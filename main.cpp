@@ -7,6 +7,7 @@
 #include "concurrent_queue.hpp"
 #include "try_locker.hpp"
 #include "running_statistics.hpp"
+#include "time_keeper.hpp"
 
 using namespace math;
 
