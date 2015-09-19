@@ -8,7 +8,8 @@
 #include "try_locker.hpp"
 #include "running_statistics.hpp"
 #include "time_keeper.hpp"
-#include "human_time.h"
+#include "human_time.hpp"
+#include "signal.hpp"
 
 using namespace math;
 using namespace util;
