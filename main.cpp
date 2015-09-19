@@ -8,8 +8,10 @@
 #include "try_locker.hpp"
 #include "running_statistics.hpp"
 #include "time_keeper.hpp"
+#include "human_time.h"
 
 using namespace math;
+using namespace util;
 
 int main(int argc, const char * argv[])
 {

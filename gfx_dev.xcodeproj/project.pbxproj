@@ -33,6 +33,7 @@
 		081204A21BAE061B00C7C0F4 /* try_locker.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = try_locker.hpp; sourceTree = SOURCE_ROOT; };
 		081204A31BAE086F00C7C0F4 /* running_statistics.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = running_statistics.hpp; sourceTree = SOURCE_ROOT; };
 		081204A41BAE09F300C7C0F4 /* time_keeper.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = time_keeper.hpp; sourceTree = SOURCE_ROOT; };
+		081204A51BAE0C1700C7C0F4 /* human_time.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = human_time.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +75,7 @@
 				081204A31BAE086F00C7C0F4 /* running_statistics.hpp */,
 				081204A41BAE09F300C7C0F4 /* time_keeper.hpp */,
 				0812049C1BADDF6800C7C0F4 /* main.cpp */,
+				081204A51BAE0C1700C7C0F4 /* human_time.h */,
 			);
 			path = gfx_dev;
 			sourceTree = "<group>";
