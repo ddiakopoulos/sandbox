@@ -14,14 +14,14 @@ namespace math
     // Matrix diagonalizer //
     /////////////////////////
 
+    // A must be a symmetric matrix.
+    // returns quaternion q such that its corresponding matrix Q
+    // can be used to Diagonalize A
+    // Diagonal matrix D = Q * A * Transpose(Q);  and  A = QT*D*Q
+    // The rows of q are the eigenvectors D's diagonal is the eigenvalues
+    // As per 'row' convention if double3x3 Q = qmat(q); then v*Q = q*v*conj(q)
     template<class T> vec<T,4> diagonalizer(const mat<T,3,3> &A)
     {
-        // A must be a symmetric matrix.
-        // returns quaternion q such that its corresponding matrix Q 
-        // can be used to Diagonalize A
-        // Diagonal matrix D = Q * A * Transpose(Q);  and  A = QT*D*Q
-        // The rows of q are the eigenvectors D's diagonal is the eigenvalues
-        // As per 'row' convention if double3x3 Q = qmat(q); then v*Q = q*v*conj(q)
         int maxsteps=24;  // certainly wont need that many.
         int i;
         vec<T,4> q(0,0,0,1);
