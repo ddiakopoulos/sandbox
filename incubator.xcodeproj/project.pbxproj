@@ -42,6 +42,7 @@
 		081204AA1BAE3AA500C7C0F4 /* json.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = json.cpp; sourceTree = SOURCE_ROOT; };
 		081204AB1BAE3AA500C7C0F4 /* json.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = json.hpp; sourceTree = SOURCE_ROOT; };
 		081204AD1BAE7C8600C7C0F4 /* geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = geometry.hpp; sourceTree = SOURCE_ROOT; };
+		081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = pid_controller.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +91,7 @@
 				081204AA1BAE3AA500C7C0F4 /* json.cpp */,
 				081204AB1BAE3AA500C7C0F4 /* json.hpp */,
 				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
+				081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */,
 				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
 			name = source;

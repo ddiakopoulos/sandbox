@@ -15,6 +15,7 @@
 #include "string_utils.hpp"
 #include "json.hpp"
 #include "geometry.hpp"
+#include "pid_controller.hpp"
 
 using namespace math;
 using namespace util;
