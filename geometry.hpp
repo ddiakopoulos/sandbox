@@ -28,11 +28,22 @@ namespace util
         math::Box<float, 3> bounds;
     };
     
-    struct RenderableModel : public Model
+    struct Mesh : public Model
     {
-        void draw();
-        void update();
+        Mesh();
+        Mesh(Mesh && r);
+        Mesh(const Mesh & r) = delete;
+        Mesh & operator = (Mesh && r);
+        Mesh & operator = (const Mesh & r) = delete;
+        ~Mesh();
+        void draw() const;
+        void update() const;
     };
+    
+    Mesh make_mesh(Model & m)
+    {
+        return Mesh();
+    }
     
     void compute_normals(Geometry & g)
     {
