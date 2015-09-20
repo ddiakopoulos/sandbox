@@ -10,6 +10,7 @@
 #include "time_keeper.hpp"
 #include "human_time.hpp"
 #include "signal.hpp"
+#include "one_euro.hpp"
 
 using namespace math;
 using namespace util;

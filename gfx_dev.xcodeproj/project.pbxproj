@@ -35,6 +35,7 @@
 		081204A41BAE09F300C7C0F4 /* time_keeper.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = time_keeper.hpp; sourceTree = SOURCE_ROOT; };
 		081204A51BAE0C1700C7C0F4 /* human_time.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = human_time.hpp; sourceTree = SOURCE_ROOT; };
 		081204A61BAE0CC100C7C0F4 /* signal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = signal.hpp; sourceTree = SOURCE_ROOT; };
+		081204A71BAE330600C7C0F4 /* one_euro.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = one_euro.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,9 +76,10 @@
 				081204991BADDEF700C7C0F4 /* math_util.hpp */,
 				081204A31BAE086F00C7C0F4 /* running_statistics.hpp */,
 				081204A41BAE09F300C7C0F4 /* time_keeper.hpp */,
-				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 				081204A51BAE0C1700C7C0F4 /* human_time.hpp */,
 				081204A61BAE0CC100C7C0F4 /* signal.hpp */,
+				081204A71BAE330600C7C0F4 /* one_euro.hpp */,
+				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
 			path = gfx_dev;
 			sourceTree = "<group>";
