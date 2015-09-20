@@ -118,7 +118,6 @@ namespace math
     // between apprx points where dir1 and dir2 intersect sphere. 
     inline float4 virtual_trackball(const float3 &cop, const float3 &cor, const float3 &dir1, const float3 &dir2)
     {
- 
         float3 nrml = cor - cop; // compute plane 
         float fudgefactor = 1.0f / (length(nrml) * 0.25f); // since trackball proportional to distance from cop
         nrml = normalize(nrml);

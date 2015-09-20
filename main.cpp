@@ -13,6 +13,7 @@
 #include "one_euro.hpp"
 #include "other.hpp"
 #include "string_utils.hpp"
+#include "json.hpp"
 
 using namespace math;
 using namespace util;
