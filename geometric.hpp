@@ -70,13 +70,13 @@ namespace math
     // Bounding Box //
     //////////////////
 
-    template<class T, int M> struct box 
+    template<class T, int M> struct Box
     {
         vec<T, M> position;
         vec<T, M> dimensions;
 
-        box() : position((T) 0), dimensions((T) 0)  { }
-        box(vec<T, M> pt, vec<T, M> dims) : position(pt), dimensions(dims) { }
+        Box() : position((T) 0), dimensions((T) 0)  { }
+        Box(vec<T, M> pt, vec<T, M> dims) : position(pt), dimensions(dims) { }
 
         bool contains(const vec<T, M>& qt) const 
         {
@@ -86,13 +86,13 @@ namespace math
             return true;
         }
 
-        void clamp(const box<T, M>& other) 
+        void clamp(const Box<T, M> & other)
         {
             dimensions = math::min(dimensions, other.dimensions);
             position = math::clamp(position, other.position, other.position + other.dimensions - dimensions);
         }
 
-        void intersect(const box<T, M>& other) 
+        void intersect(const Box<T, M> & other)
         {
             vec<T, M> mn = math::max(position, other.position);
             vec<T, M> mx = math::min(max(), other.max());
@@ -117,7 +117,7 @@ namespace math
             return position + dimensions / (T) (2);
         }
 
-        vec<T, M> clamp(const vec<T, M>& pt, const box<T, M>& parent) 
+        vec<T, M> clamp(const vec<T, M>& pt, const Box<T, M> & parent)
         {
             return math::clamp(pt, parent.position, parent.position + parent.dimensions - dimensions);
         }

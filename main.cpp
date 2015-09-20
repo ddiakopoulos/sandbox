@@ -14,6 +14,7 @@
 #include "other.hpp"
 #include "string_utils.hpp"
 #include "json.hpp"
+#include "geometry.hpp"
 
 using namespace math;
 using namespace util;
