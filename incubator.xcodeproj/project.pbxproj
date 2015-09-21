@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		0812049D1BADDF6800C7C0F4 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0812049C1BADDF6800C7C0F4 /* main.cpp */; };
 		081204AC1BAE3AA500C7C0F4 /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 081204AA1BAE3AA500C7C0F4 /* json.cpp */; };
+		089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B86071BAFC9AB00B3A290 /* murmur_hash_3.cpp */; };
+		089B86121BAFC9AB00B3A290 /* noise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B86091BAFC9AB00B3A290 /* noise1234.cpp */; };
+		089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,6 +47,16 @@
 		081204AD1BAE7C8600C7C0F4 /* geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = geometry.hpp; sourceTree = SOURCE_ROOT; };
 		081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = pid_controller.hpp; sourceTree = SOURCE_ROOT; };
 		089B85FD1BAFC70B00B3A290 /* base64.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = base64.hpp; sourceTree = SOURCE_ROOT; };
+		089B86071BAFC9AB00B3A290 /* murmur_hash_3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = murmur_hash_3.cpp; path = third_party/murmur_hash_3.cpp; sourceTree = SOURCE_ROOT; };
+		089B86081BAFC9AB00B3A290 /* murmur_hash_3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = murmur_hash_3.h; path = third_party/murmur_hash_3.h; sourceTree = SOURCE_ROOT; };
+		089B86091BAFC9AB00B3A290 /* noise1234.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = noise1234.cpp; path = third_party/noise1234.cpp; sourceTree = SOURCE_ROOT; };
+		089B860A1BAFC9AB00B3A290 /* noise1234.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = noise1234.h; path = third_party/noise1234.h; sourceTree = SOURCE_ROOT; };
+		089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = simplexnoise1234.cpp; path = third_party/simplexnoise1234.cpp; sourceTree = SOURCE_ROOT; };
+		089B860C1BAFC9AB00B3A290 /* simplexnoise1234.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = simplexnoise1234.h; path = third_party/simplexnoise1234.h; sourceTree = SOURCE_ROOT; };
+		089B860D1BAFC9AB00B3A290 /* stb_image_resize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image_resize.h; path = third_party/stb_image_resize.h; sourceTree = SOURCE_ROOT; };
+		089B860E1BAFC9AB00B3A290 /* stb_image_write.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image_write.h; path = third_party/stb_image_write.h; sourceTree = SOURCE_ROOT; };
+		089B860F1BAFC9AB00B3A290 /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = third_party/stb_image.h; sourceTree = SOURCE_ROOT; };
+		089B86101BAFC9AB00B3A290 /* stb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_truetype.h; path = third_party/stb_truetype.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +89,9 @@
 		0812048F1BADDEC100C7C0F4 /* source */ = {
 			isa = PBXGroup;
 			children = (
+				089B86001BAFC96D00B3A290 /* noise1234 */,
+				089B85FF1BAFC96800B3A290 /* stb */,
+				089B85FE1BAFC95D00B3A290 /* murmur_hash */,
 				081204981BADDEF700C7C0F4 /* linear_algebra.hpp */,
 				081204971BADDEF700C7C0F4 /* geometric.hpp */,
 				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
@@ -98,6 +114,37 @@
 			);
 			name = source;
 			path = gfx_dev;
+			sourceTree = "<group>";
+		};
+		089B85FE1BAFC95D00B3A290 /* murmur_hash */ = {
+			isa = PBXGroup;
+			children = (
+				089B86071BAFC9AB00B3A290 /* murmur_hash_3.cpp */,
+				089B86081BAFC9AB00B3A290 /* murmur_hash_3.h */,
+			);
+			name = murmur_hash;
+			sourceTree = "<group>";
+		};
+		089B85FF1BAFC96800B3A290 /* stb */ = {
+			isa = PBXGroup;
+			children = (
+				089B860D1BAFC9AB00B3A290 /* stb_image_resize.h */,
+				089B860E1BAFC9AB00B3A290 /* stb_image_write.h */,
+				089B860F1BAFC9AB00B3A290 /* stb_image.h */,
+				089B86101BAFC9AB00B3A290 /* stb_truetype.h */,
+			);
+			name = stb;
+			sourceTree = "<group>";
+		};
+		089B86001BAFC96D00B3A290 /* noise1234 */ = {
+			isa = PBXGroup;
+			children = (
+				089B86091BAFC9AB00B3A290 /* noise1234.cpp */,
+				089B860A1BAFC9AB00B3A290 /* noise1234.h */,
+				089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */,
+				089B860C1BAFC9AB00B3A290 /* simplexnoise1234.h */,
+			);
+			name = noise1234;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -157,6 +204,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				0812049D1BADDF6800C7C0F4 /* main.cpp in Sources */,
+				089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */,
+				089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */,
+				089B86121BAFC9AB00B3A290 /* noise1234.cpp in Sources */,
 				081204AC1BAE3AA500C7C0F4 /* json.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
