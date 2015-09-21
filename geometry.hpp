@@ -30,12 +30,27 @@ namespace util
     
     struct Mesh : public Model
     {
-        Mesh();
-        Mesh(Mesh && r);
+        Mesh()
+        {
+            
+        }
+        
+        Mesh(Mesh && r)
+        {
+            
+        }
+        
         Mesh(const Mesh & r) = delete;
-        Mesh & operator = (Mesh && r);
+        
+        Mesh & operator = (Mesh && r)
+        {
+            return *this;
+        }
+        
         Mesh & operator = (const Mesh & r) = delete;
+        
         ~Mesh();
+        
         void draw() const;
         void update() const;
     };
@@ -47,6 +62,21 @@ namespace util
     
     void compute_normals(Geometry & g)
     {
+        g.normals.resize(g.vertices.size());
+        
+        for (auto & n : g.normals)
+            n = math::float3(0,0,0);
+        
+        for (auto & tri : g.faces)
+        {
+            math::float3 n = math::cross(g.vertices[tri.y] - g.vertices[tri.x], g.vertices[tri.z] - g.vertices[tri.x]);
+            g.normals[tri.x] += n;
+            g.normals[tri.y] += n;
+            g.normals[tri.z] += n;
+        }
+        
+        for (auto & n : g.normals)
+            n = math::normalize(n);
         
     }
     

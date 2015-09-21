@@ -31,13 +31,8 @@ struct HumanTime
     void update()
     {
         std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-        std::chrono::system_clock::duration tp = now.time_since_epoch();
-
         time_t tt = std::chrono::system_clock::to_time_t(now);
-        
         tm utc_tm = *gmtime(&tt);
-        tm local_tm = *localtime(&tt);
-
         year = utc_tm.tm_year + 1900;
         month = utc_tm.tm_mon;
         monthDay = utc_tm.tm_mday;

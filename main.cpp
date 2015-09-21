@@ -16,6 +16,7 @@
 #include "json.hpp"
 #include "geometry.hpp"
 #include "pid_controller.hpp"
+#include "base64.hpp"
 
 using namespace math;
 using namespace util;
