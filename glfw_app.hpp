@@ -10,6 +10,8 @@
 #include <string>
 #include <GLFW/glfw3.h>
 
+namespace util
+{
 struct UpdateEvent
 {
     double elapsed_s;
@@ -81,7 +83,10 @@ private:
 
     std::vector<std::exception_ptr> exceptions;
 };
+    
+extern int Main(int argc, char * argv[]);
+    
+} // end namespace util
 
-extern int main(int argc, char * argv[]);
 
-#define IMPLEMENT_MAIN(...) namespace util { int main(int argc, char * argv[]); } int main(int argc, char * argv[]) { return main(argc, argv); } int main(__VA_ARGS__)
+#define IMPLEMENT_MAIN(...) namespace util { int main(int argc, char * argv[]); } int main(int argc, char * argv[]) { return util::Main(argc, argv); } int util::Main(__VA_ARGS__)

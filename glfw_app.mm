@@ -21,20 +21,32 @@ static InputEvent generate_input_event(GLFWwindow * window, InputEvent::Type typ
     return e;
 }
 
+static void s_error_callback(int error, const char * description)
+{
+    std::cerr << description << std::endl;
+}
+
 #define CATCH_CURRENT app->exceptions.push_back(std::current_exception())
 
 GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples)
 {
+    if (!glfwInit())
+        ::exit(EXIT_FAILURE);
+
     glfwWindowHint(GLFW_DEPTH_BITS, 24);
     glfwWindowHint(GLFW_STENCIL_BITS, 8);
     glfwWindowHint(GLFW_SAMPLES, glfwSamples);
 
-#if defined(ANVIL_OSX)
+#if defined(ANVIL_PLATFORM_OSX)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
+    
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+    
+    glfwSetErrorCallback(s_error_callback);
     
     window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
 
@@ -42,6 +54,7 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     {
         ANVIL_ERROR( "Failed to open GLFW window" );
         glfwTerminate();
+        ::exit(EXIT_FAILURE);
     }
 
     glfwMakeContextCurrent(window);
@@ -50,7 +63,7 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     ANVIL_INFO("GL_VENDOR =   " << (char *)glGetString(GL_VENDOR));
     ANVIL_INFO("GL_RENDERER = " << (char *)glGetString(GL_RENDERER));
    
-#if defined(ANVIL_WIN)
+#if defined(ANVIL_PLATFORM_WINDOWS)
     glewExperimental = GL_TRUE;
     if (GLenum err = glewInit()) 
         throw std::runtime_error(std::string("glewInit() failed - ") + (const char *)glewGetErrorString(err));
@@ -188,7 +201,6 @@ void GLFWApp::main_loop()
     }
 }
 
-
 void GLFWApp::on_uncaught_exception(std::exception_ptr e)
 {
     rethrow_exception(e);
@@ -267,7 +279,7 @@ int2 get_screen_size(GLFWwindow * window)
     return {0, 0};
 }
 
-#if defined (ANVIL_WIN)
+#if defined (ANVIL_PLATFORM_WINDOWS)
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
@@ -327,7 +339,7 @@ void GLFWApp::exit_fullscreen(GLFWwindow * window, const int2 & windowedSize, co
     glfwSetWindowSize(window, windowedSize.x + 4, windowedSize.y + 4);
 }
 
-#elif defined(ANVIL_OSX)
+#elif defined(ANVIL_PLATFORM_OSX)
 
 #define GLFW_EXPOSE_NATIVE_COCOA
 #define GLFW_EXPOSE_NATIVE_NSGL

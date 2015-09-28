@@ -62,7 +62,8 @@ namespace util
     };
     
     enum class LogChannel : uint8_t { LOG_NADA, LOG_ERROR, LOG_INFO };
-    void print_log(LogChannel severity, const char * file, int line, const std::string & message)
+    
+    inline void print_log(LogChannel severity, const char * file, int line, const std::string & message)
     {
         if (severity ==LogChannel::LOG_ERROR) std::cerr << file << " : " << line << " - " << message << std::endl;
         else std::cout << file << " : " << line << " - " << message << std::endl;

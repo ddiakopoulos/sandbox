@@ -19,13 +19,29 @@
 #include "base64.hpp"
 #include "signal_filters.hpp"
 #include "bit_mask.hpp"
+#include "glfw_app.hpp"
 
 using namespace math;
 using namespace util;
 
-int main(int argc, const char * argv[])
+struct ExperimentalApp : GLFWApp
 {
-    ConcurrentQueue<float> queue;
-    RunningStats<float> stats;
+    
+    ExperimentalApp() : GLFWApp(100, 100, "Experimental App")
+    {
+        
+    }
+    
+    ~ExperimentalApp()
+    {
+        
+    }
+};
+
+IMPLEMENT_MAIN(int argc, char * argv[])
+{
+    ExperimentalApp app;
+    app.main_loop();
     return 0;
 }
+
