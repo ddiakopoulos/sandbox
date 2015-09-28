@@ -158,6 +158,6 @@ public:
     }
 };
     
-} // end namespace gfn
+} // end namespace util
 
 #endif

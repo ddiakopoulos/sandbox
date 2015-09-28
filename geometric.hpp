@@ -122,38 +122,64 @@ namespace math
             return math::clamp(pt, parent.position, parent.position + parent.dimensions - dimensions);
         }
     };
+    
+    struct Bounds
+    {
+        float x0;
+        float y0;
+        float x1;
+        float y1;
+        
+        Bounds() : x0(), y0(), x1(), y1() {};
+        Bounds(float x0, float y0, float x1, float y1) : x0(x0), y0(y0), x1(x1), y1(y1) {}
+        
+        bool inside(const float px, const float py) const { return px >= x0 && py >= y0 && px < x1 && py < y1; }
+        bool inside(const float2 & point) const { return inside(point.x, point.y); }
+        
+        float2 get_min() const { return {x0,y0}; }
+        float2 get_max() const { return {x1,y1}; }
+        
+        float2 get_size() const { return get_max() - get_min(); }
+        float2 get_center() const { return {get_center_x(), get_center_y()}; }
+        
+        float get_center_x() const { return (x0+x1)/2; }
+        float get_center_y() const { return (y0+y1)/2; }
+        
+        float width() const { return x1 - x0; }
+        float height() const { return y1 - y0; }
+    };
 
     ////////////////////////////////////
     // Construct rotation quaternions //
     ////////////////////////////////////
 
-    float4 make_rotation_quat_axis_angle(const float3 & axis, float angle) 
+    inline float4 make_rotation_quat_axis_angle(const float3 & axis, float angle)
     { 
         return {axis * std::sin(angle/2), std::cos(angle/2)}; 
     }
 
-    float4 make_rotation_quat_around_x(float angle) 
+    inline float4 make_rotation_quat_around_x(float angle)
     { 
         return make_rotation_quat_axis_angle({1,0,0}, angle); 
     }
 
-    float4 make_rotation_quat_around_y(float angle) 
+    inline float4 make_rotation_quat_around_y(float angle)
     { 
         return make_rotation_quat_axis_angle({0,1,0}, angle); 
     }
 
-    float4 make_rotation_quat_around_z(float angle) 
+    inline float4 make_rotation_quat_around_z(float angle)
     { 
         return make_rotation_quat_axis_angle({0,0,1}, angle); 
     }
 
-    float4 make_rotation_quat_between_vectors(const float3 & from, const float3 & to)
+    inline float4 make_rotation_quat_between_vectors(const float3 & from, const float3 & to)
     {
         auto a = normalize(from), b = normalize(to);
         return make_rotation_quat_axis_angle(normalize(cross(a,b)), std::acos(dot(a,b)));
     }
 
-    float4 make_rotation_quat_from_rotation_matrix(const float3x3 & m)
+    inline float4 make_rotation_quat_from_rotation_matrix(const float3x3 & m)
     {
         const float magw =  m(0,0) + m(1,1) + m(2,2);
 
@@ -177,19 +203,19 @@ namespace math
         return qmul(qp, post);
     }
 
-    float4 make_rotation_quat_from_pose_matrix(const float4x4 & m)
+    inline float4 make_rotation_quat_from_pose_matrix(const float4x4 & m)
     { 
         return make_rotation_quat_from_rotation_matrix({m.x.xyz(),m.y.xyz(),m.z.xyz()}); 
     }
 
     // returns unit length q such that qmat(q)^t * matrix * qmat(q) is a diagonal matrix
-    float4 make_rotation_quat_to_diagonalize_symmetric_matrix(const float3x3 & matrix) 
+    inline float4 make_rotation_quat_to_diagonalize_symmetric_matrix(const float3x3 & matrix)
     { 
         return diagonalizer(matrix); 
     }
 
     // returns unit length q such that qmat(q)^t * matrix * qmat(q) is a diagonal matrix
-    double4 make_rotation_quat_to_diagonalize_symmetric_matrix(const double3x3 & matrix) 
+    inline double4 make_rotation_quat_to_diagonalize_symmetric_matrix(const double3x3 & matrix)
     { 
         return diagonalizer(matrix); 
     }

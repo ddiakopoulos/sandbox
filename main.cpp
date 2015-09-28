@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include "util.hpp"
+#include "string_utils.hpp"
 #include "geometric.hpp"
 #include "linear_algebra.hpp"
 #include "math_util.hpp"
@@ -11,8 +13,6 @@
 #include "human_time.hpp"
 #include "signal.hpp"
 #include "one_euro.hpp"
-#include "other.hpp"
-#include "string_utils.hpp"
 #include "json.hpp"
 #include "geometry.hpp"
 #include "pid_controller.hpp"
