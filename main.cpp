@@ -18,7 +18,7 @@
 #include "geometry.hpp"
 #include "pid_controller.hpp" // todo: do integration in pid class
 #include "base64.hpp"
-#include "signal_filters.hpp"
+#include "dsp_filters.hpp"
 #include "bit_mask.hpp"
 #include "file_io.hpp"
 #include "GlMesh.hpp"
@@ -107,14 +107,14 @@ struct ExperimentalApp : public GLFWApp
         
         simpleShader->bind();
         
-        const auto proj = make_perspective_matrix_rh_gl(0.75, (float) width / (float) height, 0.1f, 92.0f);
+        const auto proj = make_perspective_matrix_rh_gl(0.75, (float) width / (float) height, 0.01f, 92.0f);
         const float4x4 view = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
         const float4x4 viewProj = mul(proj, view);
         
         simpleShader->uniform("u_viewProj", viewProj);
         simpleShader->uniform("u_eye", float3(0, 0, 0));
         
-        simpleShader->uniform("u_emissive", float3(1.0f));
+        simpleShader->uniform("u_emissive", float3(0.05f));
         simpleShader->uniform("u_diffuse", float3(0.2f));
         
         simpleShader->uniform("u_pointLights[0].position", float3(-5, 5, -3));
@@ -124,7 +124,7 @@ struct ExperimentalApp : public GLFWApp
         simpleShader->uniform("u_pointLights[1].color", float3(0.7f, 0.8f, 0.4f));
         
         {
-            auto model = sofaModel.pose.matrix() * make_scaling_matrix(0.001);
+            auto model = mul(sofaModel.pose.matrix(), make_scaling_matrix(0.001));
             simpleShader->uniform("u_modelMatrix", model);
             simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
             sofaModel.draw();

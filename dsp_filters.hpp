@@ -1,7 +1,7 @@
 // Inspired by https://github.com/wieden-kennedy/Cinder-Sampling (Apache 2.0)
 
-#ifndef signal_filters_H
-#define signal_filters_H
+#ifndef dsp_filters_H
+#define dsp_filters_H
 
 namespace util
 {
@@ -160,4 +160,4 @@ namespace util
     
 } // end namespace util
 
-#endif
+#endif // end dsp_filters_h

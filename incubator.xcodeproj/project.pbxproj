@@ -79,7 +79,7 @@
 		089B860E1BAFC9AB00B3A290 /* stb_image_write.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image_write.h; path = third_party/stb_image_write.h; sourceTree = SOURCE_ROOT; };
 		089B860F1BAFC9AB00B3A290 /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = third_party/stb_image.h; sourceTree = SOURCE_ROOT; };
 		089B86101BAFC9AB00B3A290 /* stb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_truetype.h; path = third_party/stb_truetype.h; sourceTree = SOURCE_ROOT; };
-		089B86141BAFD06300B3A290 /* signal_filters.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = signal_filters.hpp; sourceTree = SOURCE_ROOT; };
+		089B86141BAFD06300B3A290 /* dsp_filters.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dsp_filters.hpp; sourceTree = SOURCE_ROOT; };
 		089B86151BAFD39100B3A290 /* bit_mask.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = bit_mask.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -146,7 +146,7 @@
 				081204AB1BAE3AA500C7C0F4 /* json.hpp */,
 				081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */,
 				089B85FD1BAFC70B00B3A290 /* base64.hpp */,
-				089B86141BAFD06300B3A290 /* signal_filters.hpp */,
+				089B86141BAFD06300B3A290 /* dsp_filters.hpp */,
 				089B86151BAFD39100B3A290 /* bit_mask.hpp */,
 				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
