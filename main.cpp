@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 #include "util.hpp"
 #include "string_utils.hpp"
@@ -19,10 +20,14 @@
 #include "base64.hpp"
 #include "signal_filters.hpp"
 #include "bit_mask.hpp"
+#include "file_io.hpp"
+
 #include "glfw_app.hpp"
+#include "tinyply.h"
 
 using namespace math;
 using namespace util;
+using namespace tinyply;
 
 struct ExperimentalApp : GLFWApp
 {
@@ -30,6 +35,14 @@ struct ExperimentalApp : GLFWApp
     ExperimentalApp() : GLFWApp(100, 100, "Experimental App")
     {
         
+        // Tinyply can and will throw exceptions at you!
+        try
+        {
+
+            auto f = util::read_file_binary(filename);
+            std::istringstream ss((char*)f.data(), std::ios::binary);
+            
+        }
     }
     
     ~ExperimentalApp()
