@@ -94,7 +94,7 @@ public:
 
     Integrator integrator;
     double runningError = 0.0;
-    TimeKeeper timer;
+    util::TimeKeeper timer;
 
 };
 

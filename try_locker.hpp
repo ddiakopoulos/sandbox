@@ -3,7 +3,7 @@
 
 #include <mutex>
 
-namespace math
+namespace util
 {
 class TryLocker
 {
@@ -29,6 +29,6 @@ public:
     }
 };
 
-} // end namespace math
+} // end namespace util
 
-#endif // endtry_lock_h
+#endif // end try_lock_h

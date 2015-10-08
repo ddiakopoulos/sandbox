@@ -17,7 +17,7 @@ namespace math
     // A must be a symmetric matrix.
     // returns quaternion q such that its corresponding matrix Q
     // can be used to Diagonalize A
-    // Diagonal matrix D = Q * A * Transpose(Q);  and  A = QT*D*Q
+    // Diagonal matrix D = Q * A * Transpose(Q); and A = QT*D*Q
     // The rows of q are the eigenvectors D's diagonal is the eigenvalues
     // As per 'row' convention if double3x3 Q = qmat(q); then v*Q = q*v*conj(q)
     template<class T> vec<T,4> diagonalizer(const mat<T,3,3> &A)
@@ -289,7 +289,7 @@ namespace math
         };
     }
 
-    inline float4x4 make_perspective_matrix_rh_hl(float vFovInRadians, float aspectRatio, float nearZ, float farZ)
+    inline float4x4 make_perspective_matrix_rh_gl(float vFovInRadians, float aspectRatio, float nearZ, float farZ)
     {
         const float top = nearZ * std::tan(vFovInRadians/2.f), right = top * aspectRatio;
         return make_projection_matrix_from_frustrum_rh_gl(-right, right, -top, top, nearZ, farZ);

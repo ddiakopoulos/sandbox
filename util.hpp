@@ -68,6 +68,16 @@ namespace util
         if (severity == LogChannel::LOG_ERROR) std::cerr << file << " : " << line << " - " << message << std::endl;
         else std::cout << file << " : " << line << " - " << message << std::endl;
     }
+    
+    struct Noncopyable
+    {
+    protected:
+        Noncopyable() = default;
+        ~Noncopyable() = default;
+        
+        Noncopyable (const Noncopyable& r) = delete;
+        Noncopyable & operator = (const Noncopyable& r) = delete;
+    };
 }
 
 #define ANVIL_ERROR(...) util::print_log(util::LogChannel::LOG_ERROR, __FILE__, __LINE__, util::as_string() << __VA_ARGS__)

@@ -1,3 +1,5 @@
+// Inspired by https://github.com/sgorsten/editor (public domain)
+
 #ifndef glshader_h
 #define glshader_h
 
@@ -5,19 +7,12 @@
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include "util.hpp"
-
-#if defined(ANVIL_PLATFORM_WINDOWS)
-    #define GLEW_STATIC
-    #include <GL/glew.h>
-#elif defined(ANVIL_PLATFORM_OSX)
-    #include <OpenGL/gl3.h>
-#endif
+#include "gl_common.hpp"
 
 namespace gfx
 {
-    void gl_check_error(const char * file, int32_t line);
     
-    class GlShader
+    class GlShader : public util::Noncopyable
     {
         GLuint program;
         bool enabled = false;
@@ -30,13 +25,11 @@ namespace gfx
         ~GlShader() { if(program) glDeleteProgram(program); }
         
         GlShader(GlShader && r) : GlShader() { *this = std::move(r); }
-        GlShader(const GlShader & r) = delete;
         
         GLuint get_gl_handle() const { return program; }
         GLint get_uniform_location(const std::string & name) const { return glGetUniformLocation(program, name.c_str()); }
         
         GlShader & operator = (GlShader && r) { std::swap(program, r.program); return *this; }
-        GlShader & operator = (const GlShader & r) = delete;
         
         void uniform(const std::string & name, int scalar) const { check(); glUniform1i(get_uniform_location(name), scalar); }
         void uniform(const std::string & name, float scalar) const { check(); glUniform1f(get_uniform_location(name), scalar); }
@@ -48,7 +41,7 @@ namespace gfx
         
         void texture(const std::string & name, int unit, GLuint texId, GLenum textureTarget) const;
         
-        void bind() { if (program> 0) enabled = true; glUseProgram(program); }
+        void bind() { if (program > 0) enabled = true; glUseProgram(program); }
         void unbind() { enabled = false; glUseProgram(0); }
     };
     

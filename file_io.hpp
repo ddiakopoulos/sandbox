@@ -4,11 +4,13 @@
 #include <exception>
 #include <vector>
 #include <string>
+#include <fstream>
+#include <streambuf>
 
 namespace util
 {
     
-    inline std::vector<uint8_t> read_file_binary(std::string pathToFile)
+    inline std::vector<uint8_t> read_file_binary(const std::string pathToFile)
     {
         FILE * f = fopen(pathToFile.c_str(), "rb");
         
@@ -28,6 +30,13 @@ namespace util
         
         fclose(f);
         return fileBuffer;
+    }
+    
+    inline std::string read_file_text(const std::string & pathToFile)
+    {
+        std::ifstream t(pathToFile);
+        std::string str ((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+        return str;
     }
 
 } // end namespace util

@@ -111,11 +111,10 @@ namespace math
         return { c.x / s, c.y / s, c.z / s, s / 2.0f };
     }
 
-    // Simple track ball functionality
-    //      cop    center of projection    cor   center of rotation
-    //      dir1   old mouse direction     dir2  new mouse direction
-    // Pretend there is a sphere around cor. Take rotation
-    // between apprx points where dir1 and dir2 intersect sphere. 
+    // Simple track ball:
+    // cop - center of projection, cor - center of rotation
+    // dir1 - old mouse direction, dir2 - new mouse direction
+    // Pretend there is a sphere around cor. Take rotation between apprx points where dir1 and dir2 intersect sphere.
     inline float4 virtual_trackball(const float3 &cop, const float3 &cor, const float3 &dir1, const float3 &dir2)
     {
         float3 nrml = cor - cop; // compute plane 

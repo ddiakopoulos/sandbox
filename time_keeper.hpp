@@ -7,7 +7,7 @@
 typedef std::chrono::high_resolution_clock::time_point timepoint;
 typedef std::chrono::high_resolution_clock::duration timeduration;
 
-namespace math
+namespace util
 {
 
 class TimeKeeper 
@@ -73,6 +73,6 @@ private:
 	inline timeduration running_time() const { return (isRunning) ? current_time_point() - startTime : pauseTime - startTime; }
 };
 
-} // end namespace math
+} // end namespace util
 
 #endif // end time_keeper_h

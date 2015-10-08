@@ -6,25 +6,6 @@ using namespace math;
 #include <map>
 #include <vector>
 
-void gl_check_error(const char * file, int32_t line)
-{
-    GLint error = glGetError();
-    if (error)
-    {
-        const char * errorStr = 0;
-        switch (error)
-        {
-            case GL_INVALID_ENUM: errorStr = "GL_INVALID_ENUM"; break;
-            case GL_INVALID_VALUE: errorStr = "GL_INVALID_VALUE"; break;
-            case GL_INVALID_OPERATION: errorStr = "GL_INVALID_OPERATION"; break;
-            case GL_OUT_OF_MEMORY: errorStr = "GL_OUT_OF_MEMORY"; break;
-            default: errorStr = "unknown error"; break;
-        }
-        printf("GL error : %s, line %d : %s\n", file, line, errorStr);
-        error = 0;
-    }
-}
-
 static void compile_shader(GLuint program, GLenum type, const char * source)
 {
     GLuint shader = glCreateShader(type);

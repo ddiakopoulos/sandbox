@@ -5,7 +5,7 @@
 #include <queue>
 #include <condition_variable>
 
-namespace math
+namespace util
 {
 
     template<typename T>
@@ -58,6 +58,6 @@ namespace math
 
     };
 
-} // end namespace math
+} // end namespace util
 
 #endif // end concurrent_queue_h
