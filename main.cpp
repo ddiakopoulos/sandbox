@@ -21,6 +21,8 @@
 #include "signal_filters.hpp"
 #include "bit_mask.hpp"
 #include "file_io.hpp"
+#include "GlMesh.hpp"
+#include "GlShader.hpp"
 
 #include "glfw_app.hpp"
 #include "tinyply.h"
@@ -28,11 +30,15 @@
 using namespace math;
 using namespace util;
 using namespace tinyply;
+using namespace gfx;
 
 struct ExperimentalApp : public GLFWApp
 {
     
-    ExperimentalApp() : GLFWApp(100, 100, "Experimental App")
+    Model sofaModel;
+    std::unique_ptr<gfx::GlShader> simpleShader;
+    
+    ExperimentalApp() : GLFWApp(300, 300, "Experimental App")
     {
         Geometry sofaGeometry;
         
@@ -67,6 +73,66 @@ struct ExperimentalApp : public GLFWApp
         {
             std::cerr << "Caught exception: " << e.what() << std::endl;
         }
+        
+        sofaModel = make_model_from_geometry(sofaGeometry);
+        
+        gfx::gl_check_error(__FILE__, __LINE__);
+        
+        simpleShader.reset(new gfx::GlShader(read_file_text("assets/simple.vert"), read_file_text("assets/simple.frag")));
+        
+    }
+    
+    void on_update(const UpdateEvent & e) override
+    {
+        
+    }
+    
+    void on_draw() override
+    {
+        glfwMakeContextCurrent(window);
+        
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+        glViewport(0, 0, width, height);
+        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+        
+        gfx::gl_check_error(__FILE__, __LINE__);
+        
+        simpleShader->bind();
+        
+        const auto proj = make_perspective_matrix_rh_gl(0.75, (float) width / (float) height, 0.1f, 92.0f);
+        const float4x4 view = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+        const float4x4 viewProj = mul(proj, view);
+        
+        simpleShader->uniform("u_viewProj", viewProj);
+        simpleShader->uniform("u_eye", float3(0, 0, 0));
+        
+        simpleShader->uniform("u_emissive", float3(1.0f));
+        simpleShader->uniform("u_diffuse", float3(0.2f));
+        
+        simpleShader->uniform("u_pointLights[0].position", float3(-5, 5, -3));
+        simpleShader->uniform("u_pointLights[0].color", float3(0.7f, 0.2f, 0.2f));
+        
+        simpleShader->uniform("u_pointLights[1].position", float3(-2, -5, 4));
+        simpleShader->uniform("u_pointLights[1].color", float3(0.7f, 0.8f, 0.4f));
+        
+        {
+            auto model = sofaModel.pose.matrix() * make_scaling_matrix(0.001);
+            simpleShader->uniform("u_modelMatrix", model);
+            simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
+            sofaModel.draw();
+        }
+        
+        simpleShader->unbind();
+        
+        glfwSwapBuffers(window);
+        
+        gfx::gl_check_error(__FILE__, __LINE__);
     }
     
     ~ExperimentalApp()
