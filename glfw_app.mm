@@ -52,7 +52,7 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
 
     if (!window) 
     {
-        ANVIL_ERROR( "Failed to open GLFW window" );
+        ANVIL_ERROR("Failed to open GLFW window");
         glfwTerminate();
         ::exit(EXIT_FAILURE);
     }
