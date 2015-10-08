@@ -12,11 +12,11 @@
 #include "running_statistics.hpp"
 #include "time_keeper.hpp"
 #include "human_time.hpp"
-#include "signal.hpp"
+#include "signal.hpp" // todo: rename
 #include "one_euro.hpp"
 #include "json.hpp"
 #include "geometry.hpp"
-#include "pid_controller.hpp"
+#include "pid_controller.hpp" // todo: do integration in pid class
 #include "base64.hpp"
 #include "signal_filters.hpp"
 #include "bit_mask.hpp"
@@ -58,6 +58,8 @@ struct ExperimentalApp : public GLFWApp
             for (int i = 0; i < faceCount * 3; i+=3)
                 sofaGeometry.faces.push_back(math::uint3(faces[i], faces[i+1], faces[i+2]));
             
+            sofaGeometry.compute_normals();
+            
             std::cout << "Read " << vertexCount << " vertices..." << std::endl;
             
         }
@@ -71,6 +73,7 @@ struct ExperimentalApp : public GLFWApp
     {
         
     }
+    
 };
 
 IMPLEMENT_MAIN(int argc, char * argv[])

@@ -9,7 +9,7 @@
 
 namespace util
 {
-
+    
     struct Geometry
     {
         std::vector<math::float3> vertices;
