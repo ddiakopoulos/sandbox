@@ -65,7 +65,7 @@ namespace util
     
     inline void print_log(LogChannel severity, const char * file, int line, const std::string & message)
     {
-        if (severity ==LogChannel::LOG_ERROR) std::cerr << file << " : " << line << " - " << message << std::endl;
+        if (severity == LogChannel::LOG_ERROR) std::cerr << file << " : " << line << " - " << message << std::endl;
         else std::cout << file << " : " << line << " - " << message << std::endl;
     }
 }

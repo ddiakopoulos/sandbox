@@ -34,10 +34,10 @@ struct ExperimentalApp : public GLFWApp
     
     ExperimentalApp() : GLFWApp(100, 100, "Experimental App")
     {
+        Geometry sofaGeometry;
         
         try
         {
-
             auto f = util::read_file_binary("assets/sofa.ply");
             std::istringstream ss((char*)f.data(), std::ios::binary);
             PlyFile file(ss);
@@ -49,6 +49,14 @@ struct ExperimentalApp : public GLFWApp
             uint32_t faceCount = file.request_properties_from_element("face", {"vertex_indices"}, faces, 3);
             
             file.read(ss);
+            
+            sofaGeometry.vertices.resize(vertexCount);
+            for (int i = 0; i < vertexCount * 3; i+=3)
+                sofaGeometry.vertices.push_back(math::float3(verts[i], verts[i+1], verts[i+2]));
+            
+            sofaGeometry.faces.resize(faceCount);
+            for (int i = 0; i < faceCount * 3; i+=3)
+                sofaGeometry.faces.push_back(math::uint3(faces[i], faces[i+1], faces[i+2]));
             
             std::cout << "Read " << vertexCount << " vertices..." << std::endl;
             

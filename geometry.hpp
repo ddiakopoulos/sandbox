@@ -18,7 +18,26 @@ namespace util
         std::vector<math::float2> uv;
         std::vector<math::float3> tangents;
         std::vector<math::float3> bitangents;
-        std::vector<math::uint3>  faces;
+        std::vector<math::uint3> faces;
+        
+        void compute_normals()
+        {
+            normals.resize(vertices.size());
+            for (auto & n : normals)
+                n = math::float3(0,0,0);
+            
+            for (const auto & tri : faces)
+            {
+                math::float3 n = math::cross(vertices[tri.y] - vertices[tri.x], vertices[tri.z] - vertices[tri.x]);
+                normals[tri.x] += n;
+                normals[tri.y] += n;
+                normals[tri.z] += n;
+            }
+            
+            for (auto & n : normals)
+                n = math::normalize(n);
+        }
+        
     };
     
     struct Model
@@ -60,31 +79,6 @@ namespace util
         return Mesh();
     }
     
-    void compute_normals(Geometry & g)
-    {
-        g.normals.resize(g.vertices.size());
-        
-        for (auto & n : g.normals)
-            n = math::float3(0,0,0);
-        
-        for (auto & tri : g.faces)
-        {
-            math::float3 n = math::cross(g.vertices[tri.y] - g.vertices[tri.x], g.vertices[tri.z] - g.vertices[tri.x]);
-            g.normals[tri.x] += n;
-            g.normals[tri.y] += n;
-            g.normals[tri.z] += n;
-        }
-        
-        for (auto & n : g.normals)
-            n = math::normalize(n);
-        
-    }
-    
-    void compute_tangents(Geometry & g)
-    {
-        
-    }
-    
 } // end namespace util
 
-#endif // geometry_H
+#endif // geometry_h
