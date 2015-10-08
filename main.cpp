@@ -36,16 +36,18 @@ struct ExperimentalApp : public GLFWApp
 {
     
     Model sofaModel;
+    Geometry sofaGeometry;
+    
     std::unique_ptr<gfx::GlShader> simpleShader;
     
     ExperimentalApp() : GLFWApp(300, 300, "Experimental App")
     {
-        Geometry sofaGeometry;
+
         
         try
         {
-            auto f = util::read_file_binary("assets/sofa.ply");
-            std::istringstream ss((char*)f.data(), std::ios::binary);
+            
+            std::ifstream ss("assets/sofa.ply", std::ios::binary);
             PlyFile file(ss);
             
             std::vector<float> verts;
@@ -56,11 +58,11 @@ struct ExperimentalApp : public GLFWApp
             
             file.read(ss);
             
-            sofaGeometry.vertices.resize(vertexCount);
+            sofaGeometry.vertices.reserve(vertexCount);
             for (int i = 0; i < vertexCount * 3; i+=3)
                 sofaGeometry.vertices.push_back(math::float3(verts[i], verts[i+1], verts[i+2]));
             
-            sofaGeometry.faces.resize(faceCount);
+            sofaGeometry.faces.reserve(faceCount);
             for (int i = 0; i < faceCount * 3; i+=3)
                 sofaGeometry.faces.push_back(math::uint3(faces[i], faces[i+1], faces[i+2]));
             
