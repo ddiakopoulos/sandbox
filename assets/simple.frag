@@ -1,10 +1,7 @@
 #version 330
 
-uniform mat4 u_modelMatrix;
-uniform mat4 u_modelMatrixIT;
 uniform vec3 u_emissive;
 uniform vec3 u_diffuse;
-uniform mat4 u_viewProj;
 uniform vec3 u_eye;
 
 struct PointLight

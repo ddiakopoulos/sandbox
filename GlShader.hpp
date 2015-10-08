@@ -12,6 +12,7 @@
 namespace gfx
 {
     
+    // todo: check uniform exists
     class GlShader : public util::Noncopyable
     {
         GLuint program;

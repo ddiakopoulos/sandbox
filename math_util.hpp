@@ -71,7 +71,7 @@ namespace math
     }
 
     // The point where the line p0-p2 intersects the plane n&d
-    inline float3 plane_line_intersection(const float3 &n, const float d, const float3 &p0, const float3 &p1)
+    inline float3 plane_line_intersection(const float3 &n, const float d, const float3 & p0, const float3 & p1)
     {
         float3 dif = p1 - p0;
         float dn = dot(n, dif);

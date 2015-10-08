@@ -13,39 +13,6 @@
 
 namespace gfx
 {
-    // Can be used for things like a vbo, ibo, or pbo
-    class GlBuffer : public util::Noncopyable
-    {
-        GLuint buffer;
-        GLsizeiptr bufferLen;
-    public:
-
-        GlBuffer() : buffer() {}
-        GlBuffer(GlBuffer && r) : GlBuffer() { *this = std::move(r); }
-        
-        ~GlBuffer() { if (buffer) glDeleteBuffers(1, &buffer); }
-        
-        GLuint gl_handle() const { return buffer; }
-        GLsizeiptr size() const { return bufferLen; }
-        
-        void bind(GLenum target) const { glBindBuffer(target, buffer); }
-        
-        GlBuffer & operator = (GlBuffer && r) { std::swap(buffer, r.buffer); std::swap(bufferLen, r.bufferLen); return *this; }
-    
-        void set_buffer_data(GLenum target, GLsizeiptr length, const GLvoid * data, GLenum usage)
-        {
-            if (!buffer) glGenBuffers(1, &buffer);
-            glBindBuffer(target, buffer);
-            glBufferData(target, length, data, usage);
-            glBindBuffer(target, 0);
-            this->bufferLen = length;
-        }
-        
-        void set_buffer_data(GLenum target, const std::vector<GLubyte> & bytes, GLenum usage)
-        {
-             set_buffer_data(target, bytes.size(), bytes.data(), usage);
-        }
-    };
     
     class GlMesh : public util::Noncopyable
     {
