@@ -29,19 +29,33 @@ using namespace math;
 using namespace util;
 using namespace tinyply;
 
-struct ExperimentalApp : GLFWApp
+struct ExperimentalApp : public GLFWApp
 {
     
     ExperimentalApp() : GLFWApp(100, 100, "Experimental App")
     {
         
-        // Tinyply can and will throw exceptions at you!
         try
         {
 
-            auto f = util::read_file_binary(filename);
+            auto f = util::read_file_binary("assets/sofa.ply");
             std::istringstream ss((char*)f.data(), std::ios::binary);
+            PlyFile file(ss);
             
+            std::vector<float> verts;
+            std::vector<int32_t> faces;
+            
+            uint32_t vertexCount = file.request_properties_from_element("vertex", {"x", "y", "z"}, verts);
+            uint32_t faceCount = file.request_properties_from_element("face", {"vertex_indices"}, faces, 3);
+            
+            file.read(ss);
+            
+            std::cout << "Read " << vertexCount << " vertices..." << std::endl;
+            
+        }
+        catch (std::exception e)
+        {
+            std::cerr << "Caught exception: " << e.what() << std::endl;
         }
     }
     
