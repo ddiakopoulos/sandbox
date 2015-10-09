@@ -49,7 +49,61 @@ namespace gfx
     
     struct GlCamera
     {
+        math::Pose pose;
         
+        float fov = 45.0f;
+        float nearClip = 0.1f;
+        float farClip = 128.0f;
+        
+        math::Pose get_pose() const { return pose; }
+        
+        math::float3 get_view_direction() const { return -pose.zdir(); }
+        
+        math::float3 get_eye_point() const { return pose.position; }
+        
+        math::float4x4 get_view_matrix() const { return math::make_view_matrix_from_pose(pose); }
+        
+        math::float4x4 get_projection_matrix(float aspectRatio) const
+        {
+            const float top = nearClip * std::tan((fov * (ANVIL_PI / 2) / 360) / 2);
+            const float right = top * aspectRatio;
+            const float bottom = -top;
+            const float left = -right;
+            
+            return math::make_projection_matrix_from_frustrum_rh_gl(left, right, bottom, top, nearClip, farClip);
+        }
+        
+        math::float4x4 get_projection_matrix(float l, float r, float b, float t) const
+        {
+            float left = -tanf(math::to_radians(l)) * nearClip;
+            float right = tanf(math::to_radians(r)) * nearClip;
+            float bottom = -tanf(math::to_radians(b)) * nearClip;
+            float top = tanf(math::to_radians(t)) * nearClip;
+            return math::make_projection_matrix_from_frustrum_rh_gl(left, right, bottom, top, nearClip, farClip);
+        }
+        
+        void set_orientation(math::float4 o) { pose.orientation = math::normalize(o); }
+        
+        void set_position(math::float3 p) { pose.position = p; }
+        
+        void set_perspective(float vFov, float nearClip, float farClip)
+        {
+            this->fov = vFov;
+            this->nearClip = nearClip;
+            this->farClip = farClip;
+        }
+        
+        void look_at(math::float3 target) { look_at(pose.position, target); }
+        
+        void look_at(math::float3 eyePoint, math::float3 target)
+        {
+            const math::float3 worldUp = {0,1,0};
+            pose.position = eyePoint;
+            math::float3 zDir = math::normalize(eyePoint - target);
+            math::float3 xDir = math::normalize(cross(worldUp, zDir));
+            math::float3 yDir = math::cross(zDir, xDir);
+            pose.orientation = math::normalize(math::make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
+        }
     };
     
     struct GlTexture
