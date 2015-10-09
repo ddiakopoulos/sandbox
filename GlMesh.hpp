@@ -7,7 +7,7 @@
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include "util.hpp"
-#include "gl_common.hpp"
+#include "GlShared.hpp"
 
 #include <vector>
 
