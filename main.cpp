@@ -96,14 +96,13 @@ struct ExperimentalApp : public GLFWApp
             float spread = (float)tan(45.0/2*3.14/180);
             float y = spread * ((height-event.value.y)-height/2.0f) /(height/2.0f);
             float x = spread * (event.value.x-width/2.0f) / (height/2.0f);
-            mousevec_last = mouseVec;
             mouseVec = normalize(float3(x, y, -1));
         }
 
-        //sofaModel.pose.orientation = qmul(virtual_trackball(float3(0, 0, 2), float3(0,0,0), mousevec_last, mouseVec), sofaModel.pose.orientation);
-        std::cout << sofaModel.pose.orientation << std::endl;
+        // sofaModel.pose.orientation = qmul(virtual_trackball(float3(0, 0, 2), float3(0,0,0), mousevec_last, mouseVec), sofaModel.pose.orientation);
+        mousevec_last = mouseVec;
         
-
+        std::cout << sofaModel.pose.orientation << std::endl;
     }
     
     void on_update(const UpdateEvent & e) override
