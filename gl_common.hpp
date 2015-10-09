@@ -2,6 +2,7 @@
 #define gl_common_h
 
 #include <vector>
+#include <type_traits>
 
 #if defined(ANVIL_PLATFORM_WINDOWS)
     #define GLEW_STATIC
@@ -12,6 +13,16 @@
 
 namespace gfx
 {
+    
+    template<typename T>
+    inline GLenum to_gl(T *)
+    {
+        if (std::is_same<T, int8_t *>::value) return GL_UNSIGNED_BYTE;
+        else if (std::is_same<T, uint16_t *>::value) return GL_UNSIGNED_SHORT;
+        else if (std::is_same<T, uint32_t *>::value) return GL_UNSIGNED_INT;
+        else if (std::is_same<T, float *>::value) return GL_FLOAT;
+    };
+    
     // Can be used for things like a vbo, ibo, or pbo
     class GlBuffer : public util::Noncopyable
     {
@@ -115,11 +126,6 @@ namespace gfx
     {
         
     };
-    
-    inline GLenum GetType(uint8_t *) { return GL_UNSIGNED_BYTE; }
-    inline GLenum GetType(uint16_t *) { return GL_UNSIGNED_SHORT; }
-    inline GLenum GetType(uint32_t *) { return GL_UNSIGNED_INT; }
-    inline GLenum GetType(float *) { return GL_FLOAT; }
 
     inline void gl_check_error(const char * file, int32_t line)
     {

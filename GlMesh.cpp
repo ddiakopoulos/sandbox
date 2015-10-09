@@ -5,13 +5,13 @@ using namespace math;
 
 void GlMesh::draw_elements() const
 {
-    GLsizei vertexCount = vstride ? vbo.size() / vstride : 0;
+    GLsizei vertexCount = vstride ? (vbo.size() / vstride) : 0;
     
     GLsizei indexCount = [&]()
     {
-        if (indexType == GL_UNSIGNED_BYTE) return ibo.size() / sizeof(GLubyte);
-        if (indexType == GL_UNSIGNED_SHORT) return ibo.size() / sizeof(GLushort);
-        if (indexType == GL_UNSIGNED_INT) return ibo.size() / sizeof(GLuint);
+        if (indexType == GL_UNSIGNED_BYTE) return (ibo.size() / sizeof(GLubyte));
+        if (indexType == GL_UNSIGNED_SHORT) return (ibo.size() / sizeof(GLushort));
+        if (indexType == GL_UNSIGNED_INT) return (ibo.size() / sizeof(GLuint));
         else return (unsigned long) 0;
     }();
 
@@ -31,7 +31,7 @@ void GlMesh::draw_elements() const
         {
             ibo.bind(GL_ELEMENT_ARRAY_BUFFER);
             glDrawElements(mode, indexCount, indexType, nullptr);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            ibo.unbind(GL_ELEMENT_ARRAY_BUFFER);
         }
         else
         {
@@ -41,7 +41,7 @@ void GlMesh::draw_elements() const
         {
             glDisableVertexAttribArray(index);
         }
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        vbo.unbind(GL_ARRAY_BUFFER);
     }
 }
 
