@@ -111,7 +111,7 @@ void PlyFile::read_header_property(std::istream & is)
 
 uint32_t PlyFile::skip_property_binary(const PlyProperty & property, std::istream & is)
 {
-    std::vector<char> skip(PropertyTable[property.propertyType].stride);
+    static std::vector<char> skip(PropertyTable[property.propertyType].stride);
     if (property.isList)
     {
         uint32_t listSize = 0;
@@ -141,7 +141,7 @@ void PlyFile::skip_property_ascii(const PlyProperty & property, std::istream & i
 
 void PlyFile::read_property_binary(PlyProperty::Type t, void * dest, uint32_t & destOffset, std::istream & is)
 {
-    std::vector<char> src(PropertyTable[t].stride);
+    static std::vector<char> src(PropertyTable[t].stride);
     is.read(src.data(), PropertyTable[t].stride);
     switch (t)
     {
