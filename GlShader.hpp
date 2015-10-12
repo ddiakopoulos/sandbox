@@ -34,9 +34,11 @@ namespace gfx
         
         void uniform(const std::string & name, int scalar) const { check(); glUniform1i(get_uniform_location(name), scalar); }
         void uniform(const std::string & name, float scalar) const { check(); glUniform1f(get_uniform_location(name), scalar); }
+        
         void uniform(const std::string & name, const math::float2 & vec) const { check(); glUniform2fv(get_uniform_location(name), 1, &vec.x); }
         void uniform(const std::string & name, const math::float3 & vec) const { check(); glUniform3fv(get_uniform_location(name), 1, &vec.x); }
         void uniform(const std::string & name, const math::float4 & vec) const { check(); glUniform4fv(get_uniform_location(name), 1, &vec.x); }
+        
         void uniform(const std::string & name, const math::mat<float,3,3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
         void uniform(const std::string & name, const math::mat<float,4,4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
         

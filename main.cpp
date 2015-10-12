@@ -23,6 +23,7 @@
 #include "file_io.hpp"
 #include "GlMesh.hpp"
 #include "GlShader.hpp"
+#include "GlTexture.hpp"
 
 #include "glfw_app.hpp"
 #include "tinyply.h"
@@ -37,9 +38,11 @@ struct ExperimentalApp : public GLFWApp
     
     Model sofaModel;
     Geometry sofaGeometry;
-    float3 mousevec_last;
     
-    std::unique_ptr<gfx::GlShader> simpleShader;
+    GlTexture emptyTex;
+    
+    std::unique_ptr<GLTextureView> myTexture;
+    std::unique_ptr<GlShader> simpleShader;
     
     ExperimentalApp() : GLFWApp(300, 300, "Experimental App")
     {
@@ -51,9 +54,11 @@ struct ExperimentalApp : public GLFWApp
             
             std::vector<float> verts;
             std::vector<int32_t> faces;
+            std::vector<float> texCoords;
             
             uint32_t vertexCount = file.request_properties_from_element("vertex", {"x", "y", "z"}, verts);
-            uint32_t faceCount = file.request_properties_from_element("face", {"vertex_indices"}, faces, 3);
+            uint32_t numTriangles = file.request_properties_from_element("face", {"vertex_indices"}, faces, 3);
+            uint32_t uvCount = file.request_properties_from_element("face", {"texcoord"}, texCoords, 6);
             
             file.read(ss);
             
@@ -61,11 +66,17 @@ struct ExperimentalApp : public GLFWApp
             for (int i = 0; i < vertexCount * 3; i+=3)
                 sofaGeometry.vertices.push_back(math::float3(verts[i], verts[i+1], verts[i+2]));
             
-            sofaGeometry.faces.reserve(faceCount);
-            for (int i = 0; i < faceCount * 3; i+=3)
+            sofaGeometry.faces.reserve(numTriangles);
+            for (int i = 0; i < numTriangles * 3; i+=3)
                 sofaGeometry.faces.push_back(math::uint3(faces[i], faces[i+1], faces[i+2]));
             
+            sofaGeometry.texCoords.reserve(uvCount);
+            for (int i = 0; i < uvCount * 6; i+= 2)
+                sofaGeometry.texCoords.push_back(math::float2(texCoords[i], texCoords[i+1]));
+
             sofaGeometry.compute_normals();
+            sofaGeometry.compute_bounds();
+            sofaGeometry.compute_tangents();
             
             std::cout << "Read " << vertexCount << " vertices..." << std::endl;
             
@@ -81,6 +92,10 @@ struct ExperimentalApp : public GLFWApp
         
         simpleShader.reset(new gfx::GlShader(read_file_text("assets/simple.vert"), read_file_text("assets/simple.frag")));
         
+        std::vector<uint8_t> redPixel = {255,0,0,255};
+        emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, &redPixel);
+        
+        myTexture.reset(new GLTextureView(emptyTex.get_gl_handle()));
     }
     
     void on_input(const InputEvent & event) override
@@ -88,21 +103,6 @@ struct ExperimentalApp : public GLFWApp
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
-        
-        float3 mouseVec;
-        
-        if (event.type == InputEvent::Type::CURSOR)
-        {
-            float spread = (float)tan(45.0/2*3.14/180);
-            float y = spread * ((height-event.value.y)-height/2.0f) /(height/2.0f);
-            float x = spread * (event.value.x-width/2.0f) / (height/2.0f);
-            mouseVec = normalize(float3(x, y, -1));
-        }
-
-        // sofaModel.pose.orientation = qmul(virtual_trackball(float3(0, 0, 2), float3(0,0,0), mousevec_last, mouseVec), sofaModel.pose.orientation);
-        mousevec_last = mouseVec;
-        
-        std::cout << sofaModel.pose.orientation << std::endl;
     }
     
     void on_update(const UpdateEvent & e) override
@@ -125,6 +125,10 @@ struct ExperimentalApp : public GLFWApp
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+        
+        gfx::gl_check_error(__FILE__, __LINE__);
+        
+        myTexture->draw(0, 0, 1, 1);
         
         gfx::gl_check_error(__FILE__, __LINE__);
         

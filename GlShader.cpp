@@ -38,7 +38,8 @@ GlShader::GlShader(const std::string & vertexShader, const std::string & fragmen
     compile_shader(program, GL_VERTEX_SHADER, vertexShader.c_str());
     compile_shader(program, GL_FRAGMENT_SHADER, fragmentShader.c_str());
     
-    if (geometryShader.length() != 0) compile_shader(program, GL_GEOMETRY_SHADER, geometryShader.c_str());
+    if (geometryShader.length() != 0)
+        compile_shader(program, GL_GEOMETRY_SHADER, geometryShader.c_str());
     
     glLinkProgram(program);
     

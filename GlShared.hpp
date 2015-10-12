@@ -30,6 +30,20 @@ namespace gfx
         GLsizeiptr bufferLen;
     public:
         
+        enum class Type : int
+        {
+            Vertex,
+            Index,
+            Pixel,
+            Uniform
+        };
+        
+        enum class Usage : int
+        {
+            Static,
+            Dynamic
+        };
+        
         GlBuffer() : buffer() {}
         GlBuffer(GlBuffer && r) : GlBuffer() { *this = std::move(r); }
         
@@ -115,11 +129,6 @@ namespace gfx
             math::float3 yDir = math::cross(zDir, xDir);
             pose.orientation = math::normalize(math::make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
         }
-    };
-    
-    struct GlTexture
-    {
-        
     };
     
     struct GlFramebuffer
