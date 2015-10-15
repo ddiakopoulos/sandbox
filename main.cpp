@@ -25,6 +25,8 @@
 #include "GlShader.hpp"
 #include "GlTexture.hpp"
 
+#include "sketch.hpp"
+
 #include "glfw_app.hpp"
 #include "tinyply.h"
 
@@ -96,6 +98,23 @@ struct ExperimentalApp : public GLFWApp
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, &redPixel);
         
         myTexture.reset(new GLTextureView(emptyTex.get_gl_handle()));
+        
+        std::vector<uint16_t> image(16 * 16);
+        
+        int rowNum = 0;
+        for (int i = 0; i < 16; ++i)
+        {
+            for (int j = 0; j < 16; j++)
+            {
+                if (j < 8) image[i * 16 + j] = rowNum;
+                else image[i * 16 + j] = rowNum + 100;
+            }
+            rowNum++;
+        }
+        
+        auto blocks = subdivide_grid(image, 16, 16, 2, 2);
+        
+        std::cout << blocks.size() << std::endl;
     }
     
     void on_input(const InputEvent & event) override
