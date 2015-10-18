@@ -18,6 +18,7 @@ public:
     uint32_t & operator[](const math::int3 & coords) { return voxels[coords.z * size.x * size.y + coords.y * size.x + coords.x]; }
 };
 
+template<typename T>
 inline std::vector<uint16_t> crop(const std::vector<uint16_t> & image, const int imgWidth, const int imgHeight, int x, int y, int width, int height)
 {
     std::vector<uint16_t> newImage(height * width);
@@ -25,7 +26,7 @@ inline std::vector<uint16_t> crop(const std::vector<uint16_t> & image, const int
     {
         int srcLineId = (i + y) * imgWidth + x;
         int desLineId = i * width;
-        memcpy(newImage.data() + desLineId, image.data() + srcLineId, width * 2);
+        memcpy(newImage.data() + desLineId, image.data() + srcLineId, width * sizeof(T));
     }
     return newImage;
 }
@@ -47,7 +48,7 @@ inline std::vector<std::vector<uint16_t>> subdivide_grid(const std::vector<uint1
             for (int x = 0; x < imgWidth; x += imgWidth / rowDivisor)
             {
                 auto & block = blocks[blockIdx_y * rowDivisor + blockIdx_x];
-                block = crop(image, imgWidth, imgHeight, x, y, 8, 8);
+                block = crop<uint16_t>(image, imgWidth, imgHeight, x, y, 8, 8);
                 blockIdx_x++;
             }
             blockIdx_y++;

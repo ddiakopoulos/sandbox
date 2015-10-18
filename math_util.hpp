@@ -71,7 +71,7 @@ namespace math
     }
 
     // The point where the line p0-p2 intersects the plane n&d
-    inline float3 plane_line_intersection(const float3 &n, const float d, const float3 & p0, const float3 & p1)
+    inline float3 plane_line_intersection(const float3 & n, const float d, const float3 & p0, const float3 & p1)
     {
         float3 dif = p1 - p0;
         float dn = dot(n, dif);
@@ -80,54 +80,9 @@ namespace math
     }
 
     // The point where the line p0-p2 intersects the plane n&d
-    inline float3 plane_line_intersection(const float4 &plane, const float3 &p0, const float3 &p1) 
+    inline float3 plane_line_intersection(const float4 & plane, const float3 & p0, const float3 & p1)
     { 
         return plane_line_intersection(plane.xyz(), plane.w, p0, p1);
-    }
-
-    // Returns index of argument
-    inline int argmax(const float a[], int count) 
-    {
-        if (count == 0) return -1;
-        return std::max_element(a, a + count) - a;
-    }
-
-    inline float3 orth(const float3 & v)
-    {
-        float3 absv = vabs(v);
-        float3 u(1, 1, 1);
-        u[argmax(&absv[0], 3)] = 0.0f;
-        return normalize(cross(u, v));
-    }
-
-    inline float4 rotation_arc(const float3 &v0_, const float3 &v1_)
-    {
-        auto v0 = normalize(v0_);  // Comment these two lines out if you know its not needed.
-        auto v1 = normalize(v1_);  // If vector is already unit length then why do it again?
-        auto  c = cross(v0, v1);
-        auto  d = dot(v0, v1);
-        if (d <= -1.0f) { float3 a = orth(v0); return float4(a.x, a.y, a.z, 0); } // 180 about any orthogonal axis axis
-        auto  s = sqrtf((1 + d) * 2);
-        return { c.x / s, c.y / s, c.z / s, s / 2.0f };
-    }
-
-    // Simple track ball:
-    // cop - center of projection, cor - center of rotation
-    // dir1 - old mouse direction, dir2 - new mouse direction
-    // Pretend there is a sphere around cor. Take rotation between apprx points where dir1 and dir2 intersect sphere.
-    inline float4 virtual_trackball(const float3 &cop, const float3 &cor, const float3 &dir1, const float3 &dir2)
-    {
-        float3 nrml = cor - cop; // compute plane 
-        float fudgefactor = 1.0f / (length(nrml) * 0.25f); // since trackball proportional to distance from cop
-        nrml = normalize(nrml);
-        float dist = -dot(nrml, cor);
-        float3 u = (plane_line_intersection(nrml, dist, cop, cop + dir1) - cor) * fudgefactor;
-        float m = length(u);
-        u = (m > 1) ? u / m : u - (nrml * sqrtf(1 - m*m));
-        float3 v = (plane_line_intersection(nrml, dist, cop, cop + dir2) - cor) * fudgefactor;
-        m = length(v);
-        v = (m>1) ? v / m : v - (nrml * sqrtf(1 - m*m));
-        return rotation_arc(u, v);
     }
 
 } // end namespace math
