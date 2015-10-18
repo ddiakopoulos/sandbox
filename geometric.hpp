@@ -348,6 +348,27 @@ namespace math
     { 
         return pose.inverse().matrix(); 
     }
+    
+    /////////////////////////////////
+    // Universal Coordinate System //
+    /////////////////////////////////
+    
+    struct UCoord
+    {
+        float a, b;
+        float resolve(float min, float max) const { return min + a * (max - min) + b; }
+    };
+    
+    struct URect
+    {
+        UCoord x0, y0, x1, y1;
+        Bounds resolve(const Bounds & r) const { return{ x0.resolve(r.x0, r.x1), y0.resolve(r.y0, r.y1), x1.resolve(r.x0, r.x1), y1.resolve(r.y0, r.y1) }; }
+        bool is_fixed_width() const { return x0.a == x1.a; }
+        bool is_fixed_height() const { return y0.a == y1.a; }
+        float fixed_width() const { return x1.b - x0.b; }
+        float fixed_height() const { return y1.b - y0.b; }
+    };
+
 
 } // end namespace math
 
