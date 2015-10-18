@@ -25,7 +25,7 @@
 #include "GlShader.hpp"
 #include "GlTexture.hpp"
 #include "universal_widget.hpp"
-
+#include "arcball.hpp"
 #include "sketch.hpp"
 
 #include "glfw_app.hpp"

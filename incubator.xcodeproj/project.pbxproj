@@ -59,6 +59,7 @@
 		0822AF2F1BCC16D200A894F0 /* GlTexture.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GlTexture.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF311BCFFA6A00A894F0 /* sketch.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sketch.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF321BD389EA00A894F0 /* universal_widget.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = universal_widget.hpp; sourceTree = SOURCE_ROOT; };
+		0822AF331BD4212100A894F0 /* arcball.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arcball.hpp; sourceTree = SOURCE_ROOT; };
 		08289F7E1BC5F7F30054AF3B /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tinyply.cpp; sourceTree = SOURCE_ROOT; };
 		08289F7F1BC5F7F30054AF3B /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tinyply.h; sourceTree = SOURCE_ROOT; };
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
@@ -155,6 +156,7 @@
 				089B86151BAFD39100B3A290 /* bit_mask.hpp */,
 				0822AF311BCFFA6A00A894F0 /* sketch.hpp */,
 				0822AF321BD389EA00A894F0 /* universal_widget.hpp */,
+				0822AF331BD4212100A894F0 /* arcball.hpp */,
 				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
 			name = source;
