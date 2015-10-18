@@ -12,6 +12,8 @@ static InputEvent generate_input_event(GLFWwindow * window, InputEvent::Type typ
     e.cursor = cursor;
     e.action = action;
     e.mods = 0;
+    
+    glfwGetWindowSize(window, &e.windowSize.x, &e.windowSize.y);
 
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) | glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT)) e.mods |= GLFW_MOD_SHIFT;
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) | glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL)) e.mods |= GLFW_MOD_CONTROL;

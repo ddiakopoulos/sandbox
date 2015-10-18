@@ -28,6 +28,7 @@ struct InputEvent
     int action;
     int mods;
     math::uint2 value; // button, key, codepoint, scrollX, scrollY
+    math::int2 windowSize;
     bool is_mouse_down() const { return action != GLFW_RELEASE; }
     bool is_mouse_up() const { return action == GLFW_RELEASE; }
 };
