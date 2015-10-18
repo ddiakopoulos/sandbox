@@ -9,6 +9,9 @@
 #include "GlMesh.hpp"
 #include "GlShader.hpp"
 #include "GlShared.hpp"
+#include "file_io.hpp"
+
+#include "third_party/stb_image.h"
 
 namespace gfx
 {
@@ -47,7 +50,7 @@ namespace gfx
         {
             util::Geometry g;
             g.vertices = { {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
-            g.texCoords = { {1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f} };
+            g.texCoords = { {0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
             g.faces = {{0, 1, 2}, {3, 4, 5}};
             mesh = make_mesh_from_geometry(g);
             program = GlShader(s_textureVert, s_textureFrag);
@@ -168,6 +171,24 @@ namespace gfx
         }
         
     };
+    
+    inline GlTexture load_image(const std::string & path)
+    {
+        auto binaryFile = util::read_file_binary(path);
+        
+        int width, height, nBytes;
+        auto data = stbi_load_from_memory(binaryFile.data(), (int) binaryFile.size(), &width, &height, &nBytes, 0);
+        
+        GlTexture tex;
+        switch(nBytes)
+        {
+            case 3: tex.load_data(width, height, GL_RGB, GL_UNSIGNED_BYTE, data, true); break;
+            case 4: tex.load_data(width, height, GL_RGBA, GL_UNSIGNED_BYTE, data, true); break;
+        }
+        
+        stbi_image_free(data);
+        return tex;
+    }
     
 } // end namespace gfx
 

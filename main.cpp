@@ -101,8 +101,10 @@ struct ExperimentalApp : public GLFWApp
         
         simpleShader.reset(new gfx::GlShader(read_file_text("assets/simple.vert"), read_file_text("assets/simple.frag")));
         
-        std::vector<uint8_t> whitePixel = {255,255,255,255};
-        emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel.data());
+        //std::vector<uint8_t> whitePixel = {255,255,255,255};
+        //emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel.data());
+        
+        emptyTex = load_image("assets/anvil.png");
         
         rootWidget.bounds = {0, 0, (float) width, (float) height};
         rootWidget.add_child( {{0,0},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UWidget>());
