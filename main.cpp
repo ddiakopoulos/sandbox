@@ -24,6 +24,7 @@
 #include "GlMesh.hpp"
 #include "GlShader.hpp"
 #include "GlTexture.hpp"
+#include "universal_widget.hpp"
 
 #include "sketch.hpp"
 
@@ -46,8 +47,14 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GLTextureView> myTexture;
     std::unique_ptr<GlShader> simpleShader;
     
+    UWidget rootWidget;
+    
     ExperimentalApp() : GLFWApp(300, 300, "Experimental App")
     {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+        glViewport(0, 0, width, height);
+        
         try
         {
             
@@ -97,6 +104,12 @@ struct ExperimentalApp : public GLFWApp
         std::vector<uint8_t> redPixel = {255,0,0,255};
         emptyTex.load_data(1, 1, GL_RGB, GL_RGBA, GL_UNSIGNED_BYTE, &redPixel);
         
+        rootWidget.bounds = {0, 0, (float) width, (float) height};
+        rootWidget.add_child( {{0,0},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UWidget>());
+        //rootWidget.add_child( {{0, 0}, {0.5, +10}, {0.5, 0}, {1.0, -10}}, std::make_shared<UWidget>());
+        
+        rootWidget.layout();
+    
         myTexture.reset(new GLTextureView(emptyTex.get_gl_handle()));
     }
     
@@ -155,7 +168,14 @@ struct ExperimentalApp : public GLFWApp
         simpleShader->unbind();
          
         gfx::gl_check_error(__FILE__, __LINE__);
-        myTexture->draw(math::Bounds(5, 10, 10, 10), math::int2{width, height});
+        
+        for (auto widget : rootWidget.children)
+        {
+            myTexture->draw(widget->bounds, math::int2{width, height});
+            
+            
+        }
+
         gfx::gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);

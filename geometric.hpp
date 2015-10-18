@@ -130,7 +130,7 @@ namespace math
         float x1;
         float y1;
         
-        Bounds() : x0(), y0(), x1(), y1() {};
+        Bounds() : x0(0), y0(0), x1(0), y1(0) {};
         Bounds(float x0, float y0, float x1, float y1) : x0(x0), y0(y0), x1(x1), y1(y1) {}
         
         bool inside(const float px, const float py) const { return px >= x0 && py >= y0 && px < x1 && py < y1; }
@@ -362,7 +362,7 @@ namespace math
     struct URect
     {
         UCoord x0, y0, x1, y1;
-        Bounds resolve(const Bounds & r) const { return{ x0.resolve(r.x0, r.x1), y0.resolve(r.y0, r.y1), x1.resolve(r.x0, r.x1), y1.resolve(r.y0, r.y1) }; }
+        Bounds resolve(const Bounds & r) const { return { x0.resolve(r.x0, r.x1), y0.resolve(r.y0, r.y1), x1.resolve(r.x0, r.x1), y1.resolve(r.y0, r.y1) }; }
         bool is_fixed_width() const { return x0.a == x1.a; }
         bool is_fixed_height() const { return y0.a == y1.a; }
         float fixed_width() const { return x1.b - x0.b; }
