@@ -95,7 +95,7 @@ struct ExperimentalApp : public GLFWApp
         simpleShader.reset(new gfx::GlShader(read_file_text("assets/simple.vert"), read_file_text("assets/simple.frag")));
         
         std::vector<uint8_t> redPixel = {255,0,0,255};
-        emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, &redPixel);
+        emptyTex.load_data(1, 1, GL_RGB, GL_RGBA, GL_UNSIGNED_BYTE, &redPixel);
         
         myTexture.reset(new GLTextureView(emptyTex.get_gl_handle()));
     }
@@ -125,16 +125,10 @@ struct ExperimentalApp : public GLFWApp
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
-        
-        gfx::gl_check_error(__FILE__, __LINE__);
-        
-        myTexture->draw(0, 0, 1, 1);
-        
-        gfx::gl_check_error(__FILE__, __LINE__);
-        
+     
         simpleShader->bind();
         
-        const auto proj = make_perspective_matrix_rh_gl(0.66f, (float) width / (float) height, 0.001f, 92.0f);
+        const auto proj = make_perspective_matrix_rh_gl(0.66f, (float) width / (float) height, 1.0f, 64.0f);
         const float4x4 view = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
         const float4x4 viewProj = mul(proj, view);
         
@@ -159,6 +153,10 @@ struct ExperimentalApp : public GLFWApp
         }
         
         simpleShader->unbind();
+         
+        gfx::gl_check_error(__FILE__, __LINE__);
+        myTexture->draw(10, 10, 20, 100);
+        gfx::gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
         

@@ -37,7 +37,7 @@ void GlMesh::draw_elements() const
         {
             glDrawArrays(mode, 0, vertexCount);
         }
-        for (GLuint index=0; index < MAX_ATTRIBUTES; ++index)
+        for (GLuint index = 0; index < MAX_ATTRIBUTES; ++index)
         {
             glDisableVertexAttribArray(index);
         }

@@ -41,6 +41,13 @@ namespace gfx
             return *this;
         }
         
+        void set_non_indexed(GLenum mode)
+        {
+            this->mode = mode;
+            ibo = {};
+            indexType = 0;
+        }
+
         void draw_elements() const;
         
         void set_vertex_data(GLsizeiptr size, const GLvoid * data, GLenum usage);
