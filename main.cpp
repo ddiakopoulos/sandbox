@@ -88,7 +88,7 @@ struct ExperimentalApp : public GLFWApp
             std::cerr << "Caught exception: " << e.what() << std::endl;
         }
         
-        sofaModel = make_model_from_geometry(sofaGeometry);
+        sofaModel.mesh = make_mesh_from_geometry(sofaGeometry);
         
         gfx::gl_check_error(__FILE__, __LINE__);
         

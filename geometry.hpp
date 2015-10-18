@@ -128,21 +128,9 @@ namespace util
 
     };
     
-    struct Model
+    inline gfx::GlMesh make_mesh_from_geometry(Geometry & geometry)
     {
-        gfx::GlMesh mesh;
-        math::Pose pose;
-        math::Box<float, 3> bounds;
-        
-        void draw() const
-        {
-            mesh.draw_elements();
-        }
-    };
-    
-    inline Model make_model_from_geometry(Geometry & geometry)
-    {
-        Model newModel;
+        gfx::GlMesh m;
         
         int vertexOffset = 0;
         int normalOffset = 0;
@@ -222,8 +210,6 @@ namespace util
             }
         }
         
-        gfx::GlMesh & m = newModel.mesh;
-        
         m.set_vertex_data(buffer.size() * sizeof(float), buffer.data(), GL_STATIC_DRAW);
         m.set_attribute(0, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + vertexOffset);
         if (normalOffset) m.set_attribute(1, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + normalOffset);
@@ -235,8 +221,21 @@ namespace util
         if (geometry.faces.size() > 0)
             m.set_elements(geometry.faces, GL_STATIC_DRAW);
         
-        return newModel;
+        return m;
     }
+    
+    struct Model
+    {
+        gfx::GlMesh mesh;
+        math::Pose pose;
+        math::Box<float, 3> bounds;
+        
+        void draw() const
+        {
+            mesh.draw_elements();
+        }
+    };
+    
     
 } // end namespace util
 

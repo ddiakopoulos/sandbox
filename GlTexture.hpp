@@ -40,7 +40,7 @@ namespace gfx
     struct GLTextureView : public util::Noncopyable
     {
         GlShader program;
-        util::Model mesh;
+        gfx::GlMesh mesh;
         GLuint texture;
         
         GLTextureView(GLuint tex) : texture(tex)
@@ -49,7 +49,7 @@ namespace gfx
             g.vertices = { {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
             g.texCoords = { {1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f} };
             g.faces = {{0, 1, 2}, {3, 4, 5}};
-            mesh = make_model_from_geometry(g);
+            mesh = make_mesh_from_geometry(g);
             program = GlShader(s_textureVert, s_textureFrag);
         }
         
@@ -69,7 +69,7 @@ namespace gfx
             program.uniform("u_projection", projection);
             program.texture("u_texture", 0, texture, GL_TEXTURE_2D);
             
-            mesh.draw();
+            mesh.draw_elements();
             
             program.unbind();
         }
