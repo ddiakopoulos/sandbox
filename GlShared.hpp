@@ -23,6 +23,54 @@ namespace gfx
         else if (std::is_same<T, float *>::value) return GL_FLOAT;
     };
     
+    
+    class Ray
+    {
+        math::float3 origin;
+        math::float3 direction;
+        char signX, signY, signZ;
+        math::float3 invDirection;
+    public:
+        
+        Ray() {}
+        Ray(const math::float3 &aOrigin, const math::float3 &aDirection) : origin(aOrigin) { set_direction(aDirection); }
+        
+        void set_origin(const math::float3 &aOrigin) { origin = aOrigin; }
+        const math::float3& get_origin() const { return origin; }
+        
+        void set_direction(const math::float3 &aDirection)
+        {
+            direction = aDirection;
+            invDirection = math::float3(1.0f / direction.x, 1.0f / direction.y, 1.0f / direction.z);
+            signX = (direction.x < 0.0f) ? 1 : 0;
+            signY = (direction.y < 0.0f) ? 1 : 0;
+            signZ = (direction.z < 0.0f) ? 1 : 0;
+        }
+
+        const math::float3 & get_direction() const { return direction; }
+        const math::float3 & get_inv_direction() const { return invDirection; }
+        
+        char getSignX() const { return signX; }
+        char getSignY() const { return signY; }
+        char getSignZ() const { return signZ; }
+        
+        void transform(const math::float4x4 & matrix)
+        {
+            origin = transform_vector(matrix, origin);
+            set_direction(math::get_rotation_submatrix(matrix) * direction);
+        }
+        
+        Ray transformed(const math::float4x4 & matrix) const
+        {
+            Ray result;
+            result.origin = transform_vector(matrix, origin);
+            result.set_direction(math::get_rotation_submatrix(matrix) * direction);
+            return result;
+        }
+        
+        math::float3 calculate_position(float t) const { return origin + direction * t; }
+    };
+    
     // Can be used for things like a vbo, ibo, or pbo
     class GlBuffer : public util::Noncopyable
     {
@@ -129,6 +177,14 @@ namespace gfx
             math::float3 yDir = math::cross(zDir, xDir);
             pose.orientation = math::normalize(math::make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
         }
+        
+        float get_focal_length() const
+        {
+            return (1.f / (tan(math::to_radians(fov) * 0.5f) * 2.0f));
+        }
+        
+
+
     };
     
     struct GlFramebuffer
