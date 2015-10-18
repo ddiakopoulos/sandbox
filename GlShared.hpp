@@ -142,7 +142,6 @@ namespace gfx
             const float right = top * aspectRatio;
             const float bottom = -top;
             const float left = -right;
-            
             return math::make_projection_matrix_from_frustrum_rh_gl(left, right, bottom, top, nearClip, farClip);
         }
         
@@ -182,10 +181,24 @@ namespace gfx
         {
             return (1.f / (tan(math::to_radians(fov) * 0.5f) * 2.0f));
         }
-        
-
 
     };
+    
+    inline Ray make_ray(const GlCamera & camera, const float aspectRatio, float uPos, float vPos, float imagePlaneApectRatio)
+    {
+        const float top = camera.nearClip * std::tan((camera.fov * (ANVIL_PI / 2) / 360) / 2);
+        const float right = top * aspectRatio; // Is this correct?
+        const float left = -right;
+        float s = (uPos - 0.5f) * imagePlaneApectRatio;
+        float t = (vPos - 0.5f);
+        float viewDistance = imagePlaneApectRatio / std::abs(right - left) * camera.nearClip;
+        return Ray(camera.get_eye_point(), normalize(camera.pose.xdir() * s + camera.pose.ydir() * t - (camera.get_view_direction() * viewDistance)));
+    }
+    
+    inline Ray make_ray(const GlCamera & camera, const float aspectRatio, const math::float2 & posPixels, const math::float2 & imageSizePixels)
+    {
+        return make_ray(camera, aspectRatio, posPixels.x / imageSizePixels.x, (imageSizePixels.y - posPixels.y) / imageSizePixels.y, imageSizePixels.x / imageSizePixels.y);
+    }
     
     struct GlFramebuffer
     {
