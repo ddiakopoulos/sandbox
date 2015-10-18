@@ -18,9 +18,6 @@ namespace util
 
     public:
 
-        ConcurrentQueue() {};
-        ~ConcurrentQueue() {};
-
         void push(T const & value)
         {
             std::lock_guard<std::mutex> lock(mutex);

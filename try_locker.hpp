@@ -5,29 +5,32 @@
 
 namespace util
 {
-class TryLocker
-{
-    std::mutex & mutex;
-    bool locked = false;
-public:
-    TryLocker(std::mutex & m) : mutex(m)
+    class TryLocker
     {
-        if (mutex.try_lock())
+        
+        std::mutex & mutex;
+        bool locked = false;
+        
+    public:
+        
+        TryLocker(std::mutex & m) : mutex(m)
         {
-            locked = true;
+            if (mutex.try_lock())
+            {
+                locked = true;
+            }
         }
-    }
-    
-    virtual ~TryLocker()
-    {
-        if (locked) mutex.unlock();
-    }
-    
-    bool is_locked() const
-    {
-        return locked;
-    }
-};
+        
+        virtual ~TryLocker()
+        {
+            if (locked) mutex.unlock();
+        }
+        
+        bool is_locked() const
+        {
+            return locked;
+        }
+    };
 
 } // end namespace util
 

@@ -87,7 +87,7 @@ namespace util
     /*
     * A simple complimentary filter (designed to fuse accelerometer and gyro data) 
     * Reference: http://www.pieter-jan.com/node/11
-    * UNIMPLEMENTED
+    * Tofix: UNIMPLEMENTED
     */
 
     template<typename T>
