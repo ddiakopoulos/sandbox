@@ -1,8 +1,14 @@
+#pragma once
+
+#ifndef glfw_app_h
+#define glfw_app_h
+
 #include "string_utils.hpp"
 #include "linear_algebra.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include "util.hpp"
+#include "events.hpp"
 
 #include <thread>
 #include <chrono>
@@ -12,18 +18,19 @@
 
 namespace util
 {
+
 struct UpdateEvent
 {
     double elapsed_s;
     float timestep_ms;
-    float framesPerSecond; 
+    float framesPerSecond;
 };
 
 struct InputEvent
 {
     enum Type { CURSOR, MOUSE, KEY, CHAR, SCROLL };
     GLFWwindow * window;
-    Type type; 
+    Type type;
     math::float2 cursor;
     int action;
     int mods;
@@ -32,7 +39,7 @@ struct InputEvent
     bool is_mouse_down() const { return action != GLFW_RELEASE; }
     bool is_mouse_up() const { return action == GLFW_RELEASE; }
 };
-
+    
 class GLFWApp
 {
 public:
@@ -89,5 +96,6 @@ extern int Main(int argc, char * argv[]);
     
 } // end namespace util
 
+#endif
 
 #define IMPLEMENT_MAIN(...) namespace util { int main(int argc, char * argv[]); } int main(int argc, char * argv[]) { return util::Main(argc, argv); } int util::Main(__VA_ARGS__)

@@ -60,6 +60,7 @@
 		0822AF311BCFFA6A00A894F0 /* sketch.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sketch.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF321BD389EA00A894F0 /* universal_widget.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = universal_widget.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF331BD4212100A894F0 /* arcball.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arcball.hpp; sourceTree = SOURCE_ROOT; };
+		0822AF351BD4382C00A894F0 /* ellipse_math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ellipse_math.hpp; sourceTree = SOURCE_ROOT; };
 		08289F7E1BC5F7F30054AF3B /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tinyply.cpp; sourceTree = SOURCE_ROOT; };
 		08289F7F1BC5F7F30054AF3B /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tinyply.h; sourceTree = SOURCE_ROOT; };
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
@@ -137,6 +138,7 @@
 				081204971BADDEF700C7C0F4 /* geometric.hpp */,
 				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
 				081204991BADDEF700C7C0F4 /* math_util.hpp */,
+				0822AF351BD4382C00A894F0 /* ellipse_math.hpp */,
 				0812049F1BADF68B00C7C0F4 /* circular_buffer.hpp */,
 				081204A11BAE04B300C7C0F4 /* concurrent_queue.hpp */,
 				081204A21BAE061B00C7C0F4 /* try_locker.hpp */,

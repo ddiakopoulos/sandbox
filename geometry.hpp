@@ -237,6 +237,138 @@ namespace util
     };
     
     
+    static const double SPHERE_EPSILON = 4.37114e-05;
+    
+    struct Sphere
+    {
+        math::float3 center;
+        float radius;
+        
+        Sphere() {}
+        Sphere(const math::float3 &  center, float radius) : center(center), radius(radius)
+        {
+            
+        }
+        
+        bool intersects(const gfx::Ray & ray, float * intersection = nullptr) const
+        {
+            float t;
+            math::float3 diff = ray.get_origin() - center;
+            float a = math::dot(ray.get_direction(), ray.get_direction());
+            float b = 2.0f * math::dot(diff, ray.get_direction());
+            float c = math::dot(diff, diff) - radius * radius;
+            float disc = b * b - 4.0f * a * c;
+            
+            if (disc < 0.0f)
+            {
+                return false;
+            }
+            else
+            {
+                float e = std::sqrt(disc);
+                float denom = 2.0f * a;
+                t = (-b - e) / denom;
+                
+                if (t > SPHERE_EPSILON)
+                {
+                    if (intersection) *intersection = t;
+                    return true;
+                }
+                
+                t = (-b + e) / denom;
+                if (t > SPHERE_EPSILON)
+                {
+                    if (intersection) *intersection = t;
+                    return true;
+                }
+            }
+            
+            if (intersection) *intersection = 0;
+            return false;
+        }
+        
+        // Returns the closest point on \a ray to the Sphere. If \a ray intersects then returns the point of nearest intersection.
+        math::float3 closest_point(const gfx::Ray & ray) const
+        {
+            float t;
+            math::float3 diff = ray.get_origin() - center;
+            float a = math::dot(ray.get_direction(), ray.get_direction());
+            float b = 2.0f * math::dot(diff, ray.get_direction());
+            float c = math::dot(diff, diff) - radius * radius;
+            float disc = b * b - 4.0f * a * c;
+            
+            if (disc > 0)
+            {
+                float e = std::sqrt(disc);
+                float denom = 2 * a;
+                t = (-b - e) / denom;    // smaller root
+                
+                if (t > SPHERE_EPSILON) return ray.calculate_position(t);
+                
+                t = (-b + e) / denom;    // larger root
+                if (t > SPHERE_EPSILON) return ray.calculate_position(t);
+            }
+            
+            // doesn't intersect; closest point on line
+            t = math::dot( -diff, math::normalize(ray.get_direction()) );
+            math::float3 onRay = ray.calculate_position(t);
+            return center + math::normalize( onRay - center ) * radius;
+        }
+        
+        // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms in \a transform.
+        Sphere transformed(const math::float4x4 & transform)
+        {
+            math::float4 tCenter = transform * math::float4(center, 1);
+            math::float4 tRadius = transform * math::float4(radius, 0, 0, 0);
+            return Sphere(math::float3(tCenter.x, tCenter.y, tCenter.z), length(tRadius));
+        }
+        
+        void calculate_projection(float focalLength, math::float2 *outCenter, math::float2 *outAxisA, math::float2 *outAxisB) const
+        {
+            math::float3 o(-center.x, center.y, center.z);
+            
+            float r2 = radius * radius;
+            float z2 = o.z * o.z;
+            float l2 = math::dot(o, o);
+            
+            if (outCenter) *outCenter = focalLength * o.z * math::float2(o.x, o.y) / (z2-r2);
+            
+            if (fabs(z2 - l2) > 0.00001f)
+            {
+                if (outAxisA) *outAxisA = focalLength * sqrtf(-r2*(r2-l2)/((l2-z2)*(r2-z2)*(r2-z2))) * math::float2(o.x, o.y);
+                if (outAxisB) *outAxisB = focalLength * sqrtf(fabs(-r2*(r2-l2)/((l2-z2)*(r2-z2)*(r2-l2)))) * math::float2(-o.y, o.x);
+            }
+            
+            // approximate with circle
+            else
+            {
+                float radius = focalLength * radius / sqrtf(z2 - r2);
+                if (outAxisA) *outAxisA = math::float2(radius, 0);
+                if (outAxisB) *outAxisB = math::float2(0, radius);
+            }
+        }
+        
+        // Calculates the projection of the Sphere (an oriented ellipse) given \a focalLength. Algorithm due to Iñigo Quilez.
+        void calculate_projection(float focalLength, math::float2 screenSizePixels, math::float2 * outCenter, math::float2 * outAxisA, math::float2 * outAxisB) const
+        {
+            auto toScreenPixels = [=] (math::float2 v, const math::float2 &winSizePx) {
+                math::float2 result = v;
+                result.x *= 1 / (winSizePx.x / winSizePx.y);
+                result += math::float2(0.5f);
+                result *= winSizePx;
+                return result;
+            };
+            
+            math::float2 center, axisA, axisB;
+            
+            calculate_projection(focalLength, &center, &axisA, &axisB);
+            if (outCenter) *outCenter = toScreenPixels(center, screenSizePixels);
+            if (outAxisA) *outAxisA = toScreenPixels(center + axisA * 0.5f, screenSizePixels) - toScreenPixels(center - axisA * 0.5f, screenSizePixels);
+            if (outAxisB) *outAxisB = toScreenPixels(center + axisB * 0.5f, screenSizePixels) - toScreenPixels(center - axisB * 0.5f, screenSizePixels);
+        }
+        
+    };
+    
 } // end namespace util
 
 #endif // geometry_h
