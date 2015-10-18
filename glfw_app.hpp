@@ -8,7 +8,6 @@
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include "util.hpp"
-#include "events.hpp"
 
 #include <thread>
 #include <chrono>

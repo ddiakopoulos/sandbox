@@ -27,7 +27,6 @@
 #include "universal_widget.hpp"
 #include "arcball.hpp"
 #include "sketch.hpp"
-
 #include "glfw_app.hpp"
 #include "tinyply.h"
 
@@ -48,6 +47,13 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GlShader> simpleShader;
     
     UWidget rootWidget;
+    
+    GlCamera camera;
+    Sphere cameraSphere;
+    Arcball myArcball;
+    
+    float2 lastCursor;
+    bool isDragging = false;
     
     ExperimentalApp() : GLFWApp(300, 300, "Experimental App")
     {
@@ -96,6 +102,7 @@ struct ExperimentalApp : public GLFWApp
         }
         
         sofaModel.mesh = make_mesh_from_geometry(sofaGeometry);
+        sofaModel.bounds = sofaGeometry.compute_bounds();
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
@@ -113,11 +120,37 @@ struct ExperimentalApp : public GLFWApp
         rootWidget.layout();
     
         myTexture.reset(new GLTextureView(emptyTex.get_gl_handle()));
+        
+        cameraSphere = Sphere(sofaModel.bounds.center(), 1);
+        myArcball = Arcball(&camera, cameraSphere);
+        //myArcball.set_constraint_axis(float3(0, 1, 0));
+        
     }
     
     void on_input(const InputEvent & event) override
     {
+        if (event.type == InputEvent::CURSOR && isDragging)
+        {
+            if (event.cursor != lastCursor)
+                myArcball.mouse_drag(event.cursor, event.windowSize);
+        }
         
+        if (event.type == InputEvent::MOUSE)
+        {
+            if (event.is_mouse_down())
+            {
+                isDragging = true;
+                myArcball.mouse_down(event.cursor, event.windowSize);
+            }
+            
+            if (event.is_mouse_up())
+            {
+                isDragging = false;
+                myArcball.mouse_down(event.cursor, event.windowSize);
+            }
+        }
+        
+        lastCursor = event.cursor;
     }
     
     void on_update(const UpdateEvent & e) override
@@ -161,7 +194,10 @@ struct ExperimentalApp : public GLFWApp
         
         {
             sofaModel.pose.position = float3(0, -1, -4);
+            sofaModel.pose.orientation = qmul(myArcball.get_quat(), sofaModel.pose.orientation);
+            
             auto model = mul(sofaModel.pose.matrix(), make_scaling_matrix(0.001));
+            
             simpleShader->uniform("u_modelMatrix", model);
             simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
             sofaModel.draw();
@@ -174,8 +210,6 @@ struct ExperimentalApp : public GLFWApp
         for (auto widget : rootWidget.children)
         {
             myTexture->draw(widget->bounds, math::int2{width, height});
-            
-            
         }
 
         gfx::gl_check_error(__FILE__, __LINE__);

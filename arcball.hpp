@@ -56,7 +56,8 @@ class Arcball
     GlCamera * camera;
     
     float2 initialMousePos;
-    float4 currentQuat, initialQuat;
+    float4 currentQuat = float4(0,0,0,1);
+    float4 initialQuat = float4(0,0,0,1);
     Sphere arcballSphere;
     
 public:
@@ -72,22 +73,12 @@ public:
     {
     }
     
-    void mouse_down(const InputEvent & event)
-    {
-        mouse_down(event.cursor, event.windowSize);
-    }
-    
     void mouse_down(const float2 &mousePos, const int2 &windowSize)
     {
         initialMousePos = mousePos;
         initialQuat = currentQuat;
         float temp;
         mouse_on_sphere(initialMousePos, windowSize, &fromVector, &temp);
-    }
-    
-    void mouse_drag(const InputEvent & event)
-    {
-        mouse_drag(event.cursor, event.windowSize);
     }
     
     void mouse_drag(const float2 & mousePos, const int2 & windowSize)
@@ -108,7 +99,7 @@ public:
         
         rotation = make_rotation_quat_axis_angle(axis, angle + addition);
         
-        currentQuat = normalize(rotation * initialQuat);
+        currentQuat = normalize(qmul(rotation, initialQuat));
     }
     
     void            reset_quat()                                     { currentQuat = initialQuat = float4(0, 0, 0, 1); }
