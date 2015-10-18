@@ -53,17 +53,17 @@ namespace gfx
             program = GlShader(s_textureVert, s_textureFrag);
         }
         
-        void draw(int x, int y, int width, int height)
+        void draw(math::Bounds rect, math::int2 windowSize)
         {
             program.bind();
             
-            const math::float4x4 projection = math::make_orthographic_perspective_matrix(0.0f, 300.f, 300.f, 0.0f, -1.0f, 1.0f);
+            const math::float4x4 projection = math::make_orthographic_perspective_matrix(0.0f, windowSize.y, windowSize.x, 0.0f, -1.0f, 1.0f);
             
             math::float4x4 model = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
-            model = math::mul(math::make_scaling_matrix({ (float) width, (float) height, 0.f}), model);
-            model = math::mul(math::make_translation_matrix({(float)x, (float)y, 0.f}), model);
-            model = math::mul(math::make_translation_matrix({0.5f * width, 0.5f * height, 0.0f}), model);
-            model = math::mul(math::make_translation_matrix({-0.5f * width, -0.5f * height, 0.0f}), model);
+            model = math::mul(math::make_scaling_matrix({ (float) rect.width(), (float) rect.height(), 0.f}), model);
+            model = math::mul(math::make_translation_matrix({(float) rect.x0, (float) rect.y0, 0.f}), model);
+            model = math::mul(math::make_translation_matrix({0.5f * rect.width(), 0.5f * rect.height(), 0.0f}), model);
+            model = math::mul(math::make_translation_matrix({-0.5f * rect.width(), -0.5f * rect.height(), 0.0f}), model);
 
             program.uniform("u_model", model);
             program.uniform("u_projection", projection);

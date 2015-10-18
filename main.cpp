@@ -155,7 +155,7 @@ struct ExperimentalApp : public GLFWApp
         simpleShader->unbind();
          
         gfx::gl_check_error(__FILE__, __LINE__);
-        myTexture->draw(10, 10, 20, 100);
+        myTexture->draw(math::Bounds(10, 10, 20, 30), math::int2{width, height});
         gfx::gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
