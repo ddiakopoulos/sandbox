@@ -342,9 +342,9 @@ namespace util
             // approximate with circle
             else
             {
-                float radius = focalLength * radius / sqrtf(z2 - r2);
-                if (outAxisA) *outAxisA = math::float2(radius, 0);
-                if (outAxisB) *outAxisB = math::float2(0, radius);
+                float newRadius = focalLength * radius / sqrtf(z2 - r2);
+                if (outAxisA) *outAxisA = math::float2(newRadius, 0);
+                if (outAxisB) *outAxisB = math::float2(0, newRadius);
             }
         }
         
