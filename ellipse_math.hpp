@@ -5,8 +5,16 @@
 #include "linear_algebra.hpp"
 #include <cmath>
 
+// Original functions: GteDistPointHyperellipsoid.h
+// Geometric Tools LLC, Redmond WA 98052
+// Copyright (c) 1998-2015
+// Distributed under the Boost Software License, Version 1.0.
+// http://www.boost.org/LICENSE_1_0.txt
+// http://www.geometrictools.com/License/Boost/LICENSE_1_0.txt
+
 namespace math
 {
+    // The bisection algorithm to find the unique root of F(t).
     inline float point_on_ellipse_bisector(int numComponents, const math::float2 &extents, const math::float2 &y, math::float2& x)
     {
         math::float2 z;
@@ -80,6 +88,13 @@ namespace math
         return sqrDistance;
     }
 
+    // The hyperellipsoid is sum_{d=0}^{N-1} (x[d]/e[d])^2 = 1 with the e[d]
+    // positive and nonincreasing:  e[d+1] >= e[d] for all d.  The query
+    // point is (y[0],...,y[N-1]) with y[d] >= 0 for all d.  The function
+    // returns the squared distance from the query point to the
+    // hyperellipsoid.  It also computes the hyperellipsoid point
+    // (x[0],...,x[N-1]) that is closest to (y[0],...,y[N-1]), where
+    // x[d] >= 0 for all d.
     inline float point_on_ellipse_sqr_distance_special(const math::float2 &extents, const math::float2 &y, math::float2 &x)
     {
         float sqrDistance = 0;
@@ -176,6 +191,12 @@ namespace math
         return sqrDistance;
     }
 
+    // The hyperellipsoid is sum_{d=0}^{N-1} (x[d]/e[d])^2 = 1 with no
+    // constraints on the orderind of the e[d].  The query point is
+    // (y[0],...,y[N-1]) with no constraints on the signs of the components.
+    // The function returns the squared distance from the query point to the
+    // hyperellipsoid.   It also computes the hyperellipsoid point
+    // (x[0],...,x[N-1]) that is closest to (y[0],...,y[N-1]).
     inline float point_on_ellipse_sqr_distance(const math::float2 &extents, const math::float2 &y, math::float2 &x)
     {
         // Determine negations for y to the first octant.
@@ -220,6 +241,12 @@ namespace math
         return sqrDistance;
     }
 
+    // Compute the distance from a point to a hyperellipsoid.  In 2D, this is a
+    // point-ellipse distance query.  In 3D, this is a point-ellipsoid distance
+    // query.  The following document describes the algorithm.
+    //   http://www.geometrictools.com/Documentation/DistancePointEllipseEllipsoid.pdf
+    // The hyperellipsoid can have arbitrary center and orientation; that is, it
+    // does not have to be axis-aligned with center at the origin.
     inline math::float2 get_closest_point_on_ellipse(const math::float2 & center, const math::float2 & axisA, const math::float2 & axisB, const math::float2 & testPoint)
     {
         // Compute the coordinates of Y in the hyperellipsoid coordinate system.
