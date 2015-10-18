@@ -129,7 +129,7 @@ struct ExperimentalApp : public GLFWApp
         simpleShader->bind();
         
         const auto proj = make_perspective_matrix_rh_gl(0.66f, (float) width / (float) height, 1.0f, 64.0f);
-        const float4x4 view = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+        const float4x4 view = Identity4x4;
         const float4x4 viewProj = mul(proj, view);
         
         simpleShader->uniform("u_viewProj", viewProj);
