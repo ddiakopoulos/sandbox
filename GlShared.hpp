@@ -289,9 +289,39 @@ namespace gfx
         return make_ray(camera, aspectRatio, posPixels.x / imageSizePixels.x, (imageSizePixels.y - posPixels.y) / imageSizePixels.y, imageSizePixels.x / imageSizePixels.y);
     }
     
-    struct GlFramebuffer
+    struct GlTexture;
+    class GlFramebuffer : public util::Noncopyable
     {
+        GLuint handle;
+        math::float2 size;
+    public:
+        GlFramebuffer() : handle() {}
+        GlFramebuffer(GlFramebuffer && r) : GlFramebuffer() { *this = std::move(r); }
+        ~GlFramebuffer() { if(handle) glDeleteFramebuffers(1, &handle); }
+        GlFramebuffer & operator = (GlFramebuffer && r) { std::swap(handle, r.handle); std::swap(size, r.size); return *this; }
         
+        GLuint get_handle() const { return handle; }
+        
+        bool check_complete() const
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, handle);
+            auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            return status == GL_FRAMEBUFFER_COMPLETE;
+        }
+        
+        void attach(GLenum attachment, const GlTexture & tex);
+        
+        void bind_to_draw()
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, handle);
+            glViewport(0, 0, size.x, size.y);
+        }
+        
+        void unbind()
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
     };
 
     inline void gl_check_error(const char * file, int32_t line)
