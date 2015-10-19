@@ -10,68 +10,68 @@ typedef std::chrono::high_resolution_clock::duration timeduration;
 namespace util
 {
 
-class TimeKeeper 
-{
-public:
+    class TimeKeeper 
+    {
+    public:
 
-	explicit TimeKeeper(bool run = false) : isRunning(run) 
-	{
-		if (isRunning) start();
-	}
+        explicit TimeKeeper(bool run = false) : isRunning(run) 
+        {
+            if (isRunning) start();
+        }
 
-	inline void start()
-	{
-		reset();
-		isRunning = true;
-	}
+        inline void start()
+        {
+            reset();
+            isRunning = true;
+        }
 
-	inline void stop() 
-	{
-		reset();
-		isRunning = false;
-	}
+        inline void stop() 
+        {
+            reset();
+            isRunning = false;
+        }
 
-	inline void reset() 
-	{
-		startTime = std::chrono::high_resolution_clock::now();
-		pauseTime = startTime;
-	}
+        inline void reset() 
+        {
+            startTime = std::chrono::high_resolution_clock::now();
+            pauseTime = startTime;
+        }
 
-	inline void pause() 
-	{
-		pauseTime = current_time_point();
-		isRunning = false;
-	}
+        inline void pause() 
+        {
+            pauseTime = current_time_point();
+            isRunning = false;
+        }
 
-	inline void unpause() 
-	{
-		if (isRunning) return;
-		startTime += current_time_point() - pauseTime;
-		isRunning = true;
-	}
+        inline void unpause() 
+        {
+            if (isRunning) return;
+            startTime += current_time_point() - pauseTime;
+            isRunning = true;
+        }
 
-	template<typename unit>
-	inline unit running_time() const 
-	{
-		return std::chrono::duration_cast<unit>(running_time());
-	}
+        template<typename unit>
+        inline unit running_time() const 
+        {
+            return std::chrono::duration_cast<unit>(running_time());
+        }
 
-	inline std::chrono::nanoseconds nanoseconds() const { return running_time<std::chrono::nanoseconds>(); }
-	inline std::chrono::microseconds microseconds() const { return running_time<std::chrono::microseconds>(); }
-	inline std::chrono::milliseconds milliseconds() const { return running_time<std::chrono::milliseconds>(); }
-	inline std::chrono::seconds seconds() const { return running_time<std::chrono::seconds>(); }
+        inline std::chrono::nanoseconds nanoseconds() const { return running_time<std::chrono::nanoseconds>(); }
+        inline std::chrono::microseconds microseconds() const { return running_time<std::chrono::microseconds>(); }
+        inline std::chrono::milliseconds milliseconds() const { return running_time<std::chrono::milliseconds>(); }
+        inline std::chrono::seconds seconds() const { return running_time<std::chrono::seconds>(); }
 
-	inline bool is_running() { return isRunning; }
+        inline bool is_running() { return isRunning; }
 
-private:
+    private:
 
-	bool isRunning;
-	timepoint startTime;
-	timepoint pauseTime;
+        bool isRunning;
+        timepoint startTime;
+        timepoint pauseTime;
 
-	inline timepoint current_time_point() const  { return std::chrono::high_resolution_clock::now(); }
-	inline timeduration running_time() const { return (isRunning) ? current_time_point() - startTime : pauseTime - startTime; }
-};
+        inline timepoint current_time_point() const  { return std::chrono::high_resolution_clock::now(); }
+        inline timeduration running_time() const { return (isRunning) ? current_time_point() - startTime : pauseTime - startTime; }
+    };
 
 } // end namespace util
 

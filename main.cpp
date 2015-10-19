@@ -114,7 +114,7 @@ struct ExperimentalApp : public GLFWApp
         emptyTex = load_image("assets/anvil.png");
         
         rootWidget.bounds = {0, 0, (float) width, (float) height};
-        rootWidget.add_child( {{0,0},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UWidget>());
+        rootWidget.add_child( {{0,+5},{0,+5},{0.5,0},{0.5,0}}, std::make_shared<UWidget>());
         //rootWidget.add_child( {{0, 0}, {0.5, +10}, {0.5, 0}, {1.0, -10}}, std::make_shared<UWidget>());
         
         rootWidget.layout();
