@@ -196,6 +196,8 @@ struct ExperimentalApp : public GLFWApp
             sofaModel.pose.position = float3(0, -1, -4);
             sofaModel.pose.orientation = qmul(myArcball.get_quat(), sofaModel.pose.orientation);
             
+            //std::cout <<  sofaModel.pose.orientation << std::endl;
+            
             auto model = mul(sofaModel.pose.matrix(), make_scaling_matrix(0.001));
             
             simpleShader->uniform("u_modelMatrix", model);

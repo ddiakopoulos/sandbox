@@ -1,8 +1,11 @@
+#pragma once
+
 #ifndef gl_common_h
 #define gl_common_h
 
 #include <vector>
 #include <type_traits>
+#include "glfw_app.hpp"
 
 #if defined(ANVIL_PLATFORM_WINDOWS)
     #define GLEW_STATIC
@@ -17,18 +20,17 @@ namespace gfx
     template<typename T>
     inline GLenum to_gl(T *)
     {
-        if (std::is_same<T, int8_t *>::value) return GL_UNSIGNED_BYTE;
-        else if (std::is_same<T, uint16_t *>::value) return GL_UNSIGNED_SHORT;
-        else if (std::is_same<T, uint32_t *>::value) return GL_UNSIGNED_INT;
-        else if (std::is_same<T, float *>::value) return GL_FLOAT;
+        if      (std::is_same<T, int8_t *>::value)      return GL_UNSIGNED_BYTE;
+        else if (std::is_same<T, uint16_t *>::value)    return GL_UNSIGNED_SHORT;
+        else if (std::is_same<T, uint32_t *>::value)    return GL_UNSIGNED_INT;
+        else if (std::is_same<T, float *>::value)       return GL_FLOAT;
     };
-    
     
     class Ray
     {
         math::float3 origin;
         math::float3 direction;
-        char signX, signY, signZ;
+        bool signX, signY, signZ;
         math::float3 invDirection;
     public:
         
@@ -182,6 +184,93 @@ namespace gfx
             return (1.f / (tan(math::to_radians(fov) * 0.5f) * 2.0f));
         }
 
+    };
+    
+    class FPSCameraController
+    {
+        GlCamera * cam;
+        
+        float camPitch = 0, camYaw = 0;
+        math:: float4 orientation, lastOrientation;
+        
+        bool bf = 0, bl = 0, bb = 0, br = 0, ml = 0, mr = 0;
+        math::float2 lastCursor;
+        
+    public:
+        
+        float movementSpeed = 10.0f;
+        
+        FPSCameraController(GlCamera * cam) : cam(cam)
+        {
+            update_yaw_pitch();
+        }
+        
+        void update_yaw_pitch()
+        {
+            const math::float3 worldNorth = {0,0,-1};
+            math::float3 lookVec = cam->get_view_direction();
+            math::float3 flatLookVec = normalize(math::float3(lookVec.x, 0, lookVec.z));
+            camYaw = std::acos(math::clamp(dot(worldNorth, flatLookVec), -1.0f, +1.0f)) * (flatLookVec.x > 0 ? -1 : 1);
+            camPitch = std::acos(math::clamp(dot(lookVec, flatLookVec), -1.0f, +1.0f)) * (lookVec.y > 0 ? 1 : -1);
+        }
+        
+        void handle_input(const util::InputEvent & e)
+        {
+            switch (e.type)
+            {
+                case util::InputEvent::KEY:
+                    switch (e.value[0])
+                    {
+                        case GLFW_KEY_W: bf = e.is_mouse_down(); break;
+                        case GLFW_KEY_A: bl = e.is_mouse_down(); break;
+                        case GLFW_KEY_S: bb = e.is_mouse_down(); break;
+                        case GLFW_KEY_D: br = e.is_mouse_down(); break;
+                    }
+                    break;
+                case util::InputEvent::MOUSE:
+                    switch (e.value[0])
+                    {
+                        case GLFW_MOUSE_BUTTON_LEFT: ml = e.is_mouse_down(); break;
+                        case GLFW_MOUSE_BUTTON_RIGHT: mr = e.is_mouse_down(); break;
+                    }
+                    break;
+                case util::InputEvent::CURSOR:
+                    if (mr)
+                    {
+                        camYaw -= (e.cursor.x - lastCursor.x) * 0.01f;
+                        camPitch = math::clamp(camPitch - (e.cursor.y - lastCursor.y) * 0.01f, -1.57f, +1.57f);
+                    }
+                    break;
+            }
+            lastCursor = e.cursor;
+        }
+        
+        void update(float delta)
+        {
+            math::float3 move;
+            
+            if (bf || (ml && mr)) move.z -= 1;
+            
+            if (bl)
+                move.x -= 1;
+            if (bb)
+                move.z += 1;
+            if (br)
+                move.x += 1;
+            
+            float len = length(move);
+            if(len > 0)
+            {
+                float actualMoveSpeed = delta * movementSpeed;
+                cam->set_position(cam->get_pose().transform_coord(move * (actualMoveSpeed / len)));
+            }
+            
+            math::float3 lookAt;
+            lookAt.x = cam->get_eye_point().x - 1.f * cosf(camPitch) * sinf(camYaw);
+            lookAt.y = cam->get_eye_point().y + 1.f * sinf(camPitch);
+            lookAt.z = cam->get_eye_point().z + -1.f * cosf(camPitch) * cosf(camYaw);
+            cam->look_at(lookAt);
+        }
     };
     
     inline Ray make_ray(const GlCamera & camera, const float aspectRatio, float uPos, float vPos, float imagePlaneApectRatio)
