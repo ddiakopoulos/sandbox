@@ -200,8 +200,19 @@ namespace gfx
         
         float movementSpeed = 10.0f;
         
+        FPSCameraController()
+        {
+            
+        }
+        
         FPSCameraController(GlCamera * cam) : cam(cam)
         {
+            update_yaw_pitch();
+        }
+        
+        void set_camera(GlCamera * cam)
+        {
+            this->cam = cam;
             update_yaw_pitch();
         }
         
@@ -259,17 +270,17 @@ namespace gfx
                 move.x += 1;
             
             float len = length(move);
-            if(len > 0)
+            if (len > 0)
             {
                 float actualMoveSpeed = delta * movementSpeed;
                 cam->set_position(cam->get_pose().transform_coord(move * (actualMoveSpeed / len)));
             }
             
-            math::float3 lookAt;
-            lookAt.x = cam->get_eye_point().x - 1.f * cosf(camPitch) * sinf(camYaw);
-            lookAt.y = cam->get_eye_point().y + 1.f * sinf(camPitch);
-            lookAt.z = cam->get_eye_point().z + -1.f * cosf(camPitch) * cosf(camYaw);
-            cam->look_at(lookAt);
+            math::float3 lookVec;
+            lookVec.x = cam->get_eye_point().x - 1.f * cosf(camPitch) * sinf(camYaw);
+            lookVec.y = cam->get_eye_point().y + 1.f * sinf(camPitch);
+            lookVec.z = cam->get_eye_point().z + -1.f * cosf(camPitch) * cosf(camYaw);
+            cam->look_at(lookVec);
         }
     };
     

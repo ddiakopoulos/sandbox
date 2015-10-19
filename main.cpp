@@ -29,6 +29,7 @@
 #include "sketch.hpp"
 #include "glfw_app.hpp"
 #include "tinyply.h"
+#include "renderable_grid.hpp"
 
 using namespace math;
 using namespace util;
@@ -50,10 +51,14 @@ struct ExperimentalApp : public GLFWApp
     
     GlCamera camera;
     Sphere cameraSphere;
-    Arcball myArcball;
+    //Arcball myArcball;
     
     float2 lastCursor;
     bool isDragging = false;
+    
+    RenderableGrid grid;
+    
+    FPSCameraController cameraController;
     
     ExperimentalApp() : GLFWApp(300, 300, "Experimental App")
     {
@@ -121,8 +126,11 @@ struct ExperimentalApp : public GLFWApp
     
         myTexture.reset(new GLTextureView(emptyTex.get_gl_handle()));
         
-        cameraSphere = Sphere(sofaModel.bounds.center(), 1);
-        myArcball = Arcball(&camera, cameraSphere);
+        cameraController.set_camera(&camera);
+        camera.fov = 75;
+        
+        //cameraSphere = Sphere(sofaModel.bounds.center(), 1);
+        //myArcball = Arcball(&camera, cameraSphere);
         //myArcball.set_constraint_axis(float3(0, 1, 0));
         
     }
@@ -131,8 +139,8 @@ struct ExperimentalApp : public GLFWApp
     {
         if (event.type == InputEvent::CURSOR && isDragging)
         {
-            if (event.cursor != lastCursor)
-                myArcball.mouse_drag(event.cursor, event.windowSize);
+            //if (event.cursor != lastCursor)
+               // myArcball.mouse_drag(event.cursor, event.windowSize);
         }
         
         if (event.type == InputEvent::MOUSE)
@@ -140,22 +148,23 @@ struct ExperimentalApp : public GLFWApp
             if (event.is_mouse_down())
             {
                 isDragging = true;
-                myArcball.mouse_down(event.cursor, event.windowSize);
+                //myArcball.mouse_down(event.cursor, event.windowSize);
             }
             
             if (event.is_mouse_up())
             {
                 isDragging = false;
-                myArcball.mouse_down(event.cursor, event.windowSize);
+                //myArcball.mouse_down(event.cursor, event.windowSize);
             }
         }
         
+        cameraController.handle_input(event);
         lastCursor = event.cursor;
     }
     
     void on_update(const UpdateEvent & e) override
     {
-        
+        cameraController.update(e.elapsed_s / 1000);
     }
     
     void on_draw() override
@@ -174,39 +183,43 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
      
-        simpleShader->bind();
-        
-        const auto proj = make_perspective_matrix_rh_gl(0.66f, (float) width / (float) height, 1.0f, 64.0f);
-        const float4x4 view = Identity4x4;
+        const auto proj = camera.get_projection_matrix((float) width / (float) height);
+        const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         
-        simpleShader->uniform("u_viewProj", viewProj);
-        simpleShader->uniform("u_eye", float3(0, 10, -10));
-        
-        simpleShader->uniform("u_emissive", float3(.33f, 0.36f, 0.275f));
-        simpleShader->uniform("u_diffuse", float3(0.2f, 0.4f, 0.25f));
-        
-        simpleShader->uniform("u_lights[0].position", float3(5, 10, -5));
-        simpleShader->uniform("u_lights[0].color", float3(0.7f, 0.2f, 0.2f));
-        
-        simpleShader->uniform("u_lights[1].position", float3(-5, 10, 5));
-        simpleShader->uniform("u_lights[1].color", float3(0.4f, 0.8f, 0.4f));
-        
         {
-            sofaModel.pose.position = float3(0, -1, -4);
-            sofaModel.pose.orientation = qmul(myArcball.get_quat(), sofaModel.pose.orientation);
+            simpleShader->bind();
             
-            //std::cout <<  sofaModel.pose.orientation << std::endl;
+            simpleShader->uniform("u_viewProj", viewProj);
+            simpleShader->uniform("u_eye", float3(0, 10, -10));
             
-            auto model = mul(sofaModel.pose.matrix(), make_scaling_matrix(0.001));
+            simpleShader->uniform("u_emissive", float3(.33f, 0.36f, 0.275f));
+            simpleShader->uniform("u_diffuse", float3(0.2f, 0.4f, 0.25f));
             
-            simpleShader->uniform("u_modelMatrix", model);
-            simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-            sofaModel.draw();
+            simpleShader->uniform("u_lights[0].position", float3(5, 10, -5));
+            simpleShader->uniform("u_lights[0].color", float3(0.7f, 0.2f, 0.2f));
+            
+            simpleShader->uniform("u_lights[1].position", float3(-5, 10, 5));
+            simpleShader->uniform("u_lights[1].color", float3(0.4f, 0.8f, 0.4f));
+            
+            {
+                sofaModel.pose.position = float3(0, -1, -4);
+                //sofaModel.pose.orientation = qmul(myArcball.get_quat(), sofaModel.pose.orientation);
+                
+                //std::cout <<  sofaModel.pose.orientation << std::endl;
+                
+                auto model = mul(sofaModel.pose.matrix(), make_scaling_matrix(0.001));
+                
+                simpleShader->uniform("u_modelMatrix", model);
+                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
+                sofaModel.draw();
+            }
+            
+            simpleShader->unbind();
         }
         
-        simpleShader->unbind();
-         
+        grid.render(proj, view);
+        
         gfx::gl_check_error(__FILE__, __LINE__);
         
         for (auto widget : rootWidget.children)

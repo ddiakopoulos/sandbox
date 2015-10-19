@@ -63,6 +63,7 @@
 		0822AF331BD4212100A894F0 /* arcball.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arcball.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF351BD4382C00A894F0 /* ellipse_math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ellipse_math.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF361BD4ADBF00A894F0 /* GlShared.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlShared.cpp; sourceTree = SOURCE_ROOT; };
+		0822AF381BD4B52100A894F0 /* renderable_grid.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = renderable_grid.hpp; sourceTree = SOURCE_ROOT; };
 		08289F7E1BC5F7F30054AF3B /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tinyply.cpp; sourceTree = SOURCE_ROOT; };
 		08289F7F1BC5F7F30054AF3B /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tinyply.h; sourceTree = SOURCE_ROOT; };
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
@@ -187,6 +188,7 @@
 				08289F861BC609750054AF3B /* GlMesh.cpp */,
 				0822AF2F1BCC16D200A894F0 /* GlTexture.hpp */,
 				0822AF2E1BCC16D200A894F0 /* GlTexture.cpp */,
+				0822AF381BD4B52100A894F0 /* renderable_grid.hpp */,
 			);
 			name = OpenGL;
 			sourceTree = "<group>";
