@@ -231,14 +231,7 @@ struct ExperimentalApp : public GLFWApp
         
         glfwSwapBuffers(window);
         
-        gfx::gl_check_error(__FILE__, __LINE__);
-        
         frameCount++;
-    }
-    
-    ~ExperimentalApp()
-    {
-        
     }
     
 };

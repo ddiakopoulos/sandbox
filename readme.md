@@ -5,8 +5,11 @@
 3. Reaction-diffusion simulator
 4. Game-engine-style gizmo editing interface
 5. Canonical opengl SSAO (+ model baker)
-6. OpenCL fluid simulator
+6. Fluid simulator with a compute shader
 7. Optitrak nat-net i/o
 8. Deferred rendering experiments
 9. Impulse response raytracer
 10. CEGUI universal coordinate layout +  cassowary constraint solver
+11. Procedural scene: skybox, clouds, trees.
+12. L-System + Particles
+12. Dual Contouring
