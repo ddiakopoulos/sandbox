@@ -62,4 +62,69 @@ inline std::vector<std::vector<uint16_t>> subdivide_grid(const std::vector<uint1
     return blocks;
 }
 
+#define KERNEL_SIZE 5
+#define KERNEL_OFFSET ((KERNEL_SIZE - 1) / 2)
+
+enum filter_type : int
+{
+    ERODE,
+    DILATE
+};
+
+void erode_dilate_kernel(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight, filter_type t)
+{
+    int dx, dy, wx, wy;
+    int pIndex;
+    uint16_t compare;
+    uint8_t foundMatch;
+    
+    if (t == filter_type::ERODE)
+        compare = std::numeric_limits<uint16_t>::min(); // Erode: Neighbor pixels in background
+    else
+        compare = std::numeric_limits<uint16_t>::max(); // Dilate: Look for neighbor pixels in foreground
+    
+    for (int y = 0; y < imageHeight; ++y)
+    {
+        for (int x = 0; x < imageWidth; ++x)
+        {
+            foundMatch = 0;
+            for (dy = -KERNEL_OFFSET; dy <= KERNEL_OFFSET; ++dy)
+            {
+                wy = y + dy;
+                if (wy >= 0 && wy < imageHeight)
+                {
+                    for (dx = -KERNEL_OFFSET; dx <= KERNEL_OFFSET; ++dx)
+                    {
+                        wx = x + dx;
+                        if (wx >= 0 && wx < imageWidth)
+                        {
+                            pIndex = (wy * imageWidth + wx);
+                            uint16_t inValue = inputImage[pIndex];
+                            if (inValue == compare)
+                            {
+                                foundMatch = 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (foundMatch)
+                    break;
+            }
+            
+            pIndex = (y * imageWidth + x);
+            
+            // Default: set background color
+            outputImage[pIndex] = compare;
+            
+            // Output pixel max
+            if ( (t == filter_type::ERODE && !foundMatch) || (t == filter_type::DILATE && foundMatch))
+            {
+                outputImage[pIndex] = compare;
+            }
+            
+        }
+    }
+}
+
 #endif // sketch_h
