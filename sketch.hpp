@@ -62,7 +62,7 @@ inline std::vector<std::vector<uint16_t>> subdivide_grid(const std::vector<uint1
     return blocks;
 }
 
-#define KERNEL_SIZE 5
+#define KERNEL_SIZE 3
 #define KERNEL_OFFSET ((KERNEL_SIZE - 1) / 2)
 
 enum filter_type : int

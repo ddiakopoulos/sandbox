@@ -128,7 +128,7 @@ namespace gfx
         
         float fov = 45.0f;
         float nearClip = 0.1f;
-        float farClip = 128.0f;
+        float farClip = 70.0f;
         
         math::Pose get_pose() const { return pose; }
         

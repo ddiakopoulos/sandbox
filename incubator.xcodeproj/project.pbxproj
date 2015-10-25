@@ -11,6 +11,7 @@
 		081204AC1BAE3AA500C7C0F4 /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 081204AA1BAE3AA500C7C0F4 /* json.cpp */; };
 		0822AF301BCC16D200A894F0 /* GlTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF2E1BCC16D200A894F0 /* GlTexture.cpp */; };
 		0822AF371BD4ADBF00A894F0 /* GlShared.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF361BD4ADBF00A894F0 /* GlShared.cpp */; };
+		0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF3C1BDC773C00A894F0 /* hosek.cpp */; };
 		08289F801BC5F7F30054AF3B /* tinyply.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08289F7E1BC5F7F30054AF3B /* tinyply.cpp */; };
 		08289F851BC601A70054AF3B /* GlShader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08289F831BC601A70054AF3B /* GlShader.cpp */; };
 		08289F881BC609750054AF3B /* GlMesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08289F861BC609750054AF3B /* GlMesh.cpp */; };
@@ -64,6 +65,11 @@
 		0822AF351BD4382C00A894F0 /* ellipse_math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ellipse_math.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF361BD4ADBF00A894F0 /* GlShared.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlShared.cpp; sourceTree = SOURCE_ROOT; };
 		0822AF381BD4B52100A894F0 /* renderable_grid.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = renderable_grid.hpp; sourceTree = SOURCE_ROOT; };
+		0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = hosek_data_rgb.inl; path = procedural_sky/hosek_data_rgb.inl; sourceTree = SOURCE_ROOT; };
+		0822AF3C1BDC773C00A894F0 /* hosek.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hosek.cpp; path = procedural_sky/hosek.cpp; sourceTree = SOURCE_ROOT; };
+		0822AF3D1BDC773C00A894F0 /* hosek.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = hosek.hpp; path = procedural_sky/hosek.hpp; sourceTree = SOURCE_ROOT; };
+		0822AF3E1BDC773C00A894F0 /* sky_hosek_frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = sky_hosek_frag.glsl; path = procedural_sky/sky_hosek_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0822AF3F1BDC773C00A894F0 /* sky_vert.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = sky_vert.glsl; path = procedural_sky/sky_vert.glsl; sourceTree = SOURCE_ROOT; };
 		08289F7E1BC5F7F30054AF3B /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tinyply.cpp; sourceTree = SOURCE_ROOT; };
 		08289F7F1BC5F7F30054AF3B /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tinyply.h; sourceTree = SOURCE_ROOT; };
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
@@ -131,6 +137,7 @@
 		0812048F1BADDEC100C7C0F4 /* source */ = {
 			isa = PBXGroup;
 			children = (
+				0822AF391BDC772D00A894F0 /* procedural_sky */,
 				08289F821BC6019B0054AF3B /* OpenGL */,
 				08289F7D1BC5F7E40054AF3B /* tinyply */,
 				085081981BB5B6F10084A1D6 /* app */,
@@ -166,6 +173,18 @@
 			);
 			name = source;
 			path = gfx_dev;
+			sourceTree = "<group>";
+		};
+		0822AF391BDC772D00A894F0 /* procedural_sky */ = {
+			isa = PBXGroup;
+			children = (
+				0822AF3D1BDC773C00A894F0 /* hosek.hpp */,
+				0822AF3C1BDC773C00A894F0 /* hosek.cpp */,
+				0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */,
+				0822AF3F1BDC773C00A894F0 /* sky_vert.glsl */,
+				0822AF3E1BDC773C00A894F0 /* sky_hosek_frag.glsl */,
+			);
+			name = procedural_sky;
 			sourceTree = "<group>";
 		};
 		08289F7D1BC5F7E40054AF3B /* tinyply */ = {
@@ -293,6 +312,7 @@
 				089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */,
 				08289F801BC5F7F30054AF3B /* tinyply.cpp in Sources */,
 				089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */,
+				0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */,
 				0822AF371BD4ADBF00A894F0 /* GlShared.cpp in Sources */,
 				089B86121BAFC9AB00B3A290 /* noise1234.cpp in Sources */,
 				081204AC1BAE3AA500C7C0F4 /* json.cpp in Sources */,

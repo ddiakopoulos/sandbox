@@ -128,7 +128,7 @@ namespace util
 
     };
     
-    inline gfx::GlMesh make_mesh_from_geometry(Geometry & geometry)
+    inline gfx::GlMesh make_mesh_from_geometry(const Geometry & geometry)
     {
         gfx::GlMesh m;
         
@@ -235,7 +235,6 @@ namespace util
             mesh.draw_elements();
         }
     };
-    
     
     static const double SPHERE_EPSILON = 4.37114e-05;
     

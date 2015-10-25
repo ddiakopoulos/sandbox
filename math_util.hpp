@@ -84,6 +84,11 @@ namespace math
     { 
         return plane_line_intersection(plane.xyz(), plane.w, p0, p1);
     }
+    
+    inline float3 spherical(float theta, float phi)
+    {
+        return float3(cos(phi) * sin(theta), sin(phi) * sin(theta), cos(theta));
+    }
 
 } // end namespace math
 
