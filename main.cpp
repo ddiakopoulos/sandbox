@@ -235,7 +235,7 @@ struct ExperimentalApp : public GLFWApp
             
             // Largest non-clipped sphere
             float4x4 world = make_translation_matrix(camera.get_eye_point()) * make_scaling_matrix(camera.farClip * .99);
-            world *= make_rotation_matrix({1, 0, 0}, to_radians(-90));
+            //world *= make_rotation_matrix({1, 0, 0}, to_radians(-90));
             
             hosek_sky->uniform("ViewProjection", viewProj);
             hosek_sky->uniform("World", world);
