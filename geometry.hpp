@@ -368,6 +368,39 @@ namespace util
         
     };
     
+    gfx::GlMesh make_sphere_mesh(float radius)
+    {
+        Geometry sphereGeom;
+        
+        int U = 16, V = 16;
+        
+        for (int ui = 0; ui < U; ++ui)
+        {
+            for (int vi = 0; vi < V; ++vi)
+            {
+                float u = float(ui) / (U - 1) * ANVIL_PI;
+                float v = float(vi) / (V - 1) * 2 * ANVIL_PI;
+                math::float3 normal = math::spherical(u, v);
+                sphereGeom.vertices.push_back({normal * radius});
+                sphereGeom.normals.push_back(normal);
+            }
+        }
+        
+        for (uint32_t ui = 0; ui < U; ++ui)
+        {
+            uint32_t un = (ui + 1) % U;
+            for (uint32_t vi = 0; vi < V; ++vi)
+            {
+                uint32_t vn = (vi + 1) % V;
+                sphereGeom.faces.push_back({ui * V + vi, un * V + vi, un * V + vn});
+                sphereGeom.faces.push_back({ui * V + vi, un * V + vn, ui * V + vn});
+            }
+        }
+        
+        return make_mesh_from_geometry(sphereGeom);
+    }
+
+    
 } // end namespace util
 
 #endif // geometry_h

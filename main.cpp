@@ -38,38 +38,6 @@ using namespace util;
 using namespace tinyply;
 using namespace gfx;
 
-GlMesh make_sphere_mesh(float radius)
-{
-    Geometry sphereGeom;
-    
-    int U = 16, V = 16;
-    
-    for (int ui = 0; ui < U; ++ui)
-    {
-        for (int vi = 0; vi < V; ++vi)
-        {
-            float u = float(ui) / (U - 1) * ANVIL_PI;
-            float v = float(vi) / (V - 1) * 2 * ANVIL_PI;
-            float3 normal = spherical(u, v);
-            sphereGeom.vertices.push_back({normal * radius});
-            sphereGeom.normals.push_back(normal);
-        }
-    }
-    
-    for (uint32_t ui = 0; ui < U; ++ui)
-    {
-        uint32_t un = (ui + 1) % U;
-        for (uint32_t vi = 0; vi < V; ++vi)
-        {
-            uint32_t vn = (vi + 1) % V;
-            sphereGeom.faces.push_back({ui * V + vi, un * V + vi, un * V + vn});
-            sphereGeom.faces.push_back({ui * V + vi, un * V + vn, ui * V + vn});
-        }
-    }
-    
-    return make_mesh_from_geometry(sphereGeom);
-}
-
 struct ExperimentalApp : public GLFWApp
 {
     
@@ -98,7 +66,7 @@ struct ExperimentalApp : public GLFWApp
     float sunPhi = 200;
     float skyTurbidity = 6;
     
-    HosekSky sky = HosekSky::compute(to_radians(sunTheta), skyTurbidity, 1.33f);
+    HosekSky sky = HosekSky::compute(to_radians(sunTheta), skyTurbidity, 0.21f);
     
     GlMesh skyMesh;
     
@@ -184,6 +152,25 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
+        if (event.type == InputEvent::KEY)
+        {
+            if (event.value[0] == GLFW_KEY_RIGHT && event.action == GLFW_RELEASE)
+            {
+                sunPhi += 5;
+            }
+            if (event.value[0] == GLFW_KEY_LEFT && event.action == GLFW_RELEASE)
+            {
+                sunPhi -= 5;
+            }
+            if (event.value[0] == GLFW_KEY_UP && event.action == GLFW_RELEASE)
+            {
+                sunTheta += 5;
+            }
+            if (event.value[0] == GLFW_KEY_DOWN && event.action == GLFW_RELEASE)
+            {
+                sunTheta -= 5;
+            }
+        }
         if (event.type == InputEvent::CURSOR && isDragging)
         {
             //if (event.cursor != lastCursor)
@@ -213,7 +200,6 @@ struct ExperimentalApp : public GLFWApp
     {
         cameraController.update(e.elapsed_s / 1000);
     }
-
     
     void on_draw() override
     {
