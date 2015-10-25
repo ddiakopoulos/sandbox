@@ -57,7 +57,7 @@ namespace math
         bool        operator > (const vec & r) const            { return std::make_tuple(x,y,z) > std::make_tuple(r.x,r.y,r.z); }
 
         vec<T, 2>   xy() const                                  { return vec<T, 2>(x, y); };
-        template<class F> vec apply(const vec & r, F f) const   { return {f(x,r.x), f(y,r.y), f(z,r.z)}; }
+        template<class F> vec apply(const vec & r, F f) const   { return {static_cast<float>(f(x,r.x)), static_cast<float>(f(y,r.y)), static_cast<float>(f(z,r.z))}; }
         template<class F> vec apply(const T & r, F f) const     { return {static_cast<float>(f(x,r)), static_cast<float>(f(y,r)), static_cast<float>(f(z,r))}; }
     };
 
@@ -96,8 +96,12 @@ namespace math
     template<class T, int M> vec<T, M>   operator - (const vec<T, M> & a, const T & b)            { return a.apply(b, [](T a, T b) { return a - b; }); }
     template<class T, int M> vec<T, M>   operator * (const vec<T, M> & a, const T & b)            { return a.apply(b, [](T a, T b) { return a * b; }); }
     template<class T, int M> vec<T, M>   operator / (const vec<T, M> & a, const T & b)            { return a.apply(b, [](T a, T b) { return a / b; }); }
-    template<class T, int M> vec<T, M>   operator * (const T & a, const vec<T, M> & b)            { return b*a; }
-
+    
+    template<class T, int M> vec<T, M>   operator - (const T & a, const vec<T, M> & b)            { return b - a; }
+    template<class T, int M> vec<T, M>   operator + (const T & a, const vec<T, M> & b)            { return b + a; }
+    template<class T, int M> vec<T, M>   operator / (const T & a, const vec<T, M> & b)            { return b / a; }
+    template<class T, int M> vec<T, M>   operator * (const T & a, const vec<T, M> & b)            { return b * a; }
+    
     template<class T, int M> vec<T, M> & operator += (vec<T, M> & a, const vec<T, M> & b)         { return a = a + b; }
     template<class T, int M> vec<T, M> & operator -= (vec<T, M> & a, const vec<T, M> & b)         { return a = a - b; }
     template<class T, int M> vec<T, M> & operator *= (vec<T, M> & a, const vec<T, M> & b)         { return a = a * b; }
@@ -135,7 +139,9 @@ namespace math
     template<class T, int M> vec<T, M>   ffloor(const vec<T, M> & a)                              { return a.apply(T(), [](T a, T) { return ::floor(a); }); }
     template<class T, int M> vec<T, M>   cceil(const vec<T, M> & a)                               { return a.apply(T(), [](T a, T) { return ::ceil(a); }); }
     template<class T, int M> vec<T, M>   vabs(const vec<T, M> & a)                                { return a.apply(T(), [](T a, T) { return ::abs(a); }); }
-
+    template<class T, int M> vec<T, M>   pow(const vec<T, M> & a, const vec<T, M> & b)            { return a.apply(b, [](T a, T b) { return ::pow(a, b); }); }
+    template<class T, int M> vec<T, M>   exp(const vec<T, M> & a)                                 { return a.apply(T(), [](T a, T) { return ::exp(a); }); }
+    
     template<class T> vec<T,4>           qconj(const vec<T,4> & q)                                { return {-q.x,-q.y,-q.z,q.w}; }
     template<class T> vec<T,4>           qinv(const vec<T,4> & q)                                 { return qconj(q)/lengthSqr(q); }
     template<class T> vec<T,4>           qmul(const vec<T,4> & a, const vec<T,4> & b)             { return {a.x*b.w+a.w*b.x+a.y*b.z-a.z*b.y, a.y*b.w+a.w*b.y+a.z*b.x-a.x*b.z, a.z*b.w+a.w*b.z+a.x*b.y-a.y*b.x, a.w*b.w-a.x*b.x-a.y*b.y-a.z*b.z}; }
