@@ -30,11 +30,44 @@
 #include "glfw_app.hpp"
 #include "tinyply.h"
 #include "renderable_grid.hpp"
+#include "hosek.hpp"
 
 using namespace math;
 using namespace util;
 using namespace tinyply;
 using namespace gfx;
+
+GlMesh make_sphere_mesh(float radius)
+{
+    Geometry sphereGeom;
+    
+    int U = 16, V = 16;
+    
+    for (int ui = 0; ui < U; ++ui)
+    {
+        for (int vi = 0; vi < V; ++vi)
+        {
+            float u = float(ui) / (U - 1) * ANVIL_PI;
+            float v = float(vi) / (V - 1) * 2 * ANVIL_PI;
+            float3 normal = spherical(u, v);
+            sphereGeom.vertices.push_back({normal * radius});
+            sphereGeom.normals.push_back(normal);
+        }
+    }
+    
+    for (uint32_t ui = 0; ui < U; ++ui)
+    {
+        uint32_t un = (ui + 1) % U;
+        for (uint32_t vi = 0; vi < V; ++vi)
+        {
+            uint32_t vn = (vi + 1) % V;
+            sphereGeom.faces.push_back({ui * V + vi, un * V + vi, un * V + vn});
+            sphereGeom.faces.push_back({ui * V + vi, un * V + vn, ui * V + vn});
+        }
+    }
+    
+    return make_mesh_from_geometry(sphereGeom);
+}
 
 struct ExperimentalApp : public GLFWApp
 {
@@ -60,7 +93,17 @@ struct ExperimentalApp : public GLFWApp
     
     FPSCameraController cameraController;
     
-    ExperimentalApp() : GLFWApp(300, 300, "Experimental App")
+    float sunTheta = 60;
+    float sunPhi = 240;
+    float skyTurbidity = 12;
+    
+    HosekSky sky = HosekSky::compute(to_radians(sunTheta), skyTurbidity, 1.33f);
+    
+    GlMesh skyMesh;
+    
+    std::unique_ptr<GlShader> hosek_sky;
+    
+    ExperimentalApp() : GLFWApp(600, 600, "Experimental App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -68,7 +111,6 @@ struct ExperimentalApp : public GLFWApp
         
         try
         {
-            
             std::ifstream ss("assets/sofa.ply", std::ios::binary);
             PlyFile file(ss);
             
@@ -127,7 +169,11 @@ struct ExperimentalApp : public GLFWApp
         myTexture.reset(new GLTextureView(emptyTex.get_gl_handle()));
         
         cameraController.set_camera(&camera);
-        camera.fov = 75;
+        camera.fov = 65;
+        
+        //skyMesh = std::move(make_sphere_mesh(0.1, 12, 12));
+        skyMesh = make_sphere_mesh(1.0f);
+        hosek_sky.reset(new gfx::GlShader(read_file_text("procedural_sky/sky_vert.glsl"), read_file_text("procedural_sky/sky_hosek_frag.glsl")));
         
         //cameraSphere = Sphere(sofaModel.bounds.center(), 1);
         //myArcball = Arcball(&camera, cameraSphere);
@@ -166,6 +212,7 @@ struct ExperimentalApp : public GLFWApp
     {
         cameraController.update(e.elapsed_s / 1000);
     }
+
     
     void on_draw() override
     {
@@ -173,8 +220,12 @@ struct ExperimentalApp : public GLFWApp
         
         glfwMakeContextCurrent(window);
         
-        glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -187,6 +238,45 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         
+        {
+            hosek_sky->bind();
+            
+            glDisable(GL_BLEND);
+            glDisable(GL_CULL_FACE);
+        
+            float3 sunDirection = spherical(to_radians(sunTheta), to_radians(sunPhi));
+            
+            // Largest non-clipped sphere
+            float4x4 world = make_translation_matrix(camera.get_eye_point()) * make_scaling_matrix(camera.farClip * .99);
+            world *= make_rotation_matrix({1, 0, 0}, to_radians(-90));
+            
+            hosek_sky->uniform("ViewProjection", viewProj);
+            hosek_sky->uniform("World", world);
+            
+            hosek_sky->uniform("A", sky.A);
+            hosek_sky->uniform("B", sky.B);
+            hosek_sky->uniform("C", sky.C);
+            hosek_sky->uniform("D", sky.D);
+            hosek_sky->uniform("E", sky.E);
+            hosek_sky->uniform("F", sky.F);
+            hosek_sky->uniform("G", sky.G);
+            hosek_sky->uniform("H", sky.H);
+            hosek_sky->uniform("I", sky.I);
+            hosek_sky->uniform("Z", sky.Z);
+            hosek_sky->uniform("SunDirection", sunDirection);
+            
+            //glDisable(GL_DEPTH_TEST);
+            //glDepthMask(GL_FALSE);
+            
+            skyMesh.draw_elements();
+            
+            //glDepthMask(GL_TRUE);
+            //glEnable(GL_BLEND);
+            //glEnable(GL_CULL_FACE);
+
+            hosek_sky->unbind();
+        }
+            
         {
             simpleShader->bind();
             
@@ -215,6 +305,13 @@ struct ExperimentalApp : public GLFWApp
                 sofaModel.draw();
             }
             
+            {
+                auto model = make_scaling_matrix(1);
+                simpleShader->uniform("u_modelMatrix", model);
+                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
+                //skyMesh.draw_elements();
+            }
+            
             simpleShader->unbind();
         }
         
@@ -224,7 +321,7 @@ struct ExperimentalApp : public GLFWApp
         
         for (auto widget : rootWidget.children)
         {
-            myTexture->draw(widget->bounds, math::int2{width, height});
+            //myTexture->draw(widget->bounds, math::int2{width, height});
         }
 
         gfx::gl_check_error(__FILE__, __LINE__);
