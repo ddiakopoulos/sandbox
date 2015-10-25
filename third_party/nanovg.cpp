@@ -19,9 +19,9 @@
 #include <stdio.h>
 #include <math.h>
 #include "nanovg.h"
+
 #define FONTSTASH_IMPLEMENTATION
 #include "fontstash.h"
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 #ifdef _MSC_VER
@@ -35,16 +35,15 @@
 #define NVG_MAX_FONTIMAGE_SIZE   2048
 #define NVG_MAX_FONTIMAGES       4
 
-#define NVG_INIT_COMMANDS_SIZE 256
-#define NVG_INIT_POINTS_SIZE 128
-#define NVG_INIT_PATHS_SIZE 16
-#define NVG_INIT_VERTS_SIZE 256
-#define NVG_MAX_STATES 32
+#define NVG_INIT_COMMANDS_SIZE  256
+#define NVG_INIT_POINTS_SIZE    128
+#define NVG_INIT_PATHS_SIZE     16
+#define NVG_INIT_VERTS_SIZE     256
+#define NVG_MAX_STATES          32
 
-#define NVG_KAPPA90 0.5522847493f	// Length proportional to radius of a cubic bezier handle for 90deg arcs.
+#define NVG_KAPPA90             0.5522847493f	// Length proportional to radius of a cubic bezier handle for 90deg arcs.
 
 #define NVG_COUNTOF(arr) (sizeof(arr) / sizeof(0[arr]))
-
 
 enum NVGcommands {
 	NVG_MOVETO = 0,

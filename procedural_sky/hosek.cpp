@@ -78,7 +78,6 @@ HosekSky HosekSky::compute(float sunTheta, float turbidity, float normalizedSunY
     if (normalizedSunY)
     {
         float3 S = perezExt(std::cos(sunTheta), 0, 1.f, A, B, C, D, E, F, G, H, I) * Z;
-        
         Z /= dot(S, float3(0.2126, 0.7152, 0.0722));
         Z *= normalizedSunY;
     }

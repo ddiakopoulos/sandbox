@@ -31,6 +31,7 @@
 #include "tinyply.h"
 #include "renderable_grid.hpp"
 #include "hosek.hpp"
+#include "nvg.hpp"
 
 using namespace math;
 using namespace util;
@@ -94,8 +95,8 @@ struct ExperimentalApp : public GLFWApp
     FPSCameraController cameraController;
     
     float sunTheta = 60;
-    float sunPhi = 240;
-    float skyTurbidity = 12;
+    float sunPhi = 200;
+    float skyTurbidity = 6;
     
     HosekSky sky = HosekSky::compute(to_radians(sunTheta), skyTurbidity, 1.33f);
     
