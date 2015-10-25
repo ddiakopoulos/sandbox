@@ -24,7 +24,6 @@ public:
 };
 
 NVGcontext * make_nanovg_context (int flags);
-
 void release_nanovg_context(NVGcontext * context);
 
 #endif

@@ -372,7 +372,7 @@ namespace util
     {
         Geometry sphereGeom;
         
-        int U = 16, V = 16;
+        int U = 32, V = 32;
         
         for (int ui = 0; ui < U; ++ui)
         {

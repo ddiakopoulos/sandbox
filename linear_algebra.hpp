@@ -135,9 +135,9 @@ namespace math
     template<class T, int M> vec<T, M>   min(const vec<T, M> & a, const vec<T, M> & b)            { return a.apply(b, [](T a, T b) { return std::min(a, b); }); }
     template<class T, int M> vec<T, M>   nlerp(const vec<T, M> & a, const vec<T, M> & b, T t)     { return normalize(lerp(a, b, t)); }
     template<class T, int M> vec<T, M>   normalize(const vec<T, M> & a)                           { return a / std::max(T(1E-6), length(a)); }
-    template<class T, int M> vec<T, M>   round(const vec<T, M> & a)                               { return a.apply(T(), [](T a, T) { return ::round(a); }); }
-    template<class T, int M> vec<T, M>   ffloor(const vec<T, M> & a)                              { return a.apply(T(), [](T a, T) { return ::floor(a); }); }
-    template<class T, int M> vec<T, M>   cceil(const vec<T, M> & a)                               { return a.apply(T(), [](T a, T) { return ::ceil(a); }); }
+    template<class T, int M> vec<T, M>   vround(const vec<T, M> & a)                               { return a.apply(T(), [](T a, T) { return ::round(a); }); }
+    template<class T, int M> vec<T, M>   vfloor(const vec<T, M> & a)                              { return a.apply(T(), [](T a, T) { return ::floor(a); }); }
+    template<class T, int M> vec<T, M>   vceil(const vec<T, M> & a)                               { return a.apply(T(), [](T a, T) { return ::ceil(a); }); }
     template<class T, int M> vec<T, M>   vabs(const vec<T, M> & a)                                { return a.apply(T(), [](T a, T) { return ::abs(a); }); }
     template<class T, int M> vec<T, M>   pow(const vec<T, M> & a, const vec<T, M> & b)            { return a.apply(b, [](T a, T b) { return ::pow(a, b); }); }
     template<class T, int M> vec<T, M>   exp(const vec<T, M> & a)                                 { return a.apply(T(), [](T a, T) { return ::exp(a); }); }

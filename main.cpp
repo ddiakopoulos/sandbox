@@ -31,6 +31,8 @@
 #include "tinyply.h"
 #include "renderable_grid.hpp"
 #include "hosek.hpp"
+#include "preetham.hpp"
+
 #include "nvg.hpp"
 
 using namespace math;
@@ -62,15 +64,19 @@ struct ExperimentalApp : public GLFWApp
     
     FPSCameraController cameraController;
     
-    float sunTheta = 60;
-    float sunPhi = 200;
-    float skyTurbidity = 6;
+    float sunTheta = 60; // 0 - 90
+    float sunPhi = 210; // 0 - 360
     
-    HosekSky sky = HosekSky::compute(to_radians(sunTheta), skyTurbidity, 0.21f);
+    float skyTurbidity = 5;
+    float skySphereSize = 1.0f;
+    
+    HosekSky sky = HosekSky::compute(to_radians(sunTheta), skyTurbidity, 1.1f);
+    //PreethamSky sky = PreethamSky::compute(to_radians(sunTheta), skyTurbidity, 1.1f);
     
     GlMesh skyMesh;
     
     std::unique_ptr<GlShader> hosek_sky;
+    std::unique_ptr<GlShader> preetham_sky;
     
     ExperimentalApp() : GLFWApp(600, 600, "Experimental App")
     {
@@ -138,11 +144,13 @@ struct ExperimentalApp : public GLFWApp
         myTexture.reset(new GLTextureView(emptyTex.get_gl_handle()));
         
         cameraController.set_camera(&camera);
-        camera.fov = 65;
-        
-        //skyMesh = std::move(make_sphere_mesh(0.1, 12, 12));
-        skyMesh = make_sphere_mesh(1.0f);
+        camera.fov = 90;
+
+        skyMesh = make_sphere_mesh(skySphereSize);
         hosek_sky.reset(new gfx::GlShader(read_file_text("procedural_sky/sky_vert.glsl"), read_file_text("procedural_sky/sky_hosek_frag.glsl")));
+        preetham_sky.reset(new gfx::GlShader(read_file_text("procedural_sky/sky_vert.glsl"), read_file_text("procedural_sky/sky_preetham_frag.glsl")));
+        
+        grid = RenderableGrid(1, 100, 100);
         
         //cameraSphere = Sphere(sofaModel.bounds.center(), 1);
         //myArcball = Arcball(&camera, cameraSphere);
@@ -214,28 +222,32 @@ struct ExperimentalApp : public GLFWApp
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         
+        glDisable(GL_POLYGON_OFFSET_FILL);
+        
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
      
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         
         {
+            
+            sky = HosekSky::compute(to_radians(sunTheta), skyTurbidity, 1.1f);
+            
             hosek_sky->bind();
             
             glDisable(GL_BLEND);
             glDisable(GL_CULL_FACE);
-        
+            
             float3 sunDirection = spherical(to_radians(sunTheta), to_radians(sunPhi));
             
             // Largest non-clipped sphere
             float4x4 world = make_translation_matrix(camera.get_eye_point()) * make_scaling_matrix(camera.farClip * .99);
-            //world *= make_rotation_matrix({1, 0, 0}, to_radians(-90));
             
             hosek_sky->uniform("ViewProjection", viewProj);
             hosek_sky->uniform("World", world);
@@ -252,16 +264,40 @@ struct ExperimentalApp : public GLFWApp
             hosek_sky->uniform("Z", sky.Z);
             hosek_sky->uniform("SunDirection", sunDirection);
             
-            //glDisable(GL_DEPTH_TEST);
-            //glDepthMask(GL_FALSE);
+            std::cout << sunDirection << std::endl;
+
+            skyMesh.draw_elements();
+
+            hosek_sky->unbind();
+            
+            
+            /*
+            sky = PreethamSky::compute(to_radians(sunTheta), skyTurbidity, 1.1f);
+            
+            preetham_sky->bind();
+            
+            glDisable(GL_BLEND);
+            glDisable(GL_CULL_FACE);
+            
+            float3 sunDirection = normalize(spherical(to_radians(sunTheta), to_radians(sunPhi)));
+            
+            // Largest non-clipped sphere
+            float4x4 world = make_translation_matrix(camera.get_eye_point()) * make_scaling_matrix(camera.farClip * .99);
+            
+            preetham_sky->uniform("ViewProjection", viewProj);
+            preetham_sky->uniform("World", world);
+            preetham_sky->uniform("A", sky.A);
+            preetham_sky->uniform("B", sky.B);
+            preetham_sky->uniform("C", sky.C);
+            preetham_sky->uniform("D", sky.D);
+            preetham_sky->uniform("E", sky.E);
+            preetham_sky->uniform("Z", sky.Z);
+            //preetham_sky->uniform("SunDirection", sunDirection);
             
             skyMesh.draw_elements();
             
-            //glDepthMask(GL_TRUE);
-            //glEnable(GL_BLEND);
-            //glEnable(GL_CULL_FACE);
-
-            hosek_sky->unbind();
+            preetham_sky->unbind();
+            */
         }
             
         {

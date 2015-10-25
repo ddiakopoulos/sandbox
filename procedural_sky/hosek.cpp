@@ -45,7 +45,7 @@ static double evaluate(const double* dataset, size_t stride, float turbidity, fl
         a1t1 * albedo * turbidityK;
 }
 
-static float3 perezExt(float cos_theta, float gamma, float cos_gamma, float3 A, float3 B, float3 C, float3 D, float3 E, float3 F, float3 G, float3 H, float3 I)
+static float3 HosekWilkie(float cos_theta, float gamma, float cos_gamma, float3 A, float3 B, float3 C, float3 D, float3 E, float3 F, float3 G, float3 H, float3 I)
 {
     float3 chi = (1.f + cos_gamma * cos_gamma) / math::pow(1.f + H * H - 2.f * cos_gamma * H, float3(1.5f));
     return (1.f + A * math::exp(B / (cos_theta + 0.01f))) * (C + D * math::exp(E * gamma) + F * (cos_gamma * cos_gamma) + G * chi + I * (float) sqrt(std::max(0.f, cos_theta)));
@@ -58,7 +58,7 @@ HosekSky HosekSky::compute(float sunTheta, float turbidity, float normalizedSunY
     
     for (int i = 0; i < 3; ++i)
     {
-        float albedo = 0;
+        float albedo = 0.0;
         
         A[i] = evaluate(datasetsRGB[i] + 0, 9, turbidity, albedo, sunTheta);
         B[i] = evaluate(datasetsRGB[i] + 1, 9, turbidity, albedo, sunTheta);
@@ -77,7 +77,7 @@ HosekSky HosekSky::compute(float sunTheta, float turbidity, float normalizedSunY
     
     if (normalizedSunY)
     {
-        float3 S = perezExt(std::cos(sunTheta), 0, 1.f, A, B, C, D, E, F, G, H, I) * Z;
+        float3 S = HosekWilkie(std::cos(sunTheta), 0, 1.f, A, B, C, D, E, F, G, H, I) * Z;
         Z /= dot(S, float3(0.2126, 0.7152, 0.0722));
         Z *= normalizedSunY;
     }

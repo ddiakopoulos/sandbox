@@ -25,6 +25,7 @@
 		089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */; };
 		08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2DC1BDD667000895E31 /* nvg.cpp */; };
 		08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E11BDD669600895E31 /* nanovg.cpp */; };
+		08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E51BDD79F000895E31 /* preetham.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -105,6 +106,9 @@
 		08CFD2E01BDD669600895E31 /* nanovg_gl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg_gl.h; path = third_party/nanovg_gl.h; sourceTree = SOURCE_ROOT; };
 		08CFD2E11BDD669600895E31 /* nanovg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = nanovg.cpp; path = third_party/nanovg.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2E21BDD669600895E31 /* nanovg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg.h; path = third_party/nanovg.h; sourceTree = SOURCE_ROOT; };
+		08CFD2E51BDD79F000895E31 /* preetham.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = preetham.cpp; path = procedural_sky/preetham.cpp; sourceTree = SOURCE_ROOT; };
+		08CFD2E61BDD79F000895E31 /* preetham.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = preetham.hpp; path = procedural_sky/preetham.hpp; sourceTree = SOURCE_ROOT; };
+		08CFD2E81BDD7A2700895E31 /* sky_preetham_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_preetham_frag.glsl; path = procedural_sky/sky_preetham_frag.glsl; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -187,11 +191,14 @@
 		0822AF391BDC772D00A894F0 /* procedural_sky */ = {
 			isa = PBXGroup;
 			children = (
+				08CFD2E61BDD79F000895E31 /* preetham.hpp */,
+				08CFD2E51BDD79F000895E31 /* preetham.cpp */,
 				0822AF3D1BDC773C00A894F0 /* hosek.hpp */,
 				0822AF3C1BDC773C00A894F0 /* hosek.cpp */,
 				0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */,
 				0822AF3F1BDC773C00A894F0 /* sky_vert.glsl */,
 				0822AF3E1BDC773C00A894F0 /* sky_hosek_frag.glsl */,
+				08CFD2E81BDD7A2700895E31 /* sky_preetham_frag.glsl */,
 			);
 			name = procedural_sky;
 			sourceTree = "<group>";
@@ -343,6 +350,7 @@
 				08289F801BC5F7F30054AF3B /* tinyply.cpp in Sources */,
 				089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */,
 				0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */,
+				08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */,
 				0822AF371BD4ADBF00A894F0 /* GlShared.cpp in Sources */,
 				08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */,
 				08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */,

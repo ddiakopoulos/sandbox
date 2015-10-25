@@ -198,7 +198,7 @@ namespace gfx
         
     public:
         
-        float movementSpeed = 10.0f;
+        float movementSpeed = 8.0f;
         
         FPSCameraController()
         {
@@ -218,7 +218,7 @@ namespace gfx
         
         void update_yaw_pitch()
         {
-            const math::float3 worldNorth = {0,0,-1};
+            const math::float3 worldNorth = {0, 0, -1};
             math::float3 lookVec = cam->get_view_direction();
             math::float3 flatLookVec = normalize(math::float3(lookVec.x, 0, lookVec.z));
             camYaw = std::acos(math::clamp(dot(worldNorth, flatLookVec), -1.0f, +1.0f)) * (flatLookVec.x > 0 ? -1 : 1);
