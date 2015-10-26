@@ -6,6 +6,7 @@
 
 #include "linear_algebra.hpp"
 #include "math_util.hpp"
+#include <ostream>
 
 namespace math
 {
@@ -148,6 +149,8 @@ namespace math
         float width() const { return x1 - x0; }
         float height() const { return y1 - y0; }
     };
+    
+    //template<class T> std::ostream & operator << (std::ostream & a, Bounds b) { return a << "[" << b.x0 << ", " << b.y0 << ", " << b.x1 << ", " << b.y1 << "]"; }
 
     ////////////////////////////////////
     // Construct rotation quaternions //

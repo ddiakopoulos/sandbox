@@ -60,15 +60,11 @@ namespace gfx
         {
             program.bind();
             
-            const math::float4x4 projection = math::make_orthographic_perspective_matrix(0.0f, windowSize.y, windowSize.x, 0.0f, -1.0f, 1.0f);
+            const math::float4x4 projection = math::make_orthographic_perspective_matrix(0.0f, windowSize.x, windowSize.y, 0.0f, -1.0f, 1.0f);
             
-            // Fixme
             math::float4x4 model = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
-            model = math::mul(math::make_scaling_matrix({ (float) rect.x1, (float) rect.y1, 0.f}), model);
+            model = math::mul(math::make_scaling_matrix({ (float) rect.width(), (float) rect.height(), 0.f}), model);
             model = math::mul(math::make_translation_matrix({(float) rect.x0, (float) rect.y0, 0.f}), model);
-            model = math::mul(math::make_translation_matrix({0.5f * rect.x1, 0.5f * rect.y1, 0.0f}), model);
-            model = math::mul(math::make_translation_matrix({-0.5f * rect.x1, -0.5f * rect.y1, 0.0f}), model);
-
             program.uniform("u_model", model);
             program.uniform("u_projection", projection);
             program.texture("u_texture", 0, texture, GL_TEXTURE_2D);

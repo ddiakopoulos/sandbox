@@ -26,7 +26,7 @@ namespace util
             {
                 auto size = child->bounds.get_size();
                 child->bounds = child->placement.resolve(bounds);
-                auto childAspect = aspectRatio;
+                auto childAspect = child->bounds.width() / child->bounds.height();
                 if (childAspect > 0)
                 {
                     float xpadding = (1 - std::min((child->bounds.height() * childAspect) / child->bounds.width(), 1.0f)) / 2;
@@ -36,10 +36,10 @@ namespace util
                 if (child->bounds.get_size() != size)
                     child->layout();
                 
-                std::cout << child->bounds.x0 << std::endl;
-                std::cout << child->bounds.y0 << std::endl;
-                std::cout << child->bounds.x1 << std::endl;
-                std::cout << child->bounds.y1 << std::endl;
+                //std::cout << child->bounds.x0 << std::endl;
+                //std::cout << child->bounds.y0 << std::endl;
+                //std::cout << child->bounds.x1 << std::endl;
+                //std::cout << child->bounds.y1 << std::endl;
             }
         }
         

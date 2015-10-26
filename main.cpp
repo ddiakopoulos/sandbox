@@ -128,7 +128,7 @@ struct ExperimentalApp : public GLFWApp
         emptyTex = load_image("assets/anvil.png");
         
         rootWidget.bounds = {0, 0, (float) width, (float) height};
-        rootWidget.add_child( {{0,+5},{0,+5},{0.5,0},{0.5,0}}, std::make_shared<UWidget>());
+        rootWidget.add_child( {{0,+10},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UWidget>());
         //rootWidget.add_child( {{0, 0}, {0.5, +10}, {0.5, 0}, {1.0, -10}}, std::make_shared<UWidget>());
         
         rootWidget.layout();
@@ -151,6 +151,12 @@ struct ExperimentalApp : public GLFWApp
         //myArcball = Arcball(&camera, cameraSphere);
         //myArcball.set_constraint_axis(float3(0, 1, 0));
         
+    }
+    
+    void on_window_resize(math::int2 size) override
+    {
+        rootWidget.bounds = {0, 0, (float) size.x, (float) size.y};
+        rootWidget.layout();
     }
     
     void on_input(const InputEvent & event) override
@@ -222,6 +228,16 @@ struct ExperimentalApp : public GLFWApp
             nvgStrokeColor(nvgCtx, nvgRGBA(255, 255, 255, 127));
             nvgStrokeWidth(nvgCtx, 2.0f);
             nvgStroke(nvgCtx);
+            
+            for (auto widget : rootWidget.children)
+            {
+                nvgBeginPath(nvgCtx);
+                nvgRect(nvgCtx, widget->bounds.x0, widget->bounds.y0, widget->bounds.width(), widget->bounds.height());
+                std::cout << widget->bounds.width() << std::endl;
+                nvgStrokeColor(nvgCtx, nvgRGBA(255, 255, 255, 255));
+                nvgStrokeWidth(nvgCtx, 1.0f);
+                nvgStroke(nvgCtx);
+            }
             
             std::string text = "Hello NanoVG";
             const float textX = 15 + TEXT_OFFSET_X, textY = 15 + TEXT_OFFSET_Y;
@@ -308,7 +324,7 @@ struct ExperimentalApp : public GLFWApp
         
         for (auto widget : rootWidget.children)
         {
-            //myTexture->draw(widget->bounds, math::int2{width, height});
+            myTexture->draw(widget->bounds, int2(width, height));
         }
 
         gfx::gl_check_error(__FILE__, __LINE__);
