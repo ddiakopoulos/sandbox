@@ -126,7 +126,7 @@ namespace gfx
     {
         math::Pose pose;
         
-        float fov = 45.0f;
+        float fov = 60.0f;
         float nearClip = 0.1f;
         float farClip = 70.0f;
         
@@ -140,7 +140,7 @@ namespace gfx
         
         math::float4x4 get_projection_matrix(float aspectRatio) const
         {
-            const float top = nearClip * std::tan((fov * (ANVIL_PI / 2) / 360) / 2);
+            const float top = nearClip * std::tan((fov * (ANVIL_PI * 2.f) / 360.0f) / 2.0f);
             const float right = top * aspectRatio;
             const float bottom = -top;
             const float left = -right;

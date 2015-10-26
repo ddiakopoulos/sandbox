@@ -144,7 +144,7 @@ struct ExperimentalApp : public GLFWApp
         myTexture.reset(new GLTextureView(emptyTex.get_gl_handle()));
         
         cameraController.set_camera(&camera);
-        camera.fov = 90;
+        camera.fov = 75;
 
         skyMesh = make_sphere_mesh(skySphereSize);
         hosek_sky.reset(new gfx::GlShader(read_file_text("procedural_sky/sky_vert.glsl"), read_file_text("procedural_sky/sky_hosek_frag.glsl")));
@@ -177,6 +177,11 @@ struct ExperimentalApp : public GLFWApp
             if (event.value[0] == GLFW_KEY_DOWN && event.action == GLFW_RELEASE)
             {
                 sunTheta -= 5;
+            }
+            if (event.value[0] == GLFW_KEY_EQUAL && event.action == GLFW_REPEAT)
+            {
+                camera.fov += 1;
+                std::cout << camera.fov << std::endl;
             }
         }
         if (event.type == InputEvent::CURSOR && isDragging)
@@ -262,10 +267,9 @@ struct ExperimentalApp : public GLFWApp
             hosek_sky->uniform("H", sky.H);
             hosek_sky->uniform("I", sky.I);
             hosek_sky->uniform("Z", sky.Z);
-            hosek_sky->uniform("SunDirection", sunDirection);
             
-            std::cout << sunDirection << std::endl;
-
+            //hosek_sky->uniform("SunDirection", sunDirection);
+            
             skyMesh.draw_elements();
 
             hosek_sky->unbind();

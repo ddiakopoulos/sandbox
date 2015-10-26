@@ -7,7 +7,7 @@ NvgFont::NvgFont(NVGcontext * nvg, const std::string & name, std::vector<uint8_t
 {
     this->buffer = std::move(buffer);
     this->nvg = nvg;
-    id = nvgCreateFontMem(nvg, name.c_str(), this->buffer.data(), this->buffer.size(), 0);
+    id = nvgCreateFontMem(nvg, name.c_str(), this->buffer.data(), (int) this->buffer.size(), 0);
     if (id < 0)
         throw std::runtime_error("Failed to load font: " + name);
 }
@@ -18,7 +18,7 @@ size_t NvgFont::get_cursor_location(const std::string & text, float fontSize, in
     nvgFontSize(nvg, fontSize);
     nvgFontFaceId(nvg, id);
     nvgTextAlign(nvg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-    positions.resize(nvgTextGlyphPositions(nvg, 0, 0, text.data(), text.data()+text.size(), positions.data(), positions.size()));
+    positions.resize(nvgTextGlyphPositions(nvg, 0, 0, text.data(), text.data() + (int) text.size(), positions.data(), (int) positions.size()));
     for (size_t i = 0; i<positions.size(); ++i)
     {
         if(xCoord < positions[i].maxx)
