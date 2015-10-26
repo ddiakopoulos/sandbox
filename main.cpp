@@ -30,8 +30,7 @@
 #include "glfw_app.hpp"
 #include "tinyply.h"
 #include "renderable_grid.hpp"
-#include "hosek.hpp"
-#include "preetham.hpp"
+#include "procedural_sky.hpp"
 
 #include "nvg.hpp"
 
@@ -63,20 +62,7 @@ struct ExperimentalApp : public GLFWApp
     RenderableGrid grid;
     
     FPSCameraController cameraController;
-    
-    float sunTheta = 60; // 0 - 90
-    float sunPhi = 210; // 0 - 360
-    
-    float skyTurbidity = 5;
-    float skySphereSize = 1.0f;
-    
-    HosekSky sky = HosekSky::compute(to_radians(sunTheta), skyTurbidity, 1.1f);
-    //PreethamSky sky = PreethamSky::compute(to_radians(sunTheta), skyTurbidity, 1.1f);
-    
-    GlMesh skyMesh;
-    
-    std::unique_ptr<GlShader> hosek_sky;
-    std::unique_ptr<GlShader> preetham_sky;
+    PreethamProceduralSky skydome;
     
     ExperimentalApp() : GLFWApp(600, 600, "Experimental App")
     {
@@ -145,10 +131,6 @@ struct ExperimentalApp : public GLFWApp
         
         cameraController.set_camera(&camera);
         camera.fov = 75;
-
-        skyMesh = make_sphere_mesh(skySphereSize);
-        hosek_sky.reset(new gfx::GlShader(read_file_text("procedural_sky/sky_vert.glsl"), read_file_text("procedural_sky/sky_hosek_frag.glsl")));
-        preetham_sky.reset(new gfx::GlShader(read_file_text("procedural_sky/sky_vert.glsl"), read_file_text("procedural_sky/sky_preetham_frag.glsl")));
         
         grid = RenderableGrid(1, 100, 100);
         
@@ -164,19 +146,19 @@ struct ExperimentalApp : public GLFWApp
         {
             if (event.value[0] == GLFW_KEY_RIGHT && event.action == GLFW_RELEASE)
             {
-                sunPhi += 5;
+                //sunPhi += 5;
             }
             if (event.value[0] == GLFW_KEY_LEFT && event.action == GLFW_RELEASE)
             {
-                sunPhi -= 5;
+                //sunPhi -= 5;
             }
             if (event.value[0] == GLFW_KEY_UP && event.action == GLFW_RELEASE)
             {
-                sunTheta += 5;
+                //sunTheta += 5;
             }
             if (event.value[0] == GLFW_KEY_DOWN && event.action == GLFW_RELEASE)
             {
-                sunTheta -= 5;
+                //sunTheta -= 5;
             }
             if (event.value[0] == GLFW_KEY_EQUAL && event.action == GLFW_REPEAT)
             {
@@ -240,70 +222,8 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         
-        {
-            
-            sky = HosekSky::compute(to_radians(sunTheta), skyTurbidity, 1.1f);
-            
-            hosek_sky->bind();
-            
-            glDisable(GL_BLEND);
-            glDisable(GL_CULL_FACE);
-            
-            float3 sunDirection = spherical(to_radians(sunTheta), to_radians(sunPhi));
-            
-            // Largest non-clipped sphere
-            float4x4 world = make_translation_matrix(camera.get_eye_point()) * make_scaling_matrix(camera.farClip * .99);
-            
-            hosek_sky->uniform("ViewProjection", viewProj);
-            hosek_sky->uniform("World", world);
-            
-            hosek_sky->uniform("A", sky.A);
-            hosek_sky->uniform("B", sky.B);
-            hosek_sky->uniform("C", sky.C);
-            hosek_sky->uniform("D", sky.D);
-            hosek_sky->uniform("E", sky.E);
-            hosek_sky->uniform("F", sky.F);
-            hosek_sky->uniform("G", sky.G);
-            hosek_sky->uniform("H", sky.H);
-            hosek_sky->uniform("I", sky.I);
-            hosek_sky->uniform("Z", sky.Z);
-            
-            //hosek_sky->uniform("SunDirection", sunDirection);
-            
-            skyMesh.draw_elements();
-
-            hosek_sky->unbind();
-            
-            
-            /*
-            sky = PreethamSky::compute(to_radians(sunTheta), skyTurbidity, 1.1f);
-            
-            preetham_sky->bind();
-            
-            glDisable(GL_BLEND);
-            glDisable(GL_CULL_FACE);
-            
-            float3 sunDirection = normalize(spherical(to_radians(sunTheta), to_radians(sunPhi)));
-            
-            // Largest non-clipped sphere
-            float4x4 world = make_translation_matrix(camera.get_eye_point()) * make_scaling_matrix(camera.farClip * .99);
-            
-            preetham_sky->uniform("ViewProjection", viewProj);
-            preetham_sky->uniform("World", world);
-            preetham_sky->uniform("A", sky.A);
-            preetham_sky->uniform("B", sky.B);
-            preetham_sky->uniform("C", sky.C);
-            preetham_sky->uniform("D", sky.D);
-            preetham_sky->uniform("E", sky.E);
-            preetham_sky->uniform("Z", sky.Z);
-            //preetham_sky->uniform("SunDirection", sunDirection);
-            
-            skyMesh.draw_elements();
-            
-            preetham_sky->unbind();
-            */
-        }
-            
+        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        
         {
             simpleShader->bind();
             

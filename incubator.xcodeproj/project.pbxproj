@@ -109,6 +109,7 @@
 		08CFD2E51BDD79F000895E31 /* preetham.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = preetham.cpp; path = procedural_sky/preetham.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2E61BDD79F000895E31 /* preetham.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = preetham.hpp; path = procedural_sky/preetham.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2E81BDD7A2700895E31 /* sky_preetham_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_preetham_frag.glsl; path = procedural_sky/sky_preetham_frag.glsl; sourceTree = SOURCE_ROOT; };
+		08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = procedural_sky.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -182,6 +183,7 @@
 				0822AF311BCFFA6A00A894F0 /* sketch.hpp */,
 				0822AF321BD389EA00A894F0 /* universal_widget.hpp */,
 				0822AF331BD4212100A894F0 /* arcball.hpp */,
+				08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */,
 				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
 			name = source;
