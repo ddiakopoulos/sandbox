@@ -39,6 +39,9 @@ using namespace util;
 using namespace tinyply;
 using namespace gfx;
 
+static const float TEXT_OFFSET_X = 3;
+static const float TEXT_OFFSET_Y = 1;
+
 struct ExperimentalApp : public GLFWApp
 {
     
@@ -65,6 +68,7 @@ struct ExperimentalApp : public GLFWApp
     PreethamProceduralSky skydome;
     
     NVGcontext * nvgCtx;
+    std::shared_ptr<NvgFont> sourceFont;
     
     ExperimentalApp() : GLFWApp(600, 600, "Experimental App")
     {
@@ -141,6 +145,8 @@ struct ExperimentalApp : public GLFWApp
         if(!nvgCtx)
             throw std::runtime_error("error initializing nanovg context");
         
+        sourceFont = std::make_shared<NvgFont>(nvgCtx, "souce_sans_pro", read_file_binary("assets/source_code_pro_regular.ttf"));
+
         //cameraSphere = Sphere(sofaModel.bounds.center(), 1);
         //myArcball = Arcball(&camera, cameraSphere);
         //myArcball.set_constraint_axis(float3(0, 1, 0));
@@ -212,10 +218,20 @@ struct ExperimentalApp : public GLFWApp
         nvgBeginFrame(nvgCtx, width, height, 1.0);
         {
             nvgBeginPath(nvgCtx);
-            nvgRect(nvgCtx, 10, 10, 150, 150);
+            nvgRect(nvgCtx, 10, 10, 200, 150);
             nvgStrokeColor(nvgCtx, nvgRGBA(255, 255, 255, 127));
             nvgStrokeWidth(nvgCtx, 2.0f);
             nvgStroke(nvgCtx);
+            
+            std::string text = "Hello NanoVG";
+            const float textX = 15 + TEXT_OFFSET_X, textY = 15 + TEXT_OFFSET_Y;
+            nvgFontFaceId(nvgCtx, sourceFont->id);
+            nvgFontSize(nvgCtx, 20);
+            nvgTextAlign(nvgCtx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+            nvgBeginPath(nvgCtx);
+            nvgFillColor(nvgCtx, nvgRGBA(0,0,0,255));
+            auto ret = nvgText(nvgCtx, textX, textY, text.c_str(), nullptr);
+            
         }
         nvgEndFrame(nvgCtx);
     }

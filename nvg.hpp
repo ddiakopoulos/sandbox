@@ -19,7 +19,6 @@ class NvgFont
 public:
     int id;
     NvgFont(NVGcontext * nvg, const std::string & name, std::vector<uint8_t> buffer);
-    NvgFont(NvgFont && r) : buffer(move(r.buffer)), nvg(), id() { std::swap(nvg, r.nvg); std::swap(id, r.id); }
     size_t get_cursor_location(const std::string & text, float fontSize, int xCoord) const;
 };
 
