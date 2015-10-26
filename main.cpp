@@ -31,8 +31,8 @@
 #include "tinyply.h"
 #include "renderable_grid.hpp"
 #include "procedural_sky.hpp"
-
 #include "nvg.hpp"
+#include "nanovg_gl.h"
 
 using namespace math;
 using namespace util;
@@ -63,6 +63,8 @@ struct ExperimentalApp : public GLFWApp
     
     FPSCameraController cameraController;
     PreethamProceduralSky skydome;
+    
+    NVGcontext * nvgCtx;
     
     ExperimentalApp() : GLFWApp(600, 600, "Experimental App")
     {
@@ -134,6 +136,11 @@ struct ExperimentalApp : public GLFWApp
         
         grid = RenderableGrid(1, 100, 100);
         
+        nvgCtx = make_nanovg_context(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+        
+        if(!nvgCtx)
+            throw std::runtime_error("error initializing nanovg context");
+        
         //cameraSphere = Sphere(sofaModel.bounds.center(), 1);
         //myArcball = Arcball(&camera, cameraSphere);
         //myArcball.set_constraint_axis(float3(0, 1, 0));
@@ -194,6 +201,23 @@ struct ExperimentalApp : public GLFWApp
     void on_update(const UpdateEvent & e) override
     {
         cameraController.update(e.elapsed_s / 1000);
+    }
+    
+    void draw_ui()
+    {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+        glViewport(0, 0, width, height);
+        
+        nvgBeginFrame(nvgCtx, width, height, 1.0);
+        {
+            nvgBeginPath(nvgCtx);
+            nvgRect(nvgCtx, 10, 10, 150, 150);
+            nvgStrokeColor(nvgCtx, nvgRGBA(255, 255, 255, 127));
+            nvgStrokeWidth(nvgCtx, 2.0f);
+            nvgStroke(nvgCtx);
+        }
+        nvgEndFrame(nvgCtx);
     }
     
     void on_draw() override
@@ -272,6 +296,8 @@ struct ExperimentalApp : public GLFWApp
         }
 
         gfx::gl_check_error(__FILE__, __LINE__);
+        
+        draw_ui();
         
         glfwSwapBuffers(window);
         

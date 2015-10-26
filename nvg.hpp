@@ -23,7 +23,7 @@ public:
     size_t get_cursor_location(const std::string & text, float fontSize, int xCoord) const;
 };
 
-NVGcontext * make_nanovg_context (int flags);
+NVGcontext * make_nanovg_context(int flags);
 void release_nanovg_context(NVGcontext * context);
 
 #endif
