@@ -71,23 +71,18 @@ enum filter_type : int
     DILATE
 };
 
+// 3x3 Erode filter with a fully square structring element { {1, 1, 1}, {1, 1, 1}, {1, 1, 1}};
 void erode_dilate_kernel(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight, filter_type t)
 {
     int dx, dy, wx, wy;
     int pIndex;
-    uint16_t compare;
-    uint8_t foundMatch;
-    
-    if (t == filter_type::ERODE)
-        compare = std::numeric_limits<uint16_t>::min(); // Erode: Neighbor pixels in background
-    else
-        compare = std::numeric_limits<uint16_t>::max(); // Dilate: Look for neighbor pixels in foreground
     
     for (int y = 0; y < imageHeight; ++y)
     {
         for (int x = 0; x < imageWidth; ++x)
         {
-            foundMatch = 0;
+			uint16_t value = 0; 
+			std::vector<uint16_t> list;
             for (dy = -KERNEL_OFFSET; dy <= KERNEL_OFFSET; ++dy)
             {
                 wy = y + dy;
@@ -100,28 +95,20 @@ void erode_dilate_kernel(const std::vector<uint16_t> & inputImage, std::vector<u
                         {
                             pIndex = (wy * imageWidth + wx);
                             uint16_t inValue = inputImage[pIndex];
-                            if (inValue == compare)
-                            {
-                                foundMatch = 1;
-                                break;
-                            }
+							list.push_back(inValue);
                         }
                     }
                 }
-                if (foundMatch)
-                    break;
+
             }
             
             pIndex = (y * imageWidth + x);
-            
-            // Default: set background color
-            outputImage[pIndex] = compare;
-            
-            // Output pixel max
-            if ( (t == filter_type::ERODE && !foundMatch) || (t == filter_type::DILATE && foundMatch))
-            {
-                outputImage[pIndex] = compare;
-            }
+
+			if (t == filter_type::ERODE)
+				outputImage[pIndex] = *std::min_element(list.begin(), list.end());
+
+			if (t== filter_type::DILATE)
+				outputImage[pIndex] = *std::max_element(list.begin(), list.end());
             
         }
     }
