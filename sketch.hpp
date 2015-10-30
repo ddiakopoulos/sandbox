@@ -71,35 +71,47 @@ enum filter_type : int
     DILATE
 };
 
-// 3x3 Erode filter with a fully square structring element { {1, 1, 1}, {1, 1, 1}, {1, 1, 1}};
+std::vector<int> box_element_3x3_identity = {0, 0, 0, 0, 1, 0, 0, 0, 0};
+
+// 3x3 matrix -- fully square structring element
+std::vector<int> box_element_3x3_square = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+
 void erode_dilate_kernel(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight, filter_type t)
 {
     int dx, dy, wx, wy;
     int pIndex;
     
+    std::vector<uint16_t> list;
+    
     for (int y = 0; y < imageHeight; ++y)
     {
         for (int x = 0; x < imageWidth; ++x)
         {
-			uint16_t value = 0; 
-			std::vector<uint16_t> list;
+            list.clear();
+            
             for (dy = -KERNEL_OFFSET; dy <= KERNEL_OFFSET; ++dy)
             {
                 wy = y + dy;
+                
+                // Clamp at Y image borders
                 if (wy >= 0 && wy < imageHeight)
                 {
                     for (dx = -KERNEL_OFFSET; dx <= KERNEL_OFFSET; ++dx)
                     {
                         wx = x + dx;
+                        
+                        // Clamp at X image borders
                         if (wx >= 0 && wx < imageWidth)
                         {
-                            pIndex = (wy * imageWidth + wx);
-                            uint16_t inValue = inputImage[pIndex];
-							list.push_back(inValue);
+                            if (box_element_3x3_square[dy * KERNEL_SIZE + dx] == 1)
+                            {
+                                pIndex = (wy * imageWidth + wx);
+                                uint16_t inValue = inputImage[pIndex];
+                                list.push_back(inValue);
+                            }
                         }
                     }
                 }
-
             }
             
             pIndex = (y * imageWidth + x);
