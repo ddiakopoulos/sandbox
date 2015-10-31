@@ -45,8 +45,7 @@ static const float TEXT_OFFSET_Y = 1;
 GlMesh make_fullscreen_quad()
 {
     util::Geometry g;
-    g.vertices = { {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
-    g.texCoords = { {0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+    g.vertices = { {-1.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f} };
     g.faces = {{0, 1, 2}, {3, 4, 5}};
     return make_mesh_from_geometry(g);
 }
@@ -61,6 +60,7 @@ struct ExperimentalApp : public GLFWApp
     
     std::unique_ptr<GLTextureView> colorTextureView;
     std::unique_ptr<GLTextureView> depthTextureView;
+    std::unique_ptr<GLTextureView> outputTextureView;
     
     std::unique_ptr<GlShader> simpleShader;
     
@@ -93,6 +93,8 @@ struct ExperimentalApp : public GLFWApp
     
     GlTexture outputTexture;
     GlFramebuffer outputFbo;
+    
+    int enableAo = 0;
     
     ExperimentalApp() : GLFWApp(600, 600, "Experimental App")
     {
@@ -154,6 +156,7 @@ struct ExperimentalApp : public GLFWApp
         rootWidget.bounds = {0, 0, (float) width, (float) height};
         rootWidget.add_child( {{0,+10},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UWidget>()); // for colorTexture
         rootWidget.add_child( {{.50,+10},{0, +10},{1.0, -10},{0.5,0}}, std::make_shared<UWidget>()); // for depthTexture
+        rootWidget.add_child( {{.0,+10},{0.5, +10},{0.5, 0},{1.0, -10}}, std::make_shared<UWidget>()); // for outputTexture
         
         rootWidget.layout();
         
@@ -182,27 +185,14 @@ struct ExperimentalApp : public GLFWApp
         if (!sceneFramebuffer.check_complete()) throw std::runtime_error("incomplete framebuffer");
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
-        colorTextureView.reset(new GLTextureView(sceneColorTexture.get_gl_handle()));
-        depthTextureView.reset(new GLTextureView(sceneDepthTexture.get_gl_handle()));
-        
         outputTexture.load_data(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
         outputFbo.attach(GL_COLOR_ATTACHMENT0, outputTexture);
-        
-        /*
-        glBindFramebuffer(GL_FRAMEBUFFER, outputFbo.get_handle());
-        auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        switch(status)
-        {
-            case GL_FRAMEBUFFER_COMPLETE: break;
-            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: throw std::runtime_error("Framebuffer is not complete - GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
-            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: throw std::runtime_error("Framebuffer is not complete - GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
-            case GL_FRAMEBUFFER_UNSUPPORTED: throw std::runtime_error("Framebuffer is not complete - GL_FRAMEBUFFER_UNSUPPORTED");
-            default: throw std::runtime_error("Framebuffer is not complete - unknown reason");
-        }
-        */
         if (!outputFbo.check_complete()) throw std::runtime_error("incomplete framebuffer");
         
+        colorTextureView.reset(new GLTextureView(sceneColorTexture.get_gl_handle()));
+        depthTextureView.reset(new GLTextureView(sceneDepthTexture.get_gl_handle()));
+        outputTextureView.reset(new GLTextureView(outputTexture.get_gl_handle()));
+
         gfx::gl_check_error(__FILE__, __LINE__);
         
         //cameraSphere = Sphere(sofaModel.bounds.center(), 1);
@@ -237,10 +227,20 @@ struct ExperimentalApp : public GLFWApp
             {
                 //sunTheta -= 5;
             }
-            if (event.value[0] == GLFW_KEY_EQUAL && event.action == GLFW_REPEAT)
+            if (event.value[0] == GLFW_KEY_EQUAL && event.action == GLFW_RELEASE)
             {
                 camera.fov += 1;
                 std::cout << camera.fov << std::endl;
+            }
+            if (event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
+            {
+                std::cout << "AO On" << std::endl;
+                enableAo = 1;
+            }
+            if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE)
+            {
+                std::cout << "AO Off" << std::endl;
+                enableAo = 0;
             }
         }
         if (event.type == InputEvent::CURSOR && isDragging)
@@ -328,7 +328,7 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
      
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.5f, 1.0f);
 
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
@@ -375,17 +375,43 @@ struct ExperimentalApp : public GLFWApp
             grid.render(proj, view);
             gfx::gl_check_error(__FILE__, __LINE__);
         }
+
+        outputFbo.bind_to_draw();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        
+        gfx::gl_check_error(__FILE__, __LINE__);
+        
+        {
+             ssaoShader->bind();
+            
+             ssaoShader->texture("u_colorTexture", 0, sceneColorTexture);
+             ssaoShader->texture("u_depthTexture", 1, sceneDepthTexture);
+             ssaoShader->uniform("u_useNoise", 1);
+             ssaoShader->uniform("u_useMist", 0);
+             ssaoShader->uniform("u_aoOnly", enableAo);
+             ssaoShader->uniform("u_cameraNearClip", camera.nearClip);
+             ssaoShader->uniform("u_cameraFarClip", camera.farClip);
+             ssaoShader->uniform("u_resolution", float2(width, height));
+            
+             // Passthrough geometry
+             sceneQuad.draw_elements();
+            
+             ssaoShader->unbind();
+        }
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
         
         // Bind to 0
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
-        gfx::gl_check_error(__FILE__, __LINE__);
-        
         colorTextureView->draw(rootWidget.children[0]->bounds, int2(width, height));
         depthTextureView->draw(rootWidget.children[1]->bounds, int2(width, height));
+        outputTextureView->draw(rootWidget.children[2]->bounds, int2(width, height));
+        
         gfx::gl_check_error(__FILE__, __LINE__);
         
-        //draw_ui();
+        draw_ui();
         
         glfwSwapBuffers(window);
         

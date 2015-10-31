@@ -118,8 +118,8 @@ void main(void)
     vec2 dither = dithering_noise(texCoord);
     float depthSample = read_depth(texCoord);
     
-    float w = (1.0 / width) / clamp(depthSample, edgeHaloClamp,1.0) + (dither.x * (1.0 - dither.x));
-    float h = (1.0 / height) / clamp(depthSample, edgeHaloClamp,1.0) + (dither.y * (1.0 - dither.y));
+    float w = (1.0 / width) / clamp(depthSample, edgeHaloClamp, 1.0) + (dither.x * (1.0 - dither.x));
+    float h = (1.0 / height) / clamp(depthSample, edgeHaloClamp, 1.0) + (dither.y * (1.0 - dither.y));
     
     float pw;
     float ph;
@@ -161,8 +161,8 @@ void main(void)
     if (u_aoOnly == 1)
     {
         final = vec3(mix(vec3(ao), vec3(1.0), luminance * lumInfluence));
+
     }
     
     out_color = vec4(final, 1.0);
-    //out_color = vec4(1.0, 0, 0, 1.0);
 }
