@@ -49,8 +49,8 @@ public:
         
         render_internal(viewProj, sunDirection, world);
         
-        //glEnable(GL_BLEND);
-        //glEnable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
     }
     
     virtual void recompute(float sunTheta, float turbidity, float albedo, float normalizedSunY) = 0;

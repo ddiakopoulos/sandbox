@@ -42,6 +42,15 @@ using namespace gfx;
 static const float TEXT_OFFSET_X = 3;
 static const float TEXT_OFFSET_Y = 1;
 
+GlMesh make_fullscreen_quad()
+{
+    util::Geometry g;
+    g.vertices = { {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
+    g.texCoords = { {0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+    g.faces = {{0, 1, 2}, {3, 4, 5}};
+    return make_mesh_from_geometry(g);
+}
+
 struct ExperimentalApp : public GLFWApp
 {
     
@@ -50,8 +59,13 @@ struct ExperimentalApp : public GLFWApp
     
     GlTexture emptyTex;
     
-    std::unique_ptr<GLTextureView> myTexture;
+    std::unique_ptr<GLTextureView> colorTextureView;
+    std::unique_ptr<GLTextureView> depthTextureView;
+    
     std::unique_ptr<GlShader> simpleShader;
+    
+    std::unique_ptr<GlShader> ssaoShader;
+    std::unique_ptr<GlShader> textureShader;
     
     UWidget rootWidget;
     
@@ -69,6 +83,16 @@ struct ExperimentalApp : public GLFWApp
     
     NVGcontext * nvgCtx;
     std::shared_ptr<NvgFont> sourceFont;
+    
+    GlFramebuffer sceneFramebuffer;
+    GlTexture sceneColorTexture;
+    GlTexture sceneDepthTexture;
+    
+    //GlRenderbuffer sceneDepthBuffer;
+    GlMesh sceneQuad;
+    
+    GlTexture outputTexture;
+    GlFramebuffer outputFbo;
     
     ExperimentalApp() : GLFWApp(600, 600, "Experimental App")
     {
@@ -128,12 +152,10 @@ struct ExperimentalApp : public GLFWApp
         emptyTex = load_image("assets/anvil.png");
         
         rootWidget.bounds = {0, 0, (float) width, (float) height};
-        rootWidget.add_child( {{0,+10},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UWidget>());
-        //rootWidget.add_child( {{0, 0}, {0.5, +10}, {0.5, 0}, {1.0, -10}}, std::make_shared<UWidget>());
+        rootWidget.add_child( {{0,+10},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UWidget>()); // for colorTexture
+        rootWidget.add_child( {{.50,+10},{0, +10},{1.0, -10},{0.5,0}}, std::make_shared<UWidget>()); // for depthTexture
         
         rootWidget.layout();
-    
-        myTexture.reset(new GLTextureView(emptyTex.get_gl_handle()));
         
         cameraController.set_camera(&camera);
         camera.fov = 75;
@@ -142,11 +164,47 @@ struct ExperimentalApp : public GLFWApp
         
         nvgCtx = make_nanovg_context(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
         
-        if(!nvgCtx)
-            throw std::runtime_error("error initializing nanovg context");
+        if (!nvgCtx) throw std::runtime_error("error initializing nanovg context");
         
         sourceFont = std::make_shared<NvgFont>(nvgCtx, "souce_sans_pro", read_file_binary("assets/source_code_pro_regular.ttf"));
 
+        ssaoShader.reset(new gfx::GlShader(read_file_text("assets/passthrough_vertex.glsl"), read_file_text("assets/arkano_ssao_frag.glsl")));
+        
+        gfx::gl_check_error(__FILE__, __LINE__);
+        
+        sceneColorTexture.load_data(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        sceneDepthTexture.load_data(width, height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        
+        sceneQuad = make_fullscreen_quad();
+        //sceneDepthBuffer = GlRenderbuffer(GL_DEPTH_COMPONENT16, width, height);
+        sceneFramebuffer.attach(GL_COLOR_ATTACHMENT0, sceneColorTexture);
+        sceneFramebuffer.attach(GL_DEPTH_ATTACHMENT, sceneDepthTexture);
+        if (!sceneFramebuffer.check_complete()) throw std::runtime_error("incomplete framebuffer");
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        
+        colorTextureView.reset(new GLTextureView(sceneColorTexture.get_gl_handle()));
+        depthTextureView.reset(new GLTextureView(sceneDepthTexture.get_gl_handle()));
+        
+        outputTexture.load_data(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        outputFbo.attach(GL_COLOR_ATTACHMENT0, outputTexture);
+        
+        /*
+        glBindFramebuffer(GL_FRAMEBUFFER, outputFbo.get_handle());
+        auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        switch(status)
+        {
+            case GL_FRAMEBUFFER_COMPLETE: break;
+            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: throw std::runtime_error("Framebuffer is not complete - GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: throw std::runtime_error("Framebuffer is not complete - GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+            case GL_FRAMEBUFFER_UNSUPPORTED: throw std::runtime_error("Framebuffer is not complete - GL_FRAMEBUFFER_UNSUPPORTED");
+            default: throw std::runtime_error("Framebuffer is not complete - unknown reason");
+        }
+        */
+        if (!outputFbo.check_complete()) throw std::runtime_error("incomplete framebuffer");
+        
+        gfx::gl_check_error(__FILE__, __LINE__);
+        
         //cameraSphere = Sphere(sofaModel.bounds.center(), 1);
         //myArcball = Arcball(&camera, cameraSphere);
         //myArcball.set_constraint_axis(float3(0, 1, 0));
@@ -233,7 +291,6 @@ struct ExperimentalApp : public GLFWApp
             {
                 nvgBeginPath(nvgCtx);
                 nvgRect(nvgCtx, widget->bounds.x0, widget->bounds.y0, widget->bounds.width(), widget->bounds.height());
-                std::cout << widget->bounds.width() << std::endl;
                 nvgStrokeColor(nvgCtx, nvgRGBA(255, 255, 255, 255));
                 nvgStrokeWidth(nvgCtx, 1.0f);
                 nvgStroke(nvgCtx);
@@ -260,76 +317,75 @@ struct ExperimentalApp : public GLFWApp
         
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
         
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        
-        glDisable(GL_POLYGON_OFFSET_FILL);
+        //glDepthFunc(GL_LEQUAL);
+        //glEnable(GL_BLEND);
+        //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_POLYGON_OFFSET_FILL);
         
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
-        
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
      
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         
-        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
-        
+        // Draw into the framebuffer
+        sceneFramebuffer.bind_to_draw();
         {
-            simpleShader->bind();
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             
-            simpleShader->uniform("u_viewProj", viewProj);
-            simpleShader->uniform("u_eye", float3(0, 10, -10));
+            skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
             
-            simpleShader->uniform("u_emissive", float3(.33f, 0.36f, 0.275f));
-            simpleShader->uniform("u_diffuse", float3(0.2f, 0.4f, 0.25f));
+            GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
+            glDrawBuffers(1, drawBuffers);
             
-            simpleShader->uniform("u_lights[0].position", float3(5, 10, -5));
-            simpleShader->uniform("u_lights[0].color", float3(0.7f, 0.2f, 0.2f));
-            
-            simpleShader->uniform("u_lights[1].position", float3(-5, 10, 5));
-            simpleShader->uniform("u_lights[1].color", float3(0.4f, 0.8f, 0.4f));
+            gfx::gl_check_error(__FILE__, __LINE__);
             
             {
-                sofaModel.pose.position = float3(0, -1, -4);
-                //sofaModel.pose.orientation = qmul(myArcball.get_quat(), sofaModel.pose.orientation);
+                simpleShader->bind();
                 
-                //std::cout <<  sofaModel.pose.orientation << std::endl;
+                simpleShader->uniform("u_viewProj", viewProj);
+                simpleShader->uniform("u_eye", float3(0, 10, -10));
                 
-                auto model = mul(sofaModel.pose.matrix(), make_scaling_matrix(0.001));
+                simpleShader->uniform("u_emissive", float3(.33f, 0.36f, 0.275f));
+                simpleShader->uniform("u_diffuse", float3(0.2f, 0.4f, 0.25f));
                 
-                simpleShader->uniform("u_modelMatrix", model);
-                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-                sofaModel.draw();
+                simpleShader->uniform("u_lights[0].position", float3(5, 10, -5));
+                simpleShader->uniform("u_lights[0].color", float3(0.7f, 0.2f, 0.2f));
+                
+                simpleShader->uniform("u_lights[1].position", float3(-5, 10, 5));
+                simpleShader->uniform("u_lights[1].color", float3(0.4f, 0.8f, 0.4f));
+                
+                {
+                    sofaModel.pose.position = float3(0, -1, -4);
+                    auto model = mul(sofaModel.pose.matrix(), make_scaling_matrix(0.001));
+                    simpleShader->uniform("u_modelMatrix", model);
+                    simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
+                    sofaModel.draw();
+                }
+                
+                simpleShader->unbind();
             }
-            
-            {
-                auto model = make_scaling_matrix(1);
-                simpleShader->uniform("u_modelMatrix", model);
-                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-                //skyMesh.draw_elements();
-            }
-            
-            simpleShader->unbind();
+            grid.render(proj, view);
+            gfx::gl_check_error(__FILE__, __LINE__);
         }
         
-        grid.render(proj, view);
+        // Bind to 0
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
-        for (auto widget : rootWidget.children)
-        {
-            myTexture->draw(widget->bounds, int2(width, height));
-        }
-
+        colorTextureView->draw(rootWidget.children[0]->bounds, int2(width, height));
+        depthTextureView->draw(rootWidget.children[1]->bounds, int2(width, height));
         gfx::gl_check_error(__FILE__, __LINE__);
         
-        draw_ui();
+        //draw_ui();
         
         glfwSwapBuffers(window);
         

@@ -5,6 +5,7 @@ using namespace math;
 
 #include <map>
 #include <vector>
+#include "GlTexture.hpp"
 
 static void compile_shader(GLuint program, GLenum type, const char * source)
 {
@@ -64,4 +65,9 @@ void GlShader::texture(const std::string & name, int unit, GLuint texId, GLenum 
     glUniform1i(get_uniform_location(name), unit);
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(textureTarget, texId);
+}
+
+void GlShader::texture(const char * name, int unit, const GlTexture & tex) const
+{
+    texture(name, unit, tex.get_gl_handle(), GL_TEXTURE_2D);
 }

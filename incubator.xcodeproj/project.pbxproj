@@ -110,6 +110,8 @@
 		08CFD2E61BDD79F000895E31 /* preetham.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = preetham.hpp; path = procedural_sky/preetham.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2E81BDD7A2700895E31 /* sky_preetham_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_preetham_frag.glsl; path = procedural_sky/sky_preetham_frag.glsl; sourceTree = SOURCE_ROOT; };
 		08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = procedural_sky.hpp; sourceTree = SOURCE_ROOT; };
+		08CFD2EB1BDDF7AC00895E31 /* arkano_ssao_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = arkano_ssao_frag.glsl; path = assets/arkano_ssao_frag.glsl; sourceTree = SOURCE_ROOT; };
+		08CFD2EC1BDDF7AC00895E31 /* filmgrain_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = filmgrain_frag.glsl; path = assets/filmgrain_frag.glsl; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -150,6 +152,7 @@
 		0812048F1BADDEC100C7C0F4 /* source */ = {
 			isa = PBXGroup;
 			children = (
+				08CFD2EA1BDDF79900895E31 /* shaders */,
 				08CFD2DB1BDD666000895E31 /* nanovg */,
 				0822AF391BDC772D00A894F0 /* procedural_sky */,
 				08289F821BC6019B0054AF3B /* OpenGL */,
@@ -289,6 +292,15 @@
 				08CFD2E21BDD669600895E31 /* nanovg.h */,
 			);
 			name = nvg;
+			sourceTree = "<group>";
+		};
+		08CFD2EA1BDDF79900895E31 /* shaders */ = {
+			isa = PBXGroup;
+			children = (
+				08CFD2EB1BDDF7AC00895E31 /* arkano_ssao_frag.glsl */,
+				08CFD2EC1BDDF7AC00895E31 /* filmgrain_frag.glsl */,
+			);
+			name = shaders;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

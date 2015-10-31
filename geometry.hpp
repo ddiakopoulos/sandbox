@@ -368,7 +368,7 @@ namespace util
         
     };
     
-    gfx::GlMesh make_sphere_mesh(float radius)
+    inline gfx::GlMesh make_sphere_mesh(float radius)
     {
         Geometry sphereGeom;
         

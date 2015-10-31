@@ -43,6 +43,7 @@ namespace gfx
         void uniform(const std::string & name, const math::mat<float,4,4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
         
         void texture(const std::string & name, int unit, GLuint texId, GLenum textureTarget) const;
+        void texture(const char * name, int unit, const GlTexture & tex) const;
         
         void bind() { if (program > 0) enabled = true; glUseProgram(program); }
         void unbind() { enabled = false; glUseProgram(0); }

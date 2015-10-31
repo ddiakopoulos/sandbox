@@ -300,6 +300,31 @@ namespace gfx
         return make_ray(camera, aspectRatio, posPixels.x / imageSizePixels.x, (imageSizePixels.y - posPixels.y) / imageSizePixels.y, imageSizePixels.x / imageSizePixels.y);
     }
     
+    class GlRenderbuffer : public util::Noncopyable
+    {
+        GLuint renderbuffer;
+        math::int2 size;
+    public:
+        
+        GlRenderbuffer() : renderbuffer() {}
+        GlRenderbuffer(GLenum internalformat, GLsizei width, GLsizei height)
+        {
+            glGenRenderbuffers(1, &renderbuffer);
+            glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+            glRenderbufferStorage(GL_RENDERBUFFER, internalformat, width, height);
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            size = {width, height};
+        }
+        
+        GlRenderbuffer(GlRenderbuffer && r) : GlRenderbuffer() { *this = std::move(r); }
+        ~GlRenderbuffer() { if(renderbuffer) glDeleteRenderbuffers(1, &renderbuffer); }
+        
+        GlRenderbuffer & operator = (GlRenderbuffer && r) { std::swap(renderbuffer, r.renderbuffer); std::swap(size, r.size); return *this; }
+        
+        GLuint get_handle() const { return renderbuffer; }
+        math::int2 get_size() const { return size; }
+    };
+    
     struct GlTexture;
     class GlFramebuffer : public util::Noncopyable
     {
@@ -322,6 +347,7 @@ namespace gfx
         }
         
         void attach(GLenum attachment, const GlTexture & tex);
+        void attach(GLenum attachment, const GlRenderbuffer & rb);
         
         void bind_to_draw()
         {
