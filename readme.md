@@ -1,16 +1,25 @@
 # Experiments!
 
-1. CPU path tracer
-2. GPU path tracer
-3. Reaction-diffusion simulator
-4. Game-engine-style gizmo editing interface
-5. Canonical opengl SSAO (+ model baker)
-6. Fluid simulator with a compute shader
-7. Optitrak nat-net i/o
-8. Deferred rendering experiments
-9. Impulse response raytracer
-10. CEGUI universal coordinate layout +  cassowary constraint solver
-11. Procedural scene: skybox, clouds, trees.
-12. L-System + Particles
-12. Dual Contouring
-13. Immediate Mode GUI
+* Film grain post-process
+* FXAA
+* Game-engine-style gizmo editing interface
+* Collision geometry
+* UI layout via cassowary constraint solver (Rhea library)
+* Dual contouring + terrain deformation (ref. impl)
+* A Simple scenegraph
+* CPU path tracer (+ lighting baker?)
+* Immediate Mode GUI test
+* Reaction-diffusion simulator
+* Fluid simulator with a compute shader
+* Optitrak nat-net i/o
+* Procedural scene: clouds, trees.
+* Deferred rendering experiments
+* L-System + particles
+* Impulse response raytracer
+
+# Recent
+* Arkano22 SSAO implementation
+* CEGUI layout system
+* Procedrual sky dome with Preentham and Hosek-Wilkie models
+* Arcball camera
+* Basic image morphologies (erode/dilate)

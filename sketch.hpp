@@ -76,6 +76,7 @@ std::vector<int> box_element_3x3_identity = {0, 0, 0, 0, 1, 0, 0, 0, 0};
 // 3x3 matrix -- fully square structring element
 std::vector<int> box_element_3x3_square = {1, 1, 1, 1, 1, 1, 1, 1, 1};
 
+// Todo: check odd kernel size, pass in kernel
 void erode_dilate_kernel(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight, filter_type t)
 {
     int dx, dy, wx, wy;
