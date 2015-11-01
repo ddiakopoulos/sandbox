@@ -70,7 +70,7 @@ namespace util
         template<class T> as_string & operator << (const T & val) { ss << val; return *this; }
     };
     
-    enum class LogChannel : uint8_t { LOG_NADA, LOG_ERROR, LOG_INFO };
+    enum class LogChannel : uint8_t { LOG_SILENT, LOG_ERROR, LOG_INFO };
     
     inline void print_log(LogChannel severity, const char * file, int line, const std::string & message)
     {

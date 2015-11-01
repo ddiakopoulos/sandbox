@@ -33,6 +33,7 @@
 #include "procedural_sky.hpp"
 #include "nvg.hpp"
 #include "nanovg_gl.h"
+#include "gpu_timer.hpp"
 
 using namespace math;
 using namespace util;
@@ -96,6 +97,8 @@ struct ExperimentalApp : public GLFWApp
     GlFramebuffer outputFbo;
     
     int enableAo = 0;
+    
+    GPUTimer * sceneTimer = new GPUTimer("Scene");
     
     ExperimentalApp() : GLFWApp(600, 600, "Experimental App")
     {
@@ -315,6 +318,8 @@ struct ExperimentalApp : public GLFWApp
     
     void on_draw() override
     {
+        sceneTimer->start();
+        
         static int frameCount = 0;
         
         glfwMakeContextCurrent(window);
@@ -387,21 +392,22 @@ struct ExperimentalApp : public GLFWApp
         gfx::gl_check_error(__FILE__, __LINE__);
         
         {
-             ssaoShader->bind();
-            
-             ssaoShader->texture("u_colorTexture", 0, sceneColorTexture);
-             ssaoShader->texture("u_depthTexture", 1, sceneDepthTexture);
-             ssaoShader->uniform("u_useNoise", 1);
-             ssaoShader->uniform("u_useMist", 0);
-             ssaoShader->uniform("u_aoOnly", enableAo);
-             ssaoShader->uniform("u_cameraNearClip", camera.nearClip);
-             ssaoShader->uniform("u_cameraFarClip", camera.farClip);
-             ssaoShader->uniform("u_resolution", float2(width, height));
-            
-             // Passthrough geometry
-             sceneQuad.draw_elements();
-            
-             ssaoShader->unbind();
+            //GPU_SCOPED_TIMER("SSAO Pass");
+            ssaoShader->bind();
+
+            ssaoShader->texture("u_colorTexture", 0, sceneColorTexture);
+            ssaoShader->texture("u_depthTexture", 1, sceneDepthTexture);
+            ssaoShader->uniform("u_useNoise", 1);
+            ssaoShader->uniform("u_useMist", 0);
+            ssaoShader->uniform("u_aoOnly", enableAo);
+            ssaoShader->uniform("u_cameraNearClip", camera.nearClip);
+            ssaoShader->uniform("u_cameraFarClip", camera.farClip);
+            ssaoShader->uniform("u_resolution", float2(width, height));
+
+            // Passthrough geometry
+            sceneQuad.draw_elements();
+
+            ssaoShader->unbind();
         }
         
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -420,6 +426,8 @@ struct ExperimentalApp : public GLFWApp
         glfwSwapBuffers(window);
         
         frameCount++;
+        
+        sceneTimer->stop();
     }
     
 };
@@ -430,4 +438,3 @@ IMPLEMENT_MAIN(int argc, char * argv[])
     app.main_loop();
     return 0;
 }
-

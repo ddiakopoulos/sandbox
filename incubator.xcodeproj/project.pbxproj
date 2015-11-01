@@ -83,6 +83,7 @@
 		08289F891BC609B80054AF3B /* GlShared.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GlShared.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD711BE56C7E000F148E /* passthrough_vertex.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = passthrough_vertex.glsl; path = assets/passthrough_vertex.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD721BE691B1000F148E /* fxaa_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = fxaa_frag.glsl; path = assets/fxaa_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD731BE6A031000F148E /* gpu_timer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = gpu_timer.hpp; sourceTree = SOURCE_ROOT; };
 		085081951BB5B6EA0084A1D6 /* glfw_app.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = glfw_app.mm; sourceTree = SOURCE_ROOT; };
 		085081961BB5B6EA0084A1D6 /* glfw_app.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glfw_app.hpp; sourceTree = SOURCE_ROOT; };
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -189,6 +190,7 @@
 				0822AF321BD389EA00A894F0 /* universal_widget.hpp */,
 				0822AF331BD4212100A894F0 /* arcball.hpp */,
 				08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */,
+				0849FD731BE6A031000F148E /* gpu_timer.hpp */,
 				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
 			name = source;
