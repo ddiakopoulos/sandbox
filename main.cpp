@@ -65,7 +65,8 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GlShader> simpleShader;
     
     std::unique_ptr<GlShader> ssaoShader;
-    std::unique_ptr<GlShader> textureShader;
+    std::unique_ptr<GlShader> filmGrainShader;
+    std::unique_ptr<GlShader> fxaaShader;
     
     UWidget rootWidget;
     
@@ -172,6 +173,9 @@ struct ExperimentalApp : public GLFWApp
         sourceFont = std::make_shared<NvgFont>(nvgCtx, "souce_sans_pro", read_file_binary("assets/source_code_pro_regular.ttf"));
 
         ssaoShader.reset(new gfx::GlShader(read_file_text("assets/passthrough_vertex.glsl"), read_file_text("assets/arkano_ssao_frag.glsl")));
+        
+        filmGrainShader.reset(new gfx::GlShader(read_file_text("assets/passthrough_vertex.glsl"), read_file_text("assets/filmgrain_frag.glsl")));
+        fxaaShader.reset(new gfx::GlShader(read_file_text("assets/passthrough_vertex.glsl"), read_file_text("assets/fxaa_frag.glsl")));
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
