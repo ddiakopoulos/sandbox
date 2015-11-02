@@ -56,7 +56,7 @@ struct ExperimentalApp : public GLFWApp
     Model sofaModel;
     Geometry sofaGeometry;
     
-    GlTexture emptyTex;
+    GlTexture crateDiffuseTex;
     
     std::unique_ptr<GLTextureView> colorTextureView;
     std::unique_ptr<GLTextureView> depthTextureView;
@@ -112,12 +112,12 @@ struct ExperimentalApp : public GLFWApp
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
-        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
+        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         
         //std::vector<uint8_t> whitePixel = {255,255,255,255};
         //emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel.data());
         
-        emptyTex = load_image("assets/images/anvil.png");
+        crateDiffuseTex = load_image("assets/models/crate/crate_diffuse.png");
         
         rootWidget.bounds = {0, 0, (float) width, (float) height};
         rootWidget.add_child( {{0,+10},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UWidget>()); // for colorTexture
@@ -317,6 +317,8 @@ struct ExperimentalApp : public GLFWApp
                 
                 simpleShader->uniform("u_lights[1].position", float3(-5, 10, 5));
                 simpleShader->uniform("u_lights[1].color", float3(0.4f, 0.8f, 0.4f));
+                
+                simpleShader->texture("u_diffuseTex", 0, crateDiffuseTex.get_gl_handle(), GL_TEXTURE_2D);
                 
                 {
                     sofaModel.pose.position = float3(0, 0, 0);

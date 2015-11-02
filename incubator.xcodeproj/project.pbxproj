@@ -80,6 +80,17 @@
 		08289F871BC609750054AF3B /* GlMesh.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GlMesh.hpp; sourceTree = SOURCE_ROOT; };
 		08289F891BC609B80054AF3B /* GlShared.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GlShared.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD731BE6A031000F148E /* gpu_timer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = gpu_timer.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD741BE7C1C1000F148E /* arkano_ssao_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = arkano_ssao_frag.glsl; path = assets/shaders/arkano_ssao_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD751BE7C1C1000F148E /* filmgrain_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = filmgrain_frag.glsl; path = assets/shaders/filmgrain_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD761BE7C1C1000F148E /* fxaa_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = fxaa_frag.glsl; path = assets/shaders/fxaa_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD771BE7C1C1000F148E /* post_vertex.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = post_vertex.glsl; path = assets/shaders/post_vertex.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD781BE7C1C1000F148E /* simple_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = simple_frag.glsl; path = assets/shaders/simple_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD791BE7C1C1000F148E /* simple_texture_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = simple_texture_frag.glsl; path = assets/shaders/simple_texture_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD7A1BE7C1C1000F148E /* simple_texture_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = simple_texture_vert.glsl; path = assets/shaders/simple_texture_vert.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD7B1BE7C1C1000F148E /* simple_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = simple_vert.glsl; path = assets/shaders/simple_vert.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD7C1BE7C1C1000F148E /* sky_hosek_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_hosek_frag.glsl; path = assets/shaders/sky_hosek_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD7D1BE7C1C1000F148E /* sky_preetham_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_preetham_frag.glsl; path = assets/shaders/sky_preetham_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD7E1BE7C1C1000F148E /* sky_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_vert.glsl; path = assets/shaders/sky_vert.glsl; sourceTree = SOURCE_ROOT; };
 		085081951BB5B6EA0084A1D6 /* glfw_app.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = glfw_app.mm; sourceTree = SOURCE_ROOT; };
 		085081961BB5B6EA0084A1D6 /* glfw_app.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glfw_app.hpp; sourceTree = SOURCE_ROOT; };
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -291,6 +302,17 @@
 		08CFD2EA1BDDF79900895E31 /* shaders */ = {
 			isa = PBXGroup;
 			children = (
+				0849FD741BE7C1C1000F148E /* arkano_ssao_frag.glsl */,
+				0849FD751BE7C1C1000F148E /* filmgrain_frag.glsl */,
+				0849FD761BE7C1C1000F148E /* fxaa_frag.glsl */,
+				0849FD771BE7C1C1000F148E /* post_vertex.glsl */,
+				0849FD781BE7C1C1000F148E /* simple_frag.glsl */,
+				0849FD791BE7C1C1000F148E /* simple_texture_frag.glsl */,
+				0849FD7A1BE7C1C1000F148E /* simple_texture_vert.glsl */,
+				0849FD7B1BE7C1C1000F148E /* simple_vert.glsl */,
+				0849FD7C1BE7C1C1000F148E /* sky_hosek_frag.glsl */,
+				0849FD7D1BE7C1C1000F148E /* sky_preetham_frag.glsl */,
+				0849FD7E1BE7C1C1000F148E /* sky_vert.glsl */,
 			);
 			name = shaders;
 			sourceTree = "<group>";
