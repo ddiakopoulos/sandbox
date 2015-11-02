@@ -92,6 +92,11 @@
 		0849FD831BE7C66E000F148E /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyply.cpp; path = third_party/tinyply.cpp; sourceTree = SOURCE_ROOT; };
 		0849FD841BE7C66E000F148E /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyply.h; path = third_party/tinyply.h; sourceTree = SOURCE_ROOT; };
 		0849FD871BE7C801000F148E /* anvil.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = anvil.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD881BE7CAAB000F148E /* arcball_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = arcball_app.hpp; path = examples/arcball_app.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD891BE7CAAB000F148E /* empty_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = empty_app.hpp; path = examples/empty_app.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = sandbox_app.hpp; path = examples/sandbox_app.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD8B1BE7CAAB000F148E /* skydome_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = skydome_app.hpp; path = examples/skydome_app.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ssao_app.hpp; path = examples/ssao_app.hpp; sourceTree = SOURCE_ROOT; };
 		085081951BB5B6EA0084A1D6 /* glfw_app.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = glfw_app.mm; sourceTree = SOURCE_ROOT; };
 		085081961BB5B6EA0084A1D6 /* glfw_app.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glfw_app.hpp; sourceTree = SOURCE_ROOT; };
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -252,6 +257,11 @@
 		0849FD861BE7C6F0000F148E /* examples */ = {
 			isa = PBXGroup;
 			children = (
+				0849FD881BE7CAAB000F148E /* arcball_app.hpp */,
+				0849FD891BE7CAAB000F148E /* empty_app.hpp */,
+				0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */,
+				0849FD8B1BE7CAAB000F148E /* skydome_app.hpp */,
+				0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */,
 			);
 			name = examples;
 			sourceTree = "<group>";

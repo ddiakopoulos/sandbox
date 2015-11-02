@@ -1,47 +1,16 @@
 #include <iostream>
 #include <sstream>
 
-#include "util.hpp"
-#include "string_utils.hpp"
-#include "geometric.hpp"
-#include "linear_algebra.hpp"
-#include "math_util.hpp"
-#include "circular_buffer.hpp"
-#include "concurrent_queue.hpp"
-#include "try_locker.hpp"
-#include "running_statistics.hpp"
-#include "time_keeper.hpp"
-#include "human_time.hpp"
-#include "signal.hpp" // todo: rename
-#include "one_euro.hpp"
-#include "json.hpp"
-#include "geometry.hpp"
-#include "pid_controller.hpp"
-#include "base64.hpp"
-#include "dsp_filters.hpp"
-#include "bit_mask.hpp"
-#include "file_io.hpp"
-#include "GlMesh.hpp"
-#include "GlShader.hpp"
-#include "GlTexture.hpp"
-#include "universal_widget.hpp"
-#include "arcball.hpp"
-#include "sketch.hpp"
-#include "glfw_app.hpp"
-#include "renderable_grid.hpp"
-#include "procedural_sky.hpp"
-#include "nvg.hpp"
-#include "nanovg_gl.h"
-#include "gpu_timer.hpp"
+#include "anvil.hpp"
 
 using namespace math;
 using namespace util;
-using namespace tinyply;
 using namespace gfx;
 
 static const float TEXT_OFFSET_X = 3;
 static const float TEXT_OFFSET_Y = 1;
 
+/*
 struct ExperimentalApp : public GLFWApp
 {
     
@@ -372,10 +341,13 @@ struct ExperimentalApp : public GLFWApp
     
 };
 
+*/
+
 //#include "examples/sandbox_app.hpp"
 //#include "examples/ssao_app.hpp"
 //#include "examples/arcball_app.hpp"
 //#include "examples/skydome_app.hpp"
+#include "examples/empty_app.hpp"
 
 IMPLEMENT_MAIN(int argc, char * argv[])
 {
