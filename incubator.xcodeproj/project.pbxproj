@@ -8,13 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		0812049D1BADDF6800C7C0F4 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0812049C1BADDF6800C7C0F4 /* main.cpp */; };
-		081204AC1BAE3AA500C7C0F4 /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 081204AA1BAE3AA500C7C0F4 /* json.cpp */; };
 		0822AF301BCC16D200A894F0 /* GlTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF2E1BCC16D200A894F0 /* GlTexture.cpp */; };
 		0822AF371BD4ADBF00A894F0 /* GlShared.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF361BD4ADBF00A894F0 /* GlShared.cpp */; };
 		0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF3C1BDC773C00A894F0 /* hosek.cpp */; };
-		08289F801BC5F7F30054AF3B /* tinyply.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08289F7E1BC5F7F30054AF3B /* tinyply.cpp */; };
 		08289F851BC601A70054AF3B /* GlShader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08289F831BC601A70054AF3B /* GlShader.cpp */; };
 		08289F881BC609750054AF3B /* GlMesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08289F861BC609750054AF3B /* GlMesh.cpp */; };
+		0849FD821BE7C667000F148E /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD801BE7C667000F148E /* json.cpp */; };
+		0849FD851BE7C66E000F148E /* tinyply.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD831BE7C66E000F148E /* tinyply.cpp */; };
 		085081971BB5B6EA0084A1D6 /* glfw_app.mm in Sources */ = {isa = PBXBuildFile; fileRef = 085081951BB5B6EA0084A1D6 /* glfw_app.mm */; };
 		087A4EA21BB8EC9B00975C72 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA11BB8EC9B00975C72 /* OpenGL.framework */; };
 		087A4EA41BB8ECA100975C72 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA31BB8ECA100975C72 /* GLKit.framework */; };
@@ -56,8 +56,6 @@
 		081204A71BAE330600C7C0F4 /* one_euro.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = one_euro.hpp; sourceTree = SOURCE_ROOT; };
 		081204A81BAE336600C7C0F4 /* util.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = util.hpp; sourceTree = SOURCE_ROOT; };
 		081204A91BAE367900C7C0F4 /* string_utils.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = string_utils.hpp; sourceTree = SOURCE_ROOT; };
-		081204AA1BAE3AA500C7C0F4 /* json.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = json.cpp; sourceTree = SOURCE_ROOT; };
-		081204AB1BAE3AA500C7C0F4 /* json.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = json.hpp; sourceTree = SOURCE_ROOT; };
 		081204AD1BAE7C8600C7C0F4 /* geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = geometry.hpp; sourceTree = SOURCE_ROOT; };
 		081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = pid_controller.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF2E1BCC16D200A894F0 /* GlTexture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlTexture.cpp; sourceTree = SOURCE_ROOT; };
@@ -71,8 +69,6 @@
 		0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = hosek_data_rgb.inl; path = procedural_sky/hosek_data_rgb.inl; sourceTree = SOURCE_ROOT; };
 		0822AF3C1BDC773C00A894F0 /* hosek.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hosek.cpp; path = procedural_sky/hosek.cpp; sourceTree = SOURCE_ROOT; };
 		0822AF3D1BDC773C00A894F0 /* hosek.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = hosek.hpp; path = procedural_sky/hosek.hpp; sourceTree = SOURCE_ROOT; };
-		08289F7E1BC5F7F30054AF3B /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tinyply.cpp; sourceTree = SOURCE_ROOT; };
-		08289F7F1BC5F7F30054AF3B /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tinyply.h; sourceTree = SOURCE_ROOT; };
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
 		08289F831BC601A70054AF3B /* GlShader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlShader.cpp; sourceTree = SOURCE_ROOT; };
 		08289F841BC601A70054AF3B /* GlShader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GlShader.hpp; sourceTree = SOURCE_ROOT; };
@@ -91,12 +87,16 @@
 		0849FD7C1BE7C1C1000F148E /* sky_hosek_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_hosek_frag.glsl; path = assets/shaders/sky_hosek_frag.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD7D1BE7C1C1000F148E /* sky_preetham_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_preetham_frag.glsl; path = assets/shaders/sky_preetham_frag.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD7E1BE7C1C1000F148E /* sky_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_vert.glsl; path = assets/shaders/sky_vert.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD801BE7C667000F148E /* json.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = json.cpp; path = third_party/json.cpp; sourceTree = SOURCE_ROOT; };
+		0849FD811BE7C667000F148E /* json.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = json.hpp; path = third_party/json.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD831BE7C66E000F148E /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyply.cpp; path = third_party/tinyply.cpp; sourceTree = SOURCE_ROOT; };
+		0849FD841BE7C66E000F148E /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyply.h; path = third_party/tinyply.h; sourceTree = SOURCE_ROOT; };
 		085081951BB5B6EA0084A1D6 /* glfw_app.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = glfw_app.mm; sourceTree = SOURCE_ROOT; };
 		085081961BB5B6EA0084A1D6 /* glfw_app.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glfw_app.hpp; sourceTree = SOURCE_ROOT; };
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		087A4EA31BB8ECA100975C72 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		087A4EA51BB8ECA600975C72 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		087A4EA91BB995AD00975C72 /* libglfw3.3.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw3.3.1.dylib; path = ../../../../usr/local/Cellar/glfw3/3.1.1/lib/libglfw3.3.1.dylib; sourceTree = "<group>"; };
+		087A4EA91BB995AD00975C72 /* libglfw3.3.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw3.3.1.dylib; path = /usr/local/Cellar/glfw3/3.1.1/lib/libglfw3.3.1.dylib; sourceTree = "<absolute>"; };
 		089B85FD1BAFC70B00B3A290 /* base64.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = base64.hpp; sourceTree = SOURCE_ROOT; };
 		089B86071BAFC9AB00B3A290 /* murmur_hash_3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = murmur_hash_3.cpp; path = third_party/murmur_hash_3.cpp; sourceTree = SOURCE_ROOT; };
 		089B86081BAFC9AB00B3A290 /* murmur_hash_3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = murmur_hash_3.h; path = third_party/murmur_hash_3.h; sourceTree = SOURCE_ROOT; };
@@ -139,10 +139,7 @@
 		081204841BADDEC100C7C0F4 = {
 			isa = PBXGroup;
 			children = (
-				087A4EA91BB995AD00975C72 /* libglfw3.3.1.dylib */,
-				087A4EA51BB8ECA600975C72 /* Cocoa.framework */,
-				087A4EA31BB8ECA100975C72 /* GLKit.framework */,
-				087A4EA11BB8EC9B00975C72 /* OpenGL.framework */,
+				0849FD7F1BE7C326000F148E /* Dependencies */,
 				0812048F1BADDEC100C7C0F4 /* source */,
 				0812048E1BADDEC100C7C0F4 /* Products */,
 			);
@@ -180,12 +177,12 @@
 				081204A41BAE09F300C7C0F4 /* time_keeper.hpp */,
 				081204A51BAE0C1700C7C0F4 /* human_time.hpp */,
 				081204A61BAE0CC100C7C0F4 /* signal.hpp */,
+				0849FD801BE7C667000F148E /* json.cpp */,
+				0849FD811BE7C667000F148E /* json.hpp */,
 				081204A71BAE330600C7C0F4 /* one_euro.hpp */,
 				081204A81BAE336600C7C0F4 /* util.hpp */,
 				081204A91BAE367900C7C0F4 /* string_utils.hpp */,
 				08289F811BC5F8370054AF3B /* file_io.hpp */,
-				081204AA1BAE3AA500C7C0F4 /* json.cpp */,
-				081204AB1BAE3AA500C7C0F4 /* json.hpp */,
 				081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */,
 				089B85FD1BAFC70B00B3A290 /* base64.hpp */,
 				089B86141BAFD06300B3A290 /* dsp_filters.hpp */,
@@ -216,8 +213,8 @@
 		08289F7D1BC5F7E40054AF3B /* tinyply */ = {
 			isa = PBXGroup;
 			children = (
-				08289F7E1BC5F7F30054AF3B /* tinyply.cpp */,
-				08289F7F1BC5F7F30054AF3B /* tinyply.h */,
+				0849FD831BE7C66E000F148E /* tinyply.cpp */,
+				0849FD841BE7C66E000F148E /* tinyply.h */,
 			);
 			name = tinyply;
 			sourceTree = "<group>";
@@ -236,6 +233,17 @@
 				0822AF381BD4B52100A894F0 /* renderable_grid.hpp */,
 			);
 			name = OpenGL;
+			sourceTree = "<group>";
+		};
+		0849FD7F1BE7C326000F148E /* Dependencies */ = {
+			isa = PBXGroup;
+			children = (
+				087A4EA91BB995AD00975C72 /* libglfw3.3.1.dylib */,
+				087A4EA51BB8ECA600975C72 /* Cocoa.framework */,
+				087A4EA31BB8ECA100975C72 /* GLKit.framework */,
+				087A4EA11BB8EC9B00975C72 /* OpenGL.framework */,
+			);
+			name = Dependencies;
 			sourceTree = "<group>";
 		};
 		085081981BB5B6F10084A1D6 /* app */ = {
@@ -375,17 +383,17 @@
 			files = (
 				0812049D1BADDF6800C7C0F4 /* main.cpp in Sources */,
 				089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */,
-				08289F801BC5F7F30054AF3B /* tinyply.cpp in Sources */,
 				089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */,
 				0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */,
 				08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */,
 				0822AF371BD4ADBF00A894F0 /* GlShared.cpp in Sources */,
 				08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */,
+				0849FD851BE7C66E000F148E /* tinyply.cpp in Sources */,
 				08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */,
 				089B86121BAFC9AB00B3A290 /* noise1234.cpp in Sources */,
-				081204AC1BAE3AA500C7C0F4 /* json.cpp in Sources */,
 				08289F881BC609750054AF3B /* GlMesh.cpp in Sources */,
 				085081971BB5B6EA0084A1D6 /* glfw_app.mm in Sources */,
+				0849FD821BE7C667000F148E /* json.cpp in Sources */,
 				0822AF301BCC16D200A894F0 /* GlTexture.cpp in Sources */,
 				08289F851BC601A70054AF3B /* GlShader.cpp in Sources */,
 			);

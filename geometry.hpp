@@ -351,7 +351,7 @@ namespace util
             return false;
         }
         
-        // Returns the closest point on \a ray to the Sphere. If \a ray intersects then returns the point of nearest intersection.
+        // Returns the closest point on the ray to the Sphere. If ray intersects then returns the point of nearest intersection.
         math::float3 closest_point(const gfx::Ray & ray) const
         {
             float t;
@@ -379,7 +379,7 @@ namespace util
             return center + math::normalize( onRay - center ) * radius;
         }
         
-        // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms in \a transform.
+        // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms in a transform.
         Sphere transformed(const math::float4x4 & transform)
         {
             math::float4 tCenter = transform * math::float4(center, 1);
@@ -412,7 +412,7 @@ namespace util
             }
         }
         
-        // Calculates the projection of the Sphere (an oriented ellipse) given \a focalLength. Algorithm due to Iñigo Quilez.
+        // Calculates the projection of the Sphere (an oriented ellipse) given a focalLength. Algorithm due to Iñigo Quilez.
         void calculate_projection(float focalLength, math::float2 screenSizePixels, math::float2 * outCenter, math::float2 * outAxisA, math::float2 * outAxisB) const
         {
             auto toScreenPixels = [=] (math::float2 v, const math::float2 &winSizePx) {

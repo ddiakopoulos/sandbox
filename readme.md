@@ -25,9 +25,7 @@
 * Basic image morphologies (erode/dilate)
 
 # Technical Debt
-* Rename: post_vertex.glsl, make_post_quad()
 * Make cubemap box
-* Create model loader
 * Create skydome app
 * Model loading app with arcball camera
 * SSAO App

@@ -49,8 +49,8 @@
     #define GL_PUSH_ALL_ATTRIB() glPushAttrib(GL_ALL_ATTRIB_BITS);
     #define GL_POP_ATTRIB() glPopAttrib();
 #else
-    #define GL_PUSH_ALL_ATTRIB()
-    #define GL_POP_ATTRIB()
+    #define GL_PUSH_ALL_ATTRIB();
+    #define GL_POP_ATTRIB();
 #endif
 
 static const math::float4x4 Identity4x4 = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};

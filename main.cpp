@@ -16,7 +16,7 @@
 #include "one_euro.hpp"
 #include "json.hpp"
 #include "geometry.hpp"
-#include "pid_controller.hpp" // todo: do integration in pid class
+#include "pid_controller.hpp"
 #include "base64.hpp"
 #include "dsp_filters.hpp"
 #include "bit_mask.hpp"

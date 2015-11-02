@@ -5,13 +5,13 @@ using namespace math;
 
 void GlMesh::draw_elements() const
 {
-    GLsizei vertexCount = vstride ? (vbo.size() / vstride) : 0;
+    GLsizei vertexCount = vstride ? ((int) vbo.size() / vstride) : 0;
     
     GLsizei indexCount = [&]()
     {
-        if (indexType == GL_UNSIGNED_BYTE) return (ibo.size() / sizeof(GLubyte));
-        if (indexType == GL_UNSIGNED_SHORT) return (ibo.size() / sizeof(GLushort));
-        if (indexType == GL_UNSIGNED_INT) return (ibo.size() / sizeof(GLuint));
+        if (indexType == GL_UNSIGNED_BYTE) return ((int)ibo.size() / sizeof(GLubyte));
+        if (indexType == GL_UNSIGNED_SHORT) return ((int)ibo.size() / sizeof(GLushort));
+        if (indexType == GL_UNSIGNED_INT) return ((int)ibo.size() / sizeof(GLuint));
         else return (unsigned long) 0;
     }();
 
