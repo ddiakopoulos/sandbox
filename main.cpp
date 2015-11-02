@@ -28,7 +28,6 @@
 #include "arcball.hpp"
 #include "sketch.hpp"
 #include "glfw_app.hpp"
-#include "tinyply.h"
 #include "renderable_grid.hpp"
 #include "procedural_sky.hpp"
 #include "nvg.hpp"
@@ -106,44 +105,7 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        try
-        {
-            std::ifstream ss("assets/sofa.ply", std::ios::binary);
-            PlyFile file(ss);
-            
-            std::vector<float> verts;
-            std::vector<int32_t> faces;
-            std::vector<float> texCoords;
-            
-            uint32_t vertexCount = file.request_properties_from_element("vertex", {"x", "y", "z"}, verts);
-            uint32_t numTriangles = file.request_properties_from_element("face", {"vertex_indices"}, faces, 3);
-            uint32_t uvCount = file.request_properties_from_element("face", {"texcoord"}, texCoords, 6);
-            
-            file.read(ss);
-            
-            sofaGeometry.vertices.reserve(vertexCount);
-            for (int i = 0; i < vertexCount * 3; i+=3)
-                sofaGeometry.vertices.push_back(math::float3(verts[i], verts[i+1], verts[i+2]));
-            
-            sofaGeometry.faces.reserve(numTriangles);
-            for (int i = 0; i < numTriangles * 3; i+=3)
-                sofaGeometry.faces.push_back(math::uint3(faces[i], faces[i+1], faces[i+2]));
-            
-            sofaGeometry.texCoords.reserve(uvCount);
-            for (int i = 0; i < uvCount * 6; i+= 2)
-                sofaGeometry.texCoords.push_back(math::float2(texCoords[i], texCoords[i+1]));
-
-            sofaGeometry.compute_normals();
-            sofaGeometry.compute_bounds();
-            sofaGeometry.compute_tangents();
-            
-            std::cout << "Read " << vertexCount << " vertices..." << std::endl;
-            
-        }
-        catch (std::exception e)
-        {
-            std::cerr << "Caught exception: " << e.what() << std::endl;
-        }
+        sofaGeometry = load_geometry_from_ply("assets/models/crate/crate.ply");
         
         sofaModel.mesh = make_mesh_from_geometry(sofaGeometry);
         sofaModel.bounds = sofaGeometry.compute_bounds();
@@ -218,22 +180,7 @@ struct ExperimentalApp : public GLFWApp
     {
         if (event.type == InputEvent::KEY)
         {
-            if (event.value[0] == GLFW_KEY_RIGHT && event.action == GLFW_RELEASE)
-            {
-                //sunPhi += 5;
-            }
-            if (event.value[0] == GLFW_KEY_LEFT && event.action == GLFW_RELEASE)
-            {
-                //sunPhi -= 5;
-            }
-            if (event.value[0] == GLFW_KEY_UP && event.action == GLFW_RELEASE)
-            {
-                //sunTheta += 5;
-            }
-            if (event.value[0] == GLFW_KEY_DOWN && event.action == GLFW_RELEASE)
-            {
-                //sunTheta -= 5;
-            }
+
             if (event.value[0] == GLFW_KEY_EQUAL && event.action == GLFW_RELEASE)
             {
                 camera.fov += 1;
@@ -318,7 +265,7 @@ struct ExperimentalApp : public GLFWApp
     
     void on_draw() override
     {
-        sceneTimer->start();
+        //sceneTimer->start();
         
         static int frameCount = 0;
         
@@ -372,8 +319,8 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->uniform("u_lights[1].color", float3(0.4f, 0.8f, 0.4f));
                 
                 {
-                    sofaModel.pose.position = float3(0, -1, -4);
-                    auto model = mul(sofaModel.pose.matrix(), make_scaling_matrix(0.001));
+                    sofaModel.pose.position = float3(0, 0, 0);
+                    auto model = mul(sofaModel.pose.matrix(), make_scaling_matrix(0.1));
                     simpleShader->uniform("u_modelMatrix", model);
                     simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
                     sofaModel.draw();
@@ -392,7 +339,6 @@ struct ExperimentalApp : public GLFWApp
         gfx::gl_check_error(__FILE__, __LINE__);
         
         {
-            //GPU_SCOPED_TIMER("SSAO Pass");
             ssaoShader->bind();
 
             ssaoShader->texture("u_colorTexture", 0, sceneColorTexture);
@@ -427,7 +373,7 @@ struct ExperimentalApp : public GLFWApp
         
         frameCount++;
         
-        sceneTimer->stop();
+        //sceneTimer->stop();
     }
     
 };
