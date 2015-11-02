@@ -1,12 +1,15 @@
-#ifndef geometry_H
-#define geometry_H
+#ifndef geometry_h
+#define geometry_h
 
 #include "linear_algebra.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include "GlMesh.hpp"
+#include "tinyply.h"
 
+#include <sstream>
 #include <vector>
+#include <fstream>
 
 namespace util
 {
@@ -128,6 +131,66 @@ namespace util
 
     };
     
+    // Handles trimeshes only
+    inline Geometry load_geometry_from_ply(const std::string & path)
+    {
+        Geometry geo;
+        
+        try
+        {
+            std::ifstream ss(path, std::ios::binary);
+            
+            if (ss.rdbuf()->in_avail())
+                throw std::runtime_error("Could not load file" + path);
+            
+            tinyply::PlyFile file(ss);
+            
+            std::vector<float> verts;
+            std::vector<int32_t> faces;
+            std::vector<float> texCoords;
+            
+            bool hasTexcoords = false;
+            
+            // Todo... usual suspects like normals and vertex colors
+            for (auto e : file.get_elements())
+            {
+                for (auto p : e.properties)
+                {
+                    if (p.name == "texcoord") hasTexcoords = true;
+                }
+            }
+            
+            uint32_t vertexCount = file.request_properties_from_element("vertex", {"x", "y", "z"}, verts);
+            uint32_t numTriangles = file.request_properties_from_element("face", {"vertex_indices"}, faces, 3);
+            uint32_t uvCount = (hasTexcoords) ? file.request_properties_from_element("face", {"texcoord"}, texCoords, 6) : 0;
+            
+            file.read(ss);
+            
+            geo.vertices.reserve(vertexCount);
+            for (int i = 0; i < vertexCount * 3; i+=3)
+                geo.vertices.push_back(math::float3(verts[i], verts[i+1], verts[i+2]));
+            
+            geo.faces.reserve(numTriangles);
+            for (int i = 0; i < numTriangles * 3; i+=3)
+                geo.faces.push_back(math::uint3(faces[i], faces[i+1], faces[i+2]));
+            
+            geo.texCoords.reserve(uvCount);
+            for (int i = 0; i < uvCount * 6; i+= 2)
+                geo.texCoords.push_back(math::float2(texCoords[i], texCoords[i+1]));
+            
+            geo.compute_normals();
+            geo.compute_tangents();
+            geo.compute_bounds();
+            
+        }
+        catch (std::exception e)
+        {
+            ANVIL_ERROR("[tinyply] Caught exception:" << e.what());
+        }
+        
+        return geo;
+    }
+    
     inline gfx::GlMesh make_mesh_from_geometry(const Geometry & geometry)
     {
         gfx::GlMesh m;
@@ -209,6 +272,8 @@ namespace util
                 buffer.push_back(geometry.bitangents[i].z);
             }
         }
+        
+        // Hereby known as the The Blake C. Lucas mesh attribute order:
         
         m.set_vertex_data(buffer.size() * sizeof(float), buffer.data(), GL_STATIC_DRAW);
         m.set_attribute(0, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + vertexOffset);
@@ -399,7 +464,6 @@ namespace util
         
         return make_mesh_from_geometry(sphereGeom);
     }
-
     
 } // end namespace util
 
