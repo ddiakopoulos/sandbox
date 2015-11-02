@@ -112,12 +112,12 @@ struct ExperimentalApp : public GLFWApp
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
-        simpleShader.reset(new gfx::GlShader(read_file_text("assets/simple.vert"), read_file_text("assets/simple.frag")));
+        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
         //std::vector<uint8_t> whitePixel = {255,255,255,255};
         //emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel.data());
         
-        emptyTex = load_image("assets/anvil.png");
+        emptyTex = load_image("assets/images/anvil.png");
         
         rootWidget.bounds = {0, 0, (float) width, (float) height};
         rootWidget.add_child( {{0,+10},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UWidget>()); // for colorTexture
@@ -135,12 +135,12 @@ struct ExperimentalApp : public GLFWApp
         
         if (!nvgCtx) throw std::runtime_error("error initializing nanovg context");
         
-        sourceFont = std::make_shared<NvgFont>(nvgCtx, "souce_sans_pro", read_file_binary("assets/source_code_pro_regular.ttf"));
+        sourceFont = std::make_shared<NvgFont>(nvgCtx, "souce_sans_pro", read_file_binary("assets/fonts/source_code_pro_regular.ttf"));
 
-        ssaoShader.reset(new gfx::GlShader(read_file_text("assets/passthrough_vertex.glsl"), read_file_text("assets/arkano_ssao_frag.glsl")));
+        ssaoShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/arkano_ssao_frag.glsl")));
         
-        filmGrainShader.reset(new gfx::GlShader(read_file_text("assets/passthrough_vertex.glsl"), read_file_text("assets/filmgrain_frag.glsl")));
-        fxaaShader.reset(new gfx::GlShader(read_file_text("assets/passthrough_vertex.glsl"), read_file_text("assets/fxaa_frag.glsl")));
+        filmGrainShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/filmgrain_frag.glsl")));
+        fxaaShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/fxaa_frag.glsl")));
         
         gfx::gl_check_error(__FILE__, __LINE__);
         

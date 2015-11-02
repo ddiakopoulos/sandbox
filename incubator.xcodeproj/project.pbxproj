@@ -71,8 +71,6 @@
 		0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = hosek_data_rgb.inl; path = procedural_sky/hosek_data_rgb.inl; sourceTree = SOURCE_ROOT; };
 		0822AF3C1BDC773C00A894F0 /* hosek.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hosek.cpp; path = procedural_sky/hosek.cpp; sourceTree = SOURCE_ROOT; };
 		0822AF3D1BDC773C00A894F0 /* hosek.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = hosek.hpp; path = procedural_sky/hosek.hpp; sourceTree = SOURCE_ROOT; };
-		0822AF3E1BDC773C00A894F0 /* sky_hosek_frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = sky_hosek_frag.glsl; path = procedural_sky/sky_hosek_frag.glsl; sourceTree = SOURCE_ROOT; };
-		0822AF3F1BDC773C00A894F0 /* sky_vert.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = sky_vert.glsl; path = procedural_sky/sky_vert.glsl; sourceTree = SOURCE_ROOT; };
 		08289F7E1BC5F7F30054AF3B /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tinyply.cpp; sourceTree = SOURCE_ROOT; };
 		08289F7F1BC5F7F30054AF3B /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tinyply.h; sourceTree = SOURCE_ROOT; };
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
@@ -81,8 +79,6 @@
 		08289F861BC609750054AF3B /* GlMesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlMesh.cpp; sourceTree = SOURCE_ROOT; };
 		08289F871BC609750054AF3B /* GlMesh.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GlMesh.hpp; sourceTree = SOURCE_ROOT; };
 		08289F891BC609B80054AF3B /* GlShared.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GlShared.hpp; sourceTree = SOURCE_ROOT; };
-		0849FD711BE56C7E000F148E /* passthrough_vertex.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = passthrough_vertex.glsl; path = assets/passthrough_vertex.glsl; sourceTree = SOURCE_ROOT; };
-		0849FD721BE691B1000F148E /* fxaa_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = fxaa_frag.glsl; path = assets/fxaa_frag.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD731BE6A031000F148E /* gpu_timer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = gpu_timer.hpp; sourceTree = SOURCE_ROOT; };
 		085081951BB5B6EA0084A1D6 /* glfw_app.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = glfw_app.mm; sourceTree = SOURCE_ROOT; };
 		085081961BB5B6EA0084A1D6 /* glfw_app.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glfw_app.hpp; sourceTree = SOURCE_ROOT; };
@@ -111,10 +107,7 @@
 		08CFD2E21BDD669600895E31 /* nanovg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg.h; path = third_party/nanovg.h; sourceTree = SOURCE_ROOT; };
 		08CFD2E51BDD79F000895E31 /* preetham.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = preetham.cpp; path = procedural_sky/preetham.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2E61BDD79F000895E31 /* preetham.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = preetham.hpp; path = procedural_sky/preetham.hpp; sourceTree = SOURCE_ROOT; };
-		08CFD2E81BDD7A2700895E31 /* sky_preetham_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_preetham_frag.glsl; path = procedural_sky/sky_preetham_frag.glsl; sourceTree = SOURCE_ROOT; };
 		08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = procedural_sky.hpp; sourceTree = SOURCE_ROOT; };
-		08CFD2EB1BDDF7AC00895E31 /* arkano_ssao_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = arkano_ssao_frag.glsl; path = assets/arkano_ssao_frag.glsl; sourceTree = SOURCE_ROOT; };
-		08CFD2EC1BDDF7AC00895E31 /* filmgrain_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = filmgrain_frag.glsl; path = assets/filmgrain_frag.glsl; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -205,9 +198,6 @@
 				0822AF3D1BDC773C00A894F0 /* hosek.hpp */,
 				0822AF3C1BDC773C00A894F0 /* hosek.cpp */,
 				0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */,
-				0822AF3F1BDC773C00A894F0 /* sky_vert.glsl */,
-				0822AF3E1BDC773C00A894F0 /* sky_hosek_frag.glsl */,
-				08CFD2E81BDD7A2700895E31 /* sky_preetham_frag.glsl */,
 			);
 			name = procedural_sky;
 			sourceTree = "<group>";
@@ -301,10 +291,6 @@
 		08CFD2EA1BDDF79900895E31 /* shaders */ = {
 			isa = PBXGroup;
 			children = (
-				0849FD711BE56C7E000F148E /* passthrough_vertex.glsl */,
-				08CFD2EB1BDDF7AC00895E31 /* arkano_ssao_frag.glsl */,
-				08CFD2EC1BDDF7AC00895E31 /* filmgrain_frag.glsl */,
-				0849FD721BE691B1000F148E /* fxaa_frag.glsl */,
 			);
 			name = shaders;
 			sourceTree = "<group>";
