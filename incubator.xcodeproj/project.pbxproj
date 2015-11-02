@@ -91,6 +91,7 @@
 		0849FD811BE7C667000F148E /* json.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = json.hpp; path = third_party/json.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD831BE7C66E000F148E /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyply.cpp; path = third_party/tinyply.cpp; sourceTree = SOURCE_ROOT; };
 		0849FD841BE7C66E000F148E /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyply.h; path = third_party/tinyply.h; sourceTree = SOURCE_ROOT; };
+		0849FD871BE7C801000F148E /* anvil.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = anvil.hpp; sourceTree = SOURCE_ROOT; };
 		085081951BB5B6EA0084A1D6 /* glfw_app.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = glfw_app.mm; sourceTree = SOURCE_ROOT; };
 		085081961BB5B6EA0084A1D6 /* glfw_app.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glfw_app.hpp; sourceTree = SOURCE_ROOT; };
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -156,6 +157,7 @@
 		0812048F1BADDEC100C7C0F4 /* source */ = {
 			isa = PBXGroup;
 			children = (
+				0849FD861BE7C6F0000F148E /* examples */,
 				08CFD2EA1BDDF79900895E31 /* shaders */,
 				08CFD2DB1BDD666000895E31 /* nanovg */,
 				0822AF391BDC772D00A894F0 /* procedural_sky */,
@@ -192,6 +194,7 @@
 				0822AF331BD4212100A894F0 /* arcball.hpp */,
 				08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */,
 				0849FD731BE6A031000F148E /* gpu_timer.hpp */,
+				0849FD871BE7C801000F148E /* anvil.hpp */,
 				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
 			name = source;
@@ -244,6 +247,13 @@
 				087A4EA11BB8EC9B00975C72 /* OpenGL.framework */,
 			);
 			name = Dependencies;
+			sourceTree = "<group>";
+		};
+		0849FD861BE7C6F0000F148E /* examples */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = examples;
 			sourceTree = "<group>";
 		};
 		085081981BB5B6F10084A1D6 /* app */ = {

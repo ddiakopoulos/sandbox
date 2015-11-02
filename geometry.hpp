@@ -465,6 +465,14 @@ namespace util
         return make_mesh_from_geometry(sphereGeom);
     }
     
+    inline gfx::GlMesh make_fullscreen_quad()
+    {
+        Geometry g;
+        g.vertices = { {-1.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f} };
+        g.faces = {{0, 1, 2}, {3, 4, 5}};
+        return make_mesh_from_geometry(g);
+    }
+    
 } // end namespace util
 
 #endif // geometry_h

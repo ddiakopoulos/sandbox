@@ -42,14 +42,6 @@ using namespace gfx;
 static const float TEXT_OFFSET_X = 3;
 static const float TEXT_OFFSET_Y = 1;
 
-GlMesh make_fullscreen_quad()
-{
-    util::Geometry g;
-    g.vertices = { {-1.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f} };
-    g.faces = {{0, 1, 2}, {3, 4, 5}};
-    return make_mesh_from_geometry(g);
-}
-
 struct ExperimentalApp : public GLFWApp
 {
     
@@ -379,6 +371,11 @@ struct ExperimentalApp : public GLFWApp
     }
     
 };
+
+//#include "examples/sandbox_app.hpp"
+//#include "examples/ssao_app.hpp"
+//#include "examples/arcball_app.hpp"
+//#include "examples/skydome_app.hpp"
 
 IMPLEMENT_MAIN(int argc, char * argv[])
 {
