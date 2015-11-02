@@ -257,8 +257,8 @@
 				0849FD891BE7CAAB000F148E /* empty_app.hpp */,
 				0849FD881BE7CAAB000F148E /* arcball_app.hpp */,
 				0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */,
-				0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */,
 				0849FD8B1BE7CAAB000F148E /* skydome_app.hpp */,
+				0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */,
 			);
 			name = examples;
 			sourceTree = "<group>";
