@@ -23,6 +23,8 @@
 #define ANVIL_LN_10 2.3025850929940459
 #define ANVIL_INV_LN_10 0.43429448190325176
 
+#define ANVIL_GOLDEN 1.61803398874989484820
+
 #if (defined(__linux) || defined(__unix) || defined(__posix) || defined(__LINUX__) || defined(__linux__))
     #define ANVIL_PLATFORM_LINUX 1
 #elif (defined(_WIN64) || defined(_WIN32) || defined(__CYGWIN32__) || defined(__MINGW32__))
