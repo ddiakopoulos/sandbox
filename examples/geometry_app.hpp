@@ -81,7 +81,7 @@ struct ExperimentalApp : public GLFWApp
         proceduralModels[4].mesh = make_capsule_mesh(8, 1, 3);
         proceduralModels[4].pose.position = float3(5, 0, 10);
         
-        proceduralModels[5].mesh = make_plane_mesh(2, 2, 1, 1);
+        proceduralModels[5].mesh = make_plane_mesh(2, 2, 5, 5);
         proceduralModels[5].pose.position = float3(-5, 0, 2);
         
         proceduralModels[6].mesh = make_axis_mesh();

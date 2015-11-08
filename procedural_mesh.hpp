@@ -236,8 +236,13 @@ inline gfx::GlMesh make_plane_mesh(float width, float height, uint nw, uint nh)
             plane.texCoords.emplace_back(u + ou, v);
             plane.texCoords.emplace_back(u + ou, v + ov);
             
+            // Front faces
             plane.faces.push_back({indexOffset + 0, indexOffset + 1, indexOffset + 2});
             plane.faces.push_back({indexOffset + 0, indexOffset + 2, indexOffset + 3});
+            
+            // Back faces
+            plane.faces.push_back({indexOffset + 2, indexOffset + 1, indexOffset + 0});
+            plane.faces.push_back({indexOffset + 3, indexOffset + 2, indexOffset + 0});
             
             indexOffset += 4;
         }
@@ -273,8 +278,9 @@ inline gfx::GlMesh make_axis_mesh()
     return axisMesh;
 }
 
-inline gfx::GlMesh make_spiral_mesh(float resolution = 1000.f, float freq = 15.f)
+inline gfx::GlMesh make_spiral_mesh(float resolution = 512.0f, float freq = 128.f)
 {
+    assert(freq < resolution);
     Geometry spiral;
     float off = 1.0 / resolution;
     for (float i = 0.0; i < 1.0 + off; i += off)
@@ -317,7 +323,7 @@ inline gfx::GlMesh make_octohedron_mesh()
         {0.0, 1.0, 0.0}, {0.0, -1.0, 0.0},
         {0.0, 0.0, 1.0}, {0.0, 0.0, -1.0}
     };
-    octohedron.faces = {{0, 2, 4}, {0, 4, 3}, {0, 3, 5}, {0, 5, 2}, {1, 2, 5}, {1, 5, 3}, {1, 3, 4}, {1, 2, 4}};
+    octohedron.faces = {{0, 2, 4}, {0, 4, 3}, {0, 3, 5}, {0, 5, 2}, {1, 2, 5}, {1, 5, 3}, {1, 3, 4}, {1, 4, 2}};
     octohedron.compute_normals();
     return make_mesh_from_geometry(octohedron);
 }
