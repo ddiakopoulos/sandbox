@@ -12,7 +12,7 @@ struct ExperimentalApp : public GLFWApp
     PreethamProceduralSky skydome;
     RenderableGrid grid;
 
-    ExperimentalApp() : GLFWApp(600, 600, "Sandbox App"")
+    ExperimentalApp() : GLFWApp(600, 600, "Sandbox App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);

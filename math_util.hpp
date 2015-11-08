@@ -90,6 +90,17 @@ namespace math
     {
         return float3(cos(phi) * sin(theta), sin(phi) * sin(theta), cos(theta));
     }
+    
+    inline float damped_spring(float target, float current, float & velocity, float delta, const float spring_constant)
+    {
+        float currentToTarget = target - current;
+        float springForce = currentToTarget * spring_constant;
+        float dampingForce = -velocity * 2 * sqrt(spring_constant);
+        float force = springForce + dampingForce;
+        velocity += force * delta;
+        float displacement = velocity * delta;
+        return current + displacement;
+    }
 
 } // end namespace math
 

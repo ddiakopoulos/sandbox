@@ -20,11 +20,12 @@
 # Recent
 * Arkano22 SSAO implementation
 * CEGUI layout system
-* Procedrual sky dome with Preentham and Hosek-Wilkie models
+* Procedrual sky dome with Preetham and Hosek-Wilkie models
 * Arcball camera
 * Basic image morphologies (erode/dilate)
 
 # Next
+* Procedural assets (torus, icosahedron, tetrahedron, octohedron, cube)
 * Skydome example app
 * Cubemap loader
 * Fix models with UVs

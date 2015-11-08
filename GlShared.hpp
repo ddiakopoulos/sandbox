@@ -198,7 +198,7 @@ namespace gfx
         
     public:
         
-        float movementSpeed = 8.0f;
+        float movementSpeed = 20.0f;
         
         FPSCameraController()
         {
@@ -256,26 +256,31 @@ namespace gfx
             lastCursor = e.cursor;
         }
         
+        math::float3 velocity = math::float3(0, 0, 0);
+        
         void update(float delta)
         {
             math::float3 move;
             
-            if (bf || (ml && mr)) move.z -= 1;
+            if (bf || (ml && mr)) move.z -= 1 * movementSpeed;
             
             if (bl)
-                move.x -= 1;
+                move.x -= 1 * movementSpeed;
             if (bb)
-                move.z += 1;
+                move.z += 1 * movementSpeed;
             if (br)
-                move.x += 1;
+                move.x += 1 * movementSpeed;
             
-            float len = length(move);
-            if (len > 0)
-            {
-                float actualMoveSpeed = delta * movementSpeed;
-                cam->set_position(cam->get_pose().transform_coord(move * (actualMoveSpeed / len)));
-            }
+            auto current = cam->get_pose().position;
+            auto target = cam->get_pose().transform_coord(move);
             
+            float springyX = math::damped_spring(target.x, current.x, velocity.x, delta, 0.99);
+            float springyY = math::damped_spring(target.y, current.y, velocity.y, delta, 0.99);
+            float springyZ = math::damped_spring(target.z, current.z, velocity.z, delta, 0.99);
+            
+            math::float3 dampedLocation = {springyX, springyY, springyZ};
+            cam->set_position(dampedLocation);
+
             math::float3 lookVec;
             lookVec.x = cam->get_eye_point().x - 1.f * cosf(camPitch) * sinf(camYaw);
             lookVec.y = cam->get_eye_point().y + 1.f * sinf(camPitch);
