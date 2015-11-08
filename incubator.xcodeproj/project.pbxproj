@@ -99,6 +99,7 @@
 		0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ssao_app.hpp; path = examples/ssao_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8E1BEF19A7000F148E /* geometry_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = geometry_app.hpp; path = examples/geometry_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8F1BEFCC64000F148E /* hdr_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = hdr_frag.glsl; path = assets/shaders/hdr_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD901BEFDC8D000F148E /* procedural_mesh.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = procedural_mesh.hpp; sourceTree = SOURCE_ROOT; };
 		085081951BB5B6EA0084A1D6 /* glfw_app.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = glfw_app.mm; sourceTree = SOURCE_ROOT; };
 		085081961BB5B6EA0084A1D6 /* glfw_app.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glfw_app.hpp; sourceTree = SOURCE_ROOT; };
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -176,6 +177,7 @@
 				081204981BADDEF700C7C0F4 /* linear_algebra.hpp */,
 				081204971BADDEF700C7C0F4 /* geometric.hpp */,
 				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
+				0849FD901BEFDC8D000F148E /* procedural_mesh.hpp */,
 				0822AF351BD4382C00A894F0 /* ellipse_math.hpp */,
 				0812049F1BADF68B00C7C0F4 /* circular_buffer.hpp */,
 				081204A11BAE04B300C7C0F4 /* concurrent_queue.hpp */,
@@ -184,8 +186,6 @@
 				081204A41BAE09F300C7C0F4 /* time_keeper.hpp */,
 				081204A51BAE0C1700C7C0F4 /* human_time.hpp */,
 				081204A61BAE0CC100C7C0F4 /* signal.hpp */,
-				0849FD801BE7C667000F148E /* json.cpp */,
-				0849FD811BE7C667000F148E /* json.hpp */,
 				081204A71BAE330600C7C0F4 /* one_euro.hpp */,
 				081204A91BAE367900C7C0F4 /* string_utils.hpp */,
 				08289F811BC5F8370054AF3B /* file_io.hpp */,
@@ -269,6 +269,7 @@
 		0849FD8D1BE7CB2B000F148E /* third_party */ = {
 			isa = PBXGroup;
 			children = (
+				0849FD911BF00334000F148E /* json */,
 				08289F7D1BC5F7E40054AF3B /* tinyply */,
 				089B86001BAFC96D00B3A290 /* noise1234 */,
 				089B85FF1BAFC96800B3A290 /* stb */,
@@ -276,6 +277,15 @@
 				08CFD2E41BDD669A00895E31 /* nvg */,
 			);
 			name = third_party;
+			sourceTree = "<group>";
+		};
+		0849FD911BF00334000F148E /* json */ = {
+			isa = PBXGroup;
+			children = (
+				0849FD801BE7C667000F148E /* json.cpp */,
+				0849FD811BE7C667000F148E /* json.hpp */,
+			);
+			name = json;
 			sourceTree = "<group>";
 		};
 		085081981BB5B6F10084A1D6 /* app */ = {

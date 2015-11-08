@@ -433,47 +433,6 @@ namespace util
         
     };
     
-    inline gfx::GlMesh make_sphere_mesh(float radius)
-    {
-        Geometry sphereGeom;
-        
-        int U = 32, V = 32;
-        
-        for (int ui = 0; ui < U; ++ui)
-        {
-            for (int vi = 0; vi < V; ++vi)
-            {
-                float u = float(ui) / (U - 1) * ANVIL_PI;
-                float v = float(vi) / (V - 1) * 2 * ANVIL_PI;
-                math::float3 normal = math::spherical(u, v);
-                sphereGeom.vertices.push_back({normal * radius});
-                sphereGeom.normals.push_back(normal);
-            }
-        }
-        
-        for (uint32_t ui = 0; ui < U; ++ui)
-        {
-            uint32_t un = (ui + 1) % U;
-            for (uint32_t vi = 0; vi < V; ++vi)
-            {
-                uint32_t vn = (vi + 1) % V;
-                sphereGeom.faces.push_back({ui * V + vi, un * V + vi, un * V + vn});
-                sphereGeom.faces.push_back({ui * V + vi, un * V + vn, ui * V + vn});
-            }
-        }
-        
-        return make_mesh_from_geometry(sphereGeom);
-    }
-
-
-    inline gfx::GlMesh make_fullscreen_quad()
-    {
-        Geometry g;
-        g.vertices = { {-1.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f} };
-        g.faces = {{0, 1, 2}, {3, 4, 5}};
-        return make_mesh_from_geometry(g);
-    }
-    
 } // end namespace util
 
 #endif // geometry_h

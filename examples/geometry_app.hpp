@@ -15,6 +15,7 @@ struct Object
 struct ModelObject : public Object
 {
     GlMesh mesh;
+    void draw() const { mesh.draw_elements(); };
 };
 
 struct LightObject : public Object
@@ -43,6 +44,8 @@ struct ExperimentalApp : public GLFWApp
     std::vector<LightObject> lights;
     std::vector<TexturedObject> texturedModels;
     
+    std::vector<ModelObject> proceduralModels;
+    
     ExperimentalApp() : GLFWApp(640, 480, "Geometry App")
     {
         int width, height;
@@ -50,6 +53,52 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         grid = RenderableGrid(1, 100, 100);
         cameraController.set_camera(&camera);
+        
+        lights.resize(2);
+        
+        lights[0].color = float3(0.7f, 0.2f, 0.2f);
+        lights[0].pose.position = float3(5, 10, -5);
+        
+        lights[1].color = float3(0.4f, 0.8f, 0.4f);
+        lights[1].pose.position = float3(-5, 10, 5);
+        
+        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
+        
+        proceduralModels.resize(11);
+        
+        proceduralModels[0].mesh = make_sphere_mesh(1.0);
+        proceduralModels[0].pose.position = float3(5, 0, 2);
+        
+        proceduralModels[1].mesh = make_cube_mesh();
+        proceduralModels[1].pose.position = float3(5, 0, 4);
+        
+        proceduralModels[2].mesh = make_frustum_mesh();
+        proceduralModels[2].pose.position = float3(5, 0, 6);
+        
+        proceduralModels[3].mesh = make_torus_mesh();
+        proceduralModels[3].pose.position = float3(10, 4, -10);
+        
+        proceduralModels[4].mesh = make_capsule_mesh(8, 1, 3);
+        proceduralModels[4].pose.position = float3(5, 0, 10);
+        
+        proceduralModels[5].mesh = make_plane_mesh(2, 2, 1, 1);
+        proceduralModels[5].pose.position = float3(-5, 0, 2);
+        
+        proceduralModels[6].mesh = make_axis_mesh();
+        proceduralModels[6].pose.position = float3(-5, 2, 4);
+        
+        proceduralModels[7].mesh = make_spiral_mesh();
+        proceduralModels[7].pose.position = float3(-5, 0, 6);
+        
+        proceduralModels[8].mesh = make_icosahedron_mesh();
+        proceduralModels[8].pose.position = float3(-10, 0, 8);
+        
+        proceduralModels[9].mesh = make_octohedron_mesh();
+        proceduralModels[9].pose.position = float3(-15, 0, 10);
+        
+        proceduralModels[10].mesh = make_tetrahedron_mesh();
+        proceduralModels[10].pose.position = float3(-20, 0, 12);
+        
         gfx::gl_check_error(__FILE__, __LINE__);
     }
     
@@ -105,15 +154,13 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->uniform("u_lights[" + std::to_string(i) + "].position", light.pose.position);
                 simpleShader->uniform("u_lights[" + std::to_string(i) + "].color", light.color);
             }
-            /*
+
+            for (const auto & model : proceduralModels)
             {
-                sofaModel.pose.position = float3(0, 0, 0);
-                auto model = mul(sofaModel.pose.matrix(), make_scaling_matrix(0.001));
-                simpleShader->uniform("u_modelMatrix", model);
-                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-                sofaModel.draw();
+                simpleShader->uniform("u_modelMatrix", model.get_model());
+                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                model.draw();
             }
-            */
             
             simpleShader->unbind();
         }

@@ -9,8 +9,8 @@
 
 #include "hosek.hpp"
 #include "preetham.hpp"
+#include "procedural_mesh.hpp"
 
-// Todo: implement HDR
 // http://www.learnopengl.com/#!Advanced-Lighting/HDR
 
 class ProceduralSky
