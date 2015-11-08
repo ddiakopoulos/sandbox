@@ -28,4 +28,3 @@
 * Skydome example app
 * Cubemap loader
 * Fix models with UVs
-* Fix timestep

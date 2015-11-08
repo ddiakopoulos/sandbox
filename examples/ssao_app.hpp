@@ -112,7 +112,7 @@ struct ExperimentalApp : public GLFWApp
     
     void on_update(const UpdateEvent & e) override
     {
-        cameraController.update(e.elapsed_s / 1000);
+        cameraController.update(e.timestep_ms);
     }
     
     void draw_ui()
