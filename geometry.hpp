@@ -464,7 +464,8 @@ namespace util
         
         return make_mesh_from_geometry(sphereGeom);
     }
-    
+
+
     inline gfx::GlMesh make_fullscreen_quad()
     {
         Geometry g;

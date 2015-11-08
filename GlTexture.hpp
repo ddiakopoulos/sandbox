@@ -50,7 +50,7 @@ namespace gfx
         {
             util::Geometry g;
             g.vertices = { {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
-            g.texCoords = { {0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+            g.texCoords = { {0.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f} };
             g.faces = {{0, 1, 2}, {3, 4, 5}};
             mesh = make_mesh_from_geometry(g);
             program = GlShader(s_textureVert, s_textureFrag);

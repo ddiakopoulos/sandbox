@@ -52,6 +52,8 @@ struct ExperimentalApp : public GLFWApp
         cameraController.set_camera(&camera);
         camera.fov = 75;
         
+        camera.look_at({0, 1.5, 3}, {0, 0, 0});
+        
         grid = RenderableGrid(1, 100, 100);
         
         nvgCtx = make_nanovg_context(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
@@ -176,7 +178,7 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->bind();
                 
                 simpleShader->uniform("u_viewProj", viewProj);
-                simpleShader->uniform("u_eye", float3(0, 10, -10));
+                simpleShader->uniform("u_eye", camera.get_eye_point());
                 
                 simpleShader->uniform("u_emissive", float3(.33f, 0.36f, 0.275f));
                 simpleShader->uniform("u_diffuse", float3(0.2f, 0.4f, 0.25f));
