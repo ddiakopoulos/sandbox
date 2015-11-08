@@ -73,9 +73,9 @@ public:
         origin = newOrigin; 
     }
 
-    void render(const math::float4x4 proj, const math::float4x4 view)
+    void render(const math::float4x4 proj, const math::float4x4 view, float3 translation = {0, 0, 0})
     {
-        auto model = math::make_translation_matrix(math::float3(0, 0.0, 0));
+        auto model = math::make_translation_matrix(translation);
         auto modelViewProjectionMatrix = mul(mul(proj, view), model);
 
         gridShader.bind();

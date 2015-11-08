@@ -85,7 +85,10 @@ inline gfx::GlMesh make_frustum_mesh()
         {+1, -1, -1}, {-1, -1, -1}, {-1, -1, -1},
         {-1, +1, -1}
     };
-    return make_mesh_from_geometry(frustum);
+    frustum.compute_normals();
+    auto frustumMesh = make_mesh_from_geometry(frustum);
+    frustumMesh.set_non_indexed(GL_LINES);
+    return frustumMesh;
 }
 
 inline gfx::GlMesh make_torus_mesh(int radial_segments = 8)

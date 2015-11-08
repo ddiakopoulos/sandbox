@@ -67,13 +67,13 @@ struct ExperimentalApp : public GLFWApp
         proceduralModels.resize(11);
         
         proceduralModels[0].mesh = make_sphere_mesh(1.0);
-        proceduralModels[0].pose.position = float3(5, 0, 2);
+        proceduralModels[0].pose.position = float3(3, 0, 2);
         
         proceduralModels[1].mesh = make_cube_mesh();
-        proceduralModels[1].pose.position = float3(5, 0, 4);
+        proceduralModels[1].pose.position = float3(7, 0, 5);
         
         proceduralModels[2].mesh = make_frustum_mesh();
-        proceduralModels[2].pose.position = float3(5, 0, 6);
+        proceduralModels[2].pose.position = float3(0, 0, 6);
         
         proceduralModels[3].mesh = make_torus_mesh();
         proceduralModels[3].pose.position = float3(10, 4, -10);
@@ -165,7 +165,7 @@ struct ExperimentalApp : public GLFWApp
             simpleShader->unbind();
         }
         
-        grid.render(proj, view);
+        grid.render(proj, view, {0, -5, 0});
 
         gfx::gl_check_error(__FILE__, __LINE__);
         
