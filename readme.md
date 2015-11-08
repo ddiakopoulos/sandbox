@@ -1,7 +1,5 @@
 # Experiments!
 
-* Film grain post-process
-* FXAA
 * Game-engine-style gizmo editing interface
 * Collision geometry
 * UI layout via cassowary constraint solver (Rhea library)
@@ -16,6 +14,9 @@
 * L-System + particles
 * Impulse response raytracer
 * Optitrak nat-net i/o
+* Terrain + Water
+* Bruneton Sky Model
+* BRDF / PBR Shaders
 
 # Recent
 * Arkano22 SSAO implementation
@@ -23,9 +24,3 @@
 * Procedrual sky dome with Preetham and Hosek-Wilkie models
 * Arcball camera
 * Basic image morphologies (erode/dilate)
-
-# Next
-* Procedural assets (torus, icosahedron, tetrahedron, octohedron, cube)
-* Skydome example app
-* Cubemap loader
-* Fix models with UVs
