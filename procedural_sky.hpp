@@ -29,7 +29,7 @@ protected:
     
 public:
     
-    float sunPhi = 210; // 0 - 360
+    float sunPhi = 230; // 0 - 360
     
     ProceduralSky(float sunTheta = 80, float turbidity = 4, float albedo = 0.1, float normalizedSunY = 1.15)
     {
@@ -67,8 +67,6 @@ class HosekProceduralSky : public ProceduralSky
     
     virtual void render_internal(float4x4 viewProj, float3 sunDir, float4x4 world) override
     {
-        float3 sunDirection = spherical(to_radians(sunTheta), to_radians(sunPhi));
-        
         sky->bind();
         sky->uniform("ViewProjection", viewProj);
         sky->uniform("World", world);
@@ -82,7 +80,7 @@ class HosekProceduralSky : public ProceduralSky
         sky->uniform("H", data.H);
         sky->uniform("I", data.I);
         sky->uniform("Z", data.Z);
-        sky->uniform("SunDirection", sunDirection);
+        sky->uniform("SunDirection", sunDir);
         skyMesh.draw_elements();
         sky->unbind();
     }
@@ -109,8 +107,6 @@ class PreethamProceduralSky : public ProceduralSky
     
     virtual void render_internal(float4x4 viewProj, float3 sunDir, float4x4 world) override
     {
-        float3 sunDirection = spherical(to_radians(sunTheta), to_radians(sunPhi));
-        
         sky->bind();
         sky->uniform("ViewProjection", viewProj);
         sky->uniform("World", world);
@@ -120,7 +116,7 @@ class PreethamProceduralSky : public ProceduralSky
         sky->uniform("D", data.D);
         sky->uniform("E", data.E);
         sky->uniform("Z", data.Z);
-        sky->uniform("SunDirection", sunDirection);
+        sky->uniform("SunDirection", sunDir);
         skyMesh.draw_elements();
         sky->unbind();
     }

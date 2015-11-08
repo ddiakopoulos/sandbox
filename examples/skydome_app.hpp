@@ -10,6 +10,7 @@ struct ExperimentalApp : public GLFWApp
 
     GlCamera camera;
     
+    float sunTheta = 80.f;
     PreethamProceduralSky preethamSky;
     HosekProceduralSky hosekWilkieSky;
     
@@ -61,7 +62,7 @@ struct ExperimentalApp : public GLFWApp
     {
 
     }
-    
+   
     void on_input(const InputEvent & event) override
     {
         if (event.type == InputEvent::KEY)
@@ -87,6 +88,16 @@ struct ExperimentalApp : public GLFWApp
                 useHdr = !useHdr;
                 if (useHdr)sceneView.reset(new GLTextureView(hdrOutputTexture.get_gl_handle()));
                 else sceneView.reset(new GLTextureView(sceneColorTexture.get_gl_handle()));
+            }
+            else if (event.value[0] == GLFW_KEY_EQUAL && event.action == GLFW_RELEASE)
+            {
+                sunTheta += 5;
+                sky->recompute(sunTheta, 4, 0.1, 1.15);
+            }
+            else if (event.value[0] == GLFW_KEY_MINUS && event.action == GLFW_RELEASE)
+            {
+                sunTheta -= 5;
+                sky->recompute(sunTheta, 4, 0.1, 1.15);
             }
         }
         
