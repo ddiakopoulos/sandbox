@@ -104,7 +104,7 @@ struct ExperimentalApp : public GLFWApp
             simpleTexturedShader->bind();
             
             simpleTexturedShader->uniform("u_viewProj", viewProj);
-            simpleTexturedShader->uniform("u_eye", float3(0, 10, -10));
+            simpleTexturedShader->uniform("u_eye", camera.get_eye_point());
             
             simpleTexturedShader->uniform("u_emissive", float3(.33f, 0.36f, 0.275f));
             simpleTexturedShader->uniform("u_diffuse", float3(0.2f, 0.4f, 0.25f));

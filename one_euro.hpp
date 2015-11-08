@@ -237,7 +237,7 @@ namespace math
     private:
 
         bool _firstTime;
-        math::float4 _hatxprev;// = {0, 0, 0, 1};
+        math::float4 _hatxprev;
     };
 
     class QuatFilterable
