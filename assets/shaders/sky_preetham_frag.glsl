@@ -37,5 +37,5 @@ void main()
     
     vec3 R = vec3(R_r, R_g, R_b);
     
-    out_color = vec4(gamma(clamp(R, 0, 1)), 1);
+    out_color = vec4(R, 1);
 }

@@ -29,6 +29,5 @@ void main()
 	float gamma_ = acos(cos_gamma);
 
 	vec3 R = Z * HosekWilkie(cos_theta, gamma_, cos_gamma);
-
-    out_color = vec4(gamma(clamp(R, 0, 1)), 1);
+    out_color = vec4(R, 1);
 }

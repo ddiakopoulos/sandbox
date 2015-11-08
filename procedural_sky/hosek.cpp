@@ -18,7 +18,7 @@ namespace
              1 *                     pow(value, 5) * spline[5 * stride];
     }
 
-    double evaluate(const double* dataset, size_t stride, float turbidity, float albedo, float sunTheta)
+    double evaluate(const double * dataset, size_t stride, float turbidity, float albedo, float sunTheta)
     {
         // splines are functions of elevation^1/3
         double elevationK = pow(std::max<float>(0.f, 1.f - sunTheta / (ANVIL_PI / 2.f)), 1.f / 3.0f);

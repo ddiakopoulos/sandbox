@@ -98,6 +98,7 @@
 		0849FD8B1BE7CAAB000F148E /* skydome_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = skydome_app.hpp; path = examples/skydome_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ssao_app.hpp; path = examples/ssao_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8E1BEF19A7000F148E /* geometry_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = geometry_app.hpp; path = examples/geometry_app.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD8F1BEFCC64000F148E /* hdr_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = hdr_frag.glsl; path = assets/shaders/hdr_frag.glsl; sourceTree = SOURCE_ROOT; };
 		085081951BB5B6EA0084A1D6 /* glfw_app.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = glfw_app.mm; sourceTree = SOURCE_ROOT; };
 		085081961BB5B6EA0084A1D6 /* glfw_app.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glfw_app.hpp; sourceTree = SOURCE_ROOT; };
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -195,7 +196,6 @@
 				0822AF311BCFFA6A00A894F0 /* sketch.hpp */,
 				0822AF321BD389EA00A894F0 /* universal_widget.hpp */,
 				0822AF331BD4212100A894F0 /* arcball.hpp */,
-				08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */,
 				0849FD731BE6A031000F148E /* gpu_timer.hpp */,
 				0849FD871BE7C801000F148E /* anvil.hpp */,
 				0812049C1BADDF6800C7C0F4 /* main.cpp */,
@@ -207,6 +207,7 @@
 		0822AF391BDC772D00A894F0 /* procedural_sky */ = {
 			isa = PBXGroup;
 			children = (
+				08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */,
 				08CFD2E61BDD79F000895E31 /* preetham.hpp */,
 				08CFD2E51BDD79F000895E31 /* preetham.cpp */,
 				0822AF3D1BDC773C00A894F0 /* hosek.hpp */,
@@ -340,6 +341,7 @@
 		08CFD2EA1BDDF79900895E31 /* shaders */ = {
 			isa = PBXGroup;
 			children = (
+				0849FD8F1BEFCC64000F148E /* hdr_frag.glsl */,
 				0849FD741BE7C1C1000F148E /* arkano_ssao_frag.glsl */,
 				0849FD751BE7C1C1000F148E /* filmgrain_frag.glsl */,
 				0849FD761BE7C1C1000F148E /* fxaa_frag.glsl */,
