@@ -122,7 +122,7 @@ public:
         Ray ray = make_ray(*camera, ((float) windowSize.x / (float) windowSize.y), float2(point.x, point.y), float2(windowSize.x, windowSize.y));
         
         // Click inside the sphere?
-        if (arcballSphere.intersects(ray, &rayT) > 0)
+        if (intersect_ray_sphere(ray, arcballSphere, &rayT) > 0)
         {
             // trace a ray through the pixel to the sphere
             *resultVector = normalize(ray.calculate_position(rayT) - arcballSphere.center);
