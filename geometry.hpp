@@ -383,12 +383,42 @@ namespace util
         
     };
     
+    static const double PLANE_EPSILON = 0.0001;
+    
+    struct Plane
+    {
+        math::float4 equation; // ax * by * cz + d form (xyz normal, w distance)
+        Plane(math::float4 equation) : equation(equation) {}
+        Plane(math::float3 normal, float distance) { equation = math::float4(normal.x, normal.y, normal.z, distance); }
+        void normalize() { float n = 1.0f / math::length(get_normal()); equation *= n; };
+        math::float3 get_normal() const { return math::float3(equation.x, equation.y, equation.z); }
+        float distance_to(math::float3 point) const { return dot(get_normal(), point) + equation.w; };
+        bool contains(math::float3 point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
+    };
     //////////////////////////////
-    // Ray object intersections //
+    // Ray-object intersections //
     //////////////////////////////
     
+    bool intersect_ray_plane(const gfx::Ray & ray, const Plane & p, math::float3 * intersection, float * outT = nullptr)
+    {
+        float d = math::dot(ray.direction, p.get_normal());
+        // Make sure we're not parallel to the plane
+        if (std::abs(d) > PLANE_EPSILON)
+        {
+            float t = -p.distance_to(ray.origin) / d;
+            
+            if (t >= 0.0f)
+            {
+                if (outT) *outT = t;
+                if (intersection) *intersection = ray.origin + t * ray.direction;
+                return true;
+            }
+        }
+        return false;
+    }
+    
     // Implementation adapted from: http://www.lighthouse3d.com/tutorials/maths/ray-triangle-intersection/
-    bool intersect_ray_triangle(const gfx::Ray & ray, const math::float3 & v0, const math::float3 & v1, const math::float3 & v2, float * outT, math::float2 * outUV)
+    bool intersect_ray_triangle(const gfx::Ray & ray, const math::float3 & v0, const math::float3 & v1, const math::float3 & v2, float * outT, math::float2 * outUV = nullptr)
     {
         math::float3 e1 = v1 - v0, e2 = v2 - v0, h = cross(ray.direction, e2);
         
@@ -409,6 +439,56 @@ namespace util
         
         if (outT) *outT = t;
         if (outUV) *outUV = {u,v};
+        
+        return true;
+    }
+    
+     // Real-Time Collision Detection pg. 180
+    bool intersect_ray_box(const gfx::Ray & ray, const math::Box<float, 3> bounds, float *outT = nullptr)
+    {
+        float tmin = 0.0f; // set to -FLT_MAX to get first hit on line
+        float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
+        
+        // For all three slabs
+        for (int i = 0; i < 3; i++)
+        {
+            if (std::abs(ray.direction[i]) < PLANE_EPSILON)
+            {
+                // Ray is parallel to slab. No hit if r.origin not within slab
+                if ((ray.origin[i] < bounds.min[i]) || (ray.origin[i] > bounds.max[i]))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                // Compute intersection t value of ray with near and far plane of slab
+                float ood( 1.0f / ray.direction[i]);
+                float t1((bounds.min[i] - ray.origin[i]) * ood);
+                float t2((bounds.max[i] - ray.origin[i]) * ood);
+                
+                // Make t1 be intersection with near plane, t2 with far plane
+                if (t1 > t2)
+                {
+                    float tmp = t1;
+                    t1 = t2;
+                    t2 = tmp;
+                }
+                
+                // Compute the intersection of slab intersection intervals
+                tmin = std::max<float>(tmin, t1); // Rather than: if (t1 > tmin) tmin = t1;
+                tmax = std::min<float>(tmax, t2); // Rather than: if (t2 < tmax) tmax = t2;
+                
+                // Exit with no collision as soon as slab intersection becomes empty
+                if (tmin > tmax)
+                {
+                    return false;
+                }
+            }
+        }
+        
+        // Ray intersects all 3 slabs. Intersection t value (tmin)
+        if (outT) *outT = tmin;
         
         return true;
     }
