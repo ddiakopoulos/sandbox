@@ -25,7 +25,8 @@ struct ModelObject : public Object
 {
     GlMesh mesh;
     void draw() const { mesh.draw_elements(); };
-    void build(const Geometry & g) {
+    void build(const Geometry & g)
+    {
         mesh = make_mesh_from_geometry(g);
         bounds = g.compute_bounds();
     };

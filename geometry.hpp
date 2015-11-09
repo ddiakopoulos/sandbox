@@ -397,6 +397,13 @@ namespace util
         bool contains(math::float3 point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
     };
     
+    struct Segment
+    {
+        math::float3 first, second;
+        Segment(math::float3 first, math::float3 second) : first(first), second(second) {}
+        math::float3 get_direction() const { return normalize (second - first); };
+    };
+    
     //////////////////////////////
     // Ray-object intersections //
     //////////////////////////////
