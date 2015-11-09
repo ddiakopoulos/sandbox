@@ -116,17 +116,20 @@ namespace util
             }
         }
         
-        math::Box<float, 3> compute_bounds()
+        math::Box<float, 3> compute_bounds() const
         {
-            math::Box<float, 3> bbox;
-            bbox.min() = math::float3(std::numeric_limits<float>::infinity());
-            bbox.max() = -bbox.min();
+            math::Box<float, 3> bounds;
+            
+            bounds.min = math::float3(std::numeric_limits<float>::infinity());
+            bounds.max = -bounds.min;
+            
             for (const auto & vertex : vertices)
             {
-                bbox.min() = min(bbox.min(), vertex);
-                bbox.max() = max(bbox.max(), vertex);
+                //auto newV = pose.transform_coord(vertex);
+                bounds.min  = min(bounds.min, vertex);
+                bounds.max  = max(bounds.max, vertex);
             }
-            return bbox;
+            return bounds;
         }
 
     };
@@ -274,7 +277,6 @@ namespace util
         }
         
         // Hereby known as the The Blake C. Lucas mesh attribute order:
-        
         m.set_vertex_data(buffer.size() * sizeof(float), buffer.data(), GL_STATIC_DRAW);
         m.set_attribute(0, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + vertexOffset);
         if (normalOffset) m.set_attribute(1, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + normalOffset);
@@ -289,18 +291,6 @@ namespace util
         return m;
     }
     
-    struct Model
-    {
-        gfx::GlMesh mesh;
-        math::Pose pose;
-        math::Box<float, 3> bounds;
-        
-        void draw() const
-        {
-            mesh.draw_elements();
-        }
-    };
-    
     static const double SPHERE_EPSILON = 4.37114e-05;
     
     struct Sphere
@@ -309,47 +299,7 @@ namespace util
         float radius;
         
         Sphere() {}
-        Sphere(const math::float3 &  center, float radius) : center(center), radius(radius)
-        {
-            
-        }
-        
-        bool intersects(const gfx::Ray & ray, float * intersection = nullptr) const
-        {
-            float t;
-            math::float3 diff = ray.get_origin() - center;
-            float a = math::dot(ray.get_direction(), ray.get_direction());
-            float b = 2.0f * math::dot(diff, ray.get_direction());
-            float c = math::dot(diff, diff) - radius * radius;
-            float disc = b * b - 4.0f * a * c;
-            
-            if (disc < 0.0f)
-            {
-                return false;
-            }
-            else
-            {
-                float e = std::sqrt(disc);
-                float denom = 2.0f * a;
-                t = (-b - e) / denom;
-                
-                if (t > SPHERE_EPSILON)
-                {
-                    if (intersection) *intersection = t;
-                    return true;
-                }
-                
-                t = (-b + e) / denom;
-                if (t > SPHERE_EPSILON)
-                {
-                    if (intersection) *intersection = t;
-                    return true;
-                }
-            }
-            
-            if (intersection) *intersection = 0;
-            return false;
-        }
+        Sphere(const math::float3 &  center, float radius) : center(center), radius(radius) {}
         
         // Returns the closest point on the ray to the Sphere. If ray intersects then returns the point of nearest intersection.
         math::float3 closest_point(const gfx::Ray & ray) const
@@ -379,7 +329,7 @@ namespace util
             return center + math::normalize( onRay - center ) * radius;
         }
         
-        // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms in a transform.
+        // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms.
         Sphere transformed(const math::float4x4 & transform)
         {
             math::float4 tCenter = transform * math::float4(center, 1);
@@ -412,7 +362,7 @@ namespace util
             }
         }
         
-        // Calculates the projection of the Sphere (an oriented ellipse) given a focalLength. Algorithm due to Iñigo Quilez.
+        // Calculates the projection of the sphere (an oriented ellipse) given a focal length. Algorithm due to Iñigo Quilez.
         void calculate_projection(float focalLength, math::float2 screenSizePixels, math::float2 * outCenter, math::float2 * outAxisA, math::float2 * outAxisB) const
         {
             auto toScreenPixels = [=] (math::float2 v, const math::float2 &winSizePx) {
@@ -432,6 +382,123 @@ namespace util
         }
         
     };
+    
+    //////////////////////////////
+    // Ray object intersections //
+    //////////////////////////////
+    
+    // Implementation adapted from: http://www.lighthouse3d.com/tutorials/maths/ray-triangle-intersection/
+    bool intersect_ray_triangle(const gfx::Ray & ray, const math::float3 & v0, const math::float3 & v1, const math::float3 & v2, float * outT, math::float2 * outUV)
+    {
+        math::float3 e1 = v1 - v0, e2 = v2 - v0, h = cross(ray.direction, e2);
+        
+        float a = dot(e1, h);
+        if (fabsf(a) == 0.0f) return false; // Ray is collinear with triangle plane
+        
+        math::float3 s = ray.origin - v0;
+        float f = 1 / a;
+        float u = f * dot(s,h);
+        if (u < 0 || u > 1) return false; // Line intersection is outside bounds of triangle
+        
+        math::float3 q = cross(s, e1);
+        float v = f * math::dot(ray.direction, q);
+        if (v < 0 || u + v > 1) return false; // Line intersection is outside bounds of triangle
+        
+        float t = f * dot(e2, q);
+        if (t < 0) return false; // Line intersection, but not a ray intersection
+        
+        if (outT) *outT = t;
+        if (outUV) *outUV = {u,v};
+        
+        return true;
+    }
+    
+    bool intersect_ray_box(const gfx::Ray & ray, const math::float3 & boxMin, const math::float3 & boxMax)
+    {
+        // Determine an interval t0 <= t <= t1 in which ray(t).x is within the box extents
+        float t0 = (boxMin.x - ray.origin.x) / ray.direction.x, t1 = (boxMax.x - ray.origin.x) / ray.direction.x;
+        if(ray.direction.x < 0) std::swap(t0, t1);
+        
+        // Determine an interval t0y <= t <= t1y in which ray(t).y is within the box extents
+        float t0y = (boxMin.y - ray.origin.y) / ray.direction.y, t1y = (boxMax.y - ray.origin.y) / ray.direction.y;
+        if(ray.direction.y < 0) std::swap(t0y, t1y);
+        
+        // Intersect this interval with the previously computed interval
+        if (t0 > t1y || t0y > t1) return false;
+        t0 = std::max(t0, t0y);
+        t1 = std::min(t1, t1y);
+        
+        // Determine an interval t0z <= t <= t1z in which ray(t).z is within the box extents
+        float t0z = (boxMin.z - ray.origin.z) / ray.direction.z, t1z = (boxMax.z - ray.origin.z) / ray.direction.z;
+        if(ray.direction.z < 0) std::swap(t0z, t1z);
+        
+        // Intersect this interval with the previously computed interval
+        if (t0 > t1z || t0z > t1) return false;
+        t0 = std::max(t0, t0z);
+        t1 = std::min(t1, t1z);
+        
+        // True if the intersection interval is in front of the ray
+        return t0 > 0;
+    }
+    
+    bool intersect_ray_sphere(const gfx::Ray & ray, const Sphere & sphere, float * intersection = nullptr)
+    {
+        float t;
+        math::float3 diff = ray.get_origin() - sphere.center;
+        float a = math::dot(ray.get_direction(), ray.get_direction());
+        float b = 2.0f * math::dot(diff, ray.get_direction());
+        float c = math::dot(diff, diff) - sphere.radius * sphere.radius;
+        float disc = b * b - 4.0f * a * c;
+        
+        if (disc < 0.0f) return false;
+        else
+        {
+            float e = std::sqrt(disc);
+            float denom = 2.0f * a;
+            t = (-b - e) / denom;
+            
+            if (t > SPHERE_EPSILON)
+            {
+                if (intersection) *intersection = t;
+                return true;
+            }
+            
+            t = (-b + e) / denom;
+            if (t > SPHERE_EPSILON)
+            {
+                if (intersection) *intersection = t;
+                return true;
+            }
+        }
+        
+        if (intersection) *intersection = 0;
+        return false;
+    }
+    
+    bool intersect_ray_mesh(const gfx::Ray & ray, const Geometry & mesh, float * outRayT)
+    {
+        float bestT = std::numeric_limits<float>::infinity(), t;
+        math::float2 outUv;
+        
+        auto meshBounds = mesh.compute_bounds();
+        if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds.min, meshBounds.max))
+        {
+            for (auto & tri : mesh.faces)
+            {
+                if (intersect_ray_triangle(ray, mesh.vertices[tri.x], mesh.vertices[tri.y], mesh.vertices[tri.z], &t, &outUv) && t < bestT)
+                    bestT = t;
+            }
+        }
+        
+        if (bestT == std::numeric_limits<float>::infinity())
+            return false;
+        
+        if (outRayT)
+            *outRayT = bestT;
+        
+        return true;
+    }
+
     
 } // end namespace util
 
