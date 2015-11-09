@@ -42,16 +42,9 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        crateGeometry = load_geometry_from_ply("assets/models/crate/crate.ply");
-        
-        crateModel.mesh = make_cube_mesh();
-        crateModel.bounds = make_cube().compute_bounds();
-        
-        std::cout << make_cube().compute_bounds().min << std::endl;
-        std::cout << make_cube().compute_bounds().max << std::endl;
-        std::cout << make_cube().compute_bounds().center() << std::endl;
-        std::cout << make_cube().compute_bounds().volume() << std::endl;
-        
+        crateGeometry = make_cube();
+        crateModel.mesh = make_mesh_from_geometry(crateGeometry);
+        crateModel.bounds = crateGeometry.compute_bounds();
         crateModel.pose.position = {0, 0, 0};
         
         simpleTexturedShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
@@ -59,7 +52,7 @@ struct ExperimentalApp : public GLFWApp
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
-        cameraSphere = Sphere(crateModel.bounds.center(), 8);
+        cameraSphere = Sphere(crateModel.bounds.center(), crateModel.bounds.volume());
         myArcball = Arcball(&camera, cameraSphere);
         
         camera.look_at({0, 0, 10}, {0, 0, 0});
@@ -81,7 +74,6 @@ struct ExperimentalApp : public GLFWApp
             if (event.cursor != lastCursor)
             {
                 myArcball.mouse_drag(event.cursor, event.windowSize);
-                //crateModel.pose.orientation = qmul(myArcball.get_quat(), crateModel.pose.orientation);
             }
         }
         
@@ -91,7 +83,6 @@ struct ExperimentalApp : public GLFWApp
             {
                 isDragging = true;
                 myArcball.mouse_down(event.cursor, event.windowSize);
-                //crateModel.pose.orientation = qmul(myArcball.get_quat(), crateModel.pose.orientation);
             }
             
             if (event.is_mouse_up())
@@ -105,7 +96,7 @@ struct ExperimentalApp : public GLFWApp
     
     void on_update(const UpdateEvent & e) override
     {
-        if (isDragging)
+        //if (isDragging)
             crateModel.pose.orientation = qmul(myArcball.get_quat(), crateModel.pose.orientation);
     }
     
@@ -146,7 +137,6 @@ struct ExperimentalApp : public GLFWApp
             
             {
                 auto model = crateModel.get_model();
-                //std::cout << crateModel.pose.orientation << std::endl;
                 simpleTexturedShader->uniform("u_modelMatrix", model);
                 simpleTexturedShader->uniform("u_modelMatrixIT", inv(transpose(model)));
                 crateModel.draw();
