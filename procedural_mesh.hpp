@@ -6,7 +6,47 @@
 #include "geometric.hpp"
 #include "GlMesh.hpp"
 
-inline gfx::GlMesh make_sphere_mesh(float radius)
+inline Geometry make_cube()
+{
+    Geometry cube;
+    
+    cube.vertices = {
+        { -1, -1, -1 }, { -1, -1, +1 }, { -1, +1, +1 }, { -1, +1, -1 },
+        { +1, -1, +1 }, { +1, -1, -1 }, { +1, +1, -1 }, { +1, +1, +1 },
+        { -1, -1, -1 }, { +1, -1, -1 }, { +1, -1, +1 }, { -1, -1, +1 },
+        { +1, +1, -1 }, { -1, +1, -1 }, { -1, +1, +1 }, { +1, +1, +1 },
+        { -1, -1, -1 }, { -1, +1, -1 }, { +1, +1, -1 }, { +1, -1, -1 },
+        { -1, +1, +1 }, { -1, -1, +1 }, { +1, -1, +1 }, { +1, +1, +1 }
+    };
+    
+    cube.texCoords = {
+        {0, 0}, {1, 0}, {1, 1}, {0, 0}, {1, 1}, {0, 1},
+        {0, 0}, {1, 0}, {1, 1}, {0, 0}, {1, 1}, {0, 1},
+        {0, 0}, {1, 0}, {1, 1}, {0, 0}, {1, 1}, {0, 1},
+        {0, 0}, {1, 0}, {1, 1}, {0, 0}, {1, 1}, {0, 1}
+    };
+    
+    cube.faces = {
+        {0,  1,  2 }, {0,  2,  3 },
+        {4,  5,  6 }, {4,  6,  7 },
+        {8,  9,  10}, {8,  10, 11},
+        {12, 13, 14}, {12, 14, 15},
+        {16, 17, 18}, {16, 18, 19},
+        {20, 21, 22}, {20, 22, 23}
+    };
+    
+    cube.compute_normals();
+    cube.compute_tangents();
+    
+    return cube;
+}
+
+inline gfx::GlMesh make_cube_mesh()
+{
+    return make_mesh_from_geometry(make_cube());
+}
+
+inline Geometry make_sphere(float radius)
 {
     Geometry sphereGeom;
     
@@ -34,47 +74,15 @@ inline gfx::GlMesh make_sphere_mesh(float radius)
             sphereGeom.faces.push_back({ui * V + vi, un * V + vn, ui * V + vn});
         }
     }
-    
-    return make_mesh_from_geometry(sphereGeom);
+    return sphereGeom;
 }
 
-inline gfx::GlMesh make_cube_mesh()
+inline gfx::GlMesh make_sphere_mesh(float radius)
 {
-    Geometry cube;
- 
-    cube.vertices = {
-        { -1, -1, -1 }, { -1, -1, +1 }, { -1, +1, +1 }, { -1, +1, -1 },
-        { +1, -1, +1 }, { +1, -1, -1 }, { +1, +1, -1 }, { +1, +1, +1 },
-        { -1, -1, -1 }, { +1, -1, -1 }, { +1, -1, +1 }, { -1, -1, +1 },
-        { +1, +1, -1 }, { -1, +1, -1 }, { -1, +1, +1 }, { +1, +1, +1 },
-        { -1, -1, -1 }, { -1, +1, -1 }, { +1, +1, -1 }, { +1, -1, -1 },
-        { -1, +1, +1 }, { -1, -1, +1 }, { +1, -1, +1 }, { +1, +1, +1 }
-    };
-        
-    cube.texCoords = {
-        {0, 0}, {1, 0}, {1, 1}, {0, 0}, {1, 1}, {0, 1},
-        {0, 0}, {1, 0}, {1, 1}, {0, 0}, {1, 1}, {0, 1},
-        {0, 0}, {1, 0}, {1, 1}, {0, 0}, {1, 1}, {0, 1},
-        {0, 0}, {1, 0}, {1, 1}, {0, 0}, {1, 1}, {0, 1}
-    };
-
-    cube.faces = {
-        {0,  1,  2 }, {0,  2,  3 },
-        {4,  5,  6 }, {4,  6,  7 },
-        {8,  9,  10}, {8,  10, 11},
-        {12, 13, 14}, {12, 14, 15},
-        {16, 17, 18}, {16, 18, 19},
-        {20, 21, 22}, {20, 22, 23}
-    };
-    
-    cube.compute_normals();
-    cube.compute_tangents();
-    
-    return make_mesh_from_geometry(cube);
+    return make_mesh_from_geometry(make_sphere(radius));
 }
 
-
-inline gfx::GlMesh make_frustum_mesh(float aspectRatio = 1.33333f)
+inline Geometry make_frustum(float aspectRatio = 1.33333f)
 {
     Geometry frustum;
     
@@ -89,12 +97,17 @@ inline gfx::GlMesh make_frustum_mesh(float aspectRatio = 1.33333f)
         {-1, +h, -1.5}
     };
     frustum.compute_normals();
-    auto frustumMesh = make_mesh_from_geometry(frustum);
+    return frustum;
+}
+
+inline gfx::GlMesh make_frustum_mesh(float aspectRatio = 1.33333f)
+{
+    auto frustumMesh = make_mesh_from_geometry(make_frustum(aspectRatio));
     frustumMesh.set_non_indexed(GL_LINES);
     return frustumMesh;
 }
 
-inline gfx::GlMesh make_torus_mesh(int radial_segments = 8)
+inline Geometry make_torus(int radial_segments = 8)
 {
     Geometry torus;
     
@@ -121,10 +134,15 @@ inline gfx::GlMesh make_torus_mesh(int radial_segments = 8)
     }
     torus.compute_normals();
     torus.compute_tangents();
-    return make_mesh_from_geometry(torus);
+    return torus;
 }
 
-inline gfx::GlMesh make_capsule_mesh(int segments, float radius, float length)
+inline gfx::GlMesh make_torus_mesh(int radial_segments = 8)
+{
+    return make_mesh_from_geometry(make_torus(radial_segments));
+}
+
+inline Geometry make_capsule(int segments, float radius, float length)
 {
     Geometry capsule;
     
@@ -209,10 +227,15 @@ inline gfx::GlMesh make_capsule_mesh(int segments, float radius, float length)
         capsule.faces.emplace_back(v, v + 1, v + doubleSegments + 1);
         ++v;
     }
-    return make_mesh_from_geometry(capsule);
+    return capsule;
 }
 
-inline gfx::GlMesh make_plane_mesh(float width, float height, uint nw, uint nh)
+inline gfx::GlMesh make_capsule_mesh(int segments, float radius, float length)
+{
+    return make_mesh_from_geometry(make_capsule(segments, radius, length));
+}
+
+inline Geometry make_plane(float width, float height, uint nw, uint nh)
 {
     Geometry plane;
     uint32_t indexOffset = 0;
@@ -256,11 +279,15 @@ inline gfx::GlMesh make_plane_mesh(float width, float height, uint nw, uint nh)
     
     plane.compute_normals();
     plane.compute_tangents();
-    
-    return make_mesh_from_geometry(plane);
+    return plane;
 }
 
-inline gfx::GlMesh make_axis_mesh()
+inline gfx::GlMesh make_plane_mesh(float width, float height, uint nw, uint nh)
+{
+    return make_mesh_from_geometry(make_plane(width, height, nw, nh));
+}
+
+inline Geometry make_axis()
 {
     Geometry axis;
     
@@ -279,14 +306,18 @@ inline gfx::GlMesh make_axis_mesh()
     axis.colors.emplace_back(1.0, 0.0, 0.0, 1.0);
     axis.colors.emplace_back(1.0, 0.0, 0.0, 1.0);
     
-    auto axisMesh = make_mesh_from_geometry(axis);
+    return axis;
+}
+
+inline gfx::GlMesh make_axis_mesh()
+{
+    auto axisMesh = make_mesh_from_geometry(make_axis());
     axisMesh.set_non_indexed(GL_LINES);
     return axisMesh;
 }
 
-inline gfx::GlMesh make_spiral_mesh(float resolution = 512.0f, float freq = 128.f)
+inline Geometry make_spiral(float resolution = 512.0f, float freq = 128.f)
 {
-    assert(freq < resolution);
     Geometry spiral;
     float off = 1.0 / resolution;
     for (float i = 0.0; i < 1.0 + off; i += off)
@@ -294,12 +325,18 @@ inline gfx::GlMesh make_spiral_mesh(float resolution = 512.0f, float freq = 128.
         float s = cos(i * 2.0 * ANVIL_PI + M_PI) * 0.5f + 0.5f;
         spiral.vertices.push_back({cosf(i * ANVIL_PI * freq) * s, i, sinf(i * ANVIL_PI * freq) * s});
     }
-    auto sprialMesh = make_mesh_from_geometry(spiral);
+    return spiral;
+}
+
+inline gfx::GlMesh make_spiral_mesh(float resolution = 512.0f, float freq = 128.f)
+{
+    assert(freq < resolution);
+    auto sprialMesh = make_mesh_from_geometry(make_spiral());
     sprialMesh.set_non_indexed(GL_LINE_STRIP);
     return sprialMesh;
 }
 
-inline gfx::GlMesh make_icosahedron_mesh()
+inline Geometry make_icosahedron()
 {
     Geometry icosahedron;
     const float t = (1.0f + sqrtf(5.0f)) / 2.0f;
@@ -318,10 +355,15 @@ inline gfx::GlMesh make_icosahedron_mesh()
     };
     
     icosahedron.compute_normals();
-    return make_mesh_from_geometry(icosahedron);
+    return icosahedron;
 }
 
-inline gfx::GlMesh make_octohedron_mesh()
+inline gfx::GlMesh make_icosahedron_mesh()
+{
+    return make_mesh_from_geometry(make_icosahedron());
+}
+
+inline Geometry make_octohedron()
 {
     Geometry octohedron;
     octohedron.vertices = {
@@ -331,10 +373,15 @@ inline gfx::GlMesh make_octohedron_mesh()
     };
     octohedron.faces = {{0, 2, 4}, {0, 4, 3}, {0, 3, 5}, {0, 5, 2}, {1, 2, 5}, {1, 5, 3}, {1, 3, 4}, {1, 4, 2}};
     octohedron.compute_normals();
-    return make_mesh_from_geometry(octohedron);
+    return octohedron;
 }
 
-inline gfx::GlMesh make_tetrahedron_mesh()
+inline gfx::GlMesh make_octohedron_mesh()
+{
+    return make_mesh_from_geometry(make_octohedron());
+}
+
+inline Geometry make_tetrahedron()
 {
     Geometry tetrahedron;
     tetrahedron.vertices = {
@@ -343,7 +390,12 @@ inline gfx::GlMesh make_tetrahedron_mesh()
     };
     tetrahedron.faces = {{2, 1, 0},{0, 3, 2},{1, 3, 0},{2, 3, 1}};
     tetrahedron.compute_normals();
-    return make_mesh_from_geometry(tetrahedron);
+    return tetrahedron;
+}
+
+inline gfx::GlMesh make_tetrahedron_mesh()
+{
+    return make_mesh_from_geometry(make_tetrahedron());
 }
 
 inline gfx::GlMesh make_fullscreen_quad()
