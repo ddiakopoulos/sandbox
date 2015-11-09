@@ -79,32 +79,22 @@ namespace math
         Box() : min((T) 0), max((T) 0)  { }
         Box(vec<T, M> pt, vec<T, M> dims) : min(pt), max(dims) { }
 
-        bool contains(const vec<T, M>& qt) const 
+        bool contains(const vec<T, M> & qt) const
         {
             for (int m = 0; m < M; m++)
                 if (qt[m] < min[m] || qt[m] >= min[m] + max[m])
                     return false;
             return true;
         }
-        
-        void intersect(const Box<T, M> & other)
-        {
-            vec<T, M> mn = math::max(min, other.min);
-            vec<T, M> mx = math::min(max, other.max());
-            max = mx - mn;
-            for (int m = 0; m < M; m++)
-                max[m] = std::max(max[m], (T) 0);
-            min = mn;
-        }
 
         vec<T, M> center() const 
         {
-            return min + max / (T) (2);
+            return min + (0.5f * (max - min));
         }
-
-        vec<T, M> clamp(const vec<T, M> & pt, const Box<T, M> & parent)
+        
+        float volume() const
         {
-            return math::clamp(pt, parent.min, parent.min + parent.max - max);
+            return ( max.x - min.x ) * ( max.y - min.y ) * ( max.z - min.z );
         }
     };
     

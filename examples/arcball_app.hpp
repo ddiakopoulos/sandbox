@@ -44,18 +44,25 @@ struct ExperimentalApp : public GLFWApp
         
         crateGeometry = load_geometry_from_ply("assets/models/crate/crate.ply");
         
-        crateModel.mesh = make_mesh_from_geometry(crateGeometry);
-        crateModel.bounds = crateGeometry.compute_bounds();
+        crateModel.mesh = make_cube_mesh();
+        crateModel.bounds = make_cube().compute_bounds();
         
-        crateModel.pose.position = {0, -0.25, -2.5};
+        std::cout << make_cube().compute_bounds().min << std::endl;
+        std::cout << make_cube().compute_bounds().max << std::endl;
+        std::cout << make_cube().compute_bounds().center() << std::endl;
+        std::cout << make_cube().compute_bounds().volume() << std::endl;
+        
+        crateModel.pose.position = {0, 0, 0};
         
         simpleTexturedShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         crateDiffuseTex = load_image("assets/models/crate/crate_diffuse.png");
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
-        cameraSphere = Sphere(crateModel.bounds.center(), 1);
+        cameraSphere = Sphere(crateModel.bounds.center(), 8);
         myArcball = Arcball(&camera, cameraSphere);
+        
+        camera.look_at({0, 0, 10}, {0, 0, 0});
         //myArcball.set_constraint_axis(float3(0, 1, 0));
         
         gfx::gl_check_error(__FILE__, __LINE__);
@@ -98,7 +105,8 @@ struct ExperimentalApp : public GLFWApp
     
     void on_update(const UpdateEvent & e) override
     {
-        crateModel.pose.orientation = qmul(myArcball.get_quat(), crateModel.pose.orientation);
+        if (isDragging)
+            crateModel.pose.orientation = qmul(myArcball.get_quat(), crateModel.pose.orientation);
     }
     
     void on_draw() override
@@ -137,7 +145,7 @@ struct ExperimentalApp : public GLFWApp
             simpleTexturedShader->texture("u_diffuseTex", 0, crateDiffuseTex.get_gl_handle(), GL_TEXTURE_2D);
             
             {
-                auto model = mul(crateModel.pose.matrix(), make_scaling_matrix(0.15));
+                auto model = crateModel.get_model();
                 //std::cout << crateModel.pose.orientation << std::endl;
                 simpleTexturedShader->uniform("u_modelMatrix", model);
                 simpleTexturedShader->uniform("u_modelMatrixIT", inv(transpose(model)));

@@ -77,7 +77,7 @@ public:
     void mouse_down(const float2 &mousePos, const int2 &windowSize)
     {
         initialMousePos = mousePos;
-        initialQuat = currentQuat;
+        initialQuat = {0, 0, 0, 1};
         float temp;
         mouse_on_sphere(initialMousePos, windowSize, &fromVector, &temp);
     }
@@ -137,19 +137,20 @@ public:
         
         if (useConstraints)
         {
-            //from = constrain_to_axis(from, axisConstraint);
-            //to = constrain_to_axis(to, axisConstraint);
+            from = constrain_to_axis(from, axisConstraint);
+            to = constrain_to_axis(to, axisConstraint);
         }
         
-        float4 rotation = normalize(make_rotation_quat_between_vectors(from, to)); // rotr(from, to);
+        float4 rotation = make_rotation_quat_between_vectors(from, to); // rotr(from, to);
         std::cout << "Rotation F: " << rotation << std::endl;
         float3 axis = axis_from_quat(rotation);
         float angle = angle_from_quat(rotation);
         
-        rotation = make_rotation_quat_axis_angle(axis, angle + addition); //angleAxis(angle + addition, axis);
+        rotation = angleAxis(angle + addition, axis);
         
         currentQuat = normalize(qmul(rotation, initialQuat));
         
+        std::cout << "add: " << addition << std::endl;
         std::cout << "From: " <<  from << std::endl;
         std::cout << "To: " << to << std::endl;
         std::cout << "Axis: " <<  axis << std::endl;
@@ -176,12 +177,14 @@ public:
     
     void mouse_on_sphere(const float2 & point, const int2 & windowSize, float3 * resultVector, float * resultAngleAddition)
     {
+        float2 clampedPoint = clamp<float2>(point, {0, 0}, float2(windowSize.x, windowSize.y));
+        
         float rayT;
         
-        Ray ray = make_ray(*camera, ((float) windowSize.x / (float) windowSize.y), float2(point.x, point.y), float2(windowSize.x, windowSize.y));
+        Ray ray = camera->get_world_ray(clampedPoint, float2(windowSize.x, windowSize.y));
         
         // Click inside the sphere?
-        if (arcballSphere.intersects(ray, &rayT) > 0)
+        if (intersect_ray_sphere(ray, arcballSphere, &rayT) > 0)
         {
             // trace a ray through the pixel to the sphere
             *resultVector = normalize(ray.calculate_position(rayT) - arcballSphere.center);
