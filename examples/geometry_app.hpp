@@ -154,6 +154,9 @@ struct ExperimentalApp : public GLFWApp
                     if (model.check_hit(worldRay))
                     {
                         std::cout << "We hit something! \n";
+                        boxSelection.pose.position = model.pose.position;
+                        boxSelection.scale = model.scale * float3(1.25);
+                        break;
                     }
                 }
             }
@@ -217,6 +220,13 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->uniform("u_modelMatrix", modelMat);
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(modelMat)));
                 model.draw();
+            }
+            
+            {
+                auto modelMat = boxSelection.get_model();
+                simpleShader->uniform("u_modelMatrix", modelMat);
+                simpleShader->uniform("u_modelMatrixIT", inv(transpose(modelMat)));
+                boxSelection.draw();
             }
             
             simpleShader->unbind();
