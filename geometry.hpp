@@ -390,11 +390,13 @@ namespace util
         math::float4 equation; // ax * by * cz + d form (xyz normal, w distance)
         Plane(math::float4 equation) : equation(equation) {}
         Plane(math::float3 normal, float distance) { equation = math::float4(normal.x, normal.y, normal.z, distance); }
-        void normalize() { float n = 1.0f / math::length(get_normal()); equation *= n; };
         math::float3 get_normal() const { return math::float3(equation.x, equation.y, equation.z); }
+        void normalize() { float n = 1.0f / math::length(get_normal()); equation *= n; };
+        float get_distance() const { return equation.w; }
         float distance_to(math::float3 point) const { return dot(get_normal(), point) + equation.w; };
         bool contains(math::float3 point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
     };
+    
     //////////////////////////////
     // Ray-object intersections //
     //////////////////////////////
