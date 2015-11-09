@@ -74,16 +74,19 @@ inline gfx::GlMesh make_cube_mesh()
 }
 
 
-inline gfx::GlMesh make_frustum_mesh()
+inline gfx::GlMesh make_frustum_mesh(float aspectRatio = 1.33333f)
 {
     Geometry frustum;
+    
+    float h = 1 / aspectRatio;
+    
     frustum.vertices = {
-        {+0, +0, +0}, {-1, +1, -1}, {+0, +0, +0},
-        {+1, +1, -1}, {+0, +0, +0}, {-1, -1, -1},
-        {+0, +0, +0}, {+1, -1, -1}, {-1, +1, -1},
-        {+1, +1, -1}, {+1, +1, -1}, {+1, -1, -1},
-        {+1, -1, -1}, {-1, -1, -1}, {-1, -1, -1},
-        {-1, +1, -1}
+        {+0, +0, +0}, {-1, +h, -1.5}, {+0, +0, +0},
+        {+1, +h, -1.5}, {+0, +0, +0}, {-1, -h, -1.5},
+        {+0, +0, +0}, {+1, -h, -1.5}, {-1, +h, -1.5},
+        {+1, +h, -1.5}, {+1, +h, -1.5}, {+1, -h, -1.5},
+        {+1, -h, -1.5}, {-1, -h, -1.5}, {-1, -h, -1.5},
+        {-1, +h, -1.5}
     };
     frustum.compute_normals();
     auto frustumMesh = make_mesh_from_geometry(frustum);
