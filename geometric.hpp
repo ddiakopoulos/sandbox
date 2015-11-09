@@ -73,54 +73,38 @@ namespace math
 
     template<class T, int M> struct Box
     {
-        vec<T, M> position;
-        vec<T, M> dimensions;
+        vec<T, M> min;
+        vec<T, M> max;
 
-        Box() : position((T) 0), dimensions((T) 0)  { }
-        Box(vec<T, M> pt, vec<T, M> dims) : position(pt), dimensions(dims) { }
+        Box() : min((T) 0), max((T) 0)  { }
+        Box(vec<T, M> pt, vec<T, M> dims) : min(pt), max(dims) { }
 
         bool contains(const vec<T, M>& qt) const 
         {
             for (int m = 0; m < M; m++)
-                if (qt[m] < position[m] || qt[m] >= position[m] + dimensions[m])
+                if (qt[m] < min[m] || qt[m] >= min[m] + max[m])
                     return false;
             return true;
         }
-
-        void clamp(const Box<T, M> & other)
-        {
-            dimensions = math::min(dimensions, other.dimensions);
-            position = math::clamp(position, other.position, other.position + other.dimensions - dimensions);
-        }
-
+        
         void intersect(const Box<T, M> & other)
         {
-            vec<T, M> mn = math::max(position, other.position);
-            vec<T, M> mx = math::min(max(), other.max());
-            dimensions = mx - mn;
+            vec<T, M> mn = math::max(min, other.min);
+            vec<T, M> mx = math::min(max, other.max());
+            max = mx - mn;
             for (int m = 0; m < M; m++)
-                dimensions[m] = std::max(dimensions[m], (T) 0);
-            position = mn;
-        }
-
-        vec<T, M> max() const 
-        {
-            return position + dimensions;
-        }
-
-        vec<T, M> min() const 
-        {
-            return position;
+                max[m] = std::max(max[m], (T) 0);
+            min = mn;
         }
 
         vec<T, M> center() const 
         {
-            return position + dimensions / (T) (2);
+            return min + max / (T) (2);
         }
 
-        vec<T, M> clamp(const vec<T, M>& pt, const Box<T, M> & parent)
+        vec<T, M> clamp(const vec<T, M> & pt, const Box<T, M> & parent)
         {
-            return math::clamp(pt, parent.position, parent.position + parent.dimensions - dimensions);
+            return math::clamp(pt, parent.min, parent.min + parent.max - max);
         }
     };
     
@@ -285,10 +269,10 @@ namespace math
     {
         return 
         {
-            {2*nearZ/(right-left),0,0,0},
-            {0,2*nearZ/(top-bottom),0,0},
-            {(right+left)/(right-left), (top+bottom)/(top-bottom), -(farZ+nearZ)/(farZ-nearZ), -1},
-            {0,0,-2*farZ*nearZ/(farZ-nearZ),0}
+            {2 * nearZ / (right-left), 0, 0, 0},
+            {0,2 * nearZ / (top-bottom), 0 ,0},
+            {(right + left) / (right-left), (top + bottom) / (top - bottom), -(farZ + nearZ) / (farZ - nearZ), -1},
+            {0, 0, -2 * farZ * nearZ / (farZ - nearZ), 0}
         };
     }
 
