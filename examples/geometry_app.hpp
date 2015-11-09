@@ -10,12 +10,25 @@ struct Object
     float3 scale;
     Object() : scale(1, 1, 1) {}
     float4x4 get_model() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
+    math::Box<float, 3> bounds;
+    
+    bool check_hit(const Ray & worldRay) const
+    {
+        auto localRay = pose.inverse() * worldRay;
+        localRay.origin /= scale;
+        localRay.direction /= scale;
+        return intersect_ray_box(localRay, bounds.min, bounds.max);
+    }
 };
 
 struct ModelObject : public Object
 {
     GlMesh mesh;
     void draw() const { mesh.draw_elements(); };
+    void build(const Geometry & g) {
+        mesh = make_mesh_from_geometry(g);
+        bounds = g.compute_bounds();
+    };
 };
 
 struct LightObject : public Object
@@ -47,6 +60,8 @@ struct ExperimentalApp : public GLFWApp
     std::vector<ModelObject> proceduralModels;
     std::vector<ModelObject> debugModels;
     
+    ModelObject boxSelection;
+    
     ExperimentalApp() : GLFWApp(640, 480, "Geometry App")
     {
         int width, height;
@@ -55,60 +70,66 @@ struct ExperimentalApp : public GLFWApp
         grid = RenderableGrid(1, 100, 100);
         cameraController.set_camera(&camera);
         
+        boxSelection.build(make_cube());
+        boxSelection.mesh.set_non_indexed(GL_LINES);
+        
         lights.resize(2);
         
-        lights[0].color = float3(0.7f, 0.2f, 0.2f);
-        lights[0].pose.position = float3(5, 10, -5);
+        lights[0].color = float3(44.f / 255.f, 168.f / 255.f, 220.f / 255.f);
+        lights[0].pose.position = float3(25, 15, 0);
         
-        lights[1].color = float3(0.4f, 0.8f, 0.4f);
-        lights[1].pose.position = float3(-5, 10, 5);
+        lights[1].color = float3(220.f / 255.f, 44.f / 255.f, 201.f / 255.f);
+        lights[1].pose.position = float3(-25, 15, 0);
         
         simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
         {
             proceduralModels.resize(11);
             
-            proceduralModels[0].mesh = make_sphere_mesh(1.0);
+            proceduralModels[0].build(make_sphere(1.0));
             proceduralModels[0].pose.position = float3(3, 0, 2);
             
-            proceduralModels[1].mesh = make_cube_mesh();
+            proceduralModels[1].build(make_cube());
             proceduralModels[1].pose.position = float3(7, 0, 5);
             
-            proceduralModels[2].mesh = make_frustum_mesh();
+            proceduralModels[2].build(make_frustum());
             proceduralModels[2].pose.position = float3(0, 0, 6);
             
-            proceduralModels[3].mesh = make_torus_mesh();
+            proceduralModels[3].build(make_torus());
             proceduralModels[3].pose.position = float3(10, 4, -10);
             
-            proceduralModels[4].mesh = make_capsule_mesh(8, 1, 3);
+            proceduralModels[4].build(make_capsule(8, 1, 3));
             proceduralModels[4].pose.position = float3(5, 0, 10);
             
-            proceduralModels[5].mesh = make_plane_mesh(2, 2, 5, 5);
+            proceduralModels[5].build(make_plane(2, 2, 5, 5));
             proceduralModels[5].pose.position = float3(-5, 0, 2);
             
-            proceduralModels[6].mesh = make_axis_mesh();
+            proceduralModels[6].build(make_axis());
             proceduralModels[6].pose.position = float3(-5, 2, 4);
             
-            proceduralModels[7].mesh = make_spiral_mesh();
+            proceduralModels[7].build(make_spiral());
             proceduralModels[7].pose.position = float3(-5, 0, 6);
             
-            proceduralModels[8].mesh = make_icosahedron_mesh();
+            proceduralModels[8].build(make_icosahedron());
             proceduralModels[8].pose.position = float3(-10, 0, 8);
             
-            proceduralModels[9].mesh = make_octohedron_mesh();
+            proceduralModels[9].build(make_octohedron());
             proceduralModels[9].pose.position = float3(-15, 0, 10);
             
-            proceduralModels[10].mesh = make_tetrahedron_mesh();
+            proceduralModels[10].build(make_tetrahedron());
             proceduralModels[10].pose.position = float3(-20, 0, 12);
         }
         
         {
-            debugModels.resize(2);
+            debugModels.resize(3);
             debugModels[0].mesh = make_mesh_from_geometry(load_geometry_from_ply("assets/models/geometry/CubeHollow2Sides.ply"));
             debugModels[0].pose.position = float3(4, -2, 4);
             
             debugModels[1].mesh = make_mesh_from_geometry(load_geometry_from_ply("assets/models/geometry/CylinderUniform.ply"));
             debugModels[1].pose.position = float3(-4, -2, -4);
+            
+            debugModels[2].mesh = make_mesh_from_geometry(load_geometry_from_ply("assets/models/shaderball/shaderball.ply"));
+            debugModels[2].pose.position = float3(0, -4, 0);
         }
         
         gfx::gl_check_error(__FILE__, __LINE__);
@@ -121,6 +142,22 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
+        if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS)
+        {
+            if (event.value[0] == GLFW_MOUSE_BUTTON_LEFT)
+            {
+                int width, height;
+                glfwGetWindowSize(window, &width, &height);
+                for (const auto & model : proceduralModels)
+                {
+                    auto worldRay = camera.get_world_ray(event.cursor, float2(width, height));
+                    if (model.check_hit(worldRay))
+                    {
+                        std::cout << "We hit something! \n";
+                    }
+                }
+            }
+        }
         cameraController.handle_input(event);
     }
     
@@ -156,7 +193,7 @@ struct ExperimentalApp : public GLFWApp
             simpleShader->uniform("u_viewProj", viewProj);
             simpleShader->uniform("u_eye", camera.get_eye_point());
             
-            simpleShader->uniform("u_emissive", float3(.33f, 0.33f, 0.33f));
+            simpleShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
             simpleShader->uniform("u_diffuse", float3(0.4f, 0.4f, 0.25f));
             
             for (int i = 0; i < lights.size(); i++)

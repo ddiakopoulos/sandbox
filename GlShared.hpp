@@ -28,11 +28,12 @@ namespace gfx
     
     class Ray
     {
-        math::float3 origin;
-        math::float3 direction;
         bool signX, signY, signZ;
         math::float3 invDirection;
     public:
+        
+        math::float3 origin;
+        math::float3 direction;
         
         Ray() {}
         Ray(const math::float3 &aOrigin, const math::float3 &aDirection) : origin(aOrigin) { set_direction(aDirection); }
@@ -72,6 +73,15 @@ namespace gfx
         
         math::float3 calculate_position(float t) const { return origin + direction * t; }
     };
+    
+    inline Ray operator * (const math::Pose & pose, const Ray & ray) { return {pose.transform_coord(ray.get_origin()), pose.transform_vector(ray.get_direction())}; }
+    
+    inline Ray ray_from_viewport_pixel(const math::float2 & pixelCoord, const math::float2 & viewportSize, const math::float4x4 & projectionMatrix)
+    {
+        float vx = pixelCoord.x * 2 / viewportSize.x - 1, vy = 1 - pixelCoord.y * 2 / viewportSize.y;
+        auto invProj = inv(projectionMatrix);
+        return {{0,0,0}, normalize(transform_coord(invProj, {vx, vy, +1}) - transform_coord(invProj, {vx, vy, -1}))};
+    }
     
     // Can be used for things like a vbo, ibo, or pbo
     class GlBuffer : public util::Noncopyable
@@ -182,6 +192,13 @@ namespace gfx
         float get_focal_length() const
         {
             return (1.f / (tan(math::to_radians(fov) * 0.5f) * 2.0f));
+        }
+        
+        Ray get_world_ray(math::float2 cursor, math::float2 viewport)
+        {
+            float aspect = viewport.x / viewport.y;
+            auto cameraRay = ray_from_viewport_pixel(cursor, viewport, get_projection_matrix(aspect));
+            return pose * cameraRay;
         }
 
     };
