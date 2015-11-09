@@ -18,6 +18,7 @@ using namespace gfx;
 
 inline float angle_from_quat(const float4 & quat)
 {
+    std::cout << quat.w << std::endl;
     return acos(quat.w) * 2.0f;
 }
 
@@ -81,6 +82,53 @@ public:
         mouse_on_sphere(initialMousePos, windowSize, &fromVector, &temp);
     }
     
+    math::float4 angleAxis(float const & angle, math::float3 const & v)
+    {
+        float4 result;
+        float const a(angle);
+        float const s = sin(a * 0.5f);
+        result.w = cos(a * 0.5f);
+        result.x = v.x * s;
+        result.y = v.y * s;
+        result.z = v.z * s;
+        return result;
+    }
+    
+    math::float4 rotr(const math::float3 orig, const math::float3 dest)
+    {
+        
+        const float ROTATION_EPSILON = std::numeric_limits<float>::epsilon();
+        
+        float cosTheta = dot(orig, dest);
+        
+        math::float3 rotationAxis;
+        
+        if(cosTheta < -1.0f + ROTATION_EPSILON)
+        {
+            // special case when vectors in opposite directions :
+            // there is no "ideal" rotation axis
+            // So guess one; any will do as long as it's perpendicular to start
+            // This implementation favors a rotation around the Up axis (Y),
+            // since it's often what you want to do.
+            rotationAxis = cross(math::float3(0, 0, 1), orig);
+            
+            if (lengthSqr(rotationAxis) < ROTATION_EPSILON) // bad luck, they were parallel, try again!
+                rotationAxis = cross(float3(1, 0, 0), orig);
+            
+            rotationAxis = normalize(rotationAxis);
+            
+            return angleAxis(ANVIL_PI, rotationAxis);
+        }
+        
+        // Implementation from Stan Melax's Game Programming Gems 1 article
+        rotationAxis = cross(orig, dest);
+        
+        float s = sqrt(1.0f + cosTheta) * 2.0f;
+        float invs = 1.0f / s;
+        
+        return math::float4(rotationAxis.x * invs, rotationAxis.y * invs, rotationAxis.z * invs, s * 0.5f);
+    }
+    
     void mouse_drag(const float2 & mousePos, const int2 & windowSize)
     {
         float addition;
@@ -89,17 +137,26 @@ public:
         
         if (useConstraints)
         {
-            from = constrain_to_axis(from, axisConstraint);
-            to = constrain_to_axis(to, axisConstraint);
+            //from = constrain_to_axis(from, axisConstraint);
+            //to = constrain_to_axis(to, axisConstraint);
         }
         
-        float4 rotation = make_rotation_quat_between_vectors(from, to);
+        float4 rotation = normalize(make_rotation_quat_between_vectors(from, to)); // rotr(from, to);
+        std::cout << "Rotation F: " << rotation << std::endl;
         float3 axis = axis_from_quat(rotation);
         float angle = angle_from_quat(rotation);
         
-        rotation = make_rotation_quat_axis_angle(axis, angle + addition);
+        rotation = make_rotation_quat_axis_angle(axis, angle + addition); //angleAxis(angle + addition, axis);
         
         currentQuat = normalize(qmul(rotation, initialQuat));
+        
+        std::cout << "From: " <<  from << std::endl;
+        std::cout << "To: " << to << std::endl;
+        std::cout << "Axis: " <<  axis << std::endl;
+        std::cout << "Angle: " << angle << std::endl;
+        std::cout << "Rotation: " << rotation << std::endl;
+        std::cout << "Initial: " << initialQuat << std::endl;
+        std::cout << "------------------------" << std::endl;
     }
     
     void            reset_quat()                                     { currentQuat = initialQuat = float4(0, 0, 0, 1); }
@@ -115,14 +172,16 @@ public:
     
     void            disable_constraints()                            { useConstraints = false; }
     bool            is_using_constraints() const                     { return useConstraints; }
+
     
     void mouse_on_sphere(const float2 & point, const int2 & windowSize, float3 * resultVector, float * resultAngleAddition)
     {
         float rayT;
+        
         Ray ray = make_ray(*camera, ((float) windowSize.x / (float) windowSize.y), float2(point.x, point.y), float2(windowSize.x, windowSize.y));
         
         // Click inside the sphere?
-        if (intersect_ray_sphere(ray, arcballSphere, &rayT) > 0)
+        if (arcballSphere.intersects(ray, &rayT) > 0)
         {
             // trace a ray through the pixel to the sphere
             *resultVector = normalize(ray.calculate_position(rayT) - arcballSphere.center);

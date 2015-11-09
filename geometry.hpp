@@ -329,6 +329,43 @@ namespace util
             return center + math::normalize( onRay - center ) * radius;
         }
         
+        bool intersects(const gfx::Ray & ray, float * intersection = nullptr) const
+        {
+            float t;
+            math::float3 diff = ray.get_origin() - center;
+            float a = math::dot(ray.get_direction(), ray.get_direction());
+            float b = 2.0f * math::dot(diff, ray.get_direction());
+            float c = math::dot(diff, diff) - radius * radius;
+            float disc = b * b - 4.0f * a * c;
+            
+            if (disc < 0.0f)
+            {
+                return false;
+            }
+            else
+            {
+                float e = std::sqrt(disc);
+                float denom = 2.0f * a;
+                t = (-b - e) / denom;
+                
+                if (t > SPHERE_EPSILON)
+                {
+                    if (intersection) *intersection = t;
+                    return true;
+                }
+                
+                t = (-b + e) / denom;
+                if (t > SPHERE_EPSILON)
+                {
+                    if (intersection) *intersection = t;
+                    return true;
+                }
+            }
+            
+            if (intersection) *intersection = 0;
+            return false;
+        }
+        
         // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms.
         Sphere transformed(const math::float4x4 & transform)
         {

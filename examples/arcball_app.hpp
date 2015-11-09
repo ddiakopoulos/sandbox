@@ -3,10 +3,26 @@
 using namespace math;
 using namespace util;
 using namespace gfx;
+
+struct Object
+{
+    Pose pose;
+    float3 scale;
+    Object() : scale(1, 1, 1) {}
+    float4x4 get_model() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
+    math::Box<float, 3> bounds;
+};
+
+struct ModelObject : public Object
+{
+    GlMesh mesh;
+    void draw() const { mesh.draw_elements(); };
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     
-    Model crateModel;
+    ModelObject crateModel;
     Geometry crateGeometry;
     
     GlTexture crateDiffuseTex;
@@ -56,7 +72,10 @@ struct ExperimentalApp : public GLFWApp
         if (event.type == InputEvent::CURSOR && isDragging)
         {
             if (event.cursor != lastCursor)
+            {
                 myArcball.mouse_drag(event.cursor, event.windowSize);
+                //crateModel.pose.orientation = qmul(myArcball.get_quat(), crateModel.pose.orientation);
+            }
         }
         
         if (event.type == InputEvent::MOUSE)
@@ -65,12 +84,12 @@ struct ExperimentalApp : public GLFWApp
             {
                 isDragging = true;
                 myArcball.mouse_down(event.cursor, event.windowSize);
+                //crateModel.pose.orientation = qmul(myArcball.get_quat(), crateModel.pose.orientation);
             }
             
             if (event.is_mouse_up())
             {
                 isDragging = false;
-                myArcball.mouse_down(event.cursor, event.windowSize);
             }
         }
         
@@ -118,7 +137,8 @@ struct ExperimentalApp : public GLFWApp
             simpleTexturedShader->texture("u_diffuseTex", 0, crateDiffuseTex.get_gl_handle(), GL_TEXTURE_2D);
             
             {
-                auto model = mul(crateModel.pose.matrix(), make_scaling_matrix(0.1));
+                auto model = mul(crateModel.pose.matrix(), make_scaling_matrix(0.15));
+                //std::cout << crateModel.pose.orientation << std::endl;
                 simpleTexturedShader->uniform("u_modelMatrix", model);
                 simpleTexturedShader->uniform("u_modelMatrixIT", inv(transpose(model)));
                 crateModel.draw();
