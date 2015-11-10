@@ -43,6 +43,51 @@ struct TexturedObject : public ModelObject
     GlTexture normalTexture;
 };
 
+class Raycaster
+{
+    Bounds rect;
+    float4x4 invViewProj;
+public:
+    
+    Raycaster(const Bounds rect, const float4x4 & proj, const Pose & view)
+    {
+        this->rect = rect;
+        invViewProj = inv(mul(proj, look_at_matrix_rh(view.position, view.position + view.ydir(), view.zdir())));
+    }
+    
+    Ray compute(const float2 & pixel) const
+    {
+        auto viewX = (pixel.x - rect.x0) * 2.0f / rect.width() - 1;
+        auto viewY = 1 - (pixel.y - rect.y0) * 2.0f / rect.height();
+        return between(transform_coord(invViewProj, {viewX, viewY, -1}), transform_coord(invViewProj, {viewX, viewY, 1}));
+    }
+};
+
+class LinearTranslationDragger
+{
+    ModelObject & object;
+    Raycaster caster;
+    float3 direction, initialPosition;
+    float initialS;
+    
+    float ComputeS(const float2 & mouse) const
+    {
+        const Ray ray1 = {initialPosition, direction}, ray2 = caster.compute(mouse);
+        const auto r12 = ray2.origin - ray1.origin;
+        const auto e1e2 = dot(ray1.direction, ray2.direction), denom = 1 - e1e2 * e1e2;
+        return (dot(r12,ray1.direction) - dot(r12,ray2.direction) * e1e2) / denom;
+    }
+    
+public:
+    
+    LinearTranslationDragger(ModelObject & object, const Raycaster & caster, const float3 & direction, const float2 & click) : object(object), caster(caster), direction(qrot(object.pose.orientation, direction)), initialPosition(object.pose.position), initialS(ComputeS(click)) {}
+    
+    void OnDrag(float2 newMouse) { object.pose.position = initialPosition + direction * (ComputeS(newMouse) - initialS); }
+    void OnRelease() {}
+    void OnCancel() { object.pose.position = initialPosition; }
+};
+
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -63,6 +108,15 @@ struct ExperimentalApp : public GLFWApp
     
     ModelObject boxSelection;
     
+    int selectedObjectIndex = -1;
+    
+    bool isDragging = false;
+    
+    Ray initialRay;
+    float3 initialPosition;
+    
+    std::shared_ptr<LinearTranslationDragger> dragger;
+    
     ExperimentalApp() : GLFWApp(640, 480, "Geometry App")
     {
         int width, height;
@@ -72,7 +126,8 @@ struct ExperimentalApp : public GLFWApp
         cameraController.set_camera(&camera);
         
         boxSelection.build(make_cube());
-        boxSelection.mesh.set_non_indexed(GL_LINES);
+        boxSelection.scale = {4, .25, .25};
+        //boxSelection.mesh.set_non_indexed(GL_LINES);
         
         lights.resize(2);
         
@@ -143,25 +198,82 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
+        if (event.type == InputEvent::CURSOR && isDragging)
+        {
+            if (selectedObjectIndex >= 0)
+            {
+                if (dragger)
+                    dragger->OnDrag(event.cursor);
+                
+                //std::cout << selectedObjectIndex << " - " << selectedObject.pose.position.x << std::endl;
+                
+                
+            }
+        }
+        
         if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS)
         {
             if (event.value[0] == GLFW_MOUSE_BUTTON_LEFT)
             {
                 int width, height;
                 glfwGetWindowSize(window, &width, &height);
+                
+                int objIdx = -1;
                 for (const auto & model : proceduralModels)
                 {
                     auto worldRay = camera.get_world_ray(event.cursor, float2(width, height));
                     if (model.check_hit(worldRay))
                     {
-                        std::cout << "We hit something! \n";
                         boxSelection.pose.position = model.pose.position;
-                        boxSelection.scale = model.scale * float3(1.25);
+                        selectedObjectIndex = objIdx + 1;
+                        std::cout << "New selected object: " << selectedObjectIndex << std::endl;
                         break;
                     }
+                    objIdx++;
                 }
+                
+                
+                if (selectedObjectIndex >= 0)
+                {
+                    Raycaster caster({0, 0, (float) event.windowSize.x, (float) event.windowSize.y}, make_perspective_matrix_rh_gl(1, (event.windowSize.x / event.windowSize.y), 0.25f, 32.f), camera.pose);
+                    // Ray ray = caster.compute(event.cursor);
+                    
+                    auto & selectedObject = proceduralModels[selectedObjectIndex];
+                    initialPosition = selectedObject.pose.position;
+                    
+                    float3 axis = float3(0, 0, 1);
+                    
+                    dragger = std::make_shared<LinearTranslationDragger>(selectedObject, caster, axis, event.cursor);
+                }
+
             }
         }
+        
+        
+        if (event.type == InputEvent::MOUSE)
+        {
+            if (event.is_mouse_down())
+            {
+                isDragging = true;
+                
+                auto worldRay = camera.get_world_ray(event.cursor, float2(event.windowSize.x, event.windowSize.y));
+                if (boxSelection.check_hit(worldRay))
+                {
+                    initialRay = worldRay;
+                    std::cout << "set initial ray... " << std::endl;
+
+                }
+                
+
+              
+            }
+            
+            if (event.is_mouse_up())
+            {
+                isDragging = false;
+            }
+        }
+        
         cameraController.handle_input(event);
     }
     

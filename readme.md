@@ -1,7 +1,6 @@
 # Experiments!
 
 * Game-engine-style gizmo editing interface
-* Collision geometry
 * UI layout via cassowary constraint solver (Rhea library)
 * Dual contouring + terrain deformation (ref. impl)
 * A simple scenegraph
@@ -9,7 +8,7 @@
 * Immediate Mode GUI test
 * Reaction-diffusion simulator
 * Fluid simulator with a compute shader
-* Procedural scene: clouds, trees.
+* Procedural clouds
 * Deferred rendering experiments
 * L-System + particles
 * Impulse response raytracer
@@ -20,7 +19,8 @@
 
 # Recent
 * Arkano22 SSAO implementation
+* Several more post-processing effects: film grain, FXAA
 * CEGUI layout system
-* Procedrual sky dome with Preetham and Hosek-Wilkie models
+* Procedural sky dome with Preetham and Hosek-Wilkie models
 * Arcball camera
 * Basic image morphologies (erode/dilate)

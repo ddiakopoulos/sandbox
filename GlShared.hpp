@@ -72,9 +72,12 @@ namespace gfx
         }
         
         math::float3 calculate_position(float t) const { return origin + direction * t; }
+        
     };
     
     inline Ray operator * (const math::Pose & pose, const Ray & ray) { return {pose.transform_coord(ray.get_origin()), pose.transform_vector(ray.get_direction())}; }
+    
+    inline Ray between(const math::float3 & start, const math::float3 & end) { return {start, normalize(end - start)}; }
     
     inline Ray ray_from_viewport_pixel(const math::float2 & pixelCoord, const math::float2 & viewportSize, const math::float4x4 & projectionMatrix)
     {

@@ -291,6 +291,12 @@ namespace math
     { 
         return mul(transform, float4(vector,0)).xyz(); 
     }
+    
+    inline float4x4 look_at_matrix_rh(const float3 & eye, const float3 & center, const float3 & up)
+    {
+        auto f = normalize(center - eye), s = normalize(cross(f, up)), u = normalize(cross(s, f));
+        return mul(transpose(float4x4({s,0},{u,0},{-f,0},{0,0,0,1})), make_translation_matrix(-eye));
+    }
 
     ///////////
     // Poses //
