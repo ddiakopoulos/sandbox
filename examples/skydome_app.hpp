@@ -21,6 +21,7 @@ struct ExperimentalApp : public GLFWApp
     FPSCameraController cameraController;
     
     std::unique_ptr<GlShader> filmgrainShader;
+    std::unique_ptr<GlShader> fxaaShader;
     
     bool useHdr = true;
     float hdrExposure = 1.0f;
@@ -48,6 +49,7 @@ struct ExperimentalApp : public GLFWApp
         
         hdrShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/hdr_frag.glsl")));
         filmgrainShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/filmgrain_frag.glsl")));
+        fxaaShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/fxaa_frag.glsl")));
         fullscreen_post_quad = make_fullscreen_quad();
         
         sceneColorTexture.load_data(width, height, GL_RGB16F, GL_RGB, GL_FLOAT, nullptr);
@@ -152,6 +154,9 @@ struct ExperimentalApp : public GLFWApp
             hdrShader->unbind();
         }
         
+        /*
+         
+        // Quick postprocessing tests... 
         {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
@@ -166,6 +171,20 @@ struct ExperimentalApp : public GLFWApp
             
             filmgrainShader->unbind();
         }
+        
+        {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
+            fxaaShader->bind();
+            fxaaShader->texture("u_diffuseTexture", 0, sceneColorTexture);
+            fxaaShader->uniform("u_Resolution", float2(width, height));
+            
+            // Passthrough geometry
+            fullscreen_post_quad.draw_elements();
+            
+            fxaaShader->unbind();
+        }
+        */
         
         // Bind to 0
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
