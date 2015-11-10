@@ -20,6 +20,8 @@ struct ExperimentalApp : public GLFWApp
 
     FPSCameraController cameraController;
     
+    std::unique_ptr<GlShader> filmgrainShader;
+    
     bool useHdr = true;
     float hdrExposure = 1.0f;
     std::unique_ptr<GlShader> hdrShader;
@@ -45,6 +47,7 @@ struct ExperimentalApp : public GLFWApp
         sky = dynamic_cast<PreethamProceduralSky *>(&preethamSky);
         
         hdrShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/hdr_frag.glsl")));
+        filmgrainShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/filmgrain_frag.glsl")));
         fullscreen_post_quad = make_fullscreen_quad();
         
         sceneColorTexture.load_data(width, height, GL_RGB16F, GL_RGB, GL_FLOAT, nullptr);
@@ -147,6 +150,21 @@ struct ExperimentalApp : public GLFWApp
             fullscreen_post_quad.draw_elements();
             
             hdrShader->unbind();
+        }
+        
+        {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
+            filmgrainShader->bind();
+            filmgrainShader->texture("u_diffuseTexture", 0, sceneColorTexture);
+            filmgrainShader->uniform("u_Time", frameCount / 10000.f);
+            filmgrainShader->uniform("u_useColoredNoise", 1);
+            filmgrainShader->uniform("u_resolution", float2(width, height));
+            
+            // Passthrough geometry
+            fullscreen_post_quad.draw_elements();
+            
+            filmgrainShader->unbind();
         }
         
         // Bind to 0

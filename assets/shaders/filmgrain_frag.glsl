@@ -7,14 +7,14 @@ uniform vec2 u_resolution;
 
 const float permTexUnit = 1.0 / 256.0; // Perm texture texel-size
 const float permTexUnitHalf = 0.5 / 256.0; // Half perm texture texel-size
-const float grainamount = 0.05;
+const float grainamount = 0.025;
 
 float width = u_resolution.x;
 float height = u_resolution.y;
 
 float colorAmount = 0.6;
-float grainSize = 1.6; // Approx. Range: (1.5 - 2.5)
-float luminanceAmount = 1.0; 
+float grainSize = 1.75; // Approx. Range: (1.5 - 2.5)
+float luminanceAmount = 0.66;
 
 in vec2 texCoord;
 out vec4 out_color;
