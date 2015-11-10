@@ -4,10 +4,25 @@ using namespace math;
 using namespace util;
 using namespace gfx;
 
+struct Object
+{
+    Pose pose;
+    float3 scale;
+    Object() : scale(1, 1, 1) {}
+    float4x4 get_model() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
+    math::Box<float, 3> bounds;
+};
+
+struct ModelObject : public Object
+{
+    GlMesh mesh;
+    void draw() const { mesh.draw_elements(); };
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     
-    Model sofaModel;
+    ModelObject sofaModel;
     Geometry sofaGeometry;
     
     std::unique_ptr<GlShader> simpleShader;
