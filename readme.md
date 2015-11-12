@@ -1,5 +1,14 @@
 # Experiments!
 
+## Recent
+* Arkano22 SSAO implementation
+* Several more post-processing effects: film grain, FXAA
+* CEGUI layout system
+* Procedural sky dome with Preetham and Hosek-Wilkie models
+* Arcball camera
+* Basic image morphologies (erode/dilate)
+
+## In Progress
 * Game-engine-style gizmo editing interface
 * UI layout via cassowary constraint solver (Rhea library)
 * Dual contouring + terrain deformation (ref. impl)
@@ -16,11 +25,5 @@
 * Terrain + Water
 * Bruneton Sky Model
 * BRDF / PBR Shaders
+* Automatic UV generation
 
-# Recent
-* Arkano22 SSAO implementation
-* Several more post-processing effects: film grain, FXAA
-* CEGUI layout system
-* Procedural sky dome with Preetham and Hosek-Wilkie models
-* Arcball camera
-* Basic image morphologies (erode/dilate)
