@@ -72,7 +72,6 @@ namespace gfx
         }
         
         math::float3 calculate_position(float t) const { return origin + direction * t; }
-        
     };
     
     inline Ray operator * (const math::Pose & pose, const Ray & ray) { return {pose.transform_coord(ray.get_origin()), pose.transform_vector(ray.get_direction())}; }

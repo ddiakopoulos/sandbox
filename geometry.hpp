@@ -388,8 +388,9 @@ namespace util
     struct Plane
     {
         math::float4 equation; // ax * by * cz + d form (xyz normal, w distance)
-        Plane(math::float4 equation) : equation(equation) {}
-        Plane(math::float3 normal, float distance) { equation = math::float4(normal.x, normal.y, normal.z, distance); }
+        Plane(const math::float4 & equation) : equation(equation) {}
+        Plane(const math::float3 & normal, const float & distance) { equation = math::float4(normal.x, normal.y, normal.z, distance); }
+        Plane(const math::float3 & normal, const math::float3 & point) { equation = math::float4(normal.x, normal.y, normal.z, -dot(normal, point)); }
         math::float3 get_normal() const { return math::float3(equation.x, equation.y, equation.z); }
         void normalize() { float n = 1.0f / math::length(get_normal()); equation *= n; };
         float get_distance() const { return equation.w; }
@@ -410,6 +411,7 @@ namespace util
     
     inline bool intersect_ray_plane(const gfx::Ray & ray, const Plane & p, math::float3 * intersection, float * outT = nullptr)
     {
+
         float d = math::dot(ray.direction, p.get_normal());
         // Make sure we're not parallel to the plane
         if (std::abs(d) > PLANE_EPSILON)
@@ -564,6 +566,7 @@ namespace util
         return false;
     }
     
+    // todo - impelement method for GlMesh as well
     inline bool intersect_ray_mesh(const gfx::Ray & ray, const Geometry & mesh, float * outRayT)
     {
         float bestT = std::numeric_limits<float>::infinity(), t;
