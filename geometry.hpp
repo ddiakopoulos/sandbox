@@ -408,7 +408,7 @@ namespace util
     // Ray-object intersections //
     //////////////////////////////
     
-    bool intersect_ray_plane(const gfx::Ray & ray, const Plane & p, math::float3 * intersection, float * outT = nullptr)
+    inline bool intersect_ray_plane(const gfx::Ray & ray, const Plane & p, math::float3 * intersection, float * outT = nullptr)
     {
         float d = math::dot(ray.direction, p.get_normal());
         // Make sure we're not parallel to the plane
@@ -427,7 +427,7 @@ namespace util
     }
     
     // Implementation adapted from: http://www.lighthouse3d.com/tutorials/maths/ray-triangle-intersection/
-    bool intersect_ray_triangle(const gfx::Ray & ray, const math::float3 & v0, const math::float3 & v1, const math::float3 & v2, float * outT, math::float2 * outUV = nullptr)
+    inline bool intersect_ray_triangle(const gfx::Ray & ray, const math::float3 & v0, const math::float3 & v1, const math::float3 & v2, float * outT, math::float2 * outUV = nullptr)
     {
         math::float3 e1 = v1 - v0, e2 = v2 - v0, h = cross(ray.direction, e2);
         
@@ -453,7 +453,7 @@ namespace util
     }
     
      // Real-Time Collision Detection pg. 180
-    bool intersect_ray_box(const gfx::Ray & ray, const math::Box<float, 3> bounds, float *outT = nullptr)
+    inline bool intersect_ray_box(const gfx::Ray & ray, const math::Box<float, 3> bounds, float *outT = nullptr)
     {
         float tmin = 0.0f; // set to -FLT_MAX to get first hit on line
         float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
@@ -502,7 +502,7 @@ namespace util
         return true;
     }
     
-    bool intersect_ray_box(const gfx::Ray & ray, const math::float3 & boxMin, const math::float3 & boxMax)
+    inline bool intersect_ray_box(const gfx::Ray & ray, const math::float3 & boxMin, const math::float3 & boxMax)
     {
         // Determine an interval t0 <= t <= t1 in which ray(t).x is within the box extents
         float t0 = (boxMin.x - ray.origin.x) / ray.direction.x, t1 = (boxMax.x - ray.origin.x) / ray.direction.x;
@@ -530,7 +530,7 @@ namespace util
         return t0 > 0;
     }
     
-    bool intersect_ray_sphere(const gfx::Ray & ray, const Sphere & sphere, float * intersection = nullptr)
+    inline bool intersect_ray_sphere(const gfx::Ray & ray, const Sphere & sphere, float * intersection = nullptr)
     {
         float t;
         math::float3 diff = ray.get_origin() - sphere.center;
@@ -564,7 +564,7 @@ namespace util
         return false;
     }
     
-    bool intersect_ray_mesh(const gfx::Ray & ray, const Geometry & mesh, float * outRayT)
+    inline bool intersect_ray_mesh(const gfx::Ray & ray, const Geometry & mesh, float * outRayT)
     {
         float bestT = std::numeric_limits<float>::infinity(), t;
         math::float2 outUv;

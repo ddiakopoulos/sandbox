@@ -33,10 +33,8 @@ struct Object
     Pose pose;
     float3 scale;
     Object() : scale(1, 1, 1) {}
-    Object(float3 axis) : axis(axis) {}
     float4x4 get_model() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
     math::Box<float, 3> bounds;
-    float3 axis;
     
     bool check_hit(const Ray & worldRay) const
     {
@@ -63,22 +61,33 @@ struct LightObject : public Object
     float3 color;
 };
 
-struct TranslationHandle : public Object
+
+struct Raycast
+{
+    GlCamera & cam; float2 viewport;
+    Raycast(GlCamera & camera, float2 viewport) : cam(camera), viewport(viewport) {}
+    Ray from(float2 cursor) { return cam.get_world_ray(cursor, viewport); };
+};
+
+struct Handle
+{
+    float3 axis;
+    Handle(float3 axis) : axis(axis) {}
+};
+
+struct TranslationHandle : public Renderable, public Handle
 {
     GlMesh mesh;
     Geometry geom;
     
-    TranslationHandle(float3 axis, float size) : Object(axis)
+    TranslationHandle(float3 axis, float size) : Handle(axis)
     {
         geom = make_cube();
-        mesh = make_mesh_from_geometry(geom);
-        bounds = geom.compute_bounds();
+        build(geom);
         pose.orientation = {0, 0, 0, 1};
         pose.position = size * axis;
         scale = (size * axis) + float3(0.15, 0.15, 0.15);
     }
-    
-    void draw() const { mesh.draw_elements(); };
 };
 
 struct TranslationGizmo
@@ -107,26 +116,19 @@ struct TranslationGizmo
     }
 };
 
-struct Raycast
-{
-    GlCamera & cam; float2 viewport;
-    Raycast(GlCamera & camera, float2 viewport) : cam(camera), viewport(viewport) {}
-    Ray cast(float2 cursor) { return cam.get_world_ray(cursor, viewport); };
-};
-
 struct TranslationDragger
 {
     Renderable & object;
-    Raycast caster;
+    Raycast rc;
     
     float3 axis;
-    float2 click;
     float3 initialPosition;
+    float initialOffset;
     
     float compute_offset(float2 cursor)
     {
         Ray first = {initialPosition, axis}; // From the object origin along the axis of travel
-        Ray second = caster.cast(cursor); // world space click
+        Ray second = rc.from(cursor); // world space click
         float3 lineDir = second.origin - first.origin;
         const float e1e2 = dot(first.direction, second.direction);
         const float denom = 1 - e1e2 * e1e2;
@@ -134,12 +136,15 @@ struct TranslationDragger
         return distance;
     }
     
-    TranslationDragger(Raycast caster, Renderable & object, const float3 & axis, const float2 & click) : caster(caster), object(object), axis(axis), initialPosition(object.pose.position) {}
+    TranslationDragger(Raycast rc, Renderable & object, const float3 & axis, const float2 & cursor) : rc(rc), object(object), axis(axis), initialPosition(object.pose.position)
+    {
+        initialOffset = compute_offset(cursor);
+    }
     
     void on_drag(float2 cursor)
     {
         auto offset = compute_offset(cursor);
-        object.pose.position = initialPosition + (axis * offset);
+        object.pose.position = initialPosition + (axis * (offset - initialOffset));
     }
  
 };
