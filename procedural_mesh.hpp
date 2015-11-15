@@ -77,6 +77,11 @@ inline Geometry make_sphere(float radius)
     return sphereGeom;
 }
 
+inline gfx::GlMesh make_sphere_mesh(float radius)
+{
+    return make_mesh_from_geometry(make_sphere(radius));
+}
+
 inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
 {
     Geometry ringGeom;
@@ -100,10 +105,10 @@ inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
         // Segments per cicle
         for (uint32_t o = 0; o <= thetaSegments; o++)
         {
-            auto segment = thetaStart + (float)o / (float)thetaSegments * thetaLength;
+            auto segment = thetaStart + (float) o / (float) thetaSegments * thetaLength;
             
-            vertex.x = radius * cos( segment );
-            vertex.y = radius * sin( segment );
+            vertex.x = radius * cos(segment);
+            vertex.y = radius * sin(segment);
             vertex.z = 0;
             
             ringGeom.vertices.push_back(vertex);
@@ -150,11 +155,6 @@ inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
 inline gfx::GlMesh make_ring_mesh(float innerRadius = 1.0f, float outerRadius = 2.0f)
 {
     return make_mesh_from_geometry(make_ring(innerRadius, outerRadius));
-}
-
-inline gfx::GlMesh make_sphere_mesh(float radius)
-{
-    return make_mesh_from_geometry(make_sphere(radius));
 }
 
 inline Geometry make_frustum(float aspectRatio = 1.33333f)
