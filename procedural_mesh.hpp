@@ -6,17 +6,17 @@
 #include "geometric.hpp"
 #include "GlMesh.hpp"
 
-inline Geometry make_cube()
+inline Geometry make_cube(float s = 1.0f)
 {
     Geometry cube;
     
     cube.vertices = {
-        { -1, -1, -1 }, { -1, -1, +1 }, { -1, +1, +1 }, { -1, +1, -1 },
-        { +1, -1, +1 }, { +1, -1, -1 }, { +1, +1, -1 }, { +1, +1, +1 },
-        { -1, -1, -1 }, { +1, -1, -1 }, { +1, -1, +1 }, { -1, -1, +1 },
-        { +1, +1, -1 }, { -1, +1, -1 }, { -1, +1, +1 }, { +1, +1, +1 },
-        { -1, -1, -1 }, { -1, +1, -1 }, { +1, +1, -1 }, { +1, -1, -1 },
-        { -1, +1, +1 }, { -1, -1, +1 }, { +1, -1, +1 }, { +1, +1, +1 }
+        { -1*s, -1*s, -1*s }, { -1*s, -1*s, +1*s }, { -1*s, +1*s, +1*s }, { -1*s, +1*s, -1*s },
+        { +1*s, -1*s, +1*s }, { +1*s, -1*s, -1*s }, { +1*s, +1*s, -1*s }, { +1*s, +1*s, +1*s },
+        { -1*s, -1*s, -1*s }, { +1*s, -1*s, -1*s }, { +1*s, -1*s, +1*s }, { -1*s, -1*s, +1*s },
+        { +1*s, +1*s, -1*s }, { -1*s, +1*s, -1*s }, { -1*s, +1*s, +1*s }, { +1*s, +1*s, +1*s },
+        { -1*s, -1*s, -1*s }, { -1*s, +1*s, -1*s }, { +1*s, +1*s, -1*s }, { +1*s, -1*s, -1*s },
+        { -1*s, +1*s, +1*s }, { -1*s, -1*s, +1*s }, { +1*s, -1*s, +1*s }, { +1*s, +1*s, +1*s }
     };
     
     cube.texCoords = {
@@ -41,9 +41,9 @@ inline Geometry make_cube()
     return cube;
 }
 
-inline gfx::GlMesh make_cube_mesh()
+inline gfx::GlMesh make_cube_mesh(float scale = 1.0f)
 {
-    return make_mesh_from_geometry(make_cube());
+    return make_mesh_from_geometry(make_cube(scale));
 }
 
 inline Geometry make_sphere(float radius)
@@ -75,6 +75,81 @@ inline Geometry make_sphere(float radius)
         }
     }
     return sphereGeom;
+}
+
+inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
+{
+    Geometry ringGeom;
+    
+    uint32_t thetaSegments = 6;
+    uint32_t phiSegments = 2;
+    
+    float thetaStart = 0.0;
+    float thetaLength = ANVIL_TAU;
+
+    float radius = innerRadius;
+    float radiusStep = ((outerRadius - innerRadius) / (float) phiSegments);
+    
+    //std::vector<float2> uvs;
+    
+    // Number of circles inside ring
+    for (uint32_t i = 0; i <= phiSegments; i++)
+    {
+        float3 vertex;
+        
+        // Segments per cicle
+        for (uint32_t o = 0; o <= thetaSegments; o++)
+        {
+            auto segment = thetaStart + (float)o / (float)thetaSegments * thetaLength;
+            
+            vertex.x = radius * cos( segment );
+            vertex.y = radius * sin( segment );
+            vertex.z = 0;
+            
+            ringGeom.vertices.push_back(vertex);
+            ringGeom.texCoords.emplace_back((vertex.x / outerRadius + 1.0f) / 2.0f, (vertex.y / outerRadius + 1.0f) / 2.0f);
+            
+        }
+        radius += radiusStep;
+    }
+    
+    for (uint32_t i = 0; i < phiSegments; i++)
+    {
+        uint32_t thetaSegment = i * thetaSegments;
+        
+        for (uint32_t o = 0; o <= thetaSegments; o++)
+        {
+            uint32_t segment = o + thetaSegment;
+            
+            uint32_t v1 = segment + i;
+            uint32_t v2 = segment + thetaSegments + i;
+            uint32_t v3 = segment + thetaSegments + 1 + i;
+            
+            ringGeom.faces.emplace_back(v1, v2, v3); // back
+            ringGeom.faces.emplace_back(v3, v2, v1); // front
+            //ringGeom.texCoords.push_back(uvs[v1], uvs[v2], uvs[v3]);
+
+            v1 = segment + i;
+            v2 = segment + thetaSegments + 1 + i;
+            v3 = segment + 1 + i;
+            
+            ringGeom.faces.emplace_back(v1, v2, v3);
+            ringGeom.faces.emplace_back(v3, v2, v1);
+            //ringGeom.texCoords.push_back(uvs[v1], uvs[v2], uvs[v3]);
+            
+        }
+        
+    }
+
+    ringGeom.compute_normals();
+    ringGeom.compute_tangents();
+    
+    return ringGeom;
+}
+
+inline gfx::GlMesh make_ring_mesh(float innerRadius = 1.0f, float outerRadius = 2.0f)
+{
+    return make_mesh_from_geometry(make_ring(innerRadius, outerRadius));
 }
 
 inline gfx::GlMesh make_sphere_mesh(float radius)
