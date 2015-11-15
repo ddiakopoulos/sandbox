@@ -6,24 +6,29 @@ using namespace gfx;
     
 constexpr const char colorVertexShader[] = R"(#version 330
     layout(location = 0) in vec3 vertex;
+    layout(location = 1) in vec3 vnorm;
     uniform mat4 u_modelMatrix;
+    uniform mat4 u_modelMatrixIT;
     uniform mat4 u_viewProj;
     uniform vec3 u_color;
     out vec3 color;
+    out vec3 normal;
     void main()
     {
         vec4 worldPos = u_modelMatrix * vec4(vertex, 1);
         gl_Position = u_viewProj * worldPos;
         color = u_color * 0.80;
+        normal = normalize((u_modelMatrixIT * vec4(vnorm,0)).xyz);
     }
 )";
 
 constexpr const char colorFragmentShader[] = R"(#version 330
     in vec3 color;
     out vec4 f_color;
+    in vec3 normal;
     void main()
     {
-        f_color = vec4(color.rgb, 1);
+        f_color = (vec4(color.rgb, 1) * 0.75)+ (dot(normal, vec3(0, 1, 0)) * 0.33);
     }
 )";
 
@@ -86,7 +91,7 @@ struct Raycast
 
 struct IGizmo
 {
-    virtual void on_drag(float2 cursor) = 0;
+    virtual void on_drag(float2 cursor, bool uniform = false) = 0;
     virtual void on_release() = 0;
     virtual void on_cancel() = 0;
 };
@@ -116,7 +121,7 @@ struct TranslationDragger : public IGizmo
         initialOffset = compute_offset(cursor);
     }
     
-    void on_drag(float2 cursor) final
+    void on_drag(float2 cursor, bool uniform = false) final
     {
         const float offset = compute_offset(cursor);
         object.pose.position = initialPosition + (axis * (offset - initialOffset));
@@ -151,10 +156,13 @@ struct ScalingDragger : public IGizmo
         initialFactor = compute_scale(cursor);
     }
     
-    void on_drag(float2 cursor) final
+    void on_drag(float2 cursor, bool uniform = false) final
     {
         float scale = compute_scale(cursor) / initialFactor;
-        object.scale = initialScale + scaleDirection * ((scale - 1) * dot(initialScale, scaleDirection));
+        if (uniform)
+            object.scale = initialScale + (scale - 1);
+        else
+            object.scale = initialScale + scaleDirection * ((scale - 1) * dot(initialScale, scaleDirection));
     }
     
     void on_release() final {}
@@ -183,7 +191,7 @@ struct RotationDragger : public IGizmo
         edge1 = compute_edge(cursor);
     }
     
-    void on_drag(float2 cursor) final
+    void on_drag(float2 cursor, bool uniform = false) final
     {
         float3 newEdge = compute_edge(cursor);
         object.pose.orientation = qmul(make_rotation_quat_between_vectors(edge1, newEdge), initialOrientation);
@@ -390,7 +398,7 @@ struct ExperimentalApp : public GLFWApp
         {
             if (selectedObject && activeGizmo)
             {
-                activeGizmo->on_drag(event.cursor);
+                activeGizmo->on_drag(event.cursor, event.using_shift_key());
             }
         }
         
