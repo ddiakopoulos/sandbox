@@ -14,7 +14,7 @@ constexpr const char colorVertexShader[] = R"(#version 330
     {
         vec4 worldPos = u_modelMatrix * vec4(vertex, 1);
         gl_Position = u_viewProj * worldPos;
-        color = u_color;
+        color = u_color * 0.80;
     }
 )";
 
@@ -211,8 +211,6 @@ struct ExperimentalApp : public GLFWApp
     std::vector<Renderable> debugModels;
 
     Renderable * selectedObject = nullptr;
-    
-    bool isDragging = false;
 
     GizmoMode gizmoMode = GizmoMode::Translate;
     std::shared_ptr<IGizmo> activeGizmo;
@@ -227,7 +225,7 @@ struct ExperimentalApp : public GLFWApp
         s.vertices.insert(s.vertices.end(), a.vertices.begin(), a.vertices.end());
         s.vertices.insert(s.vertices.end(), b.vertices.begin(), b.vertices.end());
         s.faces.insert(s.faces.end(), a.faces.begin(), a.faces.end());
-        for (auto & f : s.faces) s.faces.push_back({ (int) a.vertices.size() + f.x, (int) a.vertices.size() + f.y, (int) a.vertices.size() + f.z} );
+        for (auto & f : b.faces) s.faces.push_back({ (int) a.vertices.size() + f.x, (int) a.vertices.size() + f.y, (int) a.vertices.size() + f.z} );
         return s;
     }
     
@@ -251,7 +249,32 @@ struct ExperimentalApp : public GLFWApp
         colorShader.reset(new gfx::GlShader(colorVertexShader, colorFragmentShader));
         
         {
+            auto arrowCap = make_cylinder(0.0f, 1.75f, 2.f, 12, 12, false);
+            auto axisBox = make_cube();
             
+            Pose p(make_rotation_quat_between_vectors({0, 1, 0}, {1, 0, 0}), {0,0,0});
+            for (auto & v : arrowCap.vertices)
+                v = p.transform_coord(v);
+        
+            for (auto & v : arrowCap.vertices)
+                v = {(v.x * 0.25f) + 4.125f, v.y * 0.25f, v.z * 0.25f};
+            
+            for (auto & v : axisBox.vertices)
+                v = {(v.x * 2) + 2.125f, v.y * 0.125f, v.z * 0.125f};
+            
+            auto linearTranslationMesh = concatenate_geometry(axisBox, arrowCap);
+            linearTranslationMesh.compute_normals();
+            translationGeometry = Renderable(linearTranslationMesh);
+        }
+        
+        {
+            auto ringG = make_ring();
+            for (auto & v : ringG.vertices)
+                v = {v.z, v.x, v.y};
+            rotationGeometry = Renderable(ringG);
+        }
+        
+        {
             auto endBox = make_cube();
             auto axisBox = make_cube();
             
@@ -261,18 +284,9 @@ struct ExperimentalApp : public GLFWApp
             for (auto & v : axisBox.vertices)
                 v = {(v.x * 2) + 2.125f, v.y * 0.125f, v.z * 0.125f};
             
-            auto linearTranslationMesh = concatenate_geometry(endBox, axisBox);
-            linearTranslationMesh.compute_normals();
-            
-            translationGeometry = Renderable(linearTranslationMesh);
-            scalingGeometry = Renderable(linearTranslationMesh);
-        }
-        
-        {
-            auto ringG = make_ring();
-            for (auto & v : ringG.vertices)
-                v = {v.z, v.x, v.y};
-            rotationGeometry = Renderable(ringG);
+            auto scalingMesh = concatenate_geometry(endBox, axisBox);
+            scalingMesh.compute_normals();
+            scalingGeometry = Renderable(scalingMesh);
         }
         
         {
@@ -364,31 +378,19 @@ struct ExperimentalApp : public GLFWApp
                         selectedObject = nullptr;
                     }
                 }
-
-            }
-        }
-        
-        if (event.type == InputEvent::CURSOR && isDragging)
-        {
-            if (selectedObject)
-            {
-                if (activeGizmo)
-                {
-                    activeGizmo->on_drag(event.cursor);
-                }
-            }
-        }
-        
-        if (event.type == InputEvent::MOUSE)
-        {
-            if (event.is_mouse_down())
-            {
-                isDragging = true;
             }
             
-            if (event.is_mouse_up())
+            if (event.value[0] == GLFW_MOUSE_BUTTON_RIGHT)
             {
-                isDragging = false;
+                activeGizmo.reset();
+            }
+        }
+        
+        if (event.type == InputEvent::CURSOR && event.drag)
+        {
+            if (selectedObject && activeGizmo)
+            {
+                activeGizmo->on_drag(event.cursor);
             }
         }
         
