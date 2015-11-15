@@ -28,7 +28,7 @@ namespace gfx
         
     public:
         
-        GlMesh() {  memset(attributes,0,sizeof(attributes)); glGenVertexArrays(1, &vao); }
+        GlMesh() { memset(attributes,0,sizeof(attributes)); glGenVertexArrays(1, &vao); }
         GlMesh(GlMesh && r) : GlMesh() { *this = std::move(r); }
         ~GlMesh() {};
         

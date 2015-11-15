@@ -145,6 +145,8 @@ namespace math
     template<class T> vec<T,4>           qconj(const vec<T,4> & q)                                { return {-q.x,-q.y,-q.z,q.w}; }
     template<class T> vec<T,4>           qinv(const vec<T,4> & q)                                 { return qconj(q)/lengthSqr(q); }
     template<class T> vec<T,4>           qmul(const vec<T,4> & a, const vec<T,4> & b)             { return {a.x*b.w+a.w*b.x+a.y*b.z-a.z*b.y, a.y*b.w+a.w*b.y+a.z*b.x-a.x*b.z, a.z*b.w+a.w*b.z+a.x*b.y-a.y*b.x, a.w*b.w-a.x*b.x-a.y*b.y-a.z*b.z}; }
+    
+    // Construct quaternion to describe rotation in radians around an arbitrary axis
     template<class T> vec<T,3>           qrot(const vec<T,4> & q, const vec<T,3> & v)             { return qxdir(q)*v.x + qydir(q)*v.y + qzdir(q)*v.z; } // qvq*    
     template<class T> vec<T,3>           qxdir(const vec<T,4> & q)                                { return {1-2*(q.y*q.y+q.z*q.z), 2*(q.x*q.y+q.w*q.z), 2*(q.x*q.z-q.w*q.y)}; }
     template<class T> vec<T,3>           qydir(const vec<T,4> & q)                                { return {2*(q.x*q.y-q.w*q.z), 1-2*(q.x*q.x+q.z*q.z), 2*(q.y*q.z+q.w*q.x)}; }
