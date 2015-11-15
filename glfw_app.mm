@@ -126,31 +126,50 @@ GLFWApp::~GLFWApp()
         glfwDestroyWindow(window);
 }
 
+void GLFWApp::preprocess_input(InputEvent & event)
+{
+    if (event.type == InputEvent::MOUSE)
+    {
+        if (event.is_mouse_down())
+            isDragging = true;
+        
+        if (event.is_mouse_up())
+            isDragging = false;
+    }
+    
+    if (event.type == InputEvent::CURSOR)
+    {
+        event.drag = isDragging;
+    }
+    
+    on_input(event);
+}
+
 void GLFWApp::consume_character(uint32_t codepoint)
 {
     auto e = generate_input_event(window, InputEvent::CHAR, get_cursor_position(), 0);
     e.value[0] = codepoint;
-    on_input(e);
+    preprocess_input(e);
 }
 
 void GLFWApp::consume_key(int key, int action)
 {
     auto e = generate_input_event(window, InputEvent::KEY, get_cursor_position(), action);
     e.value[0] = key;
-    on_input(e);
+    preprocess_input(e);
 }
 
 void GLFWApp::consume_mousebtn(int button, int action)
 {
     auto e = generate_input_event(window, InputEvent::MOUSE, get_cursor_position(), action);
     e.value[0] = button;
-    on_input(e);
+    preprocess_input(e);
 }
 
 void GLFWApp::consume_cursor(double xpos, double ypos)
 {
     auto e = generate_input_event(window, InputEvent::CURSOR, {(float)xpos, (float)ypos}, 0);
-    on_input(e);
+    preprocess_input(e);
 }
 
 void GLFWApp::consume_scroll(double deltaX, double deltaY)
@@ -158,7 +177,7 @@ void GLFWApp::consume_scroll(double deltaX, double deltaY)
     auto e = generate_input_event(window, InputEvent::SCROLL, get_cursor_position(), 0);
     e.value[0] = (float) deltaX;
     e.value[1] = (float) deltaY;
-    on_input(e);
+    preprocess_input(e);
 }
 
 void GLFWApp::main_loop() 

@@ -28,15 +28,26 @@ struct UpdateEvent
 struct InputEvent
 {
     enum Type { CURSOR, MOUSE, KEY, CHAR, SCROLL };
+    
     GLFWwindow * window;
+    math::int2 windowSize;
+    
     Type type;
-    math::float2 cursor;
     int action;
     int mods;
+    
+    math::float2 cursor;
+    bool drag = false;
+    
     math::uint2 value; // button, key, codepoint, scrollX, scrollY
-    math::int2 windowSize;
+    
     bool is_mouse_down() const { return action != GLFW_RELEASE; }
     bool is_mouse_up() const { return action == GLFW_RELEASE; }
+    
+    bool using_shift_key() const { return mods & GLFW_MOD_SHIFT; };
+    bool using_control_key() const { return mods & GLFW_MOD_CONTROL; };
+    bool using_alt_key() const { return mods & GLFW_MOD_ALT; };
+    bool using_super_key() const { return mods & GLFW_MOD_SUPER; };
 };
     
 class GLFWApp
@@ -57,7 +68,6 @@ public:
     virtual void on_uncaught_exception(std::exception_ptr e);
 
     math::float2 get_cursor_position() const;
-    int get_keyboard_modkeys() const;
 
     void exit();
 
@@ -69,12 +79,16 @@ protected:
     GLFWwindow * window;
 
 private:
-
+    
+    bool isDragging = false;
+    
     void consume_character(uint32_t codepoint);
     void consume_key(int key, int action);
     void consume_mousebtn(int button, int action);
     void consume_cursor(double xpos, double ypos);
     void consume_scroll(double xoffset, double yoffset);
+    
+    void preprocess_input(InputEvent & event);
 
     static void enter_fullscreen(GLFWwindow * window, math::int2 & windowedSize, math::int2 & windowedPos);
     static void exit_fullscreen(GLFWwindow * window, const math::int2 & windowedSize, const math::int2 & windowedPos);
