@@ -82,6 +82,141 @@ inline gfx::GlMesh make_sphere_mesh(float radius)
     return make_mesh_from_geometry(make_sphere(radius));
 }
 
+inline Geometry make_cylinder(float radiusTop, float radiusBottom, float height, int radialSegments, int heightSegments, bool openEnded = false)
+{
+    Geometry cylinderGeom;
+
+    float heightHalf = height / 2.f;
+    
+    std::vector<std::vector<uint32_t>> vertexRowArray;
+    
+    for (int y = 0; y <= heightSegments; y++)
+    {
+        std::vector<uint32_t> newRow;
+        
+        float v = (float) y / heightSegments;
+        float radius = v * (radiusBottom - radiusTop) + radiusTop;
+        
+        for (int x = 0; x <= radialSegments; x++)
+        {
+            float u = (float) x / (float) radialSegments;
+            
+            float3 vertex;
+            
+            vertex.x = radius * sin(u * ANVIL_TAU);
+            vertex.y = -v * height + heightHalf;
+            vertex.z = radius * cos(u * ANVIL_TAU);
+            
+            cylinderGeom.vertices.push_back(vertex);
+            newRow.push_back((int) cylinderGeom.vertices.size() - 1);
+        }
+        
+        vertexRowArray.push_back(newRow);
+    }
+    
+    float tanTheta = (radiusBottom - radiusTop) / height;
+    
+    float3 na, nb;
+    
+    for (int x = 0; x < radialSegments; x++)
+    {
+        if (radiusTop != 0)
+        {
+            na = cylinderGeom.vertices[vertexRowArray[0][x]];
+            nb = cylinderGeom.vertices[vertexRowArray[0][x + 1]];
+        }
+        else
+        {
+            na = cylinderGeom.vertices[vertexRowArray[1][x]];
+            nb = cylinderGeom.vertices[vertexRowArray[1][x + 1]];
+        }
+        
+        na.y = sqrt(na.x * na.x + na.z * na.z) * tanTheta;
+        nb.y = sqrt(nb.x * nb.x + nb.z * nb.z) * tanTheta;
+        
+        na = normalize(na);
+        nb = normalize(nb);
+        
+        for (int y = 0; y < heightSegments; y++)
+        {
+            uint32_t v1 = vertexRowArray[y][x];
+            uint32_t v2 = vertexRowArray[y + 1][x];
+            uint32_t v3 = vertexRowArray[y + 1][x + 1];
+            uint32_t v4 = vertexRowArray[y][x + 1];
+            
+            float3 n1 = na;
+            float3 n2 = na;
+            float3 n3 = nb;
+            float3 n4 = nb;
+            
+            cylinderGeom.faces.emplace_back(v1, v2, v4);
+            cylinderGeom.normals.push_back(n1);
+            cylinderGeom.normals.push_back(n2);
+            cylinderGeom.normals.push_back(n3);
+            
+            
+            cylinderGeom.faces.emplace_back(v2, v3, v4);
+            cylinderGeom.normals.push_back(n2);
+            cylinderGeom.normals.push_back(n3);
+            cylinderGeom.normals.push_back(n4);
+        }
+    }
+    
+    // top cap
+    if (! openEnded && radiusTop > 0)
+    {
+        cylinderGeom.vertices.push_back(float3(0, heightHalf, 0));
+        
+        for (int x = 0; x < radialSegments; x++)
+        {
+            
+            uint32_t v1 = vertexRowArray[0][x];
+            uint32_t v2 = vertexRowArray[0][x + 1];
+            uint32_t v3 = (int) cylinderGeom.vertices.size() - 1;
+            
+            float3 n1 = float3(0, 1, 0);
+            float3 n2 = float3(0, 1, 0);
+            float3 n3 = float3(0, 1, 0);
+            
+            cylinderGeom.faces.emplace_back(uint3(v1, v2, v3));
+            cylinderGeom.normals.push_back(n1);
+            cylinderGeom.normals.push_back(n2);
+            cylinderGeom.normals.push_back(n3);
+        }
+        
+    }
+    
+    // bottom cap
+    if (!openEnded && radiusBottom > 0) 
+    {
+        cylinderGeom.vertices.push_back(float3(0, -heightHalf, 0));
+        
+        for (int x = 0; x < radialSegments; x++)
+        {
+            uint32_t v1 = vertexRowArray[heightSegments][x + 1];
+            uint32_t v2 = vertexRowArray[heightSegments][x];
+            uint32_t v3 = (int) cylinderGeom.vertices.size() - 1;
+            
+            float3 n1 = float3(0, -1, 0);
+            float3 n2 = float3(0, -1, 0);
+            float3 n3 = float3(0, -1, 0);
+            
+            cylinderGeom.faces.emplace_back(uint3(v1, v2, v3));
+            cylinderGeom.normals.push_back(n1);
+            cylinderGeom.normals.push_back(n2);
+            cylinderGeom.normals.push_back(n3);
+        }
+        
+    }
+    
+    return cylinderGeom;
+}
+
+inline gfx::GlMesh make_cylinder_mesh(float radiusTop, float radiusBottom, float height, int radialSegments, int heightSegments, bool openEnded = false)
+{
+    return make_mesh_from_geometry(make_cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded));
+}
+
 inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
 {
     Geometry ringGeom;
