@@ -159,10 +159,8 @@ struct ScalingDragger : public IGizmo
     void on_drag(float2 cursor, bool uniform = false) final
     {
         float scale = compute_scale(cursor) / initialFactor;
-        if (uniform)
-            object.scale = initialScale + (scale - 1);
-        else
-            object.scale = initialScale + scaleDirection * ((scale - 1) * dot(initialScale, scaleDirection));
+        auto scaled = (uniform) ? initialScale + (scale - 1) : initialScale + scaleDirection * ((scale - 1) * dot(initialScale, scaleDirection));
+        object.scale = clamp(scaled, {0.05, 0.05, 0.05}, {100, 100, 100});
     }
     
     void on_release() final {}
