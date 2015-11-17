@@ -1,4 +1,5 @@
 #include "anvil.hpp"
+#include "tiny_obj_loader.h"
 
 using namespace math;
 using namespace util;
@@ -64,6 +65,21 @@ struct ExperimentalApp : public GLFWApp
         simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         colorShader.reset(new gfx::GlShader(colorVertexShader, colorFragmentShader));
         
+        {
+            std::vector<tinyobj::shape_t> shapes;
+            std::vector<tinyobj::material_t> materials;
+            std::string err;
+            bool status = tinyobj::LoadObj(shapes, materials, err, "assets/models/sponza/sponza.obj", "assets/models/sponza/");
+            
+            if (!err.empty())
+            {
+                std::cerr << err << std::endl;
+            }
+            
+            std::cout << "# of shapes    : " << shapes.size() << std::endl;
+            std::cout << "# of materials : " << materials.size() << std::endl;
+
+        }
         {
             lights.resize(2);
             
