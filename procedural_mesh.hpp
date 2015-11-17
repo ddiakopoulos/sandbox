@@ -85,7 +85,7 @@ inline gfx::GlMesh make_sphere_mesh(float radius)
 inline Geometry make_cylinder(float radiusTop, float radiusBottom, float height, int radialSegments, int heightSegments, bool openEnded = false)
 {
     Geometry cylinderGeom;
-
+    
     float heightHalf = height / 2.f;
     
     std::vector<std::vector<uint32_t>> vertexRowArray;
@@ -162,8 +162,8 @@ inline Geometry make_cylinder(float radiusTop, float radiusBottom, float height,
         }
     }
     
-    // top cap
-    if (! openEnded && radiusTop > 0)
+    // Top
+    if (!openEnded && radiusTop > 0)
     {
         cylinderGeom.vertices.push_back(float3(0, heightHalf, 0));
         
@@ -186,7 +186,7 @@ inline Geometry make_cylinder(float radiusTop, float radiusBottom, float height,
         
     }
     
-    // bottom cap
+    // Bottom
     if (!openEnded && radiusBottom > 0) 
     {
         cylinderGeom.vertices.push_back(float3(0, -heightHalf, 0));
@@ -209,6 +209,8 @@ inline Geometry make_cylinder(float radiusTop, float radiusBottom, float height,
         
     }
     
+    //cylinderGeom.compute_normals();
+    
     return cylinderGeom;
 }
 
@@ -221,7 +223,7 @@ inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
 {
     Geometry ringGeom;
     
-    uint32_t thetaSegments = 6;
+    uint32_t thetaSegments = 8;
     uint32_t phiSegments = 2;
     
     float thetaStart = 0.0;
@@ -265,8 +267,7 @@ inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
             uint32_t v2 = segment + thetaSegments + i;
             uint32_t v3 = segment + thetaSegments + 1 + i;
             
-            ringGeom.faces.emplace_back(v1, v2, v3); // back
-            ringGeom.faces.emplace_back(v3, v2, v1); // front
+            ringGeom.faces.emplace_back(v1, v2, v3); // front
             //ringGeom.texCoords.push_back(uvs[v1], uvs[v2], uvs[v3]);
 
             v1 = segment + i;
@@ -274,7 +275,6 @@ inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
             v3 = segment + 1 + i;
             
             ringGeom.faces.emplace_back(v1, v2, v3);
-            ringGeom.faces.emplace_back(v3, v2, v1);
             //ringGeom.texCoords.push_back(uvs[v1], uvs[v2], uvs[v3]);
             
         }
@@ -317,7 +317,7 @@ inline gfx::GlMesh make_frustum_mesh(float aspectRatio = 1.33333f)
     return frustumMesh;
 }
 
-inline Geometry make_torus(int radial_segments = 8)
+inline Geometry make_torus(int radial_segments = 24)
 {
     Geometry torus;
     

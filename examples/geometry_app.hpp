@@ -192,7 +192,7 @@ struct RotationDragger : public IGizmo
     void on_drag(float2 cursor, bool uniform = false) final
     {
         float3 newEdge = compute_edge(cursor);
-        object.pose.orientation = qmul(make_rotation_quat_between_vectors(edge1, newEdge), initialOrientation);
+        object.pose.orientation  = qmul(make_rotation_quat_between_vectors(edge1, newEdge), initialOrientation);
     }
     
     void on_release() final {}
@@ -276,7 +276,7 @@ struct ExperimentalApp : public GLFWApp
         {
             auto ringG = make_ring();
             for (auto & v : ringG.vertices)
-                v = {v.z, v.x, v.y};
+                v = {v.z * 1.5f, v.x * 1.5f, v.y * 1.5f};
             rotationGeometry = Renderable(ringG);
         }
         
@@ -296,13 +296,16 @@ struct ExperimentalApp : public GLFWApp
         }
         
         {
-            proceduralModels.resize(2);
+            proceduralModels.resize(3);
             
             proceduralModels[0] = Renderable(make_sphere(1.0));
             proceduralModels[0].pose.position = float3(0, 0, +5);
             
             proceduralModels[1] = Renderable(make_cube());
             proceduralModels[1].pose.position = float3(0, 0, -5);
+            
+            proceduralModels[2] = Renderable(make_cylinder(2, 3, 2, 12, 3));
+            proceduralModels[2].pose.position = float3(-5, 0, 0);
         }
         
         gfx::gl_check_error(__FILE__, __LINE__);
@@ -348,23 +351,31 @@ struct ExperimentalApp : public GLFWApp
                 // If we've already selected an object, check to see if we can interact with the gizmo
                 if (selectedObject)
                 {
-                    bool hit = false;
+                    float bestT = std::numeric_limits<float>::max();
+                    float3 hitAxis;
                     for (auto axis : {float3(1, 0, 0), float3(0, 1, 0), float3(0, 0, 1)})
                     {
                         // The handle is composed as a piece of geometry on the X axis.
                         auto p = selectedObject->pose * Pose(make_rotation_quat_between_vectors({1,0,0}, axis), {0,0,0});
                         auto localRay = p.inverse() * worldRay;
-                        hit = GetGizmoMesh().check_hit(localRay);
-                        
-                        if (hit)
+                        float tValue = 0.0f;
+                        bool hit = GetGizmoMesh().check_hit(localRay, &tValue);
+                        if (hit && (tValue <= bestT))
                         {
-                            Raycast raycast(camera, float2(event.windowSize.x, event.windowSize.y));
-                            activeGizmo = MakeGizmo(raycast, *selectedObject, axis, event.cursor);
-                            break;
-        
+                            bestT = tValue;
+                            hitAxis = axis;
+                            std::cout << bestT << std::endl;
                         }
                     }
-                    if (!hit) activeGizmo.reset();
+                    if (bestT > 0.f)
+                    {
+                        Raycast raycast(camera, float2(event.windowSize.x, event.windowSize.y));
+                        activeGizmo = MakeGizmo(raycast, *selectedObject, hitAxis, event.cursor);
+                    }
+                    else
+                    {
+                        activeGizmo.reset();
+                    }
                 }
                 
                 // We didn't interact with the gizmo, so check if we should select a new object.

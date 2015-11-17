@@ -7,6 +7,7 @@
 * Procedural sky dome with Preetham and Hosek-Wilkie models
 * Arcball camera
 * Basic image morphologies (erode/dilate)
+* Hot air balloon, Balloons in general!
 
 ## In Progress
 * Game-engine-style gizmo editing interface
@@ -26,4 +27,3 @@
 * Bruneton Sky Model
 * BRDF / PBR Shaders
 * Automatic UV generation
-
