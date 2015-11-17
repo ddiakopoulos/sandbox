@@ -16,6 +16,7 @@
 		0849FD821BE7C667000F148E /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD801BE7C667000F148E /* json.cpp */; };
 		0849FD851BE7C66E000F148E /* tinyply.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD831BE7C66E000F148E /* tinyply.cpp */; };
 		0849FD9C1BFADE27000F148E /* gizmo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD9A1BFADE27000F148E /* gizmo.cpp */; };
+		0849FDA11BFAFCC3000F148E /* tiny_obj_loader.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD9F1BFAFCC3000F148E /* tiny_obj_loader.cc */; };
 		085081971BB5B6EA0084A1D6 /* glfw_app.mm in Sources */ = {isa = PBXBuildFile; fileRef = 085081951BB5B6EA0084A1D6 /* glfw_app.mm */; };
 		087A4EA21BB8EC9B00975C72 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA11BB8EC9B00975C72 /* OpenGL.framework */; };
 		087A4EA41BB8ECA100975C72 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA31BB8ECA100975C72 /* GLKit.framework */; };
@@ -104,6 +105,8 @@
 		0849FD9A1BFADE27000F148E /* gizmo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gizmo.cpp; sourceTree = SOURCE_ROOT; };
 		0849FD9B1BFADE27000F148E /* gizmo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = gizmo.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD9D1BFADE59000F148E /* scene.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = scene.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD9F1BFAFCC3000F148E /* tiny_obj_loader.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tiny_obj_loader.cc; path = third_party/tiny_obj_loader.cc; sourceTree = SOURCE_ROOT; };
+		0849FDA01BFAFCC3000F148E /* tiny_obj_loader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tiny_obj_loader.h; path = third_party/tiny_obj_loader.h; sourceTree = SOURCE_ROOT; };
 		085081951BB5B6EA0084A1D6 /* glfw_app.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = glfw_app.mm; sourceTree = SOURCE_ROOT; };
 		085081961BB5B6EA0084A1D6 /* glfw_app.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glfw_app.hpp; sourceTree = SOURCE_ROOT; };
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -274,6 +277,7 @@
 		0849FD8D1BE7CB2B000F148E /* third_party */ = {
 			isa = PBXGroup;
 			children = (
+				0849FD9E1BFAFC77000F148E /* tinyobj */,
 				0849FD911BF00334000F148E /* json */,
 				08289F7D1BC5F7E40054AF3B /* tinyply */,
 				089B86001BAFC96D00B3A290 /* noise1234 */,
@@ -301,6 +305,15 @@
 				0849FD9B1BFADE27000F148E /* gizmo.hpp */,
 			);
 			name = gizmo;
+			sourceTree = "<group>";
+		};
+		0849FD9E1BFAFC77000F148E /* tinyobj */ = {
+			isa = PBXGroup;
+			children = (
+				0849FD9F1BFAFCC3000F148E /* tiny_obj_loader.cc */,
+				0849FDA01BFAFCC3000F148E /* tiny_obj_loader.h */,
+			);
+			name = tinyobj;
 			sourceTree = "<group>";
 		};
 		085081981BB5B6F10084A1D6 /* app */ = {
@@ -445,6 +458,7 @@
 				0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */,
 				08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */,
 				0822AF371BD4ADBF00A894F0 /* GlShared.cpp in Sources */,
+				0849FDA11BFAFCC3000F148E /* tiny_obj_loader.cc in Sources */,
 				08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */,
 				0849FD851BE7C66E000F148E /* tinyply.cpp in Sources */,
 				08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */,

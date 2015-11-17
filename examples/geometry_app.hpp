@@ -75,16 +75,13 @@ struct ExperimentalApp : public GLFWApp
         }
         
         {
-            proceduralModels.resize(3);
+            proceduralModels.resize(2);
             
             proceduralModels[0] = Renderable(make_sphere(1.0));
             proceduralModels[0].pose.position = float3(0, 0, +5);
             
             proceduralModels[1] = Renderable(make_cube());
             proceduralModels[1].pose.position = float3(0, 0, -5);
-            
-            proceduralModels[2] = Renderable(make_cylinder(2, 3, 2, 12, 3));
-            proceduralModels[2].pose.position = float3(-5, 0, 0);
         }
         
         gfx::gl_check_error(__FILE__, __LINE__);
