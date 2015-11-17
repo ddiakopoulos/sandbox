@@ -197,6 +197,7 @@ void GizmoEditor::handle_input(const InputEvent & event, std::vector<Renderable>
                 // Otherwise, select a new object
                 for (auto & model : sceneModels)
                 {
+                    // Todo - correct z order
                     auto worldRay = sceneCamera.get_world_ray(event.cursor, float2(event.windowSize.x, event.windowSize.y));
                     if (model.check_hit(worldRay))
                     {
