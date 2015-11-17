@@ -52,6 +52,8 @@ struct ExperimentalApp : public GLFWApp
     
     std::vector<LightObject> lights;
     
+    std::vector<GlMesh> sponzaMeshes;
+    
     ExperimentalApp() : GLFWApp(820, 480, "Geometry App")
     {
         int width, height;
@@ -76,17 +78,53 @@ struct ExperimentalApp : public GLFWApp
                 std::cerr << err << std::endl;
             }
             
+            std::vector<Geometry> geometries;
+            
             std::cout << "# of shapes    : " << shapes.size() << std::endl;
             std::cout << "# of materials : " << materials.size() << std::endl;
-
+            
+            // Parse tinyobj data into geometry struct
+            for (unsigned int i = 0; i < shapes.size(); i++)
+            {
+                Geometry g;
+                tinyobj::shape_t *shape = &shapes[i];
+                tinyobj::mesh_t *mesh = &shapes[i].mesh;
+                
+                std::cout << "Parsing: " << shape->name << std::endl;
+                std::cout << mesh->indices.size() << std::endl;
+                for (size_t i = 0; i < mesh->indices.size(); i += 3)
+                {
+                    uint32_t idx1 = mesh->indices[i + 0];
+                    uint32_t idx2 = mesh->indices[i + 1];
+                    uint32_t idx3 = mesh->indices[i + 2];
+                    g.faces.push_back({idx1, idx2, idx3});
+                }
+                
+                for (size_t v = 0; v < mesh->positions.size(); v += 3)
+                {
+                    float3 vert = float3(mesh->positions[v + 0], mesh->positions[v + 1], mesh->positions[v + 2]);
+                    g.vertices.push_back(vert);
+                    
+                }
+            
+                geometries.push_back(g);
+                
+            }
+            
+            for (auto & g : geometries)
+            {
+                g.compute_normals();
+                sponzaMeshes.push_back(make_mesh_from_geometry(g));
+            }
+            
         }
         {
             lights.resize(2);
             
-            lights[0].color = float3(44.f / 255.f, 168.f / 255.f, 220.f / 255.f);
+            lights[0].color = float3(60.f / 255.f, 168.f / 255.f, 180.f / 255.f);
             lights[0].pose.position = float3(25, 15, 0);
             
-            lights[1].color = float3(220.f / 255.f, 44.f / 255.f, 201.f / 255.f);
+            lights[1].color = float3(100.f / 255.f, 120.f / 255.f, 105.f / 255.f);
             lights[1].pose.position = float3(-25, 15, 0);
         }
         
@@ -164,6 +202,16 @@ struct ExperimentalApp : public GLFWApp
                 model.draw();
             }
             
+            for (const auto & model : sponzaMeshes)
+            {
+                Pose p;
+                auto modelMat = p.matrix();
+                simpleShader->uniform("u_modelMatrix", modelMat);
+                simpleShader->uniform("u_modelMatrixIT", inv(transpose(modelMat)));
+                model.draw_elements();
+                
+            }
+            
             simpleShader->unbind();
         }
         
@@ -193,7 +241,7 @@ struct ExperimentalApp : public GLFWApp
             colorShader->unbind();
         }
         
-        grid.render(proj, view, {0, -5, 0});
+        grid.render(proj, view, {0, -0.5, 0});
 
         gfx::gl_check_error(__FILE__, __LINE__);
         
