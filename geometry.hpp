@@ -291,6 +291,16 @@ namespace util
         return m;
     }
     
+    inline Geometry concatenate_geometry(const Geometry & a, const Geometry & b)
+    {
+        Geometry s;
+        s.vertices.insert(s.vertices.end(), a.vertices.begin(), a.vertices.end());
+        s.vertices.insert(s.vertices.end(), b.vertices.begin(), b.vertices.end());
+        s.faces.insert(s.faces.end(), a.faces.begin(), a.faces.end());
+        for (auto & f : b.faces) s.faces.push_back({ (int) a.vertices.size() + f.x, (int) a.vertices.size() + f.y, (int) a.vertices.size() + f.z} );
+        return s;
+    }
+    
     static const double SPHERE_EPSILON = 4.37114e-05;
     
     struct Sphere
@@ -408,6 +418,21 @@ namespace util
     //////////////////////////////
     // Ray-object intersections //
     //////////////////////////////
+    
+    // The point where the line p0-p2 intersects the plane n&d
+    inline math::float3 plane_line_intersection(const math::float3 & n, const float d, const math::float3 & p0, const math::float3 & p1)
+    {
+        math::float3 dif = p1 - p0;
+        float dn = math::dot(n, dif);
+        float t = -(d + math::dot(n, p0)) / dn;
+        return p0 + (dif*t);
+    }
+    
+    // The point where the line p0-p2 intersects the plane n&d
+    inline math::float3 plane_line_intersection(const math::float4 & plane, const math::float3 & p0, const math::float3 & p1)
+    {
+        return plane_line_intersection(plane.xyz(), plane.w, p0, p1);
+    }
     
     inline bool intersect_ray_plane(const gfx::Ray & ray, const Plane & p, math::float3 * intersection, float * outT = nullptr)
     {
