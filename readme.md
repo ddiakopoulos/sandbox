@@ -2,15 +2,15 @@
 
 ## Recent
 * Arkano22 SSAO implementation
-* Several more post-processing effects: film grain, FXAA
+* Several other GLSL 330-core post-processing effects: film grain, FXAA
 * CEGUI layout system
-* Procedural sky dome with Preetham and Hosek-Wilkie models
+* Procedural sky dome with Preetham and Hosek-Wilkie models (and borked HDR)
 * Arcball camera
 * Basic image morphologies (erode/dilate)
-* Hot air balloon, Balloons in general!
+* Opinionated 3d gizmo editing tool
 
 ## In Progress
-* Game-engine-style gizmo editing interface
+
 * UI layout via cassowary constraint solver (Rhea library)
 * Dual contouring + terrain deformation (ref. impl)
 * A simple scenegraph
@@ -23,7 +23,6 @@
 * L-System + particles
 * Impulse response raytracer
 * Optitrak nat-net i/o
-* Terrain + Water
 * Bruneton Sky Model
 * BRDF / PBR Shaders
-* Automatic UV generation
+* Automatic UV generation (foo library)
