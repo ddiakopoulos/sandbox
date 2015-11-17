@@ -69,21 +69,6 @@ namespace math
         }
         return outVal;
     }
-
-    // The point where the line p0-p2 intersects the plane n&d
-    inline float3 plane_line_intersection(const float3 & n, const float d, const float3 & p0, const float3 & p1)
-    {
-        float3 dif = p1 - p0;
-        float dn = dot(n, dif);
-        float t = -(d + dot(n, p0)) / dn;
-        return p0 + (dif*t);
-    }
-
-    // The point where the line p0-p2 intersects the plane n&d
-    inline float3 plane_line_intersection(const float4 & plane, const float3 & p0, const float3 & p1)
-    { 
-        return plane_line_intersection(plane.xyz(), plane.w, p0, p1);
-    }
     
     // In radians
     inline float3 spherical(float theta, float phi)

@@ -5,6 +5,10 @@
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include "GlMesh.hpp"
+#include <assert.h>
+
+using namespace util;
+using namespace math;
 
 inline Geometry make_cube(float s = 1.0f)
 {

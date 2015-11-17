@@ -81,12 +81,11 @@ namespace util
         else std::cout << file << " : " << line << " - " << message << std::endl;
     }
     
-    struct Noncopyable
+    class Noncopyable
     {
     protected:
         Noncopyable() = default;
         ~Noncopyable() = default;
-        
         Noncopyable (const Noncopyable& r) = delete;
         Noncopyable & operator = (const Noncopyable& r) = delete;
     };

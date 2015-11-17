@@ -116,7 +116,8 @@ namespace math
         if (y[2 - 1] > 0)
             sqrDistance = point_on_ellipse_bisector(numPos, ePos, yPos, xPos);
         else 
-        {  // y[N-1] = 0
+        {
+            // y[N-1] = 0
             float numer[1], denom[1];
             float eNm1Sqr = extents[2 - 1] * extents[2 - 1];
             for (int i = 0; i < numPos; ++i)
@@ -168,7 +169,7 @@ namespace math
                 }
             }
 
-            if (! inSubHyperellipsoid) 
+            if (!inSubHyperellipsoid)
             {
                 // yPos[] is outside the subhyperellipsoid.  The closest
                 // hyperellipsoid point has x[N-1] == 0 and is on the
@@ -258,8 +259,7 @@ namespace math
         math::float2 diff = testPoint - center;
         math::float2 y(dot(diff, unitA), dot(diff, unitB));
 
-        // Compute the closest hyperellipsoid point in the axis-aligned
-        // coordinate system.
+        // Compute the closest hyperellipsoid point in the axis-aligned coordinate system.
         math::float2 x;
         math::float2 extents(lengthA, lengthB);
         point_on_ellipse_sqr_distance(extents, y, x);

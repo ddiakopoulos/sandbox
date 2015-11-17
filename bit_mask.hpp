@@ -5,8 +5,7 @@
 
 namespace util 
 {
-
-    // Holds the bitmask.
+    
     template<typename T>
     class BitMask 
     {
