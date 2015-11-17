@@ -32,173 +32,6 @@ constexpr const char colorFragmentShader[] = R"(#version 330
     }
 )";
 
-struct Object
-{
-    Pose pose;
-    float3 scale;
-    Object() : scale(1, 1, 1) {}
-    float4x4 get_model() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
-    math::Box<float, 3> bounds;
-
-};
-
-struct Renderable : public Object
-{
-    GlMesh mesh;
-    Geometry geom;
-    
-    Renderable() {}
-    
-    Renderable(const Geometry & g) : geom(g)
-    {
-        mesh = make_mesh_from_geometry(g);
-        bounds = g.compute_bounds();
-        //mesh.set_non_indexed(GL_LINES);
-    }
-    
-    void draw() const { mesh.draw_elements(); };
-
-    bool check_hit(const Ray & worldRay, float * out = nullptr) const
-    {
-        auto localRay = pose.inverse() * worldRay;
-        localRay.origin /= scale;
-        localRay.direction /= scale;
-        float outT = 0.0f;
-        bool hit = intersect_ray_mesh(localRay, geom, &outT);
-        if (out) *out = outT;
-        return hit;
-    }
-};
-
-struct LightObject : public Object
-{
-    float3 color;
-};
-
-enum class GizmoMode : int
-{
-    Translate,
-    Rotate,
-    Scale
-};
-
-struct Raycast
-{
-    GlCamera & cam; float2 viewport;
-    Raycast(GlCamera & camera, float2 viewport) : cam(camera), viewport(viewport) {}
-    Ray from(float2 cursor) { return cam.get_world_ray(cursor, viewport); };
-};
-
-struct IGizmo
-{
-    virtual void on_drag(float2 cursor, bool uniform = false) = 0;
-    virtual void on_release() = 0;
-    virtual void on_cancel() = 0;
-};
-
-struct TranslationDragger : public IGizmo
-{
-    Renderable & object;
-    Raycast rc;
-    
-    float3 axis;
-    float3 initialPosition;
-    float initialOffset;
-    
-    float compute_offset(float2 cursor)
-    {
-        Ray first = {initialPosition, axis}; // From the object origin along the axis of travel
-        Ray second = rc.from(cursor); // world space click
-        float3 lineDir = second.origin - first.origin;
-        const float e1e2 = dot(first.direction, second.direction);
-        const float denom = 1 - e1e2 * e1e2;
-        const float distance = (dot(lineDir, first.direction) - dot(lineDir, second.direction) * e1e2) / denom;
-        return distance;
-    }
-    
-    TranslationDragger(Raycast rc, Renderable & object, const float3 & axis, const float2 & cursor) : rc(rc), object(object), axis(qrot(object.pose.orientation, axis)), initialPosition(object.pose.position)
-    {
-        initialOffset = compute_offset(cursor);
-    }
-    
-    void on_drag(float2 cursor, bool uniform = false) final
-    {
-        const float offset = compute_offset(cursor);
-        object.pose.position = initialPosition + (axis * (offset - initialOffset));
-    }
-    
-    void on_release() final {}
-    void on_cancel() final {}
-};
-
-struct ScalingDragger : public IGizmo
-{
-    Renderable & object;
-    Raycast rc;
-    
-    float3 axis, initialScale, scaleDirection;
-    float initialFactor;
-    
-    float compute_scale(float2 cursor)
-    {
-        Ray first = {object.pose.position, axis};
-        Ray second = rc.from(cursor);
-        float3 lineDir = second.origin - first.origin;
-        const float e1e2 = dot(first.direction, second.direction);
-        const float denom = 1 - e1e2 * e1e2;
-        const float distance = (dot(lineDir, first.direction) - dot(lineDir, second.direction) * e1e2) / denom;
-        return distance;
-    }
-    
-    ScalingDragger(Raycast rc, Renderable & object, const float3 & axis, const float2 & cursor) : rc(rc), object(object), axis(qrot(object.pose.orientation, axis)), initialScale(object.scale)
-    {
-        scaleDirection = axis;
-        initialFactor = compute_scale(cursor);
-    }
-    
-    void on_drag(float2 cursor, bool uniform = false) final
-    {
-        float scale = compute_scale(cursor) / initialFactor;
-        auto scaled = (uniform) ? initialScale + (scale - 1) : initialScale + scaleDirection * ((scale - 1) * dot(initialScale, scaleDirection));
-        object.scale = clamp(scaled, {0.05, 0.05, 0.05}, {100, 100, 100});
-    }
-    
-    void on_release() final {}
-    void on_cancel() final {}
-};
-
-struct RotationDragger : public IGizmo
-{
-    Renderable & object;
-    Raycast rc;
-    
-    float3 axis, edge1;
-    float4 initialOrientation;
-    
-    float3 compute_edge(const float2 & cursor)
-    {
-        auto ray = rc.from(cursor);
-        float3 intersectionPt;
-        float t = 0.0;
-        intersect_ray_plane(ray, Plane(axis, object.pose.position), &intersectionPt, &t);
-        return ray.calculate_position(t) - object.pose.position;
-    }
-    
-    RotationDragger(Raycast rc, Renderable & object, const float3 & axis, const float2 & cursor) : rc(rc), object(object), axis(qrot(object.pose.orientation, axis)), initialOrientation(object.pose.orientation)
-    {
-        edge1 = compute_edge(cursor);
-    }
-    
-    void on_drag(float2 cursor, bool uniform = false) final
-    {
-        float3 newEdge = compute_edge(cursor);
-        object.pose.orientation  = qmul(make_rotation_quat_between_vectors(edge1, newEdge), initialOrientation);
-    }
-    
-    void on_release() final {}
-    void on_cancel() final {}
-};
-
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -208,32 +41,15 @@ struct ExperimentalApp : public GLFWApp
     RenderableGrid grid;
     FPSCameraController cameraController;
     
+    std::unique_ptr<GizmoEditor> gizmoEditor;
+    
+    std::vector<Renderable> proceduralModels;
+    std::vector<Renderable> debugModels;
+    
     std::unique_ptr<GlShader> simpleShader;
     std::unique_ptr<GlShader> colorShader;
     
     std::vector<LightObject> lights;
-    
-    std::vector<Renderable> proceduralModels;
-    std::vector<Renderable> debugModels;
-
-    Renderable * selectedObject = nullptr;
-
-    GizmoMode gizmoMode = GizmoMode::Translate;
-    std::shared_ptr<IGizmo> activeGizmo;
-    
-    Renderable translationGeometry;
-    Renderable scalingGeometry;
-    Renderable rotationGeometry;
-    
-    Geometry concatenate_geometry(const Geometry & a, const Geometry & b)
-    {
-        Geometry s;
-        s.vertices.insert(s.vertices.end(), a.vertices.begin(), a.vertices.end());
-        s.vertices.insert(s.vertices.end(), b.vertices.begin(), b.vertices.end());
-        s.faces.insert(s.faces.end(), a.faces.begin(), a.faces.end());
-        for (auto & f : b.faces) s.faces.push_back({ (int) a.vertices.size() + f.x, (int) a.vertices.size() + f.y, (int) a.vertices.size() + f.z} );
-        return s;
-    }
     
     ExperimentalApp() : GLFWApp(820, 480, "Geometry App")
     {
@@ -243,56 +59,19 @@ struct ExperimentalApp : public GLFWApp
         grid = RenderableGrid(1, 100, 100);
         cameraController.set_camera(&camera);
         
-        lights.resize(2);
-        
-        lights[0].color = float3(44.f / 255.f, 168.f / 255.f, 220.f / 255.f);
-        lights[0].pose.position = float3(25, 15, 0);
-        
-        lights[1].color = float3(220.f / 255.f, 44.f / 255.f, 201.f / 255.f);
-        lights[1].pose.position = float3(-25, 15, 0);
+        gizmoEditor.reset(new GizmoEditor(camera));
         
         simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         colorShader.reset(new gfx::GlShader(colorVertexShader, colorFragmentShader));
         
         {
-            auto arrowCap = make_cylinder(0.0f, 1.75f, 2.f, 12, 12, false);
-            auto axisBox = make_cube();
+            lights.resize(2);
             
-            Pose p(make_rotation_quat_between_vectors({0, 1, 0}, {1, 0, 0}), {0,0,0});
-            for (auto & v : arrowCap.vertices)
-                v = p.transform_coord(v);
-        
-            for (auto & v : arrowCap.vertices)
-                v = {(v.x * 0.25f) + 4.125f, v.y * 0.25f, v.z * 0.25f};
+            lights[0].color = float3(44.f / 255.f, 168.f / 255.f, 220.f / 255.f);
+            lights[0].pose.position = float3(25, 15, 0);
             
-            for (auto & v : axisBox.vertices)
-                v = {(v.x * 2) + 2.125f, v.y * 0.125f, v.z * 0.125f};
-            
-            auto linearTranslationMesh = concatenate_geometry(axisBox, arrowCap);
-            linearTranslationMesh.compute_normals();
-            translationGeometry = Renderable(linearTranslationMesh);
-        }
-        
-        {
-            auto ringG = make_ring();
-            for (auto & v : ringG.vertices)
-                v = {v.z * 1.5f, v.x * 1.5f, v.y * 1.5f};
-            rotationGeometry = Renderable(ringG);
-        }
-        
-        {
-            auto endBox = make_cube();
-            auto axisBox = make_cube();
-            
-            for (auto & v : endBox.vertices)
-                v = {(v.x + 16) * 0.25f, v.y * 0.25f, v.z * 0.25f};
-            
-            for (auto & v : axisBox.vertices)
-                v = {(v.x * 2) + 2.125f, v.y * 0.125f, v.z * 0.125f};
-            
-            auto scalingMesh = concatenate_geometry(endBox, axisBox);
-            scalingMesh.compute_normals();
-            scalingGeometry = Renderable(scalingMesh);
+            lights[1].color = float3(220.f / 255.f, 44.f / 255.f, 201.f / 255.f);
+            lights[1].pose.position = float3(-25, 15, 0);
         }
         
         {
@@ -316,117 +95,9 @@ struct ExperimentalApp : public GLFWApp
 
     }
     
-    std::shared_ptr<IGizmo> MakeGizmo(Raycast & rc, Renderable & object, const float3 & axis, const float2 & cursor)
-    {
-        switch (gizmoMode)
-        {
-            case GizmoMode::Translate: return std::make_shared<TranslationDragger>(rc, *selectedObject, axis, cursor);
-            case GizmoMode::Rotate: return std::make_shared<RotationDragger>(rc, *selectedObject, axis, cursor);
-            case GizmoMode::Scale: return std::make_shared<ScalingDragger>(rc, *selectedObject, axis, cursor);
-        }
-    }
-    
-    Renderable & GetGizmoMesh()
-    {
-        switch (gizmoMode)
-        {
-            case GizmoMode::Translate: return translationGeometry;
-            case GizmoMode::Rotate: return rotationGeometry;
-            case GizmoMode::Scale: return scalingGeometry;
-        }
-    }
-    
     void on_input(const InputEvent & event) override
     {
-        
-        if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS)
-        {
-            if (event.value[0] == GLFW_MOUSE_BUTTON_LEFT)
-            {
-                int width, height;
-                glfwGetWindowSize(window, &width, &height);
-                
-                auto worldRay = camera.get_world_ray(event.cursor, float2(event.windowSize.x, event.windowSize.y));
-                
-                // If we've already selected an object, check to see if we can interact with the gizmo
-                if (selectedObject)
-                {
-                    float bestT = std::numeric_limits<float>::max();
-                    float3 hitAxis;
-                    for (auto axis : {float3(1, 0, 0), float3(0, 1, 0), float3(0, 0, 1)})
-                    {
-                        // The handle is composed as a piece of geometry on the X axis.
-                        auto p = selectedObject->pose * Pose(make_rotation_quat_between_vectors({1,0,0}, axis), {0,0,0});
-                        auto localRay = p.inverse() * worldRay;
-                        float tValue = 0.0f;
-                        bool hit = GetGizmoMesh().check_hit(localRay, &tValue);
-                        if (hit && (tValue <= bestT))
-                        {
-                            bestT = tValue;
-                            hitAxis = axis;
-                            std::cout << bestT << std::endl;
-                        }
-                    }
-                    if (bestT > 0.f)
-                    {
-                        Raycast raycast(camera, float2(event.windowSize.x, event.windowSize.y));
-                        activeGizmo = MakeGizmo(raycast, *selectedObject, hitAxis, event.cursor);
-                    }
-                    else
-                    {
-                        activeGizmo.reset();
-                    }
-                }
-                
-                // We didn't interact with the gizmo, so check if we should select a new object.
-                if (!activeGizmo)
-                {
-
-                    // Otherwise, select a new object
-                    for (auto & model : proceduralModels)
-                    {
-                        auto worldRay = camera.get_world_ray(event.cursor, float2(width, height));
-                        if (model.check_hit(worldRay))
-                        {
-                            selectedObject = &model;
-
-                            break;
-                        }
-                        selectedObject = nullptr;
-                    }
-                }
-            }
-            
-            if (event.value[0] == GLFW_MOUSE_BUTTON_RIGHT)
-            {
-                activeGizmo.reset();
-            }
-        }
-        
-        if (event.type == InputEvent::CURSOR && event.drag)
-        {
-            if (selectedObject && activeGizmo)
-            {
-                activeGizmo->on_drag(event.cursor, event.using_shift_key());
-            }
-        }
-        
-        if (event.type == InputEvent::KEY)
-        {
-            if (event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
-            {
-                gizmoMode = GizmoMode::Translate;
-            }
-            else if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE)
-            {
-                gizmoMode = GizmoMode::Rotate;
-            }
-            else if (event.value[0] == GLFW_KEY_3 && event.action == GLFW_RELEASE)
-            {
-                gizmoMode = GizmoMode::Scale;
-            }
-            
-        }
+        gizmoEditor->handle_input(event, proceduralModels);
         cameraController.handle_input(event);
     }
     
@@ -480,8 +151,6 @@ struct ExperimentalApp : public GLFWApp
                 model.draw();
             }
             
-            
-
             simpleShader->unbind();
         }
         
@@ -494,15 +163,17 @@ struct ExperimentalApp : public GLFWApp
             
             colorShader->uniform("u_viewProj", viewProj);
             
-            if (selectedObject)
+            if (gizmoEditor->get_selected_object())
             {
+                Renderable * selectedObject = gizmoEditor->get_selected_object();
+                
                 for (auto axis : {float3(1, 0, 0), float3(0, 1, 0), float3(0, 0, 1)})
                 {
                     auto p = selectedObject->pose * Pose(make_rotation_quat_between_vectors({1,0,0}, axis), {0,0,0});
                     colorShader->uniform("u_modelMatrix", p.matrix());
                     colorShader->uniform("u_modelMatrixIT", inv(transpose(p.matrix())));
                     colorShader->uniform("u_color", axis);
-                    GetGizmoMesh().draw();
+                    gizmoEditor->get_gizmo_mesh().draw();
                 }
             }
 
