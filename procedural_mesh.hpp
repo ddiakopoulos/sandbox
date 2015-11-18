@@ -10,17 +10,17 @@
 using namespace util;
 using namespace math;
 
-inline Geometry make_cube(float s = 1.0f)
+inline Geometry make_cube()
 {
     Geometry cube;
     
     cube.vertices = {
-        { -1*s, -1*s, -1*s }, { -1*s, -1*s, +1*s }, { -1*s, +1*s, +1*s }, { -1*s, +1*s, -1*s },
-        { +1*s, -1*s, +1*s }, { +1*s, -1*s, -1*s }, { +1*s, +1*s, -1*s }, { +1*s, +1*s, +1*s },
-        { -1*s, -1*s, -1*s }, { +1*s, -1*s, -1*s }, { +1*s, -1*s, +1*s }, { -1*s, -1*s, +1*s },
-        { +1*s, +1*s, -1*s }, { -1*s, +1*s, -1*s }, { -1*s, +1*s, +1*s }, { +1*s, +1*s, +1*s },
-        { -1*s, -1*s, -1*s }, { -1*s, +1*s, -1*s }, { +1*s, +1*s, -1*s }, { +1*s, -1*s, -1*s },
-        { -1*s, +1*s, +1*s }, { -1*s, -1*s, +1*s }, { +1*s, -1*s, +1*s }, { +1*s, +1*s, +1*s }
+        { -1, -1, -1 }, { -1, -1, +1 }, { -1, +1, +1 }, { -1, +1, -1 },
+        { +1, -1, +1 }, { +1, -1, -1 }, { +1, +1, -1 }, { +1, +1, +1 },
+        { -1, -1, -1 }, { +1, -1, -1 }, { +1, -1, +1 }, { -1, -1, +1 },
+        { +1, +1, -1 }, { -1, +1, -1 }, { -1, +1, +1 }, { +1, +1, +1 },
+        { -1, -1, -1 }, { -1, +1, -1 }, { +1, +1, -1 }, { +1, -1, -1 },
+        { -1, +1, +1 }, { -1, -1, +1 }, { +1, -1, +1 }, { +1, +1, +1 }
     };
     
     cube.texCoords = {
@@ -45,9 +45,9 @@ inline Geometry make_cube(float s = 1.0f)
     return cube;
 }
 
-inline gfx::GlMesh make_cube_mesh(float scale = 1.0f)
+inline gfx::GlMesh make_cube_mesh()
 {
-    return make_mesh_from_geometry(make_cube(scale));
+    return make_mesh_from_geometry(make_cube());
 }
 
 inline Geometry make_sphere(float radius)
