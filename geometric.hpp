@@ -156,6 +156,14 @@ namespace math
         return make_rotation_quat_axis_angle(normalize(cross(a,b)), std::acos(dot(a,b)));
     }
 
+    inline float4 make_snapped_rotation_quat_between_vectors(const float3 & from, const float3 & to, const float angle)
+    {
+        auto a = normalize(from);
+        auto b = normalize(to);
+        auto snappedAcos = std::floor(std::acos(dot(a,b)) / angle) * angle;
+        return make_rotation_quat_axis_angle(normalize(cross(a,b)), snappedAcos);
+    }
+    
     inline float4 make_rotation_quat_from_rotation_matrix(const float3x3 & m)
     {
         const float magw =  m(0,0) + m(1,1) + m(2,2);
@@ -197,7 +205,7 @@ namespace math
         return diagonalizer(matrix); 
     }
 
-    inline float4 make_axis_angle_rotation_quat(const float4& q)
+    inline float4 make_axis_angle_rotation_quat(const float4 & q)
     {
         float4 result;
         result.w = 2.0f * (float) acosf(std::max(-1.0f, std::min(q.w, 1.0f))); // angle

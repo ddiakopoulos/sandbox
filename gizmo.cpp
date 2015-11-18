@@ -34,7 +34,7 @@ struct TranslationGizmo : public IGizmo
         initialOffset = compute_offset(cursor);
     }
     
-    void on_drag(float2 cursor, bool uniform = false) final
+    void on_drag(float2 cursor, bool extra) final
     {
         const float offset = compute_offset(cursor);
         object.pose.position = initialPosition + (axis * (offset - initialOffset));
@@ -70,10 +70,13 @@ struct RotationGizmo : public IGizmo
         edge1 = compute_edge(cursor);
     }
     
-    void on_drag(float2 cursor, bool uniform = false) final
+    void on_drag(float2 cursor, bool snap) final
     {
         float3 newEdge = compute_edge(cursor);
-        object.pose.orientation  = qmul(make_rotation_quat_between_vectors(edge1, newEdge), initialOrientation);
+        if (snap)
+            object.pose.orientation  = qmul(make_snapped_rotation_quat_between_vectors(edge1, newEdge, to_radians(15)), initialOrientation);
+        else
+            object.pose.orientation  = qmul(make_rotation_quat_between_vectors(edge1, newEdge), initialOrientation);
     }
     
     void on_release() final {}
@@ -109,10 +112,10 @@ struct ScalingGizmo : public IGizmo
         initialFactor = compute_scale(cursor);
     }
     
-    void on_drag(float2 cursor, bool uniform = false) final
+    void on_drag(float2 cursor, bool scaleUniformly) final
     {
         float scale = compute_scale(cursor) / initialFactor;
-        auto scaled = (uniform) ? initialScale + (scale - 1) : initialScale + scaleDirection * ((scale - 1) * dot(initialScale, scaleDirection));
+        auto scaled = (scaleUniformly) ? initialScale + (scale - 1) : initialScale + scaleDirection * ((scale - 1) * dot(initialScale, scaleDirection));
         object.scale = clamp(scaled, {0.05, 0.05, 0.05}, {100, 100, 100});
     }
     

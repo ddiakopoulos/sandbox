@@ -10,7 +10,7 @@
 
 struct IGizmo
 {
-    virtual void on_drag(math::float2 cursor, bool uniform = false) = 0;
+    virtual void on_drag(math::float2 cursor, bool = false) = 0;
     virtual void on_release() = 0;
     virtual void on_cancel() = 0;
 };
