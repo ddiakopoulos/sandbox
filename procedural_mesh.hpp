@@ -296,6 +296,70 @@ inline gfx::GlMesh make_ring_mesh(float innerRadius = 1.0f, float outerRadius = 
     return make_mesh_from_geometry(make_ring(innerRadius, outerRadius));
 }
 
+inline Geometry make_3d_ring(float innerRadius = 1.0f, float outerRadius = 2.0f, float length = 1.0f)
+{
+    Geometry ringGeom;
+    
+    uint32_t rs = 24; // radial segments
+    uint32_t rs2 = rs * 2;
+    
+    // Inner Ring
+    for (uint32_t i = 0; i < rs2; i++)
+    {
+        float angle = i * ANVIL_TAU / rs;
+        float x = innerRadius * cos(angle);
+        float y = innerRadius * sin(angle);
+        float z = (i < rs) ? -(length * 0.5f) : (length * 0.5f);
+        ringGeom.vertices.emplace_back(x, y, z);
+    }
+    
+    for (uint32_t i = 0; i < rs; i++)
+    {
+        uint4 q = uint4(i, i + rs, (i + 1) % rs + rs, (i + 1) % rs);
+        ringGeom.faces.push_back({q.x,q.y,q.z}); // faces point in
+        ringGeom.faces.push_back({q.x,q.z,q.w});
+    }
+    
+    // Outer Ring
+    for (uint32_t i = 0; i < rs2; i++)
+    {
+        float angle = i * ANVIL_TAU / rs;
+        float x = outerRadius * cos(angle);
+        float y = outerRadius * sin(angle);
+        float z = (i < rs)?  -(length * 0.5f) : (length * 0.5f);
+        ringGeom.vertices.emplace_back(x, y, z);
+    }
+    
+    for (uint32_t i = 0; i < rs; i++)
+    {
+        uint32_t b = (uint32_t) ringGeom.vertices.size() / 2;
+        uint4 q = uint4(b + i, (b + i) + rs, ((b + i) + 1) % rs + (3 * rs), ((b + i) + 1) % rs + (rs * 2));
+        ringGeom.faces.push_back({q.w,q.z,q.x}); // faces point out
+        ringGeom.faces.push_back({q.z,q.y,q.x});
+    }
+    
+    // Top + Bottom
+    for (int i = 0; i < rs; i++)
+    {
+        int x = i + rs;
+        uint4 q = uint4(i, (i) % rs + (2 * rs), (i + 1) % rs + (2 * rs), (i + 1) % rs); // -Z end
+        uint4 q2 = uint4(x, (x) % (2 * rs) + (2 * rs), (i + 1) % rs + (3 * rs), ((i + 1) % rs) + rs); // +Z end
+        ringGeom.faces.push_back({q.w,q.z,q.x});
+        ringGeom.faces.push_back({q.z,q.y,q.x});
+        ringGeom.faces.push_back({q2.x,q2.y,q2.z});
+        ringGeom.faces.push_back({q2.x,q2.z,q2.w});
+    }
+    
+    ringGeom.compute_normals();
+    
+    return ringGeom;
+}
+
+inline gfx::GlMesh make_3d_ring_mesh(float innerRadius = 1.0f, float outerRadius = 2.0f, float length = 1.0f)
+{
+    return make_mesh_from_geometry(make_3d_ring(innerRadius, outerRadius, length));
+}
+
 inline Geometry make_frustum(float aspectRatio = 1.33333f)
 {
     Geometry frustum;
