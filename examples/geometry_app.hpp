@@ -53,7 +53,7 @@ struct ExperimentalApp : public GLFWApp
     std::vector<LightObject> lights;
     
     std::vector<GlMesh> sponzaMeshes;
-    
+
     ExperimentalApp() : GLFWApp(820, 480, "Geometry App")
     {
         int width, height;
@@ -114,7 +114,7 @@ struct ExperimentalApp : public GLFWApp
             for (auto & g : geometries)
             {
                 g.compute_normals();
-                sponzaMeshes.push_back(make_mesh_from_geometry(g));
+                //sponzaMeshes.push_back(make_mesh_from_geometry(g));
             }
             
         }
@@ -129,7 +129,7 @@ struct ExperimentalApp : public GLFWApp
         }
         
         {
-            proceduralModels.resize(2);
+            proceduralModels.resize(3);
             
             proceduralModels[0] = Renderable(make_sphere(1.0));
             proceduralModels[0].pose.position = float3(0, 0, +5);
@@ -169,7 +169,7 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
      
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.1f, 0.1f, 0.5f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();

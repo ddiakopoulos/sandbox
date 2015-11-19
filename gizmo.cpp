@@ -251,9 +251,9 @@ void GizmoEditor::make_gizmo_meshes()
     translationMesh = Renderable(tGeometry);
     
     // Create the rotation mesh
-    Geometry rGeometry = make_ring();
+    Geometry rGeometry = make_3d_ring(1.50f, 1.70f, 0.20f);
     for (auto & v : rGeometry.vertices)
-        v = {v.z * 1.5f, v.x * 1.5f, v.y * 1.5f};
+        v = {v.z * 1.50f, v.x * 1.50f, v.y * 1.50f};
     rotationMesh = Renderable(rGeometry);
     
     // Create the scale mesh
