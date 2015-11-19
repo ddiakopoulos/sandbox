@@ -1,5 +1,6 @@
 #include "anvil.hpp"
 #include "tiny_obj_loader.h"
+#include "noise1234.h"
 
 using namespace math;
 using namespace util;
@@ -32,6 +33,19 @@ constexpr const char colorFragmentShader[] = R"(#version 330
         f_color = (vec4(color.rgb, 1) * 0.75)+ (dot(normal, vec3(0, 1, 0)) * 0.33);
     }
 )";
+
+Geometry make_noisy_blob()
+{
+    Geometry blob = make_sphere(2.0f);
+    for (auto & v : blob.vertices)
+    {
+        v *= 1.33f;
+        float n = Noise1234::noise(v.x, v.y, v.z);
+        v += (0.25f * n);
+    }
+    blob.compute_normals();
+    return blob;
+}
 
 struct ExperimentalApp : public GLFWApp
 {
@@ -136,6 +150,9 @@ struct ExperimentalApp : public GLFWApp
             
             proceduralModels[1] = Renderable(make_cube());
             proceduralModels[1].pose.position = float3(0, 0, -5);
+            
+            proceduralModels[2] = Renderable(make_noisy_blob());
+            proceduralModels[2].pose.position = float3(-5, 0, -5);
         }
         
         gfx::gl_check_error(__FILE__, __LINE__);
