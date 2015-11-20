@@ -44,6 +44,8 @@ newmtl sp_01_stub_baza_
 	Kd 0.784314 0.784314 0.784314
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
+	map_Ka 01_STUB.JPG
+	map_Kd 01_STUB.JPG
 
 newmtl sp_01_stub_kut
 	Ns 50.000000
