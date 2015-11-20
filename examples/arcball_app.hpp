@@ -4,15 +4,6 @@ using namespace math;
 using namespace util;
 using namespace gfx;
 
-struct Object
-{
-    Pose pose;
-    float3 scale;
-    Object() : scale(1, 1, 1) {}
-    float4x4 get_model() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
-    math::Box<float, 3> bounds;
-};
-
 struct ModelObject : public Object
 {
     GlMesh mesh;
@@ -26,6 +17,7 @@ struct ExperimentalApp : public GLFWApp
     Geometry crateGeometry;
     
     GlTexture crateDiffuseTex;
+    GlTexture crateNormalTex;
     
     std::unique_ptr<GlShader> simpleTexturedShader;
     
@@ -35,6 +27,7 @@ struct ExperimentalApp : public GLFWApp
     
     float2 lastCursor;
     bool isDragging = false;
+    bool useNormal = false;
     
     ExperimentalApp() : GLFWApp(600, 600, "Arcball Camera App")
     {
@@ -42,17 +35,24 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        crateGeometry = make_cube();
-        crateModel.mesh = make_mesh_from_geometry(crateGeometry);
+        crateGeometry = load_geometry_from_ply("assets/models/barrel/barrel.ply");
         crateModel.bounds = crateGeometry.compute_bounds();
+        
+        Pose p = Pose({0, 0, 0, 1}, -crateModel.bounds.center());
+        for (auto & v : crateGeometry.vertices)
+            v = transform_coord(p.matrix(), v);
+        
+        crateModel.mesh = make_mesh_from_geometry(crateGeometry);
         crateModel.pose.position = {0, 0, 0};
         
         simpleTexturedShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
-        crateDiffuseTex = load_image("assets/models/crate/crate_diffuse.png");
+        crateDiffuseTex = load_image("assets/models/barrel/barrel_2_diffuse.png");
+        crateNormalTex = load_image("assets/models/barrel/barrel_normal.png");
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
-        cameraSphere = Sphere(crateModel.bounds.center(), crateModel.bounds.volume());
+        std::cout << crateModel.bounds.center() << std::endl;
+        cameraSphere = Sphere({0, 0, 0}, 6);
         myArcball = Arcball(&camera, cameraSphere);
         
         camera.look_at({0, 0, 10}, {0, 0, 0});
@@ -69,6 +69,14 @@ struct ExperimentalApp : public GLFWApp
     void on_input(const InputEvent & event) override
     {
         
+        if (event.type == InputEvent::KEY)
+        {
+            if (event.value[0] == GLFW_KEY_N && event.action == GLFW_RELEASE)
+            {
+                useNormal = !useNormal;
+            }
+            
+        }
         if (event.type == InputEvent::CURSOR && isDragging)
         {
             if (event.cursor != lastCursor)
@@ -124,16 +132,18 @@ struct ExperimentalApp : public GLFWApp
             simpleTexturedShader->uniform("u_viewProj", viewProj);
             simpleTexturedShader->uniform("u_eye", camera.get_eye_point());
             
-            simpleTexturedShader->uniform("u_emissive", float3(.33f, 0.36f, 0.275f));
-            simpleTexturedShader->uniform("u_diffuse", float3(0.2f, 0.4f, 0.25f));
+            simpleTexturedShader->uniform("u_emissive", float3(.5f, 0.5f, 0.5f));
+            simpleTexturedShader->uniform("u_diffuse", float3(0.7f, 0.7f, 0.7f));
             
-            simpleTexturedShader->uniform("u_lights[0].position", float3(5, 10, -5));
+            simpleTexturedShader->uniform("u_lights[0].position", float3(6, 10, -6));
             simpleTexturedShader->uniform("u_lights[0].color", float3(0.7f, 0.2f, 0.2f));
             
-            simpleTexturedShader->uniform("u_lights[1].position", float3(-5, 10, 5));
+            simpleTexturedShader->uniform("u_lights[1].position", float3(-6, 10, 6));
             simpleTexturedShader->uniform("u_lights[1].color", float3(0.4f, 0.8f, 0.4f));
             
             simpleTexturedShader->texture("u_diffuseTex", 0, crateDiffuseTex.get_gl_handle(), GL_TEXTURE_2D);
+            simpleTexturedShader->texture("u_normalTex", 1, crateNormalTex.get_gl_handle(), GL_TEXTURE_2D);
+            simpleTexturedShader->uniform("useNormal", useNormal);
             
             {
                 auto model = crateModel.get_model();
