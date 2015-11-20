@@ -47,6 +47,12 @@ Geometry make_noisy_blob()
     return blob;
 }
 
+struct SponzaChunk
+{
+    std::vector<int> materialIds;
+    GlMesh mesh;
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -66,7 +72,8 @@ struct ExperimentalApp : public GLFWApp
     
     std::vector<LightObject> lights;
     
-    std::vector<GlMesh> sponzaMeshes;
+    std::vector<SponzaChunk> sponzaMeshes;
+    std::vector<GlTexture> sponzaTextures; // indexed by id
 
     ExperimentalApp() : GLFWApp(820, 480, "Geometry App")
     {
@@ -78,7 +85,7 @@ struct ExperimentalApp : public GLFWApp
         
         gizmoEditor.reset(new GizmoEditor(camera));
         
-        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
+        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         colorShader.reset(new gfx::GlShader(colorVertexShader, colorFragmentShader));
         
         {
@@ -105,6 +112,7 @@ struct ExperimentalApp : public GLFWApp
                 tinyobj::mesh_t *mesh = &shapes[i].mesh;
                 
                 std::cout << "Parsing: " << shape->name << std::endl;
+                
                 std::cout << mesh->indices.size() << std::endl;
                 for (size_t i = 0; i < mesh->indices.size(); i += 3)
                 {
@@ -114,31 +122,48 @@ struct ExperimentalApp : public GLFWApp
                     g.faces.push_back({idx1, idx2, idx3});
                 }
                 
+                for (size_t i = 0; i < mesh->texcoords.size() / 2; i++)
+                {
+                    float uv1 = mesh->texcoords[2 * i + 0];
+                    float uv2 = mesh->texcoords[2 * i + 1];
+                    g.texCoords.push_back({uv1, uv2});
+                }
+                
+                std::cout << mesh->positions.size() << " - " << mesh->texcoords.size() << std::endl;
+                
                 for (size_t v = 0; v < mesh->positions.size(); v += 3)
                 {
                     float3 vert = float3(mesh->positions[v + 0], mesh->positions[v + 1], mesh->positions[v + 2]);
                     g.vertices.push_back(vert);
-                    
                 }
             
                 geometries.push_back(g);
-                
             }
             
-            for (auto & g : geometries)
+            for (auto m : materials)
             {
+                if (m.diffuse_texname.size() <= 0) continue;
+                std::string texName = "assets/models/sponza/" + m.diffuse_texname;
+                GlTexture tex = load_image(texName);
+                sponzaTextures.push_back(std::move(tex));
+            }
+            
+            for (unsigned int i = 0; i < shapes.size(); i++)
+            {
+                auto g = geometries[i];
                 g.compute_normals();
-                //sponzaMeshes.push_back(make_mesh_from_geometry(g));
+                sponzaMeshes.push_back({shapes[i].mesh.material_ids, make_mesh_from_geometry(g)});
             }
             
         }
+        
         {
             lights.resize(2);
             
-            lights[0].color = float3(60.f / 255.f, 168.f / 255.f, 180.f / 255.f);
+            lights[0].color = float3(249.f / 255.f, 228.f / 255.f, 157.f / 255.f);
             lights[0].pose.position = float3(25, 15, 0);
             
-            lights[1].color = float3(100.f / 255.f, 120.f / 255.f, 105.f / 255.f);
+            lights[1].color = float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f);
             lights[1].pose.position = float3(-25, 15, 0);
         }
         
@@ -202,7 +227,7 @@ struct ExperimentalApp : public GLFWApp
             simpleShader->uniform("u_eye", camera.get_eye_point());
             
             simpleShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
-            simpleShader->uniform("u_diffuse", float3(0.4f, 0.4f, 0.25f));
+            simpleShader->uniform("u_diffuse", float3(0.4f, 0.4f, 0.4f));
             
             for (int i = 0; i < lights.size(); i++)
             {
@@ -216,8 +241,10 @@ struct ExperimentalApp : public GLFWApp
             {
                 simpleShader->uniform("u_modelMatrix", model.get_model());
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                model.draw();
+                //model.draw();
             }
+            
+            gfx::gl_check_error(__FILE__, __LINE__);
             
             for (const auto & model : sponzaMeshes)
             {
@@ -225,12 +252,17 @@ struct ExperimentalApp : public GLFWApp
                 auto modelMat = p.matrix();
                 simpleShader->uniform("u_modelMatrix", modelMat);
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(modelMat)));
-                model.draw_elements();
-                
+                const GlTexture & tex = sponzaTextures[model.materialIds[0]];
+                simpleShader->texture("u_diffuseTex", 0, tex);
+                model.mesh.draw_elements();
             }
+            
+            gfx::gl_check_error(__FILE__, __LINE__);
             
             simpleShader->unbind();
         }
+        
+        gfx::gl_check_error(__FILE__, __LINE__);
         
         // Color gizmo shader
         {
