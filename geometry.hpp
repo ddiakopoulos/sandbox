@@ -10,6 +10,7 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
+#include <algorithm>
 
 namespace util
 {
@@ -134,9 +135,19 @@ namespace util
 
     };
     
+    inline uint32_t make_vert(std::vector<std::tuple<math::float3, math::float2>> & buffer, const math::float3 & position, math::float2 texcoord)
+    {
+        auto vert = std::make_tuple(position, texcoord);
+        auto it = std::find(begin(buffer), end(buffer), vert);
+        if(it != end(buffer)) return it - begin(buffer);
+        buffer.push_back(vert); // Add to unique list if we didn't find it
+        return (uint32_t) buffer.size() - 1;
+    }
+    
     // Handles trimeshes only
     inline Geometry load_geometry_from_ply(const std::string & path)
     {
+        
         Geometry geo;
         
         try
@@ -156,12 +167,8 @@ namespace util
             
             // Todo... usual suspects like normals and vertex colors
             for (auto e : file.get_elements())
-            {
                 for (auto p : e.properties)
-                {
                     if (p.name == "texcoord") hasTexcoords = true;
-                }
-            }
             
             uint32_t vertexCount = file.request_properties_from_element("vertex", {"x", "y", "z"}, verts);
             uint32_t numTriangles = file.request_properties_from_element("face", {"vertex_indices"}, faces, 3);
@@ -170,17 +177,40 @@ namespace util
             file.read(ss);
             
             geo.vertices.reserve(vertexCount);
+            std::vector<math::float3> flatVerts;
             for (int i = 0; i < vertexCount * 3; i+=3)
-                geo.vertices.push_back(math::float3(verts[i], verts[i+1], verts[i+2]));
+                flatVerts.push_back(math::float3(verts[i], verts[i+1], verts[i+2]));
             
             geo.faces.reserve(numTriangles);
+            std::vector<math::uint3> flatFaces;
             for (int i = 0; i < numTriangles * 3; i+=3)
-                geo.faces.push_back(math::uint3(faces[i], faces[i+1], faces[i+2]));
+                flatFaces.push_back(math::uint3(faces[i], faces[i+1], faces[i+2]));
             
             geo.texCoords.reserve(uvCount);
-            for (int i = 0; i < uvCount * 6; i+= 2)
-                geo.texCoords.push_back(math::float2(texCoords[i], texCoords[i+1]));
+            std::vector<math::float2> flatTexCoords;
+            for (int i = 0; i < uvCount * 6; i+=2)
+               flatTexCoords.push_back(math::float2(texCoords[i], texCoords[i + 1]));
             
+            std::vector<std::tuple<math::float3, math::float2>> uniqueVerts;
+            std::vector<uint32_t> indexBuffer;
+            
+            for (int i = 0; i < flatFaces.size(); i++)
+            {
+                auto f = flatFaces[i];
+                indexBuffer.push_back(make_vert(uniqueVerts, flatVerts[f.x], flatTexCoords[3 * i + 0]));
+                indexBuffer.push_back(make_vert(uniqueVerts, flatVerts[f.y], flatTexCoords[3 * i + 1]));
+                indexBuffer.push_back(make_vert(uniqueVerts, flatVerts[f.z], flatTexCoords[3 * i + 2]));
+            }
+
+            for (auto v : uniqueVerts)
+            {
+                geo.vertices.push_back(std::get<0>(v));
+                geo.texCoords.push_back(std::get<1>(v));
+            }
+            
+            for (int i = 0; i < indexBuffer.size(); i+=3)
+                geo.faces.push_back(math::uint3(indexBuffer[i], indexBuffer[i+1], indexBuffer[i+2]));
+
             geo.compute_normals();
             geo.compute_tangents();
             geo.compute_bounds();
