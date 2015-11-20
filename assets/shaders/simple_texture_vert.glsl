@@ -18,5 +18,5 @@ void main()
     gl_Position = u_viewProj * worldPos;
     position = worldPos.xyz;
     normal = normalize((u_modelMatrixIT * vec4(v_normal,0)).xyz);
-    texCoord = v_texCoord;
+    texCoord = v_texCoord.st * vec2(1.0, -1.0);
 }
