@@ -329,10 +329,23 @@ namespace math
         Pose        operator * (const Pose & pose) const            { return {qmul(orientation,pose.orientation), transform_coord(pose.position)}; }
     };
 
-    float4x4 make_view_matrix_from_pose(const Pose & pose) 
+    inline float4x4 make_view_matrix_from_pose(const Pose & pose)
     { 
         return pose.inverse().matrix(); 
     }
+    
+    inline Pose look_to_pose(math::float3 eyePoint, math::float3 target)
+    {
+        math::Pose p;
+        const math::float3 worldUp = {0,1,0};
+        p.position = eyePoint;
+        math::float3 zDir = math::normalize(eyePoint - target);
+        math::float3 xDir = math::normalize(cross(worldUp, zDir));
+        math::float3 yDir = math::cross(zDir, xDir);
+        p.orientation = math::normalize(math::make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
+        return p;
+    }
+    
     
     /////////////////////////////////
     // Universal Coordinate System //
