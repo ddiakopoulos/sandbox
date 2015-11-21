@@ -163,9 +163,10 @@ struct ExperimentalApp : public GLFWApp
     {
         cameraController.update(e.timestep_ms);
         animator.update(e.timestep_ms);
-        auto pos = camera.get_eye_point();
         
-        camera.set_position(float3(pos.x, pos.y, cameraZ));
+        math::float3 newPos = float3(cos(zeroOne), 0.25, sin(zeroOne)) * 24.f;
+        std::cout << newPos << std::endl;
+        camera.set_position(float3(newPos.x, newPos.y, newPos.z));
         
         // Option One
         //camera.look_at(camera.pose.position, {-8, 2, 0});
