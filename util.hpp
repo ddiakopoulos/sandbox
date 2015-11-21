@@ -48,7 +48,7 @@
     #define ANVIL_COMPILER_VISUAL_STUDIO 1
 #endif
 
-#if defined (ANVIL_WINDOWS)
+#if defined (ANVIL_PLATFORM_WINDOWS)
     #define GL_PUSH_ALL_ATTRIB() glPushAttrib(GL_ALL_ATTRIB_BITS);
     #define GL_POP_ATTRIB() glPopAttrib();
 #else

@@ -13,6 +13,11 @@
 #include <chrono>
 #include <codecvt>
 #include <string>
+
+#define GLEW_STATIC
+#include "glew.h"
+
+#define GLFW_INCLUDE_GLU
 #include <GLFW/glfw3.h>
 
 namespace util

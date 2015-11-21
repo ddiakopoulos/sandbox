@@ -513,7 +513,7 @@ inline gfx::GlMesh make_capsule_mesh(int segments, float radius, float length)
     return make_mesh_from_geometry(make_capsule(segments, radius, length));
 }
 
-inline Geometry make_plane(float width, float height, uint nw, uint nh)
+inline Geometry make_plane(float width, float height, uint32_t nw, uint32_t nh)
 {
     Geometry plane;
     uint32_t indexOffset = 0;
@@ -560,7 +560,7 @@ inline Geometry make_plane(float width, float height, uint nw, uint nh)
     return plane;
 }
 
-inline gfx::GlMesh make_plane_mesh(float width, float height, uint nw, uint nh)
+inline gfx::GlMesh make_plane_mesh(float width, float height, uint32_t nw, uint32_t nh)
 {
     return make_mesh_from_geometry(make_plane(width, height, nw, nh));
 }
@@ -600,7 +600,7 @@ inline Geometry make_spiral(float resolution = 512.0f, float freq = 128.f)
     float off = 1.0 / resolution;
     for (float i = 0.0; i < 1.0 + off; i += off)
     {
-        float s = cos(i * 2.0 * ANVIL_PI + M_PI) * 0.5f + 0.5f;
+        float s = cos(i * 2.0 * ANVIL_PI + ANVIL_PI) * 0.5f + 0.5f;
         spiral.vertices.push_back({cosf(i * ANVIL_PI * freq) * s, i, sinf(i * ANVIL_PI * freq) * s});
     }
     return spiral;

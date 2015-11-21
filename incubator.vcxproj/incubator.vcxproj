@@ -1,0 +1,260 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\anvil.hpp" />
+    <ClInclude Include="..\arcball.hpp" />
+    <ClInclude Include="..\base64.hpp" />
+    <ClInclude Include="..\bit_mask.hpp" />
+    <ClInclude Include="..\circular_buffer.hpp" />
+    <ClInclude Include="..\concurrent_queue.hpp" />
+    <ClInclude Include="..\dsp_filters.hpp" />
+    <ClInclude Include="..\ellipse_math.hpp" />
+    <ClInclude Include="..\examples\arcball_app.hpp" />
+    <ClInclude Include="..\examples\empty_app.hpp" />
+    <ClInclude Include="..\examples\geometry_app.hpp" />
+    <ClInclude Include="..\examples\sandbox_app.hpp" />
+    <ClInclude Include="..\examples\skydome_app.hpp" />
+    <ClInclude Include="..\examples\ssao_app.hpp" />
+    <ClInclude Include="..\file_io.hpp" />
+    <ClInclude Include="..\geometric.hpp" />
+    <ClInclude Include="..\geometry.hpp" />
+    <ClInclude Include="..\gizmo.hpp" />
+    <ClInclude Include="..\glfw_app.hpp" />
+    <ClInclude Include="..\GlMesh.hpp" />
+    <ClInclude Include="..\GlShader.hpp" />
+    <ClInclude Include="..\GlShared.hpp" />
+    <ClInclude Include="..\GlTexture.hpp" />
+    <ClInclude Include="..\gpu_timer.hpp" />
+    <ClInclude Include="..\human_time.hpp" />
+    <ClInclude Include="..\linear_algebra.hpp" />
+    <ClInclude Include="..\math_util.hpp" />
+    <ClInclude Include="..\nvg.hpp" />
+    <ClInclude Include="..\one_euro.hpp" />
+    <ClInclude Include="..\pid_controller.hpp" />
+    <ClInclude Include="..\procedural_mesh.hpp" />
+    <ClInclude Include="..\procedural_sky.hpp" />
+    <ClInclude Include="..\procedural_sky\hosek.hpp" />
+    <ClInclude Include="..\procedural_sky\preetham.hpp" />
+    <ClInclude Include="..\renderable_grid.hpp" />
+    <ClInclude Include="..\running_statistics.hpp" />
+    <ClInclude Include="..\scene.hpp" />
+    <ClInclude Include="..\signal.hpp" />
+    <ClInclude Include="..\sketch.hpp" />
+    <ClInclude Include="..\string_utils.hpp" />
+    <ClInclude Include="..\third_party\fontstash.h" />
+    <ClInclude Include="..\third_party\json.hpp" />
+    <ClInclude Include="..\third_party\murmur_hash_3.h" />
+    <ClInclude Include="..\third_party\nanovg.h" />
+    <ClInclude Include="..\third_party\nanovg_gl.h" />
+    <ClInclude Include="..\third_party\nanovg_gl_utils.h" />
+    <ClInclude Include="..\third_party\noise1234.h" />
+    <ClInclude Include="..\third_party\oscpkt.hpp" />
+    <ClInclude Include="..\third_party\oscpkt_udp.hpp" />
+    <ClInclude Include="..\third_party\simplexnoise1234.h" />
+    <ClInclude Include="..\third_party\stb_image.h" />
+    <ClInclude Include="..\third_party\stb_image_resize.h" />
+    <ClInclude Include="..\third_party\stb_image_write.h" />
+    <ClInclude Include="..\third_party\stb_truetype.h" />
+    <ClInclude Include="..\third_party\tinyply.h" />
+    <ClInclude Include="..\third_party\tiny_obj_loader.h" />
+    <ClInclude Include="..\time_keeper.hpp" />
+    <ClInclude Include="..\try_locker.hpp" />
+    <ClInclude Include="..\universal_widget.hpp" />
+    <ClInclude Include="..\util.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\gizmo.cpp" />
+    <ClCompile Include="..\GlMesh.cpp" />
+    <ClCompile Include="..\GlShader.cpp" />
+    <ClCompile Include="..\GlShared.cpp" />
+    <ClCompile Include="..\GlTexture.cpp" />
+    <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\nvg.cpp" />
+    <ClCompile Include="..\procedural_sky\hosek.cpp" />
+    <ClCompile Include="..\procedural_sky\preetham.cpp" />
+    <ClCompile Include="..\third_party\json.cpp" />
+    <ClCompile Include="..\third_party\murmur_hash_3.cpp" />
+    <ClCompile Include="..\third_party\nanovg.cpp" />
+    <ClCompile Include="..\third_party\noise1234.cpp" />
+    <ClCompile Include="..\third_party\simplexnoise1234.cpp" />
+    <ClCompile Include="..\third_party\tinyply.cpp" />
+    <ClCompile Include="..\third_party\tiny_obj_loader.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\glfw_app.mm">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</DeploymentContent>
+    </ClCompile>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{992E85A7-B590-477B-A1B2-8A04AAAD0E10}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>incubator</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <Linkage-glfw>
+    </Linkage-glfw>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <Linkage-glfw>
+    </Linkage-glfw>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <Linkage-glfw>
+    </Linkage-glfw>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <Linkage-glfw>
+    </Linkage-glfw>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third_party\glew\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32s.lib;opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third_party\glew\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32s.lib;opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third_party\glew\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32s.lib;opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third_party\glew\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32s.lib;opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="..\procedural_sky\hosek_data_rgb.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,269 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="third_party">
+      <UniqueIdentifier>{44fc042c-0d49-441b-ba08-cdbd35a2a947}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{18186070-66de-4e86-bdec-e8ce244b6aff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="examples">
+      <UniqueIdentifier>{77386985-2a71-4ff4-9bef-37935b1c545d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\opengl">
+      <UniqueIdentifier>{96253310-1f6d-4a4b-8ed0-6bdeb76e65c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\math">
+      <UniqueIdentifier>{c7417ef8-96e1-441c-86ea-dd75ccbeaae8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\tools">
+      <UniqueIdentifier>{10616b86-375f-450b-ab3f-8e2517e46f22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\app">
+      <UniqueIdentifier>{11a7ec82-191b-4beb-ba51-981dacc2f378}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\sky">
+      <UniqueIdentifier>{56b58ccd-80db-4de5-adf4-0638975646e8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\third_party\fontstash.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\json.hpp">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\murmur_hash_3.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\nanovg.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\nanovg_gl.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\nanovg_gl_utils.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\noise1234.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\oscpkt.hpp">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\oscpkt_udp.hpp">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\simplexnoise1234.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\stb_image.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\stb_image_resize.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\stb_image_write.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\stb_truetype.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\tiny_obj_loader.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\tinyply.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\arcball_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\empty_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\geometry_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\sandbox_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\skydome_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\ssao_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\anvil.hpp">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\geometry.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\geometric.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\linear_algebra.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\math_util.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pid_controller.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\one_euro.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\running_statistics.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dsp_filters.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ellipse_math.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\glfw_app.hpp">
+      <Filter>source\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\nvg.hpp">
+      <Filter>source\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GlMesh.hpp">
+      <Filter>source\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GlShader.hpp">
+      <Filter>source\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GlShared.hpp">
+      <Filter>source\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GlTexture.hpp">
+      <Filter>source\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gpu_timer.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arcball.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\circular_buffer.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\concurrent_queue.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\file_io.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gizmo.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\human_time.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\procedural_mesh.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\procedural_sky.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\renderable_grid.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\scene.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\signal.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sketch.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\string_utils.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\time_keeper.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\try_locker.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\universal_widget.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bit_mask.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\base64.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\util.hpp">
+      <Filter>source\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\procedural_sky\hosek.hpp">
+      <Filter>source\sky</Filter>
+    </ClInclude>
+    <ClInclude Include="..\procedural_sky\preetham.hpp">
+      <Filter>source\sky</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\third_party\json.cpp">
+      <Filter>third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\murmur_hash_3.cpp">
+      <Filter>third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\nanovg.cpp">
+      <Filter>third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\noise1234.cpp">
+      <Filter>third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\simplexnoise1234.cpp">
+      <Filter>third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\tiny_obj_loader.cc">
+      <Filter>third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\tinyply.cpp">
+      <Filter>third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\nvg.cpp">
+      <Filter>source\app</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GlMesh.cpp">
+      <Filter>source\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GlShader.cpp">
+      <Filter>source\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GlShared.cpp">
+      <Filter>source\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GlTexture.cpp">
+      <Filter>source\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gizmo.cpp">
+      <Filter>source\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\main.cpp">
+      <Filter>examples</Filter>
+    </ClCompile>
+    <ClCompile Include="..\procedural_sky\hosek.cpp">
+      <Filter>source\sky</Filter>
+    </ClCompile>
+    <ClCompile Include="..\procedural_sky\preetham.cpp">
+      <Filter>source\sky</Filter>
+    </ClCompile>
+    <ClCompile Include="..\glfw_app.mm">
+      <Filter>source\app</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\procedural_sky\hosek_data_rgb.inl">
+      <Filter>source\sky</Filter>
+    </None>
+  </ItemGroup>
+</Project>

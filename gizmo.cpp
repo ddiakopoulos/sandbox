@@ -116,7 +116,7 @@ struct ScalingGizmo : public IGizmo
     {
         float scale = compute_scale(cursor) / initialFactor;
         auto scaled = (scaleUniformly) ? initialScale + (scale - 1) : initialScale + scaleDirection * ((scale - 1) * dot(initialScale, scaleDirection));
-        object.scale = clamp(scaled, {0.05, 0.05, 0.05}, {100, 100, 100});
+        object.scale = clamp(scaled, {0.05f, 0.05f, 0.05f}, {100, 100, 100});
     }
     
     void on_release() final {}
@@ -241,10 +241,10 @@ void GizmoEditor::make_gizmo_meshes()
         v = p.transform_coord(v);
     
     for (auto & v : arrowCap.vertices)
-        v = {(v.x * 0.25f) + 4.125f, v.y * 0.25f, v.z * 0.25f};
+        v = float3((v.x * 0.25f) + 4.125f, v.y * 0.25f, v.z * 0.25f);
     
     for (auto & v : axisBoxT.vertices)
-        v = {(v.x * 2) + 2.125f, v.y * 0.125f, v.z * 0.125f};
+        v = float3((v.x * 2) + 2.125f, v.y * 0.125f, v.z * 0.125f);
     
     Geometry tGeometry = concatenate_geometry(axisBoxT, arrowCap);
     tGeometry.compute_normals();
@@ -253,7 +253,7 @@ void GizmoEditor::make_gizmo_meshes()
     // Create the rotation mesh
     Geometry rGeometry = make_3d_ring(1.50f, 1.70f, 0.20f);
     for (auto & v : rGeometry.vertices)
-        v = {v.z * 1.50f, v.x * 1.50f, v.y * 1.50f};
+        v = float3(v.z * 1.50f, v.x * 1.50f, v.y * 1.50f);
     rotationMesh = Renderable(rGeometry);
     
     // Create the scale mesh
@@ -261,10 +261,10 @@ void GizmoEditor::make_gizmo_meshes()
     Geometry axisBoxS = make_cube();
     
     for (auto & v : endBox.vertices)
-        v = {(v.x + 16) * 0.25f, v.y * 0.25f, v.z * 0.25f};
+        v = float3((v.x + 16) * 0.25f, v.y * 0.25f, v.z * 0.25f);
     
     for (auto & v : axisBoxS.vertices)
-        v = {(v.x * 2) + 2.125f, v.y * 0.125f, v.z * 0.125f};
+        v = float3((v.x * 2) + 2.125f, v.y * 0.125f, v.z * 0.125f);
     
     Geometry sGeometry = concatenate_geometry(endBox, axisBoxS);
     sGeometry.compute_normals();

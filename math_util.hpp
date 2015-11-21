@@ -1,13 +1,15 @@
 #ifndef math_util_h
 #define math_util_h
 
+#include "util.hpp"
 #include "linear_algebra.hpp"
+#include <algorithm>
 
 namespace math
 {
 
-    inline float to_radians(float degrees) { return degrees * M_PI / 180.0f; }
-    inline float to_degrees(float radians) { return radians * 180.0f / M_PI; }
+    inline float to_radians(float degrees) { return degrees * ANVIL_PI / 180.0f; }
+    inline float to_degrees(float radians) { return radians * 180.0f / ANVIL_PI; }
 
     template<typename T> 
     T min(const T& x, const T& y) 

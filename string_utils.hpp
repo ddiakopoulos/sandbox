@@ -4,6 +4,9 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <functional>
+#include <cctype>
+#include <algorithm>
 
 namespace util
 {

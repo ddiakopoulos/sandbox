@@ -8,8 +8,7 @@
 #include "glfw_app.hpp"
 
 #if defined(ANVIL_PLATFORM_WINDOWS)
-    #define GLEW_STATIC
-    #include <GL/glew.h>
+
 #elif defined(ANVIL_PLATFORM_OSX)
     #include <OpenGL/gl3.h>
 #endif

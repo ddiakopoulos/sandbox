@@ -12,7 +12,7 @@ void GlMesh::draw_elements() const
         if (indexType == GL_UNSIGNED_BYTE) return ((int)ibo.size() / sizeof(GLubyte));
         if (indexType == GL_UNSIGNED_SHORT) return ((int)ibo.size() / sizeof(GLushort));
         if (indexType == GL_UNSIGNED_INT) return ((int)ibo.size() / sizeof(GLuint));
-        else return (unsigned long) 0;
+        else return (size_t) 0;
     }();
 
     if (vertexCount)

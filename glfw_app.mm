@@ -68,8 +68,8 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
 #if defined(ANVIL_PLATFORM_WINDOWS)
     glewExperimental = GL_TRUE;
     if (GLenum err = glewInit()) 
-        throw std::runtime_error(std::string("glewInit() failed - ") + (const char *)glewGetErrorString(err));
-    ANVIL_DEBUG("GLEW_VERSION = " << (char *)glewGetString(GLEW_VERSION));
+       throw std::runtime_error(std::string("glewInit() failed - ") + (const char *)glewGetErrorString(err));
+    ANVIL_INFO("GLEW_VERSION = " << (char *)glewGetString(GLEW_VERSION));
 #endif
     
     glfwSetWindowUserPointer(window, this);
@@ -113,11 +113,13 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     {
         auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); try { app->consume_scroll(deltaX, deltaY);} catch(...) { CATCH_CURRENT; }
     });
-    
+	
+	/*    
     glfwSetDropCallback (window, [](GLFWwindow * window, int count, const char * names[])
     {
         auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); try { app->on_drop({names, names+count});} catch(...) { CATCH_CURRENT; }
     });
+	*/
 }
 
 GLFWApp::~GLFWApp() 
@@ -302,6 +304,7 @@ int2 get_screen_size(GLFWwindow * window)
 
 #if defined (ANVIL_PLATFORM_WINDOWS)
 
+#undef APIENTRY
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
 #include <GLFW/glfw3native.h>
@@ -312,13 +315,13 @@ namespace util
     std::string windows_to_utf8(const std::wstring & string)
     {
         std::wstring_convert<std::codecvt_utf8<wchar_t>> conversion;
-        return conversion.to_bytes(str);
+        return conversion.to_bytes(string);
     }
 
     std::wstring utf8_to_windows(const std::string & string)
     {
         std::wstring_convert<std::codecvt_utf8<wchar_t>> conversion;
-        return conversion.from_bytes(str);
+        return conversion.from_bytes(string);
     }
 }
 
