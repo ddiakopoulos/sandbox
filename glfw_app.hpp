@@ -14,8 +14,10 @@
 #include <codecvt>
 #include <string>
 
+#if defined(ANVIL_PLATFORM_WINDOWS)
 #define GLEW_STATIC
 #include "glew.h"
+#endif
 
 #define GLFW_INCLUDE_GLU
 #include <GLFW/glfw3.h>

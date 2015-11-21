@@ -26,7 +26,7 @@ struct Renderable : public Object
     {
         mesh = make_mesh_from_geometry(g);
         bounds = g.compute_bounds();
-        //mesh.set_non_indexed(GL_POINTS);
+        //mesh.set_non_indexed(GL_TRIANGLE_STRIP);
         //glPointSize(8);
     }
     
