@@ -11,13 +11,64 @@ struct ExperimentalApp : public GLFWApp
     GlCamera camera;
     PreethamProceduralSky skydome;
     RenderableGrid grid;
-
-    ExperimentalApp() : GLFWApp(600, 600, "Sandbox App")
+    FPSCameraController cameraController;
+    
+    std::vector<Renderable> proceduralModels;
+    std::vector<Renderable> cameraPositions;
+    
+    std::unique_ptr<GlShader> simpleShader;
+    
+    std::vector<LightObject> lights;
+    
+    ExperimentalApp() : GLFWApp(940, 720, "Sandbox App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
+        
+        cameraController.set_camera(&camera);
+        
+        camera.look_at({0, 8, 24}, {0, 0, 0});
+        
+        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
+        
+        {
+            lights.resize(2);
+            lights[0].color = float3(249.f / 255.f, 228.f / 255.f, 157.f / 255.f);
+            lights[0].pose.position = float3(25, 15, 0);
+            lights[1].color = float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f);
+            lights[1].pose.position = float3(-25, 15, 0);
+        }
+        
+        {
+            cameraPositions.resize(2);
+            cameraPositions[0] = Renderable(make_frustum());
+            cameraPositions[0].pose.position = float3(0, 8, +24);
+            cameraPositions[0].mesh.set_non_indexed(GL_LINES);
+            
+            cameraPositions[1] = Renderable(make_frustum());
+            cameraPositions[1].pose.position = float3(0, 8, -24);
+            cameraPositions[1].mesh.set_non_indexed(GL_LINES);
+        }
+        
+        {
+            proceduralModels.resize(4);
+            
+            proceduralModels[0] = Renderable(make_sphere(1.0));
+            proceduralModels[0].pose.position = float3(0, 2, +8);
+            
+            proceduralModels[1] = Renderable(make_cube());
+            proceduralModels[1].pose.position = float3(0, 2, -8);
+            
+            proceduralModels[2] = Renderable(make_icosahedron());
+            proceduralModels[2].pose.position = float3(8, 2, 0);
+            
+            proceduralModels[3] = Renderable(make_octohedron());
+            proceduralModels[3].pose.position = float3(-8, 2, 0);
+        }
+        
         grid = RenderableGrid(1, 100, 100);
+        
         gfx::gl_check_error(__FILE__, __LINE__);
     }
     
@@ -28,12 +79,12 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
-
+        cameraController.handle_input(event);
     }
     
     void on_update(const UpdateEvent & e) override
     {
-
+        cameraController.update(e.timestep_ms);
     }
     
     void on_draw() override
@@ -56,6 +107,42 @@ struct ExperimentalApp : public GLFWApp
         
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
 
+        // Simple Shader
+        {
+            simpleShader->bind();
+            
+            simpleShader->uniform("u_viewProj", viewProj);
+            simpleShader->uniform("u_eye", camera.get_eye_point());
+            
+            simpleShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
+            simpleShader->uniform("u_diffuse", float3(0.4f, 0.4f, 0.4f));
+            
+            for (int i = 0; i < lights.size(); i++)
+            {
+                auto light = lights[i];
+                
+                simpleShader->uniform("u_lights[" + std::to_string(i) + "].position", light.pose.position);
+                simpleShader->uniform("u_lights[" + std::to_string(i) + "].color", light.color);
+            }
+            
+            for (const auto & model : proceduralModels)
+            {
+                simpleShader->uniform("u_modelMatrix", model.get_model());
+                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                model.draw();
+            }
+            
+            for (const auto & model : cameraPositions)
+            {
+                simpleShader->uniform("u_modelMatrix", model.get_model());
+                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                model.draw();
+            }
+            gfx::gl_check_error(__FILE__, __LINE__);
+            
+            simpleShader->unbind();
+        }
+        
         grid.render(proj, view);
 
         gfx::gl_check_error(__FILE__, __LINE__);

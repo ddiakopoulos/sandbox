@@ -1,4 +1,4 @@
-// A refactoring of the gizmo editing utility part of Sterling Orstern's public domain scene-editing project:
+// A refactoring of the gizmo editing utility part of Sterling Orsten's public domain scene-editing project:
 // https://github.com/sgorsten/editor
 
 #pragma once
