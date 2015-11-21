@@ -41,7 +41,7 @@ struct TranslationGizmo : public IGizmo
     }
     
     void on_release() final {}
-    void on_cancel() final {}
+    void on_cancel() final { object.pose.position = initialPosition; }
 };
 
 ////////////////////
@@ -80,7 +80,7 @@ struct RotationGizmo : public IGizmo
     }
     
     void on_release() final {}
-    void on_cancel() final {}
+    void on_cancel() final { object.pose.orientation = initialOrientation; }
 };
 
 ///////////////////
@@ -120,7 +120,7 @@ struct ScalingGizmo : public IGizmo
     }
     
     void on_release() final {}
-    void on_cancel() final {}
+    void on_cancel() final { object.scale = initialScale; }
 };
 
 //////////////////
@@ -227,6 +227,9 @@ void GizmoEditor::handle_input(const InputEvent & event, std::vector<Renderable>
         if(event.value[0] == hotkey_translate) gizmoMode = GizmoMode::Translate;
         if(event.value[0] == hotkey_rotate) gizmoMode = GizmoMode::Rotate;
         if(event.value[0] == hotkey_scale) gizmoMode = GizmoMode::Scale;
+        if (event.drag && selectedObject && activeGizmo)
+            if (event.value[0] == GLFW_KEY_ESCAPE) activeGizmo->on_cancel();
+
     }
 }
 

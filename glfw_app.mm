@@ -132,18 +132,10 @@ void GLFWApp::preprocess_input(InputEvent & event)
 {
     if (event.type == InputEvent::MOUSE)
     {
-        if (event.is_mouse_down())
-            isDragging = true;
-        
-        if (event.is_mouse_up())
-            isDragging = false;
+        if (event.is_mouse_down()) isDragging = true;
+        else if (event.is_mouse_up()) isDragging = false;
     }
-    
-    if (event.type == InputEvent::CURSOR)
-    {
-        event.drag = isDragging;
-    }
-    
+    event.drag = isDragging;
     on_input(event);
 }
 
