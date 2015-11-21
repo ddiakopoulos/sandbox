@@ -4,14 +4,71 @@ using namespace math;
 using namespace util;
 using namespace gfx;
 
+struct Smoothstep
+{
+    inline static float ease_in_out(const float t)
+    {
+        auto scale = t * t * (3.f - 2.f * t); return scale * 1.0f;
+    }
+};
+
+class Animator
+{
+    struct Tween
+    {
+        void * variable;
+        float t0, t1;
+        std::function<void(float t)> on_update;
+    };
+    
+    std::list<Tween> tweens;
+    float now = 0.0f;
+    
+public:
+    
+    Animator() {}
+    
+    void update(float timestep)
+    {
+        now += timestep;
+        for (auto it = begin(tweens); it != end(tweens);)
+        {
+            if (now < it->t1)
+            {
+                it->on_update(static_cast<float>((now - it->t0) / (it->t1 - it->t0)));
+                ++it;
+            }
+            else
+            {
+                it->on_update(1.0f);
+                it = tweens.erase(it);
+            }
+        }
+    }
+    
+    template<class VariableType, class EasingFunc>
+    const Tween & make_tween(VariableType * variable, VariableType targetValue, float seconds, EasingFunc ease)
+    {
+        VariableType initialValue = *variable;
+        auto updateFunction = [variable, initialValue, targetValue, ease](float t)
+        {
+            *variable = static_cast<VariableType>(initialValue * (1 - ease(t)) + targetValue * ease(t));
+        };
+        
+        tweens.push_back({variable, now, now + seconds, updateFunction});
+        return tweens.back();
+    }
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
 
     GlCamera camera;
-    PreethamProceduralSky skydome;
+    HosekProceduralSky skydome;
     RenderableGrid grid;
     FPSCameraController cameraController;
+    Animator animator;
     
     std::vector<Renderable> proceduralModels;
     std::vector<Renderable> cameraPositions;
@@ -19,6 +76,11 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GlShader> simpleShader;
     
     std::vector<LightObject> lights;
+    
+    float cameraZ = 0.0f;
+    float zeroOne = 0.0f;
+    Pose start;
+    Pose end;
     
     ExperimentalApp() : GLFWApp(940, 720, "Sandbox App")
     {
@@ -29,6 +91,7 @@ struct ExperimentalApp : public GLFWApp
         cameraController.set_camera(&camera);
         
         camera.look_at({0, 8, 24}, {0, 0, 0});
+        cameraZ = camera.pose.position.z;
         
         simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
@@ -67,7 +130,10 @@ struct ExperimentalApp : public GLFWApp
             proceduralModels[3].pose.position = float3(-8, 2, 0);
         }
         
-        grid = RenderableGrid(1, 100, 100);
+        start = look_to_pose(float3(0, 8, +24), float3(-8, 2, 0));
+        end = look_to_pose(float3(0, 8, -24), float3(-8, 2, 0));
+        
+        grid = RenderableGrid(1, 64, 64);
         
         gfx::gl_check_error(__FILE__, __LINE__);
     }
@@ -79,12 +145,33 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
+        if (event.type == InputEvent::KEY)
+        {
+            if (event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
+                animator.make_tween(&cameraZ, -24.0f, 4.0f, Smoothstep::ease_in_out);
+            if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE)
+                animator.make_tween(&cameraZ, 24.0f, 2.0f, Smoothstep::ease_in_out);
+            if (event.value[0] == GLFW_KEY_3 && event.action == GLFW_RELEASE)
+                animator.make_tween(&zeroOne, 1.0f, 3.0f, Smoothstep::ease_in_out);
+            if (event.value[0] == GLFW_KEY_4 && event.action == GLFW_RELEASE)
+                animator.make_tween(&zeroOne, 0.0f, 3.0f, Smoothstep::ease_in_out);
+        }
         cameraController.handle_input(event);
     }
     
     void on_update(const UpdateEvent & e) override
     {
         cameraController.update(e.timestep_ms);
+        animator.update(e.timestep_ms);
+        auto pos = camera.get_eye_point();
+        
+        camera.set_position(float3(pos.x, pos.y, cameraZ));
+        
+        // Option One
+        //camera.look_at(camera.pose.position, {-8, 2, 0});
+        
+        // Option Two
+        camera.pose.orientation = qlerp(start.orientation, end.orientation, zeroOne);
     }
     
     void on_draw() override
