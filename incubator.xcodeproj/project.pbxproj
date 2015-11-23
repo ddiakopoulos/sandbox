@@ -126,6 +126,7 @@
 		089B86101BAFC9AB00B3A290 /* stb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_truetype.h; path = third_party/stb_truetype.h; sourceTree = SOURCE_ROOT; };
 		089B86141BAFD06300B3A290 /* dsp_filters.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dsp_filters.hpp; sourceTree = SOURCE_ROOT; };
 		089B86151BAFD39100B3A290 /* bit_mask.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = bit_mask.hpp; sourceTree = SOURCE_ROOT; };
+		08C475791C02CFF30031E87E /* terrain_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = terrain_app.hpp; path = examples/terrain_app.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DC1BDD667000895E31 /* nvg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nvg.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DD1BDD667000895E31 /* nvg.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = nvg.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DF1BDD669600895E31 /* nanovg_gl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg_gl_utils.h; path = third_party/nanovg_gl_utils.h; sourceTree = SOURCE_ROOT; };
@@ -247,6 +248,7 @@
 				0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */,
 				0849FD8B1BE7CAAB000F148E /* skydome_app.hpp */,
 				0849FD8E1BEF19A7000F148E /* geometry_app.hpp */,
+				08C475791C02CFF30031E87E /* terrain_app.hpp */,
 				0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */,
 			);
 			name = examples;
