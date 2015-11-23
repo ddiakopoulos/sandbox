@@ -12,6 +12,75 @@ struct Smoothstep
     }
 };
 
+struct Sine
+{
+    inline static float ease_in_out(float t)
+    {
+        return -0.5f * (cos((float) ANVIL_PI * t) - 1);
+    }
+};
+
+struct Circular
+{
+    inline static float ease_in_out(float t)
+    {
+        t *= 2;
+        if (t < 1) {
+            return -0.5f * (sqrt(1 - t*t) - 1);
+        }
+        else {
+            t -= 2;
+            return 0.5f * (sqrt(1 - t*t) + 1);
+        }
+    }
+};
+
+struct Linear
+{
+    inline static float ease_in_out(const float t)
+    {
+        return t;
+    }
+};
+
+struct Exponential
+{
+    inline static float ease_in_out(float t)
+    {
+        if (t == 0) return 0;
+        if (t == 1) return 1;
+        t *= 2;
+        if (t < 1) return 0.5f * pow(2, 10 * (t - 1));
+        return 0.5f * (- pow(2, -10 * (t - 1)) + 2);
+    }
+};
+
+struct Cubic
+{
+    inline static float ease_in_out(float t)
+    {
+        t *= 2;
+        if (t < 1)
+            return 0.5f * t*t*t;
+        t -= 2;
+        return 0.5f*(t*t*t + 2);
+    }
+    
+};
+
+struct Quartic
+{
+    inline static float ease_in_out(float t)
+    {
+        t *= 2;
+        if (t < 1) return 0.5f*t*t*t*t;
+        else {
+            t -= 2;
+            return -0.5f * (t*t*t*t - 2.0f);
+        }
+    }
+};
+
 class Animator
 {
     struct Tween
@@ -130,8 +199,8 @@ struct ExperimentalApp : public GLFWApp
             proceduralModels[3].pose.position = float3(-8, 2, 0);
         }
         
-        start = look_to_pose(float3(0, 8, +24), float3(-8, 2, 0));
-        end = look_to_pose(float3(0, 8, -24), float3(-8, 2, 0));
+        start = look_at_pose(float3(0, 8, +24), float3(-8, 2, 0));
+        end = look_at_pose(float3(0, 8, -24), float3(-8, 2, 0));
         
         grid = RenderableGrid(1, 64, 64);
         
@@ -152,9 +221,9 @@ struct ExperimentalApp : public GLFWApp
             if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE)
                 animator.make_tween(&cameraZ, 24.0f, 2.0f, Smoothstep::ease_in_out);
             if (event.value[0] == GLFW_KEY_3 && event.action == GLFW_RELEASE)
-                animator.make_tween(&zeroOne, 1.0f, 3.0f, Smoothstep::ease_in_out);
+                animator.make_tween(&zeroOne, 1.0f, 3.0f, Sine::ease_in_out);
             if (event.value[0] == GLFW_KEY_4 && event.action == GLFW_RELEASE)
-                animator.make_tween(&zeroOne, 0.0f, 3.0f, Smoothstep::ease_in_out);
+                animator.make_tween(&zeroOne, 0.0f, 3.0f, Sine::ease_in_out);
         }
         cameraController.handle_input(event);
     }
@@ -164,12 +233,14 @@ struct ExperimentalApp : public GLFWApp
         cameraController.update(e.timestep_ms);
         animator.update(e.timestep_ms);
         
-        math::float3 newPos = float3(cos(zeroOne), 0.25, sin(zeroOne)) * 24.f;
+        auto what = math::spherical(zeroOne * ANVIL_PI, zeroOne * ANVIL_PI / 2);
+        
+        math::float3 newPos = float3(what.x, 1, what.z) * float3(24, 8, 24);
         std::cout << newPos << std::endl;
         camera.set_position(float3(newPos.x, newPos.y, newPos.z));
         
         // Option One
-        //camera.look_at(camera.pose.position, {-8, 2, 0});
+        camera.look_at(camera.pose.position, {-8, 2, 0});
         
         // Option Two
         camera.pose.orientation = qlerp(start.orientation, end.orientation, zeroOne);
