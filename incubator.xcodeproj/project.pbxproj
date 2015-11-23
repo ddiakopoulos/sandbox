@@ -180,31 +180,9 @@
 				08289F821BC6019B0054AF3B /* gl */,
 				085081981BB5B6F10084A1D6 /* app */,
 				0849FD991BFADE05000F148E /* gizmo */,
-				081204A81BAE336600C7C0F4 /* util.hpp */,
-				081204991BADDEF700C7C0F4 /* math_util.hpp */,
-				081204981BADDEF700C7C0F4 /* linear_algebra.hpp */,
-				081204971BADDEF700C7C0F4 /* geometric.hpp */,
-				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
-				0849FD901BEFDC8D000F148E /* procedural_mesh.hpp */,
-				0822AF351BD4382C00A894F0 /* ellipse_math.hpp */,
-				0812049F1BADF68B00C7C0F4 /* circular_buffer.hpp */,
-				081204A11BAE04B300C7C0F4 /* concurrent_queue.hpp */,
-				081204A21BAE061B00C7C0F4 /* try_locker.hpp */,
-				081204A31BAE086F00C7C0F4 /* running_statistics.hpp */,
-				081204A41BAE09F300C7C0F4 /* time_keeper.hpp */,
-				081204A51BAE0C1700C7C0F4 /* human_time.hpp */,
-				081204A61BAE0CC100C7C0F4 /* signal.hpp */,
-				081204A71BAE330600C7C0F4 /* one_euro.hpp */,
-				081204A91BAE367900C7C0F4 /* string_utils.hpp */,
-				08289F811BC5F8370054AF3B /* file_io.hpp */,
-				081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */,
-				089B85FD1BAFC70B00B3A290 /* base64.hpp */,
-				089B86141BAFD06300B3A290 /* dsp_filters.hpp */,
-				089B86151BAFD39100B3A290 /* bit_mask.hpp */,
-				0822AF311BCFFA6A00A894F0 /* sketch.hpp */,
-				0822AF321BD389EA00A894F0 /* universal_widget.hpp */,
-				0822AF331BD4212100A894F0 /* arcball.hpp */,
-				0849FD731BE6A031000F148E /* gpu_timer.hpp */,
+				08C475761C02C9200031E87E /* rendering */,
+				08C475771C02C9650031E87E /* math */,
+				08C475781C02C9790031E87E /* tools */,
 				0849FD871BE7C801000F148E /* anvil.hpp */,
 				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
@@ -245,7 +223,7 @@
 				08289F861BC609750054AF3B /* GlMesh.cpp */,
 				0822AF2F1BCC16D200A894F0 /* GlTexture.hpp */,
 				0822AF2E1BCC16D200A894F0 /* GlTexture.cpp */,
-				0822AF381BD4B52100A894F0 /* renderable_grid.hpp */,
+				0849FD731BE6A031000F148E /* gpu_timer.hpp */,
 			);
 			name = gl;
 			sourceTree = "<group>";
@@ -321,6 +299,7 @@
 			children = (
 				085081951BB5B6EA0084A1D6 /* glfw_app.mm */,
 				085081961BB5B6EA0084A1D6 /* glfw_app.hpp */,
+				081204A81BAE336600C7C0F4 /* util.hpp */,
 			);
 			name = app;
 			sourceTree = "<group>";
@@ -354,6 +333,51 @@
 				089B860C1BAFC9AB00B3A290 /* simplexnoise1234.h */,
 			);
 			name = noise1234;
+			sourceTree = "<group>";
+		};
+		08C475761C02C9200031E87E /* rendering */ = {
+			isa = PBXGroup;
+			children = (
+				0822AF381BD4B52100A894F0 /* renderable_grid.hpp */,
+				0849FD901BEFDC8D000F148E /* procedural_mesh.hpp */,
+			);
+			name = rendering;
+			sourceTree = "<group>";
+		};
+		08C475771C02C9650031E87E /* math */ = {
+			isa = PBXGroup;
+			children = (
+				081204991BADDEF700C7C0F4 /* math_util.hpp */,
+				081204981BADDEF700C7C0F4 /* linear_algebra.hpp */,
+				081204971BADDEF700C7C0F4 /* geometric.hpp */,
+				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
+				0822AF351BD4382C00A894F0 /* ellipse_math.hpp */,
+				081204A31BAE086F00C7C0F4 /* running_statistics.hpp */,
+				081204A71BAE330600C7C0F4 /* one_euro.hpp */,
+				081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */,
+				089B86141BAFD06300B3A290 /* dsp_filters.hpp */,
+			);
+			name = math;
+			sourceTree = "<group>";
+		};
+		08C475781C02C9790031E87E /* tools */ = {
+			isa = PBXGroup;
+			children = (
+				0812049F1BADF68B00C7C0F4 /* circular_buffer.hpp */,
+				081204A11BAE04B300C7C0F4 /* concurrent_queue.hpp */,
+				081204A21BAE061B00C7C0F4 /* try_locker.hpp */,
+				081204A41BAE09F300C7C0F4 /* time_keeper.hpp */,
+				081204A51BAE0C1700C7C0F4 /* human_time.hpp */,
+				081204A61BAE0CC100C7C0F4 /* signal.hpp */,
+				081204A91BAE367900C7C0F4 /* string_utils.hpp */,
+				08289F811BC5F8370054AF3B /* file_io.hpp */,
+				089B85FD1BAFC70B00B3A290 /* base64.hpp */,
+				089B86151BAFD39100B3A290 /* bit_mask.hpp */,
+				0822AF311BCFFA6A00A894F0 /* sketch.hpp */,
+				0822AF321BD389EA00A894F0 /* universal_widget.hpp */,
+				0822AF331BD4212100A894F0 /* arcball.hpp */,
+			);
+			name = tools;
 			sourceTree = "<group>";
 		};
 		08CFD2DB1BDD666000895E31 /* nanovg */ = {
