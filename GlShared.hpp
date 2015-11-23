@@ -182,12 +182,7 @@ namespace gfx
         
         void look_at(math::float3 eyePoint, math::float3 target)
         {
-            const math::float3 worldUp = {0,1,0};
-            pose.position = eyePoint;
-            math::float3 zDir = math::normalize(eyePoint - target);
-            math::float3 xDir = math::normalize(cross(worldUp, zDir));
-            math::float3 yDir = math::cross(zDir, xDir);
-            pose.orientation = math::normalize(math::make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
+            look_at_pose(eyePoint, target, pose);
         }
         
         float get_focal_length() const
