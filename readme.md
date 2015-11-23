@@ -11,6 +11,7 @@
 
 ## In Progress
 
+* GLSL Shader hot-reload
 * UI layout via cassowary constraint solver (Rhea library)
 * Dual contouring + terrain deformation (ref. impl)
 * A simple scenegraph
