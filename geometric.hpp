@@ -299,6 +299,11 @@ namespace math
     { 
         return mul(transform, float4(vector,0)).xyz(); 
     }
+    
+    inline float3 transform_vector(const float4 & b, const float3 & a)
+    {
+        return qmul(b, float4(a, 1)).xyz();
+    }
 
     ///////////
     // Poses //
