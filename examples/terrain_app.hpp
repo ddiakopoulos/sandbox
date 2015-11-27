@@ -83,6 +83,8 @@ struct ExperimentalApp : public GLFWApp
     float appTime = 0;
     float yWaterPlane = 2.0f;
     
+    UWidget rootWidget;
+    
     ExperimentalApp() : GLFWApp(940, 720, "Sandbox App")
     {
         int width, height;
@@ -129,6 +131,13 @@ struct ExperimentalApp : public GLFWApp
         depthTextureView.reset(new GLTextureView(sceneDepthTexture.get_gl_handle()));
         
         gfx::gl_check_error(__FILE__, __LINE__);
+        
+        // Set up the UI
+        rootWidget.bounds = {0, 0, (float) width, (float) height};
+        rootWidget.add_child( {{0,+10},{0,+10},{0.25,0},{0.25,0}}, std::make_shared<UWidget>()); // for colorTexture
+        rootWidget.add_child( {{.25,+10},{0, +10},{0.50, -10},{0.25,0}}, std::make_shared<UWidget>()); // for depthTexture
+        rootWidget.layout();
+        
     }
     
     GlTexture make_perlin_texture(int width, int height)
@@ -197,6 +206,16 @@ struct ExperimentalApp : public GLFWApp
         
         glDisable(GL_BLEND);
         gfx::gl_check_error(__FILE__, __LINE__);
+    }
+    
+    void draw_ui()
+    {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+        glViewport(0, 0, width, height);
+        
+        colorTextureView->draw(rootWidget.children[0]->bounds, int2(width, height));
+        depthTextureView->draw(rootWidget.children[1]->bounds, int2(width, height));
     }
     
     void on_draw() override
@@ -318,8 +337,8 @@ Mreflection = |  -2NxNy 1-2Ny2   -2NyNz  -2NyD |
         //glDisable(GL_DEPTH_TEST);
         //glDisable(GL_CULL_FACE);
         //glDisable(GL_BLEND);
-        colorTextureView->draw({0, 0, 200, 200}, int2(width, height));
-        depthTextureView->draw({200, 0, 400, 200}, int2(width, height));
+        
+        draw_ui();
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
