@@ -9,7 +9,7 @@ uniform mat4 u_modelMatrix;
 uniform mat3 u_modelMatrixIT;
 uniform vec3 u_lightPosition;
 
-#define FOG_DENSITY 0.05
+#define FOG_DENSITY 0.025
 #define FOG_COLOR vec3(1.0)
 
 float exp_fog(const float dist, const float density) 

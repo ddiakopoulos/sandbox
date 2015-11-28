@@ -14,7 +14,7 @@ out vec3 vPosition;
 
 void main() 
 {
-    float offset = texture(u_noiseTexture, uv * 2.0).r;
+    float offset = texture(u_noiseTexture, uv).r;
     vec3 pos = vec3(position.xy, 4.0 * offset);
     gl_Position = u_mvp * vec4(pos, 1.0);
     vPosition = pos;

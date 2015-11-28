@@ -1,6 +1,6 @@
 #version 330
 
-#define FOG_DENSITY 0.05
+#define FOG_DENSITY 0.025
 #define FOG_COLOR vec3(1.0)
 
 in vec2 vTexCoord;
@@ -37,7 +37,7 @@ void main(void)
     vec3 n = u_modelMatrixIT * normalize(cross(p0, p1));
 
     vec3 surfaceColor = vec3(0.88, 0.88, 0.88);
-    float ambientIntensity = 1.0;
+    float ambientIntensity = 0.75;
 
     vec3 surfaceToLight = normalize(u_modelMatrix * vec4(u_lightPosition, 0.0)).xyz;
     vec3 surfaceToCamera = normalize(-u_modelMatrix * vec4(vPosition, 0.0)).xyz;
@@ -48,7 +48,7 @@ void main(void)
 
     vec3 lightFactor = ambient + diffuse;
 
-    vec2 uv = gl_FragCoord.xy / u_resolution;
+    vec2 uv = (gl_FragCoord.xy) / u_resolution;
     vec2 reflectionUV = vec2(uv.x, 1.0 - uv.y);
 
     float depth = texture(u_depthTexture, uv).x;

@@ -52,7 +52,6 @@ struct ExperimentalApp : public GLFWApp
     uint64_t frameCount = 0;
 
     GlCamera camera;
-    GlCamera reflectionCamera;
     
     HosekProceduralSky skydome;
     FPSCameraController cameraController;
@@ -111,7 +110,7 @@ struct ExperimentalApp : public GLFWApp
         gfx::gl_check_error(__FILE__, __LINE__);
         
         terrainMesh = Renderable(make_plane(96.f, 96.f, 128, 128));
-        waterMesh = Renderable(make_plane(96.f, 96.f, 128, 128));
+        waterMesh = Renderable(make_plane(96.f, 96.f, 64, 64));
         
         cubeMesh = Renderable(make_cube());
         
@@ -152,7 +151,7 @@ struct ExperimentalApp : public GLFWApp
             {
                 float h = 0.0f;
                 float f = 0.05f;
-                h += simplex2(x * f, y * f, 4.0f, 1.f, 6.0f) * 1; f /= 2.0f;
+                h += simplex2(x * f, y * f, 4.0f, 1.f, 8.0f) * 1; f /= 2.0f;
                 h += simplex2(x * f, y * f, 4.0f, 2.f, 6.0f) * 2; f /= 2.0f;
                 h += simplex2(x * f, y * f, 4.0f, 3.f, 4.0f) * 4; f /= 2.0f;
                 h += simplex2(x * f, y * f, 4.0f, 4.f, 2.0f) * 8; f /= 2.0f;
@@ -195,7 +194,7 @@ struct ExperimentalApp : public GLFWApp
         terrainShader->uniform("u_mvp", mvp);
         terrainShader->uniform("u_modelMatrix", model);
         terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(mvp))));
-        terrainShader->uniform("u_clipPlane", float4(0.0, 0.0, 1.0, -yWaterPlane)); // water
+        //terrainShader->uniform("u_clipPlane", float4(0.0, 0.0, 1.0, -yWaterPlane)); // water
         terrainShader->uniform("u_lightPosition", float3(0.0, 0.0, -5.0));
         terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
         
@@ -271,6 +270,25 @@ struct ExperimentalApp : public GLFWApp
         reflectionMat(3,3) = 1.0f;
     }
     
+    float4x4 scale(float4x4 & m, float3 v)
+    {
+        float4x4 result = Identity4x4;
+        result(0, 0) = v.x;
+        result(1, 1) = v.y;
+        result(2, 2) = v.z;
+        return m * result;
+    }
+    
+    // Given position/normal of the plane, calculates plane in camera space.
+    float4 camera_space_plane(float4x4 viewMatrix, float3 pos, float3 normal, float sideSign, float clipPlaneOffset)
+    {
+        float3 offsetPos = pos + normal * clipPlaneOffset;
+        float4x4 m = viewMatrix;
+        float3 cpos = transform_coord(m, offsetPos);
+        float3 cnormal = normalize(transform_vector(m, normal)) * sideSign;
+        return float4(cnormal.x, cnormal.y, cnormal.z, -dot(cpos,cnormal));
+    }
+    
     void on_draw() override
     {
         glfwMakeContextCurrent(window);
@@ -289,27 +307,31 @@ struct ExperimentalApp : public GLFWApp
         
         float4x4 viewProj = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix();
         
-        //skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
             
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            glPolygonOffset(0.4f, 1.0f);
+            
             glFrontFace(GL_CW);
             //glCullFace(GL_BACK);
-            //glDisable(GL_CULL_FACE);
+            glDisable(GL_CULL_FACE);
             glEnable(GL_CLIP_PLANE0);
             
             reflectionFramebuffer.bind_to_draw();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glClearColor(1.f, 0.0f, 0.0f, 1.0f);
             
-            reflectionCamera.set_position(camera.pose.position);
-            reflectionCamera.set_orientation(camera.pose.orientation);
+            const float clipPlaneOffset = 0.07f;
             
             // Reflect camera around reflection plane
             float3 normal = float3(0, 1, 0);
             float3 pos = {0, 0, 0}; //Location of object... here, the "terrain"
-            float d = -dot(normal, pos) - yWaterPlane;
+            float d = -dot(normal, pos) - clipPlaneOffset;
             float4 reflectionPlane = float4(normal.x, normal.y, normal.z, d);
+            
+            float4 clipPlane = camera_space_plane(camera.get_view_matrix(), pos, normal, 1.0f, clipPlaneOffset);
             
             float4x4 reflection = Zero4x4;
             calculate_reflection_matrix(reflection, reflectionPlane);
@@ -317,16 +339,16 @@ struct ExperimentalApp : public GLFWApp
             float3 oldPosition = camera.pose.position;
             float3 newPosition = transform_coord(reflection, oldPosition);
             
-            reflectionCamera.set_position(newPosition);
+            camera.set_position(newPosition);
             
             auto e = quat_to_euler(camera.pose.orientation);
-            reflectionCamera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
-            
-            float4x4 reflectedView = reflectionCamera.get_view_matrix() * reflection;
-            
-            float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
-            float4x4 mvp = reflectionCamera.get_projection_matrix((float) width / (float) height) * reflectedView * model;
+            camera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
 
+            float4x4 reflectedView = reflection * camera.pose.inverse().matrix();
+            
+            float4x4 model = make_scaling_matrix({1, -1, 1}) * make_translation_matrix({0,0, 0}) * make_rotation_matrix({1, 0, 0}, (ANVIL_PI / 2));
+            float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * reflectedView * model;
+            //float4(0.0, 0.0, 1.0, -yWaterPlane))
             terrainShader->bind();
             terrainShader->uniform("u_mvp", mvp);
             terrainShader->uniform("u_modelMatrix", model);
@@ -343,6 +365,11 @@ struct ExperimentalApp : public GLFWApp
             glFrontFace(GL_CCW);
             
             reflectionFramebuffer.unbind();
+            
+            camera.set_position(oldPosition);
+            camera.set_orientation(euler_to_quat(e.x, e.y, e.z));
+            
+            glDisable(GL_POLYGON_OFFSET_FILL);
             
         }
         
