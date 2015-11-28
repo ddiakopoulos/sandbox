@@ -1,6 +1,6 @@
 #version 330
 
-#define FOG_DENSITY 0.05
+#define FOG_DENSITY 0.005
 #define FOG_COLOR vec3(1.0)
 
 in vec2 vTexCoord;

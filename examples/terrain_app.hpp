@@ -195,13 +195,11 @@ struct ExperimentalApp : public GLFWApp
         terrainShader->uniform("u_mvp", mvp);
         terrainShader->uniform("u_modelMatrix",  model);
         terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(mvp))));
-        terrainShader->uniform("u_clipPlane", float4(0.0, 0.0, 1.0, -yWaterPlane)); // water
+        //terrainShader->uniform("u_clipPlane", float4(0.0, 0.0, 1.0, -yWaterPlane)); // water
         terrainShader->uniform("u_lightPosition", float3(0.0, 0.0, -5.0));
         terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
         
         terrainMesh.draw();
-        cubeMesh.draw();
-        
         terrainShader->unbind();
         
         glDisable(GL_BLEND);
@@ -216,6 +214,57 @@ struct ExperimentalApp : public GLFWApp
         
         colorTextureView->draw(rootWidget.children[0]->bounds, int2(width, height));
         depthTextureView->draw(rootWidget.children[1]->bounds, int2(width, height));
+    }
+    
+    float4 euler_to_quat(float roll, float pitch, float yaw)
+    {
+        double sy = sin(yaw * 0.5);
+        double cy = cos(yaw * 0.5);
+        double sp = sin(pitch * 0.5);
+        double cp = cos(pitch * 0.5);
+        double sr = sin(roll * 0.5);
+        double cr = cos(roll * 0.5);
+        double w = cr*cp*cy + sr*sp*sy;
+        double x = sr*cp*cy - cr*sp*sy;
+        double y = cr*sp*cy + sr*cp*sy;
+        double z = cr*cp*sy - sr*sp*cy;
+        return float4(x,y,z,w);
+    }
+    
+    float3 quat_to_euler(float4 q)
+    {
+        float3 e;
+        const double q0 = q.w;
+        const double q1 = q.x;
+        const double q2 = q.y;
+        const double q3 = q.z;
+        e.x = atan2(2*(q0*q1+q2*q3), 1-2*(q1*q1+q2*q2));
+        e.y = asin(2*(q0*q2-q3*q1));
+        e.z = atan2(2*(q0*q3+q1*q2), 1-2*(q2*q2+q3*q3));
+        return e;
+    }
+    
+    void calculate_reflection_matrix (float4x4 & reflectionMat, float4 plane)
+    {
+        reflectionMat(0,0) = (1.f- 2.0f * plane[0]*plane[0]);
+        reflectionMat(0,1) = (   - 2.0f * plane[0]*plane[1]);
+        reflectionMat(0,2) = (   - 2.0f * plane[0]*plane[2]);
+        reflectionMat(0,3) = (   - 2.0f * plane[3]*plane[0]);
+        
+        reflectionMat(1,0) = (   - 2.0f * plane[1]*plane[0]);
+        reflectionMat(1,1) = (1.f- 2.0f * plane[1]*plane[1]);
+        reflectionMat(1,2) = (   - 2.0f * plane[1]*plane[2]);
+        reflectionMat(1,3) = (   - 2.0f * plane[3]*plane[1]);
+        
+        reflectionMat(2,0) = (   - 2.0f * plane[2]*plane[0]);
+        reflectionMat(2,1) = (   - 2.0f * plane[2]*plane[1]);
+        reflectionMat(2,2) = (1.f- 2.0f * plane[2]*plane[2]);
+        reflectionMat(2,3) = (   - 2.0f * plane[3]*plane[2]);
+        
+        reflectionMat(3,0) = 0.0f;
+        reflectionMat(3,1) = 0.0f;
+        reflectionMat(3,2) = 0.0f;
+        reflectionMat(3,3) = 1.0f;
     }
     
     void on_draw() override
@@ -239,37 +288,43 @@ struct ExperimentalApp : public GLFWApp
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
-            glFrontFace(GL_CW);
             
+            //glFrontFace(GL_CW);
+            //glCullFace(GL_BACK);
+            glDisable(GL_CULL_FACE);
             glEnable(GL_CLIP_PLANE0);
             
             reflectionFramebuffer.bind_to_draw();
-            glClear(GL_COLOR_BUFFER_BIT);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
-            float3 camPosition = camera.get_eye_point();
-            camPosition.y = -camPosition.y * yWaterPlane * 2.f;
+            reflectionCamera.set_position(camera.pose.position);
+            reflectionCamera.set_orientation(camera.pose.orientation);
             
-            reflectionCamera.set_position(camPosition);
-            reflectionCamera.set_orientation(camera.pose.orientation); // same orientation as regular camera...
-            //reflectionCamera.pose.orientation = qmul(make_rotation_quat_axis_angle({-1, 0, 0}, ANVIL_PI), reflectionCamera.pose.orientation);
+            // Reflect camera around reflection plane
+            float3 normal = float3(0, 1, 0);
+            float3 pos = {0, 0, 0}; //Location of object... here, the "terrain"
+            float d = -dot(normal, pos) - yWaterPlane;
+            float4 reflectionPlane = float4(normal.x, normal.y, normal.z, d);
             
-             /*
-              | 1-2Nx2   -2NxNy  -2NxNz  -2NxD |
-Mreflection = |  -2NxNy 1-2Ny2   -2NyNz  -2NyD |
-              |  -2NxNz  -2NyNz 1-2Nz2   -2NzD |
-              |    0       0       0       1   |
-
-             Where (Nx,Ny,Nz,D) are the coefficients of plane equation (xNx + yNy + zNz + D = 0). Notice, that (Nx,Ny,Nz) is also the normal vector of given plane.
-             */
+            float4x4 reflection = Zero4x4;
+            calculate_reflection_matrix(reflection, reflectionPlane);
             
-            float4x4 reflect = {{1, 0, 0, 0}, {0, -1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
-            float3 n = {0, 1, 0};
-    
-            float4x4 reflectedView = reflect * reflectionCamera.get_view_matrix();
+            float4x4 flip = Zero4x4;
+            calculate_reflection_matrix(flip, float4(0, 0, 1, 0));
+            
+            float3 oldPosition = camera.pose.position;
+            float3 newPosition = transform_coord(reflection, oldPosition);
+            
+            reflectionCamera.set_position(newPosition);
+            
+            auto e = quat_to_euler(camera.pose.orientation);
+            reflectionCamera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
+            
+            float4x4 reflectedView = reflectionCamera.get_view_matrix() * reflection;
+            
             float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
             float4x4 mvp = reflectionCamera.get_projection_matrix((float) width / (float) height) * reflectedView * model;
-            
+
             terrainShader->bind();
             terrainShader->uniform("u_mvp", mvp);
             terrainShader->uniform("u_modelMatrix", model);
@@ -279,16 +334,15 @@ Mreflection = |  -2NxNy 1-2Ny2   -2NyNz  -2NyD |
             terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
             
             terrainMesh.draw();
-            cubeMesh.draw();
             
             terrainShader->unbind();
             
             glDisable(GL_CLIP_PLANE0);
-            glFrontFace(GL_CCW);
-            glEnable(GL_CULL_FACE);
-            glEnable(GL_DEPTH_TEST);
+            //glFrontFace(GL_CCW);
             
             gfx::gl_check_error(__FILE__, __LINE__);
+            
+            glDisable(GL_CLIP_PLANE0);
             reflectionFramebuffer.unbind();
         }
         
@@ -334,9 +388,9 @@ Mreflection = |  -2NxNy 1-2Ny2   -2NyNz  -2NyD |
             //glDisable(GL_BLEND);
         }
 
-        //glDisable(GL_DEPTH_TEST);
-        //glDisable(GL_CULL_FACE);
-        //glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_BLEND);
         
         draw_ui();
         
