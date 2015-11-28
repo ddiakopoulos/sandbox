@@ -9,7 +9,7 @@ uniform mat4 u_modelMatrix;
 uniform mat3 u_modelMatrixIT;
 uniform vec3 u_lightPosition;
 
-#define FOG_DENSITY 0.005
+#define FOG_DENSITY 0.05
 #define FOG_COLOR vec3(1.0)
 
 float exp_fog(const float dist, const float density) 
@@ -24,7 +24,7 @@ void main(void)
     vec3 p1 = dFdy(vPosition);
     vec3 n = u_modelMatrixIT * normalize(cross(p0, p1));
 
-    vec3 surfaceColor = vec3(0.24, 0.635, 0.425);
+    vec3 surfaceColor = vec3(0.4, 0.45, 0.425);
     float ambientIntensity = 0.05;
 
     vec3 surfaceToLight = normalize(u_modelMatrix * vec4(u_lightPosition, 0.0)).xyz;

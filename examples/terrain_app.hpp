@@ -193,16 +193,20 @@ struct ExperimentalApp : public GLFWApp
         
         terrainShader->bind();
         terrainShader->uniform("u_mvp", mvp);
-        terrainShader->uniform("u_modelMatrix",  model);
+        terrainShader->uniform("u_modelMatrix", model);
         terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(mvp))));
-        //terrainShader->uniform("u_clipPlane", float4(0.0, 0.0, 1.0, -yWaterPlane)); // water
+        terrainShader->uniform("u_clipPlane", float4(0.0, 0.0, 1.0, -yWaterPlane)); // water
         terrainShader->uniform("u_lightPosition", float3(0.0, 0.0, -5.0));
         terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
         
         terrainMesh.draw();
         terrainShader->unbind();
         
+        //glEnable(GL_DEPTH_TEST);
+        //glEnable(GL_CULL_FACE);
+        //glCullFace(GL_BACK);
         glDisable(GL_BLEND);
+        
         gfx::gl_check_error(__FILE__, __LINE__);
     }
     
@@ -246,20 +250,20 @@ struct ExperimentalApp : public GLFWApp
     
     void calculate_reflection_matrix (float4x4 & reflectionMat, float4 plane)
     {
-        reflectionMat(0,0) = (1.f- 2.0f * plane[0]*plane[0]);
-        reflectionMat(0,1) = (   - 2.0f * plane[0]*plane[1]);
-        reflectionMat(0,2) = (   - 2.0f * plane[0]*plane[2]);
-        reflectionMat(0,3) = (   - 2.0f * plane[3]*plane[0]);
+        reflectionMat(0,0) = (1.f-2.0f * plane[0]*plane[0]);
+        reflectionMat(0,1) = (   -2.0f * plane[0]*plane[1]);
+        reflectionMat(0,2) = (   -2.0f * plane[0]*plane[2]);
+        reflectionMat(0,3) = (   -2.0f * plane[3]*plane[0]);
         
-        reflectionMat(1,0) = (   - 2.0f * plane[1]*plane[0]);
-        reflectionMat(1,1) = (1.f- 2.0f * plane[1]*plane[1]);
-        reflectionMat(1,2) = (   - 2.0f * plane[1]*plane[2]);
-        reflectionMat(1,3) = (   - 2.0f * plane[3]*plane[1]);
+        reflectionMat(1,0) = (   -2.0f * plane[1]*plane[0]);
+        reflectionMat(1,1) = (1.f-2.0f * plane[1]*plane[1]);
+        reflectionMat(1,2) = (   -2.0f * plane[1]*plane[2]);
+        reflectionMat(1,3) = (   -2.0f * plane[3]*plane[1]);
         
-        reflectionMat(2,0) = (   - 2.0f * plane[2]*plane[0]);
-        reflectionMat(2,1) = (   - 2.0f * plane[2]*plane[1]);
-        reflectionMat(2,2) = (1.f- 2.0f * plane[2]*plane[2]);
-        reflectionMat(2,3) = (   - 2.0f * plane[3]*plane[2]);
+        reflectionMat(2,0) = (   -2.0f * plane[2]*plane[0]);
+        reflectionMat(2,1) = (   -2.0f * plane[2]*plane[1]);
+        reflectionMat(2,2) = (1.f-2.0f * plane[2]*plane[2]);
+        reflectionMat(2,3) = (   -2.0f * plane[3]*plane[2]);
         
         reflectionMat(3,0) = 0.0f;
         reflectionMat(3,1) = 0.0f;
@@ -274,7 +278,7 @@ struct ExperimentalApp : public GLFWApp
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_SCISSOR_TEST);
-        
+
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -285,17 +289,18 @@ struct ExperimentalApp : public GLFWApp
         
         float4x4 viewProj = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix();
         
-        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        //skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
             
-            //glFrontFace(GL_CW);
+            glFrontFace(GL_CW);
             //glCullFace(GL_BACK);
-            glDisable(GL_CULL_FACE);
+            //glDisable(GL_CULL_FACE);
             glEnable(GL_CLIP_PLANE0);
             
             reflectionFramebuffer.bind_to_draw();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClearColor(1.f, 0.0f, 0.0f, 1.0f);
             
             reflectionCamera.set_position(camera.pose.position);
             reflectionCamera.set_orientation(camera.pose.orientation);
@@ -308,10 +313,7 @@ struct ExperimentalApp : public GLFWApp
             
             float4x4 reflection = Zero4x4;
             calculate_reflection_matrix(reflection, reflectionPlane);
-            
-            float4x4 flip = Zero4x4;
-            calculate_reflection_matrix(flip, float4(0, 0, 1, 0));
-            
+
             float3 oldPosition = camera.pose.position;
             float3 newPosition = transform_coord(reflection, oldPosition);
             
@@ -338,12 +340,10 @@ struct ExperimentalApp : public GLFWApp
             terrainShader->unbind();
             
             glDisable(GL_CLIP_PLANE0);
-            //glFrontFace(GL_CCW);
+            glFrontFace(GL_CCW);
             
-            gfx::gl_check_error(__FILE__, __LINE__);
-            
-            glDisable(GL_CLIP_PLANE0);
             reflectionFramebuffer.unbind();
+            
         }
         
         {
@@ -388,9 +388,9 @@ struct ExperimentalApp : public GLFWApp
             //glDisable(GL_BLEND);
         }
 
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_BLEND);
+        //glDisable(GL_DEPTH_TEST);
+        //glDisable(GL_CULL_FACE);
+        //glDisable(GL_BLEND);
         
         draw_ui();
         

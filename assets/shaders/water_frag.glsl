@@ -1,6 +1,6 @@
 #version 330
 
-#define FOG_DENSITY 0.005
+#define FOG_DENSITY 0.05
 #define FOG_COLOR vec3(1.0)
 
 in vec2 vTexCoord;
@@ -36,7 +36,7 @@ void main(void)
     vec3 p1 = dFdy(vPosition);
     vec3 n = u_modelMatrixIT * normalize(cross(p0, p1));
 
-    vec3 surfaceColor = vec3(0.54, 0.74, 0.38);
+    vec3 surfaceColor = vec3(0.88, 0.88, 0.88);
     float ambientIntensity = 1.0;
 
     vec3 surfaceToLight = normalize(u_modelMatrix * vec4(u_lightPosition, 0.0)).xyz;
@@ -57,7 +57,7 @@ void main(void)
     f_color = vec4(lightFactor, 0.4 + 0.2 * diffuseCoefficient);
 
     // mix with reflection texture
-    f_color.rgb = mix(texture(u_reflectionTexture, reflectionUV).rgb, f_color.rgb, 0.2);
+    f_color.rgb = mix(texture(u_reflectionTexture, reflectionUV).rgb, f_color.rgb, 0.5);
 
     // smooth edges
     f_color.a *= clamp(waterDepth * 1.5, 0.0, 1.0);
