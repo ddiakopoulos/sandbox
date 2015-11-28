@@ -189,13 +189,15 @@ struct ExperimentalApp : public GLFWApp
         
         float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
         float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
+        float4x4 modelViewMat = camera.get_view_matrix() * model;
         
         terrainShader->bind();
         terrainShader->uniform("u_mvp", mvp);
-        terrainShader->uniform("u_modelMatrix", model);
-        terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(mvp))));
+        terrainShader->uniform("u_modelView", modelViewMat);
+        terrainShader->uniform("u_eyePosition", camera.get_eye_point());
+        terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
         //terrainShader->uniform("u_clipPlane", float4(0.0, 0.0, 1.0, -yWaterPlane)); // water
-        terrainShader->uniform("u_lightPosition", float3(0.0, 0.0, -5.0));
+        terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
         terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
         
         terrainMesh.draw();
@@ -311,8 +313,8 @@ struct ExperimentalApp : public GLFWApp
         
         {
             
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            glPolygonOffset(0.4f, 1.0f);
+            //glEnable(GL_POLYGON_OFFSET_FILL);
+            //glPolygonOffset(0.4f, 1.0f);
             
             glFrontFace(GL_CW);
             //glCullFace(GL_BACK);
@@ -336,25 +338,28 @@ struct ExperimentalApp : public GLFWApp
             float4x4 reflection = Zero4x4;
             calculate_reflection_matrix(reflection, reflectionPlane);
 
-            float3 oldPosition = camera.pose.position;
-            float3 newPosition = transform_coord(reflection, oldPosition);
+            Pose oldPose = camera.pose;
+            float3 newPosition = transform_coord(reflection, camera.pose.position);
             
             camera.set_position(newPosition);
             
             auto e = quat_to_euler(camera.pose.orientation);
-            camera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
+            camera.set_orientation(euler_to_quat(e.x, e.y, -e.z));
 
-            float4x4 reflectedView = reflection * camera.pose.inverse().matrix();
+            float4x4 reflectedView = reflection * camera.get_view_matrix();
             
-            float4x4 model = make_scaling_matrix({1, -1, 1}) * make_translation_matrix({0,0, 0}) * make_rotation_matrix({1, 0, 0}, (ANVIL_PI / 2));
+            float4x4 model = make_rotation_matrix({1, 0, 0}, (ANVIL_PI / 2));
             float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * reflectedView * model;
+            float4x4 modelViewMat = camera.get_view_matrix() * model;
+            
             //float4(0.0, 0.0, 1.0, -yWaterPlane))
             terrainShader->bind();
             terrainShader->uniform("u_mvp", mvp);
-            terrainShader->uniform("u_modelMatrix", model);
-            terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(mvp))));
+            terrainShader->uniform("u_modelView", modelViewMat);
+            terrainShader->uniform("u_eyePosition", camera.get_eye_point());
+            terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             terrainShader->uniform("u_clipPlane", float4(0.0, 0.0, 1.0, -yWaterPlane)); // water - http://trederia.blogspot.com/2014/09/water-in-opengl-and-gles-20-part3.html
-            terrainShader->uniform("u_lightPosition", float3(0.0, 0.0, -5.0));
+            terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
             terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
             
             terrainMesh.draw();
@@ -366,11 +371,9 @@ struct ExperimentalApp : public GLFWApp
             
             reflectionFramebuffer.unbind();
             
-            camera.set_position(oldPosition);
-            camera.set_orientation(euler_to_quat(e.x, e.y, e.z));
+            camera.pose = oldPose;
             
-            glDisable(GL_POLYGON_OFFSET_FILL);
-            
+            //glDisable(GL_POLYGON_OFFSET_FILL);
         }
         
         {

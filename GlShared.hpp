@@ -213,6 +213,8 @@ namespace gfx
         
         float movementSpeed = 20.0f;
         
+        math::float3 lastLook;
+        
         FPSCameraController()
         {
             
@@ -298,6 +300,7 @@ namespace gfx
             lookVec.x = cam->get_eye_point().x - 1.f * cosf(camPitch) * sinf(camYaw);
             lookVec.y = cam->get_eye_point().y + 1.f * sinf(camPitch);
             lookVec.z = cam->get_eye_point().z + -1.f * cosf(camPitch) * cosf(camYaw);
+            lastLook = lookVec;
             cam->look_at(lookVec);
         }
     };

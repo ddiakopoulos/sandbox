@@ -5,9 +5,10 @@ out vec4 f_color;
 in float vOffset;
 in vec3 vPosition;
 
-uniform mat4 u_modelMatrix;
+uniform mat4 u_modelView;
 uniform mat3 u_modelMatrixIT;
 uniform vec3 u_lightPosition;
+uniform vec3 u_eyePosition;
 
 #define FOG_DENSITY 0.025
 #define FOG_COLOR vec3(1.0)
@@ -27,8 +28,12 @@ void main(void)
     vec3 surfaceColor = vec3(0.4, 0.45, 0.425);
     float ambientIntensity = 0.05;
 
-    vec3 surfaceToLight = normalize(u_modelMatrix * vec4(u_lightPosition, 0.0)).xyz;
-    vec3 surfaceToCamera = normalize(-u_modelMatrix * vec4(vPosition, 0.0)).xyz;
+    vec3 surfacePos = (u_modelView * vec4(vPosition, 0.0)).xyz;
+    vec3 surfaceToLight = normalize(u_lightPosition - surfacePos);
+    vec3 surfaceToCamera = normalize(u_eyePosition - surfacePos);
+
+    //vec3 surfaceToLight = normalize(u_modelView * vec4(u_lightPosition, 0.0)).xyz;
+    //vec3 surfaceToCamera = normalize(-u_modelView * vec4(vPosition, 0.0)).xyz;
 
     vec3 ambient = ambientIntensity * surfaceColor;
     float diffuseCoefficient = max(0.0, dot(n, surfaceToLight));

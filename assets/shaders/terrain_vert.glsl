@@ -19,5 +19,5 @@ void main()
     gl_Position = u_mvp * vec4(pos, 1.0);
     vPosition = pos;
     vOffset = offset;
-    gl_ClipDistance[0] = dot(vec4(pos, 1.0), -u_clipPlane);
+    gl_ClipDistance[0] = dot(vec4(pos, 1.0), u_clipPlane);
 }
