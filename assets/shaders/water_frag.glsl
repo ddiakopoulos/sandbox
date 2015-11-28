@@ -10,9 +10,10 @@ out vec4 f_color;
 
 uniform sampler2D u_reflectionTexture;
 uniform sampler2D u_depthTexture;
+uniform vec3 u_eyePosition;
 
 uniform mat3 u_modelMatrixIT;
-uniform mat4 u_modelMatrix;
+uniform mat4 u_modelView;
 
 uniform vec2 u_resolution;
 uniform vec3 u_lightPosition;
@@ -39,8 +40,9 @@ void main(void)
     vec3 surfaceColor = vec3(0.88, 0.88, 0.88);
     float ambientIntensity = 0.75;
 
-    vec3 surfaceToLight = normalize(u_modelMatrix * vec4(u_lightPosition, 0.0)).xyz;
-    vec3 surfaceToCamera = normalize(-u_modelMatrix * vec4(vPosition, 0.0)).xyz;
+    vec3 surfacePos = (u_modelView * vec4(vPosition, 0.0)).xyz;
+    vec3 surfaceToLight = normalize(u_lightPosition - surfacePos);
+    vec3 surfaceToCamera = normalize(u_eyePosition - surfacePos);
 
     vec3 ambient = ambientIntensity * surfaceColor;
     float diffuseCoefficient = max(0.0, dot(n, surfaceToLight));

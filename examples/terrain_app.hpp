@@ -344,13 +344,13 @@ struct ExperimentalApp : public GLFWApp
             camera.set_position(newPosition);
             
             auto e = quat_to_euler(camera.pose.orientation);
-            camera.set_orientation(euler_to_quat(e.x, e.y, -e.z));
+            camera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
 
             float4x4 reflectedView = reflection * camera.get_view_matrix();
             
-            float4x4 model = make_rotation_matrix({1, 0, 0}, (ANVIL_PI / 2));
+            float4x4 model = make_scaling_matrix({1, 1, 1}) * make_rotation_matrix({1, 0, 0}, (ANVIL_PI / 2));
             float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * reflectedView * model;
-            float4x4 modelViewMat = camera.get_view_matrix() * model;
+            float4x4 modelViewMat = reflectedView * model;
             
             //float4(0.0, 0.0, 1.0, -yWaterPlane))
             terrainShader->bind();
@@ -395,14 +395,16 @@ struct ExperimentalApp : public GLFWApp
 
             float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
             auto mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
+            float4x4 modelViewMat = camera.get_view_matrix() * model;
             
             waterShader->bind();
             
             waterShader->uniform("u_mvp", mvp);
             waterShader->uniform("u_time", appTime);
             waterShader->uniform("u_yWaterPlane", yWaterPlane);
-            waterShader->uniform("u_modelMatrix", model);
-            waterShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(mvp))));
+            waterShader->uniform("u_eyePosition", camera.get_eye_point());
+            waterShader->uniform("u_modelView", modelViewMat);
+            waterShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             waterShader->uniform("u_resolution", float2(width, height));
             
             waterShader->texture("u_reflectionTexture", 0, sceneColorTexture.get_gl_handle(), GL_TEXTURE_2D);
@@ -410,7 +412,7 @@ struct ExperimentalApp : public GLFWApp
             
             waterShader->uniform("u_near", camera.nearClip);
             waterShader->uniform("u_far", camera.farClip);
-            waterShader->uniform("u_lightPosition", float3(0.0, 0.0, -5.0));
+            waterShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
             
             waterMesh.draw();
             waterShader->unbind();
