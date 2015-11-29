@@ -13,6 +13,9 @@ uniform vec3 u_eyePosition;
 uniform vec4 u_clipPlane;
 uniform vec3 u_surfaceColor;
 
+#define FOG_DENSITY 0.015
+#define FOG_COLOR vec3(1.0)
+
 bool isOnPlane(vec3 point, vec3 normal, float elevation) 
 {
     if (elevation <= 0.0f) 
@@ -21,6 +24,12 @@ bool isOnPlane(vec3 point, vec3 normal, float elevation)
         return point.y <= elevation;
     else 
         return point.y >= elevation;
+}
+
+float exp_fog(const float dist, const float density) 
+{
+    float d = density * dist;
+    return exp2(d * d * -1.44);
 }
 
 bool isClipped(vec4 worldPosition) 
@@ -54,4 +63,5 @@ void main(void)
     vec3 lightFactor = ambient + diffuse;
 
     f_color = vec4(lightFactor, 1.0);
+    f_color.rgb = mix(f_color.rgb, FOG_COLOR, 1.0 - exp_fog(gl_FragCoord.z / gl_FragCoord.w, FOG_DENSITY));
 }
