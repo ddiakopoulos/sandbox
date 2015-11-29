@@ -24,6 +24,7 @@
 * Fluid simulator with a compute shader
 * Procedural clouds
 * Deferred rendering experiments
+* Spherical harmonic lighting experiment
 * L-System + particles
 * Impulse response raytracer
 * Optitrak nat-net i/o
