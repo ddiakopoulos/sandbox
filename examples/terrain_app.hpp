@@ -30,8 +30,6 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GLTextureView> colorTextureView;
     std::unique_ptr<GLTextureView> depthTextureView;
     
-    std::mt19937 mt_rand;
-    
     const float clipPlaneOffset = 0.075f;
     
     float yWaterPlane = 0.0f;
@@ -42,8 +40,13 @@ struct ExperimentalApp : public GLFWApp
     
     float appTime = 0;
     
+    std::random_device rd;
+    std::mt19937 gen;
+    
     ExperimentalApp() : GLFWApp(940, 720, "Sandbox App")
     {
+        gen = std::mt19937(rd());
+        
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -67,11 +70,11 @@ struct ExperimentalApp : public GLFWApp
 
         waterMesh = Renderable(make_plane(96.f, 96.f, 128, 128));
         
-        terrainMesh = make_perlin_mesh(64, 64); //Renderable(make_cube());
+        // Seed perlin noise
+
+        seed((float) std::uniform_int_distribution<int>(0, 512)(gen));
         
-        auto seedGenerator = std::bind(std::uniform_int_distribution<>(0, 512), std::ref(mt_rand));
-        auto newSeed = seedGenerator();
-        seed(newSeed);
+        terrainMesh = make_perlin_mesh(64, 64); //Renderable(make_cube());
         
         colorTextureView.reset(new GLTextureView(sceneColorTexture.get_gl_handle()));
         depthTextureView.reset(new GLTextureView(sceneDepthTexture.get_gl_handle()));
@@ -95,7 +98,7 @@ struct ExperimentalApp : public GLFWApp
             for (int z = 0; z <= gridSize; ++z)
             {
                 float y = simplex2(x * 0.02f, z * 0.01f, 4.0f, 0.25f, 4.0f) * 10;
-                    terrain.vertices.push_back({(float)x, y, (float)z});
+                terrain.vertices.push_back({(float)x, y, (float)z});
             }
         }
         
