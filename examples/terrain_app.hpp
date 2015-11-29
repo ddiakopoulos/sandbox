@@ -193,34 +193,6 @@ struct ExperimentalApp : public GLFWApp
         //depthTextureView->draw(rootWidget.children[1]->bounds, int2(width, height));
     }
     
-    float4 euler_to_quat(float roll, float pitch, float yaw)
-    {
-        double sy = sin(yaw * 0.5);
-        double cy = cos(yaw * 0.5);
-        double sp = sin(pitch * 0.5);
-        double cp = cos(pitch * 0.5);
-        double sr = sin(roll * 0.5);
-        double cr = cos(roll * 0.5);
-        double w = cr*cp*cy + sr*sp*sy;
-        double x = sr*cp*cy - cr*sp*sy;
-        double y = cr*sp*cy + sr*cp*sy;
-        double z = cr*cp*sy - sr*sp*cy;
-        return float4(x,y,z,w);
-    }
-    
-    float3 quat_to_euler(float4 q)
-    {
-        float3 e;
-        const double q0 = q.w;
-        const double q1 = q.x;
-        const double q2 = q.y;
-        const double q3 = q.z;
-        e.x = atan2(2*(q0*q1+q2*q3), 1-2*(q1*q1+q2*q2));
-        e.y = asin(2*(q0*q2-q3*q1));
-        e.z = atan2(2*(q0*q3+q1*q2), 1-2*(q2*q2+q3*q3));
-        return e;
-    }
-    
     /*
                    | 1-2Nx^2   -2NxNy  -2NxNz  -2NxD |
      mReflection = |  -2NxNy  1-2Ny^2  -2NyNz  -2NyD |
@@ -304,8 +276,8 @@ struct ExperimentalApp : public GLFWApp
                 camera.set_position(newPosition); // newPosition
                 
                 // Flip X axis
-                auto e = quat_to_euler(camera.pose.orientation);
-                camera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
+                auto e = make_euler_from_quat(camera.pose.orientation);
+                camera.set_orientation(make_quat_from_euler(-e.x, e.y, e.z));
             }
             
             // Reflect camera around reflection plane

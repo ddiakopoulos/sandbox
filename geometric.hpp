@@ -224,6 +224,35 @@ namespace math
         }
         return result;
     }
+    
+    inline float4 make_quat_from_euler(float roll, float pitch, float yaw)
+    {
+        double sy = sin(yaw * 0.5);
+        double cy = cos(yaw * 0.5);
+        double sp = sin(pitch * 0.5);
+        double cp = cos(pitch * 0.5);
+        double sr = sin(roll * 0.5);
+        double cr = cos(roll * 0.5);
+        double w = cr*cp*cy + sr*sp*sy;
+        double x = sr*cp*cy - cr*sp*sy;
+        double y = cr*sp*cy + sr*cp*sy;
+        double z = cr*cp*sy - sr*sp*cy;
+        return float4(x,y,z,w);
+    }
+    
+    inline float3 make_euler_from_quat(float4 q)
+    {
+        float3 e;
+        const double q0 = q.w;
+        const double q1 = q.x;
+        const double q2 = q.y;
+        const double q3 = q.z;
+        e.x = atan2(2*(q0*q1+q2*q3), 1-2*(q1*q1+q2*q2));
+        e.y = asin(2*(q0*q2-q3*q1));
+        e.z = atan2(2*(q0*q3+q1*q2), 1-2*(q2*q2+q3*q3));
+        return e;
+    }
+    
 
     //////////////////////////////////////////////
     // Construct affine transformation matrices //
