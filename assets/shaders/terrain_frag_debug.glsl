@@ -11,6 +11,7 @@ uniform mat3 u_modelMatrixIT;
 uniform vec3 u_lightPosition;
 uniform vec3 u_eyePosition;
 uniform vec4 u_clipPlane;
+uniform vec3 u_surfaceColor;
 
 bool isOnPlane(vec3 point, vec3 normal, float elevation) 
 {
@@ -40,7 +41,7 @@ void main(void)
     vec3 p1 = dFdy(p);
     vec3 n = u_modelMatrixIT * normalize(cross(p0, p1));
 
-    vec3 surfaceColor = vec3(1.0, 0.5, 1.0);
+    vec3 surfaceColor = u_surfaceColor;
     float ambientIntensity = 0.33;
 
     vec3 surfacePos = (u_modelView * vec4(p, 0.0)).xyz;

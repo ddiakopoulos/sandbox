@@ -13,8 +13,8 @@ out vec3 vPosition;
 
 const float pi = 3.14159;
 
-float waveAmplitude = 0.05;
-float waveFreq = 100.0 * 2 * pi;
+float waveAmplitude = 0.15;
+float waveFreq = 128.0 * 2 * pi;
 float waveSpeed = 0.005;
 
 float distance_from(float x, float y) 

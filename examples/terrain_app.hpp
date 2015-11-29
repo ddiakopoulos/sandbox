@@ -26,6 +26,7 @@ struct ExperimentalApp : public GLFWApp
     
     Renderable waterMesh;
     Renderable terrainMesh;
+    Renderable icosahedron;
     
     std::unique_ptr<GLTextureView> colorTextureView;
     std::unique_ptr<GLTextureView> depthTextureView;
@@ -33,12 +34,13 @@ struct ExperimentalApp : public GLFWApp
     const float clipPlaneOffset = 0.075f;
     
     float yWaterPlane = 0.0f;
-    int yIndex = -2;
-    float4x4 terrainTranslationMat = make_translation_matrix({0, static_cast<float>(yIndex), 0});
+    int yIndex = 0;
+    float4x4 terrainTranslationMat = make_translation_matrix({-16, static_cast<float>(yIndex), -16});
     
     UWidget rootWidget;
     
     float appTime = 0;
+    float rotationAngle = 0.0f;
     
     std::random_device rd;
     std::mt19937 gen;
@@ -68,13 +70,13 @@ struct ExperimentalApp : public GLFWApp
         
         gfx::gl_check_error(__FILE__, __LINE__);
 
-        waterMesh = Renderable(make_plane(96.f, 96.f, 128, 128));
+        waterMesh = Renderable(make_plane(112.f, 112.f, 128, 128));
         
         // Seed perlin noise
-
         seed((float) std::uniform_int_distribution<int>(0, 512)(gen));
-        
         terrainMesh = make_perlin_mesh(64, 64); //Renderable(make_cube());
+        
+        icosahedron = Renderable(make_icosahedron());
         
         colorTextureView.reset(new GLTextureView(sceneColorTexture.get_gl_handle()));
         depthTextureView.reset(new GLTextureView(sceneDepthTexture.get_gl_handle()));
@@ -89,16 +91,44 @@ struct ExperimentalApp : public GLFWApp
         
     }
     
+    std::vector<float> make_radial_mask(int size, float heightScale = 1.0)
+    {
+        float radius = size / 2.0f;
+        
+        std::vector<float> mask(size * size + 2);
+        
+        for (int iy = 0; iy <= size; iy++)
+        {
+            for (int ix = 0; ix <= size; ix++)
+            {
+                float centerToX = ix - radius;
+                float centerToY = iy - radius;
+                float distance = (float) sqrt(centerToX * centerToX + centerToY * centerToY);
+                float delta = distance / radius;
+                mask[iy * size + ix] = delta * delta;
+            }
+        }
+        
+        return mask;
+    }
+    
     Geometry make_perlin_mesh(int width, int height)
     {
         Geometry terrain;
-        int gridSize = 32;
-        for (int x = 0; x <= gridSize; ++x)
+        float gridSize = 32.0f;
+        
+        auto mask = make_radial_mask(32);
+        
+        for (int x = 0; x <= gridSize; x++)
         {
-            for (int z = 0; z <= gridSize; ++z)
+            for (int z = 0; z <= gridSize; z++)
             {
-                float y = simplex2(x * 0.02f, z * 0.01f, 4.0f, 0.25f, 4.0f) * 10;
-                terrain.vertices.push_back({(float)x, y, (float)z});
+                //const float sigma = 1024.0f;
+                float y = simplex2(x * 0.02f, z * 0.01f, 4.0f, 4.0f, 2.0f) * 12.5;
+                //float w = 0.54 - 0.46 * cos(ANVIL_TAU * (x * gridSize + z) / ( gridSize));
+                auto w = mask[x * gridSize + z];
+                std::cout << w << std::endl;
+                terrain.vertices.push_back({(float)x, y * (1 - w), (float)z});
             }
         }
         
@@ -150,6 +180,7 @@ struct ExperimentalApp : public GLFWApp
     {
         appTime = e.elapsed_s;
         cameraController.update(e.timestep_ms);
+        rotationAngle += e.timestep_ms;
     }
     
     void draw_terrain()
@@ -163,7 +194,11 @@ struct ExperimentalApp : public GLFWApp
 
         std::vector<float4x4> models;
         models.push_back(terrainTranslationMat);
-                         
+        
+        terrainShader->uniform("u_eyePosition", camera.get_eye_point());
+        terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
+        terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
+        
         for (auto m : models)
         {
             float4x4 model = Identity4x4 * m;
@@ -172,11 +207,20 @@ struct ExperimentalApp : public GLFWApp
             
             terrainShader->uniform("u_mvp", mvp);
             terrainShader->uniform("u_modelView", modelViewMat);
-            terrainShader->uniform("u_eyePosition", camera.get_eye_point());
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
-            terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
-            terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
+            terrainShader->uniform("u_surfaceColor", float3(95.f / 255.f, 189.f / 255.f, 192.f / 255.f));
             terrainMesh.draw();
+        }
+        
+        {
+            float4x4 model = Identity4x4 * make_translation_matrix({0, 12, 0}) * make_rotation_matrix({0, 1, 0}, rotationAngle * 0.99f);
+            float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
+            float4x4 modelViewMat = camera.get_view_matrix() * model;
+            
+            terrainShader->uniform("u_mvp", mvp);
+            terrainShader->uniform("u_modelView", modelViewMat);
+            terrainShader->uniform("u_surfaceColor", float3(189.f / 255.f, 94.f / 255.f, 188.f / 255.f));
+            icosahedron.draw();
         }
         
         terrainShader->unbind();
@@ -192,7 +236,7 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        colorTextureView->draw(rootWidget.children[0]->bounds, int2(width, height));
+        //colorTextureView->draw(rootWidget.children[0]->bounds, int2(width, height));
         //depthTextureView->draw(rootWidget.children[1]->bounds, int2(width, height));
     }
     
@@ -269,7 +313,7 @@ struct ExperimentalApp : public GLFWApp
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             terrainShader->uniform("u_clipPlane", clipPlane);
             terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
-            
+            terrainShader->uniform("u_surfaceColor", float3(1, 1, 1));
             terrainMesh.draw();
             
             terrainShader->unbind();
@@ -296,8 +340,8 @@ struct ExperimentalApp : public GLFWApp
         // Draw Water
         {
             // Gives it a bit of a wispy look....
-            //glEnable(GL_BLEND);
-            //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            // glEnable(GL_BLEND);
+            // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
             auto mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
