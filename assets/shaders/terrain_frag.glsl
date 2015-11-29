@@ -11,6 +11,8 @@ uniform vec3 u_lightPosition;
 uniform vec3 u_eyePosition;
 uniform vec4 u_clipPlane;
 
+in vec3 p;
+
 #define FOG_DENSITY 0.025
 #define FOG_COLOR vec3(1.0)
 
@@ -22,7 +24,7 @@ float exp_fog(const float dist, const float density)
 
 void main(void) 
 {
-    float clipPos = dot (vPosition, u_clipPlane.xyz) + u_clipPlane.w;
+    float clipPos = dot (p, u_clipPlane.xyz) + u_clipPlane.w;
     if (clipPos < 0.0) discard;
 
     vec3 p0 = dFdx(vPosition);

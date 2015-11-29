@@ -12,17 +12,36 @@ uniform vec3 u_lightPosition;
 uniform vec3 u_eyePosition;
 uniform vec4 u_clipPlane;
 
+bool isOnPlane(vec3 point, vec3 normal, float elevation) 
+{
+    if (elevation <= 0.0f) 
+        return false;
+    else if (normal.y <= 0.0f) 
+        return point.y <= elevation;
+    else 
+        return point.y >= elevation;
+}
+
+bool isClipped(vec4 worldPosition) 
+{
+    return isOnPlane(worldPosition.xyz, u_clipPlane.xyz, u_clipPlane.w);
+}
+
+void discardIfClipped(vec4 worldPosition) 
+{
+    if (isClipped(worldPosition)) discard;
+}
+
 void main(void) 
 {
-    float clipPos = dot (vPosition, u_clipPlane.xyz) + u_clipPlane.w;
-    //if (clipPos < 0.0) discard;
+    discardIfClipped(vec4(vPosition, 1.0));
 
     vec3 p0 = dFdx(p);
     vec3 p1 = dFdy(p);
     vec3 n = u_modelMatrixIT * normalize(cross(p0, p1));
 
     vec3 surfaceColor = vec3(1.0, 0.5, 1.0);
-    float ambientIntensity = 0.1;
+    float ambientIntensity = 0.33;
 
     vec3 surfacePos = (u_modelView * vec4(p, 0.0)).xyz;
     vec3 surfaceToLight = normalize(u_lightPosition - surfacePos);

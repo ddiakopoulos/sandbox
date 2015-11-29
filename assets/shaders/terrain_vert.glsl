@@ -10,6 +10,7 @@ uniform mat4 u_mvp;
 
 out float vOffset;
 out vec3 vPosition;
+out vec3 p;
 
 void main() 
 {
@@ -19,5 +20,6 @@ void main()
     gl_Position = worldPosition;
     vPosition = worldPosition.xyz;
     vOffset = offset;
+    p = position;
     //gl_ClipDistance[0] = dot(vec4(pos, 1.0), u_clipPlane);
 }

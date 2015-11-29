@@ -1,4 +1,4 @@
-#include "anvil.hpp"
+#include "index.hpp"
 #include "noise.h"
 #include <random>
 
@@ -176,9 +176,6 @@ struct ExperimentalApp : public GLFWApp
             for (int z = 0; z <= gridSize; ++z)
             {
                 float y = simplex2(x * 0.02f, z * 0.01f, 4.0f, 0.25f, 4.0f) * 10;
-                if (x == 0 || x == gridSize || z == 0 || z == gridSize)
-                    terrain.vertices.push_back({(float)x, 0, (float)z});
-                else
                     terrain.vertices.push_back({(float)x, y, (float)z});
             }
         }
@@ -200,8 +197,8 @@ struct ExperimentalApp : public GLFWApp
         {
             terrain.faces.push_back(uint3(f.x, f.y, f.z));
             terrain.faces.push_back(uint3(f.x, f.z, f.w));
-            //terrain.faces.push_back(uint3(f.z, f.y, f.x));
-            //terrain.faces.push_back(uint3(f.w, f.z, f.x));
+            terrain.faces.push_back(uint3(f.z, f.y, f.x));
+            terrain.faces.push_back(uint3(f.w, f.z, f.x));
         }
         
         terrain.compute_normals();
@@ -268,7 +265,7 @@ struct ExperimentalApp : public GLFWApp
             terrainShader->uniform("u_eyePosition", camera.get_eye_point());
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
-            terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
+            //terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
             
             cubeMesh.draw();
         }
@@ -395,7 +392,7 @@ struct ExperimentalApp : public GLFWApp
             //glEnable(GL_CLIP_PLANE0);
             
             reflectionFramebuffer.bind_to_draw();
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT);
             glClearColor(1.f, 0.0f, 0.0f, 1.0f);
             
             const float clipPlaneOffset = 0.075f;
@@ -420,6 +417,8 @@ struct ExperimentalApp : public GLFWApp
             
             float4 clipPlane = camera_space_plane(camera.get_view_matrix(), pos, normal, 1.0f, clipPlaneOffset);
             
+            std::cout << clipPlane << std::endl;
+            
             float4x4 reflection = Zero4x4;
             calculate_reflection_matrix(reflection, reflectionPlane);
             reflection = reflection;
@@ -438,7 +437,7 @@ struct ExperimentalApp : public GLFWApp
             terrainShader->uniform("u_modelView", modelViewMat);
             terrainShader->uniform("u_eyePosition", camera.get_eye_point());
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
-            terrainShader->uniform("u_clipPlane", {0, 1, 0, clipPlaneOffset}); // water - http://trederia.blogspot.com/2014/09/water-in-opengl-and-gles-20-part3.html
+            terrainShader->uniform("u_clipPlane", clipPlane); // water - http://trederia.blogspot.com/2014/09/wadter-in-opengl-and-gles-20-part3.html
             terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
             terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
             
@@ -486,6 +485,8 @@ struct ExperimentalApp : public GLFWApp
             waterShader->uniform("u_modelView", modelViewMat);
             waterShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             waterShader->uniform("u_resolution", float2(width, height));
+            
+            waterShader->uniform("u_clipPlane", {0, 1, 0, 0});
             
             waterShader->texture("u_reflectionTexture", 0, sceneColorTexture.get_gl_handle(), GL_TEXTURE_2D);
             waterShader->texture("u_depthTexture", 1, sceneDepthTexture.get_gl_handle(), GL_TEXTURE_2D);
