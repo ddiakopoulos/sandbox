@@ -285,27 +285,25 @@ struct ExperimentalApp : public GLFWApp
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
-            //glEnable(GL_POLYGON_OFFSET_FILL);
-            //glPolygonOffset(0.4f, 1.0f);
-            
+            // Wind in reverse order
             glFrontFace(GL_CW);
-            //glCullFace(GL_BACK);
-            //glDisable(GL_CULL_FACE);
-            //glEnable(GL_CLIP_PLANE0);
             
             reflectionFramebuffer.bind_to_draw();
             glClear(GL_COLOR_BUFFER_BIT);
-            glClearColor(1.f, 0.0f, 0.0f, 1.0f);
-
-            Pose oldPose = camera.pose;
+            glClearColor(0.f, 0.0f, 0.0f, 1.0f);
             
-            float3 newPosition = camera.pose.position;
-            newPosition.y *= -1.0f;
-            camera.set_position(newPosition); // newPosition
+            Pose savedCameraPose = camera.pose;
             
-            // Flip X axis
-            auto e = quat_to_euler(camera.pose.orientation);
-            camera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
+            // Set up temporary reflection camera
+            {
+                float3 newPosition = camera.pose.position;
+                newPosition.y *= -1.0f;
+                camera.set_position(newPosition); // newPosition
+                
+                // Flip X axis
+                auto e = quat_to_euler(camera.pose.orientation);
+                camera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
+            }
             
             // Reflect camera around reflection plane
             float3 normal = float3(0, 1, 0);
@@ -319,10 +317,9 @@ struct ExperimentalApp : public GLFWApp
             calculate_reflection_matrix(reflection, reflectionPlane);
             
             float4x4 reflectedView = reflection * camera.get_view_matrix();
-            
-            float4x4 proj = camera.get_projection_matrix((float) width / (float) height);
+
             float4x4 model = Identity4x4 * terrainTranslationMat;
-            float4x4 mvp = proj * reflectedView * model;
+            float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * reflectedView * model;
             float4x4 modelViewMat = reflectedView * model;
             
             terrainShader->bind();
@@ -337,11 +334,12 @@ struct ExperimentalApp : public GLFWApp
             
             terrainShader->unbind();
             
-            //glDisable(GL_CLIP_PLANE0);
-            glFrontFace(GL_CCW);
-            
             reflectionFramebuffer.unbind();
-            camera.pose = oldPose;
+            
+            // Pop reverse winding
+            glFrontFace(GL_CCW);
+        
+            camera.pose = savedCameraPose;
         }
         
         {
