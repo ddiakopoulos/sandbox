@@ -70,7 +70,7 @@ struct ExperimentalApp : public GLFWApp
     GlFramebuffer depthFramebuffer;
     GlTexture sceneDepthTexture;
     
-    Renderable terrainMesh, waterMesh;
+    Renderable waterMesh;
     
     Renderable cubeMesh;
     
@@ -96,7 +96,7 @@ struct ExperimentalApp : public GLFWApp
 
         perlinTexture = make_perlin_texture(16, 16);
 
-        terrainShader.reset(new gfx::GlShader(read_file_text("assets/shaders/terrain_vert.glsl"), read_file_text("assets/shaders/terrain_frag.glsl")));
+        terrainShader.reset(new gfx::GlShader(read_file_text("assets/shaders/terrain_vert_debug.glsl"), read_file_text("assets/shaders/terrain_frag_debug.glsl")));
         waterShader.reset(new gfx::GlShader(read_file_text("assets/shaders/water_vert.glsl"), read_file_text("assets/shaders/water_frag.glsl")));
         
         sceneColorTexture.load_data(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
@@ -108,8 +108,7 @@ struct ExperimentalApp : public GLFWApp
         if (!depthFramebuffer.check_complete()) throw std::runtime_error("incomplete framebuffer");
         
         gfx::gl_check_error(__FILE__, __LINE__);
-        
-        terrainMesh = Renderable(make_plane(96.f, 96.f, 128, 128));
+
         waterMesh = Renderable(make_plane(96.f, 96.f, 64, 64));
         
         cubeMesh = Renderable(make_cube());
@@ -187,7 +186,7 @@ struct ExperimentalApp : public GLFWApp
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         
-        float4x4 model = make_translation_matrix({0, 2, 0}) * make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
+        float4x4 model = Identity4x4;
         float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
         float4x4 modelViewMat = camera.get_view_matrix() * model;
         
@@ -200,7 +199,8 @@ struct ExperimentalApp : public GLFWApp
         terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
         terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
         
-        terrainMesh.draw();
+        cubeMesh.draw();
+        
         terrainShader->unbind();
         
         //glEnable(GL_DEPTH_TEST);
@@ -282,15 +282,6 @@ struct ExperimentalApp : public GLFWApp
         reflectionMat(3,3) = 1.0f;
     }
     
-    float4x4 scale(float4x4 & m, float3 v)
-    {
-        float4x4 result = Identity4x4;
-        result(0, 0) = v.x;
-        result(1, 1) = v.y;
-        result(2, 2) = v.z;
-        return m * result;
-    }
-    
     // Given position/normal of the plane, calculates plane in camera space.
     float4 camera_space_plane(float4x4 viewMatrix, float3 pos, float3 normal, float sideSign, float clipPlaneOffset)
     {
@@ -301,26 +292,6 @@ struct ExperimentalApp : public GLFWApp
         return float4(cnormal.x, cnormal.y, cnormal.z, -dot(cpos,cnormal));
     }
     
-    float4x4 calculate_oblique_matrix(float4x4 projection, float4 clipPlane)
-    {
-        float4 q = inv(projection) * float4(sign<float>(clipPlane.x), sign<float>(clipPlane.y), 1.0f, 1.0f);
-        float4 c = clipPlane * (2.0f / (dot(clipPlane, q)));
-        
-        // replace the 3rd row
-        
-        float4 row = projection.getRow(2);
-        float4 e = projection.getRow(3);
-        
-        row.x = c.x - e.x;
-        row.y  = c.y - e.y;
-        row.z  = c.z - e.z;
-        row.w = c.w - e.w;
-        
-        projection.setRow(2, row);
-
-        return projection;
-    }
-
     void on_draw() override
     {
         glfwMakeContextCurrent(window);
@@ -367,10 +338,6 @@ struct ExperimentalApp : public GLFWApp
             
             float4x4 reflection = Zero4x4;
             calculate_reflection_matrix(reflection, reflectionPlane);
-
-            //float4x4 flipMat = Zero4x4;
-            //float4 flipPlane = float4(1, 0, 1, 0);
-            //calculate_reflection_matrix(flipMat, flipPlane);
             
             Pose oldPose = camera.pose;
             float3 newPosition = transform_coord(reflection, camera.pose.position);
@@ -383,7 +350,7 @@ struct ExperimentalApp : public GLFWApp
             float4x4 reflectedView = reflection * camera.get_view_matrix();
             
             float4x4 proj = camera.get_projection_matrix((float) width / (float) height);
-            float4x4 model = make_scaling_matrix({1, 1, 1}) * make_translation_matrix({0, 2, 0 }) * make_rotation_matrix({1, 0, 0}, (ANVIL_PI / 2));
+            float4x4 model = Identity4x4;
             float4x4 mvp = proj * reflectedView * model;
             float4x4 modelViewMat = reflectedView * model;
             
@@ -397,7 +364,7 @@ struct ExperimentalApp : public GLFWApp
             terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
             terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
             
-            terrainMesh.draw();
+            cubeMesh.draw();
             
             terrainShader->unbind();
             
