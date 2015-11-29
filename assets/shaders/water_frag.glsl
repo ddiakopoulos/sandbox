@@ -51,7 +51,7 @@ void main(void)
     vec3 lightFactor = ambient + diffuse;
 
     vec2 uv = (gl_FragCoord.xy) / u_resolution;
-    vec2 reflectionUV = vec2(uv.x, 1.0 - uv.y);
+    vec2 reflectionUV = vec2(uv.x, uv.y);
 
     float depth = texture(u_depthTexture, uv).x;
     float waterDepth = linearize_depth(depth) - linearize_depth(gl_FragCoord.z);

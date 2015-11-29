@@ -211,7 +211,7 @@ namespace gfx
         
     public:
         
-        float movementSpeed = 20.0f;
+        float movementSpeed = 0.25f;
         
         math::float3 lastLook;
         
@@ -294,7 +294,7 @@ namespace gfx
             float springyZ = math::damped_spring(target.z, current.z, velocity.z, delta, 0.99);
             
             math::float3 dampedLocation = {springyX, springyY, springyZ};
-            cam->set_position(dampedLocation);
+            cam->set_position(target);
 
             math::float3 lookVec;
             lookVec.x = cam->get_eye_point().x - 1.f * cosf(camPitch) * sinf(camYaw);

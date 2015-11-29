@@ -92,7 +92,7 @@ struct ExperimentalApp : public GLFWApp
         
         cameraController.set_camera(&camera);
         
-        //camera.look_at({0, 8, 24}, {0, 0, 0});
+        camera.look_at({0, 4, 12}, {0, 0, 0});
 
         perlinTexture = make_perlin_texture(16, 16);
 
@@ -111,7 +111,7 @@ struct ExperimentalApp : public GLFWApp
 
         waterMesh = Renderable(make_plane(96.f, 96.f, 64, 64));
         
-        cubeMesh = Renderable(make_cube());
+        cubeMesh = make_perlin_mesh(64, 64); //Renderable(make_cube());
         
         auto seedGenerator = std::bind(std::uniform_int_distribution<>(0, 512), std::ref(mt_rand));
         auto newSeed = seedGenerator();
@@ -163,14 +163,75 @@ struct ExperimentalApp : public GLFWApp
         return tex;
     }
     
+    Geometry make_perlin_mesh(int width, int height)
+    {
+        std::mt19937 mt_rand;
+        auto seedGenerator = std::bind(std::uniform_int_distribution<>(0, 1500), std::ref(mt_rand));
+        seed(seedGenerator());
+        
+        Geometry terrain;
+        int gridSize = 32;
+        for (int x = 0; x <= gridSize; ++x)
+        {
+            for (int z = 0; z <= gridSize; ++z)
+            {
+                float y = simplex2(x * 0.02f, z * 0.01f, 4.0f, 0.25f, 4.0f) * 10;
+                if (x == 0 || x == gridSize || z == 0 || z == gridSize)
+                    terrain.vertices.push_back({(float)x, 0, (float)z});
+                else
+                    terrain.vertices.push_back({(float)x, y, (float)z});
+            }
+        }
+        
+        std::vector<uint4> quads;
+        for(int x = 0; x < gridSize; ++x)
+        {
+            for(int z = 0; z < gridSize; ++z)
+            {
+                std::uint32_t tlIndex = z * (gridSize+1) + x;
+                std::uint32_t trIndex = z * (gridSize+1) + (x + 1);
+                std::uint32_t blIndex = (z + 1) * (gridSize+1) + x;
+                std::uint32_t brIndex = (z + 1) * (gridSize+1) + (x + 1);
+                quads.push_back({blIndex, tlIndex, trIndex, brIndex});
+            }
+        }
+        
+        for (auto f : quads)
+        {
+            terrain.faces.push_back(uint3(f.x, f.y, f.z));
+            terrain.faces.push_back(uint3(f.x, f.z, f.w));
+            //terrain.faces.push_back(uint3(f.z, f.y, f.x));
+            //terrain.faces.push_back(uint3(f.w, f.z, f.x));
+        }
+        
+        terrain.compute_normals();
+        return terrain;
+    }
+    
     void on_window_resize(math::int2 size) override
     {
 
     }
     
+    float4x4 terrainTranslationMat = make_translation_matrix({0, -5, 0});
+    
+    int yIndex = 0;
     void on_input(const InputEvent & event) override
     {
         cameraController.handle_input(event);
+        
+        if (event.type == InputEvent::KEY)
+        {
+            if (event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
+            {
+                terrainTranslationMat = make_translation_matrix({0, static_cast<float>(yIndex++), 0});
+            }
+            else if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE)
+            {
+                terrainTranslationMat = make_translation_matrix({0, static_cast<float>(yIndex--), 0});
+            }
+        }
+        
     }
     
     void on_update(const UpdateEvent & e) override
@@ -186,20 +247,31 @@ struct ExperimentalApp : public GLFWApp
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         
-        float4x4 model = Identity4x4;
-        float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
-        float4x4 modelViewMat = camera.get_view_matrix() * model;
+
         
         terrainShader->bind();
-        terrainShader->uniform("u_mvp", mvp);
-        terrainShader->uniform("u_modelView", modelViewMat);
-        terrainShader->uniform("u_eyePosition", camera.get_eye_point());
-        terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
-        terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
-        terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
+        
         terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
         
-        cubeMesh.draw();
+        std::vector<float4x4> models;
+        models.push_back(terrainTranslationMat);
+        //models.push_back(make_translation_matrix({-8, -2, 0}));
+                         
+        for (auto m : models)
+        {
+            float4x4 model = Identity4x4 * m;
+            float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
+            float4x4 modelViewMat = camera.get_view_matrix() * model;
+            
+            terrainShader->uniform("u_mvp", mvp);
+            terrainShader->uniform("u_modelView", modelViewMat);
+            terrainShader->uniform("u_eyePosition", camera.get_eye_point());
+            terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
+            terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
+            terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
+            
+            cubeMesh.draw();
+        }
         
         terrainShader->unbind();
         
@@ -317,8 +389,8 @@ struct ExperimentalApp : public GLFWApp
             //glEnable(GL_POLYGON_OFFSET_FILL);
             //glPolygonOffset(0.4f, 1.0f);
             
-            glFrontFace(GL_CW);
-            glCullFace(GL_BACK);
+            //glFrontFace(GL_CW);
+            //glCullFace(GL_BACK);
             //glDisable(GL_CULL_FACE);
             //glEnable(GL_CLIP_PLANE0);
             
@@ -326,11 +398,23 @@ struct ExperimentalApp : public GLFWApp
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glClearColor(1.f, 0.0f, 0.0f, 1.0f);
             
-            const float clipPlaneOffset = 0.03f;
+            const float clipPlaneOffset = 0.075f;
+        
+            
+            Pose oldPose = camera.pose;
+            //float3 newPosition = transform_coord(reflection, camera.pose.position);
+            
+            float3 newPosition = camera.pose.position;
+            newPosition.y *= -1.0f;
+            camera.set_position(newPosition); // newPosition
+            
+            auto e = quat_to_euler(camera.pose.orientation);
+            camera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
+
             
             // Reflect camera around reflection plane
             float3 normal = float3(0, 1, 0);
-            float3 pos = {0, 2, 0}; //Location of object... here, the "terrain"
+            float3 pos = {0, 0, 0}; //Location of object... here, the "terrain"
             float d = -dot(normal, pos) - clipPlaneOffset;
             float4 reflectionPlane = float4(normal.x, normal.y, normal.z, d);
             
@@ -338,19 +422,13 @@ struct ExperimentalApp : public GLFWApp
             
             float4x4 reflection = Zero4x4;
             calculate_reflection_matrix(reflection, reflectionPlane);
+            reflection = reflection;
             
-            Pose oldPose = camera.pose;
-            float3 newPosition = transform_coord(reflection, camera.pose.position);
-            camera.set_position(newPosition); // newPosition
-            
-            auto e = quat_to_euler(camera.pose.orientation);
-            //camera.set_orientation(euler_to_quat(e.x, e.y, -e.z));
-
             // Needs reflection *
             float4x4 reflectedView = reflection * camera.get_view_matrix();
             
             float4x4 proj = camera.get_projection_matrix((float) width / (float) height);
-            float4x4 model = Identity4x4;
+            float4x4 model = Identity4x4 * terrainTranslationMat;
             float4x4 mvp = proj * reflectedView * model;
             float4x4 modelViewMat = reflectedView * model;
             
@@ -360,7 +438,7 @@ struct ExperimentalApp : public GLFWApp
             terrainShader->uniform("u_modelView", modelViewMat);
             terrainShader->uniform("u_eyePosition", camera.get_eye_point());
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
-            terrainShader->uniform("u_clipPlane", clipPlane); // water - http://trederia.blogspot.com/2014/09/water-in-opengl-and-gles-20-part3.html
+            terrainShader->uniform("u_clipPlane", {0, 1, 0, clipPlaneOffset}); // water - http://trederia.blogspot.com/2014/09/water-in-opengl-and-gles-20-part3.html
             terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
             terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
             

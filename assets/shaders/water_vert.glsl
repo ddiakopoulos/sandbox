@@ -36,7 +36,7 @@ void main()
     float a4 = add_wave(uv.x * 0.5, uv.y * 0.5, waveSpeed, waveAmplitude, 0.5 * waveFreq, 2.0);
     float a5 = add_wave(0.0, 0.0, waveSpeed, waveAmplitude, .5 * waveFreq, 2.0);
 
-    vec3 pos = vec3(position.xy, 0.3 * (a0 + a1 + a2 + a3 + a4 + a5));
+    vec3 pos = vec3(position.xy, u_yWaterPlane + 0.3 * (a0 + a1 + a2 + a3 + a4 + a5));
     gl_Position = u_mvp * vec4(pos, 1.0);
 
     vTexCoord = uv;
