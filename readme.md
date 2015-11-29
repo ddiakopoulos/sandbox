@@ -8,9 +8,11 @@
 * Arcball camera
 * Basic image morphologies (erode/dilate)
 * Opinionated 3d gizmo editing tool
+* Island terrain with a simple water shader (waves, reflections)
 
 ## In Progress
 
+* Better water shading (refraction, skybox lighting)
 * GLSL Shader hot-reload
 * UI layout via cassowary constraint solver (Rhea library)
 * Dual contouring + terrain deformation (ref. impl)

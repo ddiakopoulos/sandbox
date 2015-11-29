@@ -94,18 +94,19 @@ struct ExperimentalApp : public GLFWApp
     std::vector<float> make_radial_mask(int size, float heightScale = 1.0)
     {
         float radius = size / 2.0f;
-        
         std::vector<float> mask(size * size + 2);
         
         for (int iy = 0; iy <= size; iy++)
         {
             for (int ix = 0; ix <= size; ix++)
             {
-                float centerToX = ix - radius;
-                float centerToY = iy - radius;
+                auto n = std::uniform_real_distribution<float>(-1.0f, 1.0f)(gen);
+                float centerToX = (ix + n) - radius;
+                n = std::uniform_real_distribution<float>(0.0f, 3.0f)(gen);
+                float centerToY = (iy + n) - radius;
                 float distance = (float) sqrt(centerToX * centerToX + centerToY * centerToY);
-                float delta = distance / radius;
-                mask[iy * size + ix] = delta * delta;
+                float delta = distance / (radius);
+                mask[iy * size + ix] = (delta * delta);
             }
         }
         
@@ -219,6 +220,7 @@ struct ExperimentalApp : public GLFWApp
             
             terrainShader->uniform("u_mvp", mvp);
             terrainShader->uniform("u_modelView", modelViewMat);
+            terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             terrainShader->uniform("u_surfaceColor", float3(189.f / 255.f, 94.f / 255.f, 188.f / 255.f));
             icosahedron.draw();
         }
