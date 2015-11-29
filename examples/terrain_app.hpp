@@ -65,7 +65,7 @@ struct ExperimentalApp : public GLFWApp
         
         gfx::gl_check_error(__FILE__, __LINE__);
 
-        waterMesh = Renderable(make_plane(96.f, 96.f, 64, 64));
+        waterMesh = Renderable(make_plane(96.f, 96.f, 128, 128));
         
         terrainMesh = make_perlin_mesh(64, 64); //Renderable(make_cube());
         
@@ -231,8 +231,10 @@ struct ExperimentalApp : public GLFWApp
         (Nx,Ny,Nz) is also the normal vector of given plane.
      */
     
-    void calculate_reflection_matrix (float4x4 & reflectionMat, float4 plane)
+    float4x4 calculate_reflection_matrix(float4 plane)
     {
+        float4x4 reflectionMat = Zero4x4;
+        
         reflectionMat(0,0) = (1.f-2.0f * plane[0]*plane[0]);
         reflectionMat(0,1) = (   -2.0f * plane[0]*plane[1]);
         reflectionMat(0,2) = (   -2.0f * plane[0]*plane[2]);
@@ -252,6 +254,8 @@ struct ExperimentalApp : public GLFWApp
         reflectionMat(3,1) = 0.0f;
         reflectionMat(3,2) = 0.0f;
         reflectionMat(3,3) = 1.0f;
+        
+        return reflectionMat;
     }
     
     // Given position/normal of the plane, calculates plane in camera space.
@@ -276,7 +280,6 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        // This otherwise skybox doesn't render
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.f, 0.0f, 0.0f, 1.0f);
         
@@ -307,14 +310,13 @@ struct ExperimentalApp : public GLFWApp
             
             // Reflect camera around reflection plane
             float3 normal = float3(0, 1, 0);
-            float3 pos = {0, 0, 0}; //Location of object... here, the "terrain"
+            float3 pos = {0, 0, 0}; // Location of object... here, the terrain
             float d = -dot(normal, pos) - clipPlaneOffset;
             float4 reflectionPlane = float4(normal.x, normal.y, normal.z, d);
             
             float4 clipPlane = camera_space_plane(camera.get_view_matrix(), pos, normal, 1.0f, clipPlaneOffset);
             
-            float4x4 reflection = Zero4x4;
-            calculate_reflection_matrix(reflection, reflectionPlane);
+            float4x4 reflection = calculate_reflection_matrix(reflectionPlane);
             
             float4x4 reflectedView = reflection * camera.get_view_matrix();
 
@@ -327,7 +329,7 @@ struct ExperimentalApp : public GLFWApp
             terrainShader->uniform("u_modelView", modelViewMat);
             terrainShader->uniform("u_eyePosition", camera.get_eye_point());
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
-            terrainShader->uniform("u_clipPlane", clipPlane); // water - http://trederia.blogspot.com/2014/09/wadter-in-opengl-and-gles-20-part3.html
+            terrainShader->uniform("u_clipPlane", clipPlane);
             terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
             
             terrainMesh.draw();
