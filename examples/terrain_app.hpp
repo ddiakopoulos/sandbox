@@ -35,8 +35,8 @@ struct ExperimentalApp : public GLFWApp
     const float clipPlaneOffset = 0.075f;
     
     float yWaterPlane = 0.0f;
-    float4x4 terrainTranslationMat = make_translation_matrix({0, -5, 0});
-    int yIndex = 0;
+    int yIndex = -2;
+    float4x4 terrainTranslationMat = make_translation_matrix({0, static_cast<float>(yIndex), 0});
     
     UWidget rootWidget;
     
@@ -193,43 +193,6 @@ struct ExperimentalApp : public GLFWApp
         //depthTextureView->draw(rootWidget.children[1]->bounds, int2(width, height));
     }
     
-    /*
-                   | 1-2Nx^2   -2NxNy  -2NxNz  -2NxD |
-     mReflection = |  -2NxNy  1-2Ny^2  -2NyNz  -2NyD |
-                   |  -2NxNz  -2NyNz  1-2Nz^2  -2NzD |
-                   |    0       0       0       1    |
-     
-        Where (Nx,Ny,Nz,D) are the coefficients of plane equation (xNx + yNy + zNz + D = 0).
-        (Nx,Ny,Nz) is also the normal vector of given plane.
-     */
-    
-    float4x4 calculate_reflection_matrix(float4 plane)
-    {
-        float4x4 reflectionMat = Zero4x4;
-        
-        reflectionMat(0,0) = (1.f-2.0f * plane[0]*plane[0]);
-        reflectionMat(0,1) = (   -2.0f * plane[0]*plane[1]);
-        reflectionMat(0,2) = (   -2.0f * plane[0]*plane[2]);
-        reflectionMat(0,3) = (   -2.0f * plane[3]*plane[0]);
-        
-        reflectionMat(1,0) = (   -2.0f * plane[1]*plane[0]);
-        reflectionMat(1,1) = (1.f-2.0f * plane[1]*plane[1]);
-        reflectionMat(1,2) = (   -2.0f * plane[1]*plane[2]);
-        reflectionMat(1,3) = (   -2.0f * plane[3]*plane[1]);
-        
-        reflectionMat(2,0) = (   -2.0f * plane[2]*plane[0]);
-        reflectionMat(2,1) = (   -2.0f * plane[2]*plane[1]);
-        reflectionMat(2,2) = (1.f-2.0f * plane[2]*plane[2]);
-        reflectionMat(2,3) = (   -2.0f * plane[3]*plane[2]);
-        
-        reflectionMat(3,0) = 0.0f;
-        reflectionMat(3,1) = 0.0f;
-        reflectionMat(3,2) = 0.0f;
-        reflectionMat(3,3) = 1.0f;
-        
-        return reflectionMat;
-    }
-    
     // Given position/normal of the plane, calculates plane in camera space.
     float4 camera_space_plane(float4x4 viewMatrix, float3 pos, float3 normal, float sideSign, float clipPlaneOffset)
     {
@@ -288,7 +251,7 @@ struct ExperimentalApp : public GLFWApp
             
             float4 clipPlane = camera_space_plane(camera.get_view_matrix(), pos, normal, 1.0f, clipPlaneOffset);
             
-            float4x4 reflection = calculate_reflection_matrix(reflectionPlane);
+            float4x4 reflection = make_reflection_matrix(reflectionPlane);
             
             float4x4 reflectedView = reflection * camera.get_view_matrix();
 
