@@ -116,8 +116,8 @@ struct ExperimentalApp : public GLFWApp
         {
             terrain.faces.push_back(uint3(f.x, f.y, f.z));
             terrain.faces.push_back(uint3(f.x, f.z, f.w));
-            terrain.faces.push_back(uint3(f.z, f.y, f.x));
-            terrain.faces.push_back(uint3(f.w, f.z, f.x));
+            //terrain.faces.push_back(uint3(f.z, f.y, f.x));
+            //terrain.faces.push_back(uint3(f.w, f.z, f.x));
         }
         
         terrain.compute_normals();
@@ -288,7 +288,7 @@ struct ExperimentalApp : public GLFWApp
             //glEnable(GL_POLYGON_OFFSET_FILL);
             //glPolygonOffset(0.4f, 1.0f);
             
-            //glFrontFace(GL_CW);
+            glFrontFace(GL_CW);
             //glCullFace(GL_BACK);
             //glDisable(GL_CULL_FACE);
             //glEnable(GL_CLIP_PLANE0);
