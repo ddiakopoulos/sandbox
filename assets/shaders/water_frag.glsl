@@ -1,3 +1,5 @@
+// http://khayyam.kaplinski.com/2011/10/reflective-water-with-glsl-part-ii.html
+
 #version 330
 
 #define FOG_DENSITY 0.025
@@ -31,6 +33,11 @@ float exp_fog(const float dist, const float density)
     return exp2(d * d * -1.44);
 }
 
+float fresnel(float da, float bias, float power)
+{
+    return max(bias + (1.0 - bias) * pow(da, power), 0.0);
+}
+
 void main(void) 
 {
     vec3 p0 = dFdx(vPosition);
@@ -53,17 +60,21 @@ void main(void)
     vec2 uv = (gl_FragCoord.xy) / u_resolution;
     vec2 reflectionUV = vec2(uv.x, uv.y);
 
+
+    float ndotl = max(dot(surfacePos, n), 0);
+    float facing = 1.0 - ndotl;
+    float fresnelFac = fresnel(facing, 0.9, 0.25);
+
     float depth = texture(u_depthTexture, uv).x;
     float waterDepth = linearize_depth(depth) - linearize_depth(gl_FragCoord.z);
 
     f_color = vec4(lightFactor, 0.4 + 0.2 * diffuseCoefficient);
 
-    // mix with reflection texture
-    f_color.rgb = mix(texture(u_reflectionTexture, reflectionUV).rgb, f_color.rgb, 0.5);
+    // Reflection tex
+    f_color.rgb = mix(texture(u_reflectionTexture, reflectionUV).rgb * fresnelFac, f_color.rgb, 0.5);
 
-    // smooth edges
+    // Smooth water edges
     f_color.a *= clamp(waterDepth * 1.5, 0.0, 1.0);
 
-    // add fog
     f_color.rgb = mix(f_color.rgb, FOG_COLOR, 1.0 - exp_fog(gl_FragCoord.z / gl_FragCoord.w, FOG_DENSITY));
 }

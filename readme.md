@@ -12,7 +12,7 @@
 
 ## In Progress
 
-* Better water shading (refraction, skybox lighting)
+* Better water shading (refraction, normals, sun position, skybox reflections)
 * GLSL Shader hot-reload
 * UI layout via cassowary constraint solver (Rhea library)
 * Dual contouring + terrain deformation (ref. impl)

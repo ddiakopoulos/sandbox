@@ -70,7 +70,7 @@ struct ExperimentalApp : public GLFWApp
         
         gfx::gl_check_error(__FILE__, __LINE__);
 
-        waterMesh = Renderable(make_plane(112.f, 112.f, 128, 128));
+        waterMesh = Renderable(make_plane(112.f, 112.f, 256, 256));
         
         // Seed perlin noise
         seed((float) std::uniform_int_distribution<int>(0, 512)(gen));
@@ -88,7 +88,6 @@ struct ExperimentalApp : public GLFWApp
         rootWidget.add_child( {{0,+10},{0,+10},{0.25,0},{0.25,0}}, std::make_shared<UWidget>()); // for colorTexture
         rootWidget.add_child( {{.25,+10},{0, +10},{0.50, -10},{0.25,0}}, std::make_shared<UWidget>()); // for depthTexture
         rootWidget.layout();
-        
     }
     
     std::vector<float> make_radial_mask(int size, float heightScale = 1.0)
@@ -322,10 +321,10 @@ struct ExperimentalApp : public GLFWApp
             
             reflectionFramebuffer.unbind();
             
+            camera.pose = savedCameraPose;
+            
             // Pop reverse winding
             glFrontFace(GL_CCW);
-        
-            camera.pose = savedCameraPose;
         }
         
         {

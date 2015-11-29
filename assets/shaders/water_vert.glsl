@@ -11,7 +11,7 @@ uniform float u_yWaterPlane;
 out vec2 vTexCoord;
 out vec3 vPosition;
 
-const float pi = 3.14159;
+const float pi = 3.14159265358979323846;
 
 float waveAmplitude = 0.15;
 float waveFreq = 128.0 * 2 * pi;
