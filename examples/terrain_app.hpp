@@ -80,7 +80,7 @@ struct ExperimentalApp : public GLFWApp
     std::mt19937 mt_rand;
     
     float appTime = 0;
-    float yWaterPlane = 2.0f;
+    float yWaterPlane = 0.0f;
     
     UWidget rootWidget;
     
@@ -187,7 +187,7 @@ struct ExperimentalApp : public GLFWApp
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         
-        float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
+        float4x4 model = make_translation_matrix({0, 2, 0}) * make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
         float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
         float4x4 modelViewMat = camera.get_view_matrix() * model;
         
@@ -196,8 +196,8 @@ struct ExperimentalApp : public GLFWApp
         terrainShader->uniform("u_modelView", modelViewMat);
         terrainShader->uniform("u_eyePosition", camera.get_eye_point());
         terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
-        //terrainShader->uniform("u_clipPlane", float4(0.0, 0.0, 1.0, -yWaterPlane)); // water
         terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
+        terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
         terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
         
         terrainMesh.draw();
@@ -218,7 +218,7 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         
         colorTextureView->draw(rootWidget.children[0]->bounds, int2(width, height));
-        depthTextureView->draw(rootWidget.children[1]->bounds, int2(width, height));
+        //depthTextureView->draw(rootWidget.children[1]->bounds, int2(width, height));
     }
     
     float4 euler_to_quat(float roll, float pitch, float yaw)
@@ -248,6 +248,16 @@ struct ExperimentalApp : public GLFWApp
         e.z = atan2(2*(q0*q3+q1*q2), 1-2*(q2*q2+q3*q3));
         return e;
     }
+    
+    /*
+                   | 1-2Nx^2   -2NxNy  -2NxNz  -2NxD |
+     mReflection = |  -2NxNy  1-2Ny^2  -2NyNz  -2NyD |
+                   |  -2NxNz  -2NyNz  1-2Nz^2  -2NzD |
+                   |    0       0       0       1    |
+     
+        Where (Nx,Ny,Nz,D) are the coefficients of plane equation (xNx + yNy + zNz + D = 0).
+        (Nx,Ny,Nz) is also the normal vector of given plane.
+     */
     
     void calculate_reflection_matrix (float4x4 & reflectionMat, float4 plane)
     {
@@ -291,6 +301,26 @@ struct ExperimentalApp : public GLFWApp
         return float4(cnormal.x, cnormal.y, cnormal.z, -dot(cpos,cnormal));
     }
     
+    float4x4 calculate_oblique_matrix(float4x4 projection, float4 clipPlane)
+    {
+        float4 q = inv(projection) * float4(sign<float>(clipPlane.x), sign<float>(clipPlane.y), 1.0f, 1.0f);
+        float4 c = clipPlane * (2.0f / (dot(clipPlane, q)));
+        
+        // replace the 3rd row
+        
+        float4 row = projection.getRow(2);
+        float4 e = projection.getRow(3);
+        
+        row.x = c.x - e.x;
+        row.y  = c.y - e.y;
+        row.z  = c.z - e.z;
+        row.w = c.w - e.w;
+        
+        projection.setRow(2, row);
+
+        return projection;
+    }
+
     void on_draw() override
     {
         glfwMakeContextCurrent(window);
@@ -317,19 +347,19 @@ struct ExperimentalApp : public GLFWApp
             //glPolygonOffset(0.4f, 1.0f);
             
             glFrontFace(GL_CW);
-            //glCullFace(GL_BACK);
-            glDisable(GL_CULL_FACE);
-            glEnable(GL_CLIP_PLANE0);
+            glCullFace(GL_BACK);
+            //glDisable(GL_CULL_FACE);
+            //glEnable(GL_CLIP_PLANE0);
             
             reflectionFramebuffer.bind_to_draw();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glClearColor(1.f, 0.0f, 0.0f, 1.0f);
             
-            const float clipPlaneOffset = 0.07f;
+            const float clipPlaneOffset = 0.03f;
             
             // Reflect camera around reflection plane
             float3 normal = float3(0, 1, 0);
-            float3 pos = {0, 0, 0}; //Location of object... here, the "terrain"
+            float3 pos = {0, 2, 0}; //Location of object... here, the "terrain"
             float d = -dot(normal, pos) - clipPlaneOffset;
             float4 reflectionPlane = float4(normal.x, normal.y, normal.z, d);
             
@@ -338,27 +368,32 @@ struct ExperimentalApp : public GLFWApp
             float4x4 reflection = Zero4x4;
             calculate_reflection_matrix(reflection, reflectionPlane);
 
+            //float4x4 flipMat = Zero4x4;
+            //float4 flipPlane = float4(1, 0, 1, 0);
+            //calculate_reflection_matrix(flipMat, flipPlane);
+            
             Pose oldPose = camera.pose;
             float3 newPosition = transform_coord(reflection, camera.pose.position);
-            
-            camera.set_position(newPosition);
+            camera.set_position(newPosition); // newPosition
             
             auto e = quat_to_euler(camera.pose.orientation);
-            camera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
+            //camera.set_orientation(euler_to_quat(e.x, e.y, -e.z));
 
+            // Needs reflection *
             float4x4 reflectedView = reflection * camera.get_view_matrix();
             
-            float4x4 model = make_scaling_matrix({1, 1, 1}) * make_rotation_matrix({1, 0, 0}, (ANVIL_PI / 2));
-            float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * reflectedView * model;
+            float4x4 proj = camera.get_projection_matrix((float) width / (float) height);
+            float4x4 model = make_scaling_matrix({1, 1, 1}) * make_translation_matrix({0, 2, 0 }) * make_rotation_matrix({1, 0, 0}, (ANVIL_PI / 2));
+            float4x4 mvp = proj * reflectedView * model;
             float4x4 modelViewMat = reflectedView * model;
             
-            //float4(0.0, 0.0, 1.0, -yWaterPlane))
+            //float4(0.0, 0.0, 1.0, -yWaterPlane)
             terrainShader->bind();
             terrainShader->uniform("u_mvp", mvp);
             terrainShader->uniform("u_modelView", modelViewMat);
             terrainShader->uniform("u_eyePosition", camera.get_eye_point());
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
-            terrainShader->uniform("u_clipPlane", float4(0.0, 0.0, 1.0, -yWaterPlane)); // water - http://trederia.blogspot.com/2014/09/water-in-opengl-and-gles-20-part3.html
+            terrainShader->uniform("u_clipPlane", clipPlane); // water - http://trederia.blogspot.com/2014/09/water-in-opengl-and-gles-20-part3.html
             terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
             terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
             
@@ -366,7 +401,7 @@ struct ExperimentalApp : public GLFWApp
             
             terrainShader->unbind();
             
-            glDisable(GL_CLIP_PLANE0);
+            //glDisable(GL_CLIP_PLANE0);
             glFrontFace(GL_CCW);
             
             reflectionFramebuffer.unbind();

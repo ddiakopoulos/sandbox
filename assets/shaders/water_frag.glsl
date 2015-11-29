@@ -59,7 +59,7 @@ void main(void)
     f_color = vec4(lightFactor, 0.4 + 0.2 * diffuseCoefficient);
 
     // mix with reflection texture
-    f_color.rgb = mix(texture(u_reflectionTexture, reflectionUV).rgb, f_color.rgb, 0.5);
+    f_color.rgb = mix(texture(u_reflectionTexture, reflectionUV).rgb, f_color.rgb, 0.25);
 
     // smooth edges
     f_color.a *= clamp(waterDepth * 1.5, 0.0, 1.0);
