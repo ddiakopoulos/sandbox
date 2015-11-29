@@ -39,20 +39,19 @@ struct ExperimentalApp : public GLFWApp
             lights[1].pose.position = float3(-25, 15, 0);
         }
         
+        for (int i = 0; i < 16; i++)
         {
-            proceduralModels.resize(4);
-            
-            proceduralModels[0] = Renderable(make_sphere(1.0));
-            proceduralModels[0].pose.position = float3(0, 2, +8);
-            
-            proceduralModels[1] = Renderable(make_cube());
-            proceduralModels[1].pose.position = float3(0, 2, -8);
-            
-            proceduralModels[2] = Renderable(make_icosahedron());
-            proceduralModels[2].pose.position = float3(8, 2, 0);
-            
-            proceduralModels[3] = Renderable(make_octohedron());
-            proceduralModels[3].pose.position = float3(-8, 2, 0);
+            proceduralModels.push_back(Renderable(make_icosahedron()));
+        }
+        
+        float r = 12.0f;
+        float thetaIdx = ANVIL_TAU / proceduralModels.size();
+        auto offset = thetaIdx / 2;
+        
+        for (int t = 1; t < proceduralModels.size() + 1; t++)
+        {
+            auto & obj = proceduralModels[t - 1];
+            obj.pose.position = { float(r * sin((t * thetaIdx) - offset)), 0.0f, float(r * cos((t * thetaIdx) - offset))};
         }
         
         grid = RenderableGrid(1, 64, 64);
