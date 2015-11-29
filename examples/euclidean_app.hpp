@@ -51,6 +51,12 @@ std::vector<bool> make_euclidean_rhythm(int steps, int pulses)
     return pattern;
 }
 
+// gif = jo_gif_start("euclidean.gif", width, height, 0, 255);
+// glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, rgbFrame.data());
+// flip_image(rgbFrame.data(), width, height, 4);
+// jo_gif_frame(&gif, rgbFrame.data(), 12, false);
+// jo_gif_end(&gif);
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -78,12 +84,6 @@ struct ExperimentalApp : public GLFWApp
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
-        
-         std::cout << "Gif...?" << std::endl;
-        
-        gif = jo_gif_start("euclidean.gif", width, height, 0, 255);
-        
-                std::cout << "Gif..." << std::endl;
         
         rgbFrame.resize(width * height * 4);
         
@@ -114,17 +114,12 @@ struct ExperimentalApp : public GLFWApp
         float thetaIdx = ANVIL_TAU / proceduralModels.size();
         auto offset = 0;
         
-        std::cout << offset << std::endl;
-        
         for (int t = 1; t < proceduralModels.size() + 1; t++)
         {
             auto & obj = proceduralModels[t - 1];
             obj.pose.position = { float(r * sin((t * thetaIdx) - offset)), 4.0f, float(r * cos((t * thetaIdx) - offset))};
         }
         
-
-
-
         grid = RenderableGrid(1, 64, 64);
         
         gfx::gl_check_error(__FILE__, __LINE__);
@@ -132,7 +127,7 @@ struct ExperimentalApp : public GLFWApp
     
     ~ExperimentalApp()
     {
-        jo_gif_end(&gif);
+
     }
     
     void on_window_resize(math::int2 size) override
@@ -153,24 +148,7 @@ struct ExperimentalApp : public GLFWApp
         for (int i = 0; i < euclideanPattern.size(); ++i)
         {
             auto value = euclideanPattern[i];
-            if (value)
-                proceduralModels[i].pose.orientation = make_rotation_quat_axis_angle({0, 1, 0}, 0.88f * rotationAngle);
-            
-        }
-    }
-    
-    void flip_image(unsigned char * pixels, const uint32_t width, const uint32_t height, const uint32_t bytes_per_pixel)
-    {
-        const size_t stride = width * bytes_per_pixel;
-        std::vector<unsigned char> row(stride);
-        unsigned char * low = pixels;
-        unsigned char * high = &pixels[(height - 1) * stride];
-
-        for (; low < high; low += stride, high -= stride)
-        {
-            memcpy(row.data(), low, stride);
-            memcpy(low, high, stride);
-            memcpy(high, row.data(), stride);
+            if (value) proceduralModels[i].pose.orientation = make_rotation_quat_axis_angle({0, 1, 0}, 0.88f * rotationAngle);
         }
     }
     
@@ -234,10 +212,6 @@ struct ExperimentalApp : public GLFWApp
         gfx::gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
-        
-        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, rgbFrame.data());
-        flip_image(rgbFrame.data(), width, height, 4);
-        jo_gif_frame(&gif, rgbFrame.data(), 12, false);
         
         frameCount++;
     }
