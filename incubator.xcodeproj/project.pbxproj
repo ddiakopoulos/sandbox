@@ -26,6 +26,7 @@
 		089B86121BAFC9AB00B3A290 /* noise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B86091BAFC9AB00B3A290 /* noise1234.cpp */; };
 		089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */; };
 		08C4757C1C0579550031E87E /* noise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C4757A1C0579550031E87E /* noise.cpp */; };
+		08C475821C0AE9C50031E87E /* jo_gif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C475801C0AE9C50031E87E /* jo_gif.cpp */; };
 		08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2DC1BDD667000895E31 /* nvg.cpp */; };
 		08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E11BDD669600895E31 /* nanovg.cpp */; };
 		08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E51BDD79F000895E31 /* preetham.cpp */; };
@@ -132,6 +133,8 @@
 		08C4757B1C0579550031E87E /* noise.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = noise.h; path = third_party/noise.h; sourceTree = SOURCE_ROOT; };
 		08C4757D1C0AD67D0031E87E /* camera_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = camera_app.hpp; path = examples/camera_app.hpp; sourceTree = SOURCE_ROOT; };
 		08C4757E1C0AD67D0031E87E /* euclidean_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = euclidean_app.hpp; path = examples/euclidean_app.hpp; sourceTree = SOURCE_ROOT; };
+		08C475801C0AE9C50031E87E /* jo_gif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jo_gif.cpp; path = third_party/jo_gif.cpp; sourceTree = SOURCE_ROOT; };
+		08C475811C0AE9C50031E87E /* jo_gif.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jo_gif.hpp; path = third_party/jo_gif.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DC1BDD667000895E31 /* nvg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nvg.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DD1BDD667000895E31 /* nvg.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = nvg.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DF1BDD669600895E31 /* nanovg_gl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg_gl_utils.h; path = third_party/nanovg_gl_utils.h; sourceTree = SOURCE_ROOT; };
@@ -264,6 +267,8 @@
 		0849FD8D1BE7CB2B000F148E /* third_party */ = {
 			isa = PBXGroup;
 			children = (
+				08C475801C0AE9C50031E87E /* jo_gif.cpp */,
+				08C475811C0AE9C50031E87E /* jo_gif.hpp */,
 				0849FD9E1BFAFC77000F148E /* tinyobj */,
 				0849FD911BF00334000F148E /* json */,
 				08289F7D1BC5F7E40054AF3B /* tinyply */,
@@ -492,6 +497,7 @@
 				089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */,
 				089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */,
 				0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */,
+				08C475821C0AE9C50031E87E /* jo_gif.cpp in Sources */,
 				08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */,
 				0822AF371BD4ADBF00A894F0 /* GlShared.cpp in Sources */,
 				0849FDA11BFAFCC3000F148E /* tiny_obj_loader.cc in Sources */,

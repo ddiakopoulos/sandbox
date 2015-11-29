@@ -9,9 +9,10 @@
 * Basic image morphologies (erode/dilate)
 * Opinionated 3d gizmo editing tool
 * Island terrain with a simple water shader (waves, reflections)
+* GIF export
 
 ## In Progress
-
+* Spherical environment mapping
 * Better water shading (refraction, normals, sun position, skybox reflections)
 * GLSL Shader hot-reload
 * UI layout via cassowary constraint solver (Rhea library)
@@ -29,3 +30,4 @@
 * Bruneton Sky Model
 * BRDF / PBR Shaders
 * Automatic UV generation (foo library)
+* Graph/Node editor (LabSound bindings)

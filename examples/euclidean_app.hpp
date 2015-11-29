@@ -1,4 +1,5 @@
 #include "index.hpp"
+#include "../third_party/jo_gif.hpp"
 
 using namespace math;
 using namespace util;
@@ -69,11 +70,22 @@ struct ExperimentalApp : public GLFWApp
     
     float rotationAngle = 0.0f;
     
-    ExperimentalApp() : GLFWApp(940, 720, "Sandbox App")
+    std::vector<unsigned char> rgbFrame;
+    jo_gif_t gif;
+    
+    ExperimentalApp() : GLFWApp(320, 240, "Euclidean App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
+        
+         std::cout << "Gif...?" << std::endl;
+        
+        gif = jo_gif_start("euclidean.gif", width, height, 0, 255);
+        
+                std::cout << "Gif..." << std::endl;
+        
+        rgbFrame.resize(width * height * 4);
         
         cameraController.set_camera(&camera);
         
@@ -88,7 +100,6 @@ struct ExperimentalApp : public GLFWApp
             lights[1].color = float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f);
             lights[1].pose.position = float3(-25, 15, 0);
         }
-        
         
         euclideanPattern = make_euclidean_rhythm(16, 4);
         std::rotate(euclideanPattern.rbegin(), euclideanPattern.rbegin() + 1, euclideanPattern.rend()); // Rotate right
@@ -111,9 +122,17 @@ struct ExperimentalApp : public GLFWApp
             obj.pose.position = { float(r * sin((t * thetaIdx) - offset)), 4.0f, float(r * cos((t * thetaIdx) - offset))};
         }
         
+
+
+
         grid = RenderableGrid(1, 64, 64);
         
         gfx::gl_check_error(__FILE__, __LINE__);
+    }
+    
+    ~ExperimentalApp()
+    {
+        jo_gif_end(&gif);
     }
     
     void on_window_resize(math::int2 size) override
@@ -136,7 +155,22 @@ struct ExperimentalApp : public GLFWApp
             auto value = euclideanPattern[i];
             if (value)
                 proceduralModels[i].pose.orientation = make_rotation_quat_axis_angle({0, 1, 0}, 0.88f * rotationAngle);
-                
+            
+        }
+    }
+    
+    void flip_image(unsigned char * pixels, const uint32_t width, const uint32_t height, const uint32_t bytes_per_pixel)
+    {
+        const size_t stride = width * bytes_per_pixel;
+        std::vector<unsigned char> row(stride);
+        unsigned char * low = pixels;
+        unsigned char * high = &pixels[(height - 1) * stride];
+
+        for (; low < high; low += stride, high -= stride)
+        {
+            memcpy(row.data(), low, stride);
+            memcpy(low, high, stride);
+            memcpy(high, row.data(), stride);
         }
     }
     
@@ -200,6 +234,10 @@ struct ExperimentalApp : public GLFWApp
         gfx::gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
+        
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, rgbFrame.data());
+        flip_image(rgbFrame.data(), width, height, 4);
+        jo_gif_frame(&gif, rgbFrame.data(), 12, false);
         
         frameCount++;
     }
