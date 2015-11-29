@@ -356,6 +356,51 @@ namespace math
         return p;
     }
     
+    /////////////
+    // Helpers //
+    /////////////
+    
+    inline void find_orthonormals(const float3 normal, float3 & orthonormal1, float3 & orthonormal2)
+    {
+        const float4x4 OrthoX = math::make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
+        const float4x4 OrthoY = make_rotation_matrix({0, 1, 0}, ANVIL_PI / 2);;
+        
+        float3 w = transform_vector(OrthoX, normal);
+        float d = dot(normal, w);
+        if (abs(d) > 0.6f)
+        {
+            w = transform_vector(OrthoY, normal);
+        }
+        
+        w = normalize(w);
+        
+        orthonormal1 = cross(normal, w);
+        orthonormal1 = normalize(orthonormal1);
+        orthonormal2 = cross(normal, orthonormal1);
+        orthonormal2 = normalize(orthonormal2);
+    }
+    
+    inline float find_quaternion_twist(float4 q, float3 axis)
+    {
+        normalize(axis);
+        
+        //get the plane the axis is a normal of
+        float3 orthonormal1, orthonormal2;
+        
+        find_orthonormals(axis, orthonormal1, orthonormal2);
+        
+        float3 transformed = transform_vector(q, orthonormal1); // orthonormal1 * q;
+        
+        //project transformed vector onto plane
+        float3 flattened = transformed - (dot(transformed, axis) * axis);
+        flattened = normalize(flattened);
+        
+        //get angle between original vector and projected transform to get angle around normal
+        float a = (float) acos(dot(orthonormal1, flattened));
+        
+        return a;
+    }
+    
     /////////////////////////////////
     // Universal Coordinate System //
     /////////////////////////////////

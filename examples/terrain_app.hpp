@@ -6,47 +6,6 @@ using namespace math;
 using namespace util;
 using namespace gfx;
 
-void find_orthonormals(const float3 normal, float3 & orthonormal1, float3 & orthonormal2)
-{
-    const float4x4 OrthoX = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
-    const float4x4 OrthoY = make_rotation_matrix({0, 1, 0}, ANVIL_PI / 2);;
-
-    float3 w = transform_vector(OrthoX, normal);
-    float d = dot(normal, w);
-    if (abs(d) > 0.6f)
-    {
-        w = transform_vector(OrthoY, normal);
-    }
-    
-    w = normalize(w);
-    
-    orthonormal1 = cross(normal, w);
-    orthonormal1 = normalize(orthonormal1);
-    orthonormal2 = cross(normal, orthonormal1);
-    orthonormal2 = normalize(orthonormal2);
-}
-
-float find_quaternion_twist(float4 q, float3 axis)
-{
-    normalize(axis);
-    
-    //get the plane the axis is a normal of
-    float3 orthonormal1, orthonormal2;
-    
-    find_orthonormals(axis, orthonormal1, orthonormal2);
-    
-    float3 transformed = transform_vector(q, orthonormal1); // orthonormal1 * q;
-    
-    //project transformed vector onto plane
-    float3 flattened = transformed - (dot(transformed, axis) * axis);
-    flattened = normalize(flattened);
-    
-    //get angle between original vector and projected transform to get angle around normal
-    float a = (float) acos(dot(orthonormal1, flattened));
-    
-    return a;
-}
-
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -55,11 +14,6 @@ struct ExperimentalApp : public GLFWApp
     
     HosekProceduralSky skydome;
     FPSCameraController cameraController;
-    
-    GlTexture perlinTexture;
-    
-    std::vector<Renderable> proceduralModels;
-    std::vector<LightObject> lights;
 
     std::unique_ptr<GlShader> terrainShader;
     std::unique_ptr<GlShader> waterShader;
@@ -71,18 +25,22 @@ struct ExperimentalApp : public GLFWApp
     GlTexture sceneDepthTexture;
     
     Renderable waterMesh;
-    
-    Renderable cubeMesh;
+    Renderable terrainMesh;
     
     std::unique_ptr<GLTextureView> colorTextureView;
     std::unique_ptr<GLTextureView> depthTextureView;
     
     std::mt19937 mt_rand;
     
-    float appTime = 0;
+    const float clipPlaneOffset = 0.075f;
+    
     float yWaterPlane = 0.0f;
+    float4x4 terrainTranslationMat = make_translation_matrix({0, -5, 0});
+    int yIndex = 0;
     
     UWidget rootWidget;
+    
+    float appTime = 0;
     
     ExperimentalApp() : GLFWApp(940, 720, "Sandbox App")
     {
@@ -93,8 +51,6 @@ struct ExperimentalApp : public GLFWApp
         cameraController.set_camera(&camera);
         
         camera.look_at({0, 4, 12}, {0, 0, 0});
-
-        perlinTexture = make_perlin_texture(16, 16);
 
         terrainShader.reset(new gfx::GlShader(read_file_text("assets/shaders/terrain_vert_debug.glsl"), read_file_text("assets/shaders/terrain_frag_debug.glsl")));
         waterShader.reset(new gfx::GlShader(read_file_text("assets/shaders/water_vert.glsl"), read_file_text("assets/shaders/water_frag.glsl")));
@@ -111,19 +67,11 @@ struct ExperimentalApp : public GLFWApp
 
         waterMesh = Renderable(make_plane(96.f, 96.f, 64, 64));
         
-        cubeMesh = make_perlin_mesh(64, 64); //Renderable(make_cube());
+        terrainMesh = make_perlin_mesh(64, 64); //Renderable(make_cube());
         
         auto seedGenerator = std::bind(std::uniform_int_distribution<>(0, 512), std::ref(mt_rand));
         auto newSeed = seedGenerator();
         seed(newSeed);
-        
-        {
-            lights.resize(2);
-            lights[0].color = float3(249.f / 255.f, 228.f / 255.f, 157.f / 255.f);
-            lights[0].pose.position = float3(25, 15, 0);
-            lights[1].color = float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f);
-            lights[1].pose.position = float3(-25, 15, 0);
-        }
         
         colorTextureView.reset(new GLTextureView(sceneColorTexture.get_gl_handle()));
         depthTextureView.reset(new GLTextureView(sceneDepthTexture.get_gl_handle()));
@@ -138,37 +86,8 @@ struct ExperimentalApp : public GLFWApp
         
     }
     
-    GlTexture make_perlin_texture(int width, int height)
-    {
-        GlTexture tex;
-        
-        std::vector<uint8_t> perlinNoise(width * height);
-        
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                float h = 0.0f;
-                float f = 0.05f;
-                h += simplex2(x * f, y * f, 4.0f, 1.f, 8.0f) * 1; f /= 2.0f;
-                h += simplex2(x * f, y * f, 4.0f, 2.f, 6.0f) * 2; f /= 2.0f;
-                h += simplex2(x * f, y * f, 4.0f, 3.f, 4.0f) * 4; f /= 2.0f;
-                h += simplex2(x * f, y * f, 4.0f, 4.f, 2.0f) * 8; f /= 2.0f;
-                uint8_t noiseValue = remap<float>(h, 3.0f, 8.5f, 0.0f, 255.f, true);
-                perlinNoise[y * height + x] = noiseValue;
-            }
-        }
-        tex.load_data(width, height, GL_RED, GL_UNSIGNED_BYTE, perlinNoise.data());
-        
-        return tex;
-    }
-    
     Geometry make_perlin_mesh(int width, int height)
     {
-        std::mt19937 mt_rand;
-        auto seedGenerator = std::bind(std::uniform_int_distribution<>(0, 1500), std::ref(mt_rand));
-        seed(seedGenerator());
-        
         Geometry terrain;
         int gridSize = 32;
         for (int x = 0; x <= gridSize; ++x)
@@ -210,9 +129,6 @@ struct ExperimentalApp : public GLFWApp
 
     }
     
-    float4x4 terrainTranslationMat = make_translation_matrix({0, -5, 0});
-    
-    int yIndex = 0;
     void on_input(const InputEvent & event) override
     {
         cameraController.handle_input(event);
@@ -220,13 +136,9 @@ struct ExperimentalApp : public GLFWApp
         if (event.type == InputEvent::KEY)
         {
             if (event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
-            {
                 terrainTranslationMat = make_translation_matrix({0, static_cast<float>(yIndex++), 0});
-            }
             else if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE)
-            {
                 terrainTranslationMat = make_translation_matrix({0, static_cast<float>(yIndex--), 0});
-            }
         }
         
     }
@@ -244,15 +156,10 @@ struct ExperimentalApp : public GLFWApp
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         
-
-        
         terrainShader->bind();
-        
-        terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
-        
+
         std::vector<float4x4> models;
         models.push_back(terrainTranslationMat);
-        //models.push_back(make_translation_matrix({-8, -2, 0}));
                          
         for (auto m : models)
         {
@@ -265,16 +172,12 @@ struct ExperimentalApp : public GLFWApp
             terrainShader->uniform("u_eyePosition", camera.get_eye_point());
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
-            //terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
-            
-            cubeMesh.draw();
+            terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
+            terrainMesh.draw();
         }
         
         terrainShader->unbind();
         
-        //glEnable(GL_DEPTH_TEST);
-        //glEnable(GL_CULL_FACE);
-        //glCullFace(GL_BACK);
         glDisable(GL_BLEND);
         
         gfx::gl_check_error(__FILE__, __LINE__);
@@ -382,7 +285,6 @@ struct ExperimentalApp : public GLFWApp
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
-            
             //glEnable(GL_POLYGON_OFFSET_FILL);
             //glPolygonOffset(0.4f, 1.0f);
             
@@ -394,20 +296,16 @@ struct ExperimentalApp : public GLFWApp
             reflectionFramebuffer.bind_to_draw();
             glClear(GL_COLOR_BUFFER_BIT);
             glClearColor(1.f, 0.0f, 0.0f, 1.0f);
-            
-            const float clipPlaneOffset = 0.075f;
-        
-            
+
             Pose oldPose = camera.pose;
-            //float3 newPosition = transform_coord(reflection, camera.pose.position);
             
             float3 newPosition = camera.pose.position;
             newPosition.y *= -1.0f;
             camera.set_position(newPosition); // newPosition
             
+            // Flip X axis
             auto e = quat_to_euler(camera.pose.orientation);
             camera.set_orientation(euler_to_quat(-e.x, e.y, e.z));
-
             
             // Reflect camera around reflection plane
             float3 normal = float3(0, 1, 0);
@@ -417,13 +315,9 @@ struct ExperimentalApp : public GLFWApp
             
             float4 clipPlane = camera_space_plane(camera.get_view_matrix(), pos, normal, 1.0f, clipPlaneOffset);
             
-            std::cout << clipPlane << std::endl;
-            
             float4x4 reflection = Zero4x4;
             calculate_reflection_matrix(reflection, reflectionPlane);
-            reflection = reflection;
             
-            // Needs reflection *
             float4x4 reflectedView = reflection * camera.get_view_matrix();
             
             float4x4 proj = camera.get_projection_matrix((float) width / (float) height);
@@ -431,7 +325,6 @@ struct ExperimentalApp : public GLFWApp
             float4x4 mvp = proj * reflectedView * model;
             float4x4 modelViewMat = reflectedView * model;
             
-            //float4(0.0, 0.0, 1.0, -yWaterPlane)
             terrainShader->bind();
             terrainShader->uniform("u_mvp", mvp);
             terrainShader->uniform("u_modelView", modelViewMat);
@@ -439,9 +332,8 @@ struct ExperimentalApp : public GLFWApp
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             terrainShader->uniform("u_clipPlane", clipPlane); // water - http://trederia.blogspot.com/2014/09/wadter-in-opengl-and-gles-20-part3.html
             terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
-            terrainShader->texture("u_noiseTexture", 0, perlinTexture.get_gl_handle(), GL_TEXTURE_2D);
             
-            cubeMesh.draw();
+            terrainMesh.draw();
             
             terrainShader->unbind();
             
@@ -449,10 +341,7 @@ struct ExperimentalApp : public GLFWApp
             glFrontFace(GL_CCW);
             
             reflectionFramebuffer.unbind();
-            
             camera.pose = oldPose;
-            
-            //glDisable(GL_POLYGON_OFFSET_FILL);
         }
         
         {
@@ -500,10 +389,6 @@ struct ExperimentalApp : public GLFWApp
             
             //glDisable(GL_BLEND);
         }
-
-        //glDisable(GL_DEPTH_TEST);
-        //glDisable(GL_CULL_FACE);
-        //glDisable(GL_BLEND);
         
         draw_ui();
         

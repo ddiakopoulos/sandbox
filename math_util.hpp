@@ -117,7 +117,7 @@ namespace math
     {
         return 2.f * atan(tan(hFov / 2.f) / aspectRatio );
     }
-    
+
 } // end namespace math
 
 #endif // end math_util_h
