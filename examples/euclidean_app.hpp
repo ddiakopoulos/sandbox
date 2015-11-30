@@ -62,6 +62,7 @@ std::vector<bool> make_euclidean_rhythm(int steps, int pulses)
 // [UI Todo]
 // * Button interaction
 // * Slider interaction
+// * Resize interaction
 
 static const float TEXT_OFFSET_X = 3;
 static const float TEXT_OFFSET_Y = 1;
@@ -86,10 +87,8 @@ struct LabelControl : public UIComponent
         nvgText(ctx, textX, textY, text.c_str(), nullptr);
     }
     
-    virtual void input(const InputEvent & e) override
-    {
-        std::cout << e.cursor << std::endl;
-    }
+    virtual void on_mouse_down(const float2 cursor) { std::cout << "Label Click: " << cursor << std::endl; }
+    
 };
 
 struct ButtonControl : public UIComponent
@@ -131,6 +130,10 @@ struct ButtonControl : public UIComponent
         nvgStrokeWidth(ctx, 1.0f);
         nvgStroke(ctx);
     };
+    
+    virtual void on_mouse_down(const float2 cursor) { std::cout << "Button Click: " << cursor << std::endl; }
+    virtual void on_mouse_up(const float2 cursor) { std::cout << "Button Release: " << cursor << std::endl; }
+    
 };
 
 struct SliderControl : public UIComponent
@@ -167,7 +170,19 @@ class UISurface
     
     UIStyleSheet stylesheet;
     
-    void render(UIRenderEvent & e, std::shared_ptr<UIComponent> control)
+    std::shared_ptr<UIComponent> hoverNode;
+    std::shared_ptr<UIComponent> clickedNode;
+    
+    std::shared_ptr<UIComponent> get_hover_component(const std::shared_ptr<UIComponent> & component, const float2 cursor)
+    {
+        bool hit = component->bounds.inside(cursor);
+        if (!hit) return nullptr;
+        for (auto it = component->children.crbegin(), end = component->children.crend(); it != end; ++it)
+            if (auto result = get_hover_component(*it, cursor)) return result;
+        return component;
+    }
+    
+    void render(UIRenderEvent & e, std::shared_ptr<UIComponent> & control)
     {
         // Draw current and recurse into children
         control->render(e);
@@ -175,19 +190,6 @@ class UISurface
         {
             e.parent = control.get();
             render(e, c);
-        }
-    }
-    
-    void input(const InputEvent & e, const std::shared_ptr<UIComponent> control)
-    {
-        bool hasFocus = control->bounds.inside(e.cursor);
-        if (hasFocus)
-        {
-            control->input(e);
-            for (const auto & c : control->children)
-            {
-                input(e, c);
-            }
         }
     }
     
@@ -215,7 +217,32 @@ public:
     
     void handle_input(const InputEvent & event)
     {
-        input(event, root);
+        hoverNode = get_hover_component(root, event.cursor);
+        
+        if (clickedNode)
+        {
+            if (event.type == InputEvent::MOUSE)
+            {
+                if (event.is_mouse_up())
+                {
+                    clickedNode->on_mouse_up(event.cursor);
+                    clickedNode.reset();
+                }
+            }
+        }
+        else
+        {
+            if (event.type == InputEvent::MOUSE)
+            {
+                if (event.is_mouse_down())
+                {
+                    clickedNode = hoverNode;
+                    if(clickedNode) clickedNode->on_mouse_down(event.cursor);
+                }
+            }
+        }
+
+        //input(event, root);
     }
     
     void draw(GLFWwindow * window)
