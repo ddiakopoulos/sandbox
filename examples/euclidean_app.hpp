@@ -85,10 +85,13 @@ struct LabelControl : public UIComponent
 
 struct ButtonControl : public UIComponent
 {
+    bool * value;
+    
     bool hover = false;
     
     std::string text;
     void set_text(const std::string & t) { text = t; };
+    void set_variable(bool & v) { value = &v; }
     
     ButtonControl(UIStyleSheet ss) : UIComponent(ss) {};
     
@@ -123,11 +126,22 @@ struct ButtonControl : public UIComponent
 
 struct SliderControl : public UIComponent
 {
+    float min, max;
+    float * value;
+    
+    void set_range (const float min, const float max) { this->min = min; this->max = max; }
+    void set_variable(float & v) { value = &v; }
+    
     SliderControl(UIStyleSheet ss) : UIComponent(ss) {};
     
     virtual void render(const UIRenderEvent & e) override
     {
-        
+        auto ctx = e.ctx;
+        nvgBeginPath(ctx);
+        nvgRect(ctx, bounds.x0, bounds.y0, bounds.width(), bounds.height());
+        nvgStrokeColor(ctx, nvgRGBA(255, 255, 255, 255));
+        nvgStrokeWidth(ctx, 1.0f);
+        nvgStroke(ctx);
     };
 };
 
@@ -202,10 +216,26 @@ public:
         nvgEndFrame(nvg);
     }
     
-    std::shared_ptr<ButtonControl> make_button(const std::string & text) const
+    std::shared_ptr<LabelControl> make_label(const std::string & text) const
+    {
+        auto control = std::make_shared<LabelControl>(stylesheet);
+        control->set_text(text);
+        return control;
+    }
+    
+    std::shared_ptr<ButtonControl> make_button(const std::string & text, bool & variable) const
     {
         auto control = std::make_shared<ButtonControl>(stylesheet);
         control->set_text(text);
+        control->set_variable(variable);
+        return control;
+    }
+    
+    std::shared_ptr<SliderControl> make_slider(const float min, const float max, float & variable) const
+    {
+        auto control = std::make_shared<SliderControl>(stylesheet);
+        control->set_range(min, max);
+        control->set_variable(variable);
         return control;
     }
 
