@@ -87,7 +87,7 @@ struct LabelControl : public UIComponent
         nvgText(ctx, textX, textY, text.c_str(), nullptr);
     }
     
-    virtual void on_mouse_down(const float2 cursor) { std::cout << "Label Click: " << cursor << std::endl; }
+    virtual void on_mouse_down(const float2 cursor) override { std::cout << "Label Click: " << cursor << std::endl; }
     
 };
 
@@ -131,8 +131,8 @@ struct ButtonControl : public UIComponent
         nvgStroke(ctx);
     };
     
-    virtual void on_mouse_down(const float2 cursor) { std::cout << "Button Click: " << cursor << std::endl; }
-    virtual void on_mouse_up(const float2 cursor) { std::cout << "Button Release: " << cursor << std::endl; }
+    virtual void on_mouse_down(const float2 cursor) override { std::cout << "Button Click: " << cursor << std::endl; }
+    virtual void on_mouse_up(const float2 cursor) override { std::cout << "Button Release: " << cursor << std::endl; }
     
 };
 
@@ -140,6 +140,9 @@ struct SliderControl : public UIComponent
 {
     float min, max;
     float * value;
+    float handleOffset;
+    float2 lastClick;
+    const float handleSize = 20.0f; //pixels
     
     void set_range (const float min, const float max) { this->min = min; this->max = max; }
     void set_variable(float & v) { value = &v; }
@@ -149,12 +152,29 @@ struct SliderControl : public UIComponent
     virtual void render(const UIRenderEvent & e) override
     {
         auto ctx = e.ctx;
+        
+        // Border
         nvgBeginPath(ctx);
         nvgRect(ctx, bounds.x0, bounds.y0, bounds.width(), bounds.height());
         nvgStrokeColor(ctx, style.borderColor);
         nvgStrokeWidth(ctx, 1.0f);
         nvgStroke(ctx);
+        
+        // Handle
+        nvgBeginPath(ctx);
+        nvgRect(ctx, bounds.x0 + handleOffset, bounds.y0, handleSize, bounds.height());
+        nvgFillColor(ctx, nvgRGBA(220, 220, 220, 255));
+  
+        nvgFill(ctx);
     };
+    
+    virtual void on_mouse_down(const float2 cursor) override { lastClick = cursor; }
+    
+    virtual void on_mouse_drag(const math::float2 cursor, const math::float2 delta) override
+    {
+        float2 offsetFromx0 = lastClick - bounds.x0; // 0 to the y1
+        handleOffset = clamp(offsetFromx0.x - (handleSize * 0.5f) - (lastClick.x - cursor.x), 0.0f, bounds.width() - (handleSize));
+    }
 };
 
 // A UISurface creates and owns a nanovg context and related font assets. The root
@@ -172,6 +192,7 @@ class UISurface
     
     std::shared_ptr<UIComponent> hoverNode;
     std::shared_ptr<UIComponent> clickedNode;
+    float2 lastCursor;
     
     std::shared_ptr<UIComponent> get_hover_component(const std::shared_ptr<UIComponent> & component, const float2 cursor)
     {
@@ -221,6 +242,9 @@ public:
         
         if (clickedNode)
         {
+            if (event.cursor != lastCursor)
+                clickedNode->on_mouse_drag(event.cursor, event.cursor - lastCursor);
+            
             if (event.type == InputEvent::MOUSE)
             {
                 if (event.is_mouse_up())
@@ -229,6 +253,7 @@ public:
                     clickedNode.reset();
                 }
             }
+
         }
         else
         {
@@ -241,8 +266,8 @@ public:
                 }
             }
         }
-
-        //input(event, root);
+        
+        lastCursor = event.cursor;
     }
     
     void draw(GLFWwindow * window)
@@ -304,8 +329,10 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<UISurface> userInterface;
     std::shared_ptr<LabelControl> label;
     std::shared_ptr<ButtonControl> button;
+    std::shared_ptr<SliderControl> slider;
     
     bool btnState = false;
+    float sliderVar = 0.0f;
     
     ExperimentalApp() : GLFWApp(940, 720, "Euclidean App")
     {
@@ -323,11 +350,13 @@ struct ExperimentalApp : public GLFWApp
             
             userInterface->set_root_stylesheet(stylesheet);
             
-            label = userInterface->make_label("A label is me");
-            button = userInterface->make_button("I'm a button", btnState);
+            label = userInterface->make_label("je suis label");
+            button = userInterface->make_button("touche croquante", btnState);
+            slider = userInterface->make_slider(0.0f, 1.0f, sliderVar);
             
-            userInterface->get_root()->add_child( {{0,+10},{0,+10},{0.25,0},{0.0, +90}}, label);
-            userInterface->get_root()->add_child( {{.25,+10},{0, +10},{0.50, -10},{0.0, +90}}, button);
+            userInterface->get_root()->add_child({ {0.f,+10}, {0.f,+10}, {0.25,0.f}, {0.f,+90} }, label);
+            userInterface->get_root()->add_child({ {.25,+10}, {0.f,+10}, {0.50,-10}, {0.f,+90} }, button);
+            userInterface->get_root()->add_child({ {.50,+10}, {0.f,+10}, {0.75,-10}, {0.f,+50} }, slider);
             userInterface->get_root()->layout();
         }
         cameraController.set_camera(&camera);

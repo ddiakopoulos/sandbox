@@ -61,6 +61,7 @@ struct UIComponent
     virtual void input(const util::InputEvent & e) {};
     virtual void on_mouse_down(const math::float2 cursor) {};
     virtual void on_mouse_up(const math::float2 cursor) {};
+    virtual void on_mouse_drag(const math::float2 cursor, const math::float2 delta) {};
 };
 
 #endif // end uwidget_h
