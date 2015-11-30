@@ -62,65 +62,55 @@ std::vector<bool> make_euclidean_rhythm(int steps, int pulses)
 static const float TEXT_OFFSET_X = 3;
 static const float TEXT_OFFSET_Y = 1;
 
-struct UIState
+struct LabelControl : public UIComponent
 {
-    NVGcontext * nvg;
-    float2 cursor;
-    bool leftBtn;
-    bool rightBtn;
-    std::shared_ptr<NvgFont> typeface;
-};
-
-struct PanelControl : public UWidget
-{
-    void render(std::shared_ptr<UIState> state)
+    std::string text;
+    void set_text(const std::string & t) { text = t; };
+    
+    LabelControl(UIStyleSheet ss) : UIComponent(ss) {};
+    
+    virtual void render(const UIRenderEvent & e) override
     {
-        auto ctx = state->nvg;
-        nvgBeginPath(ctx);
-        nvgRect(ctx, bounds.x0, bounds.y0, bounds.width(), bounds.height());
-        nvgStrokeColor(ctx, nvgRGBA(255, 255, 255, 255));
-        nvgStrokeWidth(ctx, 1.0f);
-        nvgStroke(ctx);
-    }
-};
-
-struct LabelControl : public UWidget
-{
-    float render(std::shared_ptr<UIState> state, const std::string & text)
-    {
-        auto ctx = state->nvg;
+        // Need to center text
+        auto ctx = e.ctx;
         const float textX = bounds.x0 + TEXT_OFFSET_X, textY = bounds.y0 + TEXT_OFFSET_Y;
-        nvgFontFaceId(ctx, state->typeface->id);
+        nvgFontFaceId(ctx, e.text->id);
         nvgFontSize(ctx, 20);
         nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgBeginPath(ctx);
         nvgFillColor(ctx, nvgRGBA(0,0,0,255));
-        return nvgText(ctx, textX, textY, text.c_str(), nullptr);
+        nvgText(ctx, textX, textY, text.c_str(), nullptr);
     }
 };
 
-struct ButtonControl : public UWidget
+struct ButtonControl : public UIComponent
 {
-    bool render(std::shared_ptr<UIState> state, const std::string & text)
+    bool hover = false;
+    
+    std::string text;
+    void set_text(const std::string & t) { text = t; };
+    
+    ButtonControl(UIStyleSheet ss) : UIComponent(ss) {};
+    
+    virtual void render(const UIRenderEvent & e) override
     {
-        auto ctx = state->nvg;
+        auto ctx = e.ctx;
         
         const float textX = bounds.x0 + TEXT_OFFSET_X, textY = bounds.y0 + TEXT_OFFSET_Y;
-        nvgFontFaceId(ctx, state->typeface->id);
+        nvgFontFaceId(ctx, e.text->id);
         nvgFontSize(ctx, 20);
         nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgBeginPath(ctx);
         nvgFillColor(ctx, nvgRGBA(0,0,0,255));
         nvgText(ctx, textX, textY, text.c_str(), nullptr);
         
-        if (bounds.inside(state->cursor) && state->leftBtn == true)
+        if (hover)
         {
             nvgBeginPath(ctx);
             nvgRect(ctx, bounds.x0, bounds.y0, bounds.width(), bounds.height());
             nvgStrokeColor(ctx, nvgRGBA(255, 0, 0, 255));
             nvgStrokeWidth(ctx, 1.0f);
             nvgStroke(ctx);
-            return true;
         }
         
         nvgBeginPath(ctx);
@@ -128,20 +118,97 @@ struct ButtonControl : public UWidget
         nvgStrokeColor(ctx, nvgRGBA(255, 255, 255, 255));
         nvgStrokeWidth(ctx, 1.0f);
         nvgStroke(ctx);
-        return false;
     };
 };
 
-struct SliderControl : public UWidget
+struct SliderControl : public UIComponent
 {
-    bool render(std::shared_ptr<UIState> state, const std::string & text, const float min, const float max, float & value)
+    SliderControl(UIStyleSheet ss) : UIComponent(ss) {};
+    
+    virtual void render(const UIRenderEvent & e) override
     {
-        if (bounds.inside(state->cursor) && state->leftBtn == true)
-        {
-            return true;
-        }
-        return false;
+        
     };
+};
+
+class UISurface
+{
+    NVGcontext * nvg;
+    
+    std::shared_ptr<NvgFont> text_fontface;
+    std::shared_ptr<NvgFont> icon_fontface;
+    std::shared_ptr<UIComponent> root;
+    
+    UIStyleSheet stylesheet;
+    
+    void render(UIRenderEvent & e, std::shared_ptr<UIComponent> control)
+    {
+        // Draw current and recurse into children
+        control->render(e);
+        for (auto & c : control->children)
+        {
+            e.parent = control.get();
+            render(e, c);
+        }
+    }
+    
+    void input(const InputEvent & e, const std::shared_ptr<UIComponent> control)
+    {
+        bool hasFocus = control->bounds.inside(e.cursor);
+        if (hasFocus)
+        {
+            control->input(e);
+            for (const auto & c : control->children)
+            {
+                input(e, c);
+            }
+        }
+    }
+    
+public:
+    
+    UISurface(float width, float height, const std::string & text_font, const std::string & icon_font)
+    {
+        nvg = make_nanovg_context(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+        if (!nvg) throw std::runtime_error("error initializing nanovg context");
+        text_fontface = std::make_shared<NvgFont>(nvg, text_font, read_file_binary("assets/fonts/" + text_font + ".ttf"));
+        icon_fontface = std::make_shared<NvgFont>(nvg, icon_font, read_file_binary("assets/fonts/" + icon_font + ".ttf"));
+        root = std::make_shared<UIComponent>(stylesheet);
+        root->bounds = {0, 0, width, height};
+    }
+    
+    ~UISurface()
+    {
+        release_nanovg_context(nvg);
+    }
+    
+    UIComponent * get_root() { return root.get(); }
+    
+    // This should be set before any widgets are added to the root node
+    void set_root_stylesheet(UIStyleSheet ss) { stylesheet = ss; }
+    
+    void handle_input(const InputEvent & event)
+    {
+        input(event, root);
+    }
+    
+    void draw(GLFWwindow * window)
+    {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+        nvgBeginFrame(nvg, width, height, 1.0);
+        UIRenderEvent e = {nvg, root.get(), text_fontface.get(), icon_fontface.get()};
+        render(e, root);
+        nvgEndFrame(nvg);
+    }
+    
+    std::shared_ptr<ButtonControl> make_button(const std::string & text) const
+    {
+        auto control = std::make_shared<ButtonControl>(stylesheet);
+        control->set_text(text);
+        return control;
+    }
+
 };
 
 struct ExperimentalApp : public GLFWApp
@@ -165,20 +232,15 @@ struct ExperimentalApp : public GLFWApp
     
     jo_gif_t gif;
     
-    NVGcontext * context;
-    UWidget uiRootNode;
-    
-    std::shared_ptr<NvgFont> sourceFont;
-    std::shared_ptr<UIState> uiState;
-    
-    std::shared_ptr<LabelControl> label;
-    std::shared_ptr<ButtonControl> button;
+    std::unique_ptr<UISurface> userInterface;
     
     ExperimentalApp() : GLFWApp(940, 720, "Euclidean App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
+        
+        userInterface.reset(new UISurface(width, height, "source_code_pro_regular", "source_code_pro_regular"));
         
         cameraController.set_camera(&camera);
         
@@ -215,13 +277,12 @@ struct ExperimentalApp : public GLFWApp
         
         grid = RenderableGrid(1, 64, 64);
         
+        /*
         {
             context = setup_user_interface();
             uiState.reset(new UIState);
             uiState->nvg = context;
             uiState->typeface = sourceFont;
-            
-            uiRootNode.bounds = {0, 0, (float) width, (float) height};
             
             label = std::make_shared<LabelControl>();
             button = std::make_shared<ButtonControl>();
@@ -231,29 +292,9 @@ struct ExperimentalApp : public GLFWApp
                 
             uiRootNode.layout();
         }
+        */
         
         gfx::gl_check_error(__FILE__, __LINE__);
-    }
-    
-    NVGcontext * setup_user_interface()
-    {
-        NVGcontext * nvgCtx = make_nanovg_context(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
-        if (!nvgCtx) throw std::runtime_error("error initializing nanovg context");
-        sourceFont = std::make_shared<NvgFont>(nvgCtx, "souce_sans_pro", read_file_binary("assets/fonts/source_code_pro_regular.ttf"));
-        return nvgCtx;
-    }
-    
-    void draw_user_interface()
-    {
-        int width, height;
-        glfwGetWindowSize(window, &width, &height);
-        
-        nvgBeginFrame(context, width, height, 1.0);
-        {
-            button->render(uiState, "Test Button");
-            label->render(uiState, "Some label...");
-        }
-        nvgEndFrame(context);
     }
     
     ~ExperimentalApp()
@@ -269,6 +310,7 @@ struct ExperimentalApp : public GLFWApp
     void on_input(const InputEvent & event) override
     {
         cameraController.handle_input(event);
+        userInterface->handle_input(event);
     }
     
     void on_update(const UpdateEvent & e) override
@@ -341,7 +383,7 @@ struct ExperimentalApp : public GLFWApp
         
         grid.render(proj, view);
         
-        draw_user_interface();
+        userInterface->draw(window);
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
