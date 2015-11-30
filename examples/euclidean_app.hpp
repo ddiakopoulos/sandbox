@@ -59,6 +59,10 @@ std::vector<bool> make_euclidean_rhythm(int steps, int pulses)
 // std::vector<unsigned char> rgbFrame;
 // rgbFrame.resize(width * height * 4);
 
+// [UI Todo]
+// * Button interaction
+// * Slider interaction
+
 static const float TEXT_OFFSET_X = 3;
 static const float TEXT_OFFSET_Y = 1;
 
@@ -71,15 +75,20 @@ struct LabelControl : public UIComponent
     
     virtual void render(const UIRenderEvent & e) override
     {
-        // Need to center text
         auto ctx = e.ctx;
-        const float textX = bounds.x0 + TEXT_OFFSET_X, textY = bounds.y0 + TEXT_OFFSET_Y;
+        float w = nvgTextBounds(ctx, 0, 0, text.c_str(), NULL, NULL);
+        const float textX = bounds.get_center_x() - w * 0.5f + 3, textY = bounds.get_center_y() + 1;
         nvgFontFaceId(ctx, e.text->id);
         nvgFontSize(ctx, 20);
-        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         nvgBeginPath(ctx);
-        nvgFillColor(ctx, nvgRGBA(0,0,0,255));
+        nvgFillColor(ctx, style.textColor);
         nvgText(ctx, textX, textY, text.c_str(), nullptr);
+    }
+    
+    virtual void input(const InputEvent & e) override
+    {
+        std::cout << e.cursor << std::endl;
     }
 };
 
@@ -98,27 +107,27 @@ struct ButtonControl : public UIComponent
     virtual void render(const UIRenderEvent & e) override
     {
         auto ctx = e.ctx;
-        
-        const float textX = bounds.x0 + TEXT_OFFSET_X, textY = bounds.y0 + TEXT_OFFSET_Y;
+        float w = nvgTextBounds(ctx, 0, 0, text.c_str(), NULL, NULL);
+        const float textX = bounds.get_center_x() - w * 0.5f + 3, textY = bounds.get_center_y() + 1;
         nvgFontFaceId(ctx, e.text->id);
         nvgFontSize(ctx, 20);
-        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         nvgBeginPath(ctx);
-        nvgFillColor(ctx, nvgRGBA(0,0,0,255));
+        nvgFillColor(ctx, style.textColor);
         nvgText(ctx, textX, textY, text.c_str(), nullptr);
         
         if (hover)
         {
             nvgBeginPath(ctx);
             nvgRect(ctx, bounds.x0, bounds.y0, bounds.width(), bounds.height());
-            nvgStrokeColor(ctx, nvgRGBA(255, 0, 0, 255));
+            nvgStrokeColor(ctx, style.borderColor);
             nvgStrokeWidth(ctx, 1.0f);
             nvgStroke(ctx);
         }
         
         nvgBeginPath(ctx);
         nvgRect(ctx, bounds.x0, bounds.y0, bounds.width(), bounds.height());
-        nvgStrokeColor(ctx, nvgRGBA(255, 255, 255, 255));
+        nvgStrokeColor(ctx, style.borderColor);
         nvgStrokeWidth(ctx, 1.0f);
         nvgStroke(ctx);
     };
@@ -139,12 +148,15 @@ struct SliderControl : public UIComponent
         auto ctx = e.ctx;
         nvgBeginPath(ctx);
         nvgRect(ctx, bounds.x0, bounds.y0, bounds.width(), bounds.height());
-        nvgStrokeColor(ctx, nvgRGBA(255, 255, 255, 255));
+        nvgStrokeColor(ctx, style.borderColor);
         nvgStrokeWidth(ctx, 1.0f);
         nvgStroke(ctx);
     };
 };
 
+// A UISurface creates and owns a nanovg context and related font assets. The root
+// node covers the surface area of the window and can be partitioned by children.
+// The surfaces handles input events from the application and redraws the tree.
 class UISurface
 {
     NVGcontext * nvg;
@@ -274,15 +286,23 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        userInterface.reset(new UISurface(width, height, "source_code_pro_regular", "source_code_pro_regular"));
-        
-        label = userInterface->make_label("A label is me");
-        button = userInterface->make_button("I'm a button", btnState);
-        
-        userInterface->get_root()->add_child( {{0,+10},{0,+10},{0.25,0},{0.0, +90}}, label);
-        userInterface->get_root()->add_child( {{.25,+10},{0, +10},{0.50, -10},{0.0, +90}}, button);
-        userInterface->get_root()->layout();
-        
+        {
+            userInterface.reset(new UISurface(width, height, "source_code_pro_regular", "source_code_pro_regular"));
+            
+            UIStyleSheet stylesheet;
+            stylesheet.textColor = nvgRGBA(255, 255, 255, 255);
+            stylesheet.backgroundColor = nvgRGBA(30, 30, 30, 255);
+            stylesheet.borderColor = nvgRGBA(255, 255, 255, 255);
+            
+            userInterface->set_root_stylesheet(stylesheet);
+            
+            label = userInterface->make_label("A label is me");
+            button = userInterface->make_button("I'm a button", btnState);
+            
+            userInterface->get_root()->add_child( {{0,+10},{0,+10},{0.25,0},{0.0, +90}}, label);
+            userInterface->get_root()->add_child( {{.25,+10},{0, +10},{0.50, -10},{0.0, +90}}, button);
+            userInterface->get_root()->layout();
+        }
         cameraController.set_camera(&camera);
         
         camera.look_at({0, 8, 24}, {0, 0, 0});
