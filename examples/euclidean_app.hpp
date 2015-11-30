@@ -168,13 +168,17 @@ struct SliderControl : public UIComponent
         nvgFill(ctx);
     };
     
-    virtual void on_mouse_down(const float2 cursor) override { lastClick = cursor; }
-    
-    virtual void on_mouse_drag(const math::float2 cursor, const math::float2 delta) override
+    void compute_offset(const float2 cursor)
     {
-        float2 offsetFromx0 = lastClick - bounds.x0; // 0 to the y1
+        float2 offsetFromx0 = lastClick - bounds.x0;
         handleOffset = clamp(offsetFromx0.x - (handleSize * 0.5f) - (lastClick.x - cursor.x), 0.0f, bounds.width() - (handleSize));
+        *value = remap<float>(handleOffset, 0.0f, bounds.width() - (handleSize), min, max, true);
+        std::cout << *value << std::endl;
     }
+    
+    virtual void on_mouse_down(const float2 cursor) override { lastClick = cursor; compute_offset(cursor); }
+    
+    virtual void on_mouse_drag(const math::float2 cursor, const math::float2 delta) override { compute_offset(cursor); }
 };
 
 // A UISurface creates and owns a nanovg context and related font assets. The root
