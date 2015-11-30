@@ -263,6 +263,10 @@ struct ExperimentalApp : public GLFWApp
     jo_gif_t gif;
     
     std::unique_ptr<UISurface> userInterface;
+    std::shared_ptr<LabelControl> label;
+    std::shared_ptr<ButtonControl> button;
+    
+    bool btnState = false;
     
     ExperimentalApp() : GLFWApp(940, 720, "Euclidean App")
     {
@@ -271,6 +275,13 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         
         userInterface.reset(new UISurface(width, height, "source_code_pro_regular", "source_code_pro_regular"));
+        
+        label = userInterface->make_label("A label is me");
+        button = userInterface->make_button("I'm a button", btnState);
+        
+        userInterface->get_root()->add_child( {{0,+10},{0,+10},{0.25,0},{0.0, +90}}, label);
+        userInterface->get_root()->add_child( {{.25,+10},{0, +10},{0.50, -10},{0.0, +90}}, button);
+        userInterface->get_root()->layout();
         
         cameraController.set_camera(&camera);
         
@@ -306,23 +317,6 @@ struct ExperimentalApp : public GLFWApp
         }
         
         grid = RenderableGrid(1, 64, 64);
-        
-        /*
-        {
-            context = setup_user_interface();
-            uiState.reset(new UIState);
-            uiState->nvg = context;
-            uiState->typeface = sourceFont;
-            
-            label = std::make_shared<LabelControl>();
-            button = std::make_shared<ButtonControl>();
-            
-            uiRootNode.add_child( {{0,+10},{0,+10},{0.25,0},{0.25,0}}, label);
-            uiRootNode.add_child( {{.25,+10},{0, +10},{0.50, -10},{0.25,0}}, button);
-                
-            uiRootNode.layout();
-        }
-        */
         
         gfx::gl_check_error(__FILE__, __LINE__);
     }
