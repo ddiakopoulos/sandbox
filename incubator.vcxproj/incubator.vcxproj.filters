@@ -93,9 +93,6 @@
     <ClInclude Include="..\examples\ssao_app.hpp">
       <Filter>examples</Filter>
     </ClInclude>
-    <ClInclude Include="..\anvil.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
     <ClInclude Include="..\geometry.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
@@ -207,6 +204,12 @@
     <ClInclude Include="..\procedural_sky\preetham.hpp">
       <Filter>source\sky</Filter>
     </ClInclude>
+    <ClInclude Include="..\examples\terrain_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\noise.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
@@ -259,6 +262,9 @@
     </ClCompile>
     <ClCompile Include="..\glfw_app.mm">
       <Filter>source\app</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\noise.cpp">
+      <Filter>third_party</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
