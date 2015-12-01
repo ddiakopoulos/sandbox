@@ -37,7 +37,7 @@ struct ExperimentalApp : public GLFWApp
     int yIndex = 0;
     float4x4 terrainTranslationMat = make_translation_matrix({-16, static_cast<float>(yIndex), -16});
     
-    UWidget rootWidget;
+    //UWidget rootWidget;
     
     float appTime = 0;
     float rotationAngle = 0.0f;
@@ -84,16 +84,16 @@ struct ExperimentalApp : public GLFWApp
         gfx::gl_check_error(__FILE__, __LINE__);
         
         // Set up the UI
-        rootWidget.bounds = {0, 0, (float) width, (float) height};
-        rootWidget.add_child( {{0,+10},{0,+10},{0.25,0},{0.25,0}}, std::make_shared<UWidget>()); // for colorTexture
-        rootWidget.add_child( {{.25,+10},{0, +10},{0.50, -10},{0.25,0}}, std::make_shared<UWidget>()); // for depthTexture
-        rootWidget.layout();
+        //rootWidget.bounds = {0, 0, (float) width, (float) height};
+       // rootWidget.add_child( {{0,+10},{0,+10},{0.25,0},{0.25,0}}, std::make_shared<UWidget>()); // for colorTexture
+       // rootWidget.add_child( {{.25,+10},{0, +10},{0.50, -10},{0.25,0}}, std::make_shared<UWidget>()); // for depthTexture
+       // rootWidget.layout();
     }
     
     std::vector<float> make_radial_mask(int size, float heightScale = 1.0)
     {
         float radius = size / 2.0f;
-        std::vector<float> mask(size * size + 2);
+        std::vector<float> mask(size * size * 2);
         
         for (int iy = 0; iy <= size; iy++)
         {
@@ -191,21 +191,21 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         
         terrainShader->bind();
-
-        std::vector<float4x4> models;
-        models.push_back(terrainTranslationMat);
         
         terrainShader->uniform("u_eyePosition", camera.get_eye_point());
         terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
         terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
         
-        for (auto m : models)
+		float4x4 viewProj = camera.get_projection_matrix((float)width / (float)height) * camera.get_view_matrix();
+
         {
-            float4x4 model = Identity4x4 * m;
+            float4x4 model = Identity4x4 * terrainTranslationMat;
             float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
             float4x4 modelViewMat = camera.get_view_matrix() * model;
             
             terrainShader->uniform("u_mvp", mvp);
+			terrainShader->uniform("u_model", model);
+			terrainShader->uniform("u_viewProj", viewProj);
             terrainShader->uniform("u_modelView", modelViewMat);
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             terrainShader->uniform("u_surfaceColor", float3(95.f / 255.f, 189.f / 255.f, 192.f / 255.f));
@@ -218,6 +218,8 @@ struct ExperimentalApp : public GLFWApp
             float4x4 modelViewMat = camera.get_view_matrix() * model;
             
             terrainShader->uniform("u_mvp", mvp);
+			terrainShader->uniform("u_model", model);
+			terrainShader->uniform("u_viewProj", viewProj);
             terrainShader->uniform("u_modelView", modelViewMat);
             terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             terrainShader->uniform("u_surfaceColor", float3(189.f / 255.f, 94.f / 255.f, 188.f / 255.f));
@@ -271,48 +273,32 @@ struct ExperimentalApp : public GLFWApp
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
-            // Wind in reverse order
+            // Wind in reverse order for reflection
             glFrontFace(GL_CW);
             
             reflectionFramebuffer.bind_to_draw();
             glClear(GL_COLOR_BUFFER_BIT);
             glClearColor(0.f, 0.0f, 0.0f, 1.0f);
             
-            Pose savedCameraPose = camera.pose;
-            
-            // Set up temporary reflection camera
-            {
-                float3 newPosition = camera.pose.position;
-                newPosition.y *= -1.0f;
-                camera.set_position(newPosition); // newPosition
-                
-                // Flip X axis
-                auto e = make_euler_from_quat(camera.pose.orientation);
-                camera.set_orientation(make_quat_from_euler(-e.x, e.y, e.z));
-            }
             
             // Reflect camera around reflection plane
             float3 normal = float3(0, 1, 0);
             float3 pos = {0, 0, 0}; // Location of object... here, the terrain
-            float d = -dot(normal, pos) - clipPlaneOffset;
-            float4 reflectionPlane = float4(normal.x, normal.y, normal.z, d);
-            
-            float4 clipPlane = camera_space_plane(camera.get_view_matrix(), pos, normal, 1.0f, clipPlaneOffset);
-            
-            float4x4 reflection = make_reflection_matrix(reflectionPlane);
-            
-            float4x4 reflectedView = reflection * camera.get_view_matrix();
+            float d = -dot(normal, pos);
+            float4 reflectionPlane = float4(normal.x, normal.y, normal.z, 0.f);
 
             float4x4 model = Identity4x4 * terrainTranslationMat;
-            float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * reflectedView * model;
-            float4x4 modelViewMat = reflectedView * model;
             
+			// Take position, transform into world space with model, reflect about a world space reflection plane, then take it into the view space of the camera
+			// ViewProj takes the camera local coordinate into screen coordinates (3D to the 2D + Z)
+			// gl_position = proj * view * refl * model * position;
+
             terrainShader->bind();
-            terrainShader->uniform("u_mvp", mvp);
-            terrainShader->uniform("u_modelView", modelViewMat);
-            terrainShader->uniform("u_eyePosition", camera.get_eye_point());
-            terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
-            terrainShader->uniform("u_clipPlane", clipPlane);
+            terrainShader->uniform("u_viewProj", viewProj * make_reflection_matrix(reflectionPlane));
+			terrainShader->uniform("u_model", model);
+			//terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
+            terrainShader->uniform("u_eyePosition", camera.get_eye_point());            
+            terrainShader->uniform("u_clipPlane", reflectionPlane);
             terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
             terrainShader->uniform("u_surfaceColor", float3(1, 1, 1));
             terrainMesh.draw();
@@ -320,9 +306,7 @@ struct ExperimentalApp : public GLFWApp
             terrainShader->unbind();
             
             reflectionFramebuffer.unbind();
-            
-            camera.pose = savedCameraPose;
-            
+
             // Pop reverse winding
             glFrontFace(GL_CCW);
         }
