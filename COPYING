@@ -1,0 +1,69 @@
+Original code licensed is released into the public domain. See LICENSE
+for details. Other pieces of software used in this repository are listed
+as follows: 
+
+https://github.com/nothings/stb (Public Domain)
+Authored by Sean T. Barrett, 1998+
+
+https://github.com/sgorsten/linalg (Public Domain)
+Authored by Sterling G. Orsten, 2014
+
+https://github.com/sgorsten/editor (Public Domain)
+Authored by Sterling G. Orsten, 2015
+
+https://github.com/sgorsten/workbench (Public Domain)
+Authored by Sterling G. Orsten, 2015
+
+https://github.com/nvpro-samples/shared_sources/blob/master/noise/noise1234.h (Public Domain)
+Authored by Stefan Gustavson, 2011
+
+http://www.jonolick.com/home/gif-writer (Public Domain)
+Authored by Jon Olick, 2015
+
+https://en.wikipedia.org/wiki/MurmurHash (Public Domain)
+Authored by Austin Appleby, 2008
+
+http://www.glfw.org/ (zlib/libpng)
+Copyright (c) Camilla Berglund, 2006-2011
+
+http://www.geometrictools.com/ (Boost)
+Copyright (c) Geometric Tools, 1998-2015
+
+https://github.com/cinder/Cinder (BSD 2-Clause)
+Copyright (c) The Barbarian Group, 2010+
+
+https://github.com/syoyo/tinyobjloader (BSD 2-Clause)
+Copyright (c) Syoyo Fujita, 2012 - 2015
+
+https://github.com/melax/sandbox (MIT)
+Copyright (c) Stan Melax, 2014
+
+https://github.com/bclucas/Alloy-Graphics-Library/ (BSD 2-Clause)
+Copyright (c) Blake C. Lucas, 2015
+
+https://github.com/dmsovetov/foo (MIT)
+Copyright (c) Dmitry Sovetov, 2015
+
+http://gruntthepeon.free.fr/oscpkt/ (zlib/libpng)
+Copyright (c) Julien Pommier, 2015
+
+https://github.com/memononen/nanovg/ (zlib/libpng)
+Copyright (c) Mikko Mononen, 2015
+
+https://github.com/caseman/noise (MIT)
+Copyight (c) Casey Duncan, 2008
+
+https://hal.inria.fr/hal-00670496/ (Boost)
+Copyright (c) Reviatech, 2012
+
+https://github.com/wieden-kennedy/Cinder-Sampling (Apache 2.0)
+Copyright (c) Wieden Kennedy, 2014
+
+https://github.com/mattdesl/glsl-fxaa/blob/master/fxaa.glsl (BSD 3-Clause)
+Copyright (c) Armin Ronacher, 2011
+
+https://github.com/BlockoS/PID/blob/master/PID.h (Apache 2.0)
+Copyright (c) Vincent Cruz, 2015
+
+"An Analytic Model for Full Spectral Sky-Dome Radiance"
+Copyright (c) Lukas Hosek and Alexander Wilkie, 2012-2013

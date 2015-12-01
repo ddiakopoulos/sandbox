@@ -267,8 +267,7 @@
 		0849FD8D1BE7CB2B000F148E /* third_party */ = {
 			isa = PBXGroup;
 			children = (
-				08C475801C0AE9C50031E87E /* jo_gif.cpp */,
-				08C475811C0AE9C50031E87E /* jo_gif.hpp */,
+				08C475831C0E0B580031E87E /* jo_gif */,
 				0849FD9E1BFAFC77000F148E /* tinyobj */,
 				0849FD911BF00334000F148E /* json */,
 				08289F7D1BC5F7E40054AF3B /* tinyply */,
@@ -394,6 +393,15 @@
 				0822AF321BD389EA00A894F0 /* universal_widget.hpp */,
 			);
 			name = tools;
+			sourceTree = "<group>";
+		};
+		08C475831C0E0B580031E87E /* jo_gif */ = {
+			isa = PBXGroup;
+			children = (
+				08C475801C0AE9C50031E87E /* jo_gif.cpp */,
+				08C475811C0AE9C50031E87E /* jo_gif.hpp */,
+			);
+			name = jo_gif;
 			sourceTree = "<group>";
 		};
 		08CFD2DB1BDD666000895E31 /* nanovg */ = {
