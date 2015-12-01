@@ -29,7 +29,7 @@ struct UIComponent
     
     UIStyleSheet style;
     
-    UIComponent(UIStyleSheet stylesheet) : style(stylesheet)
+    UIComponent(UIStyleSheet stylesheet = UIStyleSheet()) : style(stylesheet)
     {
         
     }
