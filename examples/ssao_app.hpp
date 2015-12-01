@@ -4,25 +4,10 @@ using namespace math;
 using namespace util;
 using namespace gfx;
 
-struct Object
-{
-    Pose pose;
-    float3 scale;
-    Object() : scale(1, 1, 1) {}
-    float4x4 get_model() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
-    math::Box<float, 3> bounds;
-};
-
-struct ModelObject : public Object
-{
-    GlMesh mesh;
-    void draw() const { mesh.draw_elements(); };
-};
-
 struct ExperimentalApp : public GLFWApp
 {
     
-    ModelObject sofaModel;
+    Renderable sofaModel;
     Geometry sofaGeometry;
     
     std::unique_ptr<GlShader> simpleShader;
@@ -48,7 +33,7 @@ struct ExperimentalApp : public GLFWApp
     FPSCameraController cameraController;
     
     NVGcontext * nvgCtx;
-    UWidget rootWidget;
+    UIComponent rootWidget;
     
     int enableAo = 0;
     
@@ -99,9 +84,9 @@ struct ExperimentalApp : public GLFWApp
         
         // Set up the UI
         rootWidget.bounds = {0, 0, (float) width, (float) height};
-        rootWidget.add_child( {{0,+10},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UWidget>()); // for colorTexture
-        rootWidget.add_child( {{.50,+10},{0, +10},{1.0, -10},{0.5,0}}, std::make_shared<UWidget>()); // for depthTexture
-        rootWidget.add_child( {{.0,+10},{0.5, +10},{0.5, 0},{1.0, -10}}, std::make_shared<UWidget>()); // for outputTexture
+        rootWidget.add_child( {{0,+10},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UIComponent>()); // for colorTexture
+        rootWidget.add_child( {{.50,+10},{0, +10},{1.0, -10},{0.5,0}}, std::make_shared<UIComponent>()); // for depthTexture
+        rootWidget.add_child( {{.0,+10},{0.5, +10},{0.5, 0},{1.0, -10}}, std::make_shared<UIComponent>()); // for outputTexture
         rootWidget.layout();
     }
     

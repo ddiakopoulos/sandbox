@@ -173,7 +173,6 @@ struct SliderControl : public UIComponent
         float2 offsetFromx0 = lastClick - bounds.x0;
         handleOffset = clamp(offsetFromx0.x - (handleSize * 0.5f) - (lastClick.x - cursor.x), 0.0f, bounds.width() - (handleSize));
         *value = remap<float>(handleOffset, 0.0f, bounds.width() - (handleSize), min, max, true);
-        std::cout << *value << std::endl;
     }
     
     virtual void on_mouse_down(const float2 cursor) override { lastClick = cursor; compute_offset(cursor); }
