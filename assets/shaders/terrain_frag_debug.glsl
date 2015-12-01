@@ -2,7 +2,7 @@
 
 out vec4 f_color;
 
-in vec3 vPosition;
+in vec3 worldPos;
 in vec3 norm;
 in vec3 p;
 
@@ -16,35 +16,15 @@ uniform vec3 u_surfaceColor;
 #define FOG_DENSITY 0.015
 #define FOG_COLOR vec3(1.0)
 
-bool isOnPlane(vec3 point, vec3 normal, float elevation) 
-{
-    if (elevation <= 0.0f) 
-        return false;
-    else if (normal.y <= 0.0f) 
-        return point.y <= elevation;
-    else 
-        return point.y >= elevation;
-}
-
 float exp_fog(const float dist, const float density) 
 {
     float d = density * dist;
     return exp2(d * d * -1.44);
 }
 
-bool isClipped(vec4 worldPosition) 
-{
-    return isOnPlane(worldPosition.xyz, u_clipPlane.xyz, u_clipPlane.w);
-}
-
-void discardIfClipped(vec4 worldPosition) 
-{
-    if (isClipped(worldPosition)) discard;
-}
-
 void main(void) 
 {
-    discardIfClipped(vec4(vPosition, 1.0));
+    if(dot(u_clipPlane, vec4(worldPos,1)) < 0) discard;
 
     vec3 p0 = dFdx(p);
     vec3 p1 = dFdy(p);
