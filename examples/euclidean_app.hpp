@@ -67,6 +67,30 @@ std::vector<bool> make_euclidean_rhythm(int steps, int pulses)
 static const float TEXT_OFFSET_X = 3;
 static const float TEXT_OFFSET_Y = 1;
 
+struct PanelControl : public UIComponent
+{
+    PanelControl(UIStyleSheet ss) : UIComponent(ss) {};
+    
+    virtual void render(const UIRenderEvent & e) override
+    {
+        auto ctx = e.ctx;
+        
+        // Border
+        nvgBeginPath(ctx);
+        nvgRect(ctx, bounds.x0, bounds.y0, bounds.width(), bounds.height());
+        nvgStrokeColor(ctx, style.borderColor);
+        nvgStrokeWidth(ctx, 1.0f);
+        nvgStroke(ctx);
+        
+        // Handle
+        nvgBeginPath(ctx);
+        nvgRect(ctx, bounds.x0 + 1, bounds.y0 + 1, bounds.width() - 1, bounds.height() - 1);
+        nvgFillColor(ctx, style.backgroundColor);
+        nvgFill(ctx);
+    };
+};
+
+
 struct LabelControl : public UIComponent
 {
     std::string text;
@@ -143,7 +167,9 @@ struct SliderControl : public UIComponent
     float handleOffset;
     float2 lastClick;
     const float handleSize = 20.0f; //pixels
+    std::string text;
     
+    void set_text(const std::string & t) { text = t; };
     void set_range (const float min, const float max) { this->min = min; this->max = max; }
     void set_variable(float & v) { value = &v; }
     
@@ -159,12 +185,34 @@ struct SliderControl : public UIComponent
         nvgStrokeColor(ctx, style.borderColor);
         nvgStrokeWidth(ctx, 1.0f);
         nvgStroke(ctx);
+
+        // Left-justified label
+        {
+            const float textX = bounds.get_min().x + 3, textY = bounds.get_center_y() + 1;
+            nvgFontFaceId(ctx, e.text->id);
+            nvgFontSize(ctx, 20);
+            nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+            nvgBeginPath(ctx);
+            nvgFillColor(ctx, style.textColor);
+            nvgText(ctx, textX, textY, text.c_str(), nullptr);
+        }
+        
+        // Right-justified value
+        {
+            float w = nvgTextBounds(ctx, 0, 0, text.c_str(), NULL, NULL);
+            const float textX = bounds.get_max().x - w + 3, textY = bounds.get_center_y() + 1;
+            nvgFontFaceId(ctx, e.text->id);
+            nvgFontSize(ctx, 20);
+            nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
+            nvgBeginPath(ctx);
+            nvgFillColor(ctx, style.textColor);
+            nvgText(ctx, textX, textY, std::to_string(*value).c_str(), nullptr);
+        }
         
         // Handle
         nvgBeginPath(ctx);
         nvgRect(ctx, bounds.x0 + handleOffset, bounds.y0, handleSize, bounds.height());
-        nvgFillColor(ctx, nvgRGBA(220, 220, 220, 255));
-  
+        nvgFillColor(ctx, nvgRGBA(255, 0, 0, 255));
         nvgFill(ctx);
     };
     
@@ -283,6 +331,12 @@ public:
         nvgEndFrame(nvg);
     }
     
+    std::shared_ptr<PanelControl> make_panel() const
+    {
+        auto control = std::make_shared<PanelControl>(stylesheet);
+        return control;
+    }
+    
     std::shared_ptr<LabelControl> make_label(const std::string & text) const
     {
         auto control = std::make_shared<LabelControl>(stylesheet);
@@ -298,9 +352,10 @@ public:
         return control;
     }
     
-    std::shared_ptr<SliderControl> make_slider(const float min, const float max, float & variable) const
+    std::shared_ptr<SliderControl> make_slider(const std::string & text, const float min, const float max, float & variable) const
     {
         auto control = std::make_shared<SliderControl>(stylesheet);
+        control->set_text(text);
         control->set_range(min, max);
         control->set_variable(variable);
         return control;
@@ -330,9 +385,12 @@ struct ExperimentalApp : public GLFWApp
     jo_gif_t gif;
     
     std::unique_ptr<UISurface> userInterface;
+    std::shared_ptr<PanelControl> leftPanel;
     std::shared_ptr<LabelControl> label;
     std::shared_ptr<ButtonControl> button;
-    std::shared_ptr<SliderControl> slider;
+    
+    std::shared_ptr<SliderControl> stepSlider;
+    std::shared_ptr<SliderControl> fillSlider;
     
     bool btnState = false;
     float sliderVar = 0.0f;
@@ -353,13 +411,19 @@ struct ExperimentalApp : public GLFWApp
             
             userInterface->set_root_stylesheet(stylesheet);
             
-            label = userInterface->make_label("je suis label");
-            button = userInterface->make_button("touche croquante", btnState);
-            slider = userInterface->make_slider(0.0f, 1.0f, sliderVar);
+            leftPanel = userInterface->make_panel();
+            label = userInterface->make_label("Debug Panel");
+            button = userInterface->make_button("Randomize", btnState);
+            stepSlider = userInterface->make_slider("Steps", 0.0f, 1.0f, sliderVar); // fix sliderVar
+            fillSlider = userInterface->make_slider("Fills", 0.0f, 1.0f, sliderVar);
             
-            userInterface->get_root()->add_child({ {0.f,+10}, {0.f,+10}, {0.25,0.f}, {0.f,+90} }, label);
-            userInterface->get_root()->add_child({ {.25,+10}, {0.f,+10}, {0.50,-10}, {0.f,+90} }, button);
-            userInterface->get_root()->add_child({ {.50,+10}, {0.f,+10}, {0.75,-10}, {0.f,+50} }, slider);
+            leftPanel->add_child({ {0.f,+10}, {0.00f,+10}, {1.f,-10}, {0.25f,-10} }, label);
+            leftPanel->add_child({ {0.f,+10}, {0.25f,+10}, {1.f,-10}, {0.50f,-10} }, button);
+            leftPanel->add_child({ {0.f,+10}, {0.50f,+10}, {1.f,-10}, {0.75f,-10} }, stepSlider);
+            leftPanel->add_child({ {0.f,+10}, {0.75f,+10}, {1.f,-10}, {1.00f,-10} }, fillSlider);
+            
+            userInterface->get_root()->add_child({ {0.0f,+10}, {0.f,+10}, {0.33f, 0}, {0.50f,0} }, leftPanel);
+            
             userInterface->get_root()->layout();
         }
         cameraController.set_camera(&camera);

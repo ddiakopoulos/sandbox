@@ -16,6 +16,8 @@ struct UIRenderEvent
 struct UIStyleSheet
 {
     NVGcolor textColor;
+    NVGcolor iconColor;
+    NVGcolor foregroundColor;
     NVGcolor backgroundColor;
     NVGcolor borderColor;
 };

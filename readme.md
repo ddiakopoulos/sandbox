@@ -32,3 +32,4 @@
 * BRDF / PBR Shaders
 * Automatic UV generation (foo library)
 * Graph/Node editor (LabSound bindings)
+* Lua (Angelscript, etc)
