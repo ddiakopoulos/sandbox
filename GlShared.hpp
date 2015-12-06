@@ -199,7 +199,7 @@ namespace gfx
 
     };
     
-    class FPSCameraController
+    class FlyCameraController
     {
         GlCamera * cam;
         
@@ -215,12 +215,9 @@ namespace gfx
         
         math::float3 lastLook;
         
-        FPSCameraController()
-        {
-            
-        }
+        FlyCameraController() {}
         
-        FPSCameraController(GlCamera * cam) : cam(cam)
+        FlyCameraController(GlCamera * cam) : cam(cam)
         {
             update_yaw_pitch();
         }

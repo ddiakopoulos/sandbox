@@ -18,7 +18,7 @@ struct ExperimentalApp : public GLFWApp
     
     RenderableGrid grid;
 
-    FPSCameraController cameraController;
+    FlyCameraController cameraController;
     
     std::unique_ptr<GlShader> filmgrainShader;
     std::unique_ptr<GlShader> fxaaShader;

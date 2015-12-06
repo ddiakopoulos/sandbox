@@ -11,7 +11,7 @@ struct ExperimentalApp : public GLFWApp
     GlCamera camera;
     HosekProceduralSky skydome;
     RenderableGrid grid;
-    FPSCameraController cameraController;
+    FlyCameraController cameraController;
     
     std::vector<Renderable> proceduralModels;
     std::vector<Renderable> cameraPositions;

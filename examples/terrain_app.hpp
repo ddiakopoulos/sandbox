@@ -13,7 +13,7 @@ struct ExperimentalApp : public GLFWApp
     GlCamera camera;
     
     HosekProceduralSky skydome;
-    FPSCameraController cameraController;
+    FlyCameraController cameraController;
 
     std::unique_ptr<GlShader> terrainShader;
     std::unique_ptr<GlShader> waterShader;

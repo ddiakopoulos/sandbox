@@ -30,7 +30,7 @@ struct ExperimentalApp : public GLFWApp
     PreethamProceduralSky skydome;
     
     GlCamera camera;
-    FPSCameraController cameraController;
+    FlyCameraController cameraController;
     
     NVGcontext * nvgCtx;
     UIComponent rootWidget;

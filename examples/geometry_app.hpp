@@ -60,7 +60,7 @@ struct ExperimentalApp : public GLFWApp
     GlCamera camera;
     PreethamProceduralSky preethamSky;
     RenderableGrid grid;
-    FPSCameraController cameraController;
+    FlyCameraController cameraController;
     
     std::unique_ptr<GizmoEditor> gizmoEditor;
     
