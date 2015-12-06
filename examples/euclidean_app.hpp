@@ -174,7 +174,7 @@ struct SliderControl : public UIComponent
     
     void set_text(const std::string & t) { text = t; };
     void set_range (const float min, const float max, const float stepsize = 0.0f) { this->min = min; this->max = max; this->stepsize = stepsize; }
-    void set_variable(float & v) { value = &v; }
+    void set_variable(float & v) { value = &v; set_value((*value-min)/(max-min)); }
     
     SliderControl(UIStyleSheet ss) : UIComponent(ss)
     {
@@ -228,16 +228,9 @@ struct SliderControl : public UIComponent
 
     };
     
-    void compute_value(const float n)
+    void set_value(float x)
     {
-        float v = min + (max - min) * n;
-        *value = v;
-        if(onChanged) onChanged(v);
-    }
-    
-    void compute_offset(const float2 cursor)
-    {
-        float n = clamp<float>((cursor.x - bounds.x0) / bounds.width(), 0.f, 1.0f);
+        float n = clamp<float>(x, 0.f, 1.0f);
         if (stepsize > 0)
         {
             float steps = (max - min) / stepsize;
@@ -245,13 +238,17 @@ struct SliderControl : public UIComponent
         }
         track->placement = {{0,+handleSize*0.5f}, {0,0}, {1,-handleSize*0.5f}, {1,0}};
         handle->placement = {{n,-handleSize*0.5f}, {0,0}, {n,handleSize*0.5f}, {1,0}};
+        
         refresh();
-        compute_value(n);
+        
+        float v = min + (max - min) * n;
+        *value = v;
+        if(onChanged) onChanged(v);
     }
+
+    virtual void on_mouse_down(const float2 cursor) override { lastClick = cursor; set_value((cursor.x - bounds.x0) / bounds.width()); }
     
-    virtual void on_mouse_down(const float2 cursor) override { lastClick = cursor; compute_offset(cursor); }
-    
-    virtual void on_mouse_drag(const math::float2 cursor, const math::float2 delta) override { compute_offset(cursor); }
+    virtual void on_mouse_drag(const math::float2 cursor, const math::float2 delta) override { set_value((cursor.x - bounds.x0) / bounds.width()); }
     
     void refresh() {layout(); for (auto c : children) { c->layout(); } }
     
