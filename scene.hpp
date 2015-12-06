@@ -30,6 +30,8 @@ struct Renderable : public Object
         //glPointSize(8);
     }
     
+    void rebuild_mesh() { mesh = make_mesh_from_geometry(geom); }
+    
     void draw() const { mesh.draw_elements(); };
     
     bool check_hit(const gfx::Ray & worldRay, float * out = nullptr) const

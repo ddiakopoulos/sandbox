@@ -37,7 +37,48 @@ namespace util
             list.push_back(item);
         return list;
     }
-
+    
+    inline std::string get_filename_with_extension(const std::string & path)
+    {
+        if (path.find_last_of("\\") != std::string::npos)
+            return path.substr(path.find_last_of("\\") + 1);
+        else if (path.find_last_of("/") != std::string::npos)
+            return path.substr(path.find_last_of("/") + 1);
+        return path;
+    }
+    
+    inline std::string get_filename_without_extension(const std::string & path)
+    {
+        if (path.find_last_of(".") != std::string::npos && path.find_last_of("\\") != std::string::npos)
+        {
+            size_t end = path.find_last_of(".");
+            size_t start = path.find_last_of("\\") + 1;
+            return path.substr(start, end - start);
+        }
+        else if (path.find_last_of(".") != std::string::npos && path.find_last_of("/") != std::string::npos)
+        {
+            size_t end = path.find_last_of(".");
+            size_t start = path.find_last_of("/") + 1;
+            return path.substr(start, end - start);
+        }
+        return path;
+    }
+    
+    inline std::string parent_directory_from_filepath(const std::string & path)
+    {
+        if (path.find_last_of("\\") != std::string::npos)
+        {
+            size_t end = path.find_last_of("\\");
+            return path.substr(0, end);
+        }
+        else if (path.find_last_of("/") != std::string::npos)
+        {
+            size_t end = path.find_last_of("/");
+            return path.substr(0, end);
+        }
+        return path;
+    }
+    
 } // end namespace util
 
 #endif // string_utils_h
