@@ -32,10 +32,7 @@ struct UIComponent
     
     UIStyleSheet style;
     
-    UIComponent(UIStyleSheet stylesheet = UIStyleSheet()) : style(stylesheet)
-    {
-        
-    }
+    UIComponent(UIStyleSheet stylesheet = UIStyleSheet()) : style(stylesheet) {}
     
     void add_child(const math::URect & placement, std::shared_ptr<UIComponent> child)
     {

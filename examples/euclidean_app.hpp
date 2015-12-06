@@ -228,20 +228,25 @@ struct SliderControl : public UIComponent
 
     };
     
+    void compute_value(const float n)
+    {
+        float v = min + (max - min) * n;
+        *value = v;
+        if(onChanged) onChanged(v);
+    }
+    
     void compute_offset(const float2 cursor)
     {
-        float n = (cursor.x - bounds.x0) / bounds.width();
-        n = clamp<float>(n, 0.0f, 1.0f);
-        if(stepsize > 0)
+        float n = clamp<float>((cursor.x - bounds.x0) / bounds.width(), 0.f, 1.0f);
+        if (stepsize > 0)
         {
             float steps = (max - min) / stepsize;
             n = std::round(n * steps) / steps;
         }
-        float v = min + (max - min) * n;
         track->placement = {{0,+handleSize*0.5f}, {0,0}, {1,-handleSize*0.5f}, {1,0}};
         handle->placement = {{n,-handleSize*0.5f}, {0,0}, {n,handleSize*0.5f}, {1,0}};
         refresh();
-        *value = v;
+        compute_value(n);
     }
     
     virtual void on_mouse_down(const float2 cursor) override { lastClick = cursor; compute_offset(cursor); }
@@ -249,6 +254,8 @@ struct SliderControl : public UIComponent
     virtual void on_mouse_drag(const math::float2 cursor, const math::float2 delta) override { compute_offset(cursor); }
     
     void refresh() {layout(); for (auto c : children) { c->layout(); } }
+    
+    std::function<void (float v)> onChanged;
 };
 
 // A UISurface creates and owns a nanovg context and related font assets. The root
@@ -415,7 +422,9 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<SliderControl> fillSlider;
     
     bool btnState = false;
-    float sliderVar = 0.0f;
+    
+    float numSteps = 16;
+    float numFills = 4;
     
     ExperimentalApp() : GLFWApp(940, 720, "Euclidean App")
     {
@@ -436,8 +445,18 @@ struct ExperimentalApp : public GLFWApp
             leftPanel = userInterface->make_panel();
             label = userInterface->make_label("Debug Panel");
             button = userInterface->make_button("Randomize", btnState);
-            stepSlider = userInterface->make_slider("Steps", 0.0f, 16.0f, 1.0f, sliderVar); // fix sliderVar
-            fillSlider = userInterface->make_slider("Fills", 0.0f, 16.0f, 1.0f, sliderVar);
+            stepSlider = userInterface->make_slider("Steps", 0.0f, 16.0f, 1.0f, numSteps);
+            fillSlider = userInterface->make_slider("Fills", 0.0f, 16.0f, 1.0f, numFills);
+            
+            stepSlider->onChanged = [&](float value)
+            {
+                regenerate_visuals(numSteps, numFills);
+            };
+            
+            fillSlider->onChanged = [&](float value)
+            {
+                regenerate_visuals(numSteps, numFills);
+            };
             
             leftPanel->add_child({ {0.f,+10}, {0.00f,+10}, {1.f,-10}, {0.25f,-10} }, label);
             leftPanel->add_child({ {0.f,+10}, {0.25f,+10}, {1.f,-10}, {0.50f,-10} }, button);
@@ -462,7 +481,21 @@ struct ExperimentalApp : public GLFWApp
             lights[1].pose.position = float3(-25, 15, 0);
         }
         
-        euclideanPattern = make_euclidean_rhythm(16, 4);
+        regenerate_visuals(numSteps, numFills);
+        
+        grid = RenderableGrid(1, 64, 64);
+        
+        gfx::gl_check_error(__FILE__, __LINE__);
+    }
+    
+    void regenerate_visuals(int s, int f)
+    {
+        proceduralModels.clear();
+        
+        euclideanPattern = make_euclidean_rhythm(s, f);
+        
+        if (s <= f) s = f;
+        
         std::rotate(euclideanPattern.rbegin(), euclideanPattern.rbegin() + 1, euclideanPattern.rend()); // Rotate right
         std::cout << "Pattern Size: " << euclideanPattern.size() << std::endl;
         
@@ -481,9 +514,6 @@ struct ExperimentalApp : public GLFWApp
             obj.pose.position = { float(r * sin((t * thetaIdx) - offset)), 4.0f, float(r * cos((t * thetaIdx) - offset))};
         }
         
-        grid = RenderableGrid(1, 64, 64);
-        
-        gfx::gl_check_error(__FILE__, __LINE__);
     }
     
     ~ExperimentalApp()
