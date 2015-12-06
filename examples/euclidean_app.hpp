@@ -232,6 +232,11 @@ struct SliderControl : public UIComponent
     {
         float n = (cursor.x - bounds.x0) / bounds.width();
         n = clamp<float>(n, 0.0f, 1.0f);
+        if(stepsize > 0)
+        {
+            float steps = (max - min) / stepsize;
+            n = std::round(n * steps) / steps;
+        }
         float v = min + (max - min) * n;
         track->placement = {{0,+handleSize*0.5f}, {0,0}, {1,-handleSize*0.5f}, {1,0}};
         handle->placement = {{n,-handleSize*0.5f}, {0,0}, {n,handleSize*0.5f}, {1,0}};
@@ -322,7 +327,6 @@ public:
                     clickedNode.reset();
                 }
             }
-
         }
         else
         {
@@ -331,7 +335,7 @@ public:
                 if (event.is_mouse_down())
                 {
                     clickedNode = hoverNode;
-                    if(clickedNode) clickedNode->on_mouse_down(event.cursor);
+                    if (clickedNode) clickedNode->on_mouse_down(event.cursor);
                 }
             }
         }
@@ -432,8 +436,8 @@ struct ExperimentalApp : public GLFWApp
             leftPanel = userInterface->make_panel();
             label = userInterface->make_label("Debug Panel");
             button = userInterface->make_button("Randomize", btnState);
-            stepSlider = userInterface->make_slider("Steps", 0.0f, 1.0f, 1.0f, sliderVar); // fix sliderVar
-            fillSlider = userInterface->make_slider("Fills", 0.0f, 1.0f, 1.0f, sliderVar);
+            stepSlider = userInterface->make_slider("Steps", 0.0f, 16.0f, 1.0f, sliderVar); // fix sliderVar
+            fillSlider = userInterface->make_slider("Fills", 0.0f, 16.0f, 1.0f, sliderVar);
             
             leftPanel->add_child({ {0.f,+10}, {0.00f,+10}, {1.f,-10}, {0.25f,-10} }, label);
             leftPanel->add_child({ {0.f,+10}, {0.25f,+10}, {1.f,-10}, {0.50f,-10} }, button);
