@@ -20,7 +20,7 @@ uniform PointLight u_lights[2];
 uniform vec3 u_rimColor = vec3(1, 1, 1);
 uniform float u_rimPower = 0.95;
 
-in vec3 position;
+in vec3 position; 
 in vec3 normal;
 in vec2 texCoord;
 
@@ -31,7 +31,7 @@ vec3 compute_rimlight(vec3 n, vec3 v)
     float f = 1.0f - dot(n, v);
     f = smoothstep(0.0f, 1.0f, f);
     f = pow(f, u_rimPower);
-    return f * u_rimColor;
+    return f * u_rimColor; 
 }
 
 void main()
@@ -60,7 +60,6 @@ void main()
      {
         light += compute_rimlight(normalSample, eyeDir);
      }
-
     
     f_color = vec4(diffuseSample, 1.0) * vec4(light, 1); //vec4(mix(light, diffuseSample, 0.5), 1);
 

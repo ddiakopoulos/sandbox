@@ -27,6 +27,7 @@
 		089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */; };
 		08C4757C1C0579550031E87E /* noise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C4757A1C0579550031E87E /* noise.cpp */; };
 		08C475821C0AE9C50031E87E /* jo_gif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C475801C0AE9C50031E87E /* jo_gif.cpp */; };
+		08C475851C14C9BB0031E87E /* libefsw.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 08C475841C14C9BB0031E87E /* libefsw.a */; };
 		08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2DC1BDD667000895E31 /* nvg.cpp */; };
 		08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E11BDD669600895E31 /* nanovg.cpp */; };
 		08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E51BDD79F000895E31 /* preetham.cpp */; };
@@ -135,6 +136,7 @@
 		08C4757E1C0AD67D0031E87E /* euclidean_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = euclidean_app.hpp; path = examples/euclidean_app.hpp; sourceTree = SOURCE_ROOT; };
 		08C475801C0AE9C50031E87E /* jo_gif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jo_gif.cpp; path = third_party/jo_gif.cpp; sourceTree = SOURCE_ROOT; };
 		08C475811C0AE9C50031E87E /* jo_gif.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jo_gif.hpp; path = third_party/jo_gif.hpp; sourceTree = SOURCE_ROOT; };
+		08C475841C14C9BB0031E87E /* libefsw.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libefsw.a; path = third_party/bin/libefsw.a; sourceTree = "<group>"; };
 		08CFD2DC1BDD667000895E31 /* nvg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nvg.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DD1BDD667000895E31 /* nvg.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = nvg.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DF1BDD669600895E31 /* nanovg_gl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg_gl_utils.h; path = third_party/nanovg_gl_utils.h; sourceTree = SOURCE_ROOT; };
@@ -152,6 +154,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				087A4EA61BB8ECA600975C72 /* Cocoa.framework in Frameworks */,
+				08C475851C14C9BB0031E87E /* libefsw.a in Frameworks */,
 				087A4EA41BB8ECA100975C72 /* GLKit.framework in Frameworks */,
 				087A4EAA1BB995AD00975C72 /* libglfw3.3.1.dylib in Frameworks */,
 				087A4EA21BB8EC9B00975C72 /* OpenGL.framework in Frameworks */,
@@ -239,6 +242,7 @@
 		0849FD7F1BE7C326000F148E /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				08C475841C14C9BB0031E87E /* libefsw.a */,
 				087A4EA91BB995AD00975C72 /* libglfw3.3.1.dylib */,
 				087A4EA51BB8ECA600975C72 /* Cocoa.framework */,
 				087A4EA31BB8ECA100975C72 /* GLKit.framework */,
@@ -616,6 +620,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glfw3/3.1.1/lib,
+					"$(PROJECT_DIR)/third_party/bin",
 				);
 				PRODUCT_NAME = incubator;
 			};
@@ -627,6 +632,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glfw3/3.1.1/lib,
+					"$(PROJECT_DIR)/third_party/bin",
 				);
 				PRODUCT_NAME = incubator;
 			};

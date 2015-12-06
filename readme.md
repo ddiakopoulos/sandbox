@@ -11,11 +11,11 @@
 * Island terrain with a simple water shader (waves, reflections)
 * GIF export
 * 3D Euclidean patterns
+* GLSL Shader hot-reload
 
 ## In Progress
 * Spherical environment mapping
 * Better water shading (refraction, normals, sun position, skybox reflections)
-* GLSL Shader hot-reload
 * UI layout via cassowary constraint solver (Rhea library)
 * Dual contouring + terrain deformation (ref. impl)
 * A simple scenegraph

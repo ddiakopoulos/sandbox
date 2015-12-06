@@ -1,25 +1,89 @@
 #include "index.hpp"
 
+#include "../third_party/efsw.hpp"
+
 using namespace math;
 using namespace util;
 using namespace gfx;
 
-struct ModelObject : public Object
+class ShaderReload
 {
-    GlMesh mesh;
-    void draw() const { mesh.draw_elements(); };
+    std::unique_ptr<efsw::FileWatcher> fileWatcher;
+    
+    struct UpdateListener : public efsw::FileWatchListener
+    {
+        std::function<void(const std::string filename)> callback;
+        void handleFileAction(efsw::WatchID watchid, const std::string & dir, const std::string & filename, efsw::Action action, std::string oldFilename = "")
+        {
+            if (action == efsw::Actions::Modified)
+            {
+                if (callback) callback(filename);
+            }
+        }
+    };
+    
+    std::shared_ptr<GlShader> & program;
+    std::string vertexFilename;
+    std::string fragmentFilename;
+    std::string vPath;
+    std::string fPath;
+    
+    UpdateListener listener;
+    std::atomic<bool> shouldRecompile;
+    
+public:
+    
+    ShaderReload(std::shared_ptr<GlShader> & program, const std::string & vertexShader, const std::string & fragmentShader) : program(program), vPath(vertexShader), fPath(fragmentShader)
+    {
+        fileWatcher.reset(new efsw::FileWatcher());
+        
+        // Adds another directory to watch. This time as non-recursive.
+        efsw::WatchID id = fileWatcher->addWatch("assets/", &listener, true);
+        
+        vertexFilename = get_filename_with_extension(vertexShader);
+        fragmentFilename = get_filename_with_extension(fragmentShader);
+        
+        listener.callback = [&](const std::string filename)
+        {
+            std::cout << filename << std::endl;
+            if (filename == vertexFilename || filename == fragmentFilename)
+            {
+                shouldRecompile = true;
+            }
+        };
+        
+        fileWatcher->watch();
+    }
+    
+    void handle_recompile()
+    {
+        if (shouldRecompile)
+        {
+            try
+            {
+                program = std::make_shared<GlShader>(read_file_text(vPath), read_file_text(fPath));
+                std::cout << &program << std::endl;
+            }
+            catch (const std::exception & e)
+            {
+                std::cout << e.what() << std::endl;
+            }
+            shouldRecompile = false;
+        }
+
+    }
+
 };
 
 struct ExperimentalApp : public GLFWApp
 {
-    
-    ModelObject crateModel;
-    Geometry crateGeometry;
+    Renderable object;
     
     GlTexture crateDiffuseTex;
     GlTexture crateNormalTex;
     
-    std::unique_ptr<GlShader> simpleTexturedShader;
+    std::shared_ptr<GlShader> simpleTexturedShader;
+    std::unique_ptr<ShaderReload> reload;
     
     GlCamera camera;
     Sphere cameraSphere;
@@ -35,23 +99,24 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        crateGeometry = load_geometry_from_ply("assets/models/barrel/barrel.ply");
-        crateModel.bounds = crateGeometry.compute_bounds();
+        object = Renderable(load_geometry_from_ply("assets/models/barrel/barrel.ply"));
         
-        Pose p = Pose({0, 0, 0, 1}, -crateModel.bounds.center());
-        for (auto & v : crateGeometry.vertices)
+        Pose p = Pose({0, 0, 0, 1}, -object.bounds.center());
+        for (auto & v : object.geom.vertices)
             v = transform_coord(p.matrix(), v);
         
-        crateModel.mesh = make_mesh_from_geometry(crateGeometry);
-        crateModel.pose.position = {0, 0, 0};
+        object.rebuild_mesh();
+        
+        object.pose.position = {0, 0, 0};
         
         simpleTexturedShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
+        reload.reset(new ShaderReload(simpleTexturedShader, "assets/shaders/simple_texture_vert.glsl", "assets/shaders/simple_texture_frag.glsl"));
+        
         crateDiffuseTex = load_image("assets/models/barrel/barrel_2_diffuse.png");
         crateNormalTex = load_image("assets/models/barrel/barrel_normal.png");
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
-        std::cout << crateModel.bounds.center() << std::endl;
         cameraSphere = Sphere({0, 0, 0}, 6);
         myArcball = Arcball(&camera, cameraSphere);
         
@@ -105,7 +170,9 @@ struct ExperimentalApp : public GLFWApp
     void on_update(const UpdateEvent & e) override
     {
         //if (isDragging)
-            crateModel.pose.orientation = qmul(myArcball.get_quat(), crateModel.pose.orientation);
+            object.pose.orientation = qmul(myArcball.get_quat(), object.pose.orientation);
+        
+        reload->handle_recompile();
     }
     
     void on_draw() override
@@ -146,10 +213,10 @@ struct ExperimentalApp : public GLFWApp
             simpleTexturedShader->uniform("useNormal", useNormal);
             
             {
-                auto model = crateModel.get_model();
+                auto model = object.get_model();
                 simpleTexturedShader->uniform("u_modelMatrix", model);
                 simpleTexturedShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-                crateModel.draw();
+                object.draw();
             }
             
             simpleTexturedShader->unbind();
