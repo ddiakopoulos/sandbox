@@ -24,7 +24,7 @@ float exp_fog(const float dist, const float density)
 
 void main(void) 
 {
-    if(dot(u_clipPlane, vec4(worldPos,1)) < 0) discard;
+    if (dot(u_clipPlane, vec4(worldPos,1)) < 0) discard;
 
     vec3 p0 = dFdx(p);
     vec3 p1 = dFdy(p);

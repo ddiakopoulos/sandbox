@@ -10,6 +10,7 @@
 * Opinionated 3d gizmo editing tool
 * Island terrain with a simple water shader (waves, reflections)
 * GIF export
+* 3D Euclidean patterns
 
 ## In Progress
 * Spherical environment mapping
@@ -19,7 +20,6 @@
 * Dual contouring + terrain deformation (ref. impl)
 * A simple scenegraph
 * CPU path tracer (+ lighting baker?)
-* Immediate Mode GUI test
 * Reaction-diffusion simulator
 * Fluid simulator with a compute shader
 * Procedural clouds
