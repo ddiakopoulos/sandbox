@@ -24,6 +24,7 @@ struct UIStyleSheet
 
 struct UIComponent
 {
+    bool acceptInput = true;
     float aspectRatio = 1;
     math::URect placement = {{0,0},{0,0},{1,0},{1,0}};
     math::Bounds bounds;

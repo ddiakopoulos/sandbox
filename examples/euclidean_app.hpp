@@ -162,18 +162,28 @@ struct ButtonControl : public UIComponent
 
 struct SliderControl : public UIComponent
 {
-    float min, max;
+    float min, max, stepsize;
     float * value;
     float handleOffset;
     float2 lastClick;
     const float handleSize = 20.0f; //pixels
     std::string text;
     
+    std::shared_ptr<UIComponent> handle;
+    std::shared_ptr<UIComponent> track;
+    
     void set_text(const std::string & t) { text = t; };
-    void set_range (const float min, const float max) { this->min = min; this->max = max; }
+    void set_range (const float min, const float max, const float stepsize = 0.0f) { this->min = min; this->max = max; this->stepsize = stepsize; }
     void set_variable(float & v) { value = &v; }
     
-    SliderControl(UIStyleSheet ss) : UIComponent(ss) {};
+    SliderControl(UIStyleSheet ss) : UIComponent(ss)
+    {
+        handle = std::make_shared<UIComponent>(ss); handle->acceptInput = false;
+        track = std::make_shared<UIComponent>(ss); track->acceptInput = false;
+        this->add_child({{0,0}, {0,0}, {1.f,0}, {1.f,0}}, track);
+        track->add_child({{0,0}, {0,0}, {0,+handleSize}, {1.f,0}}, handle);
+        refresh();
+    };
     
     virtual void render(const UIRenderEvent & e) override
     {
@@ -185,8 +195,15 @@ struct SliderControl : public UIComponent
         nvgStrokeColor(ctx, style.borderColor);
         nvgStrokeWidth(ctx, 1.0f);
         nvgStroke(ctx);
-
-        // Left-justified label
+        
+        // Handle
+        auto hb = handle->bounds;
+        nvgBeginPath(ctx);
+        nvgRect(ctx, hb.x0, hb.y0, handleSize, hb.height());
+        nvgFillColor(ctx, nvgRGBA(255, 0, 0, 255));
+        nvgFill(ctx);
+        
+        // Left-justified label text
         {
             const float textX = bounds.get_min().x + 3, textY = bounds.get_center_y() + 1;
             nvgFontFaceId(ctx, e.text->id);
@@ -197,7 +214,7 @@ struct SliderControl : public UIComponent
             nvgText(ctx, textX, textY, text.c_str(), nullptr);
         }
         
-        // Right-justified value
+        // Right-justified value text
         {
             float w = nvgTextBounds(ctx, 0, 0, text.c_str(), NULL, NULL);
             const float textX = bounds.get_max().x - w + 3, textY = bounds.get_center_y() + 1;
@@ -208,24 +225,25 @@ struct SliderControl : public UIComponent
             nvgFillColor(ctx, style.textColor);
             nvgText(ctx, textX, textY, std::to_string(*value).c_str(), nullptr);
         }
-        
-        // Handle
-        nvgBeginPath(ctx);
-        nvgRect(ctx, bounds.x0 + handleOffset, bounds.y0, handleSize, bounds.height());
-        nvgFillColor(ctx, nvgRGBA(255, 0, 0, 255));
-        nvgFill(ctx);
+
     };
     
     void compute_offset(const float2 cursor)
     {
-        float2 offsetFromx0 = lastClick - bounds.x0;
-        handleOffset = clamp(offsetFromx0.x - (handleSize * 0.5f) - (lastClick.x - cursor.x), 0.0f, bounds.width() - (handleSize));
-        *value = remap<float>(handleOffset, 0.0f, bounds.width() - (handleSize), min, max, true);
+        float n = (cursor.x - bounds.x0) / bounds.width();
+        n = clamp<float>(n, 0.0f, 1.0f);
+        float v = min + (max - min) * n;
+        track->placement = {{0,+handleSize*0.5f}, {0,0}, {1,-handleSize*0.5f}, {1,0}};
+        handle->placement = {{n,-handleSize*0.5f}, {0,0}, {n,handleSize*0.5f}, {1,0}};
+        refresh();
+        *value = v;
     }
     
     virtual void on_mouse_down(const float2 cursor) override { lastClick = cursor; compute_offset(cursor); }
     
     virtual void on_mouse_drag(const math::float2 cursor, const math::float2 delta) override { compute_offset(cursor); }
+    
+    void refresh() {layout(); for (auto c : children) { c->layout(); } }
 };
 
 // A UISurface creates and owns a nanovg context and related font assets. The root
@@ -248,7 +266,7 @@ class UISurface
     std::shared_ptr<UIComponent> get_hover_component(const std::shared_ptr<UIComponent> & component, const float2 cursor)
     {
         bool hit = component->bounds.inside(cursor);
-        if (!hit) return nullptr;
+        if (!hit || !component->acceptInput) return nullptr;
         for (auto it = component->children.crbegin(), end = component->children.crend(); it != end; ++it)
             if (auto result = get_hover_component(*it, cursor)) return result;
         return component;
@@ -352,11 +370,11 @@ public:
         return control;
     }
     
-    std::shared_ptr<SliderControl> make_slider(const std::string & text, const float min, const float max, float & variable) const
+    std::shared_ptr<SliderControl> make_slider(const std::string & text, const float min, const float max, const float stepsize, float & variable) const
     {
         auto control = std::make_shared<SliderControl>(stylesheet);
         control->set_text(text);
-        control->set_range(min, max);
+        control->set_range(min, max, stepsize);
         control->set_variable(variable);
         return control;
     }
@@ -414,8 +432,8 @@ struct ExperimentalApp : public GLFWApp
             leftPanel = userInterface->make_panel();
             label = userInterface->make_label("Debug Panel");
             button = userInterface->make_button("Randomize", btnState);
-            stepSlider = userInterface->make_slider("Steps", 0.0f, 1.0f, sliderVar); // fix sliderVar
-            fillSlider = userInterface->make_slider("Fills", 0.0f, 1.0f, sliderVar);
+            stepSlider = userInterface->make_slider("Steps", 0.0f, 1.0f, 1.0f, sliderVar); // fix sliderVar
+            fillSlider = userInterface->make_slider("Fills", 0.0f, 1.0f, 1.0f, sliderVar);
             
             leftPanel->add_child({ {0.f,+10}, {0.00f,+10}, {1.f,-10}, {0.25f,-10} }, label);
             leftPanel->add_child({ {0.f,+10}, {0.25f,+10}, {1.f,-10}, {0.50f,-10} }, button);
