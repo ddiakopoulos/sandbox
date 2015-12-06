@@ -228,6 +228,13 @@ struct SliderControl : public UIComponent
 
     };
     
+    void set_placement(float n)
+    {
+        track->placement = {{0,+handleSize*0.5f}, {0,0}, {1,-handleSize*0.5f}, {1,0}};
+        handle->placement = {{n,-handleSize*0.5f}, {0,0}, {n,handleSize*0.5f}, {1,0}};
+        refresh();
+    }
+    
     void set_value(float x)
     {
         float n = clamp<float>(x, 0.f, 1.0f);
@@ -236,14 +243,9 @@ struct SliderControl : public UIComponent
             float steps = (max - min) / stepsize;
             n = std::round(n * steps) / steps;
         }
-        track->placement = {{0,+handleSize*0.5f}, {0,0}, {1,-handleSize*0.5f}, {1,0}};
-        handle->placement = {{n,-handleSize*0.5f}, {0,0}, {n,handleSize*0.5f}, {1,0}};
-        
-        refresh();
-        
-        float v = min + (max - min) * n;
-        *value = v;
-        if(onChanged) onChanged(v);
+        set_placement(n);
+        *value = min + (max - min) * n;
+        if(onChanged) onChanged(*value);
     }
 
     virtual void on_mouse_down(const float2 cursor) override { lastClick = cursor; set_value((cursor.x - bounds.x0) / bounds.width()); }
