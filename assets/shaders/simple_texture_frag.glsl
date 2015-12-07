@@ -18,7 +18,7 @@ struct PointLight
 uniform PointLight u_lights[2];
 
 uniform vec3 u_rimColor = vec3(1, 1, 1);
-uniform float u_rimPower = 0.95;
+uniform float u_rimPower = 0.99;
 
 in vec3 position; 
 in vec3 normal;
