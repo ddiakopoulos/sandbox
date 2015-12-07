@@ -4,7 +4,7 @@
 * Arkano22 SSAO implementation
 * Several other GLSL 330-core post-processing effects: film grain, FXAA
 * CEGUI layout system
-* Procedural sky dome with Preetham and Hosek-Wilkie models (and borked HDR)
+* Procedural sky dome with Preetham and Hosek-Wilkie models
 * Arcball camera
 * Basic image morphologies (erode/dilate)
 * Opinionated 3d gizmo editing tool
@@ -15,9 +15,11 @@
 
 ## In Progress
 * Spherical environment mapping
+* BRDF / PBR
+* HDR pipeline
+* Dual contouring + terrain deformation (ref. impl)
 * Better water shading (refraction, normals, sun position, skybox reflections)
 * UI layout via cassowary constraint solver (Rhea library)
-* Dual contouring + terrain deformation (ref. impl)
 * A simple scenegraph
 * CPU path tracer (+ lighting baker?)
 * Reaction-diffusion simulator
@@ -29,7 +31,7 @@
 * Impulse response raytracer
 * Optitrak nat-net i/o
 * Bruneton Sky Model
-* BRDF / PBR Shaders
 * Automatic UV generation (foo library)
 * Graph/Node editor (LabSound bindings)
 * Lua (Angelscript, etc)
+* Pathfinding algos (Recast)

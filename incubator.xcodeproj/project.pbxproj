@@ -137,6 +137,7 @@
 		08C475801C0AE9C50031E87E /* jo_gif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jo_gif.cpp; path = third_party/jo_gif.cpp; sourceTree = SOURCE_ROOT; };
 		08C475811C0AE9C50031E87E /* jo_gif.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jo_gif.hpp; path = third_party/jo_gif.hpp; sourceTree = SOURCE_ROOT; };
 		08C475841C14C9BB0031E87E /* libefsw.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libefsw.a; path = third_party/bin/libefsw.a; sourceTree = "<group>"; };
+		08C475861C14F68A0031E87E /* shader_monitor.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = shader_monitor.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DC1BDD667000895E31 /* nvg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nvg.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DD1BDD667000895E31 /* nvg.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = nvg.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DF1BDD669600895E31 /* nanovg_gl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg_gl_utils.h; path = third_party/nanovg_gl_utils.h; sourceTree = SOURCE_ROOT; };
@@ -235,6 +236,7 @@
 				0822AF2F1BCC16D200A894F0 /* GlTexture.hpp */,
 				0822AF2E1BCC16D200A894F0 /* GlTexture.cpp */,
 				0849FD731BE6A031000F148E /* gpu_timer.hpp */,
+				08C475861C14F68A0031E87E /* shader_monitor.hpp */,
 			);
 			name = gl;
 			sourceTree = "<group>";

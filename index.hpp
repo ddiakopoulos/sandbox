@@ -33,3 +33,4 @@
 #include "procedural_mesh.hpp"
 #include "scene.hpp"
 #include "gizmo.hpp"
+#include "shader_monitor.hpp"
