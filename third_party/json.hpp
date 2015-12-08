@@ -1,4 +1,4 @@
-// Lightweight JSON reader from https://github.com/sgorsten/copper (MIT License, Copyright 2013 Sterling Orsten)
+// See COPYING file for attribution information
 
 #ifndef json_h
 #define json_h

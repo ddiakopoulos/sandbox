@@ -1,4 +1,4 @@
-// Inspired by https://github.com/sgorsten/editor (public domain)
+// See COPYING file for attribution information
 
 #ifndef glshader_h
 #define glshader_h

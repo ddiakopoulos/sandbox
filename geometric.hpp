@@ -1,5 +1,4 @@
-// Inspired by https://github.com/melax/sandbox/blob/master/include/geometric.h - copyright 2014 Stan Melax (MIT license)
-// Some code borrowed from https://github.com/bclucas/Alloy-Graphics-Library/blob/master/include/core/AlloyMath.h (public domain)
+// See COPYING file for attribution information
 
 #ifndef geometric_h
 #define geometric_h

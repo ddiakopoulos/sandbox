@@ -1,6 +1,4 @@
-// Copyright Reviatech 2012: Boost Licence v1.0
-// "One Euro" filter for reducing jitter
-// http://hal.inria.fr/hal-00670496/
+// See COPYING file for attribution information
 
 #ifndef one_euro_filter_h
 #define one_euro_filter_h

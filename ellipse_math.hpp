@@ -1,16 +1,11 @@
+// See COPYING file for attribution information
+
 #pragma once
 #ifndef ellipse_math_h
 #define ellipse_math_h
 
 #include "linear_algebra.hpp"
 #include <cmath>
-
-// Original functions: GteDistPointHyperellipsoid.h
-// Geometric Tools LLC, Redmond WA 98052
-// Copyright (c) 1998-2015
-// Distributed under the Boost Software License, Version 1.0.
-// http://www.boost.org/LICENSE_1_0.txt
-// http://www.geometrictools.com/License/Boost/LICENSE_1_0.txt
 
 namespace math
 {

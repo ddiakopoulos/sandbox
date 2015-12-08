@@ -1,4 +1,4 @@
-// Based on https://github.com/dmsovetov, Copyright Dmitry Sovetov 2015 (MIT)
+// See COPYING file for attribution information
 
 #ifndef bitmask_h
 #define bitmask_h

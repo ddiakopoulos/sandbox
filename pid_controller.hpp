@@ -1,4 +1,4 @@
-// Based on https://github.com/BlockoS/PID/blob/ae619ca4dc0552094ea97327a6e034151768b343/PID.inl (Apache 2.0)
+// See COPYING file for attribution information
 
 #ifndef pid_controller_h
 #define pid_controller_h

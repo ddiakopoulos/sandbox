@@ -1,4 +1,4 @@
-// Almost a direct port of Cinder's Arcball (https://github.com/cinder/Cinder/blob/master/include/cinder/Arcball.h) (BSD)
+// See COPYING file for attribution information
 
 #ifndef arcball_camera_h
 #define arcball_camera_h

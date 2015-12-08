@@ -1,4 +1,4 @@
-// Inspired by https://github.com/sgorsten/linalg - copyright 2014 Sterling Orsten (BSD license)
+// See COPYING file for attribution information
 
 #ifndef linear_algebra_h
 #define linear_algebra_h

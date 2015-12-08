@@ -1,4 +1,4 @@
-// Inspired by https://github.com/wieden-kennedy/Cinder-Sampling (Apache 2.0)
+// See COPYING file for attribution information
 
 #ifndef dsp_filters_H
 #define dsp_filters_H

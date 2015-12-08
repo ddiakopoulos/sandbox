@@ -1,4 +1,4 @@
-// Inspired by https://github.com/sgorsten/editor (public domain)
+// See COPYING file for attribution information
 
 #ifndef glmesh_h
 #define glmesh_h
