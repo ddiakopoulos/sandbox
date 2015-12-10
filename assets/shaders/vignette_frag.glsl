@@ -6,10 +6,11 @@
 uniform vec2 u_screenResolution;
 uniform float u_noiseAmount;
 uniform vec3 u_backgroundColor;
+uniform float u_time;
 
 out vec4 f_color;
 
-float random(vec3 scale, float seed){ return fract(sin(dot(gl_FragCoord.xyz+seed,scale))*43758.5453+seed); }
+float random(vec3 scale, float seed) { return fract(sin(dot(gl_FragCoord.xyz+seed, scale))*43758.5453 + seed); }
 
 void main()
 {

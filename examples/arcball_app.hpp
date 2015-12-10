@@ -8,6 +8,8 @@ struct ExperimentalApp : public GLFWApp
 {
     Renderable object;
     
+    GlMesh fullscreen_vignette_quad;
+    
     GlTexture crateDiffuseTex;
     GlTexture crateNormalTex;
     
@@ -47,6 +49,8 @@ struct ExperimentalApp : public GLFWApp
         
         crateDiffuseTex = load_image("assets/models/barrel/barrel_2_diffuse.png");
         crateNormalTex = load_image("assets/models/barrel/barrel_normal.png");
+        
+        fullscreen_vignette_quad = make_fullscreen_quad();
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
@@ -125,6 +129,13 @@ struct ExperimentalApp : public GLFWApp
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
+        
+        vignetteShader->bind();
+        vignetteShader->uniform("u_noiseAmount", 0.1f);
+        vignetteShader->uniform("u_screenResolution", float2(width, height));
+        vignetteShader->uniform("u_backgroundColor", float3(20.f / 255.f, 20.f / 255.f, 20.f / 255.f));
+        fullscreen_vignette_quad.draw_elements();
+        vignetteShader->unbind();
         
         {
             simpleTexturedShader->bind();
