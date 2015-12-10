@@ -12,6 +12,7 @@ struct ExperimentalApp : public GLFWApp
     
     GlTexture crateDiffuseTex;
     GlTexture crateNormalTex;
+    GlTexture matcapTex;
     
     std::shared_ptr<GlShader> simpleTexturedShader;
     std::shared_ptr<GlShader> vignetteShader;
@@ -51,6 +52,7 @@ struct ExperimentalApp : public GLFWApp
         
         crateDiffuseTex = load_image("assets/models/barrel/barrel_2_diffuse.png");
         crateNormalTex = load_image("assets/models/barrel/barrel_normal.png");
+        matcapTex = load_image("assets/textures/matcap/metal_heated.png");
         
         fullscreen_vignette_quad = make_fullscreen_quad();
         
@@ -139,6 +141,7 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_vignette_quad.draw_elements();
         vignetteShader->unbind();
         
+        /*
         {
             simpleTexturedShader->bind();
             
@@ -166,6 +169,25 @@ struct ExperimentalApp : public GLFWApp
             }
             
             simpleTexturedShader->unbind();
+        }
+        */
+        
+        {
+            
+            matcapShader->bind();
+            
+            auto model = object.get_model();
+            matcapShader->uniform("u_viewProj", viewProj);
+            matcapShader->uniform("u_modelMatrix", model);
+            matcapShader->uniform("u_modelViewMatrix", view * model);
+            matcapShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(model))));
+            
+            matcapShader->texture("u_matcapTexture", 0, matcapTex.get_gl_handle(), GL_TEXTURE_2D);
+            
+            object.draw();
+            
+            matcapShader->unbind();
+
         }
         
         gfx::gl_check_error(__FILE__, __LINE__);

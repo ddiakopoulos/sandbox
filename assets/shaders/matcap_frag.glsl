@@ -15,5 +15,5 @@ void main()
 	float m = 0.5 * inversesqrt(dot(r, r));
 	vec2 uv = r.xy * m + 0.5;
 
-	f_color = vec4(texture(u_matcapTexture, uv).rgb, 1.0 );
+	f_color = vec4(texture(u_matcapTexture, uv).rgb, 1.0);
 }
