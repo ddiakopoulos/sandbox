@@ -138,6 +138,8 @@
 		08C475811C0AE9C50031E87E /* jo_gif.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jo_gif.hpp; path = third_party/jo_gif.hpp; sourceTree = SOURCE_ROOT; };
 		08C475841C14C9BB0031E87E /* libefsw.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libefsw.a; path = third_party/bin/libefsw.a; sourceTree = "<group>"; };
 		08C475861C14F68A0031E87E /* shader_monitor.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = shader_monitor.hpp; sourceTree = SOURCE_ROOT; };
+		08C475871C19CCC30031E87E /* vignette_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = vignette_frag.glsl; path = assets/shaders/vignette_frag.glsl; sourceTree = SOURCE_ROOT; };
+		08C475881C19CCC30031E87E /* vignette_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = vignette_vert.glsl; path = assets/shaders/vignette_vert.glsl; sourceTree = SOURCE_ROOT; };
 		08CFD2DC1BDD667000895E31 /* nvg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nvg.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DD1BDD667000895E31 /* nvg.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = nvg.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DF1BDD669600895E31 /* nanovg_gl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg_gl_utils.h; path = third_party/nanovg_gl_utils.h; sourceTree = SOURCE_ROOT; };
@@ -433,6 +435,8 @@
 		08CFD2EA1BDDF79900895E31 /* shaders */ = {
 			isa = PBXGroup;
 			children = (
+				08C475871C19CCC30031E87E /* vignette_frag.glsl */,
+				08C475881C19CCC30031E87E /* vignette_vert.glsl */,
 				0849FD8F1BEFCC64000F148E /* hdr_frag.glsl */,
 				0849FD741BE7C1C1000F148E /* arkano_ssao_frag.glsl */,
 				0849FD751BE7C1C1000F148E /* filmgrain_frag.glsl */,
