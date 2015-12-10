@@ -15,6 +15,7 @@ struct ExperimentalApp : public GLFWApp
     
     std::shared_ptr<GlShader> simpleTexturedShader;
     std::shared_ptr<GlShader> vignetteShader;
+    std::shared_ptr<GlShader> matcapShader;
     
     ShaderMonitor shaderMonitor;
     
@@ -46,6 +47,7 @@ struct ExperimentalApp : public GLFWApp
         shaderMonitor.add_shader(simpleTexturedShader, "assets/shaders/simple_texture_vert.glsl", "assets/shaders/simple_texture_frag.glsl");
         
         vignetteShader.reset(new gfx::GlShader(read_file_text("assets/shaders/vignette_vert.glsl"), read_file_text("assets/shaders/vignette_frag.glsl")));
+        matcapShader.reset(new gfx::GlShader(read_file_text("assets/shaders/matcap_vert.glsl"), read_file_text("assets/shaders/matcap_frag.glsl")));
         
         crateDiffuseTex = load_image("assets/models/barrel/barrel_2_diffuse.png");
         crateNormalTex = load_image("assets/models/barrel/barrel_normal.png");
