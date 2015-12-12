@@ -73,22 +73,4 @@ public:
 
 };
 
-class ScopedGPUTimer
-{
-    GPUTimer timer;
-    std::string message;
-public:
-    ScopedGPUTimer(std::string message) : message(message)
-    {
-        timer.start();
-    }
-    ~ScopedGPUTimer()
-    {
-        timer.stop();
-        ANVIL_INFO(message << " " << std::to_string(timer.get_average()));
-    }
-};
-
-#define GPU_SCOPED_TIMER(MESSAGE) ScopedGPUTimer gpu_scoped_timer_ ## __LINE__(MESSAGE)
-
 #endif
