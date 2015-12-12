@@ -7,7 +7,7 @@
 #include "util.hpp"
 #include "string_utils.hpp"
 
-#include "third_party/efsw.hpp"
+#include "third_party/efsw/efsw.hpp"
 
 class ShaderMonitor
 {
@@ -29,6 +29,7 @@ class ShaderMonitor
         {
             if (action == efsw::Actions::Modified)
             {
+				std::cout << filename << std::endl;
                 if (callback) callback(filename);
             }
         }
@@ -50,6 +51,8 @@ public:
         {
             for (auto & shader : shaders)
             {
+				std::cout << filename << std::endl;
+				std::cout << get_filename_with_extension(shader.vertexPath) << std::endl;
                 if (filename == get_filename_with_extension(shader.vertexPath) || filename == get_filename_with_extension(shader.fragmentPath))
                 {
                     shader.shouldRecompile = true;

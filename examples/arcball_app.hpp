@@ -80,15 +80,14 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
-        
         if (event.type == InputEvent::KEY)
         {
             if (event.value[0] == GLFW_KEY_N && event.action == GLFW_RELEASE)
             {
                 useNormal = !useNormal;
             }
-            
         }
+
         if (event.type == InputEvent::CURSOR && isDragging)
         {
             if (event.cursor != lastCursor)
@@ -126,6 +125,8 @@ struct ExperimentalApp : public GLFWApp
     {
         glfwMakeContextCurrent(window);
         
+		//std::this_thread::sleep_for(std::chrono::milliseconds(33));
+
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         

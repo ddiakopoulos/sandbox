@@ -59,6 +59,7 @@
     <ClInclude Include="..\signal.hpp" />
     <ClInclude Include="..\sketch.hpp" />
     <ClInclude Include="..\string_utils.hpp" />
+    <ClInclude Include="..\third_party\efsw.hpp" />
     <ClInclude Include="..\third_party\fontstash.h" />
     <ClInclude Include="..\third_party\json.hpp" />
     <ClInclude Include="..\third_party\murmur_hash_3.h" />
@@ -91,6 +92,7 @@
     <ClCompile Include="..\nvg.cpp" />
     <ClCompile Include="..\procedural_sky\hosek.cpp" />
     <ClCompile Include="..\procedural_sky\preetham.cpp" />
+    <ClCompile Include="..\third_party\efsw.cpp" />
     <ClCompile Include="..\third_party\json.cpp" />
     <ClCompile Include="..\third_party\murmur_hash_3.cpp" />
     <ClCompile Include="..\third_party\nanovg.cpp" />
