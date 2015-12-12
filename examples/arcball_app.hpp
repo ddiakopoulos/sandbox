@@ -28,7 +28,7 @@ struct ExperimentalApp : public GLFWApp
     bool isDragging = false;
     bool useNormal = false;
     
-    ExperimentalApp() : GLFWApp(600, 600, "Arcball Camera App")
+    ExperimentalApp() : GLFWApp(800, 800, "Arcball Camera App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);

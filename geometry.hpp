@@ -25,19 +25,73 @@ namespace util
         std::vector<math::float3> bitangents;
         std::vector<math::uint3> faces;
         
-        void compute_normals()
+        void compute_normals(bool smooth = true)
         {
+            static const double NORMAL_EPSILON = 0.0001;
+            
             normals.resize(vertices.size());
             
             for (auto & n : normals)
                 n = math::float3(0,0,0);
-            
-            for (const auto & tri : faces)
+
+            std::vector<uint32_t> uniqueVertIndices(vertices.size(), 0);
+            if (smooth)
             {
-                math::float3 n = math::cross(vertices[tri.y] - vertices[tri.x], vertices[tri.z] - vertices[tri.x]);
-                normals[tri.x] += n;
-                normals[tri.y] += n;
-                normals[tri.z] += n;
+                for (uint32_t i = 0; i < uniqueVertIndices.size(); ++i)
+                {
+                    if (uniqueVertIndices[i] == 0)
+                    {
+                        uniqueVertIndices[i] = i + 1;
+                        const math::float3 v0 = vertices[i];
+                        for (auto j = i + 1; j < vertices.size(); ++j)
+                        {
+                            const math::float3 v1 = vertices[j];
+                            if (math::lengthSqr(v1 - v0) < NORMAL_EPSILON)
+                            {
+                                uniqueVertIndices[j] = uniqueVertIndices[i];
+                            }
+                        }
+                    }
+                }
+            }
+            
+            uint32_t idx0, idx1, idx2;
+            for (size_t i = 0; i < faces.size(); ++i)
+            {
+                auto f = faces[i];
+
+                idx0 = (smooth) ? uniqueVertIndices[f.x] - 1 : f.x;
+                idx1 = (smooth) ? uniqueVertIndices[f.y] - 1 : f.y;
+                idx2 = (smooth) ? uniqueVertIndices[f.z] - 1 : f.z;
+                
+                const math::float3 v0 = vertices[idx0];
+                const math::float3 v1 = vertices[idx1];
+                const math::float3 v2 = vertices[idx2];
+                
+                math::float3 e0 = v1 - v0;
+                math::float3 e1 = v2 - v0;
+                math::float3 e2 = v2 - v1;
+                
+                if (lengthSqr(e0) < NORMAL_EPSILON) continue;
+                if (lengthSqr(e1) < NORMAL_EPSILON) continue;
+                if (lengthSqr(e2) < NORMAL_EPSILON) continue;
+                
+                math::float3 n = cross(e0, e1);
+                
+                n = normalize(n);
+                
+                normals[f.x] += n;
+                normals[f.y] += n;
+                normals[f.z] += n;
+                
+                // Copy normals for non-unique verts
+                if (smooth)
+                {
+                    for (uint32_t i = 0; i < vertices.size(); ++i)
+                    {
+                        normals[i] = normals[uniqueVertIndices[i]-1];
+                    }
+                }
             }
             
             for (auto & n : normals)
