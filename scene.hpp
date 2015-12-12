@@ -24,13 +24,12 @@ struct Renderable : public Object
     
     Renderable(const util::Geometry & g) : geom(g)
     {
-        mesh = make_mesh_from_geometry(g);
-        bounds = g.compute_bounds();
+        rebuild_mesh();
         //mesh.set_non_indexed(GL_LINES);
         //glPointSize(8);
     }
     
-    void rebuild_mesh() { mesh = make_mesh_from_geometry(geom); }
+    void rebuild_mesh() { bounds = geom.compute_bounds(); mesh = make_mesh_from_geometry(geom); }
     
     void draw() const { mesh.draw_elements(); };
     
