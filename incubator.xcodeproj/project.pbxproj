@@ -27,7 +27,7 @@
 		089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */; };
 		08C4757C1C0579550031E87E /* noise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C4757A1C0579550031E87E /* noise.cpp */; };
 		08C475821C0AE9C50031E87E /* jo_gif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C475801C0AE9C50031E87E /* jo_gif.cpp */; };
-		08C475851C14C9BB0031E87E /* libefsw.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 08C475841C14C9BB0031E87E /* libefsw.a */; };
+		08C4758D1C1C844F0031E87E /* efsw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C4758C1C1C844F0031E87E /* efsw.cpp */; };
 		08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2DC1BDD667000895E31 /* nvg.cpp */; };
 		08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E11BDD669600895E31 /* nanovg.cpp */; };
 		08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E51BDD79F000895E31 /* preetham.cpp */; };
@@ -136,12 +136,13 @@
 		08C4757E1C0AD67D0031E87E /* euclidean_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = euclidean_app.hpp; path = examples/euclidean_app.hpp; sourceTree = SOURCE_ROOT; };
 		08C475801C0AE9C50031E87E /* jo_gif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jo_gif.cpp; path = third_party/jo_gif.cpp; sourceTree = SOURCE_ROOT; };
 		08C475811C0AE9C50031E87E /* jo_gif.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jo_gif.hpp; path = third_party/jo_gif.hpp; sourceTree = SOURCE_ROOT; };
-		08C475841C14C9BB0031E87E /* libefsw.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libefsw.a; path = third_party/bin/libefsw.a; sourceTree = "<group>"; };
 		08C475861C14F68A0031E87E /* shader_monitor.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = shader_monitor.hpp; sourceTree = SOURCE_ROOT; };
 		08C475871C19CCC30031E87E /* vignette_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = vignette_frag.glsl; path = assets/shaders/vignette_frag.glsl; sourceTree = SOURCE_ROOT; };
 		08C475881C19CCC30031E87E /* vignette_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = vignette_vert.glsl; path = assets/shaders/vignette_vert.glsl; sourceTree = SOURCE_ROOT; };
 		08C475891C19CF0B0031E87E /* matcap_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = matcap_frag.glsl; path = assets/shaders/matcap_frag.glsl; sourceTree = SOURCE_ROOT; };
 		08C4758A1C19CF0B0031E87E /* matcap_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = matcap_vert.glsl; path = assets/shaders/matcap_vert.glsl; sourceTree = SOURCE_ROOT; };
+		08C4758C1C1C844F0031E87E /* efsw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = efsw.cpp; path = third_party/efsw.cpp; sourceTree = SOURCE_ROOT; };
+		08C4758E1C1C84550031E87E /* efsw.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = efsw.hpp; path = third_party/efsw/efsw.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DC1BDD667000895E31 /* nvg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nvg.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DD1BDD667000895E31 /* nvg.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = nvg.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DF1BDD669600895E31 /* nanovg_gl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg_gl_utils.h; path = third_party/nanovg_gl_utils.h; sourceTree = SOURCE_ROOT; };
@@ -159,7 +160,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				087A4EA61BB8ECA600975C72 /* Cocoa.framework in Frameworks */,
-				08C475851C14C9BB0031E87E /* libefsw.a in Frameworks */,
 				087A4EA41BB8ECA100975C72 /* GLKit.framework in Frameworks */,
 				087A4EAA1BB995AD00975C72 /* libglfw3.3.1.dylib in Frameworks */,
 				087A4EA21BB8EC9B00975C72 /* OpenGL.framework in Frameworks */,
@@ -248,7 +248,6 @@
 		0849FD7F1BE7C326000F148E /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
-				08C475841C14C9BB0031E87E /* libefsw.a */,
 				087A4EA91BB995AD00975C72 /* libglfw3.3.1.dylib */,
 				087A4EA51BB8ECA600975C72 /* Cocoa.framework */,
 				087A4EA31BB8ECA100975C72 /* GLKit.framework */,
@@ -277,6 +276,7 @@
 		0849FD8D1BE7CB2B000F148E /* third_party */ = {
 			isa = PBXGroup;
 			children = (
+				08C4758B1C1C84420031E87E /* efsw */,
 				08C475831C0E0B580031E87E /* jo_gif */,
 				0849FD9E1BFAFC77000F148E /* tinyobj */,
 				0849FD911BF00334000F148E /* json */,
@@ -414,6 +414,15 @@
 			name = jo_gif;
 			sourceTree = "<group>";
 		};
+		08C4758B1C1C84420031E87E /* efsw */ = {
+			isa = PBXGroup;
+			children = (
+				08C4758E1C1C84550031E87E /* efsw.hpp */,
+				08C4758C1C1C844F0031E87E /* efsw.cpp */,
+			);
+			name = efsw;
+			sourceTree = "<group>";
+		};
 		08CFD2DB1BDD666000895E31 /* nanovg */ = {
 			isa = PBXGroup;
 			children = (
@@ -531,6 +540,7 @@
 				085081971BB5B6EA0084A1D6 /* glfw_app.mm in Sources */,
 				0849FD821BE7C667000F148E /* json.cpp in Sources */,
 				0822AF301BCC16D200A894F0 /* GlTexture.cpp in Sources */,
+				08C4758D1C1C844F0031E87E /* efsw.cpp in Sources */,
 				08289F851BC601A70054AF3B /* GlShader.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -627,10 +637,15 @@
 		081204951BADDEC100C7C0F4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/third_party/",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/local/Cellar/glfw3/3.1.1/include,
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glfw3/3.1.1/lib,
-					"$(PROJECT_DIR)/third_party/bin",
 				);
 				PRODUCT_NAME = incubator;
 			};
@@ -639,10 +654,15 @@
 		081204961BADDEC100C7C0F4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/third_party/",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/local/Cellar/glfw3/3.1.1/include,
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glfw3/3.1.1/lib,
-					"$(PROJECT_DIR)/third_party/bin",
 				);
 				PRODUCT_NAME = incubator;
 			};
