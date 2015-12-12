@@ -17,7 +17,7 @@ void main()
     cameraIncident = normalize(vec3(u_modelViewMatrix * vec4(inPosition, 1)));
     
     // Normal in camera space
-    cameraNormal = normalize(u_modelMatrixIT * inNormal);
+    cameraNormal = normalize(u_modelViewMatrix * vec4(inNormal, 0)).xyz;
 
     vec4 worldPos = u_modelMatrix * vec4(inPosition, 1);
     gl_Position = u_viewProj * worldPos;
