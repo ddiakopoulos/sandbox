@@ -210,6 +210,9 @@
     <ClInclude Include="..\third_party\noise.h">
       <Filter>third_party</Filter>
     </ClInclude>
+    <ClInclude Include="..\third_party\efsw.hpp">
+      <Filter>third_party</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
@@ -264,6 +267,9 @@
       <Filter>source\app</Filter>
     </ClCompile>
     <ClCompile Include="..\third_party\noise.cpp">
+      <Filter>third_party</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\efsw.cpp">
       <Filter>third_party</Filter>
     </ClCompile>
   </ItemGroup>

@@ -5,6 +5,7 @@
 // https://github.com/ddiakopoulos/tinyply
 
 #include "tinyply.h"
+#include <functional>
 
 using namespace tinyply;
 using namespace std;
