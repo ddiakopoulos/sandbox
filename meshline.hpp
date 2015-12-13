@@ -7,14 +7,10 @@
 
 #include "GlShared.hpp"
 #include "GlMesh.hpp"
-#include "constant_spline.hpp"
 #include <random>
 
 class MeshLine
 {
-    std::random_device rd;
-    std::mt19937 gen;
-
     gfx::GlShader shader;
     gfx::GlMesh mesh;
     gfx::GlCamera & camera;
@@ -71,16 +67,19 @@ public:
 
     MeshLine(gfx::GlCamera & camera, const float2 screenDims, const float linewidth, const float3 color) : camera(camera), screenDims(screenDims), linewidth(linewidth), color(color)
     {
-        gen = std::mt19937(rd());
         shader = gfx::GlShader(read_file_text("assets/shaders/meshline_vert.glsl"), read_file_text("assets/shaders/meshline_frag.glsl"));
-        auto line = create_curve();
-        process(line);
-        mesh = make_line_mesh(line);
     }
     
-    void process(const std::vector<float3> & curve)
+    void set_vertices(const std::vector<float3> & vertices)
     {
-        const auto l = curve.size();
+        const auto l = vertices.size();
+        
+        side.clear();
+        width.clear();
+        uvs.clear();
+        previous.clear();
+        next.clear();
+        indices.clear();
         
         for (size_t i = 0; i < l; i += 2)
         {
@@ -103,29 +102,29 @@ public:
         float3 v;
         
         {
-            if (curve[0] == curve[l - 1]) v = curve[l - 2];
-            else v = curve[0];
+            if (vertices[0] == vertices[l - 1]) v = vertices[l - 2];
+            else v = vertices[0];
             previous.push_back(v);
             previous.push_back(v);
         }
         
         for (size_t i = 0; i < l - 1; i += 2)
         {
-            v = curve[i];
+            v = vertices[i];
             previous.push_back(v);
             previous.push_back(v);
         }
         
         for (size_t i = 2; i < l; i += 2)
         {
-            v = curve[i];
+            v = vertices[i];
             next.push_back(v);
             next.push_back(v);
         }
         
         {
-            if (curve[l - 1] == curve[0]) v = curve[1];
-            else v = curve[l - 1];
+            if (vertices[l - 1] == vertices[0]) v = vertices[1];
+            else v = vertices[l - 1];
             next.push_back(v);
             next.push_back(v);
         }
@@ -136,39 +135,8 @@ public:
             indices.push_back(uint3(n + 0, n + 1, n + 2));
             indices.push_back(uint3(n + 2, n + 1, n + 3));
         }
-    }
-    
-    std::vector<float3> create_curve(float rMin = 3.f, float rMax = 12.f)
-    {
-        std::vector<float3> curve;
-
-        auto r = std::uniform_real_distribution<float>(0.0, 1.0);
-
-        ConstantSpline s;
         
-        s.p0 = float3(0, 0, 0);
-        s.p1 = s.p0 + float3( .5f - r(gen), .5f - r(gen), .5f - r(gen));
-        s.p2 = s.p1 + float3( .5f - r(gen), .5f - r(gen), .5f - r(gen));
-        s.p3 = s.p2 + float3( .5f - r(gen), .5f - r(gen), .5f - r(gen));
-        
-        s.p0 *= rMin + r(gen) * rMax;
-        s.p1 *= rMin + r(gen) * rMax;
-        s.p2 *= rMin + r(gen) * rMax;
-        s.p3 *= rMin + r(gen) * rMax;
-        
-        s.calculate(.001f);
-        s.calculate_distances();
-        s.reticulate(256);
-        
-        auto sPoints = s.get_spline();
-        
-        for (const auto & p : sPoints)
-        {
-            curve.push_back(p);
-            curve.push_back(p);
-        }
-        
-        return curve;
+        mesh = make_line_mesh(vertices);
     }
     
     void draw()

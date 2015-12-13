@@ -21,8 +21,13 @@ struct ExperimentalApp : public GLFWApp
     
     std::unique_ptr<MeshLine> meshline;
     
+    std::random_device rd;
+    std::mt19937 gen;
+    
     ExperimentalApp() : GLFWApp(940, 720, "Sandbox App")
     {
+        gen = std::mt19937(rd());
+    
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -32,7 +37,9 @@ struct ExperimentalApp : public GLFWApp
         camera.look_at({0, 8, 24}, {0, 0, 0});
         
         meshline.reset(new MeshLine(camera, float2(width, height), 1.0f, float3(1.0, 1.0, 1.0)));
-                       
+        auto newSpline = create_curve();
+        meshline->set_vertices(newSpline);
+        
         simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
         {
@@ -62,6 +69,40 @@ struct ExperimentalApp : public GLFWApp
         grid = RenderableGrid(1, 64, 64);
         
         gfx::gl_check_error(__FILE__, __LINE__);
+    }
+    
+    
+    std::vector<float3> create_curve(float rMin = 3.f, float rMax = 12.f)
+    {
+        std::vector<float3> curve;
+        
+        auto r = std::uniform_real_distribution<float>(0.0, 1.0);
+        
+        ConstantSpline s;
+        
+        s.p0 = float3(0, 0, 0);
+        s.p1 = s.p0 + float3( .5f - r(gen), .5f - r(gen), .5f - r(gen));
+        s.p2 = s.p1 + float3( .5f - r(gen), .5f - r(gen), .5f - r(gen));
+        s.p3 = s.p2 + float3( .5f - r(gen), .5f - r(gen), .5f - r(gen));
+        
+        s.p0 *= rMin + r(gen) * rMax;
+        s.p1 *= rMin + r(gen) * rMax;
+        s.p2 *= rMin + r(gen) * rMax;
+        s.p3 *= rMin + r(gen) * rMax;
+        
+        s.calculate(.001f);
+        s.calculate_distances();
+        s.reticulate(256);
+        
+        auto sPoints = s.get_spline();
+        
+        for (const auto & p : sPoints)
+        {
+            curve.push_back(p);
+            curve.push_back(p);
+        }
+        
+        return curve;
     }
     
     void on_window_resize(math::int2 size) override
