@@ -22,6 +22,8 @@ struct ExperimentalApp : public GLFWApp
     
     float rotationAngle = 0.0f;
     
+    GlMesh sphereMesh;
+    
     ExperimentalApp() : GLFWApp(1280, 720, "Meshline App")
     {
         gen = std::mt19937(rd());
@@ -132,8 +134,11 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         
+        auto r = std::uniform_real_distribution<float>(0.001, .5);
+        
         vignetteShader->bind();
-        vignetteShader->uniform("u_noiseAmount", 0.1f);
+        vignetteShader->uniform("u_noiseAmount", 0.05f);
+        vignetteShader->uniform("u_time", r(gen));
         vignetteShader->uniform("u_screenResolution", float2(width, height));
         vignetteShader->uniform("u_backgroundColor", float3(20.f / 255.f, 20.f / 255.f, 20.f / 255.f));
         fullscreen_vignette_quad.draw_elements();
