@@ -1,3 +1,5 @@
+// See COPYING file for attribution information
+
 #pragma once
 
 #ifndef meshline_h
@@ -5,16 +7,8 @@
 
 #include "GlShared.hpp"
 #include "GlMesh.hpp"
+#include "constant_spline.hpp"
 #include <random>
-
-struct SplinePoint
-{
-    float3 point;
-    float distance = 0.0f;
-    float ac = 0.0f;
-    SplinePoint(){};
-    SplinePoint(float3 p, float d, float ac) : point(p), distance(d), ac(ac) {}
-};
 
 class MeshLine
 {
@@ -24,16 +18,15 @@ class MeshLine
     gfx::GlShader shader;
     gfx::GlMesh mesh;
     gfx::GlCamera & camera;
+    
     float2 screenDims;
     float linewidth;
     float3 color;
     
     std::vector<float3> previous;
     std::vector<float3> next;
-    
     std::vector<float> side;
     std::vector<float> width;
-    
     std::vector<float2> uvs;
 
     GlMesh make_line_mesh(Geometry & g)
@@ -139,7 +132,7 @@ public:
         
         for (size_t i = 0; i < l - 1; i ++)
         {
-            auto n = i * 2;
+            uint32_t n = i * 2;
             g.faces.push_back(uint3(n + 0, n + 1, n + 2));
             g.faces.push_back(uint3(n + 2, n + 1, n + 3));
         }
@@ -152,8 +145,6 @@ public:
         auto r = std::uniform_real_distribution<float>(0.0, 1.0);
 
         ConstantSpline s;
-
-        s.inc = .001f;
         
         s.p0 = float3(0, 0, 0);
         s.p1 = s.p0 + float3( .5f - r(gen), .5f - r(gen), .5f - r(gen));
@@ -165,15 +156,16 @@ public:
         s.p2 *= rMin + r(gen) * rMax;
         s.p3 *= rMin + r(gen) * rMax;
         
-        s.calculate();
+        s.calculate(.001f);
         s.calculate_distances();
-        s.reticulate(500);
+        s.reticulate(256);
         
-        // Double copy of the vertices
-        for(size_t j = 0; j < s.lPoints.size(); j++)
+        auto sPoints = s.get_spline();
+        
+        for(const auto & p : sPoints)
         {
-            g.vertices.push_back(s.lPoints[j].point);
-            g.vertices.push_back(s.lPoints[j].point);
+            g.vertices.push_back(p);
+            g.vertices.push_back(p);
         }
         return g;
     }
