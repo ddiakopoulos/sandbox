@@ -14,6 +14,7 @@
 * GLSL Shader hot-reload (efsw library)
 * Spherical environment mapping (matcap shading)
 * Library of procedural meshes (cube, sphere, cone, torus, etc)
+* Billboarded triangle mesh line renderer
 
 ## In Progress
 * BRDF / PBR

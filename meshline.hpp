@@ -28,18 +28,19 @@ class MeshLine
     std::vector<float> side;
     std::vector<float> width;
     std::vector<float2> uvs;
-
-    GlMesh make_line_mesh(Geometry & g)
+    std::vector<uint3> indices;
+    
+    GlMesh make_line_mesh(const std::vector<float3> & curve)
     {
         GlMesh m;
         
         int components = 3 + 3 + 3 + 1 + 1 + 2;
         std::vector<float> buffer;
-        for (size_t i = 0; i < g.vertices.size(); ++i)
+        for (size_t i = 0; i < curve.size(); ++i)
         {
-            buffer.push_back(g.vertices[i].x);
-            buffer.push_back(g.vertices[i].y);
-            buffer.push_back(g.vertices[i].z);
+            buffer.push_back(curve[i].x);
+            buffer.push_back(curve[i].y);
+            buffer.push_back(curve[i].z);
             buffer.push_back(previous[i].x);
             buffer.push_back(previous[i].y);
             buffer.push_back(previous[i].z);
@@ -60,8 +61,8 @@ class MeshLine
         m.set_attribute(4, 1, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 10); // Width
         m.set_attribute(5, 2, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 11); // Uvs
         
-        if (g.faces.size() > 0)
-            m.set_elements(g.faces, GL_STATIC_DRAW);
+        if (indices.size() > 0)
+            m.set_elements(indices, GL_STATIC_DRAW);
         
         return m;
     }
@@ -71,16 +72,15 @@ public:
     MeshLine(gfx::GlCamera & camera, const float2 screenDims, const float linewidth, const float3 color) : camera(camera), screenDims(screenDims), linewidth(linewidth), color(color)
     {
         gen = std::mt19937(rd());
-        
         shader = gfx::GlShader(read_file_text("assets/shaders/meshline_vert.glsl"), read_file_text("assets/shaders/meshline_frag.glsl"));
-        Geometry line = create_curve();
+        auto line = create_curve();
         process(line);
         mesh = make_line_mesh(line);
     }
     
-    void process(Geometry & g)
+    void process(const std::vector<float3> & curve)
     {
-        const auto l = g.vertices.size();
+        const auto l = curve.size();
         
         for (size_t i = 0; i < l; i += 2)
         {
@@ -103,29 +103,29 @@ public:
         float3 v;
         
         {
-            if (g.vertices[0] == g.vertices[l - 1]) v = g.vertices[l - 2];
-            else v = g.vertices[0];
+            if (curve[0] == curve[l - 1]) v = curve[l - 2];
+            else v = curve[0];
             previous.push_back(v);
             previous.push_back(v);
         }
         
         for (size_t i = 0; i < l - 1; i += 2)
         {
-            v = g.vertices[i];
+            v = curve[i];
             previous.push_back(v);
             previous.push_back(v);
         }
         
         for (size_t i = 2; i < l; i += 2)
         {
-            v = g.vertices[i];
+            v = curve[i];
             next.push_back(v);
             next.push_back(v);
         }
         
         {
-            if (g.vertices[l - 1] == g.vertices[0]) v = g.vertices[1];
-            else v = g.vertices[l - 1];
+            if (curve[l - 1] == curve[0]) v = curve[1];
+            else v = curve[l - 1];
             next.push_back(v);
             next.push_back(v);
         }
@@ -133,14 +133,14 @@ public:
         for (size_t i = 0; i < l - 1; i ++)
         {
             uint32_t n = i * 2;
-            g.faces.push_back(uint3(n + 0, n + 1, n + 2));
-            g.faces.push_back(uint3(n + 2, n + 1, n + 3));
+            indices.push_back(uint3(n + 0, n + 1, n + 2));
+            indices.push_back(uint3(n + 2, n + 1, n + 3));
         }
     }
     
-    Geometry create_curve(float rMin = 3.f, float rMax = 12.f)
+    std::vector<float3> create_curve(float rMin = 3.f, float rMax = 12.f)
     {
-        Geometry g;
+        std::vector<float3> curve;
 
         auto r = std::uniform_real_distribution<float>(0.0, 1.0);
 
@@ -162,12 +162,13 @@ public:
         
         auto sPoints = s.get_spline();
         
-        for(const auto & p : sPoints)
+        for (const auto & p : sPoints)
         {
-            g.vertices.push_back(p);
-            g.vertices.push_back(p);
+            curve.push_back(p);
+            curve.push_back(p);
         }
-        return g;
+        
+        return curve;
     }
     
     void draw()
