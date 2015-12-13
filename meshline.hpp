@@ -65,7 +65,7 @@ class MeshLine
 
 public:
 
-    MeshLine(gfx::GlCamera & camera, const float2 screenDims, const float linewidth, const float3 color) : camera(camera), screenDims(screenDims), linewidth(linewidth), color(color)
+    MeshLine(gfx::GlCamera & camera, const float2 screenDims, const float linewidth, float3 color) : camera(camera), screenDims(screenDims), linewidth(linewidth), color(color)
     {
         shader = gfx::GlShader(read_file_text("assets/shaders/meshline_vert.glsl"), read_file_text("assets/shaders/meshline_frag.glsl"));
     }
