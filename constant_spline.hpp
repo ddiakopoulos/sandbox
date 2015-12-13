@@ -1,3 +1,5 @@
+// See COPYING file for attribution information
+
 #pragma once
 
 #ifndef constant_spline_h
@@ -14,31 +16,28 @@ struct SplinePoint
     SplinePoint(float3 p, float d, float ac) : point(p), distance(d), ac(ac) {}
 };
 
+// This object creates a B-Spline using 4 points, and a number steps
+// or a fixed step distance can be specified to create a set of points that cover the curve at constant rate.
 class ConstantSpline
 {
-    float3 p0;
-    float3 p1;
-    float3 p2;
-    float3 p3;
-
-    float3 tmp;
-    float3 res;
-
     std::vector<SplinePoint> points;
     std::vector<SplinePoint> lPoints;
-
-    float inc = 0.01f;
+    
+public:
+    
+    float3 p0, p1, p2, p3;
+    
     float d = 0.0f;
     
-    // This object creates a B-Spline using 4 points, and a number steps or a fixed step distance can be specified to create a set of points that cover the curve at constant rate.
     ConstantSpline() { };
 
-    void calculate()
+    void calculate(float increment = 0.01f)
     {
         d = 0.0f;
         points.clear();
         
-        for (float j = 0; j <= 1.0f; j += inc)
+        float3 tmp, result;
+        for (float j = 0; j <= 1.0f; j += increment)
         {
             float i = (1 - j);
             float ii = i * i;
@@ -47,25 +46,25 @@ class ConstantSpline
             float jj = j * j;
             float jjj = jj * j;
             
-            res = float3(0, 0, 0);
+            result = float3(0, 0, 0);
             
             tmp = p0;
             tmp *= iii;
-            res += tmp;
+            result += tmp;
             
             tmp = p1;
             tmp *= 3 * j * ii;
-            res += tmp;
+            result += tmp;
             
             tmp = p2;
             tmp *= 3 * jj * i;
-            res += tmp;
+            result += tmp;
             
             tmp = p3;
             tmp *= jjj;
-            res += tmp;
+            result += tmp;
             
-            points.emplace_back(res, 0.0f, 0.0f);
+            points.emplace_back(result, 0.0f, 0.0f);
         }
         
         points.emplace_back(p3, 0.0f, 0.0f);
@@ -95,11 +94,10 @@ class ConstantSpline
         points[points.size() - 1].ac = d;
     }
 
-
     float split_segment(const float distancePerStep, SplinePoint & a, const SplinePoint & b, std::vector<SplinePoint> & l)
     {
         SplinePoint t = b;
-        float d = 0.0f;
+        float distance = 0.0f;
         
         t.point -= a.point;
         
@@ -113,12 +111,15 @@ class ConstantSpline
         {
             a.point += t.point;
             l.push_back(a);
-            d += distancePerStep;
+            distance += distancePerStep;
         }
-        return d;
+        return distance;
     }
 
-
+    // In Will Wright's own words:
+    // Construct etwork based functions that are defined by divisible intervals
+    // while approximating said network and composing it of pieces of simple functions defined on
+    // subintervals and joined at their endpoints with a suitable degree of smoothness."
     void reticulate(uint32_t steps)
     {
         float distancePerStep = d / float(steps);
@@ -142,6 +143,13 @@ class ConstantSpline
         
         // Last point
         lPoints.push_back(points[points.size() - 1]);
+    }
+    
+    std::vector<float3> get_spline()
+    {
+        std::vector<float3> spline;
+        for (auto & p : lPoints) { spline.push_back(p.point); };
+        return spline;
     }
     
 };
