@@ -143,6 +143,10 @@
 		08C4758A1C19CF0B0031E87E /* matcap_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = matcap_vert.glsl; path = assets/shaders/matcap_vert.glsl; sourceTree = SOURCE_ROOT; };
 		08C4758C1C1C844F0031E87E /* efsw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = efsw.cpp; path = third_party/efsw.cpp; sourceTree = SOURCE_ROOT; };
 		08C4758E1C1C84550031E87E /* efsw.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = efsw.hpp; path = third_party/efsw/efsw.hpp; sourceTree = SOURCE_ROOT; };
+		08C4758F1C1CE8CD0031E87E /* meshline_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = meshline_frag.glsl; path = assets/shaders/meshline_frag.glsl; sourceTree = SOURCE_ROOT; };
+		08C475901C1CE8CD0031E87E /* meshline_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = meshline_vert.glsl; path = assets/shaders/meshline_vert.glsl; sourceTree = SOURCE_ROOT; };
+		08C475911C1CE8F30031E87E /* meshline.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = meshline.hpp; sourceTree = SOURCE_ROOT; };
+		08C475921C1DEA570031E87E /* constant_spline.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = constant_spline.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DC1BDD667000895E31 /* nvg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nvg.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DD1BDD667000895E31 /* nvg.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = nvg.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DF1BDD669600895E31 /* nanovg_gl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg_gl_utils.h; path = third_party/nanovg_gl_utils.h; sourceTree = SOURCE_ROOT; };
@@ -363,6 +367,7 @@
 		08C475761C02C9200031E87E /* rendering */ = {
 			isa = PBXGroup;
 			children = (
+				08C475911C1CE8F30031E87E /* meshline.hpp */,
 				0822AF381BD4B52100A894F0 /* renderable_grid.hpp */,
 				0849FD901BEFDC8D000F148E /* procedural_mesh.hpp */,
 			);
@@ -373,6 +378,7 @@
 			isa = PBXGroup;
 			children = (
 				081204991BADDEF700C7C0F4 /* math_util.hpp */,
+				08C475921C1DEA570031E87E /* constant_spline.hpp */,
 				081204981BADDEF700C7C0F4 /* linear_algebra.hpp */,
 				081204971BADDEF700C7C0F4 /* geometric.hpp */,
 				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
@@ -446,6 +452,8 @@
 		08CFD2EA1BDDF79900895E31 /* shaders */ = {
 			isa = PBXGroup;
 			children = (
+				08C4758F1C1CE8CD0031E87E /* meshline_frag.glsl */,
+				08C475901C1CE8CD0031E87E /* meshline_vert.glsl */,
 				08C475891C19CF0B0031E87E /* matcap_frag.glsl */,
 				08C4758A1C19CF0B0031E87E /* matcap_vert.glsl */,
 				08C475871C19CCC30031E87E /* vignette_frag.glsl */,

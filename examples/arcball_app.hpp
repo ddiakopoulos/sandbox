@@ -34,11 +34,10 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        object = Renderable(load_geometry_from_ply("assets/models/geometry/TorusKnotUniform.ply"));
+        object = Renderable(load_geometry_from_ply("assets/models/barrel/barrel.ply"));
         
-        object.scale *= 0.05f;
-        
-        object.rebuild_mesh();
+        //object.scale *= 0.05f;
+        //object.rebuild_mesh();
         
         std::cout << object.bounds.center() << std::endl;
         
@@ -148,7 +147,6 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_vignette_quad.draw_elements();
         vignetteShader->unbind();
         
-        /*
         {
             simpleTexturedShader->bind();
             
@@ -177,10 +175,9 @@ struct ExperimentalApp : public GLFWApp
             
             simpleTexturedShader->unbind();
         }
-        */
         
+        /*
         {
-            
             matcapShader->bind();
             
             auto model = object.get_model();
@@ -194,8 +191,8 @@ struct ExperimentalApp : public GLFWApp
             object.draw();
             
             matcapShader->unbind();
-
         }
+        */
         
         gfx::gl_check_error(__FILE__, __LINE__);
         

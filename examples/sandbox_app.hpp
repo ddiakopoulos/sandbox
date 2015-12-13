@@ -19,6 +19,8 @@ struct ExperimentalApp : public GLFWApp
     
     std::unique_ptr<GlShader> simpleShader;
     
+    std::unique_ptr<MeshLine> meshline;
+    
     ExperimentalApp() : GLFWApp(940, 720, "Sandbox App")
     {
         int width, height;
@@ -29,6 +31,8 @@ struct ExperimentalApp : public GLFWApp
         
         camera.look_at({0, 8, 24}, {0, 0, 0});
         
+        meshline.reset(new MeshLine(camera, float2(width, height), 1.0f, float3(1.0, 1.0, 1.0)));
+                       
         simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
         {
@@ -87,14 +91,14 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
      
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.1f, 0.1f, 0.5f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
-
+        
         // Simple Shader
         {
             simpleShader->bind();
@@ -119,11 +123,12 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
                 model.draw();
             }
-
             gfx::gl_check_error(__FILE__, __LINE__);
             
             simpleShader->unbind();
         }
+        
+        meshline->draw();
         
         grid.render(proj, view);
 

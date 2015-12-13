@@ -34,3 +34,5 @@
 #include "scene.hpp"
 #include "gizmo.hpp"
 #include "shader_monitor.hpp"
+#include "constant_spline.hpp"
+#include "meshline.hpp"
