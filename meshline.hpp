@@ -139,11 +139,10 @@ public:
         mesh = make_line_mesh(vertices);
     }
     
-    void draw()
+    void draw(const float4x4 model)
     {
         shader.bind();
-        
-        float4x4 model = Identity4x4;
+
         camera.nearClip = 0.1;
         camera.farClip = 64;
         auto projMat = camera.get_projection_matrix(screenDims.x / screenDims.y);
