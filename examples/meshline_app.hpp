@@ -22,8 +22,6 @@ struct ExperimentalApp : public GLFWApp
     
     float rotationAngle = 0.0f;
     
-    GlMesh sphereMesh;
-    
     ExperimentalApp() : GLFWApp(1280, 720, "Meshline App")
     {
         gen = std::mt19937(rd());
