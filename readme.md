@@ -15,8 +15,10 @@
 * Spherical environment mapping (matcap shading)
 * Library of procedural meshes (cube, sphere, cone, torus, etc)
 * Billboarded triangle mesh line renderer
+* Reaction-diffusion CPU simulation (Gray-Scott)
 
 ## In Progress
+* Reaction-diffusion over time (3d)
 * BRDF / PBR
 * Deferred rendering experiments
 * HDR pipeline
@@ -28,7 +30,6 @@
 * Bruneton Sky Model
 * UI layout via cassowary constraint solver (Rhea library)
 * CPU path tracer (+ lighting baker?)
-* Reaction-diffusion procedural texture
 * Fluid simulator (GL compute shader)
 * Procedural clouds
 * L-System + particles
