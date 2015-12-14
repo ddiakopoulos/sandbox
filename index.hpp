@@ -36,3 +36,4 @@
 #include "shader_monitor.hpp"
 #include "constant_spline.hpp"
 #include "meshline.hpp"
+#include "reaction_diffusion.hpp"

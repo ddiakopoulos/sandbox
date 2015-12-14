@@ -80,6 +80,7 @@
 		08289F861BC609750054AF3B /* GlMesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlMesh.cpp; sourceTree = SOURCE_ROOT; };
 		08289F871BC609750054AF3B /* GlMesh.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GlMesh.hpp; sourceTree = SOURCE_ROOT; };
 		08289F891BC609B80054AF3B /* GlShared.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GlShared.hpp; sourceTree = SOURCE_ROOT; };
+		084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = reaction_diffusion.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD731BE6A031000F148E /* gpu_timer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = gpu_timer.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD741BE7C1C1000F148E /* arkano_ssao_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = arkano_ssao_frag.glsl; path = assets/shaders/arkano_ssao_frag.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD751BE7C1C1000F148E /* filmgrain_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = filmgrain_frag.glsl; path = assets/shaders/filmgrain_frag.glsl; sourceTree = SOURCE_ROOT; };
@@ -381,6 +382,7 @@
 		08C475771C02C9650031E87E /* math */ = {
 			isa = PBXGroup;
 			children = (
+				084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */,
 				081204991BADDEF700C7C0F4 /* math_util.hpp */,
 				08C475921C1DEA570031E87E /* constant_spline.hpp */,
 				081204981BADDEF700C7C0F4 /* linear_algebra.hpp */,
