@@ -13,8 +13,7 @@ struct ExperimentalApp : public GLFWApp
     
     GlMesh fullscreen_reaction_quad;
     
-    std::unique_ptr<GlShader> reactionShader;
-    std::unique_ptr<GlShader> reactionScreenShader;
+    ShaderMonitor shaderMonitor;
     
     std::random_device rd;
     std::mt19937 gen;
@@ -30,6 +29,9 @@ struct ExperimentalApp : public GLFWApp
     
     float frameDelta = 0.0f;
     
+    std::shared_ptr<GlShader> displacementShader;
+    Renderable displacementMesh;
+    
     ExperimentalApp() : GLFWApp(1280, 720, "Reaction Diffusion App")
     {
         gen = std::mt19937(rd());
@@ -40,21 +42,25 @@ struct ExperimentalApp : public GLFWApp
         
         cameraController.set_camera(&camera);
         
-        camera.look_at({0, 0, 0}, {0, 0, 0});
+        camera.look_at({-5, 15, 0}, {0, 0, 0});
         
         pixels.resize(256 * 256 * 3, 150);
         gs.reset(new GrayScottSimulator(float2(256, 256), false));
-        gs->set_coefficients(0.023, 0.074, 0.06, 0.025);
+        gs->set_coefficients(0.023f, 0.077f, 0.16f, 0.08f);
         
         fullscreen_reaction_quad = make_fullscreen_quad();
+        
+        displacementMesh = Renderable(make_plane(48, 48, 256, 256));
         
         gsOutput.load_data(256, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
         gsOutputView.reset(new GLTextureView(gsOutput.get_gl_handle()));
         
-        rootWidget.bounds = {0, 0, (float) width, (float) height};
-        rootWidget.add_child( {{0,+10},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UIComponent>());
-        rootWidget.layout();
+        displacementShader.reset(new gfx::GlShader(read_file_text("assets/shaders/displacement_vert.glsl"), read_file_text("assets/shaders/displacement_frag.glsl")));
+        shaderMonitor.add_shader(displacementShader, "assets/shaders/displacement_vert.glsl", "assets/shaders/displacement_frag.glsl");
         
+        rootWidget.bounds = {0, 0, (float) width, (float) height};
+        rootWidget.add_child( {{0,+10},{0,+10},{0.15,0},{0.15,0}}, std::make_shared<UIComponent>());
+        rootWidget.layout();
         
         gfx::gl_check_error(__FILE__, __LINE__);
     }
@@ -66,17 +72,25 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
+        if (event.type == InputEvent::Type::KEY)
+        {
+            if (event.value[0] == GLFW_KEY_SPACE)
+            {
+                gs->reset();
+            }
+        }
         auto rX = remap<float>(event.cursor.x, 0, event.windowSize.x, 0, 256, true);
         auto rY = remap<float>(event.cursor.y, 0, event.windowSize.y, 0, 256, true);
-        
         gs->trigger_region(rX , 256 - rY, 10, 10);
         cameraController.handle_input(event);
+        
     }
     
     void on_update(const UpdateEvent & e) override
     {
         frameDelta = e.timestep_ms * 1000;
         cameraController.update(e.timestep_ms);
+        shaderMonitor.handle_recompile();
     }
     
     void draw_ui()
@@ -98,9 +112,12 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         
-        auto model = Identity4x4;
-        const auto proj = camera.get_projection_matrix((float) width / (float) height);
-        const float4x4 view = camera.get_view_matrix();
+        float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);;
+        float4x4 proj = camera.get_projection_matrix((float) width / (float) height);
+        float4x4 view = camera.get_view_matrix();
+        float4x4 mvp = proj*  view * model;
+        float4x4 modelViewMat = view * model;
+        
         const float4x4 viewProj = mul(proj, view);
         
         for (int i = 0; i < 4; ++i) gs->update(frameDelta);
@@ -117,6 +134,23 @@ struct ExperimentalApp : public GLFWApp
         }
         
         gsOutput.load_data(256, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+        
+        {
+            displacementShader->bind();
+            
+            displacementShader->uniform("u_modelMatrix", model);
+            displacementShader->uniform("u_modelMatrixIT", inv(transpose(model)));
+            displacementShader->uniform("u_viewProj", proj * view);
+            displacementShader->texture("u_displacementTex", 0, gsOutput);
+            
+            displacementShader->uniform("u_eye", camera.get_eye_point());
+            displacementShader->uniform("u_diffuse", float3(0.4f, 0.4f, 0.4f));
+            displacementShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
+            
+            displacementMesh.draw();
+
+            displacementShader->unbind();
+        }
         
         draw_ui();
         
