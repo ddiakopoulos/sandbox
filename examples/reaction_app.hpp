@@ -112,13 +112,8 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         
-        float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);;
-        float4x4 proj = camera.get_projection_matrix((float) width / (float) height);
-        float4x4 view = camera.get_view_matrix();
-        float4x4 mvp = proj*  view * model;
-        float4x4 modelViewMat = view * model;
-        
-        const float4x4 viewProj = mul(proj, view);
+        const float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);;
+        const float4x4 viewProj = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix();
         
         for (int i = 0; i < 4; ++i) gs->update(frameDelta);
         
@@ -140,7 +135,7 @@ struct ExperimentalApp : public GLFWApp
             
             displacementShader->uniform("u_modelMatrix", model);
             displacementShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-            displacementShader->uniform("u_viewProj", proj * view);
+            displacementShader->uniform("u_viewProj", viewProj);
             displacementShader->texture("u_displacementTex", 0, gsOutput);
             
             displacementShader->uniform("u_eye", camera.get_eye_point());
