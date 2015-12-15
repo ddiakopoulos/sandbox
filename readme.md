@@ -19,23 +19,25 @@
 
 ## In Progress
 * Reaction-diffusion over time (3d)
+* Mesh Decal system
+* Deferred rendering experiments (Forward+ impl)
 * BRDF / PBR
-* Deferred rendering experiments
-* HDR pipeline
+* HDR pipeline (Bloom, etc)
+* CPU path tracer (+ lighting baker?)
+* Fluid simulator (GL compute shader)
+* L-System + particles
 * Spherical harmonic lighting experiment
-* Decal system
 * Dual contouring + terrain deformation (ref. impl)
 * Animation curve editor (Tinyspline)
 * Better water shading (refraction, normals, sun position, skybox reflections)
 * Bruneton Sky Model
 * UI layout via cassowary constraint solver (Rhea library)
-* CPU path tracer (+ lighting baker?)
-* Fluid simulator (GL compute shader)
 * Procedural clouds
-* L-System + particles
 * Impulse response raytracer
-* Optitrak nat-net i/o
-* Automatic UV generation (Foo library)
 * Graph/Node editor (LabSound bindings)
 * Lua (Angelscript, etc)
 * Pathfinding algos (Recast navigation)
+* Mesh voxelization
+* Isosurface computation
+* Optitrak nat-net i/o
+* Automatic UV generation (Foo library)
