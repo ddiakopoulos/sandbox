@@ -28,7 +28,7 @@ struct ExperimentalApp : public GLFWApp
     bool isDragging = false;
     bool useNormal = false;
     
-    ExperimentalApp() : GLFWApp(800, 800, "Arcball Camera App")
+    ExperimentalApp() : GLFWApp(1280, 720, "Arcball Camera App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -114,18 +114,13 @@ struct ExperimentalApp : public GLFWApp
     
     void on_update(const UpdateEvent & e) override
     {
-        //if (isDragging)
-            object.pose.orientation = qmul(myArcball.get_quat(), object.pose.orientation);
-        
+        object.pose.orientation = qmul(myArcball.get_quat(), object.pose.orientation);
         shaderMonitor.handle_recompile();
     }
     
     void on_draw() override
     {
         glfwMakeContextCurrent(window);
-        
-		//std::this_thread::sleep_for(std::chrono::milliseconds(33));
-
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         
