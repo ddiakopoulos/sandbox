@@ -60,17 +60,14 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         
         object = Renderable(load_geometry_from_ply("assets/models/geometry/HexagonUniform.ply"));
+        object.pose.position = {0, 0, 0};
         
         std::cout << "Object Scale: " << std::fixed << object.bounds.center() << std::endl;
         std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
         std::cout << "Object Center: " << std::fixed << object.bounds.center() << std::endl;
         
         rescale_geometry(object.geom, 1.0f);
-
-        
         object.rebuild_mesh();
-        
-        object.pose.position = {0, 0, 0};
         
         simpleTexturedShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         shaderMonitor.add_shader(simpleTexturedShader, "assets/shaders/simple_texture_vert.glsl", "assets/shaders/simple_texture_frag.glsl");
@@ -110,26 +107,14 @@ struct ExperimentalApp : public GLFWApp
             }
         }
 
-        if (event.type == InputEvent::CURSOR && isDragging)
+        if (event.type == InputEvent::CURSOR && event.drag)
         {
-            if (event.cursor != lastCursor)
-            {
-                myArcball.mouse_drag(event.cursor, event.windowSize);
-            }
+            myArcball.mouse_drag(event.cursor, event.windowSize);
         }
         
-        if (event.type == InputEvent::MOUSE)
+        if (event.type == InputEvent::MOUSE && event.is_mouse_down())
         {
-            if (event.is_mouse_down())
-            {
-                isDragging = true;
-                myArcball.mouse_down(event.cursor, event.windowSize);
-            }
-            
-            if (event.is_mouse_up())
-            {
-                isDragging = false;
-            }
+            myArcball.mouse_down(event.cursor, event.windowSize);
         }
         
         lastCursor = event.cursor;
