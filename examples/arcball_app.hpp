@@ -4,13 +4,6 @@ using namespace math;
 using namespace util;
 using namespace gfx;
 
-//object.scale *= 0.05f;
-//object.rebuild_mesh();
-
-//Pose p = Pose({0, 0, 0, 1}, -object.bounds.center());
-//for (auto & v : object.geom.vertices)
-//    v = transform_coord(p.matrix(), v);
-
 struct ExperimentalApp : public GLFWApp
 {
     Renderable object;
@@ -31,9 +24,8 @@ struct ExperimentalApp : public GLFWApp
     Sphere cameraSphere;
     Arcball myArcball;
     
-    float2 lastCursor;
-    bool isDragging = false;
     bool useNormal = false;
+    bool useMatcap = false;
     
     void rescale_geometry(Geometry & g, float radius = 1.0f)
     {
@@ -105,19 +97,17 @@ struct ExperimentalApp : public GLFWApp
             {
                 useNormal = !useNormal;
             }
+            if (event.value[0] == GLFW_KEY_M && event.action == GLFW_RELEASE)
+            {
+                useMatcap = !useMatcap;
+            }
         }
 
         if (event.type == InputEvent::CURSOR && event.drag)
-        {
             myArcball.mouse_drag(event.cursor, event.windowSize);
-        }
         
         if (event.type == InputEvent::MOUSE && event.is_mouse_down())
-        {
             myArcball.mouse_down(event.cursor, event.windowSize);
-        }
-        
-        lastCursor = event.cursor;
     }
     
     void on_update(const UpdateEvent & e) override
@@ -150,6 +140,7 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_vignette_quad.draw_elements();
         vignetteShader->unbind();
         
+        if (useMatcap == false)
         {
             simpleTexturedShader->bind();
             
@@ -178,8 +169,7 @@ struct ExperimentalApp : public GLFWApp
             
             simpleTexturedShader->unbind();
         }
-        
-        /*
+        else
         {
             matcapShader->bind();
             
@@ -195,7 +185,6 @@ struct ExperimentalApp : public GLFWApp
             
             matcapShader->unbind();
         }
-        */
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
