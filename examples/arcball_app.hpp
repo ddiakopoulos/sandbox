@@ -34,12 +34,13 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        object = Renderable(load_geometry_from_ply("assets/models/barrel/barrel.ply"));
+        object = Renderable(load_geometry_from_ply("assets/models/geometry/Szilassi.ply"));
         
         //object.scale *= 0.05f;
         //object.rebuild_mesh();
         
         std::cout << object.bounds.center() << std::endl;
+        std::cout << object.bounds.volume() << std::endl;
         
         Pose p = Pose({0, 0, 0, 1}, -object.bounds.center());
         for (auto & v : object.geom.vertices)

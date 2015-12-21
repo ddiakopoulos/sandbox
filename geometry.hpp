@@ -248,18 +248,30 @@ namespace util
             std::vector<std::tuple<math::float3, math::float2>> uniqueVerts;
             std::vector<uint32_t> indexBuffer;
             
-            for (int i = 0; i < flatFaces.size(); i++)
+            // Create unique vertices for existing 'duplicate' vertices that have different texture coordinates
+            if (flatTexCoords.size())
             {
-                auto f = flatFaces[i];
-                indexBuffer.push_back(make_vert(uniqueVerts, flatVerts[f.x], flatTexCoords[3 * i + 0]));
-                indexBuffer.push_back(make_vert(uniqueVerts, flatVerts[f.y], flatTexCoords[3 * i + 1]));
-                indexBuffer.push_back(make_vert(uniqueVerts, flatVerts[f.z], flatTexCoords[3 * i + 2]));
-            }
+                for (int i = 0; i < flatFaces.size(); i++)
+                {
+                    auto f = flatFaces[i];
+                    indexBuffer.push_back(make_vert(uniqueVerts, flatVerts[f.x], flatTexCoords[3 * i + 0]));
+                    indexBuffer.push_back(make_vert(uniqueVerts, flatVerts[f.y], flatTexCoords[3 * i + 1]));
+                    indexBuffer.push_back(make_vert(uniqueVerts, flatVerts[f.z], flatTexCoords[3 * i + 2]));
+                }
 
-            for (auto v : uniqueVerts)
+                for (auto v : uniqueVerts)
+                {
+                    geo.vertices.push_back(std::get<0>(v));
+                    geo.texCoords.push_back(std::get<1>(v));
+                }
+            }
+            else
             {
-                geo.vertices.push_back(std::get<0>(v));
-                geo.texCoords.push_back(std::get<1>(v));
+                geo.vertices.reserve(flatVerts.size());
+                for (auto v : flatVerts)
+                {
+                    geo.vertices.push_back(v);
+                }
             }
             
             for (int i = 0; i < indexBuffer.size(); i+=3)
