@@ -4,6 +4,10 @@ using namespace math;
 using namespace util;
 using namespace gfx;
 
+// Fix: Arcball drag/mouse bounds issue
+// Fix: Drag and drop model loading
+// Fix: Optional normal computation
+
 struct ExperimentalApp : public GLFWApp
 {
     Renderable object;
@@ -94,13 +98,9 @@ struct ExperimentalApp : public GLFWApp
         if (event.type == InputEvent::KEY)
         {
             if (event.value[0] == GLFW_KEY_N && event.action == GLFW_RELEASE)
-            {
                 useNormal = !useNormal;
-            }
             if (event.value[0] == GLFW_KEY_M && event.action == GLFW_RELEASE)
-            {
                 useMatcap = !useMatcap;
-            }
         }
 
         if (event.type == InputEvent::CURSOR && event.drag)
