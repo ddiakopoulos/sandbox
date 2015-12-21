@@ -4,6 +4,13 @@ using namespace math;
 using namespace util;
 using namespace gfx;
 
+//object.scale *= 0.05f;
+//object.rebuild_mesh();
+
+//Pose p = Pose({0, 0, 0, 1}, -object.bounds.center());
+//for (auto & v : object.geom.vertices)
+//    v = transform_coord(p.matrix(), v);
+
 struct ExperimentalApp : public GLFWApp
 {
     Renderable object;
@@ -28,23 +35,38 @@ struct ExperimentalApp : public GLFWApp
     bool isDragging = false;
     bool useNormal = false;
     
+    void rescale_geometry(Geometry & g, float radius = 1.0f)
+    {
+        auto bounds = g.compute_bounds();
+
+        float3 r = 0.50f * (bounds.max - bounds.min);
+        
+        float3 center = bounds.min + r;
+        
+        float oldRadius = std::max(r.x, std::max(r.y, r.z));
+        float scale = radius / oldRadius;
+        
+        for (auto & v : g.vertices)
+        {
+            float3 fixed = center + scale * (v - center);
+            v = fixed;
+        }
+    }
+    
     ExperimentalApp() : GLFWApp(1280, 720, "Arcball Camera App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        object = Renderable(load_geometry_from_ply("assets/models/geometry/Szilassi.ply"));
+        object = Renderable(load_geometry_from_ply("assets/models/geometry/HexagonUniform.ply"));
         
-        //object.scale *= 0.05f;
-        //object.rebuild_mesh();
+        std::cout << "Object Scale: " << std::fixed << object.bounds.center() << std::endl;
+        std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
+        std::cout << "Object Center: " << std::fixed << object.bounds.center() << std::endl;
         
-        std::cout << object.bounds.center() << std::endl;
-        std::cout << object.bounds.volume() << std::endl;
-        
-        Pose p = Pose({0, 0, 0, 1}, -object.bounds.center());
-        for (auto & v : object.geom.vertices)
-            v = transform_coord(p.matrix(), v);
+        rescale_geometry(object.geom, 1.0f);
+
         
         object.rebuild_mesh();
         
