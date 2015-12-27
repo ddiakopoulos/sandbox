@@ -114,29 +114,28 @@ public:
         currentQuat = normalize(qmul(rotation, initialQuat));
     }
     
-    void            reset_quat()                                     { currentQuat = initialQuat = float4(0, 0, 0, 1); }
+    void reset_quat() { currentQuat = initialQuat = float4(0, 0, 0, 1); }
     
-    const float4&   get_quat() const                                 { return currentQuat; }
-    void            set_quat(const float4 &q)                        { currentQuat = q; }
+    const float4& get_quat() const { return currentQuat; }
+    void set_quat(const float4 &q) { currentQuat = q; }
     
-    void            set_sphere(const Sphere &s)                      { arcballSphere = s; }
-    const Sphere&   get_sphere() const                               { return arcballSphere; }
+    void set_sphere(const Sphere &s) { arcballSphere = s; }
+    const Sphere& get_sphere() const { return arcballSphere; }
     
-    void            set_constraint_axis(const float3 &axis)          { axisConstraint = normalize(axis); useConstraints = true; }
-    const           float3 & get_constraint_axis() const             { return axisConstraint; }
+    void set_constraint_axis(const float3 &axis) { axisConstraint = normalize(axis); useConstraints = true; }
+    const float3 & get_constraint_axis() const { return axisConstraint; }
     
-    void            disable_constraints()                            { useConstraints = false; }
-    bool            is_using_constraints() const                     { return useConstraints; }
+    void disable_constraints() { useConstraints = false; }
+    bool is_using_constraints() const { return useConstraints; }
 
     
     void mouse_on_sphere(const float2 & point, const int2 & windowSize, float3 * resultVector, float * resultAngleAddition)
     {
         float2 clampedPoint = clamp<float2>(point, {0, 0}, float2(windowSize.x, windowSize.y));
-        
-        float rayT;
-        
+    
         Ray ray = camera->get_world_ray(clampedPoint, float2(windowSize.x, windowSize.y));
         
+        float rayT;
         // Click inside the sphere?
         if (intersect_ray_sphere(ray, arcballSphere, &rayT) > 0)
         {
@@ -149,7 +148,7 @@ public:
         else
         {
             // first project the sphere according to the camera, resulting in an ellipse (possible a circle)
-            Sphere cameraSpaceSphere(transform_vector(camera->get_view_matrix(), arcballSphere.center), arcballSphere.radius);
+            Sphere cameraSpaceSphere(transform_coord(camera->get_view_matrix(), arcballSphere.center), arcballSphere.radius);
             
             float2 center, axisA, axisB;
             

@@ -4,7 +4,6 @@ using namespace math;
 using namespace util;
 using namespace gfx;
 
-// Fix: Arcball drag/mouse bounds issue
 // Fix: Drag and drop model loading
 // Fix: Optional normal computation
 
@@ -58,12 +57,14 @@ struct ExperimentalApp : public GLFWApp
         object = Renderable(load_geometry_from_ply("assets/models/geometry/HexagonUniform.ply"));
         object.pose.position = {0, 0, 0};
         
-        std::cout << "Object Scale: " << std::fixed << object.bounds.center() << std::endl;
         std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
         std::cout << "Object Center: " << std::fixed << object.bounds.center() << std::endl;
         
         rescale_geometry(object.geom, 1.0f);
         object.rebuild_mesh();
+        
+        std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
+        std::cout << "Object Center: " << std::fixed << object.bounds.center() << std::endl;
         
         simpleTexturedShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         shaderMonitor.add_shader(simpleTexturedShader, "assets/shaders/simple_texture_vert.glsl", "assets/shaders/simple_texture_frag.glsl");
@@ -79,7 +80,7 @@ struct ExperimentalApp : public GLFWApp
         
         gfx::gl_check_error(__FILE__, __LINE__);
         
-        cameraSphere = Sphere({0, 0, 0}, 6);
+        cameraSphere = Sphere({0, 0, 0}, object.bounds.volume());
         myArcball = Arcball(&camera, cameraSphere);
         
         camera.look_at({0, 0, 10}, {0, 0, 0});
