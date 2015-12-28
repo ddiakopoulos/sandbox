@@ -167,14 +167,13 @@ struct ExperimentalApp : public GLFWApp
     {
         cameraController.handle_input(event);
         
-        if (event.type == InputEvent::KEY)
+        if (event.type == InputEvent::KEY && event.action == GLFW_RELEASE)
         {
-            if (event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
+            if (event.value[0] == GLFW_KEY_1)
                 terrainTranslationMat = make_translation_matrix({0, static_cast<float>(yIndex++), 0});
-            else if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE)
+            else if (event.value[0] == GLFW_KEY_2)
                 terrainTranslationMat = make_translation_matrix({0, static_cast<float>(yIndex--), 0});
         }
-        
     }
     
     void on_update(const UpdateEvent & e) override
@@ -200,7 +199,7 @@ struct ExperimentalApp : public GLFWApp
 		float4x4 viewProj = camera.get_projection_matrix((float)width / (float)height) * camera.get_view_matrix();
 
         {
-            float4x4 model = Identity4x4 * terrainTranslationMat;
+            float4x4 model = terrainTranslationMat;
             float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
             float4x4 modelViewMat = camera.get_view_matrix() * model;
             
@@ -281,11 +280,9 @@ struct ExperimentalApp : public GLFWApp
             glClear(GL_COLOR_BUFFER_BIT);
             glClearColor(0.f, 0.0f, 0.0f, 1.0f);
             
-            
             // Reflect camera around reflection plane
             float3 normal = float3(0, 1, 0);
             float3 pos = {0, 0, 0}; // Location of object... here, the terrain
-            float d = -dot(normal, pos);
             float4 reflectionPlane = float4(normal.x, normal.y, normal.z, 0.f);
 
             float4x4 model = Identity4x4 * terrainTranslationMat;
@@ -329,7 +326,7 @@ struct ExperimentalApp : public GLFWApp
             // glEnable(GL_BLEND);
             // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
+            float4x4 model = make_rotation_matrix({1, 0, 0}, -ANVIL_PI / 2);
             auto mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
             float4x4 modelViewMat = camera.get_view_matrix() * model;
             
