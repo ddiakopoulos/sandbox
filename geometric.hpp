@@ -85,7 +85,21 @@ namespace math
                     return false;
             return true;
         }
-
+        
+        bool intersects(const vec<T, M> & other) const
+        {
+            vec<T, M> mn = max(min(), other.min());
+    		vec<T, M> mx = min(max(), other.max());
+    		vec<T, M> dims = mx - mn;
+    		int a = 1;
+    		for (int m = 0; m < M; m++) 
+    		{
+    			dims[m] = max(dims[m], (T) 0);
+    			a *= dims[m];
+    		}
+    		return (a > 0);
+        }
+		
         vec<T, M> center() const 
         {
             return min + (0.5f * (max - min));
