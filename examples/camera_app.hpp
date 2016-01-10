@@ -151,7 +151,7 @@ struct ExperimentalApp : public GLFWApp
     Pose start;
     Pose end;
     
-    ExperimentalApp() : GLFWApp(940, 720, "Sandbox App")
+    ExperimentalApp() : GLFWApp(940, 720, "GlCamera Sandbox App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);

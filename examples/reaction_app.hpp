@@ -32,7 +32,7 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<GlShader> displacementShader;
     Renderable displacementMesh;
     
-    ExperimentalApp() : GLFWApp(1280, 720, "Reaction Diffusion App")
+    ExperimentalApp() : GLFWApp(1280, 720, "Gray-Scott Reaction-Diffusion Simulation")
     {
         gen = std::mt19937(rd());
         

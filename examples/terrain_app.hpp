@@ -46,7 +46,7 @@ struct ExperimentalApp : public GLFWApp
     std::random_device rd;
     std::mt19937 gen;
     
-    ExperimentalApp() : GLFWApp(940, 720, "Sandbox App")
+    ExperimentalApp() : GLFWApp(940, 720, "Terrain & Water Scene")
     {
         gen = std::mt19937(rd());
         

@@ -425,7 +425,7 @@ struct ExperimentalApp : public GLFWApp
     float numSteps = 16;
     float numFills = 4;
     
-    ExperimentalApp() : GLFWApp(940, 720, "Euclidean App")
+    ExperimentalApp() : GLFWApp(940, 720, "SequencerUI App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
