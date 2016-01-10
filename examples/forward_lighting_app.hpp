@@ -1,5 +1,4 @@
 #include "index.hpp"
-#include "tiny_obj_loader.h"
 
 using namespace math;
 using namespace util;
@@ -33,11 +32,6 @@ constexpr const char colorFragmentShader[] = R"(#version 330
     }
 )";
 
-struct SponzaChunk
-{
-    std::vector<int> materialIds;
-    GlMesh mesh;
-};
 
 struct ExperimentalApp : public GLFWApp
 {
@@ -58,9 +52,8 @@ struct ExperimentalApp : public GLFWApp
     
     std::vector<LightObject> lights;
     
-    std::vector<SponzaChunk> sponzaMeshes;
-    std::vector<GlTexture> sponzaTextures; // indexed by id
-
+    TexturedMesh sponza;
+    
     ExperimentalApp() : GLFWApp(820, 480, "ForwardLightingSample")
     {
         int width, height;
@@ -74,74 +67,7 @@ struct ExperimentalApp : public GLFWApp
         simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         colorShader.reset(new gfx::GlShader(colorVertexShader, colorFragmentShader));
         
-        {
-            std::vector<tinyobj::shape_t> shapes;
-            std::vector<tinyobj::material_t> materials;
-            std::string err;
-            bool status = tinyobj::LoadObj(shapes, materials, err, "assets/models/sponza/sponza.obj", "assets/models/sponza/");
-            
-            if (!err.empty())
-            {
-                std::cerr << err << std::endl;
-            }
-            
-            std::vector<Geometry> geometries;
-            
-            std::cout << "# of shapes    : " << shapes.size() << std::endl;
-            std::cout << "# of materials : " << materials.size() << std::endl;
-            
-            // Parse tinyobj data into geometry struct
-            for (unsigned int i = 0; i < shapes.size(); i++)
-            {
-                Geometry g;
-                tinyobj::shape_t *shape = &shapes[i];
-                tinyobj::mesh_t *mesh = &shapes[i].mesh;
-                
-                std::cout << "Parsing: " << shape->name << std::endl;
-                
-                std::cout << mesh->indices.size() << std::endl;
-                for (size_t i = 0; i < mesh->indices.size(); i += 3)
-                {
-                    uint32_t idx1 = mesh->indices[i + 0];
-                    uint32_t idx2 = mesh->indices[i + 1];
-                    uint32_t idx3 = mesh->indices[i + 2];
-                    g.faces.push_back({idx1, idx2, idx3});
-                }
-                
-                for (size_t i = 0; i < mesh->texcoords.size() / 2; i++)
-                {
-                    float uv1 = mesh->texcoords[2 * i + 0];
-                    float uv2 = mesh->texcoords[2 * i + 1];
-                    g.texCoords.push_back({uv1, uv2});
-                }
-                
-                std::cout << mesh->positions.size() << " - " << mesh->texcoords.size() << std::endl;
-                
-                for (size_t v = 0; v < mesh->positions.size(); v += 3)
-                {
-                    float3 vert = float3(mesh->positions[v + 0], mesh->positions[v + 1], mesh->positions[v + 2]);
-                    g.vertices.push_back(vert);
-                }
-            
-                geometries.push_back(g);
-            }
-            
-            for (auto m : materials)
-            {
-                if (m.diffuse_texname.size() <= 0) continue;
-                std::string texName = "assets/models/sponza/" + m.diffuse_texname;
-                GlTexture tex = load_image(texName);
-                sponzaTextures.push_back(std::move(tex));
-            }
-            
-            for (unsigned int i = 0; i < shapes.size(); i++)
-            {
-                auto g = geometries[i];
-                g.compute_normals(false);
-                sponzaMeshes.push_back({shapes[i].mesh.material_ids, make_mesh_from_geometry(g)});
-            }
-            
-        }
+        sponza = load_geometry_from_obj("assets/models/sponza/sponza.obj");
         
         proceduralModels.resize(6);
         for (int i = 0; i < proceduralModels.size(); ++i)
@@ -226,13 +152,13 @@ struct ExperimentalApp : public GLFWApp
             
             gfx::gl_check_error(__FILE__, __LINE__);
             
-            for (const auto & model : sponzaMeshes)
+            for (const auto & model : sponza.chunks)
             {
                 Pose p;
                 auto modelMat = p.matrix();
                 simpleShader->uniform("u_modelMatrix", modelMat);
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(modelMat)));
-                const GlTexture & tex = sponzaTextures[model.materialIds[0]];
+                const GlTexture & tex = sponza.textures[model.materialIds[0]];
                 simpleShader->texture("u_diffuseTex", 0, tex);
                 model.mesh.draw_elements();
             }

@@ -29,7 +29,7 @@ struct Renderable : public Object
         //glPointSize(8);
     }
     
-    void rebuild_mesh() { bounds = geom.compute_bounds(); mesh = make_mesh_from_geometry(geom); std::cout << bounds.position << std::endl;}
+    void rebuild_mesh() { bounds = geom.compute_bounds(); mesh = make_mesh_from_geometry(geom); }
     
     void draw() const { mesh.draw_elements(); };
     

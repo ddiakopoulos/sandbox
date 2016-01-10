@@ -4,9 +4,6 @@ using namespace math;
 using namespace util;
 using namespace gfx;
 
-// Fix: Drag and drop model loading
-// Fix: Optional normal computation
-
 struct ExperimentalApp : public GLFWApp
 {
     Renderable object;
