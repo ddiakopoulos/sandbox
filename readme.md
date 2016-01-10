@@ -1,5 +1,7 @@
 # Experiments!
 
+United under the arbitrarily chosen namespace "avl" (short for Anvil).
+
 ## Recent
 * CEGUI layout system
 * Procedural sky dome with Preetham and Hosek-Wilkie models
