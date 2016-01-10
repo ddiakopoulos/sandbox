@@ -26,7 +26,7 @@ namespace avl
     template<typename T> 
     T clamp(const T& val, const T& min, const T& max) 
     {
-        return math::min(math::max(val, min), max);
+        return std::min(std::max(val, min), max);
     }
 
     template<typename T> 

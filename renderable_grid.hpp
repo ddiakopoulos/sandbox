@@ -27,24 +27,27 @@ constexpr const char gridFragmentShader[] = R"(#version 330
     }
 )";
 
+namespace avl
+{
+
 class RenderableGrid
 {
-    gfx::GlShader gridShader;
-    gfx::GlMesh gridMesh;
-    math::float3 origin = { 0.f, 0.f, 0.f };
+    GlShader gridShader;
+    GlMesh gridMesh;
+    float3 origin = { 0.f, 0.f, 0.f };
     int gridSz = 0;
     int qx, qy;
 public:
 
     RenderableGrid(float density = 1.0f, int qx = 32, int qy = 32) : qx(qx), qy(qy)
     {
-        gridShader = gfx::GlShader(gridVertexShader, gridFragmentShader);
+        gridShader = GlShader(gridVertexShader, gridFragmentShader);
 
         const int gridSize = gridSz = (qx + qy + 2) * 2;
         float width = density * qx / 2;
         float height = density * qy / 2;
 
-        struct Vertex { math::float3 position; };
+        struct Vertex { float3 position; };
         Vertex * gridVerts = new Vertex[gridSize]; 
 
         int counter = 0; 
@@ -68,28 +71,30 @@ public:
         gridMesh.set_non_indexed(GL_LINES);
     }
 
-    void set_origin(math::float3 newOrigin)
+    void set_origin(float3 newOrigin)
     {
         origin = newOrigin; 
     }
 
-    void render(const math::float4x4 proj, const math::float4x4 view, float3 translation = {0, 0, 0})
+    void render(const float4x4 proj, const float4x4 view, float3 translation = {0, 0, 0})
     {
-        auto model = math::make_translation_matrix(translation);
+        auto model = make_translation_matrix(translation);
         auto modelViewProjectionMatrix = mul(mul(proj, view), model);
 
         gridShader.bind();
         
-        gridShader.uniform("u_color", math::float3(1, 1, 1));
+        gridShader.uniform("u_color", float3(1, 1, 1));
         gridShader.uniform("u_mvp", modelViewProjectionMatrix);
         
         gridMesh.draw_elements();
         
         gridShader.unbind();
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
     }
 
 };
+    
+}
 
 #endif // renderable_grid_h

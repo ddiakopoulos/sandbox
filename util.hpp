@@ -57,13 +57,13 @@
     #define GL_POP_ATTRIB();
 #endif
 
-static const math::float4x4 Identity4x4 = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
-static const math::float3x3 Identity3x3 = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-static const math::float2x2 Identity2x2 = {{1, 0}, {0, 1}};
+static const avl::float4x4 Identity4x4 = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+static const avl::float3x3 Identity3x3 = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+static const avl::float2x2 Identity2x2 = {{1, 0}, {0, 1}};
 
-static const math::float4x4 Zero4x4 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
-static const math::float3x3 Zero3x3 = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
-static const math::float2x2 Zero2x2 = {{0, 0}, {0, 0}};
+static const avl::float4x4 Zero4x4 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+static const avl::float3x3 Zero3x3 = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+static const avl::float2x2 Zero2x2 = {{0, 0}, {0, 0}};
 
 namespace avl
 {

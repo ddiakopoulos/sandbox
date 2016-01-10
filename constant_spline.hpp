@@ -7,6 +7,9 @@
 
 #include "math_util.hpp"
 
+namespace avl
+{
+    
 struct SplinePoint
 {
     float3 point;
@@ -117,9 +120,9 @@ public:
     }
 
     // In Will Wright's own words:
-    // Construct etwork based functions that are defined by divisible intervals
-    // while approximating said network and composing it of pieces of simple functions defined on
-    // subintervals and joined at their endpoints with a suitable degree of smoothness."
+    //  "Construct network based functions that are defined by divisible intervals
+    //   while approximating said network and composing it of pieces of simple functions defined on
+    //   subintervals and joined at their endpoints with a suitable degree of smoothness."
     void reticulate(uint32_t steps)
     {
         float distancePerStep = d / float(steps);
@@ -153,5 +156,7 @@ public:
     }
     
 };
+    
+}
 
 #endif // constant_spline_h

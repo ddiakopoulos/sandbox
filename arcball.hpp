@@ -12,6 +12,9 @@
 #include "GlShared.hpp"
 #include "ellipse_math.hpp"
 
+namespace avl
+{
+    
 inline float angle_from_quat(const float4 & quat)
 {
     return acos(quat.w) * 2.0f;
@@ -26,7 +29,7 @@ inline float3 axis_from_quat(const float4 & quat)
     return float3(quat.x * tmp2, quat.y * tmp2, quat.z * tmp2);
 }
 
-inline math::float4 angleAxis(float const & angle, math::float3 const & v)
+inline float4 angleAxis(float const & angle, float3 const & v)
 {
     float4 result;
     float const a(angle);
@@ -151,10 +154,10 @@ public:
             cameraSpaceSphere.calculate_projection(camera->get_focal_length(), float2(windowSize.x, windowSize.y), &center, &axisA, &axisB);
             
             // find the point closest on the screen-projected ellipse to the mouse
-            float2 screenSpaceClosest = math::get_closest_point_on_ellipse(center, axisA, axisB, point);
+            float2 screenSpaceClosest = get_closest_point_on_ellipse(center, axisA, axisB, point);
             
             // and send a ray through that point, finding the closest point on the sphere to it
-            Ray newRay = make_ray(*camera, (float) windowSize.x / (float) windowSize.y, screenSpaceClosest, math::float2(windowSize));
+            Ray newRay = make_ray(*camera, (float) windowSize.x / (float) windowSize.y, screenSpaceClosest, float2(windowSize));
             float3 closestPointOnSphere = arcballSphere.closest_point(newRay);
             
             // our result point is the vector between this closest point on the sphere and its center
@@ -168,5 +171,7 @@ public:
     }
     
 };
+    
+}
 
 #endif // end arcball_camera_h

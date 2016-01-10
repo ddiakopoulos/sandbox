@@ -28,56 +28,56 @@ namespace avl
     class Ray
     {
         bool signX, signY, signZ;
-        math::float3 invDirection;
+        float3 invDirection;
     public:
         
-        math::float3 origin;
-        math::float3 direction;
+        float3 origin;
+        float3 direction;
         
         Ray() {}
-        Ray(const math::float3 &aOrigin, const math::float3 &aDirection) : origin(aOrigin) { set_direction(aDirection); }
+        Ray(const float3 &aOrigin, const float3 &aDirection) : origin(aOrigin) { set_direction(aDirection); }
         
-        void set_origin(const math::float3 &aOrigin) { origin = aOrigin; }
-        const math::float3& get_origin() const { return origin; }
+        void set_origin(const float3 &aOrigin) { origin = aOrigin; }
+        const float3& get_origin() const { return origin; }
         
-        void set_direction(const math::float3 &aDirection)
+        void set_direction(const float3 &aDirection)
         {
             direction = aDirection;
-            invDirection = math::float3(1.0f / direction.x, 1.0f / direction.y, 1.0f / direction.z);
+            invDirection = float3(1.0f / direction.x, 1.0f / direction.y, 1.0f / direction.z);
             signX = (direction.x < 0.0f) ? 1 : 0;
             signY = (direction.y < 0.0f) ? 1 : 0;
             signZ = (direction.z < 0.0f) ? 1 : 0;
         }
 
-        const math::float3 & get_direction() const { return direction; }
-        const math::float3 & get_inv_direction() const { return invDirection; }
+        const float3 & get_direction() const { return direction; }
+        const float3 & get_inv_direction() const { return invDirection; }
         
         char getSignX() const { return signX; }
         char getSignY() const { return signY; }
         char getSignZ() const { return signZ; }
         
-        void transform(const math::float4x4 & matrix)
+        void transform(const float4x4 & matrix)
         {
             origin = transform_vector(matrix, origin);
-            set_direction(math::get_rotation_submatrix(matrix) * direction);
+            set_direction(get_rotation_submatrix(matrix) * direction);
         }
         
-        Ray transformed(const math::float4x4 & matrix) const
+        Ray transformed(const float4x4 & matrix) const
         {
             Ray result;
             result.origin = transform_vector(matrix, origin);
-            result.set_direction(math::get_rotation_submatrix(matrix) * direction);
+            result.set_direction(get_rotation_submatrix(matrix) * direction);
             return result;
         }
         
-        math::float3 calculate_position(float t) const { return origin + direction * t; }
+        float3 calculate_position(float t) const { return origin + direction * t; }
     };
     
-    inline Ray operator * (const math::Pose & pose, const Ray & ray) { return {pose.transform_coord(ray.get_origin()), pose.transform_vector(ray.get_direction())}; }
+    inline Ray operator * (const Pose & pose, const Ray & ray) { return {pose.transform_coord(ray.get_origin()), pose.transform_vector(ray.get_direction())}; }
     
-    inline Ray between(const math::float3 & start, const math::float3 & end) { return {start, normalize(end - start)}; }
+    inline Ray between(const float3 & start, const float3 & end) { return {start, normalize(end - start)}; }
     
-    inline Ray ray_from_viewport_pixel(const math::float2 & pixelCoord, const math::float2 & viewportSize, const math::float4x4 & projectionMatrix)
+    inline Ray ray_from_viewport_pixel(const float2 & pixelCoord, const float2 & viewportSize, const float4x4 & projectionMatrix)
     {
         float vx = pixelCoord.x * 2 / viewportSize.x - 1, vy = 1 - pixelCoord.y * 2 / viewportSize.y;
         auto invProj = inv(projectionMatrix);
@@ -135,41 +135,41 @@ namespace avl
     
     struct GlCamera
     {
-        math::Pose pose;
+        Pose pose;
         
         float fov = 60.0f;
         float nearClip = 0.1f;
         float farClip = 70.0f;
         
-        math::Pose get_pose() const { return pose; }
+        Pose get_pose() const { return pose; }
         
-        math::float3 get_view_direction() const { return -pose.zdir(); }
+        float3 get_view_direction() const { return -pose.zdir(); }
         
-        math::float3 get_eye_point() const { return pose.position; }
+        float3 get_eye_point() const { return pose.position; }
         
-        math::float4x4 get_view_matrix() const { return math::make_view_matrix_from_pose(pose); }
+        float4x4 get_view_matrix() const { return make_view_matrix_from_pose(pose); }
         
-        math::float4x4 get_projection_matrix(float aspectRatio) const
+        float4x4 get_projection_matrix(float aspectRatio) const
         {
             const float top = nearClip * std::tan((fov * (ANVIL_PI * 2.f) / 360.0f) / 2.0f);
             const float right = top * aspectRatio;
             const float bottom = -top;
             const float left = -right;
-            return math::make_projection_matrix_from_frustrum_rh_gl(left, right, bottom, top, nearClip, farClip);
+            return make_projection_matrix_from_frustrum_rh_gl(left, right, bottom, top, nearClip, farClip);
         }
         
-        math::float4x4 get_projection_matrix(float l, float r, float b, float t) const
+        float4x4 get_projection_matrix(float l, float r, float b, float t) const
         {
-            float left = -tanf(math::to_radians(l)) * nearClip;
-            float right = tanf(math::to_radians(r)) * nearClip;
-            float bottom = -tanf(math::to_radians(b)) * nearClip;
-            float top = tanf(math::to_radians(t)) * nearClip;
-            return math::make_projection_matrix_from_frustrum_rh_gl(left, right, bottom, top, nearClip, farClip);
+            float left = -tanf(to_radians(l)) * nearClip;
+            float right = tanf(to_radians(r)) * nearClip;
+            float bottom = -tanf(to_radians(b)) * nearClip;
+            float top = tanf(to_radians(t)) * nearClip;
+            return make_projection_matrix_from_frustrum_rh_gl(left, right, bottom, top, nearClip, farClip);
         }
         
-        void set_orientation(math::float4 o) { pose.orientation = math::normalize(o); }
+        void set_orientation(float4 o) { pose.orientation = normalize(o); }
         
-        void set_position(math::float3 p) { pose.position = p; }
+        void set_position(float3 p) { pose.position = p; }
         
         void set_perspective(float vFov, float nearClip, float farClip)
         {
@@ -178,19 +178,19 @@ namespace avl
             this->farClip = farClip;
         }
         
-        void look_at(math::float3 target) { look_at(pose.position, target); }
+        void look_at(float3 target) { look_at(pose.position, target); }
         
-        void look_at(math::float3 eyePoint, math::float3 target)
+        void look_at(float3 eyePoint, float3 target)
         {
             look_at_pose(eyePoint, target, pose);
         }
         
         float get_focal_length() const
         {
-            return (1.f / (tan(math::to_radians(fov) * 0.5f) * 2.0f));
+            return (1.f / (tan(to_radians(fov) * 0.5f) * 2.0f));
         }
         
-        Ray get_world_ray(math::float2 cursor, math::float2 viewport)
+        Ray get_world_ray(float2 cursor, float2 viewport)
         {
             float aspect = viewport.x / viewport.y;
             auto cameraRay = ray_from_viewport_pixel(cursor, viewport, get_projection_matrix(aspect));
@@ -204,16 +204,16 @@ namespace avl
         GlCamera * cam;
         
         float camPitch = 0, camYaw = 0;
-        math:: float4 orientation, lastOrientation;
+         float4 orientation, lastOrientation;
         
         bool bf = 0, bl = 0, bb = 0, br = 0, ml = 0, mr = 0;
-        math::float2 lastCursor;
+        float2 lastCursor;
         
     public:
         
         float movementSpeed = 21.00f;
         
-        math::float3 lastLook;
+        float3 lastLook;
         
         FlyCameraController() {}
         
@@ -230,11 +230,11 @@ namespace avl
         
         void update_yaw_pitch()
         {
-            const math::float3 worldNorth = {0, 0, -1};
-            math::float3 lookVec = cam->get_view_direction();
-            math::float3 flatLookVec = normalize(math::float3(lookVec.x, 0, lookVec.z));
-            camYaw = std::acos(math::clamp(dot(worldNorth, flatLookVec), -1.0f, +1.0f)) * (flatLookVec.x > 0 ? -1 : 1);
-            camPitch = std::acos(math::clamp(dot(lookVec, flatLookVec), -1.0f, +1.0f)) * (lookVec.y > 0 ? 1 : -1);
+            const float3 worldNorth = {0, 0, -1};
+            float3 lookVec = cam->get_view_direction();
+            float3 flatLookVec = normalize(float3(lookVec.x, 0, lookVec.z));
+            camYaw = std::acos(clamp(dot(worldNorth, flatLookVec), -1.0f, +1.0f)) * (flatLookVec.x > 0 ? -1 : 1);
+            camPitch = std::acos(clamp(dot(lookVec, flatLookVec), -1.0f, +1.0f)) * (lookVec.y > 0 ? 1 : -1);
         }
         
         void handle_input(const InputEvent & e)
@@ -261,18 +261,18 @@ namespace avl
                     if (mr)
                     {
                         camYaw -= (e.cursor.x - lastCursor.x) * 0.01f;
-                        camPitch = math::clamp(camPitch - (e.cursor.y - lastCursor.y) * 0.01f, -1.57f, +1.57f);
+                        camPitch = clamp(camPitch - (e.cursor.y - lastCursor.y) * 0.01f, -1.57f, +1.57f);
                     }
                     break;
             }
             lastCursor = e.cursor;
         }
         
-        math::float3 velocity = math::float3(0, 0, 0);
+        float3 velocity = float3(0, 0, 0);
         
         void update(float delta)
         {
-            math::float3 move;
+            float3 move;
             
             if (bf || (ml && mr)) move.z -= 1 * movementSpeed;
             
@@ -286,14 +286,14 @@ namespace avl
             auto current = cam->get_pose().position;
             auto target = cam->get_pose().transform_coord(move);
             
-            float springyX = math::damped_spring(target.x, current.x, velocity.x, delta, 0.99);
-            float springyY = math::damped_spring(target.y, current.y, velocity.y, delta, 0.99);
-            float springyZ = math::damped_spring(target.z, current.z, velocity.z, delta, 0.99);
+            float springyX = damped_spring(target.x, current.x, velocity.x, delta, 0.99);
+            float springyY = damped_spring(target.y, current.y, velocity.y, delta, 0.99);
+            float springyZ = damped_spring(target.z, current.z, velocity.z, delta, 0.99);
             
-            math::float3 dampedLocation = {springyX, springyY, springyZ};
+            float3 dampedLocation = {springyX, springyY, springyZ};
             cam->set_position(dampedLocation);
 
-            math::float3 lookVec;
+            float3 lookVec;
             lookVec.x = cam->get_eye_point().x - 1.f * cosf(camPitch) * sinf(camYaw);
             lookVec.y = cam->get_eye_point().y + 1.f * sinf(camPitch);
             lookVec.z = cam->get_eye_point().z + -1.f * cosf(camPitch) * cosf(camYaw);
@@ -313,7 +313,7 @@ namespace avl
         return Ray(camera.get_eye_point(), normalize(camera.pose.xdir() * s + camera.pose.ydir() * t - (camera.get_view_direction() * viewDistance)));
     }
     
-    inline Ray make_ray(const GlCamera & camera, const float aspectRatio, const math::float2 & posPixels, const math::float2 & imageSizePixels)
+    inline Ray make_ray(const GlCamera & camera, const float aspectRatio, const float2 & posPixels, const float2 & imageSizePixels)
     {
         return make_ray(camera, aspectRatio, posPixels.x / imageSizePixels.x, (imageSizePixels.y - posPixels.y) / imageSizePixels.y, imageSizePixels.x / imageSizePixels.y);
     }
@@ -321,7 +321,7 @@ namespace avl
     class GlRenderbuffer : public Noncopyable
     {
         GLuint renderbuffer;
-        math::int2 size;
+        int2 size;
     public:
         
         GlRenderbuffer() : renderbuffer() {}
@@ -340,14 +340,14 @@ namespace avl
         GlRenderbuffer & operator = (GlRenderbuffer && r) { std::swap(renderbuffer, r.renderbuffer); std::swap(size, r.size); return *this; }
         
         GLuint get_handle() const { return renderbuffer; }
-        math::int2 get_size() const { return size; }
+        int2 get_size() const { return size; }
     };
     
     struct GlTexture;
     class GlFramebuffer : public Noncopyable
     {
         GLuint handle;
-        math::float2 size;
+        float2 size;
     public:
         GlFramebuffer() : handle() {}
         GlFramebuffer(GlFramebuffer && r) : GlFramebuffer() { *this = std::move(r); }

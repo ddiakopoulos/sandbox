@@ -16,7 +16,7 @@ namespace avl
 {
     class GlTexture : public Noncopyable
     {
-        math::int2 size;
+        int2 size;
         GLuint internalFormat;
         GLuint handle;
         
@@ -30,9 +30,9 @@ namespace avl
         
         GLuint get_gl_handle() const { return handle; }
         
-        math::int2 get_size() const { return size; }
+        int2 get_size() const { return size; }
         
-        void image2D(GLenum target, GLint level, GLenum internal_fmt, const math::int2 & size, GLenum format, GLenum type, const GLvoid * pixels)
+        void image2D(GLenum target, GLint level, GLenum internal_fmt, const int2 & size, GLenum format, GLenum type, const GLvoid * pixels)
         {
             if (!handle)
                 glGenTextures(1, &handle);

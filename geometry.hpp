@@ -32,13 +32,13 @@ namespace avl
     
     struct Geometry
     {
-        std::vector<math::float3> vertices;
-        std::vector<math::float3> normals;
-        std::vector<math::float4> colors;
-        std::vector<math::float2> texCoords;
-        std::vector<math::float3> tangents;
-        std::vector<math::float3> bitangents;
-        std::vector<math::uint3> faces;
+        std::vector<float3> vertices;
+        std::vector<float3> normals;
+        std::vector<float4> colors;
+        std::vector<float2> texCoords;
+        std::vector<float3> tangents;
+        std::vector<float3> bitangents;
+        std::vector<uint3> faces;
         
         void compute_normals(bool smooth = true)
         {
@@ -47,7 +47,7 @@ namespace avl
             normals.resize(vertices.size());
             
             for (auto & n : normals)
-                n = math::float3(0,0,0);
+                n = float3(0,0,0);
 
             std::vector<uint32_t> uniqueVertIndices(vertices.size(), 0);
             if (smooth)
@@ -57,11 +57,11 @@ namespace avl
                     if (uniqueVertIndices[i] == 0)
                     {
                         uniqueVertIndices[i] = i + 1;
-                        const math::float3 v0 = vertices[i];
+                        const float3 v0 = vertices[i];
                         for (auto j = i + 1; j < vertices.size(); ++j)
                         {
-                            const math::float3 v1 = vertices[j];
-                            if (math::lengthSqr(v1 - v0) < NORMAL_EPSILON)
+                            const float3 v1 = vertices[j];
+                            if (lengthSqr(v1 - v0) < NORMAL_EPSILON)
                             {
                                 uniqueVertIndices[j] = uniqueVertIndices[i];
                             }
@@ -79,19 +79,19 @@ namespace avl
                 idx1 = (smooth) ? uniqueVertIndices[f.y] - 1 : f.y;
                 idx2 = (smooth) ? uniqueVertIndices[f.z] - 1 : f.z;
                 
-                const math::float3 v0 = vertices[idx0];
-                const math::float3 v1 = vertices[idx1];
-                const math::float3 v2 = vertices[idx2];
+                const float3 v0 = vertices[idx0];
+                const float3 v1 = vertices[idx1];
+                const float3 v2 = vertices[idx2];
                 
-                math::float3 e0 = v1 - v0;
-                math::float3 e1 = v2 - v0;
-                math::float3 e2 = v2 - v1;
+                float3 e0 = v1 - v0;
+                float3 e1 = v2 - v0;
+                float3 e2 = v2 - v1;
                 
                 if (lengthSqr(e0) < NORMAL_EPSILON) continue;
                 if (lengthSqr(e1) < NORMAL_EPSILON) continue;
                 if (lengthSqr(e2) < NORMAL_EPSILON) continue;
                 
-                math::float3 n = cross(e0, e1);
+                float3 n = cross(e0, e1);
                 
                 n = normalize(n);
                 
@@ -110,7 +110,7 @@ namespace avl
             }
             
             for (auto & n : normals)
-                n = math::normalize(n);
+                n = normalize(n);
         }
         
         // Lengyel, Eric. "Computing Tangent Space Basis Vectors for an Arbitrary Mesh".
@@ -125,15 +125,15 @@ namespace avl
             // Each face
             for (size_t i = 0; i < faces.size(); ++i)
             {
-                math::uint3 face = faces[i];
+                uint3 face = faces[i];
                 
-                const math::float3 & v0 = vertices[face.x];
-                const math::float3 & v1 = vertices[face.y];
-                const math::float3 & v2 = vertices[face.z];
+                const float3 & v0 = vertices[face.x];
+                const float3 & v1 = vertices[face.y];
+                const float3 & v2 = vertices[face.z];
                 
-                const math::float2 & w0 = texCoords[face.x];
-                const math::float2 & w1 = texCoords[face.y];
-                const math::float2 & w2 = texCoords[face.z];
+                const float2 & w0 = texCoords[face.x];
+                const float2 & w1 = texCoords[face.y];
+                const float2 & w2 = texCoords[face.z];
                 
                 // std::cout << "x: " << face.x << " y: " <<  face.y << " z: " << face.z << std::endl;
                 
@@ -156,7 +156,7 @@ namespace avl
                     r = 1.0f / r;
                 
                 // Tangent in the S direction
-                math::float3 tangent((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+                float3 tangent((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
                 
                 // Accumulate
                 tangents[face.x] += tangent;
@@ -167,13 +167,13 @@ namespace avl
             // Tangents
             for (size_t i = 0; i < vertices.size(); ++i)
             {
-                const math::float3 normal = normals[i];
-                const math::float3 tangent = tangents[i];
+                const float3 normal = normals[i];
+                const float3 tangent = tangents[i];
                 
                 // Gram-Schmidt orthogonalize
-                tangents[i] = (tangent - normal * math::dot(normal, tangent));
+                tangents[i] = (tangent - normal * dot(normal, tangent));
                 
-                const float len = math::lengthL2(tangents[i]);
+                const float len = lengthL2(tangents[i]);
                 
                 if (len > 0.0f)
                     tangents[i] = tangents[i] / (float) sqrt(len);
@@ -182,15 +182,15 @@ namespace avl
             // Bitangents 
             for (size_t i = 0; i < vertices.size(); ++i)
             {
-                bitangents[i] = math::normalize(math::cross(normals[i], tangents[i]));
+                bitangents[i] = normalize(cross(normals[i], tangents[i]));
             }
         }
         
-        math::Box<float, 3> compute_bounds() const
+        Box<float, 3> compute_bounds() const
         {
-            math::Box<float, 3> bounds;
+            Box<float, 3> bounds;
             
-            bounds.position = math::float3(std::numeric_limits<float>::infinity());
+            bounds.position = float3(std::numeric_limits<float>::infinity());
             bounds.dimensions = -bounds.position;
             
             for (const auto & vertex : vertices)
@@ -204,9 +204,9 @@ namespace avl
 
     };
     
-    inline gfx::GlMesh make_mesh_from_geometry(const Geometry & geometry)
+    inline GlMesh make_mesh_from_geometry(const Geometry & geometry)
     {
-        gfx::GlMesh m;
+        GlMesh m;
         
         int vertexOffset = 0;
         int normalOffset = 0;
@@ -301,7 +301,7 @@ namespace avl
         return m;
     }
     
-    inline uint32_t make_vert(std::vector<std::tuple<math::float3, math::float2>> & buffer, const math::float3 & position, math::float2 texcoord)
+    inline uint32_t make_vert(std::vector<std::tuple<float3, float2>> & buffer, const float3 & position, float2 texcoord)
     {
         auto vert = std::make_tuple(position, texcoord);
         auto it = std::find(begin(buffer), end(buffer), vert);
@@ -342,21 +342,21 @@ namespace avl
             file.read(ss);
             
             geo.vertices.reserve(vertexCount);
-            std::vector<math::float3> flatVerts;
+            std::vector<float3> flatVerts;
             for (int i = 0; i < vertexCount * 3; i+=3)
-                flatVerts.push_back(math::float3(verts[i], verts[i+1], verts[i+2]));
+                flatVerts.push_back(float3(verts[i], verts[i+1], verts[i+2]));
             
             geo.faces.reserve(numTriangles);
-            std::vector<math::uint3> flatFaces;
+            std::vector<uint3> flatFaces;
             for (int i = 0; i < numTriangles * 3; i+=3)
-                flatFaces.push_back(math::uint3(faces[i], faces[i+1], faces[i+2]));
+                flatFaces.push_back(uint3(faces[i], faces[i+1], faces[i+2]));
             
             geo.texCoords.reserve(uvCount);
-            std::vector<math::float2> flatTexCoords;
+            std::vector<float2> flatTexCoords;
             for (int i = 0; i < uvCount * 6; i+=2)
-               flatTexCoords.push_back(math::float2(texCoords[i], texCoords[i + 1]));
+               flatTexCoords.push_back(float2(texCoords[i], texCoords[i + 1]));
             
-            std::vector<std::tuple<math::float3, math::float2>> uniqueVerts;
+            std::vector<std::tuple<float3, float2>> uniqueVerts;
             std::vector<uint32_t> indexBuffer;
             
             // Create unique vertices for existing 'duplicate' vertices that have different texture coordinates
@@ -386,9 +386,9 @@ namespace avl
             }
             
             for (int i = 0; i < indexBuffer.size(); i+=3)
-                geo.faces.push_back(math::uint3(indexBuffer[i], indexBuffer[i+1], indexBuffer[i+2]));
+                geo.faces.push_back(uint3(indexBuffer[i], indexBuffer[i+1], indexBuffer[i+2]));
 
-            geo.compute_normals();
+            geo.compute_normals(false);
             geo.compute_tangents();
             geo.compute_bounds();
             
@@ -490,20 +490,20 @@ namespace avl
     
     struct Sphere
     {
-        math::float3 center;
+        float3 center;
         float radius;
         
         Sphere() {}
-        Sphere(const math::float3 &  center, float radius) : center(center), radius(radius) {}
+        Sphere(const float3 &  center, float radius) : center(center), radius(radius) {}
         
         // Returns the closest point on the ray to the Sphere. If ray intersects then returns the point of nearest intersection.
-        math::float3 closest_point(const gfx::Ray & ray) const
+        float3 closest_point(const Ray & ray) const
         {
             float t;
-            math::float3 diff = ray.get_origin() - center;
-            float a = math::dot(ray.get_direction(), ray.get_direction());
-            float b = 2.0f * math::dot(diff, ray.get_direction());
-            float c = math::dot(diff, diff) - radius * radius;
+            float3 diff = ray.get_origin() - center;
+            float a = dot(ray.get_direction(), ray.get_direction());
+            float b = 2.0f * dot(diff, ray.get_direction());
+            float c = dot(diff, diff) - radius * radius;
             float disc = b * b - 4.0f * a * c;
             
             if (disc > 0)
@@ -519,56 +519,56 @@ namespace avl
             }
             
             // doesn't intersect; closest point on line
-            t = math::dot( -diff, math::normalize(ray.get_direction()) );
-            math::float3 onRay = ray.calculate_position(t);
-            return center + math::normalize( onRay - center ) * radius;
+            t = dot( -diff, normalize(ray.get_direction()) );
+            float3 onRay = ray.calculate_position(t);
+            return center + normalize( onRay - center ) * radius;
         }
         
         // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms.
-        Sphere transformed(const math::float4x4 & transform)
+        Sphere transformed(const float4x4 & transform)
         {
-            math::float4 tCenter = transform * math::float4(center, 1);
-            math::float4 tRadius = transform * math::float4(radius, 0, 0, 0);
-            return Sphere(math::float3(tCenter.x, tCenter.y, tCenter.z), length(tRadius));
+            float4 tCenter = transform * float4(center, 1);
+            float4 tRadius = transform * float4(radius, 0, 0, 0);
+            return Sphere(float3(tCenter.x, tCenter.y, tCenter.z), length(tRadius));
         }
         
-        void calculate_projection(float focalLength, math::float2 *outCenter, math::float2 *outAxisA, math::float2 *outAxisB) const
+        void calculate_projection(float focalLength, float2 *outCenter, float2 *outAxisA, float2 *outAxisB) const
         {
-            math::float3 o(-center.x, center.y, center.z);
+            float3 o(-center.x, center.y, center.z);
             
             float r2 = radius * radius;
             float z2 = o.z * o.z;
-            float l2 = math::dot(o, o);
+            float l2 = dot(o, o);
             
-            if (outCenter) *outCenter = focalLength * o.z * math::float2(o.x, o.y) / (z2-r2);
+            if (outCenter) *outCenter = focalLength * o.z * float2(o.x, o.y) / (z2-r2);
             
             if (fabs(z2 - l2) > 0.00001f)
             {
-                if (outAxisA) *outAxisA = focalLength * sqrtf(-r2*(r2-l2)/((l2-z2)*(r2-z2)*(r2-z2))) * math::float2(o.x, o.y);
-                if (outAxisB) *outAxisB = focalLength * sqrtf(fabs(-r2*(r2-l2)/((l2-z2)*(r2-z2)*(r2-l2)))) * math::float2(-o.y, o.x);
+                if (outAxisA) *outAxisA = focalLength * sqrtf(-r2*(r2-l2)/((l2-z2)*(r2-z2)*(r2-z2))) * float2(o.x, o.y);
+                if (outAxisB) *outAxisB = focalLength * sqrtf(fabs(-r2*(r2-l2)/((l2-z2)*(r2-z2)*(r2-l2)))) * float2(-o.y, o.x);
             }
             
             // approximate with circle
             else
             {
                 float newRadius = focalLength * radius / sqrtf(z2 - r2);
-                if (outAxisA) *outAxisA = math::float2(newRadius, 0);
-                if (outAxisB) *outAxisB = math::float2(0, newRadius);
+                if (outAxisA) *outAxisA = float2(newRadius, 0);
+                if (outAxisB) *outAxisB = float2(0, newRadius);
             }
         }
         
         // Calculates the projection of the sphere (an oriented ellipse) given a focal length. Algorithm due to Iñigo Quilez.
-        void calculate_projection(float focalLength, math::float2 screenSizePixels, math::float2 * outCenter, math::float2 * outAxisA, math::float2 * outAxisB) const
+        void calculate_projection(float focalLength, float2 screenSizePixels, float2 * outCenter, float2 * outAxisA, float2 * outAxisB) const
         {
-            auto toScreenPixels = [=] (math::float2 v, const math::float2 &winSizePx) {
-                math::float2 result = v;
+            auto toScreenPixels = [=] (float2 v, const float2 &winSizePx) {
+                float2 result = v;
                 result.x *= 1 / (winSizePx.x / winSizePx.y);
-                result += math::float2(0.5f);
+                result += float2(0.5f);
                 result *= winSizePx;
                 return result;
             };
             
-            math::float2 center, axisA, axisB;
+            float2 center, axisA, axisB;
             
             calculate_projection(focalLength, &center, &axisA, &axisB);
             if (outCenter) *outCenter = toScreenPixels(center, screenSizePixels);
@@ -582,22 +582,22 @@ namespace avl
     
     struct Plane
     {
-        math::float4 equation; // ax * by * cz + d form (xyz normal, w distance)
-        Plane(const math::float4 & equation) : equation(equation) {}
-        Plane(const math::float3 & normal, const float & distance) { equation = math::float4(normal.x, normal.y, normal.z, distance); }
-        Plane(const math::float3 & normal, const math::float3 & point) { equation = math::float4(normal.x, normal.y, normal.z, -dot(normal, point)); }
-        math::float3 get_normal() const { return math::float3(equation.x, equation.y, equation.z); }
-        void normalize() { float n = 1.0f / math::length(get_normal()); equation *= n; };
+        float4 equation; // ax * by * cz + d form (xyz normal, w distance)
+        Plane(const float4 & equation) : equation(equation) {}
+        Plane(const float3 & normal, const float & distance) { equation = float4(normal.x, normal.y, normal.z, distance); }
+        Plane(const float3 & normal, const float3 & point) { equation = float4(normal.x, normal.y, normal.z, -dot(normal, point)); }
+        float3 get_normal() const { return float3(equation.x, equation.y, equation.z); }
+        void normalize() { float n = 1.0f / length(get_normal()); equation *= n; };
         float get_distance() const { return equation.w; }
-        float distance_to(math::float3 point) const { return dot(get_normal(), point) + equation.w; };
-        bool contains(math::float3 point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
+        float distance_to(float3 point) const { return dot(get_normal(), point) + equation.w; };
+        bool contains(float3 point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
     };
     
     struct Segment
     {
-        math::float3 first, second;
-        Segment(math::float3 first, math::float3 second) : first(first), second(second) {}
-        math::float3 get_direction() const { return normalize (second - first); };
+        float3 first, second;
+        Segment(float3 first, float3 second) : first(first), second(second) {}
+        float3 get_direction() const { return normalize (second - first); };
     };
     
     //////////////////////////////
@@ -605,24 +605,24 @@ namespace avl
     //////////////////////////////
     
     // The point where the line p0-p2 intersects the plane n&d
-    inline math::float3 plane_line_intersection(const math::float3 & n, const float d, const math::float3 & p0, const math::float3 & p1)
+    inline float3 plane_line_intersection(const float3 & n, const float d, const float3 & p0, const float3 & p1)
     {
-        math::float3 dif = p1 - p0;
-        float dn = math::dot(n, dif);
-        float t = -(d + math::dot(n, p0)) / dn;
+        float3 dif = p1 - p0;
+        float dn = dot(n, dif);
+        float t = -(d + dot(n, p0)) / dn;
         return p0 + (dif*t);
     }
     
     // The point where the line p0-p2 intersects the plane n&d
-    inline math::float3 plane_line_intersection(const math::float4 & plane, const math::float3 & p0, const math::float3 & p1)
+    inline float3 plane_line_intersection(const float4 & plane, const float3 & p0, const float3 & p1)
     {
         return plane_line_intersection(plane.xyz(), plane.w, p0, p1);
     }
     
-    inline bool intersect_ray_plane(const gfx::Ray & ray, const Plane & p, math::float3 * intersection, float * outT = nullptr)
+    inline bool intersect_ray_plane(const Ray & ray, const Plane & p, float3 * intersection, float * outT = nullptr)
     {
 
-        float d = math::dot(ray.direction, p.get_normal());
+        float d = dot(ray.direction, p.get_normal());
         // Make sure we're not parallel to the plane
         if (std::abs(d) > PLANE_EPSILON)
         {
@@ -639,20 +639,20 @@ namespace avl
     }
     
     // Implementation adapted from: http://www.lighthouse3d.com/tutorials/maths/ray-triangle-intersection/
-    inline bool intersect_ray_triangle(const gfx::Ray & ray, const math::float3 & v0, const math::float3 & v1, const math::float3 & v2, float * outT, math::float2 * outUV = nullptr)
+    inline bool intersect_ray_triangle(const Ray & ray, const float3 & v0, const float3 & v1, const float3 & v2, float * outT, float2 * outUV = nullptr)
     {
-        math::float3 e1 = v1 - v0, e2 = v2 - v0, h = cross(ray.direction, e2);
+        float3 e1 = v1 - v0, e2 = v2 - v0, h = cross(ray.direction, e2);
         
         float a = dot(e1, h);
         if (fabsf(a) == 0.0f) return false; // Ray is collinear with triangle plane
         
-        math::float3 s = ray.origin - v0;
+        float3 s = ray.origin - v0;
         float f = 1 / a;
         float u = f * dot(s,h);
         if (u < 0 || u > 1) return false; // Line intersection is outside bounds of triangle
         
-        math::float3 q = cross(s, e1);
-        float v = f * math::dot(ray.direction, q);
+        float3 q = cross(s, e1);
+        float v = f * dot(ray.direction, q);
         if (v < 0 || u + v > 1) return false; // Line intersection is outside bounds of triangle
         
         float t = f * dot(e2, q);
@@ -665,7 +665,7 @@ namespace avl
     }
     
      // Real-Time Collision Detection pg. 180
-    inline bool intersect_ray_box(const gfx::Ray & ray, const math::Box<float, 3> bounds, float *outT = nullptr)
+    inline bool intersect_ray_box(const Ray & ray, const Box<float, 3> bounds, float *outT = nullptr)
     {
         float tmin = 0.0f; // set to -FLT_MAX to get first hit on line
         float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
@@ -714,7 +714,7 @@ namespace avl
         return true;
     }
     
-    inline bool intersect_ray_box(const gfx::Ray & ray, const math::float3 & boxMin, const math::float3 & boxMax)
+    inline bool intersect_ray_box(const Ray & ray, const float3 & boxMin, const float3 & boxMax)
     {
         // Determine an interval t0 <= t <= t1 in which ray(t).x is within the box extents
         float t0 = (boxMin.x - ray.origin.x) / ray.direction.x, t1 = (boxMax.x - ray.origin.x) / ray.direction.x;
@@ -742,13 +742,13 @@ namespace avl
         return t0 > 0;
     }
     
-    inline bool intersect_ray_sphere(const gfx::Ray & ray, const Sphere & sphere, float * intersection = nullptr)
+    inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * intersection = nullptr)
     {
         float t;
-        math::float3 diff = ray.get_origin() - sphere.center;
-        float a = math::dot(ray.get_direction(), ray.get_direction());
-        float b = 2.0f * math::dot(diff, ray.get_direction());
-        float c = math::dot(diff, diff) - sphere.radius * sphere.radius;
+        float3 diff = ray.get_origin() - sphere.center;
+        float a = dot(ray.get_direction(), ray.get_direction());
+        float b = 2.0f * dot(diff, ray.get_direction());
+        float c = dot(diff, diff) - sphere.radius * sphere.radius;
         float disc = b * b - 4.0f * a * c;
         
         if (disc < 0.0f) return false;
@@ -777,10 +777,10 @@ namespace avl
     }
     
     // todo - impelement method for GlMesh as well
-    inline bool intersect_ray_mesh(const gfx::Ray & ray, const Geometry & mesh, float * outRayT)
+    inline bool intersect_ray_mesh(const Ray & ray, const Geometry & mesh, float * outRayT)
     {
         float bestT = std::numeric_limits<float>::infinity(), t;
-        math::float2 outUv;
+        float2 outUv;
         
         auto meshBounds = mesh.compute_bounds();
         if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds.position, meshBounds.dimensions))

@@ -9,6 +9,10 @@
 // whose concentration at a given point in space is referred to by variables u and v. As the term implies,
 // they react with each other, and they diffuse through the medium. Therefore the concentration
 // of U and V at any given location changes with time and can differ from that at other locations."
+
+namespace avl
+{
+    
 class GrayScottSimulator
 {
     std::vector<double> u, v;
@@ -194,5 +198,7 @@ public:
         vv = v;
     }
 };
+    
+}
 
 #endif // reaction_diffusion_h

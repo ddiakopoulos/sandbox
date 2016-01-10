@@ -10,9 +10,9 @@
 namespace avl
 {
     // The bisection algorithm to find the unique root of F(t).
-    inline float point_on_ellipse_bisector(int numComponents, const math::float2 &extents, const math::float2 &y, math::float2& x)
+    inline float point_on_ellipse_bisector(int numComponents, const float2 &extents, const float2 &y, float2& x)
     {
-        math::float2 z;
+        float2 z;
         float sumZSqr = 0;
         int i;
         for (i = 0; i < numComponents; ++i) 
@@ -31,7 +31,7 @@ namespace avl
         }
 
         float emin = extents[numComponents - 1];
-        math::float2 pSqr, numerator;
+        float2 pSqr, numerator;
         for (i = 0; i < numComponents; ++i) 
         {
             float p = extents[i] / emin;
@@ -90,11 +90,11 @@ namespace avl
     // hyperellipsoid.  It also computes the hyperellipsoid point
     // (x[0],...,x[N-1]) that is closest to (y[0],...,y[N-1]), where
     // x[d] >= 0 for all d.
-    inline float point_on_ellipse_sqr_distance_special(const math::float2 &extents, const math::float2 &y, math::float2 &x)
+    inline float point_on_ellipse_sqr_distance_special(const float2 &extents, const float2 &y, float2 &x)
     {
         float sqrDistance = 0;
 
-        math::float2 ePos, yPos, xPos;
+        float2 ePos, yPos, xPos;
         int numPos = 0;
         for (int i = 0; i < 2; ++i) 
         {
@@ -193,7 +193,7 @@ namespace avl
     // The function returns the squared distance from the query point to the
     // hyperellipsoid.   It also computes the hyperellipsoid point
     // (x[0],...,x[N-1]) that is closest to (y[0],...,y[N-1]).
-    inline float point_on_ellipse_sqr_distance(const math::float2 &extents, const math::float2 &y, math::float2 &x)
+    inline float point_on_ellipse_sqr_distance(const float2 &extents, const float2 &y, float2 &x)
     {
         // Determine negations for y to the first octant.
         bool negate[2];
@@ -213,7 +213,7 @@ namespace avl
         for (int i = 0; i < 2; ++i)
             invPermute[permute[i].second] = i;
 
-        math::float2 locE, locY;
+        float2 locE, locY;
         int j;
         for (int i = 0; i < 2; ++i) 
         {
@@ -222,7 +222,7 @@ namespace avl
             locY[i] = std::abs(y[j]);
         }
 
-        math::float2 locX;
+        float2 locX;
         float sqrDistance = point_on_ellipse_sqr_distance_special(locE, locY, locX);
 
         // Restore the axis order and reflections.
@@ -243,24 +243,24 @@ namespace avl
     //   http://www.geometrictools.com/Documentation/DistancePointEllipseEllipsoid.pdf
     // The hyperellipsoid can have arbitrary center and orientation; that is, it
     // does not have to be axis-aligned with center at the origin.
-    inline math::float2 get_closest_point_on_ellipse(const math::float2 & center, const math::float2 & axisA, const math::float2 & axisB, const math::float2 & testPoint)
+    inline float2 get_closest_point_on_ellipse(const float2 & center, const float2 & axisA, const float2 & axisB, const float2 & testPoint)
     {
         // Compute the coordinates of Y in the hyperellipsoid coordinate system.
         float lengthA = length(axisA);
         float lengthB = length(axisB);
 
-        math::float2 unitA = axisA / lengthA;
-        math::float2 unitB = axisB / lengthB;
-        math::float2 diff = testPoint - center;
-        math::float2 y(dot(diff, unitA), dot(diff, unitB));
+        float2 unitA = axisA / lengthA;
+        float2 unitB = axisB / lengthB;
+        float2 diff = testPoint - center;
+        float2 y(dot(diff, unitA), dot(diff, unitB));
 
         // Compute the closest hyperellipsoid point in the axis-aligned coordinate system.
-        math::float2 x;
-        math::float2 extents(lengthA, lengthB);
+        float2 x;
+        float2 extents(lengthA, lengthB);
         point_on_ellipse_sqr_distance(extents, y, x);
 
         // Convert back to the original coordinate system.
-        math::float2 result = center;
+        float2 result = center;
         result += x[0] * unitA;
         result += x[1] * unitB;
 

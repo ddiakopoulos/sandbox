@@ -7,6 +7,10 @@
 #include "GlMesh.hpp"
 #include <assert.h>
 
+namespace avl
+{
+    
+
 inline Geometry make_cube()
 {
     Geometry cube;
@@ -42,7 +46,7 @@ inline Geometry make_cube()
     return cube;
 }
 
-inline gfx::GlMesh make_cube_mesh()
+inline GlMesh make_cube_mesh()
 {
     return make_mesh_from_geometry(make_cube());
 }
@@ -59,7 +63,7 @@ inline Geometry make_sphere(float radius)
         {
             float u = float(ui) / (U - 1) * ANVIL_PI;
             float v = float(vi) / (V - 1) * 2 * ANVIL_PI;
-            math::float3 normal = math::spherical(u, v);
+            float3 normal = spherical(u, v);
             sphereGeom.vertices.push_back({normal * radius});
             sphereGeom.normals.push_back(normal);
         }
@@ -78,7 +82,7 @@ inline Geometry make_sphere(float radius)
     return sphereGeom;
 }
 
-inline gfx::GlMesh make_sphere_mesh(float radius)
+inline GlMesh make_sphere_mesh(float radius)
 {
     return make_mesh_from_geometry(make_sphere(radius));
 }
@@ -215,7 +219,7 @@ inline Geometry make_cylinder(float radiusTop, float radiusBottom, float height,
     return cylinderGeom;
 }
 
-inline gfx::GlMesh make_cylinder_mesh(float radiusTop, float radiusBottom, float height, int radialSegments, int heightSegments, bool openEnded = false)
+inline GlMesh make_cylinder_mesh(float radiusTop, float radiusBottom, float height, int radialSegments, int heightSegments, bool openEnded = false)
 {
     return make_mesh_from_geometry(make_cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded));
 }
@@ -288,7 +292,7 @@ inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
     return ringGeom;
 }
 
-inline gfx::GlMesh make_ring_mesh(float innerRadius = 1.0f, float outerRadius = 2.0f)
+inline GlMesh make_ring_mesh(float innerRadius = 1.0f, float outerRadius = 2.0f)
 {
     return make_mesh_from_geometry(make_ring(innerRadius, outerRadius));
 }
@@ -352,7 +356,7 @@ inline Geometry make_3d_ring(float innerRadius = 1.0f, float outerRadius = 2.0f,
     return ringGeom;
 }
 
-inline gfx::GlMesh make_3d_ring_mesh(float innerRadius = 1.0f, float outerRadius = 2.0f, float length = 1.0f)
+inline GlMesh make_3d_ring_mesh(float innerRadius = 1.0f, float outerRadius = 2.0f, float length = 1.0f)
 {
     return make_mesh_from_geometry(make_3d_ring(innerRadius, outerRadius, length));
 }
@@ -375,7 +379,7 @@ inline Geometry make_frustum(float aspectRatio = 1.33333f)
     return frustum;
 }
 
-inline gfx::GlMesh make_frustum_mesh(float aspectRatio = 1.33333f)
+inline GlMesh make_frustum_mesh(float aspectRatio = 1.33333f)
 {
     auto frustumMesh = make_mesh_from_geometry(make_frustum(aspectRatio));
     frustumMesh.set_non_indexed(GL_LINES);
@@ -412,7 +416,7 @@ inline Geometry make_torus(int radial_segments = 24)
     return torus;
 }
 
-inline gfx::GlMesh make_torus_mesh(int radial_segments = 8)
+inline GlMesh make_torus_mesh(int radial_segments = 8)
 {
     return make_mesh_from_geometry(make_torus(radial_segments));
 }
@@ -505,7 +509,7 @@ inline Geometry make_capsule(int segments, float radius, float length)
     return capsule;
 }
 
-inline gfx::GlMesh make_capsule_mesh(int segments, float radius, float length)
+inline GlMesh make_capsule_mesh(int segments, float radius, float length)
 {
     return make_mesh_from_geometry(make_capsule(segments, radius, length));
 }
@@ -558,7 +562,7 @@ inline Geometry make_plane(float width, float height, uint32_t nw, uint32_t nh)
     return plane;
 }
 
-inline gfx::GlMesh make_plane_mesh(float width, float height, uint32_t nw, uint32_t nh)
+inline GlMesh make_plane_mesh(float width, float height, uint32_t nw, uint32_t nh)
 {
     return make_mesh_from_geometry(make_plane(width, height, nw, nh));
 }
@@ -585,7 +589,7 @@ inline Geometry make_axis()
     return axis;
 }
 
-inline gfx::GlMesh make_axis_mesh()
+inline GlMesh make_axis_mesh()
 {
     auto axisMesh = make_mesh_from_geometry(make_axis());
     axisMesh.set_non_indexed(GL_LINES);
@@ -604,7 +608,7 @@ inline Geometry make_spiral(float resolution = 512.0f, float freq = 128.f)
     return spiral;
 }
 
-inline gfx::GlMesh make_spiral_mesh(float resolution = 512.0f, float freq = 128.f)
+inline GlMesh make_spiral_mesh(float resolution = 512.0f, float freq = 128.f)
 {
     assert(freq < resolution);
     auto sprialMesh = make_mesh_from_geometry(make_spiral());
@@ -634,7 +638,7 @@ inline Geometry make_icosahedron()
     return icosahedron;
 }
 
-inline gfx::GlMesh make_icosahedron_mesh()
+inline GlMesh make_icosahedron_mesh()
 {
     return make_mesh_from_geometry(make_icosahedron());
 }
@@ -652,7 +656,7 @@ inline Geometry make_octohedron()
     return octohedron;
 }
 
-inline gfx::GlMesh make_octohedron_mesh()
+inline GlMesh make_octohedron_mesh()
 {
     return make_mesh_from_geometry(make_octohedron());
 }
@@ -669,17 +673,19 @@ inline Geometry make_tetrahedron()
     return tetrahedron;
 }
 
-inline gfx::GlMesh make_tetrahedron_mesh()
+inline GlMesh make_tetrahedron_mesh()
 {
     return make_mesh_from_geometry(make_tetrahedron());
 }
 
-inline gfx::GlMesh make_fullscreen_quad()
+inline GlMesh make_fullscreen_quad()
 {
     Geometry g;
     g.vertices = { {-1.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f} };
     g.faces = {{0, 1, 2}, {3, 4, 5}};
     return make_mesh_from_geometry(g);
+}
+    
 }
 
 #endif // procedural_mesh_h

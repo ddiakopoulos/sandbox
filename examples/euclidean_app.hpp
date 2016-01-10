@@ -246,7 +246,7 @@ struct SliderControl : public UIComponent
 
     virtual void on_mouse_down(const float2 cursor) override { lastClick = cursor; set_value((cursor.x - bounds.x0) / bounds.width()); }
     
-    virtual void on_mouse_drag(const math::float2 cursor, const math::float2 delta) override { set_value((cursor.x - bounds.x0) / bounds.width()); }
+    virtual void on_mouse_drag(const float2 cursor, const float2 delta) override { set_value((cursor.x - bounds.x0) / bounds.width()); }
     
     void refresh() {layout(); for (auto c : children) { c->layout(); } }
     
@@ -466,7 +466,7 @@ struct ExperimentalApp : public GLFWApp
         
         camera.look_at({0, 8, 24}, {0, 0, 0});
         
-        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
+        simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
         {
             lights.resize(2);
@@ -480,7 +480,7 @@ struct ExperimentalApp : public GLFWApp
         
         grid = RenderableGrid(1, 64, 64);
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
     }
     
     void regenerate_visuals(int s, int f)
@@ -516,7 +516,7 @@ struct ExperimentalApp : public GLFWApp
 
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
         
     }
@@ -590,7 +590,7 @@ struct ExperimentalApp : public GLFWApp
                 patternIdx++;
             }
             
-            gfx::gl_check_error(__FILE__, __LINE__);
+            gl_check_error(__FILE__, __LINE__);
             
             simpleShader->unbind();
         }
@@ -599,7 +599,7 @@ struct ExperimentalApp : public GLFWApp
         
         userInterface->draw(window);
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
         

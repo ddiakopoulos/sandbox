@@ -9,6 +9,9 @@
 
 #include "third_party/efsw/efsw.hpp"
 
+namespace avl
+{
+    
 class ShaderMonitor
 {
     std::unique_ptr<efsw::FileWatcher> fileWatcher;
@@ -88,5 +91,7 @@ public:
     }
     
 };
+    
+}
 
 #endif

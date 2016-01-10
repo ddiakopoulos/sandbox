@@ -9,11 +9,14 @@
 #include "GlMesh.hpp"
 #include <random>
 
+namespace avl
+{
+
 class MeshLine
 {
-    gfx::GlShader shader;
-    gfx::GlMesh mesh;
-    gfx::GlCamera & camera;
+    GlShader shader;
+    GlMesh mesh;
+    GlCamera & camera;
     
     float2 screenDims;
     float linewidth;
@@ -65,9 +68,9 @@ class MeshLine
 
 public:
 
-    MeshLine(gfx::GlCamera & camera, const float2 screenDims, const float linewidth, float3 color) : camera(camera), screenDims(screenDims), linewidth(linewidth), color(color)
+    MeshLine(GlCamera & camera, const float2 screenDims, const float linewidth, float3 color) : camera(camera), screenDims(screenDims), linewidth(linewidth), color(color)
     {
-        shader = gfx::GlShader(read_file_text("assets/shaders/meshline_vert.glsl"), read_file_text("assets/shaders/meshline_frag.glsl"));
+        shader = GlShader(read_file_text("assets/shaders/meshline_vert.glsl"), read_file_text("assets/shaders/meshline_frag.glsl"));
     }
     
     void set_vertices(const std::vector<float3> & vertices)
@@ -166,5 +169,7 @@ public:
     }
 
 };
+    
+}
 
 #endif // meshline_h

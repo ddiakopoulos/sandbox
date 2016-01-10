@@ -30,8 +30,6 @@ struct ExperimentalApp : public GLFWApp
     
     ExperimentalApp() : GLFWApp(1280, 720, "Sandbox App")
     {
-        gen = std::mt19937(rd());
-    
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -40,7 +38,7 @@ struct ExperimentalApp : public GLFWApp
         
         camera.look_at({0, 8, 24}, {0, 0, 0});
 
-        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
+        simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
         {
             lights.resize(2);
@@ -68,10 +66,10 @@ struct ExperimentalApp : public GLFWApp
         
         grid = RenderableGrid(1, 64, 64);
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
 
     }
@@ -130,14 +128,14 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
                 model.draw();
             }
-            gfx::gl_check_error(__FILE__, __LINE__);
+            gl_check_error(__FILE__, __LINE__);
             
             simpleShader->unbind();
         }
         
         grid.render(proj, view);
 
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
         

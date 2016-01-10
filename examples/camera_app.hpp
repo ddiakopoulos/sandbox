@@ -158,7 +158,7 @@ struct ExperimentalApp : public GLFWApp
         camera.look_at({0, 8, 24}, {0, 0, 0});
         cameraZ = camera.pose.position.z;
         
-        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
+        simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
         {
             lights.resize(2);
@@ -200,10 +200,10 @@ struct ExperimentalApp : public GLFWApp
         
         grid = RenderableGrid(1, 64, 64);
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
 
     }
@@ -229,9 +229,9 @@ struct ExperimentalApp : public GLFWApp
         cameraController.update(e.timestep_ms);
         animator.update(e.timestep_ms);
         
-        auto what = math::spherical(zeroOne * ANVIL_PI, zeroOne * ANVIL_PI / 2);
+        auto what = spherical(zeroOne * ANVIL_PI, zeroOne * ANVIL_PI / 2);
         
-        math::float3 newPos = float3(what.x, 1, what.z) * float3(24, 8, 24);
+        float3 newPos = float3(what.x, 1, what.z) * float3(24, 8, 24);
         std::cout << newPos << std::endl;
         camera.set_position(float3(newPos.x, newPos.y, newPos.z));
         
@@ -293,14 +293,14 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
                 model.draw();
             }
-            gfx::gl_check_error(__FILE__, __LINE__);
+            gl_check_error(__FILE__, __LINE__);
             
             simpleShader->unbind();
         }
         
         grid.render(proj, view);
 
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
         

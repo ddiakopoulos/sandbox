@@ -4,6 +4,9 @@
 #include "geometric.hpp"
 #include "nvg.hpp"
 
+namespace avl
+{
+    
 struct UIComponent;
 struct UIRenderEvent
 {
@@ -26,15 +29,15 @@ struct UIComponent
 {
     bool acceptInput = true;
     float aspectRatio = 1;
-    math::URect placement = {{0,0},{0,0},{1,0},{1,0}};
-    math::Bounds bounds;
+    URect placement = {{0,0},{0,0},{1,0},{1,0}};
+    Bounds bounds;
     std::vector<std::shared_ptr<UIComponent>> children;
     
     UIStyleSheet style;
     
     UIComponent(UIStyleSheet stylesheet = UIStyleSheet()) : style(stylesheet) {}
     
-    void add_child(const math::URect & placement, std::shared_ptr<UIComponent> child)
+    void add_child(const URect & placement, std::shared_ptr<UIComponent> child)
     {
         child->placement = placement;
         children.push_back(child);
@@ -51,7 +54,7 @@ struct UIComponent
             {
                 float xpadding = (1 - std::min((child->bounds.height() * childAspect) / child->bounds.width(), 1.0f)) / 2;
                 float ypadding = (1 - std::min((child->bounds.width() / childAspect) / child->bounds.height(), 1.0f)) / 2;
-                child->bounds = math::URect{{xpadding, 0}, {ypadding, 0}, {1 - xpadding, 0}, {1 - ypadding, 0}}.resolve(child->bounds);
+                child->bounds = URect{{xpadding, 0}, {ypadding, 0}, {1 - xpadding, 0}, {1 - ypadding, 0}}.resolve(child->bounds);
             }
             if (child->bounds.get_size() != size) child->layout();
         }
@@ -59,9 +62,11 @@ struct UIComponent
     
     virtual void render(const UIRenderEvent & e) {};
     virtual void input(const InputEvent & e) {};
-    virtual void on_mouse_down(const math::float2 cursor) {};
-    virtual void on_mouse_up(const math::float2 cursor) {};
-    virtual void on_mouse_drag(const math::float2 cursor, const math::float2 delta) {};
+    virtual void on_mouse_down(const float2 cursor) {};
+    virtual void on_mouse_up(const float2 cursor) {};
+    virtual void on_mouse_drag(const float2 cursor, const float2 delta) {};
 };
+    
+}
 
 #endif // end uwidget_h

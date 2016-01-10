@@ -14,11 +14,11 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         grid = RenderableGrid(1, 100, 100);
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         camera.look_at({0, 2.5, -2.5}, {0, 2.0, 0});
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
 
     }
@@ -55,7 +55,7 @@ struct ExperimentalApp : public GLFWApp
 
         grid.render(proj, view);
 
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
         

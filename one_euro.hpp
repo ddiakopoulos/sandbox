@@ -204,11 +204,11 @@ namespace avl
 
     public:
 
-        typedef const math::float4 return_type;
+        typedef const float4 return_type;
 
         LowPassFilterQuat() : _firstTime(true) { }
 
-        return_type filter(const math::float4 x, float alpha)
+        return_type filter(const float4 x, float alpha)
         {
             if (_firstTime)
             {
@@ -216,10 +216,10 @@ namespace avl
                 _hatxprev = x;
             }
 
-            math::float4 hatx;
+            float4 hatx;
 
             // destination, start, end, alpha
-            hatx = math::qlerp(_hatxprev, x, alpha);
+            hatx = qlerp(_hatxprev, x, alpha);
 
             // destination, source
             _hatxprev = hatx;
@@ -235,7 +235,7 @@ namespace avl
     private:
 
         bool _firstTime;
-        math::float4 _hatxprev;
+        float4 _hatxprev;
     };
 
     class QuatFilterable
@@ -245,9 +245,9 @@ namespace avl
 
         typedef float scalar_type;
 
-        typedef math::vec<scalar_type,4> value_type;
-        typedef math::vec<scalar_type,4> derivative_value_type;
-        typedef math::vec<scalar_type,4> value_ptr_type;
+        typedef vec<scalar_type,4> value_type;
+        typedef vec<scalar_type,4> derivative_value_type;
+        typedef vec<scalar_type,4> value_ptr_type;
 
         typedef LowPassFilterQuat value_filter_type;
         typedef LowPassFilterQuat derivative_filter_type;
@@ -262,9 +262,9 @@ namespace avl
         {
             scalar_type rate = 1.0f / dt;
 
-            math::float4 ip = math::qinv(prev);
+            float4 ip = qinv(prev);
 
-            math::vec<scalar_type, 4> inverse_prev((scalar_type)ip.x, (scalar_type)ip.y, (scalar_type)ip.z, (scalar_type)ip.w);
+            vec<scalar_type, 4> inverse_prev((scalar_type)ip.x, (scalar_type)ip.y, (scalar_type)ip.z, (scalar_type)ip.w);
 
             // computes quaternion product destQuat = qLeft * qRight.
             dx = current * inverse_prev;
@@ -275,7 +275,7 @@ namespace avl
             dx.z *= rate;
             dx.w = dx.w * rate + (1.0f - rate);
 
-            dx = math::normalize(dx);
+            dx = normalize(dx);
         }
 
         static scalar_type computeDerivativeMagnitude(derivative_value_type const dx)

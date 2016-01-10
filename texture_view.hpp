@@ -30,40 +30,45 @@ static const char s_textureFrag[] = R"(#version 330
     }
 )";
 
-struct GLTextureView : public Noncopyable
+namespace avl
 {
-    GlShader program;
-    GlMesh mesh;
-    GLuint texture;
     
-    GLTextureView(GLuint tex) : texture(tex)
+    struct GLTextureView : public Noncopyable
     {
-        Geometry g;
-        g.vertices = { {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
-        g.texCoords = { {0.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f} };
-        g.faces = {{0, 1, 2}, {3, 4, 5}};
-        mesh = make_mesh_from_geometry(g);
-        program = GlShader(s_textureVert, s_textureFrag);
-    }
-    
-    void draw(math::Bounds rect, math::int2 windowSize)
-    {
-        program.bind();
+        GlShader program;
+        GlMesh mesh;
+        GLuint texture;
         
-        const math::float4x4 projection = math::make_orthographic_perspective_matrix(0.0f, windowSize.x, windowSize.y, 0.0f, -1.0f, 1.0f);
+        GLTextureView(GLuint tex) : texture(tex)
+        {
+            Geometry g;
+            g.vertices = { {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
+            g.texCoords = { {0.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f} };
+            g.faces = {{0, 1, 2}, {3, 4, 5}};
+            mesh = make_mesh_from_geometry(g);
+            program = GlShader(s_textureVert, s_textureFrag);
+        }
         
-        math::float4x4 model = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
-        model = math::mul(math::make_scaling_matrix({ (float) rect.width(), (float) rect.height(), 0.f}), model);
-        model = math::mul(math::make_translation_matrix({(float) rect.x0, (float) rect.y0, 0.f}), model);
-        program.uniform("u_model", model);
-        program.uniform("u_projection", projection);
-        program.texture("u_texture", 0, texture, GL_TEXTURE_2D);
+        void draw(Bounds rect, int2 windowSize)
+        {
+            program.bind();
+            
+            const float4x4 projection = make_orthographic_perspective_matrix(0.0f, windowSize.x, windowSize.y, 0.0f, -1.0f, 1.0f);
+            
+            float4x4 model = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+            model = mul(make_scaling_matrix({ (float) rect.width(), (float) rect.height(), 0.f}), model);
+            model = mul(make_translation_matrix({(float) rect.x0, (float) rect.y0, 0.f}), model);
+            program.uniform("u_model", model);
+            program.uniform("u_projection", projection);
+            program.texture("u_texture", 0, texture, GL_TEXTURE_2D);
+            
+            mesh.draw_elements();
+            
+            program.unbind();
+        }
         
-        mesh.draw_elements();
+    };
         
-        program.unbind();
-    }
-    
-};
+}
 
 #endif // texture_view_h

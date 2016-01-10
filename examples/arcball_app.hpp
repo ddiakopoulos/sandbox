@@ -27,9 +27,9 @@ struct ExperimentalApp : public GLFWApp
     {
         auto bounds = g.compute_bounds();
 
-        float3 r = 0.50f * (bounds.max - bounds.min);
+        float3 r = 0.50f * (bounds.dimensions - bounds.position);
         
-        float3 center = bounds.min + r;
+        float3 center = bounds.position + r;
         
         float oldRadius = std::max(r.x, std::max(r.y, r.z));
         float scale = radius / oldRadius;
@@ -59,11 +59,11 @@ struct ExperimentalApp : public GLFWApp
         std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
         std::cout << "Object Center: " << std::fixed << object.bounds.center() << std::endl;
         
-        simpleTexturedShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
+        simpleTexturedShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         shaderMonitor.add_shader(simpleTexturedShader, "assets/shaders/simple_texture_vert.glsl", "assets/shaders/simple_texture_frag.glsl");
         
-        vignetteShader.reset(new gfx::GlShader(read_file_text("assets/shaders/vignette_vert.glsl"), read_file_text("assets/shaders/vignette_frag.glsl")));
-        matcapShader.reset(new gfx::GlShader(read_file_text("assets/shaders/matcap_vert.glsl"), read_file_text("assets/shaders/matcap_frag.glsl")));
+        vignetteShader.reset(new GlShader(read_file_text("assets/shaders/vignette_vert.glsl"), read_file_text("assets/shaders/vignette_frag.glsl")));
+        matcapShader.reset(new GlShader(read_file_text("assets/shaders/matcap_vert.glsl"), read_file_text("assets/shaders/matcap_frag.glsl")));
         
         crateDiffuseTex = load_image("assets/models/barrel/barrel_2_diffuse.png");
         crateNormalTex = load_image("assets/models/barrel/barrel_normal.png");
@@ -71,7 +71,7 @@ struct ExperimentalApp : public GLFWApp
         
         fullscreen_vignette_quad = make_fullscreen_quad();
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         cameraSphere = Sphere({0, 0, 0}, object.bounds.volume());
         myArcball = Arcball(&camera, cameraSphere);
@@ -79,10 +79,10 @@ struct ExperimentalApp : public GLFWApp
         camera.look_at({0, 0, 10}, {0, 0, 0});
         //myArcball.set_constraint_axis(float3(0, 1, 0));
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
         
     }
@@ -180,7 +180,7 @@ struct ExperimentalApp : public GLFWApp
             matcapShader->unbind();
         }
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
     }

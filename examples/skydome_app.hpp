@@ -39,13 +39,13 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         grid = RenderableGrid(1, 100, 100);
         cameraController.set_camera(&camera);
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         sky = dynamic_cast<PreethamProceduralSky *>(&preethamSky);
         
-        hdrShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/hdr_frag.glsl")));
-        filmgrainShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/filmgrain_frag.glsl")));
-        fxaaShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/fxaa_frag.glsl")));
+        hdrShader.reset(new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/hdr_frag.glsl")));
+        filmgrainShader.reset(new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/filmgrain_frag.glsl")));
+        fxaaShader.reset(new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/fxaa_frag.glsl")));
         fullscreen_post_quad = make_fullscreen_quad();
         
         sceneColorTexture.load_data(width, height, GL_RGB16F, GL_RGB, GL_FLOAT, nullptr);
@@ -59,7 +59,7 @@ struct ExperimentalApp : public GLFWApp
         sceneView.reset(new GLTextureView(hdrOutputTexture.get_gl_handle()));
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
 
     }
@@ -133,7 +133,7 @@ struct ExperimentalApp : public GLFWApp
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             sky->render(viewProj, camera.get_eye_point(), camera.farClip);
             grid.render(proj, view);
-            gfx::gl_check_error(__FILE__, __LINE__);
+            gl_check_error(__FILE__, __LINE__);
         }
         
         // Draw into the output FBO

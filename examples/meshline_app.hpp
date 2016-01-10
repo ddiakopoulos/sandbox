@@ -55,9 +55,9 @@ struct ExperimentalApp : public GLFWApp
             lines.push_back(line);
         }
 
-        vignetteShader.reset(new gfx::GlShader(read_file_text("assets/shaders/vignette_vert.glsl"), read_file_text("assets/shaders/vignette_frag.glsl")));
+        vignetteShader.reset(new GlShader(read_file_text("assets/shaders/vignette_vert.glsl"), read_file_text("assets/shaders/vignette_frag.glsl")));
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
     }
     
     
@@ -94,7 +94,7 @@ struct ExperimentalApp : public GLFWApp
         return curve;
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
 
     }
@@ -145,7 +145,7 @@ struct ExperimentalApp : public GLFWApp
             l->draw(model);
         }
 
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
         

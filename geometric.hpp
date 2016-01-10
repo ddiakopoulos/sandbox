@@ -424,17 +424,17 @@ namespace avl
         return pose.inverse().matrix(); 
     }
     
-    inline void look_at_pose(math::float3 eyePoint, math::float3 target, Pose & p)
+    inline void look_at_pose(float3 eyePoint, float3 target, Pose & p)
     {
-        const math::float3 worldUp = {0,1,0};
-        math::float3 zDir = math::normalize(eyePoint - target);
-        math::float3 xDir = math::normalize(cross(worldUp, zDir));
-        math::float3 yDir = math::cross(zDir, xDir);
+        const float3 worldUp = {0,1,0};
+        float3 zDir = normalize(eyePoint - target);
+        float3 xDir = normalize(cross(worldUp, zDir));
+        float3 yDir = cross(zDir, xDir);
         p.position = eyePoint;
-        p.orientation = math::normalize(math::make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
+        p.orientation = normalize(make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
     }
     
-    inline Pose look_at_pose(math::float3 eyePoint, math::float3 target)
+    inline Pose look_at_pose(float3 eyePoint, float3 target)
     {
         Pose p;
         look_at_pose(eyePoint, target, p);
@@ -447,7 +447,7 @@ namespace avl
     
     inline void find_orthonormals(const float3 normal, float3 & orthonormal1, float3 & orthonormal2)
     {
-        const float4x4 OrthoX = math::make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
+        const float4x4 OrthoX = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
         const float4x4 OrthoY = make_rotation_matrix({0, 1, 0}, ANVIL_PI / 2);;
         
         float3 w = transform_vector(OrthoX, normal);

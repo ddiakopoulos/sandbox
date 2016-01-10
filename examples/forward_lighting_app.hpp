@@ -60,8 +60,8 @@ struct ExperimentalApp : public GLFWApp
         
         gizmoEditor.reset(new GizmoEditor(camera));
         
-        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
-        colorShader.reset(new gfx::GlShader(colorVertexShader, colorFragmentShader));
+        simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
+        colorShader.reset(new GlShader(colorVertexShader, colorFragmentShader));
         
         sponza = load_geometry_from_obj("assets/models/sponza/sponza.obj");
         
@@ -82,10 +82,10 @@ struct ExperimentalApp : public GLFWApp
             lights[1].pose.position = float3(-25, 15, 0);
         }
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
 
     }
@@ -146,7 +146,7 @@ struct ExperimentalApp : public GLFWApp
                 model.draw();
             }
             
-            gfx::gl_check_error(__FILE__, __LINE__);
+            gl_check_error(__FILE__, __LINE__);
             
             for (const auto & model : sponza.chunks)
             {
@@ -159,12 +159,12 @@ struct ExperimentalApp : public GLFWApp
                 model.mesh.draw_elements();
             }
             
-            gfx::gl_check_error(__FILE__, __LINE__);
+            gl_check_error(__FILE__, __LINE__);
             
             simpleShader->unbind();
         }
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         // Color gizmo shader
         {
@@ -194,7 +194,7 @@ struct ExperimentalApp : public GLFWApp
         
         grid.render(proj, view, {0, -0.5, 0});
 
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
         

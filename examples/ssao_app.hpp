@@ -43,7 +43,7 @@ struct ExperimentalApp : public GLFWApp
         sofaModel.mesh = make_mesh_from_geometry(sofaGeometry);
         sofaModel.bounds = sofaGeometry.compute_bounds();
         
-        simpleShader.reset(new gfx::GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
+        simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
         cameraController.set_camera(&camera);
         camera.fov = 75;
@@ -55,9 +55,9 @@ struct ExperimentalApp : public GLFWApp
         nvgCtx = make_nanovg_context(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
         if (!nvgCtx) throw std::runtime_error("error initializing nanovg context");
 
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
-        ssaoShader.reset(new gfx::GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/arkano_ssao_frag.glsl")));
+        ssaoShader.reset(new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/arkano_ssao_frag.glsl")));
         
         fullscreen_post_quad = make_fullscreen_quad();
         
@@ -76,7 +76,7 @@ struct ExperimentalApp : public GLFWApp
         depthTextureView.reset(new GLTextureView(sceneDepthTexture.get_gl_handle()));
         outputTextureView.reset(new GLTextureView(outputTexture.get_gl_handle()));
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         // Set up the UI
         rootWidget.bounds = {0, 0, (float) width, (float) height};
@@ -86,7 +86,7 @@ struct ExperimentalApp : public GLFWApp
         rootWidget.layout();
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
         rootWidget.bounds = {0, 0, (float) size.x, (float) size.y};
         rootWidget.layout();
@@ -167,7 +167,7 @@ struct ExperimentalApp : public GLFWApp
             GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
             glDrawBuffers(1, drawBuffers);
             
-            gfx::gl_check_error(__FILE__, __LINE__);
+            gl_check_error(__FILE__, __LINE__);
             
             // Simple Shader
             {
@@ -196,7 +196,7 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->unbind();
             }
             grid.render(proj, view);
-            gfx::gl_check_error(__FILE__, __LINE__);
+            gl_check_error(__FILE__, __LINE__);
         }
         
         // Draw into the output FBO
@@ -223,7 +223,7 @@ struct ExperimentalApp : public GLFWApp
                 
                 ssaoShader->unbind();
             }
-            gfx::gl_check_error(__FILE__, __LINE__);
+            gl_check_error(__FILE__, __LINE__);
         }
         
         // Bind to 0
@@ -233,7 +233,7 @@ struct ExperimentalApp : public GLFWApp
         
         glfwSwapBuffers(window);
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
     }
     
 };

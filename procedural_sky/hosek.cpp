@@ -45,10 +45,9 @@ namespace
     // Radiance
     float3 hosek_wilkie(float cos_theta, float gamma, float cos_gamma, float3 A, float3 B, float3 C, float3 D, float3 E, float3 F, float3 G, float3 H, float3 I)
     {
-        float3 chi = (1.f + cos_gamma * cos_gamma) / math::pow(1.f + H * H - 2.f * cos_gamma * H, float3(1.5f));
-        return (1.f + A * math::exp(B / (cos_theta + 0.01f))) * (C + D * math::exp(E * gamma) + F * (cos_gamma * cos_gamma) + G * chi + I * (float) sqrt(std::max(0.f, cos_theta)));
+        float3 chi = (1.f + cos_gamma * cos_gamma) / pow(1.f + H * H - 2.f * cos_gamma * H, float3(1.5f));
+        return (1.f + A * exp(B / (cos_theta + 0.01f))) * (C + D * exp(E * gamma) + F * (cos_gamma * cos_gamma) + G * chi + I * (float) sqrt(std::max(0.f, cos_theta)));
     }
-    
 }
 
 HosekSkyRadianceData HosekSkyRadianceData::compute(float sunTheta, float turbidity, float albedo, float normalizedSunY)

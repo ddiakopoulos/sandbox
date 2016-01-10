@@ -53,8 +53,8 @@ struct ExperimentalApp : public GLFWApp
         
         camera.look_at({0, 4, 12}, {0, 0, 0});
 
-        terrainShader.reset(new gfx::GlShader(read_file_text("assets/shaders/terrain_vert_debug.glsl"), read_file_text("assets/shaders/terrain_frag_debug.glsl")));
-        waterShader.reset(new gfx::GlShader(read_file_text("assets/shaders/water_vert.glsl"), read_file_text("assets/shaders/water_frag.glsl")));
+        terrainShader.reset(new GlShader(read_file_text("assets/shaders/terrain_vert_debug.glsl"), read_file_text("assets/shaders/terrain_frag_debug.glsl")));
+        waterShader.reset(new GlShader(read_file_text("assets/shaders/water_vert.glsl"), read_file_text("assets/shaders/water_frag.glsl")));
         
         sceneColorTexture.load_data(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
         reflectionFramebuffer.attach(GL_COLOR_ATTACHMENT0, sceneColorTexture);
@@ -64,7 +64,7 @@ struct ExperimentalApp : public GLFWApp
         depthFramebuffer.attach(GL_DEPTH_ATTACHMENT, sceneDepthTexture);
         if (!depthFramebuffer.check_complete()) throw std::runtime_error("incomplete framebuffer");
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
 
         waterMesh = Renderable(make_plane(112.f, 112.f, 256, 256));
         
@@ -77,7 +77,7 @@ struct ExperimentalApp : public GLFWApp
         colorTextureView.reset(new GLTextureView(sceneColorTexture.get_gl_handle()));
         depthTextureView.reset(new GLTextureView(sceneDepthTexture.get_gl_handle()));
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         // Set up the UI
         //rootWidget.bounds = {0, 0, (float) width, (float) height};
@@ -151,7 +151,7 @@ struct ExperimentalApp : public GLFWApp
         return terrain;
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
 
     }
@@ -223,7 +223,7 @@ struct ExperimentalApp : public GLFWApp
         
         glDisable(GL_BLEND);
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
     }
     
     void draw_ui()
@@ -307,7 +307,7 @@ struct ExperimentalApp : public GLFWApp
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             draw_terrain();
-            gfx::gl_check_error(__FILE__, __LINE__);
+            gl_check_error(__FILE__, __LINE__);
             depthFramebuffer.unbind();
         }
         
@@ -350,7 +350,7 @@ struct ExperimentalApp : public GLFWApp
         
         draw_ui();
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
         

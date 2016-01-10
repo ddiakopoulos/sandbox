@@ -11,8 +11,10 @@
 #include "preetham.hpp"
 #include "procedural_mesh.hpp"
 
-// http://www.learnopengl.com/#!Advanced-Lighting/HDR
+namespace avl
+{
 
+// http://www.learnopengl.com/#!Advanced-Lighting/HDR
 class ProceduralSky
 {
 
@@ -89,7 +91,7 @@ public:
     
     HosekProceduralSky()
     {
-        sky.reset(new gfx::GlShader(read_file_text("assets/shaders/sky_vert.glsl"), read_file_text("assets/shaders/sky_hosek_frag.glsl")));
+        sky.reset(new GlShader(read_file_text("assets/shaders/sky_vert.glsl"), read_file_text("assets/shaders/sky_hosek_frag.glsl")));
         recompute(sunTheta, turbidity, albedo, normalizedSunY);
     }
     
@@ -125,7 +127,7 @@ public:
     
     PreethamProceduralSky()
     {
-        sky.reset(new gfx::GlShader(read_file_text("assets/shaders/sky_vert.glsl"), read_file_text("assets/shaders/sky_preetham_frag.glsl")));
+        sky.reset(new GlShader(read_file_text("assets/shaders/sky_vert.glsl"), read_file_text("assets/shaders/sky_preetham_frag.glsl")));
         recompute(sunTheta, turbidity, albedo, normalizedSunY);
     }
     
@@ -135,5 +137,7 @@ public:
     }
     
 };
+
+}
 
 #endif // end procedural_sky_h

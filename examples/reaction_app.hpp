@@ -51,17 +51,17 @@ struct ExperimentalApp : public GLFWApp
         gsOutput.load_data(256, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
         gsOutputView.reset(new GLTextureView(gsOutput.get_gl_handle()));
         
-        displacementShader.reset(new gfx::GlShader(read_file_text("assets/shaders/displacement_vert.glsl"), read_file_text("assets/shaders/displacement_frag.glsl")));
+        displacementShader.reset(new GlShader(read_file_text("assets/shaders/displacement_vert.glsl"), read_file_text("assets/shaders/displacement_frag.glsl")));
         shaderMonitor.add_shader(displacementShader, "assets/shaders/displacement_vert.glsl", "assets/shaders/displacement_frag.glsl");
         
         rootWidget.bounds = {0, 0, (float) width, (float) height};
         rootWidget.add_child( {{0,+10},{0,+10},{0.15,0},{0.15,0}}, std::make_shared<UIComponent>());
         rootWidget.layout();
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
     }
     
-    void on_window_resize(math::int2 size) override
+    void on_window_resize(int2 size) override
     {
         
     }
@@ -145,7 +145,7 @@ struct ExperimentalApp : public GLFWApp
         
         draw_ui();
         
-        gfx::gl_check_error(__FILE__, __LINE__);
+        gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
         

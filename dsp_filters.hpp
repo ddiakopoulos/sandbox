@@ -90,33 +90,33 @@ namespace avl
     */
     class ComplementaryFilterQuaternion
     {
-        math::float4 value;
+        float4 value;
     public:
 
-        math::float3 correctedBody = math::float3(0, 0, 0);
-        math::float3 correctedWorld = math::float3(0, 0, 0);
-        math::float3 accelWorld = math::float3(0, 0, 0);
-        const math::float3 worldUp = math::float3(0.0f, 1.0f, 0.0f);
+        float3 correctedBody = float3(0, 0, 0);
+        float3 correctedWorld = float3(0, 0, 0);
+        float3 accelWorld = float3(0, 0, 0);
+        const float3 worldUp = float3(0.0f, 1.0f, 0.0f);
     
         ComplementaryFilterQuaternion()
         {
             reset();
         }
 
-        math::float4 update(math::float3 gyro, math::float3 accelBody, const float samplePeriod)
+        float4 update(float3 gyro, float3 accelBody, const float samplePeriod)
         {
-            accelWorld = math::qrot(value, accelBody);
-            correctedWorld = math::cross(accelWorld, worldUp); // compute error
-            correctedBody = math::qrot(math::qconj(value), correctedWorld); // rotate correction back to body
+            accelWorld = qrot(value, accelBody);
+            correctedWorld = cross(accelWorld, worldUp); // compute error
+            correctedBody = qrot(qconj(value), correctedWorld); // rotate correction back to body
             gyro = gyro + correctedBody;  // add correction vector to gyro
-            math::float4 incrementalRotation = math::float4(gyro, samplePeriod);
+            float4 incrementalRotation = float4(gyro, samplePeriod);
             value = qmul(incrementalRotation, value); // integrate quaternion
             return value;
         }
 
         void reset()
         {
-            value = math::float4(0, 0, 0, 1);
+            value = float4(0, 0, 0, 1);
         }
     };
 
