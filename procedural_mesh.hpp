@@ -7,9 +7,6 @@
 #include "GlMesh.hpp"
 #include <assert.h>
 
-using namespace util;
-using namespace math;
-
 inline Geometry make_cube()
 {
     Geometry cube;

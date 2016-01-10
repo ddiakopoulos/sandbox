@@ -13,7 +13,7 @@
     #include <OpenGL/gl3.h>
 #endif
 
-namespace gfx
+namespace avl
 {
     
     template<typename T>
@@ -85,7 +85,7 @@ namespace gfx
     }
     
     // Can be used for things like a vbo, ibo, or pbo
-    class GlBuffer : public util::Noncopyable
+    class GlBuffer : public Noncopyable
     {
         GLuint buffer;
         GLsizeiptr bufferLen;
@@ -237,11 +237,11 @@ namespace gfx
             camPitch = std::acos(math::clamp(dot(lookVec, flatLookVec), -1.0f, +1.0f)) * (lookVec.y > 0 ? 1 : -1);
         }
         
-        void handle_input(const util::InputEvent & e)
+        void handle_input(const InputEvent & e)
         {
             switch (e.type)
             {
-                case util::InputEvent::KEY:
+                case InputEvent::KEY:
                     switch (e.value[0])
                     {
                         case GLFW_KEY_W: bf = e.is_mouse_down(); break;
@@ -250,14 +250,14 @@ namespace gfx
                         case GLFW_KEY_D: br = e.is_mouse_down(); break;
                     }
                     break;
-                case util::InputEvent::MOUSE:
+                case InputEvent::MOUSE:
                     switch (e.value[0])
                     {
                         case GLFW_MOUSE_BUTTON_LEFT: ml = e.is_mouse_down(); break;
                         case GLFW_MOUSE_BUTTON_RIGHT: mr = e.is_mouse_down(); break;
                     }
                     break;
-                case util::InputEvent::CURSOR:
+                case InputEvent::CURSOR:
                     if (mr)
                     {
                         camYaw -= (e.cursor.x - lastCursor.x) * 0.01f;
@@ -318,7 +318,7 @@ namespace gfx
         return make_ray(camera, aspectRatio, posPixels.x / imageSizePixels.x, (imageSizePixels.y - posPixels.y) / imageSizePixels.y, imageSizePixels.x / imageSizePixels.y);
     }
     
-    class GlRenderbuffer : public util::Noncopyable
+    class GlRenderbuffer : public Noncopyable
     {
         GLuint renderbuffer;
         math::int2 size;
@@ -344,7 +344,7 @@ namespace gfx
     };
     
     struct GlTexture;
-    class GlFramebuffer : public util::Noncopyable
+    class GlFramebuffer : public Noncopyable
     {
         GLuint handle;
         math::float2 size;

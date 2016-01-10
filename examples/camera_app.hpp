@@ -1,9 +1,5 @@
 #include "index.hpp"
 
-using namespace math;
-using namespace util;
-using namespace gfx;
-
 struct Smoothstep
 {
     inline static float ease_in_out(const float t)

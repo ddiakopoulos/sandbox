@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace util
+namespace avl
 {
 
     static const std::string b64_characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -106,6 +106,6 @@ namespace util
         return output;
     }
 
-} // end namespace util
+}
 
 #endif // base_64_h

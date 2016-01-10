@@ -8,7 +8,7 @@
 #include <iostream>
 #include <limits>
 
-namespace math
+namespace avl
 {
 
     class PIDController
@@ -94,7 +94,7 @@ namespace math
 
         Integrator integrator;
         double runningError = 0.0;
-        util::TimeKeeper timer;
+        TimeKeeper timer;
 
     };
 
@@ -103,6 +103,6 @@ namespace math
       // @todo
     }
 
-} // end namespace math
+}
 
 #endif // pid_controller_h

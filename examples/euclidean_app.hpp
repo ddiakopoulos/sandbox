@@ -1,10 +1,6 @@
 #include "index.hpp"
 #include "../third_party/jo_gif.hpp"
 
-using namespace math;
-using namespace util;
-using namespace gfx;
-
 std::vector<bool> make_euclidean_rhythm(int steps, int pulses)
 {
     std::vector<bool> pattern;

@@ -1,9 +1,5 @@
 #include "index.hpp"
 
-using namespace math;
-using namespace util;
-using namespace gfx;
-
 struct ExperimentalApp : public GLFWApp
 {
     Renderable object;

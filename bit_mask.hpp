@@ -3,7 +3,7 @@
 #ifndef bitmask_h
 #define bitmask_h
 
-namespace util 
+namespace avl
 {
     
     template<typename T>

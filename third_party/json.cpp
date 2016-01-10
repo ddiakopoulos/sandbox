@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <regex>
 
-namespace util
+namespace avl
 {
 
 std::ostream & printEscaped(std::ostream & out, const std::string & str)

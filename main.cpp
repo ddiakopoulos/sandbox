@@ -3,9 +3,7 @@
 
 #include "index.hpp"
 
-using namespace math;
-using namespace util;
-using namespace gfx;
+using namespace avl;
 
 //#include "examples/empty_app.hpp"
 //#include "examples/arcball_app.hpp"
@@ -18,7 +16,6 @@ using namespace gfx;
 //#include "examples/reaction_app.hpp"
 #include "examples/forward_lighting_app.hpp"
 //#include "examples/sandbox_app.hpp"
-
 
 IMPLEMENT_MAIN(int argc, char * argv[])
 {

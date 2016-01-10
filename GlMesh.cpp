@@ -1,7 +1,6 @@
 #include "GlMesh.hpp"
 
-using namespace gfx;
-using namespace math;
+using namespace avl;
 
 void GlMesh::draw_elements() const
 {

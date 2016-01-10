@@ -1,9 +1,7 @@
 #include "gizmo.hpp"
 #include "procedural_mesh.hpp"
 
-using namespace gfx;
-using namespace math;
-using namespace util;
+using namespace avl;
 
 ///////////////////////
 // Translation Gizmo //

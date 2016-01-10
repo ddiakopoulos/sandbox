@@ -3,7 +3,7 @@
 
 #include <mutex>
 
-namespace util
+namespace avl
 {
     class TryLocker
     {
@@ -32,6 +32,6 @@ namespace util
         }
     };
 
-} // end namespace util
+}
 
 #endif // end try_lock_h

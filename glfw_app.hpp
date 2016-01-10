@@ -22,7 +22,7 @@
 #define GLFW_INCLUDE_GLU
 #include <GLFW/glfw3.h>
 
-namespace util
+namespace avl
 {
 
 struct UpdateEvent
@@ -114,8 +114,8 @@ private:
     
 extern int Main(int argc, char * argv[]);
     
-} // end namespace util
+} // end namespace avl
 
 #endif
 
-#define IMPLEMENT_MAIN(...) namespace util { int main(int argc, char * argv[]); } int main(int argc, char * argv[]) { return util::Main(argc, argv); } int util::Main(__VA_ARGS__)
+#define IMPLEMENT_MAIN(...) namespace avl { int main(int argc, char * argv[]); } int main(int argc, char * argv[]) { return avl::Main(argc, argv); } int avl::Main(__VA_ARGS__)

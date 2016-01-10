@@ -7,7 +7,7 @@
 #include "linear_algebra.hpp"
 #include <cmath>
 
-namespace math
+namespace avl
 {
     // The bisection algorithm to find the unique root of F(t).
     inline float point_on_ellipse_bisector(int numComponents, const math::float2 &extents, const math::float2 &y, math::float2& x)
@@ -267,6 +267,6 @@ namespace math
         return result;
     }
 
-} // end namespace math
+}
 
 #endif // ellipse_math_h

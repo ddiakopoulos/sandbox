@@ -6,7 +6,7 @@
 #include <numeric>
 #include <type_traits>
 
-namespace math
+namespace avl
 {
     
     template <typename T>
@@ -256,6 +256,6 @@ namespace math
         bool bufferInit;
     };
 
-} // end namespace math
+}
 
 #endif //circular_buffer_h

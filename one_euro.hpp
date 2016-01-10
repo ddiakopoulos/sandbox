@@ -5,7 +5,7 @@
 
 #include "linear_algebra.hpp"
 
-namespace math 
+namespace avl
 {
     template<int dimension = 3, typename Scalar = float>
     class LowPassFilter
@@ -288,6 +288,6 @@ namespace math
 
     typedef OneEuroFilter<QuatFilterable> OneEuroFilterQuat;
 
-}; // end namespace math
+};
 
 #endif // end one_euro_filter_h

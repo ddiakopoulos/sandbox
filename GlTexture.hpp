@@ -12,11 +12,9 @@
 
 #include "third_party/stb_image.h"
 
-namespace gfx
+namespace avl
 {
-
-    
-    class GlTexture : public util::Noncopyable
+    class GlTexture : public Noncopyable
     {
         math::int2 size;
         GLuint internalFormat;
@@ -111,7 +109,7 @@ namespace gfx
     
     inline GlTexture load_image(const std::string & path)
     {
-        auto binaryFile = util::read_file_binary(path);
+        auto binaryFile = read_file_binary(path);
         
         int width, height, nBytes;
         auto data = stbi_load_from_memory(binaryFile.data(), (int) binaryFile.size(), &width, &height, &nBytes, 0);
@@ -127,6 +125,6 @@ namespace gfx
         return tex;
     }
     
-} // end namespace gfx
+}
 
 #endif // gltexture_h

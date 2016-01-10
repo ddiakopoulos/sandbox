@@ -30,15 +30,15 @@ static const char s_textureFrag[] = R"(#version 330
     }
 )";
 
-struct GLTextureView : public util::Noncopyable
+struct GLTextureView : public Noncopyable
 {
     GlShader program;
-    gfx::GlMesh mesh;
+    GlMesh mesh;
     GLuint texture;
     
     GLTextureView(GLuint tex) : texture(tex)
     {
-        util::Geometry g;
+        Geometry g;
         g.vertices = { {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
         g.texCoords = { {0.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f} };
         g.faces = {{0, 1, 2}, {3, 4, 5}};

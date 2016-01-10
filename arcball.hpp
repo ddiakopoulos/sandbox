@@ -12,10 +12,6 @@
 #include "GlShared.hpp"
 #include "ellipse_math.hpp"
 
-using namespace math;
-using namespace util;
-using namespace gfx;
-
 inline float angle_from_quat(const float4 & quat)
 {
     return acos(quat.w) * 2.0f;

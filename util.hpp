@@ -65,7 +65,7 @@ static const math::float4x4 Zero4x4 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0},
 static const math::float3x3 Zero3x3 = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
 static const math::float2x2 Zero2x2 = {{0, 0}, {0, 0}};
 
-namespace util
+namespace avl
 {
     struct as_string
     {
@@ -131,7 +131,7 @@ namespace util
     }
 }
 
-#define ANVIL_ERROR(...) util::print_log(util::LogChannel::LOG_ERROR, __FILE__, __LINE__, util::as_string() << __VA_ARGS__)
-#define ANVIL_INFO(...) util::print_log(util::LogChannel::LOG_INFO, __FILE__, __LINE__, util::as_string() << __VA_ARGS__)
+#define ANVIL_ERROR(...) avl::print_log(avl::LogChannel::LOG_ERROR, __FILE__, __LINE__, avl::as_string() << __VA_ARGS__)
+#define ANVIL_INFO(...) avl::print_log(avl::LogChannel::LOG_INFO, __FILE__, __LINE__, avl::as_string() << __VA_ARGS__)
 
 #endif

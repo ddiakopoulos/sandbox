@@ -1,8 +1,7 @@
 #include "GlShared.hpp"
 #include "GlTexture.hpp"
 
-using namespace gfx;
-using namespace math;
+using namespace avl;
 
 void GlFramebuffer::attach(GLenum attachment, const GlTexture & tex)
 {

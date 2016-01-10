@@ -9,7 +9,7 @@
 // nodeSignals.add([someObject](Node const & myNode) { someObject.doSomething(myNode); return true; });
 // nodeSignals.broadcast(someNode);
 
-namespace util
+namespace avl
 {
 
     template <typename T>
@@ -41,6 +41,6 @@ namespace util
         }
     };
 
-} // end namespace util
+}
 
 #endif // end signal_h

@@ -9,11 +9,11 @@
 #include "util.hpp"
 #include "GlShared.hpp"
 
-namespace gfx
+namespace avl
 {
     
     // todo: check uniform exists
-    class GlShader : public util::Noncopyable
+    class GlShader : public Noncopyable
     {
         GLuint program;
         bool enabled = false;
@@ -49,6 +49,6 @@ namespace gfx
         void unbind() { enabled = false; glUseProgram(0); }
     };
     
-} // end namespace gfx
+}
 
 #endif // glshader_h

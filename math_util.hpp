@@ -5,7 +5,7 @@
 #include "linear_algebra.hpp"
 #include <algorithm>
 
-namespace math
+namespace avl
 {
 
     inline float to_radians(float degrees) { return degrees * ANVIL_PI / 180.0f; }
@@ -118,6 +118,6 @@ namespace math
         return 2.f * atan(tan(hFov / 2.f) / aspectRatio );
     }
 
-} // end namespace math
+}
 
 #endif // end math_util_h

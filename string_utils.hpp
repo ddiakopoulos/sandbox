@@ -8,7 +8,7 @@
 #include <cctype>
 #include <algorithm>
 
-namespace util
+namespace avl
 {
 
     inline std::string trim_left(std::string s)
@@ -79,6 +79,6 @@ namespace util
         return path;
     }
     
-} // end namespace util
+}
 
 #endif // string_utils_h

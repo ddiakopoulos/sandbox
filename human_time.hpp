@@ -5,7 +5,7 @@
 #include <chrono>
 #include <ctime>
 
-namespace util 
+namespace avl
 {
 
     struct HumanTime
@@ -46,6 +46,6 @@ namespace util
 
     };
 
-} // end namespace util
+}
 
 #endif // human_time_h

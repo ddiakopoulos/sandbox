@@ -1,10 +1,6 @@
 #include "index.hpp"
 #include "noise1234.h"
 
-using namespace math;
-using namespace util;
-using namespace gfx;
-
 Geometry make_noisy_blob()
 {
     Geometry blob = make_sphere(2.0f);

@@ -16,10 +16,7 @@
 #include <fstream>
 #include <algorithm>
 
-using namespace math;
-using namespace gfx;
-
-namespace util
+namespace avl
 {
     struct TexturedMeshChunk
     {
@@ -805,6 +802,6 @@ namespace util
     }
 
     
-} // end namespace util
+}
 
 #endif // geometry_h

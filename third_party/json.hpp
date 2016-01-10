@@ -8,7 +8,7 @@
 #include <sstream>
 #include <vector>
 
-namespace util
+namespace avl
 {
     class JsonValue;
     typedef std::vector<JsonValue> JsonArray;
@@ -71,7 +71,7 @@ namespace util
 
         const std::string & contents() const                            { return str; }    // Contents, if a String, JSON format number, if a Number, empty otherwise
 
-        static JsonValue    fromNumber(std::string num)                 { assert(util::isJsonNumber(num)); return JsonValue(Number, move(num)); }
+        static JsonValue    fromNumber(std::string num)                 { assert(isJsonNumber(num)); return JsonValue(Number, move(num)); }
     };
 
     std::ostream & operator << (std::ostream & out, const JsonValue & val);
@@ -84,6 +84,6 @@ namespace util
     std::ostream & operator << (std::ostream & out, tabbed_ref<JsonArray> arr);
     std::ostream & operator << (std::ostream & out, tabbed_ref<JsonObject> obj);
 
-} // end namespace util
+}
 
 #endif // end json_h

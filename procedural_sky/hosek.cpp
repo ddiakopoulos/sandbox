@@ -1,7 +1,6 @@
 #include "hosek.hpp"
 
-using namespace math;
-using namespace util;
+using namespace avl;
 
 namespace
 {

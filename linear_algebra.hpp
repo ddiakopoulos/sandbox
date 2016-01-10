@@ -12,7 +12,7 @@
 #include <tuple>
 #include <limits>
 
-namespace math
+namespace avl
 {
     
     // Fixed-size, M-element vector
@@ -328,6 +328,6 @@ namespace math
     typedef vec<double, 3> double3; typedef mat<double, 3, 2> double3x2; typedef mat<double, 3, 3> double3x3; typedef mat<double, 3, 4> double3x4;
     typedef vec<double, 4> double4; typedef mat<double, 4, 2> double4x2; typedef mat<double, 4, 3> double4x3; typedef mat<double, 4, 4> double4x4;
 
-} // end namespace math
+}
 
 #endif // end linear_algebra_h

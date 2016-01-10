@@ -7,7 +7,7 @@
 #include "math_util.hpp"
 #include <ostream>
 
-namespace math
+namespace avl
 {
 
     /////////////////////////
@@ -506,6 +506,6 @@ namespace math
         float fixed_height() const { return y1.b - y0.b; }
     };
 
-} // end namespace math
+}
 
 #endif // end geometric_h

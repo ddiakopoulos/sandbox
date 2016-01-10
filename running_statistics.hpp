@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-namespace math
+namespace avl
 {
 
     template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
@@ -102,6 +102,6 @@ namespace math
 
     };
 
-} // end namespace math
+}
  
 #endif // end running_stats_h

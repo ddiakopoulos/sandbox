@@ -11,10 +11,10 @@
 
 #include <vector>
 
-namespace gfx
+namespace avl
 {
     
-    class GlMesh : public util::Noncopyable
+    class GlMesh : public Noncopyable
     {
         enum { MAX_ATTRIBUTES = 8 };
         struct Attribute { GLint size; GLenum type; GLboolean normalized; GLsizei stride; const GLvoid * pointer; } attributes[MAX_ATTRIBUTES];
@@ -74,6 +74,6 @@ namespace gfx
         template<class T, int N> void set_elements(const T (&elements)[N], GLenum usage) { set_elements(N, elements, usage); }
     };
     
-} // end namespace gfx
+}
 
 #endif // glmesh_h

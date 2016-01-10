@@ -1,11 +1,10 @@
 #include "GlShader.hpp"
 
-using namespace gfx;
-using namespace math;
-
 #include <map>
 #include <vector>
 #include "GlTexture.hpp"
+
+using namespace avl;
 
 static void compile_shader(GLuint program, GLenum type, const char * source)
 {

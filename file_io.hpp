@@ -7,7 +7,7 @@
 #include <fstream>
 #include <streambuf>
 
-namespace util
+namespace avl
 {
     
     inline std::vector<uint8_t> read_file_binary(const std::string pathToFile)
@@ -39,6 +39,6 @@ namespace util
         return str;
     }
 
-} // end namespace util
+}
 
 #endif // file_io_h

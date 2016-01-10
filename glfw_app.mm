@@ -1,8 +1,7 @@
 #include "glfw_app.hpp"
 #include "util.hpp"
 
-using namespace util;
-using namespace math;
+using namespace avl;
 
 static InputEvent generate_input_event(GLFWwindow * window, InputEvent::Type type, const float2 & cursor, int action)
 {
@@ -233,7 +232,7 @@ void GLFWApp::exit()
     glfwSetWindowShouldClose(window, 1);
 }
 
-namespace util
+namespace avl
 {
     int main(int argc, char * argv[]) 
     {
@@ -302,7 +301,7 @@ int2 get_screen_size(GLFWwindow * window)
 #include <GLFW/glfw3native.h>
 #include <shellapi.h>
 
-namespace util
+namespace avl
 {
     std::string windows_to_utf8(const std::wstring & string)
     {

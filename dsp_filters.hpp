@@ -3,7 +3,7 @@
 #ifndef dsp_filters_H
 #define dsp_filters_H
 
-namespace util
+namespace avl
 {
     
     template<typename T>
@@ -163,6 +163,6 @@ namespace util
         }
     };
     
-} // end namespace util
+}
 
 #endif // end dsp_filters_h
