@@ -116,7 +116,6 @@ namespace math
         {
             return (dimensions.x - position.x) * (dimensions.y - position.y) * (dimensions.z - position.z);
         }
-        
     };
     
     struct Bounds

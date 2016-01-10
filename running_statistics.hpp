@@ -13,7 +13,6 @@ namespace math
     {
         uint64_t n;
         T M1, M2, M3, M4;
-
     public:
 
         RunningStats()
@@ -33,21 +32,13 @@ namespace math
             T delta4 = delta2*delta2;
 
             combined.M1 = (a.n*a.M1 + b.n*b.M1) / combined.n;
-
-            combined.M2 = a.M2 + b.M2 + 
-                          delta2 * a.n * b.n / combined.n;
-
-            combined.M3 = a.M3 + b.M3 + 
-                          delta3 * a.n * b.n * (a.n - b.n)/(combined.n*combined.n);
-            combined.M3 += 3.0*delta * (a.n*b.M2 - b.n*a.M2) / combined.n;
-
-            combined.M4 = a.M4 + b.M4 + delta4*a.n*b.n * (a.n*a.n - a.n*b.n + b.n*b.n) / 
-                          (combined.n*combined.n*combined.n);
-            combined.M4 += 6.0*delta2 * (a.n*a.n*b.M2 + b.n*b.n*a.M2)/(combined.n*combined.n) + 
-                          4.0*delta*(a.n*b.M3 - b.n*a.M3) / combined.n;
+            combined.M2 = a.M2 + b.M2 + delta2 * a.n * b.n / combined.n;
+            combined.M3 = a.M3 + b.M3 +  delta3 * a.n * b.n * (a.n - b.n)/(combined.n*combined.n);
+            combined.M3 += 3.0 * delta * (a.n*b.M2 - b.n*a.M2) / combined.n;
+            combined.M4 = a.M4 + b.M4 + delta4*a.n*b.n * (a.n*a.n - a.n*b.n + b.n*b.n) / (combined.n*combined.n*combined.n);
+            combined.M4 += 6.0 * delta2 * (a.n*a.n*b.M2 + b.n*b.n*a.M2)/(combined.n*combined.n) + 4.0 * delta*(a.n*b.M3 - b.n*a.M3) / combined.n;
 
             return combined;
-
         }
 
         RunningStats & operator += (const RunningStats & rhs)
@@ -91,7 +82,7 @@ namespace math
 
         T compute_variance() const
         {
-            return M2/(n-1.0);
+            return M2 / (n - (T) 1.0);
         }
 
         T compute_std_dev() const
@@ -101,12 +92,12 @@ namespace math
 
         T compute_skewness() const
         {
-            return sqrt(double(n)) * M3 / pow(M2, 1.5);
+            return sqrt(T(n)) * M3 / pow(M2, (T) 1.5);
         }
 
         T compute_kurtosis() const
         {
-            return double(n)*M4 / (M2*M2) - 3.0;
+            return T(n) * M4 / (M2 * M2) - (T) 3.0;
         }
 
     };

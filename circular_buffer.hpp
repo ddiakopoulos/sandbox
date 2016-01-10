@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <numeric>
+#include <type_traits>
 
 namespace math
 {
@@ -194,33 +195,35 @@ namespace math
             return buffer[(readPtr - samplesAgo - 1 + get_current_size()) % get_current_size()];
         }
         
-        // Analytics
+        // Numeric Analytics
         
-        // Tofix - these apply to numeric types only
-        float compute_mean()
+        template<typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+        T compute_mean()
         {
-            float sum = 0.0;
+            T sum = 0.0;
             for (int i = 0; i < get_current_size(); i++)
             {
                 sum += buffer[i];
             }
-            return float (sum / get_current_size());
+            return T (sum / get_current_size());
         }
         
-        float compute_variance()
+        template<typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+        T compute_variance()
         {
-            float mean = compute_mean();
-            float sum = 0;
+            T mean = compute_mean();
+            T sum = 0;
             for (int i = 0; i < get_current_size(); i++)
             {
                 sum += pow(buffer[i] - mean, 2);
             }
-            return ((float) sqrt((sum / get_current_size())));   
+            return ((T) sqrt((sum / get_current_size())));
         }
         
-        float compute_min()
+        template<typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+        T compute_min()
         {
-            float min = std::numeric_limits<float>::max();
+            T min = std::numeric_limits<T>::max();
             auto size = get_current_size();
             for (uint64_t i = 0; i < size; i++)
             {
@@ -230,9 +233,10 @@ namespace math
             return min;
         }
         
-        float compute_max()
+        template<typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+        T compute_max()
         {
-            float max = std::numeric_limits<float>::min();
+            T max = std::numeric_limits<T>::min();
             auto size = get_current_size();
             for (uint64_t i = 0; i < size; i++)
             {
