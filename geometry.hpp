@@ -176,7 +176,7 @@ namespace util
             math::Box<float, 3> bounds;
             
             bounds.position = math::float3(std::numeric_limits<float>::infinity());
-            bounds.dimensions = -math::float3(std::numeric_limits<float>::infinity());
+            bounds.dimensions = -bounds.position;
             
             for (const auto & vertex : vertices)
             {
@@ -587,7 +587,7 @@ namespace util
             if (std::abs(ray.direction[i]) < PLANE_EPSILON)
             {
                 // Ray is parallel to slab. No hit if r.origin not within slab
-                if ((ray.origin[i] < bounds.min()[i]) || (ray.origin[i] > bounds.max()[i]))
+                if ((ray.origin[i] < bounds.position[i]) || (ray.origin[i] > bounds.dimensions[i]))
                 {
                     return false;
                 }
@@ -596,8 +596,8 @@ namespace util
             {
                 // Compute intersection t value of ray with near and far plane of slab
                 float ood(1.0f / ray.direction[i]);
-                float t1((bounds.min()[i] - ray.origin[i]) * ood);
-                float t2((bounds.max()[i] - ray.origin[i]) * ood);
+                float t1((bounds.position[i] - ray.origin[i]) * ood);
+                float t2((bounds.dimensions[i] - ray.origin[i]) * ood);
                 
                 // Make t1 be intersection with near plane, t2 with far plane
                 if (t1 > t2)
@@ -694,7 +694,7 @@ namespace util
         math::float2 outUv;
         
         auto meshBounds = mesh.compute_bounds();
-        if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds.min(), meshBounds.max()))
+        if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds.position, meshBounds.dimensions))
         {
             for (auto & tri : mesh.faces)
             {
