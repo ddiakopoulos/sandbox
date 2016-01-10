@@ -37,3 +37,4 @@
 #include "constant_spline.hpp"
 #include "meshline.hpp"
 #include "reaction_diffusion.hpp"
+#include "vision.hpp"

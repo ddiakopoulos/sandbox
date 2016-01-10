@@ -121,6 +121,7 @@
 		087A4EA31BB8ECA100975C72 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		087A4EA51BB8ECA600975C72 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		087A4EA91BB995AD00975C72 /* libglfw3.3.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw3.3.1.dylib; path = /usr/local/Cellar/glfw3/3.1.1/lib/libglfw3.3.1.dylib; sourceTree = "<absolute>"; };
+		088B47BD1C42D56B0007BB59 /* vision.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vision.hpp; path = minivision/vision.hpp; sourceTree = SOURCE_ROOT; };
 		089B85FD1BAFC70B00B3A290 /* base64.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = base64.hpp; sourceTree = SOURCE_ROOT; };
 		089B86071BAFC9AB00B3A290 /* murmur_hash_3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = murmur_hash_3.cpp; path = third_party/murmur_hash_3.cpp; sourceTree = SOURCE_ROOT; };
 		089B86081BAFC9AB00B3A290 /* murmur_hash_3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = murmur_hash_3.h; path = third_party/murmur_hash_3.h; sourceTree = SOURCE_ROOT; };
@@ -203,6 +204,7 @@
 				0849FD8D1BE7CB2B000F148E /* third_party */,
 				0849FD861BE7C6F0000F148E /* examples */,
 				08CFD2EA1BDDF79900895E31 /* shaders */,
+				088B47BE1C42D5730007BB59 /* minivision */,
 				08CFD2DB1BDD666000895E31 /* nanovg */,
 				0822AF391BDC772D00A894F0 /* procedural_sky */,
 				08289F821BC6019B0054AF3B /* gl */,
@@ -338,6 +340,14 @@
 				081204A81BAE336600C7C0F4 /* util.hpp */,
 			);
 			name = app;
+			sourceTree = "<group>";
+		};
+		088B47BE1C42D5730007BB59 /* minivision */ = {
+			isa = PBXGroup;
+			children = (
+				088B47BD1C42D56B0007BB59 /* vision.hpp */,
+			);
+			name = minivision;
 			sourceTree = "<group>";
 		};
 		089B85FE1BAFC95D00B3A290 /* murmur_hash */ = {
