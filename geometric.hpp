@@ -72,21 +72,25 @@ namespace math
 
     template<class T, int M> struct Box
     {
-        vec<T, M> min;
-        vec<T, M> max;
+        vec<T, M> position;
+        vec<T, M> dimensions;
 
-        Box() : min((T) 0), max((T) 0)  { }
-        Box(vec<T, M> pt, vec<T, M> dims) : min(pt), max(dims) { }
+        Box() : position((T) 0), dimensions((T) 0)  { }
+        Box(vec<T, M> pt, vec<T, M> dims) : position(pt), dimensions(dims) { }
 
         bool contains(const vec<T, M> & qt) const
         {
             for (int m = 0; m < M; m++)
-                if (qt[m] < min[m] || qt[m] >= min[m] + max[m])
+            {
+                if (qt[m] < position[m] || qt[m] >= position[m] + dimensions[m])
+                {
                     return false;
+                }
+            }
             return true;
         }
         
-        bool intersects(const vec<T, M> & other) const
+        bool intersects(const Box<T, M> & other) const
         {
             vec<T, M> mn = max(min(), other.min());
     		vec<T, M> mx = min(max(), other.max());
@@ -99,16 +103,20 @@ namespace math
     		}
     		return (a > 0);
         }
+        
+        vec<T, M> min() const { return position; }
+        vec<T, M> max() const { return position + dimensions; }
 		
         vec<T, M> center() const 
         {
-            return min + (0.5f * (max - min));
+            return position + (0.5f * (dimensions - position));
         }
         
         float volume() const
         {
-            return ( max.x - min.x ) * ( max.y - min.y ) * ( max.z - min.z );
+            return (dimensions.x - position.x) * (dimensions.y - position.y) * (dimensions.z - position.z);
         }
+        
     };
     
     struct Bounds
