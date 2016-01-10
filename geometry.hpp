@@ -176,13 +176,13 @@ namespace util
             math::Box<float, 3> bounds;
             
             bounds.position = math::float3(std::numeric_limits<float>::infinity());
-            bounds.dimensions = -bounds.min();
+            bounds.dimensions = -math::float3(std::numeric_limits<float>::infinity());
             
             for (const auto & vertex : vertices)
             {
                 //auto newV = pose.transform_coord(vertex);
-                bounds.position  = min(bounds.min(), vertex);
-                bounds.dimensions  = max(bounds.max(), vertex);
+                bounds.position = min(bounds.position, vertex);
+                bounds.dimensions = max(bounds.dimensions, vertex);
             }
             return bounds;
         }

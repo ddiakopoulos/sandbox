@@ -1,8 +1,22 @@
 #include "index.hpp"
+#include "noise1234.h"
 
 using namespace math;
 using namespace util;
 using namespace gfx;
+
+Geometry make_noisy_blob()
+{
+    Geometry blob = make_sphere(2.0f);
+    for (auto & v : blob.vertices)
+    {
+        v *= 1.33f;
+        float n = Noise1234::noise(v.x, v.y, v.z);
+        v += (0.25f * n);
+    }
+    blob.compute_normals();
+    return blob;
+}
 
 struct ExperimentalApp : public GLFWApp
 {
@@ -43,7 +57,7 @@ struct ExperimentalApp : public GLFWApp
         {
             proceduralModels.resize(4);
             
-            proceduralModels[0] = Renderable(make_sphere(1.0));
+            proceduralModels[0] = Renderable(make_noisy_blob());
             proceduralModels[0].pose.position = float3(0, 2, +8);
             
             proceduralModels[1] = Renderable(make_cube());

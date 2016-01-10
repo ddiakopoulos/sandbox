@@ -1,6 +1,5 @@
 #include "index.hpp"
 #include "tiny_obj_loader.h"
-#include "noise1234.h"
 
 using namespace math;
 using namespace util;
@@ -34,19 +33,6 @@ constexpr const char colorFragmentShader[] = R"(#version 330
     }
 )";
 
-Geometry make_noisy_blob()
-{
-    Geometry blob = make_sphere(2.0f);
-    for (auto & v : blob.vertices)
-    {
-        v *= 1.33f;
-        float n = Noise1234::noise(v.x, v.y, v.z);
-        v += (0.25f * n);
-    }
-    blob.compute_normals();
-    return blob;
-}
-
 struct SponzaChunk
 {
     std::vector<int> materialIds;
@@ -75,7 +61,7 @@ struct ExperimentalApp : public GLFWApp
     std::vector<SponzaChunk> sponzaMeshes;
     std::vector<GlTexture> sponzaTextures; // indexed by id
 
-    ExperimentalApp() : GLFWApp(820, 480, "Geometry App")
+    ExperimentalApp() : GLFWApp(820, 480, "ForwardLightingSample")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -151,12 +137,19 @@ struct ExperimentalApp : public GLFWApp
             for (unsigned int i = 0; i < shapes.size(); i++)
             {
                 auto g = geometries[i];
-                g.compute_normals();
+                g.compute_normals(false);
                 sponzaMeshes.push_back({shapes[i].mesh.material_ids, make_mesh_from_geometry(g)});
             }
             
         }
         
+        proceduralModels.resize(6);
+        for (int i = 0; i < proceduralModels.size(); ++i)
+        {
+            proceduralModels[i] = Renderable(make_cube());
+            proceduralModels[i].pose.position = float3(5 * sin(i), +2, 5 * cos(i));
+        }
+    
         {
             lights.resize(2);
             
@@ -165,19 +158,6 @@ struct ExperimentalApp : public GLFWApp
             
             lights[1].color = float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f);
             lights[1].pose.position = float3(-25, 15, 0);
-        }
-        
-        {
-            proceduralModels.resize(3);
-            
-            proceduralModels[0] = Renderable(make_sphere(1.0));
-            proceduralModels[0].pose.position = float3(0, 0, +5);
-            
-            proceduralModels[1] = Renderable(make_cube());
-            proceduralModels[1].pose.position = float3(0, 0, -5);
-            
-            proceduralModels[2] = Renderable(make_noisy_blob());
-            proceduralModels[2].pose.position = float3(-5, 0, -5);
         }
         
         gfx::gl_check_error(__FILE__, __LINE__);
@@ -241,7 +221,7 @@ struct ExperimentalApp : public GLFWApp
             {
                 simpleShader->uniform("u_modelMatrix", model.get_model());
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                //model.draw();
+                model.draw();
             }
             
             gfx::gl_check_error(__FILE__, __LINE__);

@@ -2,7 +2,6 @@
 #include "noise.h"
 #include <random>
 
-
 using namespace math;
 using namespace util;
 using namespace gfx;
@@ -124,11 +123,9 @@ struct ExperimentalApp : public GLFWApp
         {
             for (int z = 0; z <= gridSize; z++)
             {
-                //const float sigma = 1024.0f;
                 float y = simplex2(x * 0.02f, z * 0.01f, 4.0f, 4.0f, 2.0f) * 12.5;
                 //float w = 0.54 - 0.46 * cos(ANVIL_TAU * (x * gridSize + z) / ( gridSize));
                 auto w = mask[x * gridSize + z];
-                std::cout << w << std::endl;
                 terrain.vertices.push_back({(float)x, y * (1 - w), (float)z});
             }
         }

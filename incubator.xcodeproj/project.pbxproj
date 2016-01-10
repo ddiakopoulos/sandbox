@@ -107,7 +107,7 @@
 		0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = sandbox_app.hpp; path = examples/sandbox_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8B1BE7CAAB000F148E /* skydome_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = skydome_app.hpp; path = examples/skydome_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ssao_app.hpp; path = examples/ssao_app.hpp; sourceTree = SOURCE_ROOT; };
-		0849FD8E1BEF19A7000F148E /* geometry_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = geometry_app.hpp; path = examples/geometry_app.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD8E1BEF19A7000F148E /* forward_lighting_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = forward_lighting_app.hpp; path = examples/forward_lighting_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8F1BEFCC64000F148E /* hdr_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = hdr_frag.glsl; path = assets/shaders/hdr_frag.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD901BEFDC8D000F148E /* procedural_mesh.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = procedural_mesh.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD9A1BFADE27000F148E /* gizmo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gizmo.cpp; sourceTree = SOURCE_ROOT; };
@@ -274,7 +274,7 @@
 				0849FD881BE7CAAB000F148E /* arcball_app.hpp */,
 				0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */,
 				0849FD8B1BE7CAAB000F148E /* skydome_app.hpp */,
-				0849FD8E1BEF19A7000F148E /* geometry_app.hpp */,
+				0849FD8E1BEF19A7000F148E /* forward_lighting_app.hpp */,
 				08C475791C02CFF30031E87E /* terrain_app.hpp */,
 				08C4757D1C0AD67D0031E87E /* camera_app.hpp */,
 				08C4757E1C0AD67D0031E87E /* euclidean_app.hpp */,
