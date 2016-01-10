@@ -86,34 +86,39 @@ namespace util
 
     /*
     * A simple complimentary filter (designed to fuse accelerometer and gyro data) 
-    * Reference: http://www.pieter-jan.com/node/11
-    * Tofix: UNIMPLEMENTED
+    * Reference: http://philstech.blogspot.com/2015/06/complimentary-filter-example-quaternion.html
     */
-
-    template<typename T>
-    class ComplementaryFilter : public Filter<T>
+    class ComplementaryFilterQuaternion
     {
-
+        math::float4 value;
     public:
 
-        double alpha;
-        double gamma; 
-
-        ComplementaryFilter(double alpha = 0.50, double gamma = 1.0) : alpha(alpha), gamma(gamma)
+        math::float3 correctedBody = math::float3(0, 0, 0);
+        math::float3 correctedWorld = math::float3(0, 0, 0);
+        math::float3 accelWorld = math::float3(0, 0, 0);
+        const math::float3 worldUp = math::float3(0.0f, 1.0f, 0.0f);
+    
+        ComplementaryFilterQuaternion()
         {
+            reset();
         }
 
-        T update(T const gyroRate, T const accelRate) 
+        math::float4 update(math::float3 gyro, math::float3 accelBody, const float samplePeriod)
         {
-            return Filter<T>::v;
+            accelWorld = math::qrot(value, accelBody);
+            correctedWorld = math::cross(accelWorld, worldUp); // compute error
+            correctedBody = math::qrot(math::qconj(value), correctedWorld); // rotate correction back to body
+            gyro = gyro + correctedBody;  // add correction vector to gyro
+            math::float4 incrementalRotation = math::float4(gyro, samplePeriod);
+            value = qmul(incrementalRotation, value); // integrate quaternion
+            return value;
         }
 
-        void reset() override
+        void reset()
         {
-            Filter<T>::v = T(0);
+            value = math::float4(0, 0, 0, 1);
         }
     };
-
 
     /*
     * A simple 1D Linear Kalman Filter
