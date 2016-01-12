@@ -6,7 +6,6 @@ United under the arbitrarily chosen namespace "avl" (short for Anvil).
 * CEGUI layout system
 * Procedural sky dome with Preetham and Hosek-Wilkie models
 * Arcball camera
-* Basic image morphologies (erode/dilate)
 * Arkano22 SSAO implementation
 * Several GLSL 330 post-processing effects: film grain, FXAA
 * Opinionated 3d gizmo editing tool
@@ -18,6 +17,7 @@ United under the arbitrarily chosen namespace "avl" (short for Anvil).
 * Library of procedural meshes (cube, sphere, cone, torus, etc)
 * Billboarded triangle mesh line renderer
 * Reaction-diffusion CPU simulation (Gray-Scott)
+* Incubation of computer vision functionality for depth cameras (MiniVision)
 
 ## In Progress
 * Reaction-diffusion over time (3d)
