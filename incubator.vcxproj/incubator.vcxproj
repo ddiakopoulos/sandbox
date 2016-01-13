@@ -27,8 +27,11 @@
     <ClInclude Include="..\dsp_filters.hpp" />
     <ClInclude Include="..\ellipse_math.hpp" />
     <ClInclude Include="..\examples\arcball_app.hpp" />
+    <ClInclude Include="..\examples\camera_app.hpp" />
     <ClInclude Include="..\examples\empty_app.hpp" />
-    <ClInclude Include="..\examples\geometry_app.hpp" />
+    <ClInclude Include="..\examples\euclidean_app.hpp" />
+    <ClInclude Include="..\examples\forward_lighting_app.hpp" />
+    <ClInclude Include="..\examples\meshline_app.hpp" />
     <ClInclude Include="..\examples\sandbox_app.hpp" />
     <ClInclude Include="..\examples\skydome_app.hpp" />
     <ClInclude Include="..\examples\ssao_app.hpp" />
@@ -44,8 +47,10 @@
     <ClInclude Include="..\GlTexture.hpp" />
     <ClInclude Include="..\gpu_timer.hpp" />
     <ClInclude Include="..\human_time.hpp" />
+    <ClInclude Include="..\index.hpp" />
     <ClInclude Include="..\linear_algebra.hpp" />
     <ClInclude Include="..\math_util.hpp" />
+    <ClInclude Include="..\minivision\vision.hpp" />
     <ClInclude Include="..\nvg.hpp" />
     <ClInclude Include="..\one_euro.hpp" />
     <ClInclude Include="..\pid_controller.hpp" />
@@ -59,6 +64,7 @@
     <ClInclude Include="..\signal.hpp" />
     <ClInclude Include="..\sketch.hpp" />
     <ClInclude Include="..\string_utils.hpp" />
+    <ClInclude Include="..\texture_view.hpp" />
     <ClInclude Include="..\third_party\efsw.hpp" />
     <ClInclude Include="..\third_party\fontstash.h" />
     <ClInclude Include="..\third_party\json.hpp" />
@@ -190,7 +196,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -206,7 +212,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -224,7 +230,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -244,7 +250,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

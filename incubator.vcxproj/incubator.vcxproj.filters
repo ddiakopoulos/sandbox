@@ -25,6 +25,9 @@
     <Filter Include="source\sky">
       <UniqueIdentifier>{56b58ccd-80db-4de5-adf4-0638975646e8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\minivision">
+      <UniqueIdentifier>{acc63d00-0662-45cd-b463-f30156bab688}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\third_party\fontstash.h">
@@ -79,9 +82,6 @@
       <Filter>examples</Filter>
     </ClInclude>
     <ClInclude Include="..\examples\empty_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\geometry_app.hpp">
       <Filter>examples</Filter>
     </ClInclude>
     <ClInclude Include="..\examples\sandbox_app.hpp">
@@ -162,9 +162,6 @@
     <ClInclude Include="..\procedural_mesh.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\procedural_sky.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\renderable_grid.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
@@ -212,6 +209,30 @@
     </ClInclude>
     <ClInclude Include="..\third_party\efsw.hpp">
       <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\minivision\vision.hpp">
+      <Filter>source\minivision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\procedural_sky.hpp">
+      <Filter>source\sky</Filter>
+    </ClInclude>
+    <ClInclude Include="..\index.hpp">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\euclidean_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\camera_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\meshline_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\forward_lighting_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\texture_view.hpp">
+      <Filter>source\tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

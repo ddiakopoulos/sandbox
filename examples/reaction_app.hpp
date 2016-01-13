@@ -55,7 +55,7 @@ struct ExperimentalApp : public GLFWApp
         shaderMonitor.add_shader(displacementShader, "assets/shaders/displacement_vert.glsl", "assets/shaders/displacement_frag.glsl");
         
         rootWidget.bounds = {0, 0, (float) width, (float) height};
-        rootWidget.add_child( {{0,+10},{0,+10},{0.15,0},{0.15,0}}, std::make_shared<UIComponent>());
+        rootWidget.add_child( {{0.f,+10.f},{0.f,+10.f},{0.15f,0},{0.15f,0}}, std::make_shared<UIComponent>());
         rootWidget.layout();
         
         gl_check_error(__FILE__, __LINE__);
