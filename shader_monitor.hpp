@@ -11,7 +11,8 @@
 
 namespace avl
 {
-    
+
+//@tofix - windows adds a trailing slash to paths returned by efsw!
 class ShaderMonitor
 {
     std::unique_ptr<efsw::FileWatcher> fileWatcher;
