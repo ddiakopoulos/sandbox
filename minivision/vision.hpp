@@ -113,4 +113,36 @@ void erode_dilate_kernel(const std::vector<uint16_t> & inputImage, std::vector<u
     }
 }
 
+// Open Op
+
+// Close Op
+
+// Color space conversions
+
+// Equalize Histogram
+
+// ICP
+
+// Integral Img
+
+// Generate normals
+
+// NxN Median Filter
+
+// NxN Gaussian Filter
+
+// NxN Sobel Filter
+
+// NxN Canny Filter
+
+// NxN Box Filter
+
+// NxN Bilateral
+
+// 2x2 Downscale, 2x2 Upscale (NN, Bilinear, Area)
+
+// Pyramid Up, Pyramid Down
+
+// LK Optical Flow Pyramid
+
 #endif // MINI_VISION_H
