@@ -113,9 +113,41 @@ void erode_dilate_kernel(const std::vector<uint16_t> & inputImage, std::vector<u
     }
 }
 
-// Open Op
+// Morphology: Opening. Erosion of an image followed by dilation.
+// This function works on uint16_t depth maps. All memory needs to be preallocated.
+void morphology_open(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight)
+{
+    erode_dilate_kernel(inputImage, outputImage, imageWidth, imageHeight, filter_type::ERODE);
+    erode_dilate_kernel(inputImage, outputImage, imageWidth, imageHeight, filter_type::DILATE);
+}
 
-// Close Op
+// Morphology: Closing. Dilation of an image followed by an erosion.
+// This function works on uint16_t depth maps. All memory needs to be preallocated.
+void morphology_close(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight)
+{
+    erode_dilate_kernel(inputImage, outputImage, imageWidth, imageHeight, filter_type::DILATE);
+    erode_dilate_kernel(inputImage, outputImage, imageWidth, imageHeight, filter_type::ERODE);
+}
+
+// Morphology: Gradient. The difference image of dilation and erosion.
+// This function works on uint16_t depth maps. All memory needs to be preallocated.
+void morphology_gradient(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight)
+{
+    std::vector<uint16_t> dilatedImage(imageWidth * imageHeight);
+    std::vector<uint16_t> erodedImage(imageWidth * imageHeight);
+    
+    erode_dilate_kernel(inputImage, dilatedImage, imageWidth, imageHeight, filter_type::DILATE);
+    erode_dilate_kernel(inputImage, erodedImage, imageWidth, imageHeight, filter_type::ERODE);
+    
+    for (int i = 0; i < imageHeight; ++i)
+    {
+        for (int j = 0; j < imageWidth; j++)
+        {
+            auto idx = i * imageWidth + j;
+            outputImage[idx] = dilatedImage[idx] - erodedImage[idx];
+        }
+    }
+}
 
 // Color space conversions
 
