@@ -1,5 +1,7 @@
 # Experiments!
 
+[![Build Status](https://travis-ci.org/ddiakopoulos/sandbox.svg?branch=master)](https://travis-ci.org/ddiakopoulos/sandbox)
+
 United under the arbitrarily chosen namespace "avl" (short for Anvil).
 
 ## Recent
