@@ -7,6 +7,6 @@ script:
 before_install:
 - gem i slather --no-ri --no-rdoc
 - brew uninstall xctool; brew install xctool --HEAD;
-- brew tap homebrew/versions; brew install versions/glfw3
+- brew install homebrew/versions/glfw3
 
 after_success: slather
