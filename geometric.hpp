@@ -452,7 +452,7 @@ namespace avl
         
         float3 w = transform_vector(OrthoX, normal);
         float d = dot(normal, w);
-        if (abs(d) > 0.6f)
+        if (std::abs(d) > 0.6f)
         {
             w = transform_vector(OrthoY, normal);
         }
