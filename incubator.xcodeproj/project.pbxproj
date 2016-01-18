@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		080980311C4DA9120009122A /* libglfw3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 080980301C4DA9120009122A /* libglfw3.dylib */; };
 		0812049D1BADDF6800C7C0F4 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0812049C1BADDF6800C7C0F4 /* main.cpp */; };
 		0822AF301BCC16D200A894F0 /* GlTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF2E1BCC16D200A894F0 /* GlTexture.cpp */; };
 		0822AF371BD4ADBF00A894F0 /* GlShared.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF361BD4ADBF00A894F0 /* GlShared.cpp */; };
@@ -21,7 +22,6 @@
 		087A4EA21BB8EC9B00975C72 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA11BB8EC9B00975C72 /* OpenGL.framework */; };
 		087A4EA41BB8ECA100975C72 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA31BB8ECA100975C72 /* GLKit.framework */; };
 		087A4EA61BB8ECA600975C72 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA51BB8ECA600975C72 /* Cocoa.framework */; };
-		087A4EAA1BB995AD00975C72 /* libglfw3.3.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA91BB995AD00975C72 /* libglfw3.3.1.dylib */; };
 		089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B86071BAFC9AB00B3A290 /* murmur_hash_3.cpp */; };
 		089B86121BAFC9AB00B3A290 /* noise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B86091BAFC9AB00B3A290 /* noise1234.cpp */; };
 		089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */; };
@@ -46,6 +46,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		080980301C4DA9120009122A /* libglfw3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw3.dylib; path = ../../../../usr/local/lib/libglfw3.dylib; sourceTree = "<group>"; };
 		0812048D1BADDEC100C7C0F4 /* incubator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = incubator; sourceTree = BUILT_PRODUCTS_DIR; };
 		081204971BADDEF700C7C0F4 /* geometric.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = geometric.hpp; sourceTree = SOURCE_ROOT; };
 		081204981BADDEF700C7C0F4 /* linear_algebra.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = linear_algebra.hpp; sourceTree = SOURCE_ROOT; };
@@ -120,7 +121,6 @@
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		087A4EA31BB8ECA100975C72 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		087A4EA51BB8ECA600975C72 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		087A4EA91BB995AD00975C72 /* libglfw3.3.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw3.3.1.dylib; path = /usr/local/Cellar/glfw3/3.1.1/lib/libglfw3.3.1.dylib; sourceTree = "<absolute>"; };
 		088B47BD1C42D56B0007BB59 /* vision.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vision.hpp; path = minivision/vision.hpp; sourceTree = SOURCE_ROOT; };
 		088B47BF1C42DDC10007BB59 /* texture_view.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = texture_view.hpp; sourceTree = SOURCE_ROOT; };
 		089B85FD1BAFC70B00B3A290 /* base64.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = base64.hpp; sourceTree = SOURCE_ROOT; };
@@ -174,7 +174,7 @@
 			files = (
 				087A4EA61BB8ECA600975C72 /* Cocoa.framework in Frameworks */,
 				087A4EA41BB8ECA100975C72 /* GLKit.framework in Frameworks */,
-				087A4EAA1BB995AD00975C72 /* libglfw3.3.1.dylib in Frameworks */,
+				080980311C4DA9120009122A /* libglfw3.dylib in Frameworks */,
 				087A4EA21BB8EC9B00975C72 /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -262,7 +262,7 @@
 		0849FD7F1BE7C326000F148E /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
-				087A4EA91BB995AD00975C72 /* libglfw3.3.1.dylib */,
+				080980301C4DA9120009122A /* libglfw3.dylib */,
 				087A4EA51BB8ECA600975C72 /* Cocoa.framework */,
 				087A4EA31BB8ECA100975C72 /* GLKit.framework */,
 				087A4EA11BB8EC9B00975C72 /* OpenGL.framework */,
@@ -619,9 +619,9 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/usr/local/Cellar/glfw3/3.1.1/include,
+					/usr/local/include,
 				);
-				LIBRARY_SEARCH_PATHS = /usr/local/Cellar/glfw3/3.1.1/lib;
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -660,9 +660,9 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/usr/local/Cellar/glfw3/3.1.1/include,
+					/usr/local/include,
 				);
-				LIBRARY_SEARCH_PATHS = /usr/local/Cellar/glfw3/3.1.1/lib;
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
@@ -676,12 +676,8 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/third_party/",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/usr/local/Cellar/glfw3/3.1.1/include,
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/usr/local/Cellar/glfw3/3.1.1/lib,
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_NAME = incubator;
 			};
 			name = Debug;
@@ -693,12 +689,8 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/third_party/",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/usr/local/Cellar/glfw3/3.1.1/include,
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/usr/local/Cellar/glfw3/3.1.1/lib,
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_NAME = incubator;
 			};
 			name = Release;
