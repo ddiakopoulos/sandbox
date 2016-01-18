@@ -3,6 +3,138 @@
 
 #include <vector>
 #include <stdint.h>
+#include <array>
+#include <algorithm>
+
+#include "linear_algebra.hpp"
+#include "math_util.hpp"
+
+// tofix - for prototyping
+using namespace avl;
+
+std::array<double, 3> rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b) {
+    
+    
+    std::array<double, 3> hsv;
+    
+    double rd = (double)r / 255;
+    double gd = (double)g / 255;
+    double bd = (double)b / 255;
+    double max = avl::max<double>(rd, gd, bd), min = avl::min<double>(rd, gd, bd);
+    double h, s, v = max;
+    
+    double d = max - min;
+    s = max == 0 ? 0 : d / max;
+    
+    if (max == min)
+    {
+        h = 0; // achromatic
+    }
+    else
+    {
+        if (max == rd)
+            h = (gd - bd) / d + (gd < bd ? 6 : 0);
+        else if (max == gd)
+            h = (bd - rd) / d + 2;
+        else if (max == bd)
+            h = (rd - gd) / d + 4;
+        h /= 6;
+    }
+    
+    hsv[0] = h;
+    hsv[1] = s;
+    hsv[2] = v;
+    
+    return hsv;
+    
+}
+
+std::array<int, 3> hsv_to_rgb(double h, double s, double v)
+{
+    std::array<int, 3> rgb;
+    
+    double r, g, b = 0.0;
+    
+    int i = int(h * 6);
+    double f = h * 6 - i;
+    double p = v * (1 - s);
+    double q = v * (1 - f * s);
+    double t = v * (1 - (1 - f) * s);
+    
+    switch (i % 6)
+    {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    
+    rgb[0] = uint8_t(clamp((float)r * 255.0f, 0.0f, 255.0f));
+    rgb[1] = uint8_t(clamp((float)g * 255.0f, 0.0f, 255.0f));
+    rgb[2] = uint8_t(clamp((float)b * 255.0f, 0.0f, 255.0f));
+    
+    return rgb;
+}
+
+float4 HSVtoRGB(float4 hsv)
+{
+    float4 rgb;
+    if (hsv.y == 0)
+    {
+        rgb.x = hsv.z;
+        rgb.y = hsv.z;
+        rgb.z = hsv.z;
+    }
+    else
+    {
+        float varH = hsv.x * 6;
+        float varI = (float)floor(varH);
+        float var1 = hsv.z * (1 - hsv.y);
+        float var2 = hsv.z * (1 - (hsv.y * (varH - varI)));
+        float var3 = hsv.z * (1 - (hsv.y * (1 - (varH - varI))));
+        
+        if (varI == 0)
+        {
+            rgb.x = hsv.z;
+            rgb.y = var3;
+            rgb.z = var1;
+        }
+        else if (varI == 1)
+        {
+            rgb.x = var2;
+            rgb.y = hsv.z;
+            rgb.z = var1;
+        }
+        else if (varI == 2)
+        {
+            rgb.x = var1;
+            rgb.y = hsv.z;
+            rgb.z = var3;
+        }
+        else if (varI == 3)
+        {
+            rgb.x = var1;
+            rgb.y = var2;
+            rgb.z = hsv.z;
+        }
+        else if (varI == 4)
+        {
+            rgb.x = var3;
+            rgb.y = var1;
+            rgb.z = hsv.z;
+        }
+        else
+        {
+            rgb.x = hsv.z;
+            rgb.y = var1;
+            rgb.z = var2;
+        }
+    }
+    rgb.w = hsv.w;
+    return rgb;
+}
 
 template<typename T>
 inline std::vector<uint16_t> crop(const std::vector<uint16_t> & image, const int imgWidth, const int imgHeight, int x, int y, int width, int height)
