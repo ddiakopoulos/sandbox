@@ -22,7 +22,19 @@ namespace avl
     {
         return ((x) > (y) ? (x) : (y));
     }
-
+    
+    template <typename T>
+    T min(const T& a, const T& b, const T& c)
+    {
+        return std::min(a, std::min(b, c));
+    }
+    
+    template <typename T>
+    T max(const T& a, const T& b, const T& c)
+    {
+        return std::max(a, std::max(b, c));
+    }
+    
     template<typename T> 
     T clamp(const T& val, const T& min, const T& max) 
     {
