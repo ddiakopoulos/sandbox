@@ -136,6 +136,51 @@ float4 HSVtoRGB(float4 hsv)
     return rgb;
 }
 
+inline void depth_to_colored_histogram(std::vector<uint8_t> &img, const std::vector<uint16_t> & depthImg, const float2 size, const float2 hsvHueRange)
+{
+    // Cumulative histogram of depth values
+    std::array<int, 256 * 256> histogram;
+    std::fill(histogram.begin(), histogram.end(), 1);
+    
+    for (int i = 0; i < size.x * size.y; ++i)
+    {
+        if (auto d = depthImg[i]) ++histogram[d];
+    }
+    
+    for (int i = 1; i < 256 * 256; i++)
+    {
+        histogram[i] += histogram[i - 1];
+    }
+    
+    // Remap the cumulative histogram to the range [0-256]
+    for (int i = 1; i < 256 * 256; i++)
+    {
+        histogram[i] = (histogram[i] << 8) / histogram[256 * 256 - 1];
+    }
+    
+    auto rgb = img.data();
+    for (int i = 0; i < size.x * size.y; i++)
+    {
+        // For valid depth values (depth > 0)
+        if (uint16_t d = depthImg[i])
+        {
+            auto t = histogram[d]; // Use the histogram entry (in the range of [0-256]) to interpolate between nearColor and farColor
+            std::array<int, 3> returnRGB = { 0, 0, 0 };
+            returnRGB = hsv_to_rgb(remap<float>(t, hsvHueRange.x, hsvHueRange.y, 0, 255, true), 1.f, 1.f);
+            *rgb++ = returnRGB[0];
+            *rgb++ = returnRGB[1];
+            *rgb++ = returnRGB[2];
+        }
+        // Use black pixels for invalid values (depth == 0)
+        else
+        {
+            *rgb++ = 0;
+            *rgb++ = 0;
+            *rgb++ = 0;
+        }
+    }
+}
+
 template<typename T>
 inline std::vector<uint16_t> crop(const std::vector<uint16_t> & image, const int imgWidth, const int imgHeight, int x, int y, int width, int height)
 {
