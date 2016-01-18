@@ -12,9 +12,8 @@
 // tofix - for prototyping
 using namespace avl;
 
-std::array<double, 3> rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b) {
-    
-    
+std::array<double, 3> rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b)
+{
     std::array<double, 3> hsv;
     
     double rd = (double)r / 255;
@@ -46,7 +45,6 @@ std::array<double, 3> rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b) {
     hsv[2] = v;
     
     return hsv;
-    
 }
 
 std::array<int, 3> hsv_to_rgb(double h, double s, double v)
@@ -136,27 +134,21 @@ float4 HSVtoRGB(float4 hsv)
     return rgb;
 }
 
-inline void depth_to_colored_histogram(std::vector<uint8_t> &img, const std::vector<uint16_t> & depthImg, const float2 size, const float2 hsvHueRange)
+inline void depth_to_colored_histogram(std::vector<uint8_t> & img, const std::vector<uint16_t> & depthImg, const float2 size, const float2 hsvHueRange)
 {
     // Cumulative histogram of depth values
     std::array<int, 256 * 256> histogram;
     std::fill(histogram.begin(), histogram.end(), 1);
     
     for (int i = 0; i < size.x * size.y; ++i)
-    {
         if (auto d = depthImg[i]) ++histogram[d];
-    }
     
     for (int i = 1; i < 256 * 256; i++)
-    {
         histogram[i] += histogram[i - 1];
-    }
     
     // Remap the cumulative histogram to the range [0-256]
     for (int i = 1; i < 256 * 256; i++)
-    {
         histogram[i] = (histogram[i] << 8) / histogram[256 * 256 - 1];
-    }
     
     auto rgb = img.data();
     for (int i = 0; i < size.x * size.y; i++)
@@ -171,7 +163,6 @@ inline void depth_to_colored_histogram(std::vector<uint8_t> &img, const std::vec
             *rgb++ = returnRGB[1];
             *rgb++ = returnRGB[2];
         }
-        // Use black pixels for invalid values (depth == 0)
         else
         {
             *rgb++ = 0;
