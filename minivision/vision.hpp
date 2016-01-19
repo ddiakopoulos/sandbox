@@ -317,11 +317,39 @@ void morphology_gradient(const std::vector<uint16_t> & inputImage, std::vector<u
     }
 }
 
-// Color space conversions
-
-// Equalize Histogram
-
-// ICP
+// Unoptimized NxN box filter designed to operate on float3 normal maps
+void box_filter_normalmap(const std::vector<float3> & input, std::vector<float3> & output, const uint2 size, const int radius = 1)
+{
+    const float maxY = size.x - radius;
+    const float maxX = size.y - radius;
+    
+    auto out = output.data();
+    auto in = input.data();
+    
+    out += radius * size.x;
+    
+    for (size_t y = radius; y < maxY; ++y)
+    {
+        out += radius;
+        for (size_t x = radius; x < maxX; ++x, ++out)
+        {
+            float3 avg;
+            size_t index = x - radius + (y - radius) * size.x;
+            const float3 * in_row = in + index;
+            for (int dy = -radius; dy <= radius; ++dy, in_row += size.x)
+            {
+                const float3 * in_kernel = in_row;
+                for (int dx = -radius; dx <= radius; ++dx, ++in_kernel)
+                {
+                    avg += *in_kernel;
+                }
+            }
+            
+            *out = normalize(avg);
+        }
+        out += radius;
+    }
+}
 
 // Integral Img
 
@@ -335,8 +363,6 @@ void morphology_gradient(const std::vector<uint16_t> & inputImage, std::vector<u
 
 // NxN Canny Filter
 
-// NxN Box Filter
-
 // NxN Bilateral
 
 // 2x2 Downscale, 2x2 Upscale (NN, Bilinear, Area)
@@ -344,5 +370,7 @@ void morphology_gradient(const std::vector<uint16_t> & inputImage, std::vector<u
 // Pyramid Up, Pyramid Down
 
 // LK Optical Flow Pyramid
+
+// ICP
 
 #endif // MINI_VISION_H
