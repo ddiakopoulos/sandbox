@@ -314,7 +314,23 @@ struct ExperimentalApp : public GLFWApp
         {
             if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE)
             {
-                
+                // todo
+            }
+        }
+        
+        if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS)
+        {
+            if (event.value[0] == GLFW_MOUSE_BUTTON_LEFT)
+            {
+                for (auto & model : proceduralModels)
+                {
+                    auto worldRay = camera.get_world_ray(event.cursor, float2(event.windowSize));
+                    if (model.check_hit(worldRay))
+                    {
+                        // todo
+                    }
+                }
+
             }
         }
     }
