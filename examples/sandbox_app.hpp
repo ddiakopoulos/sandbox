@@ -46,25 +46,21 @@ std::vector<DecalVertex> clip_face(std::vector<DecalVertex> & inVertices, float3
     
     for (int j = 0; j < inVertices.size(); j += 3)
     {
-        float v1Out, v2Out, v3Out;
-        
-        int total = 0;
-        
         float d1 = dot(inVertices[j + 0].v, plane) - size;
         float d2 = dot(inVertices[j + 1].v, plane) - size;
         float d3 = dot(inVertices[j + 2].v, plane) - size;
         
-        v1Out = d1 > 0.f;
-        v2Out = d2 > 0.f;
-        v3Out = d3 > 0.f;
+        bool v1Out = d1 > 0.f;
+        bool v2Out = d2 > 0.f;
+        bool v3Out = d3 > 0.f;
         
-        total = (v1Out ? 1 : 0) + (v2Out ? 1 : 0) + (v3Out ? 1 : 0);
+        int total = (v1Out ? 1 : 0) + (v2Out ? 1 : 0) + (v3Out ? 1 : 0);
         
         switch(total)
         {
             case 0:
             {
-                outVertices.push_back(inVertices[j]);
+                outVertices.push_back(inVertices[j + 0]);
                 outVertices.push_back(inVertices[j + 1]);
                 outVertices.push_back(inVertices[j + 2]);
                 break;
@@ -83,7 +79,7 @@ std::vector<DecalVertex> clip_face(std::vector<DecalVertex> & inVertices, float3
                 
                 if (v2Out)
                 {
-                    nV1 = inVertices[j];
+                    nV1 = inVertices[j + 0];
                     nV2 = inVertices[j + 2];
                     nV3 = clip(inVertices[j + 1], nV1, plane);
                     nV4 = clip(inVertices[j + 1], nV2, plane);
@@ -101,7 +97,7 @@ std::vector<DecalVertex> clip_face(std::vector<DecalVertex> & inVertices, float3
                 
                 if (v3Out)
                 {
-                    nV1 = inVertices[j];
+                    nV1 = inVertices[j + 0];
                     nV2 = inVertices[j + 1];
                     nV3 = clip(inVertices[j + 2], nV1, plane);
                     nV4 = clip(inVertices[j + 2], nV2, plane);
@@ -123,7 +119,7 @@ std::vector<DecalVertex> clip_face(std::vector<DecalVertex> & inVertices, float3
                 
                 if (!v1Out)
                 {
-                    nV1 = inVertices[j];
+                    nV1 = inVertices[j + 0];
                     nV2 = clip(nV1, inVertices[j + 1], plane);
                     nV3 = clip(nV1, inVertices[j + 2], plane);
                     outVertices.push_back(nV1);
@@ -144,7 +140,7 @@ std::vector<DecalVertex> clip_face(std::vector<DecalVertex> & inVertices, float3
                 if (!v3Out)
                 {
                     nV1 = inVertices[j + 2];
-                    nV2 = clip(nV1, inVertices[j], plane);
+                    nV2 = clip(nV1, inVertices[j + 0], plane);
                     nV3 = clip(nV1, inVertices[j + 1], plane);
                     outVertices.push_back(nV1);
                     outVertices.push_back(nV2);
@@ -162,7 +158,6 @@ std::vector<DecalVertex> clip_face(std::vector<DecalVertex> & inVertices, float3
     }
     
     return outVertices;
-    
 }
 
 Geometry compute_decal(const Geometry & mesh, Pose meshPose, Pose cubePose, float3 dimensions, float3 check = float3(1, 1, 1))
@@ -227,8 +222,6 @@ Geometry compute_decal(const Geometry & mesh, Pose meshPose, Pose cubePose, floa
         decal.normals.push_back(finalVertices[k + 0].n);
         decal.normals.push_back(finalVertices[k + 1].n);
         decal.normals.push_back(finalVertices[k + 2].n);
-
-        //this.faceVertexUvs[0].push_back([this.uvs[k], this.uvs[k + 1],  this.uvs[k + 2] ]);
     }
     
     return decal;
