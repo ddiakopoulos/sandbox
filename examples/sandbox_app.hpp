@@ -167,26 +167,23 @@ std::vector<DecalVertex> clip_face(std::vector<DecalVertex> & inVertices, float3
 
 Geometry compute_decal(const Geometry & mesh, Pose meshPose, Pose cubePose, float3 dimensions, float3 check = float3(1, 1, 1))
 {
-    Geometry g;
+    Geometry decal;
     
     std::vector<DecalVertex> finalVertices;
-    auto push_vertex = [&](std::vector<DecalVertex> & vertices, const uint32_t id)
-    {
-        float3 v = mesh.vertices[id];
-        float3 n = mesh.normals[id];
-        v = transform_coord(meshPose.matrix(), v);
-        v = transform_coord(cubePose.inverse().matrix(), v);
-        vertices.emplace_back(v, n);
-    };
-    
+
     for (int i = 0; i < mesh.faces.size(); i++)
     {
         uint3 f = mesh.faces[i];
         std::vector<DecalVertex> vertices;
         
-        push_vertex(vertices, f.x);
-        push_vertex(vertices, f.y);
-        push_vertex(vertices, f.z);
+        for (int j = 0; j < 3; j++)
+        {
+            float3 v = mesh.vertices[f[j]];
+            float3 n = mesh.normals[f[j]];
+            v = transform_coord(meshPose.matrix(), v);
+            v = transform_coord(cubePose.inverse().matrix(), v);
+            vertices.emplace_back(v, n);
+        }
         
         if (check.x)
         {
@@ -209,33 +206,32 @@ Geometry compute_decal(const Geometry & mesh, Pose meshPose, Pose cubePose, floa
         for (int j = 0; j < vertices.size(); j++)
         {
             auto & currentVertex = vertices[j];
-            g.texCoords.push_back(float2(0.5f + (currentVertex.v.x / dimensions.x), 0.5f + (currentVertex.v.y / dimensions.y)));
+            decal.texCoords.push_back(float2(0.5f + (currentVertex.v.x / dimensions.x), 0.5f + (currentVertex.v.y / dimensions.y)));
             currentVertex.v = transform_coord(cubePose.matrix(), currentVertex.v);
         }
         
         if (vertices.size() == 0)
             continue;
         
-        // Concatenate
         finalVertices.insert(finalVertices.end(), vertices.begin(), vertices.end());
     }
     
     for (int k = 0; k < finalVertices.size(); k += 3)
     {
-        g.vertices.push_back(finalVertices[k + 0].v);
-        g.vertices.push_back(finalVertices[k + 1].v);
-        g.vertices.push_back(finalVertices[k + 2].v);
+        decal.faces.emplace_back(k, k + 1, k + 2);
         
-        g.normals.push_back(finalVertices[k + 0].n);
-        g.normals.push_back(finalVertices[k + 1].n);
-        g.normals.push_back(finalVertices[k + 2].n);
+        decal.vertices.push_back(finalVertices[k + 0].v);
+        decal.vertices.push_back(finalVertices[k + 1].v);
+        decal.vertices.push_back(finalVertices[k + 2].v);
         
-        uint3 f = uint3(k, k + 1, k + 2);
-        g.faces.push_back(f);
+        decal.normals.push_back(finalVertices[k + 0].n);
+        decal.normals.push_back(finalVertices[k + 1].n);
+        decal.normals.push_back(finalVertices[k + 2].n);
+
         //this.faceVertexUvs[0].push_back([this.uvs[k], this.uvs[k + 1],  this.uvs[k + 2] ]);
     }
     
-    return g;
+    return decal;
 }
 
 Geometry make_decal_geometry(Geometry & mesh, Pose meshPose, Pose cubePose, float3 dimensions)
@@ -247,9 +243,6 @@ Geometry make_decal_geometry(Geometry & mesh, Pose meshPose, Pose cubePose, floa
     {
         cube.vertices[i] *= dimensions;
     }
-    
-    auto cubeMatrix = cubePose.matrix();
-    auto iCubeMatrix = cubePose.inverse().matrix();
     
     return compute_decal(mesh, meshPose, cubePose, dimensions);
 }
