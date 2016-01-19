@@ -86,64 +86,6 @@ std::array<int, 3> hsv_to_rgb(double h, double s, double v)
     return rgb;
 }
 
-float4 HSVtoRGB(float4 hsv)
-{
-    float4 rgb;
-    if (hsv.y == 0)
-    {
-        rgb.x = hsv.z;
-        rgb.y = hsv.z;
-        rgb.z = hsv.z;
-    }
-    else
-    {
-        float varH = hsv.x * 6;
-        float varI = (float)floor(varH);
-        float var1 = hsv.z * (1 - hsv.y);
-        float var2 = hsv.z * (1 - (hsv.y * (varH - varI)));
-        float var3 = hsv.z * (1 - (hsv.y * (1 - (varH - varI))));
-        
-        if (varI == 0)
-        {
-            rgb.x = hsv.z;
-            rgb.y = var3;
-            rgb.z = var1;
-        }
-        else if (varI == 1)
-        {
-            rgb.x = var2;
-            rgb.y = hsv.z;
-            rgb.z = var1;
-        }
-        else if (varI == 2)
-        {
-            rgb.x = var1;
-            rgb.y = hsv.z;
-            rgb.z = var3;
-        }
-        else if (varI == 3)
-        {
-            rgb.x = var1;
-            rgb.y = var2;
-            rgb.z = hsv.z;
-        }
-        else if (varI == 4)
-        {
-            rgb.x = var3;
-            rgb.y = var1;
-            rgb.z = hsv.z;
-        }
-        else
-        {
-            rgb.x = hsv.z;
-            rgb.y = var1;
-            rgb.z = var2;
-        }
-    }
-    rgb.w = hsv.w;
-    return rgb;
-}
-
 inline void depth_to_colored_histogram(std::vector<uint8_t> & img, const std::vector<uint16_t> & depthImg, const float2 size, const float2 hsvHueRange)
 {
     // Cumulative histogram of depth values
