@@ -7,7 +7,7 @@ uniform vec3 u_eye;
 uniform sampler2D u_diffuseTex;
 uniform sampler2D u_normalTex;
 
-uniform int useNormal;
+uniform int useNormal = 0;
 
 struct PointLight
 {

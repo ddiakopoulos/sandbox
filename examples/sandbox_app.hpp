@@ -165,9 +165,7 @@ std::vector<DecalVertex> clip_face(std::vector<DecalVertex> & inVertices, float3
     
 }
 
-
-
-void compute_decal(Geometry mesh, Pose meshPose, Pose cubePose, float3 dimensions, float3 check = float3(1, 1, 1))
+Geometry compute_decal(const Geometry & mesh, Pose meshPose, Pose cubePose, float3 dimensions, float3 check = float3(1, 1, 1))
 {
     Geometry g;
     
@@ -237,9 +235,10 @@ void compute_decal(Geometry mesh, Pose meshPose, Pose cubePose, float3 dimension
         //this.faceVertexUvs[0].push_back([this.uvs[k], this.uvs[k + 1],  this.uvs[k + 2] ]);
     }
     
+    return g;
 }
 
-void make_decal_geometry(Geometry mesh, Pose meshPose, Pose cubePose, float3 dimensions)
+Geometry make_decal_geometry(Geometry & mesh, Pose meshPose, Pose cubePose, float3 dimensions)
 {
     Geometry cube = make_cube();
     
@@ -252,6 +251,7 @@ void make_decal_geometry(Geometry mesh, Pose meshPose, Pose cubePose, float3 dim
     auto cubeMatrix = cubePose.matrix();
     auto iCubeMatrix = cubePose.inverse().matrix();
     
+    return compute_decal(mesh, meshPose, cubePose, dimensions);
 }
 
 struct ExperimentalApp : public GLFWApp
@@ -264,9 +264,13 @@ struct ExperimentalApp : public GLFWApp
     FlyCameraController cameraController;
     
     std::vector<Renderable> proceduralModels;
+    std::vector<Renderable> decalModels;
+    
     std::vector<LightObject> lights;
     
     std::unique_ptr<GlShader> simpleShader;
+    
+    GlTexture splatterTex;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Sandbox App")
     {
@@ -278,7 +282,9 @@ struct ExperimentalApp : public GLFWApp
         
         camera.look_at({0, 8, 24}, {0, 0, 0});
 
-        simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
+        simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
+        
+        splatterTex = load_image("assets/images/splatter.png");
         
         {
             lights.resize(2);
@@ -317,6 +323,14 @@ struct ExperimentalApp : public GLFWApp
     void on_input(const InputEvent & event) override
     {
         cameraController.handle_input(event);
+        
+        if (event.type == InputEvent::KEY)
+        {
+            if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE)
+            {
+                
+            }
+        }
     }
     
     void on_update(const UpdateEvent & e) override
@@ -368,6 +382,15 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
                 model.draw();
             }
+            
+            for (const auto & decal : decalModels)
+            {
+                simpleShader->uniform("u_modelMatrix", decal.get_model());
+                simpleShader->uniform("u_modelMatrixIT", inv(transpose(decal.get_model())));
+                simpleShader->texture("u_diffuseTex", 0, splatterTex);
+                decal.draw();
+            }
+            
             gl_check_error(__FILE__, __LINE__);
             
             simpleShader->unbind();
