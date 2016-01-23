@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:incubator.xcodeproj">
+      location = "self:/Users/ddiakopoulos/Desktop/sandbox/sandbox.xcodeproj">
    </FileRef>
 </Workspace>
