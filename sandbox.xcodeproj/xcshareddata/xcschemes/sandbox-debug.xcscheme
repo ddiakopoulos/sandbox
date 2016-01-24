@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "0812048C1BADDEC100C7C0F4"
-               BuildableName = "incubator"
+               BuildableName = "sandbox"
                BlueprintName = "sandbox"
                ReferencedContainer = "container:sandbox.xcodeproj">
             </BuildableReference>
@@ -33,7 +33,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0812048C1BADDEC100C7C0F4"
-            BuildableName = "incubator"
+            BuildableName = "sandbox"
             BlueprintName = "sandbox"
             ReferencedContainer = "container:sandbox.xcodeproj">
          </BuildableReference>
@@ -57,7 +57,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0812048C1BADDEC100C7C0F4"
-            BuildableName = "incubator"
+            BuildableName = "sandbox"
             BlueprintName = "sandbox"
             ReferencedContainer = "container:sandbox.xcodeproj">
          </BuildableReference>
@@ -76,7 +76,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0812048C1BADDEC100C7C0F4"
-            BuildableName = "incubator"
+            BuildableName = "sandbox"
             BlueprintName = "sandbox"
             ReferencedContainer = "container:sandbox.xcodeproj">
          </BuildableReference>
