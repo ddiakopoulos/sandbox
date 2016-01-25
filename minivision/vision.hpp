@@ -409,6 +409,79 @@ inline void generate_normalmap(const std::vector<uint16_t> & depth, std::vector<
     }
 }
 
+template<typename T>
+T ComputeCenterOfMass(const std::vector<T> & points)
+{
+    T result;
+    for (const auto & pt : points)
+    {
+        result += pt;
+    }
+    return (result / (float) points.size());
+}
+
+// Approximate volumetic subsampling, adapted from the BSD code found in PCL's VoxelGrid filter
+// https://github.com/PointCloudLibrary/pcl/blob/master/filters/include/pcl/filters/voxel_grid.h
+inline std::vector<float3> VoxelSubsample(const std::vector<float3> & points, float voxelSize, int minOccupants)
+{
+    std::vector<float3> subPoints;
+    
+    // Structure for storing per-voxel data
+    struct Voxel { int3 coord; float3 point; int count; };
+    
+    const int HASH_SIZE = 2048;
+    const int HASH_MASK = HASH_SIZE - 1; // Hash size must be a power of two
+    
+    Voxel voxelHash[HASH_SIZE];
+    memset(voxelHash, 0, sizeof(voxelHash));
+    
+    // Store each point in corresponding voxel
+    const float inverseVoxelSize = 1.0f / voxelSize;
+    static const int3 hashCoeff(7171, 3079, 4231);
+    
+    for (const auto & pt : points)
+    {
+        // Obtain corresponding voxel
+        float3 fcoord = vfloor(pt * inverseVoxelSize);
+        int3 vcoord = int3(static_cast<int>(fcoord.x),static_cast<int>(fcoord.y),static_cast<int>(fcoord.z));
+        auto hash = dot(vcoord, hashCoeff) & HASH_MASK;
+        auto & voxel = voxelHash[hash];
+        
+        // If we collide, flush existing voxel contents
+        if (voxel.count && voxel.coord != vcoord)
+        {
+            if(voxel.count > minOccupants)
+                subPoints.push_back(voxel.point / (float)voxel.count);
+            voxel.count = 0;
+        }
+        
+        // If voxel is empty, store all properties of this point
+        if (voxel.count == 0)
+        {
+            voxel.coord = vcoord;
+            voxel.count = 1;
+            voxel.point = pt;
+        }
+        else // Otherwise just add position contribution
+        {
+            voxel.point += pt;
+            ++voxel.count;
+        }
+    }
+    
+    // Flush remaining voxels
+    for (const auto & voxel : voxelHash )
+    {
+        if (voxel.count > minOccupants)
+        {
+            subPoints.push_back(voxel.point / (float) voxel.count);
+        }
+    }
+    
+    return subPoints;
+}
+
+
 // Integral Img
 
 // NxN Median Filter
