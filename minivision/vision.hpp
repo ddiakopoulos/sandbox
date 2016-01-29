@@ -481,6 +481,13 @@ inline std::vector<float3> VoxelSubsample(const std::vector<float3> & points, fl
     return subPoints;
 }
 
+// Median Filter
+
+// Bilateral Filter
+
+// Normals Filter
+
+// Spatial derivative filter (edges)
 
 // Integral Img
 
