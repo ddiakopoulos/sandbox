@@ -39,7 +39,7 @@ struct ExperimentalApp : public GLFWApp
             std::cout << "Serial: " << dev->get_serial() << std::endl;
             std::cout << "Firmware: " << dev->get_firmware_version() << std::endl;
             
-            dev->enable_stream(rs::stream::depth, 640, 480, rs::format::z16, 60);
+            dev->enable_stream(rs::stream::depth, 320, 240, rs::format::z16, 60);
             dev->enable_stream(rs::stream::color, 640, 480, rs::format::rgb8, 60);
             
             auto intrin = dev->get_stream_intrinsics(rs::stream::depth);
@@ -62,7 +62,7 @@ struct ExperimentalApp : public GLFWApp
         
         // Generate texture handles
         depthTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        normalTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        normalTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
         
         depthTextureView.reset(new GLTextureView(depthTexture.get_gl_handle()));
         normalTextureView.reset(new GLTextureView(normalTexture.get_gl_handle()));
@@ -88,8 +88,33 @@ struct ExperimentalApp : public GLFWApp
         if (streaming)
         {
             dev->wait_for_frames();
-            depthTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-            normalTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+            
+            const uint16_t * depth_frame = reinterpret_cast<const uint16_t *>(dev->get_frame_data(rs::stream::depth));
+            auto intrin = dev->get_stream_intrinsics(rs::stream::depth);
+            
+            avl_intrin i = {intrin.width, intrin.height, intrin.ppx, intrin.ppy, intrin.fx, intrin.fy};
+            
+            std::vector<uint16_t> depthMap(intrin.width * intrin.height);
+            std::memcpy(depthMap.data(), depth_frame, sizeof(uint16_t) * intrin.width * intrin.height);
+            
+            std::vector<float3> normalMap(intrin.width * intrin.height);
+            generate_normalmap<1>(depthMap, normalMap, i);
+            
+            std::vector<uint8_t> rgbDepth(3 * intrin.width * intrin.height);
+            depth_to_colored_histogram(rgbDepth, depthMap, float2(intrin.width, intrin.height), {0.1f, .8f});
+            
+            std::vector<uint8_t> rgbNormals(3 * intrin.width * intrin.height);
+            
+            for (int s = 0; s < intrin.width * intrin.height; ++s)
+            {
+                const float3 & normal = normalMap[s];
+                rgbNormals[3 * s + 0] = static_cast<uint8_t>(128 + normal.x * 127);
+                rgbNormals[3 * s + 1] = static_cast<uint8_t>(128 + normal.y * 127);
+                rgbNormals[3 * s + 2] = static_cast<uint8_t>(128 + normal.z * 127);
+            }
+            
+            depthTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, rgbDepth.data());
+            normalTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, rgbNormals.data());
         }
 
     }
