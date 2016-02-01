@@ -118,6 +118,7 @@
 		0849FDA01BFAFCC3000F148E /* tiny_obj_loader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tiny_obj_loader.h; path = third_party/tiny_obj_loader.h; sourceTree = SOURCE_ROOT; };
 		085081951BB5B6EA0084A1D6 /* glfw_app.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = glfw_app.mm; sourceTree = SOURCE_ROOT; };
 		085081961BB5B6EA0084A1D6 /* glfw_app.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glfw_app.hpp; sourceTree = SOURCE_ROOT; };
+		0868DFFE1C5F247C0032129B /* vision_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vision_app.hpp; path = examples/vision_app.hpp; sourceTree = SOURCE_ROOT; };
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		087A4EA31BB8ECA100975C72 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		087A4EA51BB8ECA600975C72 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -284,6 +285,7 @@
 				08C475941C1DFEE20031E87E /* reaction_app.hpp */,
 				0849FD8E1BEF19A7000F148E /* forward_lighting_app.hpp */,
 				0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */,
+				0868DFFE1C5F247C0032129B /* vision_app.hpp */,
 				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
 			name = examples;
