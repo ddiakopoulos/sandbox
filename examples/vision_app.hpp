@@ -14,6 +14,8 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GLTextureView> depthTextureView;
     std::unique_ptr<GLTextureView> normalTextureView;
    
+    UIComponent uiSurface;
+    
     rs::context ctx;
     rs::device * dev;
     
@@ -26,7 +28,6 @@ struct ExperimentalApp : public GLFWApp
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
-        
         
         try
         {
@@ -41,6 +42,9 @@ struct ExperimentalApp : public GLFWApp
             dev->enable_stream(rs::stream::depth, 640, 480, rs::format::z16, 60);
             dev->enable_stream(rs::stream::color, 640, 480, rs::format::rgb8, 60);
             
+            auto intrin = dev->get_stream_intrinsics(rs::stream::depth);
+            cameraWidth = intrin.width; cameraHeight = intrin.height;
+            
             dev->start();
             
             streaming = true;
@@ -51,6 +55,11 @@ struct ExperimentalApp : public GLFWApp
             printf("    %s\n", e.what());
         }
     
+        uiSurface.bounds = {0, 0, (float) width, (float) height};
+        uiSurface.add_child( {{0,+10},{0,+10},{0.5,0},{0.5,0}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{.50,+10},{0, +10},{1.0, -10},{0.5,0}}, std::make_shared<UIComponent>());
+        uiSurface.layout();
+        
         // Generate texture handles
         depthTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
         normalTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
@@ -64,7 +73,8 @@ struct ExperimentalApp : public GLFWApp
 
     void on_window_resize(int2 size) override
     {
-
+        uiSurface.bounds = {0, 0, (float) size.x, (float) size.y};
+        uiSurface.layout();
     }
     
     void on_input(const InputEvent & event) override
@@ -102,6 +112,9 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
 
+        depthTextureView->draw(uiSurface.children[0]->bounds, int2(width, height));
+        normalTextureView->draw(uiSurface.children[1]->bounds, int2(width, height));
+        
         gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
