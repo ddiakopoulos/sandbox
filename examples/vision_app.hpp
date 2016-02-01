@@ -1,5 +1,7 @@
 #include "index.hpp"
 
+#include "librealsense/rs.hpp"
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -12,6 +14,12 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GLTextureView> depthTextureView;
     std::unique_ptr<GLTextureView> normalTextureView;
    
+    rs::context ctx;
+    rs::device * dev;
+    
+    bool streaming = false;
+    int cameraWidth = 0;
+    int cameraHeight = 0;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Vision App")
     {
@@ -19,8 +27,33 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        depthTexture.load_data(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        normalTexture.load_data(width, height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        
+        try
+        {
+            std::cout << "There are " << ctx.get_device_count() <<  "connected RealSense devices.\n";
+            if (ctx.get_device_count() == 0) throw std::runtime_error("No cameras plugged in?");
+            
+            dev = ctx.get_device(0);
+            std::cout << "Using " << dev->get_name() << std::endl;
+            std::cout << "Serial: " << dev->get_serial() << std::endl;
+            std::cout << "Firmware: " << dev->get_firmware_version() << std::endl;
+            
+            dev->enable_stream(rs::stream::depth, 640, 480, rs::format::z16, 60);
+            dev->enable_stream(rs::stream::color, 640, 480, rs::format::rgb8, 60);
+            
+            dev->start();
+            
+            streaming = true;
+        }
+        catch(const rs::error & e)
+        {
+            printf("rs::error was thrown when calling %s(%s):\n", e.get_failed_function().c_str(), e.get_failed_args().c_str());
+            printf("    %s\n", e.what());
+        }
+    
+        // Generate texture handles
+        depthTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        normalTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
         
         depthTextureView.reset(new GLTextureView(depthTexture.get_gl_handle()));
         normalTextureView.reset(new GLTextureView(normalTexture.get_gl_handle()));
@@ -28,7 +61,7 @@ struct ExperimentalApp : public GLFWApp
         gl_check_error(__FILE__, __LINE__);
         camera.look_at({0, 2.5, -2.5}, {0, 2.0, 0});
     }
-    
+
     void on_window_resize(int2 size) override
     {
 
@@ -41,6 +74,13 @@ struct ExperimentalApp : public GLFWApp
     
     void on_update(const UpdateEvent & e) override
     {
+        
+        if (streaming)
+        {
+            dev->wait_for_frames();
+            depthTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+            normalTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        }
 
     }
     
