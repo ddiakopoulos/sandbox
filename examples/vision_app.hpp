@@ -23,6 +23,16 @@ struct ExperimentalApp : public GLFWApp
     int cameraWidth = 0;
     int cameraHeight = 0;
     
+    struct CameraFrame
+    {
+        std::vector<uint16_t> depthmap;
+        std::vector<float3> normalmap;
+        std::vector<uint8_t> rgbDepth;
+        std::vector<uint8_t> rgbNormal;
+    };
+    
+    CameraFrame f;
+    
     ExperimentalApp() : GLFWApp(1280, 720, "Vision App")
     {
         int width, height;
@@ -44,6 +54,11 @@ struct ExperimentalApp : public GLFWApp
             
             auto intrin = dev->get_stream_intrinsics(rs::stream::depth);
             cameraWidth = intrin.width; cameraHeight = intrin.height;
+            
+            f.depthmap.resize(intrin.width * intrin.height);
+            f.normalmap.resize(intrin.width * intrin.height);
+            f.rgbDepth.resize(3 * intrin.width * intrin.height);
+            f.rgbNormal.resize(3 * intrin.width * intrin.height);
             
             dev->start();
             
@@ -93,28 +108,28 @@ struct ExperimentalApp : public GLFWApp
             auto intrin = dev->get_stream_intrinsics(rs::stream::depth);
             
             avl_intrin i = {intrin.width, intrin.height, intrin.ppx, intrin.ppy, intrin.fx, intrin.fy};
+        
+            std::memset(f.depthmap.data(), 0, sizeof(uint16_t) * intrin.width * intrin.height);
+            std::memset(f.normalmap.data(), 0, sizeof(float3) * intrin.width * intrin.height);
+            std::memset(f.rgbDepth.data(), 0, 3 * intrin.width * intrin.height);
+            std::memset(f.rgbNormal.data(), 0, 3 * intrin.width * intrin.height);
+        
+            std::memcpy(f.depthmap.data(), depth_frame, sizeof(uint16_t) * intrin.width * intrin.height);
             
-            std::vector<uint16_t> depthMap(intrin.width * intrin.height);
-            std::memcpy(depthMap.data(), depth_frame, sizeof(uint16_t) * intrin.width * intrin.height);
+            generate_normalmap<1>(f.depthmap, f.normalmap, i);
             
-            std::vector<float3> normalMap(intrin.width * intrin.height);
-            generate_normalmap<1>(depthMap, normalMap, i);
-            
-            std::vector<uint8_t> rgbDepth(3 * intrin.width * intrin.height);
-            depth_to_colored_histogram(rgbDepth, depthMap, float2(intrin.width, intrin.height), {0.1f, .8f});
-            
-            std::vector<uint8_t> rgbNormals(3 * intrin.width * intrin.height);
+            depth_to_colored_histogram(f.rgbDepth, f.depthmap, float2(intrin.width, intrin.height), float2(0.125f, 0.45f));
             
             for (int s = 0; s < intrin.width * intrin.height; ++s)
             {
-                const float3 & normal = normalMap[s];
-                rgbNormals[3 * s + 0] = static_cast<uint8_t>(128 + normal.x * 127);
-                rgbNormals[3 * s + 1] = static_cast<uint8_t>(128 + normal.y * 127);
-                rgbNormals[3 * s + 2] = static_cast<uint8_t>(128 + normal.z * 127);
+                const float3 & normal = f.normalmap[s];
+                f.rgbNormal[3 * s + 0] = static_cast<uint8_t>(128 + normal.x * 127);
+                f.rgbNormal[3 * s + 1] = static_cast<uint8_t>(128 + normal.y * 127);
+                f.rgbNormal[3 * s + 2] = static_cast<uint8_t>(128 + normal.z * 127);
             }
             
-            depthTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, rgbDepth.data());
-            normalTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, rgbNormals.data());
+            depthTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, f.rgbDepth.data());
+            normalTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, f.rgbNormal.data());
         }
 
     }
@@ -133,9 +148,9 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-        const float4x4 proj = camera.get_projection_matrix((float) width / (float) height);
-        const float4x4 view = camera.get_view_matrix();
-        const float4x4 viewProj = mul(proj, view);
+        //const float4x4 proj = camera.get_projection_matrix((float) width / (float) height);
+        //const float4x4 view = camera.get_view_matrix();
+        //const float4x4 viewProj = mul(proj, view);
 
         depthTextureView->draw(uiSurface.children[0]->bounds, int2(width, height));
         normalTextureView->draw(uiSurface.children[1]->bounds, int2(width, height));

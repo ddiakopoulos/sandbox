@@ -89,8 +89,7 @@ std::array<int, 3> hsv_to_rgb(double h, double s, double v)
 inline void depth_to_colored_histogram(std::vector<uint8_t> & img, const std::vector<uint16_t> & depthImg, const float2 size, const float2 hsvHueRange)
 {
     // Cumulative histogram of depth values
-    std::array<int, 256 * 256> histogram;
-    std::fill(histogram.begin(), histogram.end(), 1);
+    std::array<int, 256 * 256> histogram = { 1 };
     
     for (int i = 0; i < size.x * size.y; ++i)
         if (auto d = depthImg[i]) ++histogram[d];
@@ -110,7 +109,7 @@ inline void depth_to_colored_histogram(std::vector<uint8_t> & img, const std::ve
         {
             auto t = histogram[d]; // Use the histogram entry (in the range of [0-256]) to interpolate between nearColor and farColor
             std::array<int, 3> returnRGB = { 0, 0, 0 };
-            returnRGB = hsv_to_rgb(remap<float>(t, hsvHueRange.x, hsvHueRange.y, 0, 255, true), 1.f, 1.f);
+            returnRGB = hsv_to_rgb(remap<float>(t, 0, 255, hsvHueRange.x, hsvHueRange.y, true), 1.f, 1.f);
             *rgb++ = returnRGB[0];
             *rgb++ = returnRGB[1];
             *rgb++ = returnRGB[2];
