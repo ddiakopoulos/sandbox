@@ -304,8 +304,15 @@ void box_filter_normalmap(const std::vector<float3> & input, std::vector<float3>
     }
 }
 
+float3 compute_normal(const float3 u, const float3 v)
+{
+    float3 n = cross(u, v);
+    return normalize(n);
+}
+
 // This function derived from one found in Leo Keselman's ps1080 testing repository: https://github.com/leonidk/ps1080test
-// As such, its usage is licensed under the MPL 2.0.
+// As such, its usage is licensed under the MPL 2.0. The templated size parameter defines the area over which the normal
+// is computed.
 template <int size>
 inline void generate_normalmap(const std::vector<uint16_t> & depth, std::vector<float3> & normals, const avl_intrin intrin)
 {
@@ -314,16 +321,16 @@ inline void generate_normalmap(const std::vector<uint16_t> & depth, std::vector<
     auto halfX = intrin.ppx;
     auto halfY = intrin.ppy;
     
-    for (int i = size; i < intrin.height - size; i++)
+    for (int i = size; i < intrin.height - size; ++i)
     {
-        for (int j = size; j < intrin.width  - size; j++)
+        for (int j = size; j < intrin.width  - size; ++j)
         {
             if (!depth[i * intrin.width + j])
                 continue;
             
-            const auto cDepth = depth[i * intrin.width + j];
+            const uint16_t cDepth = depth[i * intrin.width + j];
             
-            const float3 pc = { cX*(j - halfX) * cDepth, cY * (i - halfY)*cDepth, (float)cDepth };
+            const float3 pc = { cX * (j - halfX) * cDepth, cY * (i - halfY) * cDepth, (float)cDepth };
             float3 outNorm = { 0, 0, 0 };
             
             int count = 0;
@@ -336,13 +343,7 @@ inline void generate_normalmap(const std::vector<uint16_t> & depth, std::vector<
                 const float3 px = { cX * (j - halfX + size) * xDepth, cY * (i - halfY) * xDepth, (float)xDepth };
                 const float3 py = { cX *(j - halfX) * yDepth, cY * (i - halfY + size) * yDepth, (float)yDepth };
                 
-                float3 v1 = { px[0] - pc[0], px[1] - pc[1], px[2] - pc[2] };
-                float3 v2 = { py[0] - pc[0], py[1] - pc[1], py[2] - pc[2] };
-                
-                auto v3 = cross(v1, v2);
-                v3 = normalize(v3);
-                
-                outNorm += v3;
+                outNorm += compute_normal(px-pc, py-pc);
                 count++;
             }
             
@@ -354,13 +355,7 @@ inline void generate_normalmap(const std::vector<uint16_t> & depth, std::vector<
                 const float3 px = { cX * (j - halfX - size) * xDepth, cY  * (i - halfY) * xDepth, (float)xDepth };
                 const float3 py = { cX *(j - halfX) * yDepth, cY * (i -  halfY + size) * yDepth, (float)yDepth };
                 
-                float3 v1= { pc[0] - px[0], pc[1] - px[1], pc[2] - px[2] };
-                float3 v2 = { py[0] - pc[0], py[1] - pc[1], py[2] - pc[2] };
-                
-                auto v3 = cross(v1, v2);
-                v3 = normalize(v3);
-                
-                outNorm += v3;
+                outNorm += compute_normal(pc-px, py-pc);
                 count++;
             }
             
@@ -372,13 +367,7 @@ inline void generate_normalmap(const std::vector<uint16_t> & depth, std::vector<
                 const float3 px = { cX * (j - halfX + size) * xDepth, cY * (i - halfY) * xDepth, (float)xDepth };
                 const float3 py = { cX * (j - halfX) * yDepth, cY * (i - halfY - size) * yDepth, (float)yDepth };
                 
-                float3 v1 = { px[0] - pc[0], px[1] - pc[1], px[2] - pc[2] };
-                float3 v2 = { pc[0] - py[0], pc[1] - py[1], pc[2] - py[2] };
-                
-                auto v3 = cross(v1, v2);
-                v3 = normalize(v3);
-                
-                outNorm += v3;
+                outNorm += compute_normal(px-pc, pc-py);
                 count++;
             }
             
@@ -390,13 +379,7 @@ inline void generate_normalmap(const std::vector<uint16_t> & depth, std::vector<
                 const float3 px = { cX * (j - halfX - size) * xDepth, cY * (i - halfY) * xDepth, (float)xDepth };
                 const float3 py = { cX * (j - halfX) * yDepth, cY * (i - halfY - size) * yDepth, (float)yDepth };
                 
-                float3 v1 = { pc[0] - px[0], pc[1] - px[1], pc[2] - px[2] };
-                float3 v2 = { pc[0] - py[0], pc[1] - py[1], pc[2] - py[2] };
-                
-                auto v3 = cross(v1, v2);
-                v3 = normalize(v3);
-                
-                outNorm += v3;
+                outNorm += compute_normal(pc-px, pc-py);
                 count++;
             }
             
@@ -405,6 +388,63 @@ inline void generate_normalmap(const std::vector<uint16_t> & depth, std::vector<
                 float3 v3 = { outNorm[0] / count, outNorm[1] / count, outNorm[2] / count };
                 v3 = normalize(v3);
                 normals[i * intrin.width + j] = v3;
+            }
+        }
+    }
+}
+
+template <int size>
+inline void generate_normalmap(const std::vector<float3> & points, std::vector<float3> & normals, const int width, const int height)
+{
+    for (int i = size; i < height - size; ++i)
+    {
+        for (int j = size; j < width - size; ++j)
+        {
+            if (!points[i * width + j].z)
+                continue;
+            
+            const float3 pc = points[i * width + j];
+            float3 outNorm = {0, 0, 0};
+            
+            int count = 0;
+            
+            if (points[i * width + j + size].z && points[(i + size) * width + j].z)
+            {
+                const float3 & px = points[i * width + j + size];
+                const float3 & py = points[(i + size) * width + j];
+                outNorm += compute_normal(px-pc, py-pc);
+                count++;
+            }
+            
+            if (points[i * width + j - size].z && points[(i + size) * width + j].z)
+            {
+                const float3 & px = points[i * width + j - size];
+                const float3 & py = points[(i + size) * width + j];
+                outNorm += compute_normal(pc-px, py-pc);
+                count++;
+            }
+            
+            if (points[i * width + j + size].z && points[(i - size) * width + j].z)
+            {
+                const float3 & px = points[i * width + j + size];
+                const float3 & py = points[(i - size) * width + j];
+                outNorm += compute_normal(px-pc, pc-py);
+                count++;
+            }
+            
+            if (points[i * width + j - size].z && points[(i - size) * width + j].z)
+            {
+                const float3 & px = points[i * width + j - size];
+                const float3 & py = points[(i - size) * width + j];
+                outNorm += compute_normal(pc-px, pc-py);
+                count++;
+            }
+            
+            if (count)
+            {
+                float3 v3 = { outNorm[0] / count, outNorm[1] / count, outNorm[2] / count };
+                v3 = normalize(v3);
+                normals[i * width + j] = v3;
             }
         }
     }

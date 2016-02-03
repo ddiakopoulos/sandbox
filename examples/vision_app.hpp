@@ -116,7 +116,27 @@ struct ExperimentalApp : public GLFWApp
         
             std::memcpy(f.depthmap.data(), depth_frame, sizeof(uint16_t) * intrin.width * intrin.height);
             
-            generate_normalmap<1>(f.depthmap, f.normalmap, i);
+            //generate_normalmap<1>(f.depthmap, f.normalmap, i);
+            
+            float scale = dev->get_depth_scale();
+            
+            std::vector<float3> pointcloud(intrin.width * intrin.height);
+            for (int dy = 0; dy < intrin.height; ++dy)
+            {
+                for (int dx = 0; dx < intrin.width; ++dx)
+                {
+                    const uint16_t depth_value = f.depthmap[dy * intrin.width + dx];
+                    const float depth_in_meters = depth_value * scale;
+                    
+                    //if (depth_value == 0) continue;
+                    
+                    rs::float2 depth_pixel = {(float)dx, (float)dy};
+                    rs::float3 depth_point = intrin.deproject(depth_pixel, depth_in_meters);
+                    pointcloud[dy * intrin.width + dx] = float3(depth_point.x, depth_point.y, depth_point.z);
+                }
+            }
+            
+            generate_normalmap<1>(pointcloud, f.normalmap, intrin.width, intrin.height);
             
             depth_to_colored_histogram(f.rgbDepth, f.depthmap, float2(intrin.width, intrin.height), float2(0.125f, 0.45f));
             
