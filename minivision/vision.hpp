@@ -22,7 +22,7 @@ struct avl_intrin
     float fy; // focal length of the image plane, as a multiple of pixel height
 };
 
-std::array<double, 3> rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b)
+inline std::array<double, 3> rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b)
 {
     std::array<double, 3> hsv;
     
@@ -57,7 +57,7 @@ std::array<double, 3> rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b)
     return hsv;
 }
 
-std::array<int, 3> hsv_to_rgb(double h, double s, double v)
+inline std::array<int, 3> hsv_to_rgb(double h, double s, double v)
 {
     std::array<int, 3> rgb;
     
@@ -182,7 +182,7 @@ std::vector<int> box_element_3x3_identity = {0, 0, 0, 0, 1, 0, 0, 0, 0};
 std::vector<int> box_element_3x3_square = {1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 // Todo: check odd kernel size, pass in kernel
-void erode_dilate_kernel(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight, filter_type t)
+inline void erode_dilate_kernel(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight, filter_type t)
 {
     int dx, dy, wx, wy;
     int pIndex;
@@ -234,7 +234,7 @@ void erode_dilate_kernel(const std::vector<uint16_t> & inputImage, std::vector<u
 
 // Morphology: Opening. Erosion of an image followed by dilation.
 // This function works on uint16_t depth maps. All memory needs to be preallocated.
-void morphology_open(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight)
+inline void morphology_open(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight)
 {
     std::vector<uint16_t> tmp(imageWidth * imageHeight);
     erode_dilate_kernel(inputImage, tmp, imageWidth, imageHeight, filter_type::ERODE);
@@ -243,7 +243,7 @@ void morphology_open(const std::vector<uint16_t> & inputImage, std::vector<uint1
 
 // Morphology: Closing. Dilation of an image followed by an erosion.
 // This function works on uint16_t depth maps. All memory needs to be preallocated.
-void morphology_close(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight)
+inline void morphology_close(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight)
 {
     std::vector<uint16_t> tmp(imageWidth * imageHeight);
     erode_dilate_kernel(inputImage, tmp, imageWidth, imageHeight, filter_type::DILATE);
@@ -252,7 +252,7 @@ void morphology_close(const std::vector<uint16_t> & inputImage, std::vector<uint
 
 // Morphology: Gradient. The difference image of dilation and erosion.
 // This function works on uint16_t depth maps. All memory needs to be preallocated.
-void morphology_gradient(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight)
+inline void morphology_gradient(const std::vector<uint16_t> & inputImage, std::vector<uint16_t> & outputImage, int imageWidth, int imageHeight)
 {
     std::vector<uint16_t> dilatedImage(imageWidth * imageHeight);
     std::vector<uint16_t> erodedImage(imageWidth * imageHeight);
@@ -271,7 +271,7 @@ void morphology_gradient(const std::vector<uint16_t> & inputImage, std::vector<u
 }
 
 // Unoptimized NxN box filter designed to operate on float3 normal maps
-void box_filter_normalmap(const std::vector<float3> & input, std::vector<float3> & output, const uint2 size, const int radius = 1)
+inline void box_filter_normalmap(const std::vector<float3> & input, std::vector<float3> & output, const uint2 size, const int radius = 1)
 {
     const float maxY = size.x - radius;
     const float maxX = size.y - radius;
@@ -304,7 +304,7 @@ void box_filter_normalmap(const std::vector<float3> & input, std::vector<float3>
     }
 }
 
-float3 compute_normal(const float3 u, const float3 v)
+inline float3 compute_normal(const float3 u, const float3 v)
 {
     float3 n = cross(u, v);
     return normalize(n);
@@ -451,7 +451,7 @@ inline void generate_normalmap(const std::vector<float3> & points, std::vector<f
 }
 
 template<typename T>
-T ComputeCenterOfMass(const std::vector<T> & points)
+inline T compute_center_of_mpass(const std::vector<T> & points)
 {
     T result;
     for (const auto & pt : points)
@@ -470,11 +470,12 @@ inline std::vector<float3> VoxelSubsample(const std::vector<float3> & points, fl
     // Structure for storing per-voxel data
     struct Voxel { int3 coord; float3 point; int count; };
     
+     // Hash size must be a power of two
     const int HASH_SIZE = 2048;
-    const int HASH_MASK = HASH_SIZE - 1; // Hash size must be a power of two
+    const int HASH_MASK = HASH_SIZE - 1;
     
     Voxel voxelHash[HASH_SIZE];
-    memset(voxelHash, 0, sizeof(voxelHash));
+    std::memset(voxelHash, 0, sizeof(voxelHash));
     
     // Store each point in corresponding voxel
     const float inverseVoxelSize = 1.0f / voxelSize;
@@ -491,8 +492,7 @@ inline std::vector<float3> VoxelSubsample(const std::vector<float3> & points, fl
         // If we collide, flush existing voxel contents
         if (voxel.count && voxel.coord != vcoord)
         {
-            if(voxel.count > minOccupants)
-                subPoints.push_back(voxel.point / (float)voxel.count);
+            if (voxel.count > minOccupants) subPoints.push_back(voxel.point / (float)voxel.count);
             voxel.count = 0;
         }
         
@@ -503,21 +503,17 @@ inline std::vector<float3> VoxelSubsample(const std::vector<float3> & points, fl
             voxel.count = 1;
             voxel.point = pt;
         }
-        else // Otherwise just add position contribution
+        else
         {
+            // Otherwise just add position contribution
             voxel.point += pt;
             ++voxel.count;
         }
     }
     
     // Flush remaining voxels
-    for (const auto & voxel : voxelHash )
-    {
-        if (voxel.count > minOccupants)
-        {
-            subPoints.push_back(voxel.point / (float) voxel.count);
-        }
-    }
+    for (const auto & voxel : voxelHash)
+        if (voxel.count > minOccupants) subPoints.push_back(voxel.point / (float) voxel.count);
     
     return subPoints;
 }
