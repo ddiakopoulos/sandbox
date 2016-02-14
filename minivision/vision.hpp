@@ -12,6 +12,71 @@
 // tofix - for prototyping
 using namespace avl;
 
+// 3x3
+struct kernel
+{
+    int2 kernelSize = {3, 3};
+    std::vector<int> values;
+    
+    kernel(std::vector<int> v) : values(v) {}
+    
+    int value_at(int x, int y)
+    {
+        // clamp
+        if ( x < 0 || x > 2 || y < 0 || y > 2 ) return 0;
+        return values[x * 3 + y];
+    }
+    
+};
+
+template<typename T>
+void apply_kernel(const std::vector<T> & source, std::vector<T> & dest, kernel k, const int2 size)
+{
+    const int halfkw = (k.kernelSize.x) / 2;
+    const int halfkh = (k.kernelSize.y) / 2;
+    
+    std::vector<T> list(k.kernelSize.x * k.kernelSize.y);
+    
+    assert(source.size() == dest.size());
+    
+    int dx, dy, wx, wy;
+    
+    for (int y = 0; y < size.y; ++y)
+    {
+        for (int x = 0; x < size.x; ++x)
+        {
+            list.clear();
+            for (dy = -halfkh; dy <= halfkh; ++dy)
+            {
+                wy = y + dy;
+                if (wy >= 0 && wy < size.y)
+                {
+                    for (dx = -halfkw; dx <= halfkw; ++dx)
+                    {
+                        wx = x + dx;
+                        if (wx >= 0 && wx < size.x)
+                        {
+                            list.push_back(source[wy * size.x + wx]);
+                        }
+                    }
+                }
+            }
+            
+            if (list.size())
+            {
+                T average;
+                
+                for (const auto & v : list)
+                    average += v;
+                
+                average = average / T(list.size());
+                
+                dest[y * size.x + x] = average;
+            }
+        }
+    }
+}
+
 struct avl_intrin
 {
     int width; // width of the image in pixels
@@ -270,38 +335,10 @@ inline void morphology_gradient(const std::vector<uint16_t> & inputImage, std::v
     }
 }
 
-// Unoptimized NxN box filter designed to operate on float3 normal maps
-inline void box_filter_normalmap(const std::vector<float3> & input, std::vector<float3> & output, const uint2 size, const int radius = 1)
+inline void box_filter_normalmap(const std::vector<float3> & input, std::vector<float3> & output, const int2 size, const int radius = 1)
 {
-    const float maxY = size.x - radius;
-    const float maxX = size.y - radius;
-    
-    auto out = output.data();
-    auto in = input.data();
-    
-    out += radius * size.x;
-    
-    for (size_t y = radius; y < maxY; ++y)
-    {
-        out += radius;
-        for (size_t x = radius; x < maxX; ++x, ++out)
-        {
-            float3 avg;
-            size_t index = x - radius + (y - radius) * size.x;
-            const float3 * in_row = in + index;
-            for (int dy = -radius; dy <= radius; ++dy, in_row += size.x)
-            {
-                const float3 * in_kernel = in_row;
-                for (int dx = -radius; dx <= radius; ++dx, ++in_kernel)
-                {
-                    avg += *in_kernel;
-                }
-            }
-            
-            *out = normalize(avg);
-        }
-        out += radius;
-    }
+    kernel k(box_element_3x3_square);
+    apply_kernel<float3>(input, output, k, size);
 }
 
 inline float3 compute_normal(const float3 u, const float3 v)

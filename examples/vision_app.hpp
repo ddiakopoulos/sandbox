@@ -116,7 +116,7 @@ struct ExperimentalApp : public GLFWApp
         
             std::memcpy(f.depthmap.data(), depth_frame, sizeof(uint16_t) * intrin.width * intrin.height);
             
-            //generate_normalmap<1>(f.depthmap, f.normalmap, i);
+            generate_normalmap<1>(f.depthmap, f.normalmap, i);
             
             float scale = dev->get_depth_scale();
             
@@ -136,7 +136,10 @@ struct ExperimentalApp : public GLFWApp
                 }
             }
             
-            generate_normalmap<1>(pointcloud, f.normalmap, intrin.width, intrin.height);
+            auto normalCopy = f.normalmap;
+            box_filter_normalmap(normalCopy, f.normalmap, int2(intrin.width, intrin.height), 1);
+            
+            //generate_normalmap<1>(pointcloud, f.normalmap, intrin.width, intrin.height);
             
             depth_to_colored_histogram(f.rgbDepth, f.depthmap, float2(intrin.width, intrin.height), float2(0.125f, 0.45f));
             
@@ -150,6 +153,7 @@ struct ExperimentalApp : public GLFWApp
             
             depthTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, f.rgbDepth.data());
             normalTexture.load_data(cameraWidth, cameraHeight, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, f.rgbNormal.data());
+
         }
 
     }
