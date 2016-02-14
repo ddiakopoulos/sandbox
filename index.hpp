@@ -37,3 +37,4 @@
 #include "reaction_diffusion.hpp"
 #include "vision.hpp"
 #include "texture_view.hpp"
+#include "camera.hpp"

@@ -307,7 +307,6 @@
 		0849FD991BFADE05000F148E /* gizmo */ = {
 			isa = PBXGroup;
 			children = (
-				0849FD9D1BFADE59000F148E /* scene.hpp */,
 				0849FD9A1BFADE27000F148E /* gizmo.cpp */,
 				0849FD9B1BFADE27000F148E /* gizmo.hpp */,
 			);
@@ -377,10 +376,10 @@
 		08C475761C02C9200031E87E /* rendering */ = {
 			isa = PBXGroup;
 			children = (
+				0849FD9D1BFADE59000F148E /* scene.hpp */,
 				08C475911C1CE8F30031E87E /* meshline.hpp */,
 				0822AF381BD4B52100A894F0 /* renderable_grid.hpp */,
 				088B47BF1C42DDC10007BB59 /* texture_view.hpp */,
-				0849FD901BEFDC8D000F148E /* procedural_mesh.hpp */,
 			);
 			name = rendering;
 			sourceTree = "<group>";
@@ -388,12 +387,12 @@
 		08C475771C02C9650031E87E /* math */ = {
 			isa = PBXGroup;
 			children = (
-				084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */,
 				081204991BADDEF700C7C0F4 /* math_util.hpp */,
-				08C475921C1DEA570031E87E /* constant_spline.hpp */,
 				081204981BADDEF700C7C0F4 /* linear_algebra.hpp */,
-				081204971BADDEF700C7C0F4 /* geometric.hpp */,
 				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
+				081204971BADDEF700C7C0F4 /* geometric.hpp */,
+				084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */,
+				08C475921C1DEA570031E87E /* constant_spline.hpp */,
 				0822AF351BD4382C00A894F0 /* ellipse_math.hpp */,
 				081204A31BAE086F00C7C0F4 /* running_statistics.hpp */,
 				081204A71BAE330600C7C0F4 /* one_euro.hpp */,
@@ -406,6 +405,7 @@
 		08C475781C02C9790031E87E /* tools */ = {
 			isa = PBXGroup;
 			children = (
+				0849FD901BEFDC8D000F148E /* procedural_mesh.hpp */,
 				082A2FF61C711A2300391672 /* camera.hpp */,
 				08C475861C14F68A0031E87E /* shader_monitor.hpp */,
 				0849FD731BE6A031000F148E /* gpu_timer.hpp */,
