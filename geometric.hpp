@@ -442,6 +442,75 @@ namespace avl
     }
     
     /////////////
+    //   Ray   //
+    /////////////
+    
+    class Ray
+    {
+        bool signX, signY, signZ;
+        float3 invDirection;
+    public:
+        
+        float3 origin;
+        float3 direction;
+        
+        Ray() {}
+        Ray(const float3 &aOrigin, const float3 &aDirection) : origin(aOrigin) { set_direction(aDirection); }
+        
+        void set_origin(const float3 &aOrigin) { origin = aOrigin; }
+        const float3& get_origin() const { return origin; }
+        
+        void set_direction(const float3 &aDirection)
+        {
+            direction = aDirection;
+            invDirection = float3(1.0f / direction.x, 1.0f / direction.y, 1.0f / direction.z);
+            signX = (direction.x < 0.0f) ? 1 : 0;
+            signY = (direction.y < 0.0f) ? 1 : 0;
+            signZ = (direction.z < 0.0f) ? 1 : 0;
+        }
+        
+        const float3 & get_direction() const { return direction; }
+        const float3 & get_inv_direction() const { return invDirection; }
+        
+        char getSignX() const { return signX; }
+        char getSignY() const { return signY; }
+        char getSignZ() const { return signZ; }
+        
+        void transform(const float4x4 & matrix)
+        {
+            origin = transform_vector(matrix, origin);
+            set_direction(get_rotation_submatrix(matrix) * direction);
+        }
+        
+        Ray transformed(const float4x4 & matrix) const
+        {
+            Ray result;
+            result.origin = transform_vector(matrix, origin);
+            result.set_direction(get_rotation_submatrix(matrix) * direction);
+            return result;
+        }
+        
+        float3 calculate_position(float t) const { return origin + direction * t; }
+    };
+    
+    inline Ray operator * (const Pose & pose, const Ray & ray)
+    {
+        return {pose.transform_coord(ray.get_origin()), pose.transform_vector(ray.get_direction())};
+    }
+    
+    inline Ray between(const float3 & start, const float3 & end)
+    {
+        return {start, normalize(end - start)};
+    }
+    
+    inline Ray ray_from_viewport_pixel(const float2 & pixelCoord, const float2 & viewportSize, const float4x4 & projectionMatrix)
+    {
+        float vx = pixelCoord.x * 2 / viewportSize.x - 1, vy = 1 - pixelCoord.y * 2 / viewportSize.y;
+        auto invProj = inv(projectionMatrix);
+        return {{0,0,0}, normalize(transform_coord(invProj, {vx, vy, +1}) - transform_coord(invProj, {vx, vy, -1}))};
+    }
+    
+    /////////////
     // Helpers //
     /////////////
     

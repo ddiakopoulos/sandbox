@@ -4,8 +4,6 @@
 #include "linear_algebra.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
-#include "GlMesh.hpp"
-#include "GlTexture.hpp"
 #include "string_utils.hpp"
 
 #include "tinyply.h"

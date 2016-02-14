@@ -9,11 +9,8 @@
 /* Begin PBXBuildFile section */
 		080980311C4DA9120009122A /* libglfw3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 080980301C4DA9120009122A /* libglfw3.dylib */; };
 		0812049D1BADDF6800C7C0F4 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0812049C1BADDF6800C7C0F4 /* main.cpp */; };
-		0822AF301BCC16D200A894F0 /* GlTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF2E1BCC16D200A894F0 /* GlTexture.cpp */; };
-		0822AF371BD4ADBF00A894F0 /* GlShared.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF361BD4ADBF00A894F0 /* GlShared.cpp */; };
+		0822AF371BD4ADBF00A894F0 /* GL_API.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF361BD4ADBF00A894F0 /* GL_API.cpp */; };
 		0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF3C1BDC773C00A894F0 /* hosek.cpp */; };
-		08289F851BC601A70054AF3B /* GlShader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08289F831BC601A70054AF3B /* GlShader.cpp */; };
-		08289F881BC609750054AF3B /* GlMesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08289F861BC609750054AF3B /* GlMesh.cpp */; };
 		0849FD821BE7C667000F148E /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD801BE7C667000F148E /* json.cpp */; };
 		0849FD851BE7C66E000F148E /* tinyply.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD831BE7C66E000F148E /* tinyply.cpp */; };
 		0849FD9C1BFADE27000F148E /* gizmo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD9A1BFADE27000F148E /* gizmo.cpp */; };
@@ -65,23 +62,18 @@
 		081204A91BAE367900C7C0F4 /* string_utils.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = string_utils.hpp; sourceTree = SOURCE_ROOT; };
 		081204AD1BAE7C8600C7C0F4 /* geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = geometry.hpp; sourceTree = SOURCE_ROOT; };
 		081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = pid_controller.hpp; sourceTree = SOURCE_ROOT; };
-		0822AF2E1BCC16D200A894F0 /* GlTexture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlTexture.cpp; sourceTree = SOURCE_ROOT; };
-		0822AF2F1BCC16D200A894F0 /* GlTexture.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GlTexture.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF311BCFFA6A00A894F0 /* sketch.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sketch.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF321BD389EA00A894F0 /* universal_widget.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = universal_widget.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF331BD4212100A894F0 /* arcball.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arcball.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF351BD4382C00A894F0 /* ellipse_math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ellipse_math.hpp; sourceTree = SOURCE_ROOT; };
-		0822AF361BD4ADBF00A894F0 /* GlShared.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlShared.cpp; sourceTree = SOURCE_ROOT; };
+		0822AF361BD4ADBF00A894F0 /* GL_API.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GL_API.cpp; sourceTree = SOURCE_ROOT; };
 		0822AF381BD4B52100A894F0 /* renderable_grid.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = renderable_grid.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = hosek_data_rgb.inl; path = procedural_sky/hosek_data_rgb.inl; sourceTree = SOURCE_ROOT; };
 		0822AF3C1BDC773C00A894F0 /* hosek.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hosek.cpp; path = procedural_sky/hosek.cpp; sourceTree = SOURCE_ROOT; };
 		0822AF3D1BDC773C00A894F0 /* hosek.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = hosek.hpp; path = procedural_sky/hosek.hpp; sourceTree = SOURCE_ROOT; };
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
-		08289F831BC601A70054AF3B /* GlShader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlShader.cpp; sourceTree = SOURCE_ROOT; };
-		08289F841BC601A70054AF3B /* GlShader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GlShader.hpp; sourceTree = SOURCE_ROOT; };
-		08289F861BC609750054AF3B /* GlMesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GlMesh.cpp; sourceTree = SOURCE_ROOT; };
-		08289F871BC609750054AF3B /* GlMesh.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GlMesh.hpp; sourceTree = SOURCE_ROOT; };
-		08289F891BC609B80054AF3B /* GlShared.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GlShared.hpp; sourceTree = SOURCE_ROOT; };
+		08289F891BC609B80054AF3B /* GL_API.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GL_API.hpp; sourceTree = SOURCE_ROOT; };
+		082A2FF61C711A2300391672 /* camera.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = camera.hpp; sourceTree = SOURCE_ROOT; };
 		084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = reaction_diffusion.hpp; sourceTree = SOURCE_ROOT; };
 		084196741C1E7E1700E1FC50 /* displacement_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = displacement_frag.glsl; path = assets/shaders/displacement_frag.glsl; sourceTree = SOURCE_ROOT; };
 		084196751C1E7E1700E1FC50 /* displacement_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = displacement_vert.glsl; path = assets/shaders/displacement_vert.glsl; sourceTree = SOURCE_ROOT; };
@@ -249,16 +241,8 @@
 		08289F821BC6019B0054AF3B /* gl */ = {
 			isa = PBXGroup;
 			children = (
-				08289F891BC609B80054AF3B /* GlShared.hpp */,
-				0822AF361BD4ADBF00A894F0 /* GlShared.cpp */,
-				08289F841BC601A70054AF3B /* GlShader.hpp */,
-				08289F831BC601A70054AF3B /* GlShader.cpp */,
-				08289F871BC609750054AF3B /* GlMesh.hpp */,
-				08289F861BC609750054AF3B /* GlMesh.cpp */,
-				0822AF2F1BCC16D200A894F0 /* GlTexture.hpp */,
-				0822AF2E1BCC16D200A894F0 /* GlTexture.cpp */,
-				0849FD731BE6A031000F148E /* gpu_timer.hpp */,
-				08C475861C14F68A0031E87E /* shader_monitor.hpp */,
+				08289F891BC609B80054AF3B /* GL_API.hpp */,
+				0822AF361BD4ADBF00A894F0 /* GL_API.cpp */,
 			);
 			name = gl;
 			sourceTree = "<group>";
@@ -422,6 +406,9 @@
 		08C475781C02C9790031E87E /* tools */ = {
 			isa = PBXGroup;
 			children = (
+				082A2FF61C711A2300391672 /* camera.hpp */,
+				08C475861C14F68A0031E87E /* shader_monitor.hpp */,
+				0849FD731BE6A031000F148E /* gpu_timer.hpp */,
 				0822AF331BD4212100A894F0 /* arcball.hpp */,
 				0812049F1BADF68B00C7C0F4 /* circular_buffer.hpp */,
 				081204A11BAE04B300C7C0F4 /* concurrent_queue.hpp */,
@@ -570,18 +557,15 @@
 				0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */,
 				08C475821C0AE9C50031E87E /* jo_gif.cpp in Sources */,
 				08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */,
-				0822AF371BD4ADBF00A894F0 /* GlShared.cpp in Sources */,
+				0822AF371BD4ADBF00A894F0 /* GL_API.cpp in Sources */,
 				0849FDA11BFAFCC3000F148E /* tiny_obj_loader.cc in Sources */,
 				08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */,
 				0849FD851BE7C66E000F148E /* tinyply.cpp in Sources */,
 				08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */,
 				089B86121BAFC9AB00B3A290 /* noise1234.cpp in Sources */,
-				08289F881BC609750054AF3B /* GlMesh.cpp in Sources */,
 				085081971BB5B6EA0084A1D6 /* glfw_app.mm in Sources */,
 				0849FD821BE7C667000F148E /* json.cpp in Sources */,
-				0822AF301BCC16D200A894F0 /* GlTexture.cpp in Sources */,
 				08C4758D1C1C844F0031E87E /* efsw.cpp in Sources */,
-				08289F851BC601A70054AF3B /* GlShader.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

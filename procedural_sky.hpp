@@ -4,7 +4,7 @@
 #include "linear_algebra.hpp"
 #include "math_util.hpp"
 #include "util.hpp"
-#include "GlShared.hpp"
+#include "GL_API.hpp"
 #include "file_io.hpp"
 
 #include "hosek.hpp"

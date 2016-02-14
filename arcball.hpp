@@ -3,14 +3,16 @@
 #ifndef arcball_camera_h
 #define arcball_camera_h
 
+#include "GL_API.hpp"
+#include "camera.hpp"
 #include "glfw_app.hpp"
 #include "linear_algebra.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include "util.hpp"
 #include "geometry.hpp"
-#include "GlShared.hpp"
 #include "ellipse_math.hpp"
+
 
 namespace avl
 {

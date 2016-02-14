@@ -2,7 +2,7 @@
 #define texture_view_h
 
 #include <vector>
-#include "GlTexture.hpp"
+#include "GL_API.hpp"
 #include "util.hpp"
 
 static const char s_textureVert[] = R"(#version 330

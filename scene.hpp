@@ -3,8 +3,9 @@
 #ifndef scene_h
 #define scene_h
 
-#include "GlShared.hpp"
+#include "GL_API.hpp"
 #include "geometry.hpp"
+#include "camera.hpp"
 
 namespace avl
 {

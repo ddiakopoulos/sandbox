@@ -4,13 +4,12 @@
 #include "linear_algebra.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
-#include "GlMesh.hpp"
 #include <assert.h>
+#include "GL_API.hpp"
 
 namespace avl
 {
     
-
 inline Geometry make_cube()
 {
     Geometry cube;

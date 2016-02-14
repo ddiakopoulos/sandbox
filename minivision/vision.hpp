@@ -126,7 +126,9 @@ inline std::array<int, 3> hsv_to_rgb(double h, double s, double v)
 {
     std::array<int, 3> rgb;
     
-    double r, g, b = 0.0;
+    double r = 0.0;
+    double g = 0.0;
+    double b = 0.0;
     
     int i = int(h * 6);
     double f = h * 6 - i;

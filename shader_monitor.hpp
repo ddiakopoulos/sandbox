@@ -3,7 +3,7 @@
 #ifndef shader_monitor_h
 #define shader_monitor_h
 
-#include "GlShared.hpp"
+#include "GL_API.hpp"
 #include "util.hpp"
 #include "string_utils.hpp"
 
