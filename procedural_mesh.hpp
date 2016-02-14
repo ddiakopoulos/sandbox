@@ -40,7 +40,7 @@ inline Geometry make_cube()
         {20, 21, 22}, {20, 22, 23}
     };
     
-    cube.compute_normals();
+    cube.compute_normals(true);
     cube.compute_tangents();
     
     return cube;

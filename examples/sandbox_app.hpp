@@ -22,11 +22,13 @@ struct DecalVertex
     DecalVertex() {}
 };
 
-std::vector<DecalVertex> clip_face(std::vector<DecalVertex> & inVertices, float3 dimensions, float3 plane)
+// http://blog.wolfire.com/2009/06/how-to-project-decals/
+
+std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, float3 dimensions, float3 plane)
 {
     float size = 0.5f * std::abs(dot(dimensions, plane));
     
-    auto clip = [&](const DecalVertex v0, const DecalVertex v1, float3 p)
+    auto clip = [&](const DecalVertex v0, const DecalVertex v1, const float3 p)
     {
         auto d0 = dot(v0.v, p) - size;
         auto d1 = dot(v1.v, p) - size;
@@ -160,12 +162,14 @@ std::vector<DecalVertex> clip_face(std::vector<DecalVertex> & inVertices, float3
     return outVertices;
 }
 
-Geometry compute_decal(const Geometry & mesh, Pose meshPose, Pose cubePose, float3 dimensions, float3 check = float3(1, 1, 1))
+Geometry compute_decal(const Renderable & r, Pose intersection, Pose cubePose, float3 dimensions, float3 check = float3(1, 1, 1))
 {
     Geometry decal;
     
     std::vector<DecalVertex> finalVertices;
 
+    auto & mesh = r.geom;
+    
     for (int i = 0; i < mesh.faces.size(); i++)
     {
         uint3 f = mesh.faces[i];
@@ -175,11 +179,11 @@ Geometry compute_decal(const Geometry & mesh, Pose meshPose, Pose cubePose, floa
         {
             float3 v = mesh.vertices[f[j]];
             float3 n = mesh.normals[f[j]];
-            v = transform_coord(meshPose.matrix(), v);
+            v = transform_coord(r.pose.matrix(), v);
             v = transform_coord(cubePose.inverse().matrix(), v);
             vertices.emplace_back(v, n);
         }
-        
+
         if (check.x)
         {
             vertices = clip_face(vertices, dimensions, float3(1, 0, 0));
@@ -200,9 +204,9 @@ Geometry compute_decal(const Geometry & mesh, Pose meshPose, Pose cubePose, floa
         
         for (int j = 0; j < vertices.size(); j++)
         {
-            auto & currentVertex = vertices[j];
-            decal.texCoords.push_back(float2(0.5f + (currentVertex.v.x / dimensions.x), 0.5f + (currentVertex.v.y / dimensions.y)));
-            currentVertex.v = transform_coord(cubePose.matrix(), currentVertex.v);
+            auto & a = vertices[j];
+            decal.texCoords.push_back(float2(0.5f + (a.v.x / dimensions.x), 0.5f + (a.v.y / dimensions.y)));
+            a.v = transform_coord(cubePose.matrix(), a.v);
         }
         
         if (vertices.size() == 0)
@@ -227,8 +231,10 @@ Geometry compute_decal(const Geometry & mesh, Pose meshPose, Pose cubePose, floa
     return decal;
 }
 
-Geometry make_decal_geometry(Geometry & mesh, Pose meshPose, Pose cubePose, float3 dimensions)
+Geometry make_decal_geometry(const Renderable & r, Pose intersection, Pose cubePose, float3 dimensions)
 {
+    
+    /*
     Geometry cube = make_cube();
     
     // Scale
@@ -236,8 +242,9 @@ Geometry make_decal_geometry(Geometry & mesh, Pose meshPose, Pose cubePose, floa
     {
         cube.vertices[i] *= dimensions;
     }
+    */
     
-    return compute_decal(mesh, meshPose, cubePose, dimensions);
+    return compute_decal(r, intersection, cubePose, dimensions);
 }
 
 struct ExperimentalApp : public GLFWApp
@@ -257,6 +264,7 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GlShader> simpleShader;
     
     GlTexture splatterTex;
+    GlTexture redTex;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Sandbox App")
     {
@@ -270,7 +278,13 @@ struct ExperimentalApp : public GLFWApp
 
         simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         
-        splatterTex = load_image("assets/images/splatter.png");
+        std::vector<uint8_t> bluePixel = {0, 0, 255};
+        splatterTex.load_data(1, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, bluePixel.data());
+        
+        //splatterTex = load_image("assets/images/splatter.png");
+        
+        std::vector<uint8_t> redPixel = {255, 0, 0};
+        redTex.load_data(1, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, redPixel.data());
         
         {
             lights.resize(2);
@@ -283,16 +297,16 @@ struct ExperimentalApp : public GLFWApp
         {
             proceduralModels.resize(4);
             
-            proceduralModels[0] = Renderable(make_noisy_blob());
+            proceduralModels[0] = Renderable(make_cube());
             proceduralModels[0].pose.position = float3(0, 2, +8);
             
             proceduralModels[1] = Renderable(make_cube());
             proceduralModels[1].pose.position = float3(0, 2, -8);
             
-            proceduralModels[2] = Renderable(make_icosahedron());
+            proceduralModels[2] = Renderable(make_cube());
             proceduralModels[2].pose.position = float3(8, 2, 0);
             
-            proceduralModels[3] = Renderable(make_octohedron());
+            proceduralModels[3] = Renderable(make_cube());
             proceduralModels[3].pose.position = float3(-8, 2, 0);
         }
         
@@ -325,9 +339,21 @@ struct ExperimentalApp : public GLFWApp
                 for (auto & model : proceduralModels)
                 {
                     auto worldRay = camera.get_world_ray(event.cursor, float2(event.windowSize));
-                    if (model.check_hit(worldRay))
+                    
+                    float outT = 0;
+                    bool isHit = model.check_hit(worldRay, &outT);
+                    if (isHit)
                     {
-                        // todo
+                        Pose box;
+                        Pose hitLocation;
+                        hitLocation.position = worldRay.calculate_position(outT);
+                        std::cout << hitLocation.position << std::endl;
+                        
+                        box.position = hitLocation.position;
+                        //box.orientation = make_rotation_quat_around_x(outT);
+                        
+                        auto newDecal = make_decal_geometry(model, hitLocation, box, float3(0.5, 0.5, 0.5));
+                        decalModels.push_back(Renderable(newDecal));
                     }
                 }
 
@@ -364,11 +390,13 @@ struct ExperimentalApp : public GLFWApp
         {
             simpleShader->bind();
             
-            simpleShader->uniform("u_viewProj", viewProj);
             simpleShader->uniform("u_eye", camera.get_eye_point());
+            simpleShader->uniform("u_viewProj", viewProj);
             
             simpleShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
-            simpleShader->uniform("u_diffuse", float3(0.4f, 0.4f, 0.4f));
+            simpleShader->uniform("u_diffuse", float3(0.5f, 0.4f, 0.4f));
+            
+                simpleShader->uniform("useNormal", 0);
             
             for (int i = 0; i < lights.size(); i++)
             {
@@ -382,6 +410,7 @@ struct ExperimentalApp : public GLFWApp
             {
                 simpleShader->uniform("u_modelMatrix", model.get_model());
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                simpleShader->texture("u_diffuseTex", 0, redTex);
                 model.draw();
             }
             
