@@ -26,6 +26,8 @@ struct DecalVertex
 
 std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, float3 dimensions, float3 plane)
 {
+    std::vector<DecalVertex> outVertices;
+    
     float size = 0.5f * std::abs(dot(dimensions, plane));
     
     auto clip = [&](const DecalVertex v0, const DecalVertex v1, const float3 p)
@@ -39,12 +41,8 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
             float3(v0.n.x + s * (v1.n.x - v0.n.x), v0.n.y + s * (v1.n.y - v0.n.y), v0.n.z + s * (v1.n.z - v0.n.z))
         };
         
-        // need to clip more values (texture coordinates)? do it this way:
-        //intersectpoint.value = a.value + s*(b.value-a.value);
         return vert;
     };
-    
-    std::vector<DecalVertex> outVertices;
     
     for (int j = 0; j < inVertices.size(); j += 3)
     {
@@ -162,7 +160,7 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
     return outVertices;
 }
 
-Geometry compute_decal(const Renderable & r, Pose intersection, Pose cubePose, float3 dimensions, float3 check = float3(1, 1, 1))
+Geometry make_decal_geometry(const Renderable & r, Pose intersection, Pose cubePose, float3 dimensions)
 {
     Geometry decal;
     
@@ -184,23 +182,18 @@ Geometry compute_decal(const Renderable & r, Pose intersection, Pose cubePose, f
             vertices.emplace_back(v, n);
         }
 
-        if (check.x)
-        {
-            vertices = clip_face(vertices, dimensions, float3(1, 0, 0));
-            vertices = clip_face(vertices, dimensions, float3(-1, 0, 0));
-        }
+        // Clip X faces
+        vertices = clip_face(vertices, dimensions, float3(1, 0, 0));
+        vertices = clip_face(vertices, dimensions, float3(-1, 0, 0));
         
-        if (check.y)
-        {
-            vertices = clip_face(vertices, dimensions, float3(0, 1, 0));
-            vertices = clip_face(vertices, dimensions, float3(0, -1, 0));
-        }
-        
-        if (check.z)
-        {
-            vertices = clip_face(vertices, dimensions, float3(0, 0, 1));
-            vertices = clip_face(vertices, dimensions, float3(0, 0, -1));
-        }
+        // Clip Y faces
+        vertices = clip_face(vertices, dimensions, float3(0, 1, 0));
+        vertices = clip_face(vertices, dimensions, float3(0, -1, 0));
+
+        // Clip Z faces
+        vertices = clip_face(vertices, dimensions, float3(0, 0, 1));
+        vertices = clip_face(vertices, dimensions, float3(0, 0, -1));
+
         
         for (int j = 0; j < vertices.size(); j++)
         {
@@ -229,22 +222,6 @@ Geometry compute_decal(const Renderable & r, Pose intersection, Pose cubePose, f
     }
     
     return decal;
-}
-
-Geometry make_decal_geometry(const Renderable & r, Pose intersection, Pose cubePose, float3 dimensions)
-{
-    
-    /*
-    Geometry cube = make_cube();
-    
-    // Scale
-    for (int i = 0; i < cube.vertices.size(); i++)
-    {
-        cube.vertices[i] *= dimensions;
-    }
-    */
-    
-    return compute_decal(r, intersection, cubePose, dimensions);
 }
 
 struct ExperimentalApp : public GLFWApp
@@ -344,12 +321,10 @@ struct ExperimentalApp : public GLFWApp
                     bool isHit = model.check_hit(worldRay, &outT);
                     if (isHit)
                     {
-                        Pose box;
-                        Pose hitLocation;
-                        hitLocation.position = worldRay.calculate_position(outT);
+                        Pose hitLocation(worldRay.calculate_position(outT));
                         std::cout << hitLocation.position << std::endl;
                         
-                        box.position = hitLocation.position;
+                        Pose box(hitLocation.position);
                         //box.orientation = make_rotation_quat_around_x(outT);
                         
                         auto newDecal = make_decal_geometry(model, hitLocation, box, float3(0.5, 0.5, 0.5));
