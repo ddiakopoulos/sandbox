@@ -168,6 +168,8 @@ Geometry make_decal_geometry(const Renderable & r, Pose intersection, Pose cubeP
 
     auto & mesh = r.geom;
     
+    assert(mesh.normals.size() > 0);
+    
     for (int i = 0; i < mesh.faces.size(); i++)
     {
         uint3 f = mesh.faces[i];
@@ -257,11 +259,10 @@ struct ExperimentalApp : public GLFWApp
         
         std::vector<uint8_t> bluePixel = {0, 0, 255};
         splatterTex.load_data(1, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, bluePixel.data());
-        
         //splatterTex = load_image("assets/images/splatter.png");
         
-        std::vector<uint8_t> redPixel = {255, 0, 0};
-        redTex.load_data(1, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, redPixel.data());
+        std::vector<uint8_t> pixel = {255, 255, 255};
+        redTex.load_data(1, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, pixel.data());
         
         {
             lights.resize(2);
@@ -321,10 +322,10 @@ struct ExperimentalApp : public GLFWApp
                     bool isHit = model.check_hit(worldRay, &outT);
                     if (isHit)
                     {
-                        Pose hitLocation(worldRay.calculate_position(outT));
+                        Pose hitLocation(worldRay.calculate_position(outT - 0.25f));
                         std::cout << hitLocation.position << std::endl;
                         
-                        Pose box(hitLocation.position);
+                        Pose box(worldRay.calculate_position(outT));
                         //box.orientation = make_rotation_quat_around_x(outT);
                         
                         auto newDecal = make_decal_geometry(model, hitLocation, box, float3(0.5, 0.5, 0.5));
@@ -348,6 +349,9 @@ struct ExperimentalApp : public GLFWApp
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
 
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -388,15 +392,22 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->texture("u_diffuseTex", 0, redTex);
                 model.draw();
             }
-            
-            for (const auto & decal : decalModels)
+
             {
-                simpleShader->uniform("u_modelMatrix", decal.get_model());
-                simpleShader->uniform("u_modelMatrixIT", inv(transpose(decal.get_model())));
-                simpleShader->texture("u_diffuseTex", 0, splatterTex);
-                decal.draw();
+                glEnable (GL_POLYGON_OFFSET_FILL);
+                glPolygonOffset (-1.0, 1.0);
+                
+                for (const auto & decal : decalModels)
+                {
+                    simpleShader->uniform("u_modelMatrix", decal.get_model());
+                    simpleShader->uniform("u_modelMatrixIT", inv(transpose(decal.get_model())));
+                    simpleShader->texture("u_diffuseTex", 0, splatterTex);
+                    decal.draw();
+                }
+                
+                glDisable(GL_POLYGON_OFFSET_FILL);
             }
-            
+
             gl_check_error(__FILE__, __LINE__);
             
             simpleShader->unbind();
