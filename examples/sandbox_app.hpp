@@ -92,6 +92,31 @@ struct ExperimentalApp : public GLFWApp
         // Blit
         readbackTex.load_data(1, 1, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
     
+        sceneFramebuffer.attach(GL_COLOR_ATTACHMENT0, sceneColorTexture);
+        sceneFramebuffer.attach(GL_DEPTH_ATTACHMENT, sceneDepthTexture);
+        if (!sceneFramebuffer.check_complete()) throw std::runtime_error("incomplete scene framebuffer");
+        
+        luminance_0.attach(GL_COLOR_ATTACHMENT0, luminanceTex_0);
+        if (!luminance_0.check_complete()) throw std::runtime_error("incomplete lum0 framebuffer");
+        
+        luminance_1.attach(GL_COLOR_ATTACHMENT0, luminanceTex_1);
+        if (!luminance_1.check_complete()) throw std::runtime_error("incomplete lum1 framebuffer");
+        
+        luminance_2.attach(GL_COLOR_ATTACHMENT0, luminanceTex_2);
+        if (!luminance_2.check_complete()) throw std::runtime_error("incomplete lum2 framebuffer");
+        
+        luminance_3.attach(GL_COLOR_ATTACHMENT0, luminanceTex_3);
+        if (!luminance_3.check_complete()) throw std::runtime_error("incomplete lum3 framebuffer");
+        
+        luminance_4.attach(GL_COLOR_ATTACHMENT0, luminanceTex_4);
+        if (!luminance_4.check_complete()) throw std::runtime_error("incomplete lum4 framebuffer");
+        
+        brightFramebuffer.attach(GL_COLOR_ATTACHMENT0, brightTex);
+        if (!brightFramebuffer.check_complete()) throw std::runtime_error("incomplete bright framebuffer");
+        
+        blurFramebuffer.attach(GL_COLOR_ATTACHMENT0, blurTex);
+        if (!blurFramebuffer.check_complete()) throw std::runtime_error("incomplete blur framebuffer");
+        
         luminanceView.reset(new GLTextureView(luminanceTex_0.get_gl_handle()));
         averageLuminanceView.reset(new GLTextureView(luminanceTex_4.get_gl_handle()));
         brightnessView.reset(new GLTextureView(brightTex.get_gl_handle()));
