@@ -19,7 +19,7 @@ void luminance_offset_2x2(GlShader * shader, float2 size)
     }
     
     for (int n = 0; n < num; ++n)
-        shader->uniform("u_offser[" + std::to_string(n) + "]", offsets[n]);
+        shader->uniform("u_offset[" + std::to_string(n) + "]", offsets[n]);
 }
 
 void luminance_offset_4x4(GlShader * shader, float2 size)
@@ -41,7 +41,7 @@ void luminance_offset_4x4(GlShader * shader, float2 size)
     }
     
     for (int n = 0; n < num; ++n)
-        shader->uniform("u_offser[" + std::to_string(n) + "]", offsets[n]);
+        shader->uniform("u_offset[" + std::to_string(n) + "]", offsets[n]);
 }
 
 struct ExperimentalApp : public GLFWApp
@@ -61,6 +61,7 @@ struct ExperimentalApp : public GLFWApp
     float middleGrey = 0.1f;
     float whitePoint = 0.1f;
     float threshold = 0.1f;
+    float time = 0.0f;
     
     std::unique_ptr<GlShader> hdr_meshShader;
     
@@ -231,6 +232,7 @@ struct ExperimentalApp : public GLFWApp
     void on_update(const UpdateEvent & e) override
     {
         cameraController.update(e.timestep_ms);
+        time += e.timestep_ms;
     }
     
     void on_draw() override
@@ -260,53 +262,63 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear anything out of default fbo
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
+        std::vector<float> lumValue = {0.0, 0.0, 0.0, 0.0};
         {
             luminance_0.bind_to_draw(); // 128x128 surface area - calculate luminance
             hdr_lumShader->bind();
-            hdr_lumShader->uniform("u_color", float4(255, 0, 0, 255));
+            luminance_offset_2x2(hdr_lumShader.get(), float2(128, 128));
+            hdr_lumShader->texture("s_texColor", 0, sceneColorTexture);
             fullscreen_post_quad.draw_elements();
             hdr_lumShader->unbind();
 
             luminance_1.bind_to_draw(); // 64x64 surface area - downscale + average
             hdr_avgLumShader->bind();
-            hdr_avgLumShader->uniform("u_color", float4(255, 0, 0, 255));
+            luminance_offset_4x4(hdr_avgLumShader.get(), float2(128, 128));
+            hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_0);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
             luminance_2.bind_to_draw(); // 16x16 surface area - downscale + average
             hdr_avgLumShader->bind();
-            hdr_avgLumShader->uniform("u_color", float4(255, 0, 0, 255));
+            luminance_offset_4x4(hdr_avgLumShader.get(), float2(64, 64));
+            hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_1);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
             luminance_3.bind_to_draw(); // 4x4 surface area - downscale + average
             hdr_avgLumShader->bind();
-            hdr_avgLumShader->uniform("u_color", float4(255, 0, 0, 255));
+            luminance_offset_4x4(hdr_avgLumShader.get(), float2(16, 16));
+            hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_2);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
             luminance_4.bind_to_draw(); // 1x1 surface area - downscale + average
             hdr_avgLumShader->bind();
-            hdr_avgLumShader->uniform("u_color", float4(255, 0, 0, 255));
+            luminance_offset_4x4(hdr_avgLumShader.get(), float2(4, 4));
+            hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_3);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
             // Read luminance value
-            std::vector<float> value = {0.0, 0.0, 0.0, 0.0};
-            glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, value.data());
+            glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, lumValue.data());
         }
+        
+        float4 tonemap = { middleGrey, whitePoint * whitePoint, threshold, time };
         
         // Take original scene framebuffer and render for brightness
         
         brightFramebuffer.bind_to_draw(); // 1/2 size
         hdr_brightShader->bind();
-        hdr_brightShader->uniform("u_color", float4(255, 0, 0, 255));
+        luminance_offset_4x4(hdr_brightShader.get(), float2(width / 2.f, height / 2.f));
+        hdr_brightShader->texture("s_texColor",0, sceneColorTexture);
+        hdr_brightShader->texture("s_texLum",1, luminanceTex_4); // 1x1
+        hdr_brightShader->uniform("u_tonemap", tonemap);
         fullscreen_post_quad.draw_elements();
         hdr_brightShader->unbind();
         
         blurFramebuffer.bind_to_draw(); // 1/8 size
         hdr_blurShader->bind();
-        hdr_blurShader->uniform("u_color", float4(255, 0, 0, 255));
+        hdr_blurShader->texture("s_texColor", 0, brightTex);
         fullscreen_post_quad.draw_elements();
         hdr_blurShader->unbind();
 
@@ -315,7 +327,10 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         
         hdr_tonemapShader->bind();
-        hdr_tonemapShader->uniform("u_color", float4(255, 0, 0, 255));
+        hdr_tonemapShader->texture("s_texColor",0, sceneColorTexture);
+        hdr_tonemapShader->texture("s_texLum",1, luminanceTex_4); // 1x1
+        hdr_tonemapShader->texture("s_texBlur",2, blurTex);
+        hdr_tonemapShader->uniform("u_tonemap", tonemap);
         fullscreen_post_quad.draw_elements();
         hdr_tonemapShader->unbind();
     
