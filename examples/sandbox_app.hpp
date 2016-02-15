@@ -14,6 +14,10 @@ struct ExperimentalApp : public GLFWApp
     
     UIComponent uiSurface;
     
+    float middleGrey = 0.1f;
+    float whitePoint = 0.1f;
+    float threshold = 0.1f;
+    
     std::unique_ptr<GlShader> hdr_meshShader;
     
     std::unique_ptr<GlShader> hdr_lumShader;
@@ -79,8 +83,8 @@ struct ExperimentalApp : public GLFWApp
         uiSurface.add_child( {{0.8335, +10},{0, +10},{1.0000, -10},{0.133, +10}}, std::make_shared<UIComponent>());
         uiSurface.layout();
         
-        sceneColorTexture.load_data(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT, greenDebugPixel.data());
-        sceneDepthTexture.load_data(width, width, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, greenDebugPixel.data());
+        sceneColorTexture.load_data(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        sceneDepthTexture.load_data(width, width, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
         
         luminanceTex_0.load_data(128, 128, GL_RGBA32F, GL_RGBA, GL_FLOAT, greenDebugPixel.data());
         luminanceTex_1.load_data(64, 64,   GL_RGBA32F, GL_RGBA, GL_FLOAT, greenDebugPixel.data());
@@ -199,8 +203,9 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
      
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
+        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
@@ -209,6 +214,8 @@ struct ExperimentalApp : public GLFWApp
         // Render skybox into scene
         sceneFramebuffer.bind_to_draw();
         
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
@@ -241,7 +248,6 @@ struct ExperimentalApp : public GLFWApp
         }
         
         
-         //glViewport(0, 0, width, height);
         luminance_0.bind_to_draw();
         hdr_lumShader->bind();
         hdr_lumShader->uniform("u_color", float4(255, 0, 0, 255));
@@ -268,12 +274,11 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_post_quad.draw_elements();
         hdr_blurShader->unbind();
         
-         */
-
+        */
         
-        // Output to default screen framebuffer
-        glViewport(0, 0, width, height);
+        // Output to default screen framebuffer on the last pass
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, width, height);
         
         /*
         hdr_tonemapShader->bind();
@@ -286,11 +291,11 @@ struct ExperimentalApp : public GLFWApp
         
         {
             // Debug Draw
-            luminanceView->draw(uiSurface.children[0]->bounds, int2(width, height));
-            averageLuminanceView->draw(uiSurface.children[1]->bounds, int2(width, height));
-            brightnessView->draw(uiSurface.children[2]->bounds, int2(width, height));
-            blurView->draw(uiSurface.children[3]->bounds, int2(width, height));
-            tonemapView->draw(uiSurface.children[4]->bounds, int2(width, height));
+            //luminanceView->draw(uiSurface.children[0]->bounds, int2(width, height));
+            //averageLuminanceView->draw(uiSurface.children[1]->bounds, int2(width, height));
+            //brightnessView->draw(uiSurface.children[2]->bounds, int2(width, height));
+            //blurView->draw(uiSurface.children[3]->bounds, int2(width, height));
+            tonemapView->draw(uiSurface.children[0]->bounds, int2(width, height));
             //futureView->draw(uiSurface.children[0]->bounds, int2(width, height));
         }
         
