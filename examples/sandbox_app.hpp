@@ -44,6 +44,13 @@ void luminance_offset_4x4(GlShader * shader, float2 size)
         shader->uniform("u_offset[" + std::to_string(n) + "]", offsets[n]);
 }
 
+std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath)
+{
+    auto shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath));
+    mon.add_shader(shader, vertexPath, fragPath);
+    return shader;
+}
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -179,23 +186,16 @@ struct ExperimentalApp : public GLFWApp
         cameraController.set_camera(&camera);
         
         camera.look_at({0, 8, 24}, {0, 0, 0});
+        
+        // Scene shaders
+        hdr_meshShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/simple_frag.glsl");
 
-        hdr_meshShader.reset(       new GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
-        
-        hdr_lumShader.reset(        new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
-        shaderMonitor.add_shader                (hdr_lumShader, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
-        
-        hdr_avgLumShader.reset(     new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
-        shaderMonitor.add_shader                (hdr_avgLumShader, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
-        
-        hdr_blurShader.reset(       new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
-        shaderMonitor.add_shader                (hdr_blurShader, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
-        
-        hdr_brightShader.reset(     new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
-        shaderMonitor.add_shader                (hdr_brightShader, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
-        
-        hdr_tonemapShader.reset(    new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
-        shaderMonitor.add_shader                (hdr_tonemapShader, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        // Pipeline shaders
+        hdr_lumShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        hdr_avgLumShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        hdr_blurShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        hdr_brightShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        hdr_tonemapShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
 
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
