@@ -50,13 +50,15 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
         float d2 = dot(inVertices[j + 1].v, plane) - size;
         float d3 = dot(inVertices[j + 2].v, plane) - size;
         
-        bool v1Out = d1 > 0.f;
-        bool v2Out = d2 > 0.f;
-        bool v3Out = d3 > 0.f;
+        int v1Out = d1 > 0.f;
+        int v2Out = d2 > 0.f;
+        int v3Out = d3 > 0.f;
         
-        int total = (v1Out ? 1 : 0) + (v2Out ? 1 : 0) + (v3Out ? 1 : 0);
+        int total = v1Out + v2Out + v3Out;
+
+        DecalVertex nV1, nV2, nV3, nV4;
         
-        switch(total)
+        switch (total)
         {
             case 0:
             {
@@ -65,10 +67,9 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
                 outVertices.push_back(inVertices[j + 2]);
                 break;
             }
+                
             case 1:
             {
-                DecalVertex nV1, nV2, nV3, nV4;
-                
                 if (v1Out)
                 {
                     nV1 = inVertices[j + 1];
@@ -115,8 +116,6 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
             }
             case 2:
             {
-                DecalVertex nV1, nV2, nV3;
-                
                 if (!v1Out)
                 {
                     nV1 = inVertices[j + 0];
@@ -163,17 +162,15 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
 Geometry make_decal_geometry(const Renderable & r, Pose cubePose, float3 dimensions)
 {
     Geometry decal;
-    
     std::vector<DecalVertex> finalVertices;
     
     auto & mesh = r.geom;
-    
     assert(mesh.normals.size() > 0);
     
     for (int i = 0; i < mesh.faces.size(); i++)
     {
         uint3 f = mesh.faces[i];
-        std::vector<DecalVertex> vertices;
+        std::vector<DecalVertex> clippedVertices;
         
         for (int j = 0; j < 3; j++)
         {
@@ -181,32 +178,33 @@ Geometry make_decal_geometry(const Renderable & r, Pose cubePose, float3 dimensi
             float3 n = mesh.normals[f[j]];
             v = transform_coord(r.pose.matrix(), v); // local into world
             v = transform_coord(cubePose.inverse().matrix(), v); // with the box
-            vertices.emplace_back(v, n);
+            clippedVertices.emplace_back(v, n);
         }
 
         // Clip X faces
-        vertices = clip_face(vertices, dimensions, float3(1, 0, 0));
-        vertices = clip_face(vertices, dimensions, float3(-1, 0, 0));
+        clippedVertices = clip_face(clippedVertices, dimensions, float3(1, 0, 0));
+        clippedVertices = clip_face(clippedVertices, dimensions, float3(-1, 0, 0));
         
         // Clip Y faces
-        vertices = clip_face(vertices, dimensions, float3(0, 1, 0));
-        vertices = clip_face(vertices, dimensions, float3(0, -1, 0));
+        clippedVertices = clip_face(clippedVertices, dimensions, float3(0, 1, 0));
+        clippedVertices = clip_face(clippedVertices, dimensions, float3(0, -1, 0));
 
         // Clip Z faces
-        vertices = clip_face(vertices, dimensions, float3(0, 0, 1));
-        vertices = clip_face(vertices, dimensions, float3(0, 0, -1));
-
-        for (int j = 0; j < vertices.size(); j++)
+        clippedVertices = clip_face(clippedVertices, dimensions, float3(0, 0, 1));
+        clippedVertices = clip_face(clippedVertices, dimensions, float3(0, 0, -1));
+        
+        // Projected coordinates are also our texCoords
+        for (int v = 0; v < clippedVertices.size(); v++)
         {
-            auto & a = vertices[j];
+            auto & a = clippedVertices[v];
             decal.texCoords.push_back(float2(0.5f + (a.v.x / dimensions.x), 0.5f + (a.v.y / dimensions.y)));
             a.v = transform_coord(cubePose.matrix(), a.v); // back to local
         }
         
-        if (vertices.size() == 0)
+        if (clippedVertices.size() == 0)
             continue;
         
-        finalVertices.insert(finalVertices.end(), vertices.begin(), vertices.end());
+        finalVertices.insert(finalVertices.end(), clippedVertices.begin(), clippedVertices.end());
     }
     
     for (int k = 0; k < finalVertices.size(); k += 3)
@@ -278,24 +276,21 @@ struct ExperimentalApp : public GLFWApp
             proceduralModels[1] = Renderable(make_cube());
             proceduralModels[1].pose.position = float3(0, 2, -8);
             
-            proceduralModels[2] = Renderable(make_cube());
+            auto hollowCube = load_geometry_from_ply("assets/models/geometry/CubeHollowOpen.ply");
+            for (auto & v : hollowCube.vertices) v *= 0.0125f;
+            
+            proceduralModels[2] = Renderable(hollowCube);
             proceduralModels[2].pose.position = float3(8, 2, 0);
             
-            auto model = load_geometry_from_obj_no_texture("assets/models/leeperrysmith/lps.obj");
-            
+            auto leePerryHeadModel = load_geometry_from_obj_no_texture("assets/models/leeperrysmith/lps.obj");
             Geometry combined;
-            
-            for (int i = 0; i < model.size(); ++i)
+            for (int i = 0; i < leePerryHeadModel.size(); ++i)
             {
-                auto & m = model[i];
-                
+                auto & m = leePerryHeadModel[i];
                 for (auto & v : m.vertices) v *= 15.f;
-                
                 combined = concatenate_geometry(combined, m);
             }
-            
             combined.compute_normals(false);
-            
             proceduralModels[3] = Renderable(combined);
             proceduralModels[3].pose.position = float3(-8, 2, 0);
         }
