@@ -1,5 +1,49 @@
 #include "index.hpp"
 
+void luminance_offset_2x2(GlShader * shader, float2 size)
+{
+    float4 offsets[16];
+    
+    float du = 1.0f / size.x;
+    float dv = 1.0f / size.y;
+    
+    uint32_t num = 0;
+    for (uint32_t yy = 0; yy < 3; ++yy)
+    {
+        for (uint32_t xx = 0; xx < 3; ++xx)
+        {
+            offsets[num][0] = (xx) * du;
+            offsets[num][1] = (yy) * dv;
+            ++num;
+        }
+    }
+    
+    for (int n = 0; n < num; ++n)
+        shader->uniform("u_offser[" + std::to_string(n) + "]", offsets[n]);
+}
+
+void luminance_offset_4x4(GlShader * shader, float2 size)
+{
+    float4 offsets[16];
+    
+    float du = 1.0f / size.x;
+    float dv = 1.0f / size.y;
+    
+    uint32_t num = 0;
+    for (uint32_t yy = 0; yy < 4; ++yy)
+    {
+        for (uint32_t xx = 0; xx < 4; ++xx)
+        {
+            offsets[num][0] = (xx - 1.0f) * du;
+            offsets[num][1] = (yy - 1.0f) * dv;
+            ++num;
+        }
+    }
+    
+    for (int n = 0; n < num; ++n)
+        shader->uniform("u_offser[" + std::to_string(n) + "]", offsets[n]);
+}
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -266,14 +310,14 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_post_quad.draw_elements();
         hdr_blurShader->unbind();
 
+        // Output to default screen framebuffer on the last pass
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, width, height);
+        
         hdr_tonemapShader->bind();
         hdr_tonemapShader->uniform("u_color", float4(255, 0, 0, 255));
         fullscreen_post_quad.draw_elements();
         hdr_tonemapShader->unbind();
-        
-        // Output to default screen framebuffer on the last pass
-        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        // glViewport(0, 0, width, height);
     
         //std::cout << float4(value[0], value[1], value[2], value[3]) << std::endl;
         
