@@ -13,6 +13,50 @@ struct ExperimentalApp : public GLFWApp
     std::vector<LightObject> lights;
     std::unique_ptr<GlShader> simpleShader;
     
+    UIComponent uiSurface;
+    
+    std::unique_ptr<GlShader> hdr_meshShader;
+    
+    std::unique_ptr<GlShader> hdr_LuminanceShader;
+    std::unique_ptr<GlShader> hdr_AverageLuminanceShader;
+    std::unique_ptr<GlShader> hdr_blurShader;
+    std::unique_ptr<GlShader> hdr_brightShader;
+    std::unique_ptr<GlShader> hdr_tonemapShader;
+    
+    std::unique_ptr<GLTextureView> skyboxView;
+    std::unique_ptr<GLTextureView> luminanceView;
+    std::unique_ptr<GLTextureView> averageLuminanceView;
+    std::unique_ptr<GLTextureView> brightnessView;
+    std::unique_ptr<GLTextureView> blurView;
+    std::unique_ptr<GLTextureView> tonemapView;
+    
+    GlTexture       readbackTex;
+    
+    GlTexture       sceneColorTexture;
+    GlTexture       sceneDepthTexture;
+    GlFramebuffer   sceneFramebuffer;
+    
+    GlTexture       luminanceTex_0;
+    GlFramebuffer   luminance_0;
+    
+    GlTexture       luminanceTex_1;
+    GlFramebuffer   luminance_1;
+    
+    GlTexture       luminanceTex_2;
+    GlFramebuffer   luminance_2;
+    
+    GlTexture       luminanceTex_3;
+    GlFramebuffer   luminance_3;
+    
+    GlTexture       luminanceTex_4;
+    GlFramebuffer   luminance_4;
+    
+    GlTexture       brightTex;
+    GlFramebuffer   brightFramebuffer;
+    
+    GlTexture       blurTex;
+    GlFramebuffer   blurFramebuffer;
+    
     GlTexture emptyTex;
 
     ExperimentalApp() : GLFWApp(1280, 720, "Sandbox App")
@@ -20,6 +64,15 @@ struct ExperimentalApp : public GLFWApp
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
+        
+        uiSurface.bounds = {0, 0, (float) width, (float) height};
+        uiSurface.add_child( {{0.0000, +10},{0, +10},{0.1667, -10},{0.33, 0}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.1667, +10},{0, +10},{0.3334, -10},{0.33, 0}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.3334, +10},{0, +10},{0.5009, -10},{0.33, 0}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.5000, +10},{0, +10},{0.6668, -10},{0.33, 0}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.6668, +10},{0, +10},{0.8335, -10},{0.33, 0}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.8335, +10},{0, +10},{1.0000, -10},{0.33, 0}}, std::make_shared<UIComponent>());
+        uiSurface.layout();
         
         cameraController.set_camera(&camera);
         
