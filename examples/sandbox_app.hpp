@@ -203,8 +203,8 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
      
+        // Initial clear
         glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
-        
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
@@ -213,86 +213,69 @@ struct ExperimentalApp : public GLFWApp
                  
         // Render skybox into scene
         sceneFramebuffer.bind_to_draw();
-        
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear anything out of default fbo
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
-            hdr_meshShader->bind();
-            
-            hdr_meshShader->uniform("u_eye", camera.get_eye_point());
-            hdr_meshShader->uniform("u_viewProj", viewProj);
-            
-            hdr_meshShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
-            hdr_meshShader->uniform("u_diffuse", float3(0.4f, 0.425f, 0.415f));
-            hdr_meshShader->uniform("useNormal", 0);
-            
-            for (int i = 0; i < lights.size(); i++)
-            {
-                auto light = lights[i];
-                hdr_meshShader->uniform("u_lights[" + std::to_string(i) + "].position", light.pose.position);
-                hdr_meshShader->uniform("u_lights[" + std::to_string(i) + "].color", light.color);
-            }
-            
-            for (const auto & model : models)
-            {
-                hdr_meshShader->uniform("u_modelMatrix", model.get_model());
-                hdr_meshShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                model.draw();
-            }
+            luminance_0.bind_to_draw(); // 128x128 surface area - calculate luminance
+            hdr_lumShader->bind();
+            hdr_lumShader->uniform("u_color", float4(255, 0, 0, 255));
+            fullscreen_post_quad.draw_elements();
+            hdr_lumShader->unbind();
 
-            gl_check_error(__FILE__, __LINE__);
+            luminance_1.bind_to_draw(); // 64x64 surface area - downscale + average
+            hdr_avgLumShader->bind();
+            hdr_avgLumShader->uniform("u_color", float4(255, 0, 0, 255));
+            fullscreen_post_quad.draw_elements();
+            hdr_avgLumShader->unbind();
             
-            hdr_meshShader->unbind();
+            luminance_2.bind_to_draw(); // 16x16 surface area - downscale + average
+            hdr_avgLumShader->bind();
+            hdr_avgLumShader->uniform("u_color", float4(255, 0, 0, 255));
+            fullscreen_post_quad.draw_elements();
+            hdr_avgLumShader->unbind();
+            
+            luminance_3.bind_to_draw(); // 4x4 surface area - downscale + average
+            hdr_avgLumShader->bind();
+            hdr_avgLumShader->uniform("u_color", float4(255, 0, 0, 255));
+            fullscreen_post_quad.draw_elements();
+            hdr_avgLumShader->unbind();
+            
+            luminance_4.bind_to_draw(); // 1x1 surface area - downscale + average
+            hdr_avgLumShader->bind();
+            hdr_avgLumShader->uniform("u_color", float4(255, 0, 0, 255));
+            fullscreen_post_quad.draw_elements();
+            hdr_avgLumShader->unbind();
+            
+            // Read luminance value
+            std::vector<float> value = {0.0, 0.0, 0.0, 0.0};
+            glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, value.data());
         }
         
+        // Take original scene framebuffer and render for brightness
         
-        luminance_0.bind_to_draw();
-        hdr_lumShader->bind();
-        hdr_lumShader->uniform("u_color", float4(255, 0, 0, 255));
-        fullscreen_post_quad.draw_elements();
-        hdr_lumShader->unbind();
-        
-        std::vector<float> value = {0.0, 0.0, 0.0, 0.0};
-        glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, value.data());
-        
-        /*
-                     
-        luminance_4.bind_to_draw();
-        hdr_avgLumShader->bind();
-        hdr_avgLumShader->uniform("u_color", float4(255, 100, 255, 255));
-        fullscreen_post_quad.draw_elements();
-        hdr_avgLumShader->unbind();
-        
-        brightFramebuffer.bind_to_draw();
+        brightFramebuffer.bind_to_draw(); // 1/2 size
         hdr_brightShader->bind();
         hdr_brightShader->uniform("u_color", float4(255, 0, 0, 255));
         fullscreen_post_quad.draw_elements();
         hdr_brightShader->unbind();
         
-        blurFramebuffer.bind_to_draw();
+        blurFramebuffer.bind_to_draw(); // 1/8 size
         hdr_blurShader->bind();
         hdr_blurShader->uniform("u_color", float4(255, 0, 0, 255));
         fullscreen_post_quad.draw_elements();
         hdr_blurShader->unbind();
-        
-        */
-        
-        // Output to default screen framebuffer on the last pass
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, width, height);
-        
-        /*
+
         hdr_tonemapShader->bind();
         hdr_tonemapShader->uniform("u_color", float4(255, 0, 0, 255));
         fullscreen_post_quad.draw_elements();
         hdr_tonemapShader->unbind();
-        */
         
-        //glReadBuffer(GL_COLOR_ATTACHMENT0);
-        
-        std::cout << float4(value[0], value[1], value[2], value[3]) << std::endl;
+        // Output to default screen framebuffer on the last pass
+        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // glViewport(0, 0, width, height);
+    
+        //std::cout << float4(value[0], value[1], value[2], value[3]) << std::endl;
         
         grid.render(proj, view);
         
