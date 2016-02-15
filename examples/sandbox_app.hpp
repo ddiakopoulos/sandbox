@@ -22,7 +22,6 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GlShader> hdr_brightShader;
     std::unique_ptr<GlShader> hdr_tonemapShader;
     
-    std::unique_ptr<GLTextureView> skyboxView;
     std::unique_ptr<GLTextureView> luminanceView;
     std::unique_ptr<GLTextureView> averageLuminanceView;
     std::unique_ptr<GLTextureView> brightnessView;
@@ -77,18 +76,23 @@ struct ExperimentalApp : public GLFWApp
         sceneColorTexture.load_data(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
         sceneDepthTexture.load_data(width, width, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
         
-        luminanceTex_0.load_data(128, 128, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_1.load_data(64, 64,   GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_2.load_data(16, 16,   GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_3.load_data(4, 4,     GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_4.load_data(1, 1,     GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_0.load_data(128, 128, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_1.load_data(64, 64,   GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_2.load_data(16, 16,   GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_3.load_data(4, 4,     GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_4.load_data(1, 1,     GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
         
-        brightTex.load_data(width / 2, width / 2, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        blurTex.load_data(width / 8, width / 8, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        brightTex.load_data(width / 2, width / 2, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        blurTex.load_data(width / 8, width / 8, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
         
         // Blit
-        readbackTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
+        readbackTex.load_data(1, 1, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+    
+        luminanceView.reset(new GLTextureView(luminanceTex_0.get_gl_handle()));
+        averageLuminanceView.reset(new GLTextureView(luminanceTex_4.get_gl_handle()));
+        brightnessView.reset(new GLTextureView(brightTex.get_gl_handle()));
+        blurView.reset(new GLTextureView(blurTex.get_gl_handle()));
+        tonemapView.reset(new GLTextureView(sceneColorTexture.get_gl_handle()));
         
         cameraController.set_camera(&camera);
         
