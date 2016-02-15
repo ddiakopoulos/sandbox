@@ -63,19 +63,21 @@ struct ExperimentalApp : public GLFWApp
     float threshold = 0.1f;
     float time = 0.0f;
     
-    std::unique_ptr<GlShader> hdr_meshShader;
+    ShaderMonitor shaderMonitor;
     
-    std::unique_ptr<GlShader> hdr_lumShader;
-    std::unique_ptr<GlShader> hdr_avgLumShader;
-    std::unique_ptr<GlShader> hdr_blurShader;
-    std::unique_ptr<GlShader> hdr_brightShader;
-    std::unique_ptr<GlShader> hdr_tonemapShader;
+    std::shared_ptr<GlShader> hdr_meshShader;
     
-    std::unique_ptr<GLTextureView> luminanceView;
-    std::unique_ptr<GLTextureView> averageLuminanceView;
-    std::unique_ptr<GLTextureView> brightnessView;
-    std::unique_ptr<GLTextureView> blurView;
-    std::unique_ptr<GLTextureView> tonemapView;
+    std::shared_ptr<GlShader> hdr_lumShader;
+    std::shared_ptr<GlShader> hdr_avgLumShader;
+    std::shared_ptr<GlShader> hdr_blurShader;
+    std::shared_ptr<GlShader> hdr_brightShader;
+    std::shared_ptr<GlShader> hdr_tonemapShader;
+    
+    std::shared_ptr<GLTextureView> luminanceView;
+    std::shared_ptr<GLTextureView> averageLuminanceView;
+    std::shared_ptr<GLTextureView> brightnessView;
+    std::shared_ptr<GLTextureView> blurView;
+    std::shared_ptr<GLTextureView> tonemapView;
     
     GlMesh fullscreen_post_quad;
     
@@ -181,10 +183,19 @@ struct ExperimentalApp : public GLFWApp
         hdr_meshShader.reset(       new GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
         hdr_lumShader.reset(        new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
+        shaderMonitor.add_shader                (hdr_lumShader, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        
         hdr_avgLumShader.reset(     new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
+        shaderMonitor.add_shader                (hdr_avgLumShader, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        
         hdr_blurShader.reset(       new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
+        shaderMonitor.add_shader                (hdr_blurShader, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        
         hdr_brightShader.reset(     new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
+        shaderMonitor.add_shader                (hdr_brightShader, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        
         hdr_tonemapShader.reset(    new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
+        shaderMonitor.add_shader                (hdr_tonemapShader, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
 
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
@@ -233,6 +244,7 @@ struct ExperimentalApp : public GLFWApp
     {
         cameraController.update(e.timestep_ms);
         time += e.timestep_ms;
+               shaderMonitor.handle_recompile();
     }
     
     void on_draw() override
