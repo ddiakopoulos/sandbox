@@ -16,8 +16,8 @@ struct ExperimentalApp : public GLFWApp
     
     std::unique_ptr<GlShader> hdr_meshShader;
     
-    std::unique_ptr<GlShader> hdr_LuminanceShader;
-    std::unique_ptr<GlShader> hdr_AverageLuminanceShader;
+    std::unique_ptr<GlShader> hdr_lumShader;
+    std::unique_ptr<GlShader> hdr_avgLumShader;
     std::unique_ptr<GlShader> hdr_blurShader;
     std::unique_ptr<GlShader> hdr_brightShader;
     std::unique_ptr<GlShader> hdr_tonemapShader;
@@ -27,6 +27,8 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GLTextureView> brightnessView;
     std::unique_ptr<GLTextureView> blurView;
     std::unique_ptr<GLTextureView> tonemapView;
+    
+    GlMesh fullscreen_post_quad;
     
     GlTexture       readbackTex;
     
@@ -63,6 +65,8 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
+        fullscreen_post_quad = make_fullscreen_quad();
+        
         // Debugging
         uiSurface.bounds = {0, 0, (float) width, (float) height};
         uiSurface.add_child( {{0.0000, +10},{0, +10},{0.1667, -10},{0.33, 0}}, std::make_shared<UIComponent>());
@@ -98,8 +102,14 @@ struct ExperimentalApp : public GLFWApp
         
         camera.look_at({0, 8, 24}, {0, 0, 0});
 
-        hdr_meshShader.reset(new GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
+        hdr_meshShader.reset(       new GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
+        hdr_lumShader.reset(        new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
+        hdr_avgLumShader.reset(     new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
+        hdr_blurShader.reset(       new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
+        hdr_brightShader.reset(     new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
+        hdr_tonemapShader.reset(    new GlShader(read_file_text("assets/shaders/post_vertex.glsl"), read_file_text("assets/shaders/debug_frag.glsl")));
+
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
         
@@ -155,8 +165,8 @@ struct ExperimentalApp : public GLFWApp
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glEnable(GL_BLEND);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -169,7 +179,7 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         
-        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        //skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
             hdr_meshShader->bind();
@@ -200,8 +210,42 @@ struct ExperimentalApp : public GLFWApp
             hdr_meshShader->unbind();
         }
         
-        grid.render(proj, view);
 
+        hdr_lumShader->bind();
+        hdr_lumShader->uniform("u_color", float4(255, 0, 0, 255));
+        fullscreen_post_quad.draw_elements();
+        hdr_lumShader->unbind();
+   
+        hdr_avgLumShader->bind();
+        hdr_avgLumShader->uniform("u_color", float4(255, 100, 255, 255));
+        fullscreen_post_quad.draw_elements();
+        hdr_avgLumShader->unbind();
+        
+        hdr_blurShader->bind();
+        hdr_blurShader->uniform("u_color", float4(255, 255, 100, 255));
+        fullscreen_post_quad.draw_elements();
+        hdr_blurShader->unbind();
+        
+        hdr_brightShader->bind();
+        hdr_brightShader->uniform("u_color", float4(100, 255, 255, 255));
+        fullscreen_post_quad.draw_elements();
+        hdr_brightShader->unbind();
+        
+        hdr_tonemapShader->bind();
+        hdr_tonemapShader->uniform("u_color", float4(100, 100, 255, 255));
+        fullscreen_post_quad.draw_elements();
+        hdr_tonemapShader->unbind();
+
+        grid.render(proj, view);
+        
+        // Debug Draw
+        luminanceView->draw(uiSurface.children[0]->bounds, int2(width, height));
+        averageLuminanceView->draw(uiSurface.children[1]->bounds, int2(width, height));
+        brightnessView->draw(uiSurface.children[2]->bounds, int2(width, height));
+        blurView->draw(uiSurface.children[3]->bounds, int2(width, height));
+        tonemapView->draw(uiSurface.children[4]->bounds, int2(width, height));
+        //futureView->draw(uiSurface.children[0]->bounds, int2(width, height));
+        
         gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);

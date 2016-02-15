@@ -161,6 +161,7 @@
 		08CFD2E61BDD79F000895E31 /* preetham.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = preetham.hpp; path = procedural_sky/preetham.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = procedural_sky.hpp; sourceTree = SOURCE_ROOT; };
 		08F652F41C71C4310076DF49 /* decal_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = decal_app.hpp; path = examples/decal_app.hpp; sourceTree = SOURCE_ROOT; };
+		08F652F51C7254D80076DF49 /* debug_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = debug_frag.glsl; path = assets/shaders/debug_frag.glsl; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -469,6 +470,8 @@
 		08CFD2EA1BDDF79900895E31 /* shaders */ = {
 			isa = PBXGroup;
 			children = (
+				0849FD771BE7C1C1000F148E /* post_vertex.glsl */,
+				08F652F51C7254D80076DF49 /* debug_frag.glsl */,
 				084196741C1E7E1700E1FC50 /* displacement_frag.glsl */,
 				084196751C1E7E1700E1FC50 /* displacement_vert.glsl */,
 				08C4758F1C1CE8CD0031E87E /* meshline_frag.glsl */,
@@ -481,7 +484,6 @@
 				0849FD741BE7C1C1000F148E /* arkano_ssao_frag.glsl */,
 				0849FD751BE7C1C1000F148E /* filmgrain_frag.glsl */,
 				0849FD761BE7C1C1000F148E /* fxaa_frag.glsl */,
-				0849FD771BE7C1C1000F148E /* post_vertex.glsl */,
 				0849FD7B1BE7C1C1000F148E /* simple_vert.glsl */,
 				0849FD781BE7C1C1000F148E /* simple_frag.glsl */,
 				0849FD7A1BE7C1C1000F148E /* simple_texture_vert.glsl */,
