@@ -211,6 +211,7 @@
 				08C475771C02C9650031E87E /* math */,
 				08C475781C02C9790031E87E /* tools */,
 				0849FD871BE7C801000F148E /* index.hpp */,
+				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
 			name = source;
 			path = gfx_dev;
@@ -274,7 +275,6 @@
 				0849FD8E1BEF19A7000F148E /* forward_lighting_app.hpp */,
 				0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */,
 				0868DFFE1C5F247C0032129B /* vision_app.hpp */,
-				0812049C1BADDF6800C7C0F4 /* main.cpp */,
 			);
 			name = examples;
 			sourceTree = "<group>";

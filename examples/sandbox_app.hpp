@@ -250,7 +250,7 @@ struct ExperimentalApp : public GLFWApp
     
     DecalProjectionType projType = PROJECTION_TYPE_CAMERA;
     
-    ExperimentalApp() : GLFWApp(1280, 720, "Sandbox App")
+    ExperimentalApp() : GLFWApp(1280, 720, "Decal App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -262,7 +262,7 @@ struct ExperimentalApp : public GLFWApp
 
         simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         
-        anvilTex = load_image("assets/images/uv_grid.png");
+        anvilTex = load_image("assets/images/polygon_heart.png");
         
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
@@ -304,7 +304,7 @@ struct ExperimentalApp : public GLFWApp
         }
         
         grid = RenderableGrid(1, 64, 64);
-        
+
         gl_check_error(__FILE__, __LINE__);
     }
     
@@ -343,7 +343,7 @@ struct ExperimentalApp : public GLFWApp
                         float3 target = (std::get<2>(hit) * float3(10, 10, 10)) + position;
                         
                         Pose box;
-                        
+
                         // Option A: Camera to mesh (orientation artifacts, better uv projection across hard surfaces)
                         if (projType == PROJECTION_TYPE_CAMERA)
                             box = Pose(camera.pose.orientation, position);
@@ -380,13 +380,13 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
      
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.80f, 0.80f, 0.80f, 1.0f);
 
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         
-        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        //skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         // Simple Shader
         {
@@ -396,7 +396,7 @@ struct ExperimentalApp : public GLFWApp
             simpleShader->uniform("u_viewProj", viewProj);
             
             simpleShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
-            simpleShader->uniform("u_diffuse", float3(0.5f, 0.4f, 0.4f));
+            simpleShader->uniform("u_diffuse", float3(0.4f, 0.425f, 0.415f));
             simpleShader->uniform("useNormal", 0);
             
             for (int i = 0; i < lights.size(); i++)
@@ -435,7 +435,7 @@ struct ExperimentalApp : public GLFWApp
             simpleShader->unbind();
         }
         
-        grid.render(proj, view);
+        //grid.render(proj, view);
 
         gl_check_error(__FILE__, __LINE__);
         

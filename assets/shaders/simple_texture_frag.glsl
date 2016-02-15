@@ -39,7 +39,7 @@ void main()
     vec3 eyeDir = normalize(u_eye - position);
     vec3 light = u_emissive;
 
-    vec3 diffuseSample = texture(u_diffuseTex, texCoord).rgb;
+    vec4 diffuseSample = texture(u_diffuseTex, texCoord);
     vec3 normalSample = texture(u_normalTex, texCoord).rgb;
 
     if (useNormal == 1)
@@ -61,6 +61,6 @@ void main()
         light += compute_rimlight(normalSample, eyeDir);
      }
     
-    f_color = vec4(diffuseSample, 1.0) * vec4(light, 1); //vec4(mix(light, diffuseSample, 0.5), 1);
+    f_color = diffuseSample * vec4(light, 1); //vec4(mix(light, diffuseSample, 0.5), 1);
 
 }
