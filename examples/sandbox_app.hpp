@@ -242,6 +242,14 @@ struct ExperimentalApp : public GLFWApp
     GlTexture anvilTex;
     GlTexture emptyTex;
     
+    enum DecalProjectionType
+    {
+        PROJECTION_TYPE_CAMERA,
+        PROJECTION_TYPE_NORMAL
+    };
+    
+    DecalProjectionType projType = PROJECTION_TYPE_CAMERA;
+    
     ExperimentalApp() : GLFWApp(1280, 720, "Sandbox App")
     {
         int width, height;
@@ -312,9 +320,13 @@ struct ExperimentalApp : public GLFWApp
         if (event.type == InputEvent::KEY)
         {
             if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE)
-            {
                 decalModels.clear();
-            }
+            
+            if (event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
+                projType = PROJECTION_TYPE_CAMERA;
+            
+            if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE)
+                projType = PROJECTION_TYPE_NORMAL;
         }
         
         if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS)
@@ -330,9 +342,16 @@ struct ExperimentalApp : public GLFWApp
                         float3 position = worldRay.calculate_position(std::get<1>(hit));
                         float3 target = (std::get<2>(hit) * float3(10, 10, 10)) + position;
                         
-                        Pose box(position);
-                        look_at_pose(position, target, box);
+                        Pose box;
                         
+                        // Option A: Camera to mesh (orientation artifacts, better uv projection across hard surfaces)
+                        if (projType == PROJECTION_TYPE_CAMERA)
+                            box = Pose(camera.pose.orientation, position);
+
+                        // Option B: Normal to mesh (uv issues)
+                        else if (projType == PROJECTION_TYPE_NORMAL)
+                            look_at_pose(position, target, box);
+
                         decalModels.push_back(Renderable(make_decal_geometry(model, box, float3(0.5f))));
                     }
                 }
