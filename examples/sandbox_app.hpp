@@ -241,8 +241,8 @@ struct ExperimentalApp : public GLFWApp
     
     std::unique_ptr<GlShader> simpleShader;
     
-    GlTexture splatterTex;
-    GlTexture redTex;
+    GlTexture anvilTex;
+    GlTexture emptyTex;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Sandbox App")
     {
@@ -256,12 +256,10 @@ struct ExperimentalApp : public GLFWApp
 
         simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         
-        //std::vector<uint8_t> bluePixel = {0, 0, 255};
-        //splatterTex.load_data(1, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, bluePixel.data());
-        splatterTex = load_image("assets/images/anvil.png");
+        anvilTex = load_image("assets/images/anvil.png");
         
-        std::vector<uint8_t> pixel = {255, 255, 255};
-        redTex.load_data(1, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, pixel.data());
+        std::vector<uint8_t> pixel = {0, 0, 0, 255};
+        emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
         
         {
             lights.resize(2);
@@ -305,7 +303,7 @@ struct ExperimentalApp : public GLFWApp
         {
             if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE)
             {
-                // todo
+                decalModels.clear();
             }
         }
         
@@ -384,7 +382,7 @@ struct ExperimentalApp : public GLFWApp
             {
                 simpleShader->uniform("u_modelMatrix", model.get_model());
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                simpleShader->texture("u_diffuseTex", 0, redTex);
+                simpleShader->texture("u_diffuseTex", 0, emptyTex);
                 model.draw();
             }
 
@@ -394,10 +392,9 @@ struct ExperimentalApp : public GLFWApp
                 
                 for (const auto & decal : decalModels)
                 {
-                    //simpleShader->uniform("u_emissive", float3(1.0f, 0.10f, 0.10f));
                     simpleShader->uniform("u_modelMatrix", decal.get_model());
                     simpleShader->uniform("u_modelMatrixIT", inv(transpose(decal.get_model())));
-                    simpleShader->texture("u_diffuseTex", 0, splatterTex);
+                    simpleShader->texture("u_diffuseTex", 0, anvilTex);
                     decal.draw();
                 }
                 
