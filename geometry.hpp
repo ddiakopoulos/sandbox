@@ -774,19 +774,26 @@ namespace avl
         return false;
     }
     
-    // todo - impelement method for GlMesh as well
-    inline bool intersect_ray_mesh(const Ray & ray, const Geometry & mesh, float * outRayT)
+    inline bool intersect_ray_mesh(const Ray & ray, const Geometry & mesh, float * outRayT = nullptr, float3 * outFaceNormal = nullptr)
     {
         float bestT = std::numeric_limits<float>::infinity(), t;
+        uint3 bestFace = {0, 0, 0};
+        
         float2 outUv;
+
         
         auto meshBounds = mesh.compute_bounds();
+        
         if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds.position, meshBounds.dimensions))
         {
-            for (auto & tri : mesh.faces)
+            for (int f = 0; f < mesh.faces.size(); ++f)
             {
+                auto & tri = mesh.faces[f];
                 if (intersect_ray_triangle(ray, mesh.vertices[tri.x], mesh.vertices[tri.y], mesh.vertices[tri.z], &t, &outUv) && t < bestT)
+                {
                     bestT = t;
+                    bestFace = mesh.faces[f];
+                }
             }
         }
         
@@ -795,6 +802,15 @@ namespace avl
         
         if (outRayT)
             *outRayT = bestT;
+        
+        if (outFaceNormal)
+        {
+            auto v0 = mesh.vertices[bestFace.x];
+            auto v1 = mesh.vertices[bestFace.y];
+            auto v2 = mesh.vertices[bestFace.z];
+            float3 n = normalize(cross(v1 - v0, v2 - v0));
+            *outFaceNormal = n;
+        }
         
         return true;
     }

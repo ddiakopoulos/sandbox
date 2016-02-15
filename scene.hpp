@@ -37,15 +37,15 @@ namespace avl
         
         void draw() const { mesh.draw_elements(); };
         
-        bool check_hit(const Ray & worldRay, float * out = nullptr) const
+        std::tuple<bool, float, float3> check_hit(const Ray & worldRay) const
         {
             auto localRay = pose.inverse() * worldRay;
             localRay.origin /= scale;
             localRay.direction /= scale;
             float outT = 0.0f;
-            bool hit = intersect_ray_mesh(localRay, geom, &outT);
-            if (out) *out = outT;
-            return hit;
+            float3 outNormal = {0, 0, 0};
+            bool hit = intersect_ray_mesh(localRay, geom, &outT, &outNormal);
+            return {hit, outT, outNormal};
         }
     };
 
