@@ -11,7 +11,6 @@ struct ExperimentalApp : public GLFWApp
     
     std::vector<Renderable> models;
     std::vector<LightObject> lights;
-    std::unique_ptr<GlShader> simpleShader;
     
     UIComponent uiSurface;
     
@@ -57,14 +56,15 @@ struct ExperimentalApp : public GLFWApp
     GlTexture       blurTex;
     GlFramebuffer   blurFramebuffer;
     
-    GlTexture emptyTex;
+    GlTexture       emptyTex;
 
-    ExperimentalApp() : GLFWApp(1280, 720, "Sandbox App")
+    ExperimentalApp() : GLFWApp(1280, 720, "HDR Bloom App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
+        // Debugging
         uiSurface.bounds = {0, 0, (float) width, (float) height};
         uiSurface.add_child( {{0.0000, +10},{0, +10},{0.1667, -10},{0.33, 0}}, std::make_shared<UIComponent>());
         uiSurface.add_child( {{0.1667, +10},{0, +10},{0.3334, -10},{0.33, 0}}, std::make_shared<UIComponent>());
@@ -74,11 +74,27 @@ struct ExperimentalApp : public GLFWApp
         uiSurface.add_child( {{0.8335, +10},{0, +10},{1.0000, -10},{0.33, 0}}, std::make_shared<UIComponent>());
         uiSurface.layout();
         
+        sceneColorTexture.load_data(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        sceneDepthTexture.load_data(width, width, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+        
+        luminanceTex_0.load_data(128, 128, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_1.load_data(64, 64,   GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_2.load_data(16, 16,   GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_3.load_data(4, 4,     GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_4.load_data(1, 1,     GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        
+        brightTex.load_data(width / 2, width / 2, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        blurTex.load_data(width / 8, width / 8, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        
+        // Blit
+        readbackTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+        
         cameraController.set_camera(&camera);
         
         camera.look_at({0, 8, 24}, {0, 0, 0});
 
-        simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
+        hdr_meshShader.reset(new GlShader(read_file_text("assets/shaders/simple_vert.glsl"), read_file_text("assets/shaders/simple_frag.glsl")));
         
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
@@ -152,34 +168,32 @@ struct ExperimentalApp : public GLFWApp
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
-            simpleShader->bind();
+            hdr_meshShader->bind();
             
-            simpleShader->uniform("u_eye", camera.get_eye_point());
-            simpleShader->uniform("u_viewProj", viewProj);
+            hdr_meshShader->uniform("u_eye", camera.get_eye_point());
+            hdr_meshShader->uniform("u_viewProj", viewProj);
             
-            simpleShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
-            simpleShader->uniform("u_diffuse", float3(0.4f, 0.425f, 0.415f));
-            simpleShader->uniform("useNormal", 0);
+            hdr_meshShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
+            hdr_meshShader->uniform("u_diffuse", float3(0.4f, 0.425f, 0.415f));
+            hdr_meshShader->uniform("useNormal", 0);
             
             for (int i = 0; i < lights.size(); i++)
             {
                 auto light = lights[i];
-                
-                simpleShader->uniform("u_lights[" + std::to_string(i) + "].position", light.pose.position);
-                simpleShader->uniform("u_lights[" + std::to_string(i) + "].color", light.color);
+                hdr_meshShader->uniform("u_lights[" + std::to_string(i) + "].position", light.pose.position);
+                hdr_meshShader->uniform("u_lights[" + std::to_string(i) + "].color", light.color);
             }
             
             for (const auto & model : models)
             {
-                simpleShader->uniform("u_modelMatrix", model.get_model());
-                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                simpleShader->texture("u_diffuseTex", 0, emptyTex);
+                hdr_meshShader->uniform("u_modelMatrix", model.get_model());
+                hdr_meshShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
                 model.draw();
             }
 
             gl_check_error(__FILE__, __LINE__);
             
-            simpleShader->unbind();
+            hdr_meshShader->unbind();
         }
         
         grid.render(proj, view);
