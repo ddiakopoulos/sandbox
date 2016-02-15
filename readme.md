@@ -19,14 +19,14 @@ United under the arbitrarily chosen namespace "avl" (short for Anvil).
 * Library of procedural meshes (cube, sphere, cone, torus, etc)
 * Billboarded triangle mesh line renderer
 * Reaction-diffusion CPU simulation (Gray-Scott)
-* Incubation of computer vision functionality for depth cameras (MiniVision)
+* Incubation of computer vision functions on top of [librealsense](https://www.github.com/IntelRealSense/librealsense) (minivision)
+* Decal projection on arbitrary meshes
 
 ## In Progress
-* Reaction-diffusion over time (3d)
-* Mesh Decal system
-* Deferred rendering experiments (Forward+ impl)
-* BRDF / PBR
 * HDR pipeline (Bloom, etc)
+* Deferred rendering experiments (Forward+ impl)
+* Physically-based text rendering
+* BRDF / PBR
 * CPU path tracer (+ lighting baker?)
 * Fluid simulator (GL compute shader)
 * L-System + particles
@@ -43,5 +43,6 @@ United under the arbitrarily chosen namespace "avl" (short for Anvil).
 * Pathfinding algos (Recast navigation)
 * Mesh voxelization
 * Isosurface computation
+* Reaction-diffusion over time (3d)
 * Optitrak nat-net i/o
 * Automatic UV generation (Foo library)

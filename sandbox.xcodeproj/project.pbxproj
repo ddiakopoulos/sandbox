@@ -160,6 +160,7 @@
 		08CFD2E51BDD79F000895E31 /* preetham.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = preetham.cpp; path = procedural_sky/preetham.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2E61BDD79F000895E31 /* preetham.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = preetham.hpp; path = procedural_sky/preetham.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = procedural_sky.hpp; sourceTree = SOURCE_ROOT; };
+		08F652F41C71C4310076DF49 /* decal_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = decal_app.hpp; path = examples/decal_app.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -273,6 +274,7 @@
 				08C475931C1DF7DF0031E87E /* meshline_app.hpp */,
 				08C475941C1DFEE20031E87E /* reaction_app.hpp */,
 				0849FD8E1BEF19A7000F148E /* forward_lighting_app.hpp */,
+				08F652F41C71C4310076DF49 /* decal_app.hpp */,
 				0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */,
 				0868DFFE1C5F247C0032129B /* vision_app.hpp */,
 			);

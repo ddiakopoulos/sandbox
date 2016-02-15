@@ -15,8 +15,9 @@ using namespace avl;
 //#include "examples/meshline_app.hpp"
 //#include "examples/reaction_app.hpp"
 //#include "examples/forward_lighting_app.hpp"
-#include "examples/sandbox_app.hpp"
+//#include "examples/decal_app.hpp"
 //#include "examples/vision_app.hpp"
+#include "examples/sandbox_app.hpp"
 
 IMPLEMENT_MAIN(int argc, char * argv[])
 {
