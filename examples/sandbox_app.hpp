@@ -256,9 +256,9 @@ struct ExperimentalApp : public GLFWApp
 
         simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
         
-        anvilTex = load_image("assets/images/anvil.png");
+        anvilTex = load_image("assets/images/uv_grid.png");
         
-        std::vector<uint8_t> pixel = {0, 0, 0, 255};
+        std::vector<uint8_t> pixel = {255, 255, 255, 255};
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
         
         {
@@ -281,7 +281,22 @@ struct ExperimentalApp : public GLFWApp
             proceduralModels[2] = Renderable(make_cube());
             proceduralModels[2].pose.position = float3(8, 2, 0);
             
-            proceduralModels[3] = Renderable(make_cube());
+            auto model = load_geometry_from_obj_no_texture("assets/models/leeperrysmith/lps.obj");
+            
+            Geometry combined;
+            
+            for (int i = 0; i < model.size(); ++i)
+            {
+                auto & m = model[i];
+                
+                for (auto & v : m.vertices) v *= 15.f;
+                
+                combined = concatenate_geometry(combined, m);
+            }
+            
+            combined.compute_normals(false);
+            
+            proceduralModels[3] = Renderable(combined);
             proceduralModels[3].pose.position = float3(-8, 2, 0);
         }
         
@@ -323,7 +338,7 @@ struct ExperimentalApp : public GLFWApp
                         Pose box(position);
                         look_at_pose(position, target, box);
                         
-                        decalModels.push_back(Renderable(make_decal_geometry(model, box, float3(0.5, 0.5, 0.5))));
+                        decalModels.push_back(Renderable(make_decal_geometry(model, box, float3(0.5f))));
                     }
                 }
 

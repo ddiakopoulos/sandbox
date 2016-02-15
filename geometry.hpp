@@ -399,6 +399,52 @@ namespace avl
         return geo;
     }
     
+    inline std::vector<Geometry> load_geometry_from_obj_no_texture(const std::string & asset)
+    {
+        std::vector<Geometry> meshList;
+        
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+        
+        std::string err;
+        bool status = tinyobj::LoadObj(shapes, materials, err, asset.c_str());
+
+        if (status && !err.empty())
+            std::cerr << "tinyobj sys: " + err << std::endl;
+        
+        // Parse tinyobj data into geometry struct
+        for (unsigned int i = 0; i < shapes.size(); i++)
+        {
+            Geometry g;
+            tinyobj::shape_t *shape = &shapes[i];
+            tinyobj::mesh_t *mesh = &shapes[i].mesh;
+            
+            for (size_t i = 0; i < mesh->indices.size(); i += 3)
+            {
+                uint32_t idx1 = mesh->indices[i + 0];
+                uint32_t idx2 = mesh->indices[i + 1];
+                uint32_t idx3 = mesh->indices[i + 2];
+                g.faces.push_back({idx1, idx2, idx3});
+            }
+            for (size_t i = 0; i < mesh->texcoords.size(); i+=2)
+            {
+                float uv1 = mesh->texcoords[i + 0];
+                float uv2 = mesh->texcoords[i + 1];
+                g.texCoords.push_back({uv1, uv2});
+            }
+            
+            for (size_t v = 0; v < mesh->positions.size(); v += 3)
+            {
+                float3 vert = float3(mesh->positions[v + 0], mesh->positions[v + 1], mesh->positions[v + 2]);
+                g.vertices.push_back(vert);
+            }
+            
+            meshList.push_back(g);
+        }
+        
+        return meshList;
+    }
+    
     inline TexturedMesh load_geometry_from_obj(const std::string & asset, bool printDebug = false)
     {
         TexturedMesh mesh;
