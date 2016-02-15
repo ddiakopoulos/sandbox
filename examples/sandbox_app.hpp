@@ -254,6 +254,9 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_post_quad.draw_elements();
         hdr_lumShader->unbind();
         
+        std::vector<float> value = {0.0, 0.0, 0.0, 0.0};
+        glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, value.data());
+        
         /*
                      
         luminance_4.bind_to_draw();
@@ -287,15 +290,19 @@ struct ExperimentalApp : public GLFWApp
         hdr_tonemapShader->unbind();
         */
         
+        //glReadBuffer(GL_COLOR_ATTACHMENT0);
+        
+        std::cout << float4(value[0], value[1], value[2], value[3]) << std::endl;
+        
         grid.render(proj, view);
         
         {
             // Debug Draw
-            //luminanceView->draw(uiSurface.children[0]->bounds, int2(width, height));
-            //averageLuminanceView->draw(uiSurface.children[1]->bounds, int2(width, height));
-            //brightnessView->draw(uiSurface.children[2]->bounds, int2(width, height));
-            //blurView->draw(uiSurface.children[3]->bounds, int2(width, height));
-            tonemapView->draw(uiSurface.children[0]->bounds, int2(width, height));
+            luminanceView->draw(uiSurface.children[0]->bounds, int2(width, height));
+            averageLuminanceView->draw(uiSurface.children[1]->bounds, int2(width, height));
+            brightnessView->draw(uiSurface.children[2]->bounds, int2(width, height));
+            blurView->draw(uiSurface.children[3]->bounds, int2(width, height));
+            tonemapView->draw(uiSurface.children[4]->bounds, int2(width, height));
             //futureView->draw(uiSurface.children[0]->bounds, int2(width, height));
         }
         
