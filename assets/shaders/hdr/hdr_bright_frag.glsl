@@ -25,19 +25,6 @@ vec4 toGamma(vec4 rgba)
     return vec4(toGamma(rgba.xyz), rgba.w);
 }
 
-float decodeRE8(vec4 re8)
-{
-    float exponent = re8.w * 255.0 - 128.0;
-    return re8.x * exp2(exponent);
-}
-
-vec3 decodeRGBE8(vec4 rgbe8)
-{
-    float exponent = rgbe8.w * 255.0 - 128.0;
-    vec3 rgb = rgbe8.xyz * exp2(exponent);
-    return rgb;
-}
-
 vec3 reinhard2(vec3 x, float whiteSqr)
 {
     return (x * (1.0 + x / whiteSqr) ) / (1.0 + x);
@@ -45,19 +32,19 @@ vec3 reinhard2(vec3 x, float whiteSqr)
 
 void main()
 {
-    float lum = clamp(decodeRE8(texture(s_texLum, v_texcoord0) ), 0.1, 0.7);
+    float lum = clamp(texture(s_texLum, v_texcoord0).r, 0.1, 0.7);
 
     vec3 rgb = vec3(0.0, 0.0, 0.0);
 
-    rgb += decodeRGBE8(texture(s_texColor, v_texcoord0 + u_offset[0].xy));
-    rgb += decodeRGBE8(texture(s_texColor, v_texcoord0 + u_offset[1].xy));
-    rgb += decodeRGBE8(texture(s_texColor, v_texcoord0 + u_offset[2].xy));
-    rgb += decodeRGBE8(texture(s_texColor, v_texcoord0 + u_offset[3].xy));
-    rgb += decodeRGBE8(texture(s_texColor, v_texcoord0 + u_offset[4].xy));
-    rgb += decodeRGBE8(texture(s_texColor, v_texcoord0 + u_offset[5].xy));
-    rgb += decodeRGBE8(texture(s_texColor, v_texcoord0 + u_offset[6].xy));
-    rgb += decodeRGBE8(texture(s_texColor, v_texcoord0 + u_offset[7].xy));
-    rgb += decodeRGBE8(texture(s_texColor, v_texcoord0 + u_offset[8].xy));
+    rgb += texture(s_texColor, v_texcoord0 + u_offset[0].xy).rgb;
+    rgb += texture(s_texColor, v_texcoord0 + u_offset[1].xy).rgb;
+    rgb += texture(s_texColor, v_texcoord0 + u_offset[2].xy).rgb;
+    rgb += texture(s_texColor, v_texcoord0 + u_offset[3].xy).rgb;
+    rgb += texture(s_texColor, v_texcoord0 + u_offset[4].xy).rgb;
+    rgb += texture(s_texColor, v_texcoord0 + u_offset[5].xy).rgb;
+    rgb += texture(s_texColor, v_texcoord0 + u_offset[6].xy).rgb;
+    rgb += texture(s_texColor, v_texcoord0 + u_offset[7].xy).rgb;
+    rgb += texture(s_texColor, v_texcoord0 + u_offset[8].xy).rgb;
 
     rgb *= 1.0/9.0;
 

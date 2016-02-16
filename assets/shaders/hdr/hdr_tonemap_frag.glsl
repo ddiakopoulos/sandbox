@@ -35,23 +35,9 @@ float reinhard2(float x, float whiteSqr)
     return (x * (1.0 + x / whiteSqr) ) / (1.0 + x);
 }
 
-
 vec3 reinhard2(vec3 x, float whiteSqr)
 {
     return (x * (1.0 + x / whiteSqr) ) / (1.0 + x);
-}
-
-float decodeRE8(vec4 re8)
-{
-    float exponent = re8.w * 255.0 - 128.0;
-    return re8.x * exp2(exponent);
-}
-
-vec3 decodeRGBE8(vec4 rgbe8)
-{
-    float exponent = rgbe8.w * 255.0 - 128.0;
-    vec3 rgb = rgbe8.xyz * exp2(exponent);
-    return rgb;
 }
 
 vec3 convertYxy2XYZ(vec3 Yxy)
@@ -122,8 +108,8 @@ vec4 blur9(sampler2D sampler, vec2 _uv0, vec4 _uv1, vec4 _uv2, vec4 _uv3, vec4 _
 
 void main()
 {
-    vec3 rgb = decodeRGBE8(texture(s_texColor, v_texcoord0) );
-    float lum = clamp(decodeRE8(texture(s_texLum, v_texcoord0) ), 0.1, 0.7);
+    vec3 rgb = texture(s_texColor, v_texcoord0).rgb;
+    float lum = clamp(texture(s_texLum, v_texcoord0).r, 0.1, 0.7);
 
     vec3 Yxy = convertRGB2Yxy(rgb);
 
