@@ -268,6 +268,7 @@ struct ExperimentalApp : public GLFWApp
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
+        const float4x4 modelViewProj = viewProj * Identity4x4;
                  
         // Render skybox into scene
         sceneFramebuffer.bind_to_draw();
@@ -280,6 +281,7 @@ struct ExperimentalApp : public GLFWApp
             hdr_lumShader->bind();
             luminance_offset_2x2(hdr_lumShader.get(), float2(128, 128));
             hdr_lumShader->texture("s_texColor", 0, sceneColorTexture);
+            hdr_lumShader->uniform("u_modelViewProj", modelViewProj);
             fullscreen_post_quad.draw_elements();
             hdr_lumShader->unbind();
 
@@ -287,6 +289,7 @@ struct ExperimentalApp : public GLFWApp
             hdr_avgLumShader->bind();
             luminance_offset_4x4(hdr_avgLumShader.get(), float2(128, 128));
             hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_0);
+            hdr_avgLumShader->uniform("u_modelViewProj", modelViewProj);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
@@ -294,6 +297,7 @@ struct ExperimentalApp : public GLFWApp
             hdr_avgLumShader->bind();
             luminance_offset_4x4(hdr_avgLumShader.get(), float2(64, 64));
             hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_1);
+            hdr_avgLumShader->uniform("u_modelViewProj", modelViewProj);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
@@ -301,6 +305,7 @@ struct ExperimentalApp : public GLFWApp
             hdr_avgLumShader->bind();
             luminance_offset_4x4(hdr_avgLumShader.get(), float2(16, 16));
             hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_2);
+            hdr_avgLumShader->uniform("u_modelViewProj", modelViewProj);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
@@ -308,6 +313,7 @@ struct ExperimentalApp : public GLFWApp
             hdr_avgLumShader->bind();
             luminance_offset_4x4(hdr_avgLumShader.get(), float2(4, 4));
             hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_3);
+            hdr_avgLumShader->uniform("u_modelViewProj", modelViewProj);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
@@ -325,6 +331,7 @@ struct ExperimentalApp : public GLFWApp
         hdr_brightShader->texture("s_texColor",0, sceneColorTexture);
         hdr_brightShader->texture("s_texLum",1, luminanceTex_4); // 1x1
         hdr_brightShader->uniform("u_tonemap", tonemap);
+        hdr_brightShader->uniform("u_modelViewProj", modelViewProj);
         fullscreen_post_quad.draw_elements();
         hdr_brightShader->unbind();
         
@@ -332,6 +339,7 @@ struct ExperimentalApp : public GLFWApp
         hdr_blurShader->bind();
         hdr_blurShader->texture("s_texColor", 0, brightTex);
         hdr_blurShader->uniform("u_viewTexel", float2(1.f / (width / 8.f), 1.f / (height / 8.f)));
+        hdr_blurShader->uniform("u_modelViewProj", modelViewProj);
         fullscreen_post_quad.draw_elements();
         hdr_blurShader->unbind();
 
@@ -343,6 +351,9 @@ struct ExperimentalApp : public GLFWApp
         hdr_tonemapShader->texture("s_texColor",0, sceneColorTexture);
         hdr_tonemapShader->texture("s_texLum",1, luminanceTex_4); // 1x1
         hdr_tonemapShader->texture("s_texBlur",2, blurTex);
+        hdr_tonemapShader->uniform("u_tonemap", tonemap);
+        hdr_tonemapShader->uniform("u_modelViewProj", modelViewProj);
+        hdr_tonemapShader->uniform("u_viewTexel", float2(1.f / width , 1.f / height));
         hdr_tonemapShader->uniform("u_tonemap", tonemap);
         fullscreen_post_quad.draw_elements();
         hdr_tonemapShader->unbind();

@@ -1,7 +1,6 @@
 #version 330
 
 uniform vec4 u_offset[16];
-uniform vec4 u_tonemap;
 
 uniform sampler2D s_texColor;
 
@@ -27,10 +26,10 @@ vec4 luma(vec4 rgba)
 }
 
 
-vec4 encodeRE8(float _r)
+vec4 encodeRE8(float r)
 {
-    float exponent = ceil(log2(_r) );
-    return vec4(_r / exp2(exponent), 0.0, 0.0, (exponent + 128.0) / 255.0);
+    float exponent = ceil(log2(r) );
+    return vec4(r / exp2(exponent), 0.0, 0.0, (exponent + 128.0) / 255.0);
 }
 
 void main()

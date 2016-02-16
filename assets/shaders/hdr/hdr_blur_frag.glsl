@@ -1,8 +1,5 @@
 #version 330
 
-uniform vec4 u_offset[16];
-uniform vec4 u_tonemap;
-
 uniform sampler2D s_texColor;
 
 in vec2 v_texcoord0;
