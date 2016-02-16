@@ -191,7 +191,7 @@ struct ExperimentalApp : public GLFWApp
         hdr_meshShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/simple_frag.glsl");
 
         // Pipeline shaders
-        hdr_lumShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        hdr_lumShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_lum_vert.glsl", "assets/shaders/hdr/hdr_lum_frag.glsl");
         hdr_avgLumShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
         hdr_blurShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
         hdr_brightShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
@@ -346,7 +346,8 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_post_quad.draw_elements();
         hdr_tonemapShader->unbind();
     
-        //std::cout << float4(value[0], value[1], value[2], value[3]) << std::endl;
+        // std::cout << float4(value[0], value[1], value[2], value[3]) << std::endl;
+        // std::cout << tonemap <<< std::endl;
         
         grid.render(proj, view);
         
