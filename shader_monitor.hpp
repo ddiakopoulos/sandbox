@@ -22,7 +22,7 @@ class ShaderMonitor
         std::shared_ptr<GlShader> & program;
         std::string vertexPath;
         std::string fragmentPath;
-        bool shouldRecompile;
+        bool shouldRecompile = false;
         ShaderAsset(std::shared_ptr<GlShader> & program, const std::string & v, const std::string & f) : program(program), vertexPath(v), fragmentPath(f) {};
     };
     
