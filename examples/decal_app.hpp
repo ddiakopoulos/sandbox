@@ -41,12 +41,15 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
         int v2Out = d2 > 0.f;
         int v3Out = d3 > 0.f;
         
+        // How many verts are on this side of the plane?
         int total = v1Out + v2Out + v3Out;
 
         DecalVertex nV1, nV2, nV3, nV4;
         
         switch (total)
         {
+                
+            // None - don't clip the geometry
             case 0:
             {
                 outVertices.push_back(inVertices[j + 0]);
@@ -55,16 +58,28 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
                 break;
             }
                 
+            // One vert
             case 1:
             {
+                
+                // v1 has been marked
                 if (v1Out)
                 {
                     nV1 = inVertices[j + 1];
                     nV2 = inVertices[j + 2];
-                    nV3 = clip(inVertices[j], nV1, plane);
-                    nV4 = clip(inVertices[j], nV2, plane);
+                    nV3 = clip(inVertices[j + 0], nV1, plane);
+                    nV4 = clip(inVertices[j + 0], nV2, plane);
+                    
+                    outVertices.push_back(nV1);
+                    outVertices.push_back(nV2);
+                    outVertices.push_back(nV3);
+                    
+                    outVertices.push_back(nV4);
+                    outVertices.push_back(nV3);
+                    outVertices.push_back(nV2);
                 }
                 
+                // v1 has been marked
                 if (v2Out)
                 {
                     nV1 = inVertices[j + 0];
@@ -79,28 +94,29 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
                     outVertices.push_back(nV2);
                     outVertices.push_back(nV3);
                     outVertices.push_back(nV4);
-                    
-                    break;
                 }
                 
+                // v3 has been marked
                 if (v3Out)
                 {
                     nV1 = inVertices[j + 0];
                     nV2 = inVertices[j + 1];
                     nV3 = clip(inVertices[j + 2], nV1, plane);
                     nV4 = clip(inVertices[j + 2], nV2, plane);
+
+                    outVertices.push_back(nV1);
+                    outVertices.push_back(nV2);
+                    outVertices.push_back(nV3);
+                    
+                    outVertices.push_back(nV4);
+                    outVertices.push_back(nV3);
+                    outVertices.push_back(nV2);
                 }
-                
-                outVertices.push_back(nV1);
-                outVertices.push_back(nV2);
-                outVertices.push_back(nV3);
-                
-                outVertices.push_back(nV4);
-                outVertices.push_back(nV3);
-                outVertices.push_back(nV2);
                 
                 break;
             }
+                
+            // Two verts
             case 2:
             {
                 if (!v1Out)
@@ -117,7 +133,7 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
                 {
                     nV1 = inVertices[j + 1];
                     nV2 = clip(nV1, inVertices[j + 2], plane);
-                    nV3 = clip(nV1, inVertices[j], plane);
+                    nV3 = clip(nV1, inVertices[j + 0], plane);
                     outVertices.push_back(nV1);
                     outVertices.push_back(nV2);
                     outVertices.push_back(nV3);
@@ -135,6 +151,8 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
                 
                 break;
             }
+                
+            // All outside
             case 3:
             {
                 break;
