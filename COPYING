@@ -24,58 +24,67 @@ https://en.wikipedia.org/wiki/MurmurHash (Public Domain)
 Authored by Austin Appleby, 2008
 
 http://www.glfw.org/ (zlib/libpng)
-Copyright (c) Camilla Berglund, 2006-2011
+Copyright (C) Camilla Berglund, 2006-2011
 
 http://www.geometrictools.com/ (Boost)
-Copyright (c) Geometric Tools, 1998-2015
+Copyright (C) Geometric Tools, 1998-2015
 
 https://github.com/cinder/Cinder (BSD 2-Clause)
-Copyright (c) The Barbarian Group, 2010+
+Copyright (C) The Barbarian Group, 2010+
 
 https://github.com/syoyo/tinyobjloader (BSD 2-Clause)
-Copyright (c) Syoyo Fujita, 2012 - 2015
+Copyright (C) Syoyo Fujita, 2012 - 2015
 
 https://github.com/melax/sandbox (MIT)
-Copyright (c) Stan Melax, 2014
+Copyright (C) Stan Melax, 2014
 
 https://github.com/bclucas/Alloy-Graphics-Library/ (BSD 2-Clause)
-Copyright (c) Blake C. Lucas, 2015
+Copyright (C) Blake C. Lucas, 2015
 
 https://github.com/dmsovetov/foo (MIT)
-Copyright (c) Dmitry Sovetov, 2015
+Copyright (C) Dmitry Sovetov, 2015
 
 http://gruntthepeon.free.fr/oscpkt/ (zlib/libpng)
-Copyright (c) Julien Pommier, 2015
+Copyright (C) Julien Pommier, 2015
 
 https://github.com/memononen/nanovg/ (zlib/libpng)
-Copyright (c) Mikko Mononen, 2015
+Copyright (C) Mikko Mononen, 2015
 
 https://github.com/caseman/noise (MIT)
-Copyright (c) Casey Duncan, 2008
+Copyright (C) Casey Duncan, 2008
 
 https://hal.inria.fr/hal-00670496/ (Boost)
-Copyright (c) Reviatech, 2012
+Copyright (C) Reviatech, 2012
 
 https://github.com/wieden-kennedy/Cinder-Sampling (Apache 2.0)
-Copyright (c) Wieden Kennedy, 2014
+Copyright (C) Wieden Kennedy, 2014
 
 https://github.com/mattdesl/glsl-fxaa/blob/master/fxaa.glsl (BSD 3-Clause)
-Copyright (c) Armin Ronacher, 2011
+Copyright (C) Armin Ronacher, 2011
 
 https://github.com/BlockoS/PID/blob/master/PID.h (Apache 2.0)
-Copyright (c) Vincent Cruz, 2015
+Copyright (C) Vincent Cruz, 2015
 
 https://bitbucket.org/SpartanJ/efsw (MIT)
-Copyright (c) James Wynn & Martín Lucas Golini, 2012+
+Copyright (C) James Wynn & Martín Lucas Golini, 2012+
 
 https://github.com/spite/THREE.MeshLine (MIT)
-Copyright (c) Jaume Sanchez Elias, 2015
+Copyright (C) Jaume Sanchez Elias, 2015
 
 https://github.com/spite/THREE.DecalGeometry (MIT)
 Copyright (C) Jaume Sanchez Elias, 2014
 
+https://github.com/bkaradzic/bgfx (BSD 2-Clause)
+Copyright (C) Branimir Karadzic, 2010-2016
+
 https://github.com/PointCloudLibrary/pcl (BSD 3 Clause)
-Copyright (c) The Point Cloud Library Authors, 2009+
+Copyright (C) The Point Cloud Library Authors, 2009+
+
+https://github.com/leonidk/ps1080test (MPL)
+Copyright (C) Leo Keselman, 2015
+
+https://github.com/IntelRealSense/librealsense
+Copyright (C) Intel Corporation, 2015
 
 "An Analytic Model for Full Spectral Sky-Dome Radiance"
-Copyright (c) Lukas Hosek and Alexander Wilkie, 2012-2013
+Copyright (C) Lukas Hosek and Alexander Wilkie, 2012-2013
