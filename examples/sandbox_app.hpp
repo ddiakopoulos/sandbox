@@ -85,10 +85,11 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<GLTextureView> brightnessView;
     std::shared_ptr<GLTextureView> blurView;
     std::shared_ptr<GLTextureView> tonemapView;
+    std::shared_ptr<GLTextureView> middleGreyView;
     
     GlMesh fullscreen_post_quad;
     
-    GlTexture       readbackTex;
+    GlTexture       middleGreyTex;
     
     GlTexture       sceneColorTexture;
     GlTexture       sceneDepthTexture;
@@ -148,9 +149,6 @@ struct ExperimentalApp : public GLFWApp
         
         brightTex.load_data(width / 2, width / 2, GL_RGBA32F, GL_RGBA, GL_FLOAT, greenDebugPixel.data());
         blurTex.load_data(width / 8, width / 8, GL_RGBA32F, GL_RGBA, GL_FLOAT, greenDebugPixel.data());
-        
-        // Blit
-        readbackTex.load_data(1, 1, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
     
         sceneFramebuffer.attach(GL_COLOR_ATTACHMENT0, sceneColorTexture);
         sceneFramebuffer.attach(GL_DEPTH_ATTACHMENT, sceneDepthTexture);
@@ -177,11 +175,14 @@ struct ExperimentalApp : public GLFWApp
         blurFramebuffer.attach(GL_COLOR_ATTACHMENT0, blurTex);
         if (!blurFramebuffer.check_complete()) throw std::runtime_error("incomplete blur framebuffer");
         
+        middleGreyTex.load_data(1, 1, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        
         luminanceView.reset(new GLTextureView(luminanceTex_0.get_gl_handle()));
         averageLuminanceView.reset(new GLTextureView(luminanceTex_4.get_gl_handle()));
         brightnessView.reset(new GLTextureView(brightTex.get_gl_handle()));
         blurView.reset(new GLTextureView(blurTex.get_gl_handle()));
         tonemapView.reset(new GLTextureView(sceneColorTexture.get_gl_handle()));
+        middleGreyView.reset(new GLTextureView(middleGreyTex.get_gl_handle()));
         
         cameraController.set_camera(&camera);
         
@@ -269,11 +270,15 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         const float4x4 modelViewProj = viewProj * Identity4x4;
-                 
+        
+        gl_check_error(__FILE__, __LINE__);
+        
         // Render skybox into scene
         sceneFramebuffer.bind_to_draw();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear anything out of default fbo
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        
+        gl_check_error(__FILE__, __LINE__);
         
         std::vector<float> lumValue = {0.0, 0.0, 0.0, 0.0};
         {
@@ -285,6 +290,8 @@ struct ExperimentalApp : public GLFWApp
             fullscreen_post_quad.draw_elements();
             hdr_lumShader->unbind();
 
+            gl_check_error(__FILE__, __LINE__);
+            
             luminance_1.bind_to_draw(); // 64x64 surface area - downscale + average
             hdr_avgLumShader->bind();
             luminance_offset_4x4(hdr_avgLumShader.get(), float2(128, 128));
@@ -292,6 +299,8 @@ struct ExperimentalApp : public GLFWApp
             hdr_avgLumShader->uniform("u_modelViewProj", modelViewProj);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
+            
+            gl_check_error(__FILE__, __LINE__);
             
             luminance_2.bind_to_draw(); // 16x16 surface area - downscale + average
             hdr_avgLumShader->bind();
@@ -301,6 +310,8 @@ struct ExperimentalApp : public GLFWApp
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
+            gl_check_error(__FILE__, __LINE__);
+            
             luminance_3.bind_to_draw(); // 4x4 surface area - downscale + average
             hdr_avgLumShader->bind();
             luminance_offset_4x4(hdr_avgLumShader.get(), float2(16, 16));
@@ -308,6 +319,8 @@ struct ExperimentalApp : public GLFWApp
             hdr_avgLumShader->uniform("u_modelViewProj", modelViewProj);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
+            
+            gl_check_error(__FILE__, __LINE__);
             
             luminance_4.bind_to_draw(); // 1x1 surface area - downscale + average
             hdr_avgLumShader->bind();
@@ -317,13 +330,18 @@ struct ExperimentalApp : public GLFWApp
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
+            gl_check_error(__FILE__, __LINE__);
+            
             // Read luminance value
             glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, lumValue.data());
+            
+            gl_check_error(__FILE__, __LINE__);
         }
         
         float4 tonemap = { middleGrey, whitePoint * whitePoint, threshold, time };
         
         // Take original scene framebuffer and render for brightness
+        gl_check_error(__FILE__, __LINE__);
         
         brightFramebuffer.bind_to_draw(); // 1/2 size
         hdr_brightShader->bind();
@@ -335,6 +353,8 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_post_quad.draw_elements();
         hdr_brightShader->unbind();
         
+        gl_check_error(__FILE__, __LINE__);
+        
         blurFramebuffer.bind_to_draw(); // 1/8 size
         hdr_blurShader->bind();
         hdr_blurShader->texture("s_texColor", 0, brightTex);
@@ -343,6 +363,8 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_post_quad.draw_elements();
         hdr_blurShader->unbind();
 
+        gl_check_error(__FILE__, __LINE__);
+        
         // Output to default screen framebuffer on the last pass
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
@@ -358,8 +380,14 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_post_quad.draw_elements();
         hdr_tonemapShader->unbind();
     
+        gl_check_error(__FILE__, __LINE__);
+        
         // std::cout << float4(value[0], value[1], value[2], value[3]) << std::endl;
         // std::cout << tonemap <<< std::endl;
+        
+        middleGreyTex.load_data(1, 1, GL_RGB32F, GL_RGBA, lumValue.data());
+        
+        gl_check_error(__FILE__, __LINE__);
         
         grid.render(proj, view);
         
@@ -370,7 +398,7 @@ struct ExperimentalApp : public GLFWApp
             brightnessView->draw(uiSurface.children[2]->bounds, int2(width, height));
             blurView->draw(uiSurface.children[3]->bounds, int2(width, height));
             tonemapView->draw(uiSurface.children[4]->bounds, int2(width, height));
-            //futureView->draw(uiSurface.children[0]->bounds, int2(width, height));
+            middleGreyView->draw(uiSurface.children[5]->bounds, int2(width, height));
         }
         
         gl_check_error(__FILE__, __LINE__);
