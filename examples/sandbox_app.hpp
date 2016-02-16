@@ -194,7 +194,7 @@ struct ExperimentalApp : public GLFWApp
         hdr_lumShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_lum_vert.glsl", "assets/shaders/hdr/hdr_lum_frag.glsl");
         hdr_avgLumShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_lumavg_vert.glsl", "assets/shaders/hdr/hdr_lumavg_frag.glsl");
         hdr_blurShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_blur_vert.glsl", "assets/shaders/hdr/hdr_blur_frag.glsl");
-        hdr_brightShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        hdr_brightShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_bright_vert.glsl", "assets/shaders/hdr/hdr_bright_frag.glsl");
         hdr_tonemapShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
 
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
