@@ -193,7 +193,7 @@ struct ExperimentalApp : public GLFWApp
         // Pipeline shaders
         hdr_lumShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_lum_vert.glsl", "assets/shaders/hdr/hdr_lum_frag.glsl");
         hdr_avgLumShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_lumavg_vert.glsl", "assets/shaders/hdr/hdr_lumavg_frag.glsl");
-        hdr_blurShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
+        hdr_blurShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_blur_vert.glsl", "assets/shaders/hdr/hdr_blur_frag.glsl");
         hdr_brightShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
         hdr_tonemapShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/debug_frag.glsl");
 
@@ -331,6 +331,7 @@ struct ExperimentalApp : public GLFWApp
         blurFramebuffer.bind_to_draw(); // 1/8 size
         hdr_blurShader->bind();
         hdr_blurShader->texture("s_texColor", 0, brightTex);
+        hdr_blurShader->uniform("u_viewTexel", float2(1.f / (width / 8.f), 1.f / (height / 8.f)));
         fullscreen_post_quad.draw_elements();
         hdr_blurShader->unbind();
 
