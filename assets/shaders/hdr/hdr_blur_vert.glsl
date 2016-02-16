@@ -1,7 +1,6 @@
 #version 330
 
 layout(location = 0) in vec3 inPosition;
-layout(location = 3) in vec2 inTexcoord;
 
 uniform mat4 u_modelViewProj;
 uniform vec2 u_viewTexel;
@@ -16,6 +15,8 @@ out vec4 v_texcoord4;
 void main()
 {
     gl_Position = u_modelViewProj * vec4(inPosition, 1);
+
+    vec2 inTexcoord = (inPosition.xy + vec2(1,1)) / 2.0;
 
     v_texcoord0 = inTexcoord;
 

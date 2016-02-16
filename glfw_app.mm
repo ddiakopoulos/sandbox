@@ -38,6 +38,8 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     glfwWindowHint(GLFW_STENCIL_BITS, 8);
     glfwWindowHint(GLFW_SAMPLES, glfwSamples);
 
+    glfwWindowHint(GLFW_SRGB_CAPABLE, true);
+    
 #if defined(ANVIL_PLATFORM_OSX)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);

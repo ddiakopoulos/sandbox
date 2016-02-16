@@ -1,5 +1,13 @@
 #include "index.hpp"
 
+// 1. GL_FRAMEBUFFER_SRGB?
+// 2. Proper luminance downsampling
+// 3. Blitting? / glReadPixels
+// 4.
+// 5.
+
+// http://www.gamedev.net/topic/674450-hdr-rendering-average-luminance/
+
 void luminance_offset_2x2(GlShader * shader, float2 size)
 {
     float4 offsets[16];
@@ -17,9 +25,11 @@ void luminance_offset_2x2(GlShader * shader, float2 size)
             ++num;
         }
     }
-    
+
     for (int n = 0; n < num; ++n)
+    {
         shader->uniform("u_offset[" + std::to_string(n) + "]", offsets[n]);
+    }
 }
 
 void luminance_offset_4x4(GlShader * shader, float2 size)
@@ -65,9 +75,9 @@ struct ExperimentalApp : public GLFWApp
     
     UIComponent uiSurface;
     
-    float middleGrey = 0.1f;
-    float whitePoint = 0.1f;
-    float threshold = 0.1f;
+    float middleGrey = 0.18f;
+    float whitePoint = 1.1f;
+    float threshold = 1.5f;
     float time = 0.0f;
     
     ShaderMonitor shaderMonitor;
@@ -120,6 +130,8 @@ struct ExperimentalApp : public GLFWApp
 
     ExperimentalApp() : GLFWApp(1280, 720, "HDR Bloom App")
     {
+        glEnable(GL_FRAMEBUFFER_SRGB);
+        
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -127,6 +139,16 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_post_quad = make_fullscreen_quad();
         
         std::vector<float> greenDebugPixel = {0.f, 1.0f, 0.f, 1.0f};
+        
+        std::vector<uint8_t> white;
+        
+        for (int i = 0; i < width * height; i++)
+        {
+            white.push_back(255);
+            white.push_back(255);
+            white.push_back(255);
+            white.push_back(255);
+        }
         
         // Debugging views
         uiSurface.bounds = {0, 0, (float) width, (float) height};
@@ -138,17 +160,19 @@ struct ExperimentalApp : public GLFWApp
         uiSurface.add_child( {{0.8335, +10},{0, +10},{1.0000, -10},{0.133, +10}}, std::make_shared<UIComponent>());
         uiSurface.layout();
         
-        sceneColorTexture.load_data(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        sceneDepthTexture.load_data(width, width, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+        sceneColorTexture.load_data(width, height, GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, white.data());
+        sceneDepthTexture.load_data(width, height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, white.data());
         
-        luminanceTex_0.load_data(128, 128, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_1.load_data(64, 64,   GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_2.load_data(16, 16,   GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_3.load_data(4, 4,     GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_4.load_data(1, 1,     GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_0.load_data(128, 128, GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, white.data());
+        luminanceTex_1.load_data(64, 64,   GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, white.data());
+        luminanceTex_2.load_data(16, 16,   GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, white.data());
+        luminanceTex_3.load_data(4, 4,     GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, white.data());
+        luminanceTex_4.load_data(1, 1,     GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, white.data());
         
-        brightTex.load_data(width / 2, width / 2, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        blurTex.load_data(width / 8, width / 8, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        // GL_RGBA8, GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, false }, // BGRA8
+        
+        brightTex.load_data(width / 2, height / 2, GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, white.data());
+        blurTex.load_data(width / 8, height / 8, GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, white.data());
     
         sceneFramebuffer.attach(GL_COLOR_ATTACHMENT0, sceneColorTexture);
         sceneFramebuffer.attach(GL_DEPTH_ATTACHMENT, sceneDepthTexture);
@@ -175,7 +199,7 @@ struct ExperimentalApp : public GLFWApp
         blurFramebuffer.attach(GL_COLOR_ATTACHMENT0, blurTex);
         if (!blurFramebuffer.check_complete()) throw std::runtime_error("incomplete blur framebuffer");
         
-        middleGreyTex.load_data(1, 1, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        middleGreyTex.load_data(1, 1, GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
         
         luminanceView.reset(new GLTextureView(luminanceTex_0.get_gl_handle()));
         averageLuminanceView.reset(new GLTextureView(luminanceTex_4.get_gl_handle()));
@@ -197,7 +221,7 @@ struct ExperimentalApp : public GLFWApp
         hdr_blurShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_blur_vert.glsl", "assets/shaders/hdr/hdr_blur_frag.glsl");
         hdr_brightShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_bright_vert.glsl", "assets/shaders/hdr/hdr_bright_frag.glsl");
         hdr_tonemapShader = make_watched_shader(shaderMonitor, "assets/shaders/hdr/hdr_tonemap_vert.glsl", "assets/shaders/hdr/hdr_tonemap_frag.glsl");
-
+        
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
         
@@ -244,8 +268,14 @@ struct ExperimentalApp : public GLFWApp
     void on_update(const UpdateEvent & e) override
     {
         cameraController.update(e.timestep_ms);
-        time += e.timestep_ms;
+        time += e.timestep_ms / 1000;
         shaderMonitor.handle_recompile();
+    }
+    
+    float decodeRE8(float4 re8)
+    {
+        float exponent = re8.w * 255.0 - 128.0;
+        return re8.x * exp2(exponent);
     }
     
     void on_draw() override
@@ -255,6 +285,10 @@ struct ExperimentalApp : public GLFWApp
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
 
+        //glDisable(GL_BLEND);
+        
+        glEnable(GL_FRAMEBUFFER_SRGB);
+        
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
@@ -263,19 +297,19 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
      
         // Initial clear
-        glClearColor(0.1f, 0.00f, 0.00f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glClearColor(0.0f, 0.00f, 0.00f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
-        const float4x4 modelViewProj = viewProj * Identity4x4;
+        //const float4x4 modelViewProj = viewProj;
         
         gl_check_error(__FILE__, __LINE__);
         
         // Render skybox into scene
         sceneFramebuffer.bind_to_draw();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear anything out of default fbo
+        glClear(GL_DEPTH_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear anything out of default fbo
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
@@ -315,24 +349,23 @@ struct ExperimentalApp : public GLFWApp
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         
-        std::vector<float> lumValue = {0.0, 0.0, 0.0, 0.0};
+        std::vector<float> lumValue = {0, 0, 0, 0};
         {
             luminance_0.bind_to_draw(); // 128x128 surface area - calculate luminance
             hdr_lumShader->bind();
             luminance_offset_2x2(hdr_lumShader.get(), float2(128, 128));
             hdr_lumShader->texture("s_texColor", 0, sceneColorTexture);
-            hdr_lumShader->uniform("u_modelViewProj", modelViewProj);
+            hdr_lumShader->uniform("u_modelViewProj", Identity4x4);
             fullscreen_post_quad.draw_elements();
             hdr_lumShader->unbind();
 
             gl_check_error(__FILE__, __LINE__);
             
-            /*
             luminance_1.bind_to_draw(); // 64x64 surface area - downscale + average
             hdr_avgLumShader->bind();
             luminance_offset_4x4(hdr_avgLumShader.get(), float2(128, 128));
             hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_0);
-            hdr_avgLumShader->uniform("u_modelViewProj", modelViewProj);
+            hdr_avgLumShader->uniform("u_modelViewProj", Identity4x4);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
@@ -342,7 +375,7 @@ struct ExperimentalApp : public GLFWApp
             hdr_avgLumShader->bind();
             luminance_offset_4x4(hdr_avgLumShader.get(), float2(64, 64));
             hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_1);
-            hdr_avgLumShader->uniform("u_modelViewProj", modelViewProj);
+            hdr_avgLumShader->uniform("u_modelViewProj", Identity4x4);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
@@ -352,7 +385,7 @@ struct ExperimentalApp : public GLFWApp
             hdr_avgLumShader->bind();
             luminance_offset_4x4(hdr_avgLumShader.get(), float2(16, 16));
             hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_2);
-            hdr_avgLumShader->uniform("u_modelViewProj", modelViewProj);
+            hdr_avgLumShader->uniform("u_modelViewProj", Identity4x4);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
@@ -362,15 +395,17 @@ struct ExperimentalApp : public GLFWApp
             hdr_avgLumShader->bind();
             luminance_offset_4x4(hdr_avgLumShader.get(), float2(4, 4));
             hdr_avgLumShader->texture("s_texColor", 0, luminanceTex_3);
-            hdr_avgLumShader->uniform("u_modelViewProj", modelViewProj);
+            hdr_avgLumShader->uniform("u_modelViewProj", Identity4x4);
             fullscreen_post_quad.draw_elements();
             hdr_avgLumShader->unbind();
             
             gl_check_error(__FILE__, __LINE__);
             
             // Read luminance value
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, luminanceTex_4.get_gl_handle());
             glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, lumValue.data());
-            */
+            
             gl_check_error(__FILE__, __LINE__);
         }
         
@@ -378,14 +413,14 @@ struct ExperimentalApp : public GLFWApp
         
         // Take original scene framebuffer and render for brightness
         gl_check_error(__FILE__, __LINE__);
-        /*
+
         brightFramebuffer.bind_to_draw(); // 1/2 size
         hdr_brightShader->bind();
-        luminance_offset_4x4(hdr_brightShader.get(), float2(width / 2.f, height / 2.f));
+        //luminance_offset_4x4(hdr_brightShader.get(), float2(width / 2.f, height / 2.f));
         hdr_brightShader->texture("s_texColor", 0 , sceneColorTexture);
         hdr_brightShader->texture("s_texLum", 1, luminanceTex_4); // 1x1
         hdr_brightShader->uniform("u_tonemap", tonemap);
-        hdr_brightShader->uniform("u_modelViewProj", modelViewProj);
+        hdr_brightShader->uniform("u_modelViewProj", Identity4x4);
         fullscreen_post_quad.draw_elements();
         hdr_brightShader->unbind();
         
@@ -395,13 +430,15 @@ struct ExperimentalApp : public GLFWApp
         hdr_blurShader->bind();
         hdr_blurShader->texture("s_texColor", 0, brightTex);
         hdr_blurShader->uniform("u_viewTexel", float2(1.f / (width / 8.f), 1.f / (height / 8.f)));
-        hdr_blurShader->uniform("u_modelViewProj", modelViewProj);
+        hdr_blurShader->uniform("u_modelViewProj", Identity4x4);
         fullscreen_post_quad.draw_elements();
         hdr_blurShader->unbind();
 
         gl_check_error(__FILE__, __LINE__);
-        */
+
         // Output to default screen framebuffer on the last pass
+        //glDisable(GL_FRAMEBUFFER_SRGB);
+        
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
         
@@ -410,18 +447,20 @@ struct ExperimentalApp : public GLFWApp
         hdr_tonemapShader->texture("s_texLum", 1, luminanceTex_4); // 1x1
         hdr_tonemapShader->texture("s_texBlur", 2, blurTex);
         hdr_tonemapShader->uniform("u_tonemap", tonemap);
-        hdr_tonemapShader->uniform("u_modelViewProj", modelViewProj);
-        hdr_tonemapShader->uniform("u_viewTexel", float2(1.f / width , 1.f / height));
+        hdr_tonemapShader->uniform("u_modelViewProj", Identity4x4);
+        hdr_tonemapShader->uniform("u_viewTexel", float2(1.f/ width, 1.f / height));
         hdr_tonemapShader->uniform("u_tonemap", tonemap);
+        
         fullscreen_post_quad.draw_elements();
+        
         hdr_tonemapShader->unbind();
     
         gl_check_error(__FILE__, __LINE__);
         
-        std::cout << float4(lumValue[0], lumValue[1], lumValue[2], lumValue[3]) << std::endl;
-        // std::cout << tonemap <<< std::endl;
+        std::cout << decodeRE8(float4(lumValue[0], lumValue[1], lumValue[2], lumValue[3])) << std::endl;
+        std::cout << tonemap << std::endl;
         
-        middleGreyTex.load_data(1, 1, GL_RGB32F, GL_RGBA, GL_FLOAT, lumValue.data());
+        //middleGreyTex.load_data(1, 1, GL_RGB32F, GL_RGBA, GL_FLOAT, lumValue.data());
         
         gl_check_error(__FILE__, __LINE__);
         
@@ -431,11 +470,14 @@ struct ExperimentalApp : public GLFWApp
             averageLuminanceView->draw(uiSurface.children[1]->bounds, int2(width, height));
             brightnessView->draw(uiSurface.children[2]->bounds, int2(width, height));
             blurView->draw(uiSurface.children[3]->bounds, int2(width, height));
-            middleGreyView->draw(uiSurface.children[4]->bounds, int2(width, height));
-            tonemapView->draw(uiSurface.children[5]->bounds, int2(width, height));
+            tonemapView->draw(uiSurface.children[4]->bounds, int2(width, height));
+            
+            //middleGreyView->draw(uiSurface.children[4]->bounds, int2(width, height));
+
         }
         
         gl_check_error(__FILE__, __LINE__);
+        
         
         glfwSwapBuffers(window);
         

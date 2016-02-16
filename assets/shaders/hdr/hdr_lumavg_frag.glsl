@@ -25,7 +25,6 @@ vec4 luma(vec4 rgba)
     return vec4(luma(rgba.xyz), rgba.w);
 }
 
-
 vec4 encodeRE8(float r)
 {
     float exponent = ceil(log2(r) );

@@ -377,9 +377,10 @@ namespace avl
             glBindFramebuffer(GL_FRAMEBUFFER, handle);
             glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.get_gl_handle(), 0);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            size = float2(tex.get_size().x, tex.get_size().x);
+            size = float2(tex.get_size().x, tex.get_size().y);
         }
         
+        /*
         void attach(GLenum attachment, const GlRenderbuffer & rb)
         {
             if(!handle) glGenFramebuffers(1, &handle);
@@ -388,6 +389,7 @@ namespace avl
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             size = float2(rb.get_size().x, rb.get_size().y);
         }
+        */
         
         void bind_to_draw()
         {

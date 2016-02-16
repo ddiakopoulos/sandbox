@@ -8,6 +8,17 @@ in vec2 v_texcoord0;
 
 out vec4 f_color;
 
+// RE8 Encoding/Decoding
+// The RE8 encoding is simply a single channel version of RGBE8, useful for
+// storing non-color floating point data (such as calculated scene luminance)
+// http://www.graphics.cornell.edu/online/formats/rgbe/
+
+vec4 encodeRE8(float r)
+{
+    float exponent = ceil(log2(r) );
+    return vec4(r / exp2(exponent), 0.0, 0.0, (exponent + 128.0) / 255.0);
+}
+
 vec3 decodeRGBE8(vec4 rgbe8)
 {
     float exponent = rgbe8.w * 255.0 - 128.0;
@@ -24,13 +35,6 @@ vec3 luma(vec3 rgb)
 vec4 luma(vec4 rgba)
 {
     return vec4(luma(rgba.xyz), rgba.w);
-}
-
-
-vec4 encodeRE8(float _r)
-{
-    float exponent = ceil(log2(_r) );
-    return vec4(_r / exp2(exponent), 0.0, 0.0, (exponent + 128.0) / 255.0);
 }
 
 void main()
