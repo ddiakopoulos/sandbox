@@ -136,9 +136,6 @@ struct ExperimentalApp : public GLFWApp
 
     ExperimentalApp() : GLFWApp(1280, 720, "HDR Bloom App")
     {
-        
-        imguiCreate();
-        
         glEnable(GL_FRAMEBUFFER_SRGB);
         
         int width, height;
