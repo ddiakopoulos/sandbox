@@ -83,8 +83,11 @@ Copyright (C) The Point Cloud Library Authors, 2009+
 https://github.com/leonidk/ps1080test (MPL)
 Copyright (C) Leo Keselman, 2015
 
-https://github.com/IntelRealSense/librealsense
+https://github.com/IntelRealSense/librealsense (Apache 2.0)
 Copyright (C) Intel Corporation, 2015
+
+https://github.com/ocornut/imgui (MIT)
+Copyright (C) Omar Cornut and ImGui contributors, 2014-2015 
 
 "An Analytic Model for Full Spectral Sky-Dome Radiance"
 Copyright (C) Lukas Hosek and Alexander Wilkie, 2012-2013

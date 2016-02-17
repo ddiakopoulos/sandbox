@@ -29,6 +29,8 @@
 		08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2DC1BDD667000895E31 /* nvg.cpp */; };
 		08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E11BDD669600895E31 /* nanovg.cpp */; };
 		08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E51BDD79F000895E31 /* preetham.cpp */; };
+		08F653061C74376E0076DF49 /* imgui_draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08F652FF1C74376E0076DF49 /* imgui_draw.cpp */; };
+		08F653071C74376E0076DF49 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08F653011C74376E0076DF49 /* imgui.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -125,10 +127,6 @@
 		089B860A1BAFC9AB00B3A290 /* noise1234.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = noise1234.h; path = third_party/noise1234.h; sourceTree = SOURCE_ROOT; };
 		089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = simplexnoise1234.cpp; path = third_party/simplexnoise1234.cpp; sourceTree = SOURCE_ROOT; };
 		089B860C1BAFC9AB00B3A290 /* simplexnoise1234.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = simplexnoise1234.h; path = third_party/simplexnoise1234.h; sourceTree = SOURCE_ROOT; };
-		089B860D1BAFC9AB00B3A290 /* stb_image_resize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image_resize.h; path = third_party/stb_image_resize.h; sourceTree = SOURCE_ROOT; };
-		089B860E1BAFC9AB00B3A290 /* stb_image_write.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image_write.h; path = third_party/stb_image_write.h; sourceTree = SOURCE_ROOT; };
-		089B860F1BAFC9AB00B3A290 /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = third_party/stb_image.h; sourceTree = SOURCE_ROOT; };
-		089B86101BAFC9AB00B3A290 /* stb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_truetype.h; path = third_party/stb_truetype.h; sourceTree = SOURCE_ROOT; };
 		089B86141BAFD06300B3A290 /* dsp_filters.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dsp_filters.hpp; sourceTree = SOURCE_ROOT; };
 		089B86151BAFD39100B3A290 /* bit_mask.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = bit_mask.hpp; sourceTree = SOURCE_ROOT; };
 		08C475791C02CFF30031E87E /* terrain_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = terrain_app.hpp; path = examples/terrain_app.hpp; sourceTree = SOURCE_ROOT; };
@@ -162,6 +160,20 @@
 		08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = procedural_sky.hpp; sourceTree = SOURCE_ROOT; };
 		08F652F41C71C4310076DF49 /* decal_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = decal_app.hpp; path = examples/decal_app.hpp; sourceTree = SOURCE_ROOT; };
 		08F652F51C7254D80076DF49 /* debug_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = debug_frag.glsl; path = assets/shaders/debug_frag.glsl; sourceTree = SOURCE_ROOT; };
+		08F652F71C74375D0076DF49 /* stb_image_resize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = stb_image_resize.h; path = third_party/stb/stb_image_resize.h; sourceTree = SOURCE_ROOT; };
+		08F652F81C74375D0076DF49 /* stb_image_write.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = stb_image_write.h; path = third_party/stb/stb_image_write.h; sourceTree = SOURCE_ROOT; };
+		08F652F91C74375D0076DF49 /* stb_image.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = third_party/stb/stb_image.h; sourceTree = SOURCE_ROOT; };
+		08F652FA1C74375D0076DF49 /* stb_rect_pack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = stb_rect_pack.h; path = third_party/stb/stb_rect_pack.h; sourceTree = SOURCE_ROOT; };
+		08F652FB1C74375D0076DF49 /* stb_textedit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = stb_textedit.h; path = third_party/stb/stb_textedit.h; sourceTree = SOURCE_ROOT; };
+		08F652FC1C74375D0076DF49 /* stb_truetype.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = stb_truetype.h; path = third_party/stb/stb_truetype.h; sourceTree = SOURCE_ROOT; };
+		08F652FE1C74376E0076DF49 /* imconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imconfig.h; path = third_party/imgui/imconfig.h; sourceTree = SOURCE_ROOT; };
+		08F652FF1C74376E0076DF49 /* imgui_draw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imgui_draw.cpp; path = third_party/imgui/imgui_draw.cpp; sourceTree = SOURCE_ROOT; };
+		08F653001C74376E0076DF49 /* imgui_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imgui_internal.h; path = third_party/imgui/imgui_internal.h; sourceTree = SOURCE_ROOT; };
+		08F653011C74376E0076DF49 /* imgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imgui.cpp; path = third_party/imgui/imgui.cpp; sourceTree = SOURCE_ROOT; };
+		08F653021C74376E0076DF49 /* imgui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imgui.h; path = third_party/imgui/imgui.h; sourceTree = SOURCE_ROOT; };
+		08F653031C74376E0076DF49 /* stb_rect_pack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_rect_pack.h; path = third_party/imgui/stb_rect_pack.h; sourceTree = SOURCE_ROOT; };
+		08F653041C74376E0076DF49 /* stb_textedit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_textedit.h; path = third_party/imgui/stb_textedit.h; sourceTree = SOURCE_ROOT; };
+		08F653051C74376E0076DF49 /* stb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_truetype.h; path = third_party/imgui/stb_truetype.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -285,6 +297,7 @@
 		0849FD8D1BE7CB2B000F148E /* third_party */ = {
 			isa = PBXGroup;
 			children = (
+				08F652FD1C7437610076DF49 /* imgui */,
 				08C4758B1C1C84420031E87E /* efsw */,
 				08C475831C0E0B580031E87E /* jo_gif */,
 				0849FD9E1BFAFC77000F148E /* tinyobj */,
@@ -355,10 +368,12 @@
 		089B85FF1BAFC96800B3A290 /* stb */ = {
 			isa = PBXGroup;
 			children = (
-				089B860D1BAFC9AB00B3A290 /* stb_image_resize.h */,
-				089B860E1BAFC9AB00B3A290 /* stb_image_write.h */,
-				089B860F1BAFC9AB00B3A290 /* stb_image.h */,
-				089B86101BAFC9AB00B3A290 /* stb_truetype.h */,
+				08F652F71C74375D0076DF49 /* stb_image_resize.h */,
+				08F652F81C74375D0076DF49 /* stb_image_write.h */,
+				08F652F91C74375D0076DF49 /* stb_image.h */,
+				08F652FA1C74375D0076DF49 /* stb_rect_pack.h */,
+				08F652FB1C74375D0076DF49 /* stb_textedit.h */,
+				08F652FC1C74375D0076DF49 /* stb_truetype.h */,
 			);
 			name = stb;
 			sourceTree = "<group>";
@@ -497,6 +512,21 @@
 			name = shaders;
 			sourceTree = "<group>";
 		};
+		08F652FD1C7437610076DF49 /* imgui */ = {
+			isa = PBXGroup;
+			children = (
+				08F652FE1C74376E0076DF49 /* imconfig.h */,
+				08F652FF1C74376E0076DF49 /* imgui_draw.cpp */,
+				08F653001C74376E0076DF49 /* imgui_internal.h */,
+				08F653011C74376E0076DF49 /* imgui.cpp */,
+				08F653021C74376E0076DF49 /* imgui.h */,
+				08F653031C74376E0076DF49 /* stb_rect_pack.h */,
+				08F653041C74376E0076DF49 /* stb_textedit.h */,
+				08F653051C74376E0076DF49 /* stb_truetype.h */,
+			);
+			name = imgui;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -556,6 +586,7 @@
 				08C4757C1C0579550031E87E /* noise.cpp in Sources */,
 				0849FD9C1BFADE27000F148E /* gizmo.cpp in Sources */,
 				0812049D1BADDF6800C7C0F4 /* main.cpp in Sources */,
+				08F653061C74376E0076DF49 /* imgui_draw.cpp in Sources */,
 				089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */,
 				089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */,
 				0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */,
@@ -565,6 +596,7 @@
 				0849FDA11BFAFCC3000F148E /* tiny_obj_loader.cc in Sources */,
 				08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */,
 				0849FD851BE7C66E000F148E /* tinyply.cpp in Sources */,
+				08F653071C74376E0076DF49 /* imgui.cpp in Sources */,
 				08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */,
 				089B86121BAFC9AB00B3A290 /* noise1234.cpp in Sources */,
 				085081971BB5B6EA0084A1D6 /* glfw_app.mm in Sources */,
