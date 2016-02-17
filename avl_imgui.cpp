@@ -57,7 +57,7 @@ namespace ImGui
         io.KeyMap[ImGuiKey_End]             = GLFW_KEY_END;
         io.KeyMap[ImGuiKey_Delete]          = GLFW_KEY_DELETE;
         io.KeyMap[ImGuiKey_Backspace]       = GLFW_KEY_BACKSPACE;
-        io.KeyMap[ImGuiKey_Enter]           = GLFW_KEY_RETURN;
+        io.KeyMap[ImGuiKey_Enter]           = GLFW_KEY_ENTER;
         io.KeyMap[ImGuiKey_Escape]          = GLFW_KEY_ESCAPE;
         io.KeyMap[ImGuiKey_A]               = GLFW_KEY_A;
         io.KeyMap[ImGuiKey_C]               = GLFW_KEY_C;
@@ -69,9 +69,9 @@ namespace ImGui
         // Fonts
         ImFontAtlas* fontAtlas  = ImGui::GetIO().Fonts;
         fontAtlas->Clear();
-        for (auto font : options.getFonts())
+        for (auto font : getFonts())
         {
-            string name = font.first.stem().string();
+            std::string name = font.first.stem().string();
             renderer->add_font(loadFile(font.first), font.second, options.getFontGlyphRanges(name) );
         }
         renderer->initialize_font_texture();
@@ -104,19 +104,7 @@ namespace ImGui
             auto renderer = getRenderer();
             renderer->render(data);
         };
-        
-        // connect window's signals
-        connectWindow(window);
-        
-        if (options.isAutoRenderEnabled() && window) 
-        {
-            ImGui::NewFrame();
-            sWindowConnections.push_back(window->getSignalPostDraw().connect(render));
-        }
-        
-        // connect app's signals
-        app::App::get()->getSignalDidBecomeActive().connect(resetKeys);
-        app::App::get()->getSignalWillResignActive().connect(resetKeys);
+
     }
 
     ImGui::Options & ImGui::Options::autoRender(bool autoRender)
@@ -134,7 +122,7 @@ namespace ImGui
         mFonts = fonts; return *this;
     }
 
-    ImGui::Options & ImGui::Options::fontGlyphRanges(const std::string &name, const vector<ImWchar> &glyphRanges)
+    ImGui::Options & ImGui::Options::fontGlyphRanges(const std::string &name, const std::vector<ImWchar> &glyphRanges)
     {
         mFontsGlyphRanges[name] = glyphRanges; return *this;
     }
@@ -636,15 +624,7 @@ namespace ImGui
         bool result = Combo(label, current_item, (const char*) &charArray[0], height_in_items);
         return result;
     }
-
-                case InputEvent::MOUSE:
-                    switch (e.value[0])
-                {
-                    case GLFW_MOUSE_BUTTON_LEFT: ml = e.is_mouse_down(); break;
-                    case GLFW_MOUSE_BUTTON_RIGHT: mr = e.is_mouse_down(); break;
-                }
-
-
+    
     namespace 
     {
         
@@ -701,25 +681,23 @@ namespace ImGui
         {
             ImGuiIO & io = ImGui::GetIO();
             
+            // Fixme
             uint32_t character = event.getCharUtf32();
             
             io.KeysDown[event.value[0]] = true;
             
-            if (!event.isAccelDown() && character > 0 && character <= 255) 
+            if (!event.value[0] == GLFW_KEY_LEFT_CONTROL && !event.value[0] == GLFW_KEY_RIGHT_CONTROL && character > 0 && character <= 255)
             {
                 io.AddInputCharacter((char) character);
             }
-            else if (event.value[0] != GLFW_KEY_LMETA
-                && event.value[0] != GLFW_KEY_RMETA
-                && event.isAccelDown()
-                && find(sAccelKeys.begin(), sAccelKeys.end(), event.value[0]) == sAccelKeys.end())
+            else if (event.isAccelDown() && find(sAccelKeys.begin(), sAccelKeys.end(), event.value[0]) == sAccelKeys.end())
             {
                 sAccelKeys.push_back(event.value[0]);
             }
             
-            io.KeyCtrl = io.KeysDown[GLFW_KEY_LCTRL] || io.KeysDown[GLFW_KEY_RCTRL] || io.KeysDown[GLFW_KEY_LMETA] || io.KeysDown[GLFW_KEY_RMETA];
-            io.KeyShift = io.KeysDown[GLFW_KEY_LSHIFT] || io.KeysDown[GLFW_KEY_RSHIFT];
-            io.KeyAlt = io.KeysDown[GLFW_KEY_LALT] || io.KeysDown[GLFW_KEY_RALT];
+            io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+            io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+            io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
         }
 
         // sets the right keyUp IO values in imgui
@@ -734,9 +712,9 @@ namespace ImGui
 
             sAccelKeys.clear();
             
-            io.KeyCtrl = io.KeysDown[GLFW_KEY_LCTRL] || io.KeysDown[GLFW_KEY_RCTRL] || io.KeysDown[GLFW_KEY_LMETA] || io.KeysDown[GLFW_KEY_RMETA];
-            io.KeyShift = io.KeysDown[GLFW_KEY_LSHIFT] || io.KeysDown[GLFW_KEY_RSHIFT];
-            io.KeyAlt = io.KeysDown[GLFW_KEY_LALT] || io.KeysDown[GLFW_KEY_RALT];
+            io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+            io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+            io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
         }
 
         void resize()
