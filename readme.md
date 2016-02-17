@@ -5,28 +5,30 @@
 United under the arbitrarily chosen namespace "avl" (short for Anvil).
 
 ## Recent
-* CEGUI layout system
+* 2D CEGUI layout system for screen debug output (textures, etc)
 * Procedural sky dome with Preetham and Hosek-Wilkie models
 * Arcball camera
-* Arkano22 SSAO implementation
-* Several GLSL 330 post-processing effects: film grain, FXAA
-* Opinionated 3d gizmo editing tool
+* Opinionated gizmo editing tool for 3D scenes
 * Island terrain with a simple water shader (waves, reflections)
 * Frame capture => GIF export
 * 3D Euclidean patterns
-* GLSL Shader hot-reload (efsw library)
+* GLSL Shader hot-reload (via efsw library)
 * Spherical environment mapping (matcap shading)
-* Library of procedural meshes (cube, sphere, cone, torus, etc)
+* Library of procedural meshes (cube, sphere, cone, torus, capsule, etc)
 * Billboarded triangle mesh line renderer
 * Reaction-diffusion CPU simulation (Gray-Scott)
 * Incubation of computer vision functions on top of [librealsense](https://www.github.com/IntelRealSense/librealsense) (minivision)
 * Decal projection on arbitrary meshes
+* HDR Postprocessing Pipeline (WIP)
+* Arkano22 SSAO implementation
+* Several GLSL 330 post-processing effects: film grain, FXAA
 
 ## In Progress
-* HDR pipeline (Bloom, etc)
-* Deferred rendering experiments (Forward+ impl)
 * Physically-based text rendering
 * BRDF / PBR
+* Shadow Mapping: Cascaded, Exponential
+* Orconut-Dear-ImGui Bindings
+* Deferred rendering experiments (Forward+ impl)
 * CPU path tracer (+ lighting baker?)
 * Fluid simulator (GL compute shader)
 * L-System + particles
