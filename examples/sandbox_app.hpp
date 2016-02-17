@@ -12,6 +12,8 @@
 
 // http://www.gamedev.net/topic/674450-hdr-rendering-average-luminance/
 
+#include "imgui/imgui.h"
+
 // Build a 3x3 texel offset lookup table for doing a 2x downsample
 void luminance_offset_2x2(GlShader * shader, float2 size)
 {
@@ -134,6 +136,9 @@ struct ExperimentalApp : public GLFWApp
 
     ExperimentalApp() : GLFWApp(1280, 720, "HDR Bloom App")
     {
+        
+        imguiCreate();
+        
         glEnable(GL_FRAMEBUFFER_SRGB);
         
         int width, height;

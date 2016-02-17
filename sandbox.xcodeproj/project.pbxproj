@@ -31,6 +31,7 @@
 		08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E51BDD79F000895E31 /* preetham.cpp */; };
 		08F653061C74376E0076DF49 /* imgui_draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08F652FF1C74376E0076DF49 /* imgui_draw.cpp */; };
 		08F653071C74376E0076DF49 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08F653011C74376E0076DF49 /* imgui.cpp */; };
+		08F6530A1C743AE10076DF49 /* avl_imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08F653091C743AE10076DF49 /* avl_imgui.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -174,6 +175,8 @@
 		08F653031C74376E0076DF49 /* stb_rect_pack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_rect_pack.h; path = third_party/imgui/stb_rect_pack.h; sourceTree = SOURCE_ROOT; };
 		08F653041C74376E0076DF49 /* stb_textedit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_textedit.h; path = third_party/imgui/stb_textedit.h; sourceTree = SOURCE_ROOT; };
 		08F653051C74376E0076DF49 /* stb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_truetype.h; path = third_party/imgui/stb_truetype.h; sourceTree = SOURCE_ROOT; };
+		08F653081C743AE10076DF49 /* avl_imgui.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = avl_imgui.hpp; sourceTree = SOURCE_ROOT; };
+		08F653091C743AE10076DF49 /* avl_imgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = avl_imgui.cpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -394,6 +397,8 @@
 		08C475761C02C9200031E87E /* rendering */ = {
 			isa = PBXGroup;
 			children = (
+				08F653081C743AE10076DF49 /* avl_imgui.hpp */,
+				08F653091C743AE10076DF49 /* avl_imgui.cpp */,
 				0849FD9D1BFADE59000F148E /* scene.hpp */,
 				08C475911C1CE8F30031E87E /* meshline.hpp */,
 				0822AF381BD4B52100A894F0 /* renderable_grid.hpp */,
@@ -602,6 +607,7 @@
 				085081971BB5B6EA0084A1D6 /* glfw_app.mm in Sources */,
 				0849FD821BE7C667000F148E /* json.cpp in Sources */,
 				08C4758D1C1C844F0031E87E /* efsw.cpp in Sources */,
+				08F6530A1C743AE10076DF49 /* avl_imgui.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
