@@ -28,6 +28,7 @@
     <ClInclude Include="..\ellipse_math.hpp" />
     <ClInclude Include="..\examples\arcball_app.hpp" />
     <ClInclude Include="..\examples\camera_app.hpp" />
+    <ClInclude Include="..\examples\decal_app.hpp" />
     <ClInclude Include="..\examples\empty_app.hpp" />
     <ClInclude Include="..\examples\euclidean_app.hpp" />
     <ClInclude Include="..\examples\forward_lighting_app.hpp" />
@@ -41,10 +42,7 @@
     <ClInclude Include="..\geometry.hpp" />
     <ClInclude Include="..\gizmo.hpp" />
     <ClInclude Include="..\glfw_app.hpp" />
-    <ClInclude Include="..\GlMesh.hpp" />
-    <ClInclude Include="..\GlShader.hpp" />
-    <ClInclude Include="..\GlShared.hpp" />
-    <ClInclude Include="..\GlTexture.hpp" />
+    <ClInclude Include="..\GL_API.hpp" />
     <ClInclude Include="..\gpu_timer.hpp" />
     <ClInclude Include="..\human_time.hpp" />
     <ClInclude Include="..\index.hpp" />
@@ -90,10 +88,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\gizmo.cpp" />
-    <ClCompile Include="..\GlMesh.cpp" />
-    <ClCompile Include="..\GlShader.cpp" />
-    <ClCompile Include="..\GlShared.cpp" />
-    <ClCompile Include="..\GlTexture.cpp" />
+    <ClCompile Include="..\GL_API.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\nvg.cpp" />
     <ClCompile Include="..\procedural_sky\hosek.cpp" />
@@ -261,9 +256,6 @@
       <AdditionalDependencies>glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <None Include="..\procedural_sky\hosek_data_rgb.inl" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\third_party\glfw-3.1.2\glfw3.vcxproj">
       <Project>{be423e72-28c2-4fb7-9fe1-42aa2f393bbc}</Project>

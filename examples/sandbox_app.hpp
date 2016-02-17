@@ -144,37 +144,27 @@ struct ExperimentalApp : public GLFWApp
         
         std::vector<float> greenDebugPixel = {0.f, 1.0f, 0.f, 1.0f};
         
-        std::vector<uint8_t> white;
-        
-        for (int i = 0; i < width * height; i++)
-        {
-            white.push_back(255);
-            white.push_back(255);
-            white.push_back(255);
-            white.push_back(255);
-        }
-        
         // Debugging views
         uiSurface.bounds = {0, 0, (float) width, (float) height};
-        uiSurface.add_child( {{0.0000, +10},{0, +10},{0.1667, -10},{0.133, +10}}, std::make_shared<UIComponent>());
-        uiSurface.add_child( {{0.1667, +10},{0, +10},{0.3334, -10},{0.133, +10}}, std::make_shared<UIComponent>());
-        uiSurface.add_child( {{0.3334, +10},{0, +10},{0.5009, -10},{0.133, +10}}, std::make_shared<UIComponent>());
-        uiSurface.add_child( {{0.5000, +10},{0, +10},{0.6668, -10},{0.133, +10}}, std::make_shared<UIComponent>());
-        uiSurface.add_child( {{0.6668, +10},{0, +10},{0.8335, -10},{0.133, +10}}, std::make_shared<UIComponent>());
-        uiSurface.add_child( {{0.8335, +10},{0, +10},{1.0000, -10},{0.133, +10}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.0000f, +10},{0, +10},{0.1667f, -10},{0.133f, +10}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.1667f, +10},{0, +10},{0.3334f, -10},{0.133f, +10}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.3334f, +10},{0, +10},{0.5009f, -10},{0.133f, +10}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.5000f, +10},{0, +10},{0.6668f, -10},{0.133f, +10}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.6668f, +10},{0, +10},{0.8335f, -10},{0.133f, +10}}, std::make_shared<UIComponent>());
+        uiSurface.add_child( {{0.8335f, +10},{0, +10},{1.0000f, -10},{0.133f, +10}}, std::make_shared<UIComponent>());
         uiSurface.layout();
         
-        sceneColorTexture.load_data(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT, white.data());
-        sceneDepthTexture.load_data(width, height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, white.data());
+        sceneColorTexture.load_data(width, height, GL_RGBA16F, GL_RGBA, GL_FLOAT, nullptr);
+        sceneDepthTexture.load_data(width, height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         
-        luminanceTex_0.load_data(128, 128, GL_RGBA32F, GL_RGBA, GL_FLOAT, white.data());
-        luminanceTex_1.load_data(64, 64,   GL_RGBA32F, GL_RGBA, GL_FLOAT, white.data());
-        luminanceTex_2.load_data(16, 16,   GL_RGBA32F, GL_RGBA, GL_FLOAT, white.data());
-        luminanceTex_3.load_data(4, 4,     GL_RGBA32F, GL_RGBA, GL_FLOAT, white.data());
-        luminanceTex_4.load_data(1, 1,     GL_RGBA32F, GL_RGBA, GL_FLOAT, white.data());
+        luminanceTex_0.load_data(128, 128, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_1.load_data(64, 64,   GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_2.load_data(16, 16,   GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_3.load_data(4, 4,     GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_4.load_data(1, 1,     GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
         
-        brightTex.load_data(width / 2, height / 2, GL_RGBA32F, GL_RGBA, GL_FLOAT, white.data());
-        blurTex.load_data(width / 8, height / 8, GL_RGBA32F, GL_RGBA, GL_FLOAT, white.data());
+        brightTex.load_data(width / 2, height / 2, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        blurTex.load_data(width / 8, height / 8, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
     
         sceneFramebuffer.attach(GL_COLOR_ATTACHMENT0, sceneColorTexture);
         sceneFramebuffer.attach(GL_DEPTH_ATTACHMENT, sceneDepthTexture);
