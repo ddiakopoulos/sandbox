@@ -8,6 +8,7 @@
 #include <map>
 
 #include "glfw_app.hpp"
+#include "GL_API.hpp"
 
 using namespace avl;
 
@@ -27,6 +28,68 @@ operator float4() const { return float4(x,y,z,w); }
 
 namespace ImGui {
     
+    constexpr const char s_imguiVertexShader[] = R"(#version 330
+        uniform mat4 u_mvp;
+        in vec2      inPosition;
+        in vec2      inTexcoord;
+        in vec4      inColor;
+        out vec2     vUv;
+        out vec4     vColor;
+        void main()
+        {
+            vColor       = inColor;
+            vUv          = inTexcoord;
+            gl_Position  = u_mvp * vec4(inPosition, 0.0, 1.0);
+        }
+    )";
+    
+    constexpr const char s_imguiFragmentShader[] = R"(#version 330
+        in vec2             vUv;
+        in vec4             vColor;
+        uniform sampler2D   u_texture;
+        
+        out vec4 f_color;
+        
+        void main()
+        {
+            vec4 color = texture(u_texture, vUv) * vColor;
+            f_color = color;
+        }
+    )";
+    
+    class Renderer
+    {
+        GlTexture mFontTexture;
+        GlShader mShader;
+        
+        ci::gl::VaoRef mVao;
+        ci::gl::VboRef mVbo;
+        ci::gl::VboRef mIbo;
+        
+        std::map<std::string,ImFont*> mFonts;
+        
+    public:
+        
+        Renderer();
+        
+        void render(ImDrawData* draw_data);
+        
+        ImFont * add_font(std::vector<uint8_t> & font, float size, const ImWchar * glyph_ranges = NULL);
+        
+        GlTexture & get_font_texture();
+        
+        ci::gl::VaoRef getVao();
+        ci::gl::VboRef getVbo();
+        
+        GlShader & get_shader();
+        
+        void initialize_font_texture();
+        void initialize_buffers(size_t size = 1000);
+        void create_gl_program();
+        
+        ImFont * getFont(const std::string &name);
+    };
+
     class Options
     {
 

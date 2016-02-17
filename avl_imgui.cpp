@@ -6,6 +6,178 @@
 
 namespace ImGui 
 {
+    
+    ///////////////////////////////////////
+    //   ImGui Renderer Implementation   //
+    ///////////////////////////////////////
+    
+    Renderer::Renderer()
+    {
+        create_gl_program();
+        initialize_buffers();
+    }
+    
+    // renders imgui drawlist
+    void Renderer::render(ImDrawData* draw_data)
+    {
+        const float w = ImGui::GetIO().DisplaySize.x;
+        const float h = ImGui::GetIO().DisplaySize.y;
+        
+        const auto vbo = getVbo();
+        const auto shader = get_shader();
+        
+        const float4x4 modelViewMat = {
+            {  2.0f/w, 0.0f,     0.0f,  0.0f },
+            {  0.0f,   2.0f/-h,  0.0f,  0.0f },
+            {  0.0f,   0.0f,    -1.0f,  0.0f },
+            { -1.0f,   1.0f,     0.0f,  1.0f },
+        };
+        
+        mShader.bind();
+        
+        mShader.uniform("u_mvp", modelViewMat);
+        mShader.uniform("u_texture", 0);
+        
+        for (int n = 0; n < draw_data->CmdListsCount; n++)
+        {
+            const ImDrawList* cmd_list = draw_data->CmdLists[n];
+            const ImDrawIdx* idx_buffer = &cmd_list->IdxBuffer.front();
+            
+            // Resize VBO
+            int needed_vtx_size = cmd_list->VtxBuffer.size() * sizeof(ImDrawVert);
+            if (vbo->getSize() < needed_vtx_size)
+            {
+                GLsizeiptr size = needed_vtx_size + 2000 * sizeof(ImDrawVert);
+                mVbo->bufferData(size, nullptr, GL_STREAM_DRAW);
+            }
+            
+            // Update VBO
+            {
+                gl::ScopedBuffer scopedVbo(GL_ARRAY_BUFFER, vbo->get_gl_handle());
+                ImDrawVert *vtx_data = static_cast<ImDrawVert*>(vbo->mapReplace());
+                if (!vtx_data) continue;
+                memcpy(vtx_data, &cmd_list->VtxBuffer[0], cmd_list->VtxBuffer.size() * sizeof(ImDrawVert));
+                vbo->unmap();
+            }
+            
+            // Draw
+            for (const ImDrawCmd* pcmd = cmd_list->CmdBuffer.begin(); pcmd != cmd_list->CmdBuffer.end(); pcmd++)
+            {
+                if (pcmd->UserCallback)
+                {
+                    pcmd->UserCallback(cmd_list, pcmd);
+                }
+                else
+                {
+                    gl::ScopedVao scopedVao(getVao().get());
+                    gl::ScopedBuffer scopedIndexBuffer(mIbo);
+                    
+                    gl::ScopedTextureBind scopedTexture(GL_TEXTURE_2D, (GLuint)(intptr_t) pcmd->TextureId);
+                    gl::ScopedScissor scopedScissors((int)pcmd->ClipRect.x, (int)(height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+                    gl::ScopedDepth scopedDepth(false);
+                    
+                    gl::ScopedBlendAlpha scopedBlend;
+                    
+                    gl::ScopedFaceCulling scopedFaceCulling(false);
+                    
+                    mIbo->bufferData(pcmd->ElemCount * sizeof(ImDrawIdx), idx_buffer, GL_STREAM_DRAW);
+                    gl::drawElements(GL_TRIANGLES, (GLsizei) pcmd->ElemCount, GL_UNSIGNED_SHORT, nullptr);
+                }
+                idx_buffer += pcmd->ElemCount;
+            }
+        }
+        
+        mShader.unbind();
+    }
+    
+    GlTexture & Renderer::get_font_texture()
+    {
+        if (!mFontTexture) initialize_font_texture();
+        return mFontTexture;
+    }
+    
+    gl::VaoRef Renderer::getVao()
+    {
+        if (!mVao) initialize_buffers();
+        return mVao;
+    }
+    
+    gl::VboRef Renderer::getVbo()
+    {
+        if (!mVbo) initialize_buffers();
+        return mVbo;
+    }
+    
+    void Renderer::initialize_buffers(size_t size)
+    {
+        mVbo = gl::Vbo::create(GL_ARRAY_BUFFER, size, nullptr, GL_STREAM_DRAW);
+        mIbo = gl::Vbo::create(GL_ELEMENT_ARRAY_BUFFER, 10, nullptr, GL_STREAM_DRAW);
+        mVao = gl::Vao::create();
+        
+        gl::ScopedVao mVaoScope(mVao);
+        gl::ScopedBuffer mVboScope(mVbo);
+        
+        gl::enableVertexAttribArray(0);
+        gl::enableVertexAttribArray(1);
+        gl::enableVertexAttribArray(2);
+        
+        gl::vertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (const GLvoid *)offsetof(ImDrawVert, pos));
+        gl::vertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (const GLvoid *)offsetof(ImDrawVert, uv));
+        gl::vertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (const GLvoid *)offsetof(ImDrawVert, col));
+    }
+    
+    void Renderer::initialize_font_texture()
+    {
+        unsigned char * pixels;
+        int width, height;
+        
+        ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+        
+        mFontTexture = gl::Texture::create(pixels, GL_RGBA, width, height, gl::Texture::Format().magFilter(GL_LINEAR).minFilter(GL_LINEAR));
+        
+        ImGui::GetIO().Fonts->ClearTexData();
+        ImGui::GetIO().Fonts->TexID = (void *)(intptr_t) mFontTexture->get_gl_handle();
+    }
+    
+    ImFont* Renderer::add_font(std::vector<uint8_t> & font, float size, const ImWchar * glyph_ranges)
+    {
+        ImFontAtlas* fontAtlas = ImGui::GetIO().Fonts;
+        
+        ImFontConfig config;
+        ImFont * newFont = fontAtlas->Add_fontFromMemoryTTF(font.data(), font.size(), size, &config, glyph_ranges);
+        
+        // Fixme
+        mFonts.insert(make_pair(font->getFilePath().stem().string(), newFont));
+        return newFont;
+    }
+    
+    GlShader & Renderer::get_shader()
+    {
+        if (!mShader) create_gl_program();
+        return mShader;
+    }
+    
+    void Renderer::create_gl_program()
+    {
+        try
+        {
+            mShader = GlShader(s_imguiVertexShader, s_imguiFragmentShader);
+            glBindAttribLocation(mShader.get_handle(), 0, "inPosition");
+            glBindAttribLocation(mShader.get_handle(), 1, "inTexcoord");
+            glBindAttribLocation(mShader.get_handle(), 2, "inColor");
+        }
+        catch (const std::exception & e)
+        {
+            throw std::runtime_error("Problem Compiling ImGui::Renderer shader " + e.what());
+        }
+    }
+    
+    ImFont * Renderer::getFont(const std::string &name)
+    {
+        if (!mFonts.count(name)) return nullptr;
+        else return mFonts[name];
+    }
+    
     ImGui::Options::Options(const std::shared_ptr<GLFWwindow> & window) : glfwWindowHandle(window)
     {
         build_dark_theme();
@@ -322,243 +494,7 @@ namespace ImGui
     {
         mStyle.Colors[option] = color; return *this;
     }
-
-    class Renderer 
-    {
-        GlTexture mFontTexture;
-        GlShader mShader;
-
-        ci::gl::VaoRef mVao;
-        ci::gl::VboRef mVbo;
-        ci::gl::VboRef mIbo;
-
-        std::map<string,ImFont*> mFonts;
-
-    public:
-
-        Renderer();
-        
-        void render(ImDrawData* draw_data);
-
-        ImFont * add_font(std::vector<uint8_t> & font, float size, const ImWchar* glyph_ranges = NULL);
-
-        GlTexture & get_font_texture();
-
-        ci::gl::VaoRef getVao();
-        ci::gl::VboRef getVbo();
-
-        GlShader & get_shader();
-        
-        void initialize_font_texture();
-        void initialize_buffers(size_t size = 1000);
-        void create_gl_program();
-        
-        ImFont * getFont(const std::string &name);
-    };
-
-    Renderer::Renderer()
-    {
-        create_gl_program();
-        initialize_buffers();
-    }
-
-    // renders imgui drawlist
-    void Renderer::render(ImDrawData* draw_data)
-    {
-        const float w = ImGui::GetIO().DisplaySize.x;
-        const float h = ImGui::GetIO().DisplaySize.y;
-
-        const auto vbo = getVbo();
-        const auto shader = get_shader();
-        
-        const float4x4 modelViewMat = {
-            {  2.0f/w, 0.0f,     0.0f,  0.0f },
-            {  0.0f,   2.0f/-h,  0.0f,  0.0f },
-            {  0.0f,   0.0f,    -1.0f,  0.0f },
-            { -1.0f,   1.0f,     0.0f,  1.0f },
-        };
-
-        shader.enable();
-
-        shader->uniform("u_mvp", modelViewMat);
-        shader->uniform("u_texture", 0);
-        
-        for (int n = 0; n < draw_data->CmdListsCount; n++) 
-        {
-            const ImDrawList* cmd_list = draw_data->CmdLists[n];
-            const ImDrawIdx* idx_buffer = &cmd_list->IdxBuffer.front();
-            
-            // Resize VBO
-            int needed_vtx_size = cmd_list->VtxBuffer.size() * sizeof(ImDrawVert);
-            if (vbo->getSize() < needed_vtx_size)
-            {
-                GLsizeiptr size = needed_vtx_size + 2000 * sizeof(ImDrawVert);
-                mVbo->bufferData(size, nullptr, GL_STREAM_DRAW);
-            }
-            
-            // Update VBO
-            {
-                gl::ScopedBuffer scopedVbo(GL_ARRAY_BUFFER, vbo->get_gl_handle());
-                ImDrawVert *vtx_data = static_cast<ImDrawVert*>(vbo->mapReplace());
-                if (!vtx_data) continue;
-                memcpy(vtx_data, &cmd_list->VtxBuffer[0], cmd_list->VtxBuffer.size() * sizeof(ImDrawVert));
-                vbo->unmap();
-            }
-            
-            // Draw
-            for (const ImDrawCmd* pcmd = cmd_list->CmdBuffer.begin(); pcmd != cmd_list->CmdBuffer.end(); pcmd++) 
-            {
-                if (pcmd->UserCallback) 
-                {
-                    pcmd->UserCallback(cmd_list, pcmd);
-                }
-                else 
-                {
-                    gl::ScopedVao scopedVao(getVao().get());
-                    gl::ScopedBuffer scopedIndexBuffer(mIbo);
-
-                    gl::ScopedTextureBind scopedTexture(GL_TEXTURE_2D, (GLuint)(intptr_t) pcmd->TextureId);
-                    gl::ScopedScissor scopedScissors((int)pcmd->ClipRect.x, (int)(height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
-                    gl::ScopedDepth scopedDepth(false);
-
-                    gl::ScopedBlendAlpha scopedBlend;
-
-                    gl::ScopedFaceCulling scopedFaceCulling(false);
-                    
-                    mIbo->bufferData(pcmd->ElemCount * sizeof(ImDrawIdx), idx_buffer, GL_STREAM_DRAW);
-                    gl::drawElements(GL_TRIANGLES, (GLsizei) pcmd->ElemCount, GL_UNSIGNED_SHORT, nullptr);
-                }
-                idx_buffer += pcmd->ElemCount;
-            }
-        }
-
-        shader.disable();
-    }
-
-    GlTexture & Renderer::get_font_texture()
-    {
-        if (!mFontTexture) initialize_font_texture();
-        return mFontTexture;
-    }
-
-    gl::VaoRef Renderer::getVao()
-    {
-        if (!mVao) initialize_buffers();
-        return mVao;
-    }
-
-    gl::VboRef Renderer::getVbo()
-    {
-        if (!mVbo) initialize_buffers();
-        return mVbo;
-    }
-
-    void Renderer::initialize_buffers(size_t size)
-    {
-        mVbo = gl::Vbo::create(GL_ARRAY_BUFFER, size, nullptr, GL_STREAM_DRAW);
-        mIbo = gl::Vbo::create(GL_ELEMENT_ARRAY_BUFFER, 10, nullptr, GL_STREAM_DRAW);
-        mVao = gl::Vao::create();
-        
-        gl::ScopedVao mVaoScope(mVao);
-        gl::ScopedBuffer mVboScope(mVbo);
-        
-        gl::enableVertexAttribArray(0);
-        gl::enableVertexAttribArray(1);
-        gl::enableVertexAttribArray(2);
-        
-        gl::vertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (const GLvoid *)offsetof(ImDrawVert, pos));
-        gl::vertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (const GLvoid *)offsetof(ImDrawVert, uv));
-        gl::vertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (const GLvoid *)offsetof(ImDrawVert, col));
-    }
-
-    void Renderer::initialize_font_texture()
-    {
-        unsigned char * pixels;
-        int width, height;
-
-        ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-
-        mFontTexture = gl::Texture::create(pixels, GL_RGBA, width, height, gl::Texture::Format().magFilter(GL_LINEAR).minFilter(GL_LINEAR));
-
-        ImGui::GetIO().Fonts->ClearTexData();
-        ImGui::GetIO().Fonts->TexID = (void *)(intptr_t) mFontTexture->get_gl_handle();
-    }
-
-    ImFont* Renderer::add_font(std::vector<uint8_t> & font, float size, const ImWchar * glyph_ranges)
-    {
-        ImFontAtlas* fontAtlas = ImGui::GetIO().Fonts;
-        
-        ImFontConfig config;
-        ImFont * newFont = fontAtlas->Add_fontFromMemoryTTF(font.data(), font.size(), size, &config, glyph_ranges);
-        
-        // Fixme
-        mFonts.insert(make_pair(font->getFilePath().stem().string(), newFont));
-        return newFont;
-    }
-
-    GlShader & Renderer::get_shader()
-    {
-        if (!mShader) create_gl_program();
-        return mShader;
-    }
-
-    void Renderer::create_gl_program()
-    {
-        constexpr const char colorVertexShader[] = R"(#version 330
-            uniform mat4 u_mvp;
-            in vec2      inPosition;
-            in vec2      inTexcoord;
-            in vec4      inColor;
-            out vec2     vUv;
-            out vec4     vColor;
-            void main() 
-            {
-                vColor       = inColor;
-                vUv          = inTexcoord;
-                gl_Position  = u_mvp * vec4(inPosition, 0.0, 1.0);
-            }
-        )";
-
-        constexpr const char colorFragmentShader[] = R"(#version 330
-            in vec2             vUv;
-            in vec4             vColor;
-            uniform sampler2D   u_texture;
-            
-            out vec4 f_color;
-
-            void main() 
-            {
-                vec4 color = texture(u_texture, vUv) * vColor;
-                f_color = color;
-            }
-        )";
-
-        try 
-        {
-            mShader = GlShader(colorVertexShader, colorFragmentShader);
-            glBindAttribLocation(mShader.get_handle(), 0, "inPosition");
-            glBindAttribLocation(mShader.get_handle(), 1, "inTexcoord");
-            glBindAttribLocation(mShader.get_handle(), 2, "inColor");
-        }
-        catch (const std::exception & e)
-        {
-            throw std::runtime_error("Problem Compiling ImGui::Renderer shader " + e.what());
-        }
-    }
-
-    ImFont* Renderer::getFont(const std::string &name)
-    {
-        if (!mFonts.count(name)) return nullptr;
-        else return mFonts[name];
-    }
-
-    std::shared_ptr<Renderer> getRenderer()
-    {  
-        // Fuck! Get rid of static
-        static std::shared_ptr<Renderer> renderer = std::make_shared<Renderer>();
-        return renderer;
-    }
-
+    
     //////////////////////////////
     //   Helper Functionality   //
     //////////////////////////////
