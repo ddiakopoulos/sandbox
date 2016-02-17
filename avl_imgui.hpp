@@ -12,8 +12,6 @@
 
 using namespace avl;
 
-#include "imgui/imgui.h"
-
 // Implicit casts for linalg types
 
 #define IM_VEC2_CLASS_EXTRA                                        \
@@ -26,196 +24,84 @@ operator int2() const { return int2(x,y); }
 ImVec4(const float4 & f) { x = f.x; y = f.y; z = f.z; w = f.w; }   \
 operator float4() const { return float4(x,y,z,w); } 
 
-namespace ImGui {
+#include "imgui/imgui.h"
+
+namespace ImGui
+{
     
-    constexpr const char s_imguiVertexShader[] = R"(#version 330
-        uniform mat4 u_mvp;
-        in vec2      inPosition;
-        in vec2      inTexcoord;
-        in vec4      inColor;
-        out vec2     vUv;
-        out vec4     vColor;
-        void main()
-        {
-            vColor       = inColor;
-            vUv          = inTexcoord;
-            gl_Position  = u_mvp * vec4(inPosition, 0.0, 1.0);
-        }
-    )";
-    
-    constexpr const char s_imguiFragmentShader[] = R"(#version 330
-        in vec2             vUv;
-        in vec4             vColor;
-        uniform sampler2D   u_texture;
-        
-        out vec4 f_color;
-        
-        void main()
-        {
-            vec4 color = texture(u_texture, vUv) * vColor;
-            f_color = color;
-        }
-    )";
-    
-    class Renderer
+    inline ImGuiStyle make_dark_theme()
     {
-        GlTexture mFontTexture;
-        GlShader mShader;
+        ImGuiStyle s = ImGuiStyle();
         
-        ci::gl::VaoRef mVao;
-        ci::gl::VboRef mVbo;
-        ci::gl::VboRef mIbo;
+        s.WindowMinSize                        = ImVec2(160, 20);
+        s.FramePadding                         = ImVec2(4, 2);
+        s.ItemSpacing                          = ImVec2(6, 2);
+        s.ItemInnerSpacing                     = ImVec2(6, 4);
+        s.Alpha                                = 0.95f;
+        s.WindowFillAlphaDefault               = 1.0f;
+        s.WindowRounding                       = 4.0f;
+        s.FrameRounding                        = 2.0f;
+        s.IndentSpacing                        = 6.0f;
+        s.ItemInnerSpacing                     = ImVec2(2, 4);
+        s.ColumnsMinSpacing                    = 50.0f;
+        s.GrabMinSize                          = 14.0f;
+        s.GrabRounding                         = 16.0f;
+        s.ScrollbarSize                        = 12.0f;
+        s.ScrollbarRounding                    = 16.0f;
         
-        std::map<std::string,ImFont*> mFonts;
+        s.Colors[ImGuiCol_Text]                  = ImVec4(0.86f, 0.93f, 0.89f, 0.61f);
+        s.Colors[ImGuiCol_TextDisabled]          = ImVec4(0.86f, 0.93f, 0.89f, 0.28f);
+        s.Colors[ImGuiCol_WindowBg]              = ImVec4(0.13f, 0.14f, 0.17f, 1.00f);
+        s.Colors[ImGuiCol_ChildWindowBg]         = ImVec4(0.20f, 0.22f, 0.27f, 0.58f);
+        s.Colors[ImGuiCol_Border]                = ImVec4(0.31f, 0.31f, 1.00f, 0.00f);
+        s.Colors[ImGuiCol_BorderShadow]          = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+        s.Colors[ImGuiCol_FrameBg]               = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+        s.Colors[ImGuiCol_FrameBgHovered]        = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+        s.Colors[ImGuiCol_FrameBgActive]         = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        s.Colors[ImGuiCol_TitleBg]               = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+        s.Colors[ImGuiCol_TitleBgCollapsed]      = ImVec4(0.20f, 0.22f, 0.27f, 0.75f);
+        s.Colors[ImGuiCol_TitleBgActive]         = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        s.Colors[ImGuiCol_MenuBarBg]             = ImVec4(0.20f, 0.22f, 0.27f, 0.47f);
+        s.Colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+        s.Colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.47f, 0.77f, 0.83f, 0.21f);
+        s.Colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+        s.Colors[ImGuiCol_ScrollbarGrabActive]   = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        s.Colors[ImGuiCol_ComboBg]               = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+        s.Colors[ImGuiCol_CheckMark]             = ImVec4(0.71f, 0.22f, 0.27f, 1.00f);
+        s.Colors[ImGuiCol_SliderGrab]            = ImVec4(0.47f, 0.77f, 0.83f, 0.14f);
+        s.Colors[ImGuiCol_SliderGrabActive]      = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        s.Colors[ImGuiCol_Button]                = ImVec4(0.47f, 0.77f, 0.83f, 0.14f);
+        s.Colors[ImGuiCol_ButtonHovered]         = ImVec4(0.92f, 0.18f, 0.29f, 0.86f);
+        s.Colors[ImGuiCol_ButtonActive]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        s.Colors[ImGuiCol_Header]                = ImVec4(0.92f, 0.18f, 0.29f, 0.76f);
+        s.Colors[ImGuiCol_HeaderHovered]         = ImVec4(0.92f, 0.18f, 0.29f, 0.86f);
+        s.Colors[ImGuiCol_HeaderActive]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        s.Colors[ImGuiCol_Column]                = ImVec4(0.47f, 0.77f, 0.83f, 0.32f);
+        s.Colors[ImGuiCol_ColumnHovered]         = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+        s.Colors[ImGuiCol_ColumnActive]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        s.Colors[ImGuiCol_ResizeGrip]            = ImVec4(0.47f, 0.77f, 0.83f, 0.04f);
+        s.Colors[ImGuiCol_ResizeGripHovered]     = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+        s.Colors[ImGuiCol_ResizeGripActive]      = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        s.Colors[ImGuiCol_CloseButton]           = ImVec4(0.86f, 0.93f, 0.89f, 0.16f);
+        s.Colors[ImGuiCol_CloseButtonHovered]    = ImVec4(0.86f, 0.93f, 0.89f, 0.39f);
+        s.Colors[ImGuiCol_CloseButtonActive]     = ImVec4(0.86f, 0.93f, 0.89f, 1.00f);
+        s.Colors[ImGuiCol_PlotLines]             = ImVec4(0.86f, 0.93f, 0.89f, 0.63f);
+        s.Colors[ImGuiCol_PlotLinesHovered]      = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        s.Colors[ImGuiCol_PlotHistogram]         = ImVec4(0.86f, 0.93f, 0.89f, 0.63f);
+        s.Colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        s.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.92f, 0.18f, 0.29f, 0.43f);
+        s.Colors[ImGuiCol_TooltipBg]             = ImVec4(0.47f, 0.77f, 0.83f, 0.72f);
+        s.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.22f, 0.27f, 0.73f);
         
-    public:
-        
-        Renderer();
-        
-        void render(ImDrawData* draw_data);
-        
-        ImFont * add_font(std::vector<uint8_t> & font, float size, const ImWchar * glyph_ranges = NULL);
-        
-        GlTexture & get_font_texture();
-        
-        ci::gl::VaoRef getVao();
-        ci::gl::VboRef getVbo();
-        
-        GlShader & get_shader();
-        
-        void initialize_font_texture();
-        void initialize_buffers(size_t size = 1000);
-        void create_gl_program();
-        
-        ImFont * getFont(const std::string &name);
-    };
-
-    class Options
-    {
-
-        bool mAutoRender = true;
-
-        ImGuiStyle mStyle;
-        std::vector<std::pair<std::string,float>>  mFonts;
-        std::map<std::string,std::vector<ImWchar>>  mFontsGlyphRanges;
-
-        std::shared_ptr<GLFWwindow> glfwWindowHandle;
-
-    public:
-
-        Options(const std::shared_ptr<GLFWwindow> & window);
-
-        // species whether the block should call ImGui::NewFrame and ImGui::Render automatically. Default to true.
-        Options & autoRender(bool autoRender);
-        
-        // sets the font to use in ImGui
-        Options & font(const std::string &fontPath, float size);
-        
-        // sets the list of available fonts to use in ImGui
-        Options & fonts(const std::vector<std::pair<std::string,float>> &fontPaths);
-        
-        // sets the font to use in ImGui
-        Options & fontGlyphRanges(const std::string &name, const std::vector<ImWchar> &glyphRanges);
-        
-        // Global alpha applies to everything in ImGui
-        Options & alpha(float a);
-        
-        // Padding within a window
-        Options & windowPadding(const float2 &padding);
-        
-        // Minimum window size
-        Options & windowMinSize(const float2 &minSize);
-        
-        // Radius of window corners rounding. Set to 0.0f to have rectangular windows
-        Options & windowRounding(float rounding);
-        
-        // Alignment for title bar text
-        Options & windowTitleAlign(ImGuiAlign align);
-        
-        // Radius of child window corners rounding. Set to 0.0f to have rectangular windows
-        Options & childWindowRounding(float rounding);
-        
-        // Padding within a framed rectangle (used by most widgets)
-        Options & framePadding(const float2 &padding);
-        
-        // Radius of frame corners rounding. Set to 0.0f to have rectangular frame (used by most widgets).
-        Options & frameRounding(float rounding);
-        
-        // Horizontal and vertical spacing between widgets/lines
-        Options & itemSpacing(const float2 &spacing);
-        
-        // Horizontal and vertical spacing between within elements of a composed widget (e.g. a slider and its label)
-        Options & itemInnerSpacing(const float2 &spacing);
-        
-        // Expand bounding box for touch-based system where touch position is not accurate enough (unnecessary for mouse inputs).
-        Options & touchExtraPadding(const float2 &padding);
-        
-        // Default alpha of window background, if not specified in ImGui::Begin()
-        Options & windowFillAlphaDefault(float defaultAlpha);
-        
-        // Horizontal spacing when entering a tree node
-        Options & indentSpacing(float spacing);
-        
-        // Minimum horizontal spacing between two columns
-        Options & columnsMinSpacing(float minSpacing);
-        
-        // Width of the vertical scroll bar, Height of the horizontal scrollbar
-        Options & scrollBarSize(float size);
-        
-        // Radius of grab corners for scrollbar
-        Options & scrollbarRounding(float rounding);
-        
-        // Minimum width/height of a grab box for slider/scrollbar
-        Options & grabMinSize(float minSize);
-        
-        // Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs.
-        Options & grabRounding(float rounding);
-        
-        // Window positions are clamped to be visible within the display area by at least this amount. Only covers regular windows.
-        Options & displayWindowPadding(const float2 &padding);
-        
-        // If you cannot see the edge of your screen (e.g. on a TV) increase the safe area padding. Covers popups/tooltips as well regular windows.
-        Options & displaySafeAreaPadding(const float2 &padding);
-        
-        // Enable anti-aliasing on lines/borders. Disable if you are really tight on CPU/GPU.
-        Options & antiAliasedLines(bool antiAliasing);
-        
-        // Enable anti-aliasing on filled shapes (rounded rectangles, circles, etc.)
-        Options & antiAliasedShapes(bool antiAliasing);
-        
-        // Tessellation tolerance. Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality.
-        Options & curveTessellationTol(float tessTolerance);
-        
-        Options & defaultTheme();
-
-        Options & build_dark_theme();
-        
-        // sets theme colors
-        Options & color(ImGuiCol option, const float4 & color);
-        
-        // returns whether the block should call ImGui::NewFrame and ImGui::Render automatically
-        bool isAutoRenderEnabled() const { return mAutoRender; }
-        
-        // returns the window that will be use to connect the signals and render ImGui
-        std::shared_ptr<GLFWwindow> getWindow() const { return glfwWindowHandle; }
-        
-        // returns the list of available fonts to use in ImGui
-        const std::vector<std::pair<std::string,float>>& getFonts() const { return mFonts; }
-        
-        // returns the glyph ranges if available for this font
-        const ImWchar* getFontGlyphRanges(const std::string &name) const;
-        
-        // returns the window that will be use to connect the signals and render ImGui
-        const ImGuiStyle& getStyle() const { return mStyle; }
-    };
+        return s;
+    }
     
     //////////////////////////////
     //   Helper Functionality   //
     //////////////////////////////
 
-    void Image(const GlTexture & texture, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,1), const ImVec2& uv1 = ImVec2(1,0), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
-    bool ImageButton(const GlTexture & texture, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,1),  const ImVec2& uv1 = ImVec2(1,0), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,1), const ImVec4& tint_col = ImVec4(1,1,1,1));
-    void PushFont(const std::string& name = "");
+    void Image(const GlTexture & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1), const ImVec2& uv1 = ImVec2(1,0), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
+    bool ImageButton(const GlTexture & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1),  const ImVec2& uv1 = ImVec2(1,0), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,1), const ImVec4& tint_col = ImVec4(1,1,1,1));
     bool ListBox(const char* label, int* current_item, const std::vector<std::string>& items, int height_in_items = -1);
     bool InputText(const char* label, std::string* buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
     bool InputTextMultiline(const char* label, std::string* buf, const ImVec2& size = ImVec2(0,0), ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
@@ -243,14 +129,7 @@ namespace ImGui {
         ScopedGroup();
         ~ScopedGroup();
     };
-    
-    struct ScopedFont : Noncopyable
-    {
-        ScopedFont(ImFont* font);
-        ScopedFont(const std::string &name);
-        ~ScopedFont();
-    };
-    
+
     struct ScopedStyleColor : Noncopyable
     {
         ScopedStyleColor(ImGuiCol idx, const ImVec4& col);
