@@ -10,9 +10,6 @@
     <Filter Include="examples">
       <UniqueIdentifier>{77386985-2a71-4ff4-9bef-37935b1c545d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\opengl">
-      <UniqueIdentifier>{96253310-1f6d-4a4b-8ed0-6bdeb76e65c6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\math">
       <UniqueIdentifier>{c7417ef8-96e1-441c-86ea-dd75ccbeaae8}</UniqueIdentifier>
     </Filter>
@@ -27,6 +24,9 @@
     </Filter>
     <Filter Include="source\minivision">
       <UniqueIdentifier>{acc63d00-0662-45cd-b463-f30156bab688}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\rendering">
+      <UniqueIdentifier>{96253310-1f6d-4a4b-8ed0-6bdeb76e65c6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -126,18 +126,6 @@
     <ClInclude Include="..\nvg.hpp">
       <Filter>source\app</Filter>
     </ClInclude>
-    <ClInclude Include="..\GlMesh.hpp">
-      <Filter>source\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\GlShader.hpp">
-      <Filter>source\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\GlShared.hpp">
-      <Filter>source\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\GlTexture.hpp">
-      <Filter>source\opengl</Filter>
-    </ClInclude>
     <ClInclude Include="..\gpu_timer.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
@@ -160,12 +148,6 @@
       <Filter>source\tools</Filter>
     </ClInclude>
     <ClInclude Include="..\procedural_mesh.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\renderable_grid.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\scene.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
     <ClInclude Include="..\signal.hpp">
@@ -231,8 +213,20 @@
     <ClInclude Include="..\examples\forward_lighting_app.hpp">
       <Filter>examples</Filter>
     </ClInclude>
+    <ClInclude Include="..\GL_API.hpp">
+      <Filter>source\rendering</Filter>
+    </ClInclude>
     <ClInclude Include="..\texture_view.hpp">
-      <Filter>source\tools</Filter>
+      <Filter>source\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\renderable_grid.hpp">
+      <Filter>source\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\scene.hpp">
+      <Filter>source\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\decal_app.hpp">
+      <Filter>examples</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -260,18 +254,6 @@
     <ClCompile Include="..\nvg.cpp">
       <Filter>source\app</Filter>
     </ClCompile>
-    <ClCompile Include="..\GlMesh.cpp">
-      <Filter>source\opengl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GlShader.cpp">
-      <Filter>source\opengl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GlShared.cpp">
-      <Filter>source\opengl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GlTexture.cpp">
-      <Filter>source\opengl</Filter>
-    </ClCompile>
     <ClCompile Include="..\gizmo.cpp">
       <Filter>source\tools</Filter>
     </ClCompile>
@@ -293,10 +275,8 @@
     <ClCompile Include="..\third_party\efsw.cpp">
       <Filter>third_party</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\procedural_sky\hosek_data_rgb.inl">
-      <Filter>source\sky</Filter>
-    </None>
+    <ClCompile Include="..\GL_API.cpp">
+      <Filter>source\rendering</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

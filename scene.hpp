@@ -6,6 +6,7 @@
 #include "GL_API.hpp"
 #include "geometry.hpp"
 #include "camera.hpp"
+#include <tuple>
 
 namespace avl
 {
@@ -45,7 +46,7 @@ namespace avl
             float outT = 0.0f;
             float3 outNormal = {0, 0, 0};
             bool hit = intersect_ray_mesh(localRay, geom, &outT, &outNormal);
-            return {hit, outT, outNormal};
+			return std::make_tuple(hit, outT, outNormal);
         }
     };
 
