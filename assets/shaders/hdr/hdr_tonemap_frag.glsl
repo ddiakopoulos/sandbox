@@ -127,5 +127,5 @@ void main()
 
     rgb += 0.6 * blur.xyz;
 
-    f_color = toGamma(vec4(rgb, 1.0) );
+    f_color = vec4(rgb, 1.0);
 }
