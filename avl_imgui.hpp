@@ -76,9 +76,9 @@ namespace gui
         void new_frame();
     };
     
-    inline ImGuiStyle make_dark_theme()
+    inline void make_dark_theme()
     {
-        ImGuiStyle s = ImGuiStyle();
+        ImGuiStyle & s = ImGui::GetStyle();
         
         s.WindowMinSize                          = ImVec2(160, 20);
         s.FramePadding                           = ImVec2(4, 2);
@@ -138,8 +138,6 @@ namespace gui
         s.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.92f, 0.18f, 0.29f, 0.43f);
         s.Colors[ImGuiCol_TooltipBg]             = ImVec4(0.47f, 0.77f, 0.83f, 0.72f);
         s.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.22f, 0.27f, 0.73f);
-        
-        return s;
     }
     
     //////////////////////////////

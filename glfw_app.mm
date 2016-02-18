@@ -80,6 +80,8 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     
     igm->setup(window);
     
+    gui::make_dark_theme();
+    
     glfwSetWindowRefreshCallback(window, [](GLFWwindow * window)
     {
         auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); try { app->on_draw();} catch(...) { CATCH_CURRENT; }
