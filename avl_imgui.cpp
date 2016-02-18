@@ -27,6 +27,8 @@ namespace gui
         
         state.window = win;
         
+        create_render_objects();
+        
         ImGuiIO & io = ImGui::GetIO();
         io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;
         io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
@@ -47,6 +49,8 @@ namespace gui
         io.KeyMap[ImGuiKey_X] = GLFW_KEY_X;
         io.KeyMap[ImGuiKey_Y] = GLFW_KEY_Y;
         io.KeyMap[ImGuiKey_Z] = GLFW_KEY_Z;
+        
+        io.Fonts->AddFontDefault();
         
         io.RenderDrawListsFn = [](ImDrawData * draw_data)
         {
@@ -294,14 +298,12 @@ namespace gui
         glVertexAttribPointer(state.AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col));
 #undef OFFSETOF
         
-        create_fonts_texture();
-        
-        create_render_objects();
-        
         // Restore modified GL state
         glBindTexture(GL_TEXTURE_2D, last_texture);
         glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
         glBindVertexArray(last_vertex_array);
+        
+        create_fonts_texture();
         
         return true;
     }
