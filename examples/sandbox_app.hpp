@@ -8,6 +8,7 @@
 
 // http://www.gamedev.net/topic/674450-hdr-rendering-average-luminance/
 
+// Build a 3x3 texel offset lookup table for doing a 2x downsample
 void luminance_offset_2x2(GlShader * shader, float2 size)
 {
     float4 offsets[16];
@@ -15,21 +16,21 @@ void luminance_offset_2x2(GlShader * shader, float2 size)
     float du = 1.0f / size.x;
     float dv = 1.0f / size.y;
     
-    uint32_t num = 0;
-    for (uint32_t yy = 0; yy < 3; ++yy)
+    int idx = 0;
+    for (int y = 0; y < 3; ++y)
     {
-        for (uint32_t xx = 0; xx < 3; ++xx)
+        for (int x = 0; x < 3; ++x)
         {
-            offsets[num][0] = (xx) * du;
-            offsets[num][1] = (yy) * dv;
-            ++num;
+            offsets[idx].x = (x) * du;
+            offsets[idx].y = (y) * dv;
+            ++idx;
         }
     }
-
-    for (int n = 0; n < num; ++n)
+    for (int n = 0; n < idx; ++n)
         shader->uniform("u_offset[" + std::to_string(n) + "]", offsets[n]);
 }
 
+// Build a 4x4 texel offset lookup table for doing a 4x downsample
 void luminance_offset_4x4(GlShader * shader, float2 size)
 {
     float4 offsets[16];
@@ -37,18 +38,18 @@ void luminance_offset_4x4(GlShader * shader, float2 size)
     float du = 1.0f / size.x;
     float dv = 1.0f / size.y;
     
-    uint32_t num = 0;
-    for (uint32_t yy = 0; yy < 4; ++yy)
+    int idx = 0;
+    for (int y = 0; y < 4; ++y)
     {
-        for (uint32_t xx = 0; xx < 4; ++xx)
+        for (int x = 0; x < 4; ++x)
         {
-            offsets[num][0] = (xx - 1.0f) * du;
-            offsets[num][1] = (yy - 1.0f) * dv;
-            ++num;
+            offsets[idx].x = (x) * du;
+            offsets[idx].y = (y) * dv;
+            ++idx;
         }
     }
     
-    for (int n = 0; n < num; ++n)
+    for (int n = 0; n < idx; ++n)
         shader->uniform("u_offset[" + std::to_string(n) + "]", offsets[n]);
 }
 
@@ -397,7 +398,6 @@ struct ExperimentalApp : public GLFWApp
         hdr_blurShader->uniform("u_modelViewProj", Identity4x4);
         fullscreen_post_quad.draw_elements();
         hdr_blurShader->unbind();
-
         // Output to default screen framebuffer on the last pass
 		glEnable(GL_FRAMEBUFFER_SRGB);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
