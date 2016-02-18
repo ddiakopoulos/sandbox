@@ -27,8 +27,6 @@ namespace gui
         
         state.window = win;
         
-        create_render_objects();
-        
         ImGuiIO & io = ImGui::GetIO();
         io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;
         io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
@@ -161,6 +159,12 @@ namespace gui
         #endif
     }
     
+    void ImGuiManager::shutdown()
+    {
+        destroy_render_objects();
+        ImGui::Shutdown();
+    }
+    
     void ImGuiManager::update_input_mouse(int button, int action, int /*mods*/)
     {
         ImGuiApp & state = ImGuiApp::get_instance();
@@ -186,12 +190,6 @@ namespace gui
         io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
         io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
         io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-    }
-    
-    void ImGuiManager::shutdown()
-    {
-        destroy_render_objects();
-        ImGui::Shutdown();
     }
     
     void ImGuiManager::update_input_char(unsigned int c)
@@ -238,38 +236,38 @@ namespace gui
         glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
         
-        constexpr const char * imguiVertShader = R"(#version 330
-        uniform mat4 ProjMtx;
-        in vec2 Position;
-        in vec2 UV;
-        in vec4 Color;
-        out vec2 Frag_UV;
-        out vec4 Frag_Color;
-        void main()
-        {
-            Frag_UV = UV;
-            Frag_Color = Color;
-            gl_Position = ProjMtx * vec4(Position.xy,0,1);
-        }
-        )";
+        const GLchar *vertex_shader =
+        "#version 330\n"
+        "uniform mat4 ProjMtx;\n"
+        "in vec2 Position;\n"
+        "in vec2 UV;\n"
+        "in vec4 Color;\n"
+        "out vec2 Frag_UV;\n"
+        "out vec4 Frag_Color;\n"
+        "void main()\n"
+        "{\n"
+        "	Frag_UV = UV;\n"
+        "	Frag_Color = Color;\n"
+        "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+        "}\n";
         
-        constexpr const char * imguiFragShader = R"(#version 330
-        uniform sampler2D Texture;
-        in vec2 Frag_UV;
-        in vec4 Frag_Color;
-        out vec4 Out_Color;
-        void main()
-        {
-            Out_Color = Frag_Color * texture(Texture, Frag_UV.st);
-        };
-        )";
+        const GLchar* fragment_shader =
+        "#version 330\n"
+        "uniform sampler2D Texture;\n"
+        "in vec2 Frag_UV;\n"
+        "in vec4 Frag_Color;\n"
+        "out vec4 Out_Color;\n"
+        "void main()\n"
+        "{\n"
+        "	Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
+        "}\n";
         
         state.ShaderHandle = glCreateProgram();
         state.VertHandle = glCreateShader(GL_VERTEX_SHADER);
         state.FragHandle = glCreateShader(GL_FRAGMENT_SHADER);
         
-        glShaderSource(state.VertHandle, 1, &imguiVertShader, 0);
-        glShaderSource(state.FragHandle, 1, &imguiFragShader, 0);
+        glShaderSource(state.VertHandle, 1, &vertex_shader, 0);
+        glShaderSource(state.FragHandle, 1, &fragment_shader, 0);
         glCompileShader(state.VertHandle);
         glCompileShader(state.FragHandle);
         glAttachShader(state.ShaderHandle, state.VertHandle);
@@ -298,12 +296,12 @@ namespace gui
         glVertexAttribPointer(state.AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col));
 #undef OFFSETOF
         
+        create_fonts_texture();
+        
         // Restore modified GL state
         glBindTexture(GL_TEXTURE_2D, last_texture);
         glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
         glBindVertexArray(last_vertex_array);
-        
-        create_fonts_texture();
         
         return true;
     }
@@ -339,6 +337,9 @@ namespace gui
     void ImGuiManager::new_frame()
     {
         ImGuiApp & state = ImGuiApp::get_instance();
+        
+        if (!state.FontTexture)
+            create_render_objects();
         
         ImGuiIO & io = ImGui::GetIO();
         

@@ -80,6 +80,8 @@ namespace avl
 
         void set_fullscreen(bool state);
         bool get_fullscreen();
+        
+        std::unique_ptr<gui::ImGuiManager> igm;
 
     protected:
 
@@ -110,8 +112,6 @@ namespace avl
         int2 windowedPos;
 
         std::vector<std::exception_ptr> exceptions;
-        
-        gui::ImGuiManager igm;
         
     };
         

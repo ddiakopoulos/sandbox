@@ -62,8 +62,6 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     }
 
     glfwMakeContextCurrent(window);
-
-    igm.setup(window);
     
     ANVIL_INFO("GL_VERSION =  " << (char *)glGetString(GL_VERSION));
     ANVIL_INFO("GL_VENDOR =   " << (char *)glGetString(GL_VENDOR));
@@ -77,6 +75,10 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
 #endif
     
     glfwSetWindowUserPointer(window, this);
+    
+    igm.reset(new gui::ImGuiManager());
+    
+    igm->setup(window);
     
     glfwSetWindowRefreshCallback(window, [](GLFWwindow * window)
     {
@@ -128,9 +130,8 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
 
 GLFWApp::~GLFWApp() 
 {
-    igm.shutdown();
-    if (window) 
-        glfwDestroyWindow(window);
+    igm->shutdown();
+    if (window) glfwDestroyWindow(window);
 }
 
 void GLFWApp::preprocess_input(InputEvent & event)
@@ -149,7 +150,7 @@ void GLFWApp::consume_character(uint32_t codepoint)
     auto e = generate_input_event(window, InputEvent::CHAR, get_cursor_position(), 0);
     e.value[0] = codepoint;
     preprocess_input(e);
-    igm.update_input_char(codepoint);
+    igm->update_input_char(codepoint);
 }
 
 void GLFWApp::consume_key(int key, int action)
@@ -157,7 +158,7 @@ void GLFWApp::consume_key(int key, int action)
     auto e = generate_input_event(window, InputEvent::KEY, get_cursor_position(), action);
     e.value[0] = key;
     preprocess_input(e);
-    igm.update_input_key(key, 0, action, e.mods);
+    igm->update_input_key(key, 0, action, e.mods);
 }
 
 void GLFWApp::consume_mousebtn(int button, int action)
@@ -165,7 +166,7 @@ void GLFWApp::consume_mousebtn(int button, int action)
     auto e = generate_input_event(window, InputEvent::MOUSE, get_cursor_position(), action);
     e.value[0] = button;
     preprocess_input(e);
-    igm.update_input_mouse(button, action, 0);
+    igm->update_input_mouse(button, action, 0);
 }
 
 void GLFWApp::consume_cursor(double xpos, double ypos)
@@ -180,18 +181,16 @@ void GLFWApp::consume_scroll(double deltaX, double deltaY)
     e.value[0] = (float) deltaX;
     e.value[1] = (float) deltaY;
     preprocess_input(e);
-    igm.update_input_scroll(deltaX, deltaY);
+    igm->update_input_scroll(deltaX, deltaY);
 }
 
 void GLFWApp::main_loop() 
 {
     auto t0 = std::chrono::high_resolution_clock::now();
-
+    
     while (!glfwWindowShouldClose(window)) 
     {
         glfwPollEvents();
-
-        igm.new_frame();
         
         for (auto & e : exceptions) 
             on_uncaught_exception(e);
@@ -216,7 +215,7 @@ void GLFWApp::main_loop()
             e.elapsed_s = glfwGetTime();
             e.timestep_ms = timestep;
             e.framesPerSecond = fps;
-
+            
             on_update(e);
             on_draw();
         }

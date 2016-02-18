@@ -134,6 +134,10 @@ struct ExperimentalApp : public GLFWApp
     
     GlTexture       emptyTex;
 
+    
+    bool show_test_window = true;
+    ImVec4 clear_color = ImColor(114, 144, 154);
+    
     ExperimentalApp() : GLFWApp(1280, 720, "HDR Bloom App")
     {
         glEnable(GL_FRAMEBUFFER_SRGB);
@@ -289,7 +293,7 @@ struct ExperimentalApp : public GLFWApp
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         
-        glEnable(GL_FRAMEBUFFER_SRGB);
+        //glEnable(GL_FRAMEBUFFER_SRGB);
         
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -297,7 +301,10 @@ struct ExperimentalApp : public GLFWApp
      
         glClearColor(0.0f, 0.00f, 0.00f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        std::cout << "Hello!" << std::endl;
 
+        /*
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
@@ -412,6 +419,8 @@ struct ExperimentalApp : public GLFWApp
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
         
+        
+
         hdr_tonemapShader->bind();
         hdr_tonemapShader->texture("s_texColor", 0, sceneColorTexture);
         hdr_tonemapShader->texture("s_texLum", 1, luminanceTex_4); // 1x1
@@ -432,9 +441,26 @@ struct ExperimentalApp : public GLFWApp
             brightnessView->draw(uiSurface.children[3]->bounds, int2(width, height));
             blurView->draw(uiSurface.children[4]->bounds, int2(width, height));
         }
+        */
+        
+        igm->new_frame();
+        
+        
+        // 1. Show a simple window
+        // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
+        {
+            static float f = 0.0f;
+            ImGui::Text("Hello, world!");
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+            ImGui::ColorEdit3("clear color", (float*)&clear_color);
+            //if (ImGui::Button("Test Window")) show_test_window ^= 1;
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        }
+        
+        ImGui::Render();
         
         glfwSwapBuffers(window);
-        
+
         frameCount++;
     }
     
