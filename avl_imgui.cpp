@@ -116,12 +116,12 @@ namespace ImGui
 
     ScopedId::~ScopedId() { ImGui::PopID(); }
 
-    ScopedMainMenuBar::ScopedMainMenuBar() { mOpened = ImGui::BeginMainMenuBar(); }
+    ScopedMainMenuBar::ScopedMainMenuBar() { opened = ImGui::BeginMainMenuBar(); }
 
-    ScopedMainMenuBar::~ScopedMainMenuBar() { if (mOpened) ImGui::EndMainMenuBar(); }
+    ScopedMainMenuBar::~ScopedMainMenuBar() { if (opened) ImGui::EndMainMenuBar(); }
 
-    ScopedMenuBar::ScopedMenuBar() { mOpened = ImGui::BeginMenuBar(); }
+    ScopedMenuBar::ScopedMenuBar() { opened = ImGui::BeginMenuBar(); }
 
-    ScopedMenuBar::~ScopedMenuBar() { if (mOpened) ImGui::EndMenuBar(); }
+    ScopedMenuBar::~ScopedMenuBar() { if (opened) ImGui::EndMenuBar(); }
 
 }

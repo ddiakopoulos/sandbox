@@ -33,21 +33,20 @@ namespace ImGui
     {
         ImGuiStyle s = ImGuiStyle();
         
-        s.WindowMinSize                        = ImVec2(160, 20);
-        s.FramePadding                         = ImVec2(4, 2);
-        s.ItemSpacing                          = ImVec2(6, 2);
-        s.ItemInnerSpacing                     = ImVec2(6, 4);
-        s.Alpha                                = 0.95f;
-        s.WindowFillAlphaDefault               = 1.0f;
-        s.WindowRounding                       = 4.0f;
-        s.FrameRounding                        = 2.0f;
-        s.IndentSpacing                        = 6.0f;
-        s.ItemInnerSpacing                     = ImVec2(2, 4);
-        s.ColumnsMinSpacing                    = 50.0f;
-        s.GrabMinSize                          = 14.0f;
-        s.GrabRounding                         = 16.0f;
-        s.ScrollbarSize                        = 12.0f;
-        s.ScrollbarRounding                    = 16.0f;
+        s.WindowMinSize                         = ImVec2(160, 20);
+        s.FramePadding                           = ImVec2(4, 2);
+        s.ItemSpacing                            = ImVec2(6, 2);
+        s.ItemInnerSpacing                       = ImVec2(6, 4);
+        s.Alpha                                  = 0.95f;
+        s.WindowFillAlphaDefault                 = 1.0f;
+        s.WindowRounding                         = 4.0f;
+        s.FrameRounding                          = 2.0f;
+        s.IndentSpacing                          = 6.0f;
+        s.ColumnsMinSpacing                      = 50.0f;
+        s.GrabMinSize                            = 14.0f;
+        s.GrabRounding                           = 16.0f;
+        s.ScrollbarSize                          = 12.0f;
+        s.ScrollbarRounding                      = 16.0f;
         
         s.Colors[ImGuiCol_Text]                  = ImVec4(0.86f, 0.93f, 0.89f, 0.61f);
         s.Colors[ImGuiCol_TextDisabled]          = ImVec4(0.86f, 0.93f, 0.89f, 0.28f);
@@ -167,16 +166,14 @@ namespace ImGui
     {
         ScopedMainMenuBar();
         ~ScopedMainMenuBar();
-    protected:
-        bool mOpened;
+        bool opened;
     };
     
     struct ScopedMenuBar : Noncopyable 
     {
         ScopedMenuBar();
         ~ScopedMenuBar();
-    protected:
-        bool mOpened;
+        bool opened;
     };
     
 }
