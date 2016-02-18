@@ -25,6 +25,8 @@ namespace gui
     {
         ImGuiApp & state = ImGuiApp::get_instance();
         
+        state.window = win;
+        
         ImGuiIO & io = ImGui::GetIO();
         io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;
         io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
@@ -150,9 +152,9 @@ namespace gui
             return glfwGetClipboardString(s.window);
         };
         
-#ifdef _WIN32
+        #ifdef _WIN32
         io.ImeWindowHandle = glfwGetWin32Window(state.window);
-#endif
+        #endif
     }
     
     void ImGuiManager::update_input_mouse(int button, int action, int /*mods*/)
@@ -193,7 +195,6 @@ namespace gui
         ImGuiIO & io = ImGui::GetIO();
         if (c > 0 && c < 0x10000)  io.AddInputCharacter((unsigned short)c);
     }
-    
     
     bool ImGuiManager::create_fonts_texture()
     {
@@ -295,6 +296,8 @@ namespace gui
         
         create_fonts_texture();
         
+        create_render_objects();
+        
         // Restore modified GL state
         glBindTexture(GL_TEXTURE_2D, last_texture);
         glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
@@ -334,8 +337,6 @@ namespace gui
     void ImGuiManager::new_frame()
     {
         ImGuiApp & state = ImGuiApp::get_instance();
-        
-        if (!state.FontTexture) create_render_objects();
         
         ImGuiIO & io = ImGui::GetIO();
         

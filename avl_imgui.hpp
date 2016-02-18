@@ -34,7 +34,7 @@ protected:
     Singleton() = default;
     ~Singleton() = default;
 public:
-    static T & get_instance() { return *single; };
+    static T & get_instance() { if (!single) single = new T(); return *single; };
 };
 
 namespace avl
