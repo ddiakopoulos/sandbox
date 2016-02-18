@@ -1,5 +1,6 @@
 #include "glfw_app.hpp"
 #include "util.hpp"
+#include "geometric.hpp"
 
 using namespace avl;
 

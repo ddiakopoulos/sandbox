@@ -4,8 +4,12 @@
 #include "avl_imgui.hpp"
 #include "imgui/imgui_internal.h"
 
+#include "GL_API.hpp"
+
 // Implement singleton
-template<> ImGuiApp * Singleton<ImGuiApp>::single = nullptr;
+template<> ImGui::ImGuiApp * Singleton<ImGui::ImGuiApp>::single = nullptr;
+
+using namespace avl;
 
 namespace ImGui 
 {

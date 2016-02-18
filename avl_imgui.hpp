@@ -7,26 +7,26 @@
 #include <vector>
 #include <map>
 
-#include "GL_API.hpp"
-
-using namespace avl;
+#include "glfw_app.hpp"
+#include "linear_algebra.hpp"
+#include "util.hpp"
 
 // Implicit casts for linalg types
 
-#define IM_VEC2_CLASS_EXTRA                                        \
-ImVec2(const float2 & f) { x = f.x; y = f.y; }                     \
-operator float2() const { return float2(x,y); }                    \
-ImVec2(const int2 & f) { x = f.x; y = f.y; }                       \
-operator int2() const { return int2(x,y); }
+#define IM_VEC2_CLASS_EXTRA                                             \
+ImVec2(const avl::float2 & f) { x = f.x; y = f.y; }                     \
+operator avl::float2() const { return avl::float2(x,y); }               \
+ImVec2(const avl::int2 & f) { x = f.x; y = f.y; }                       \
+operator avl::int2() const { return avl::int2(x,y); }
 
-#define IM_VEC4_CLASS_EXTRA                                        \
-ImVec4(const float4 & f) { x = f.x; y = f.y; z = f.z; w = f.w; }   \
-operator float4() const { return float4(x,y,z,w); } 
+#define IM_VEC4_CLASS_EXTRA                                             \
+ImVec4(const avl::float4 & f) { x = f.x; y = f.y; z = f.z; w = f.w; }   \
+operator avl::float4() const { return avl::float4(x,y,z,w); }
 
 #include "imgui/imgui.h"
 
 template <typename T>
-class Singleton : Noncopyable
+class Singleton : avl::Noncopyable
 {
 private:
     Singleton(const Singleton<T> &);
@@ -39,22 +39,28 @@ public:
     static T & get_instance() { return *single; };
 };
 
-struct ImGuiApp : public Singleton<ImGuiApp>
+namespace avl
 {
-    GLFWwindow * window;
-    double       Time = 0.0f;
-    bool         MousePressed[3] = { false, false, false };
-    float        MouseWheel = 0.0f;
-    GLuint       FontTexture = 0;
-    int          ShaderHandle = 0, VertHandle = 0, FragHandle = 0;
-    int          AttribLocationTex = 0, AttribLocationProjMtx = 0;
-    int          AttribLocationPosition = 0, AttribLocationUV = 0, AttribLocationColor = 0;
-    unsigned int VboHandle = 0, VaoHandle = 0, ElementsHandle = 0;
-    friend class Singleton<ImGuiApp>;
-};
+    class GlTexture;
+}
 
 namespace ImGui
 {
+    
+    struct ImGuiApp : public Singleton<ImGuiApp>
+    {
+        GLFWwindow * window;
+        double       Time = 0.0f;
+        bool         MousePressed[3] = { false, false, false };
+        float        MouseWheel = 0.0f;
+        GLuint       FontTexture = 0;
+        int          ShaderHandle = 0, VertHandle = 0, FragHandle = 0;
+        int          AttribLocationTex = 0, AttribLocationProjMtx = 0;
+        int          AttribLocationPosition = 0, AttribLocationUV = 0, AttribLocationColor = 0;
+        unsigned int VboHandle = 0, VaoHandle = 0, ElementsHandle = 0;
+        friend class Singleton<ImGuiApp>;
+    };
+
     struct ImGuiManager
     {
         void setup(GLFWwindow * win);
@@ -152,51 +158,51 @@ namespace ImGui
     //   Scoped ImGui Utilities   //
     ////////////////////////////////
 
-    struct ScopedWindow : Noncopyable
+    struct ScopedWindow : avl::Noncopyable
     {
         ScopedWindow(const std::string &name = "Debug", ImGuiWindowFlags flags = 0);
-        ScopedWindow(const std::string &name, float2 size, float fillAlpha = -1.0f, ImGuiWindowFlags flags = 0);
+        ScopedWindow(const std::string &name, avl::float2 size, float fillAlpha = -1.0f, ImGuiWindowFlags flags = 0);
         ~ScopedWindow();
     };
     
-    struct ScopedChild : Noncopyable
+    struct ScopedChild : avl::Noncopyable
     {
-        ScopedChild(const std::string &name, float2 size = float2(0.f, 0.f), bool border = false, ImGuiWindowFlags extraFlags = 0);
+        ScopedChild(const std::string &name, avl::float2 size = avl::float2(0.f, 0.f), bool border = false, ImGuiWindowFlags extraFlags = 0);
         ~ScopedChild();
     };
     
-    struct ScopedGroup : Noncopyable
+    struct ScopedGroup : avl::Noncopyable
     {
         ScopedGroup();
         ~ScopedGroup();
     };
 
-    struct ScopedStyleColor : Noncopyable
+    struct ScopedStyleColor : avl::Noncopyable
     {
         ScopedStyleColor(ImGuiCol idx, const ImVec4& col);
         ~ScopedStyleColor();
     };
     
-    struct ScopedStyleVar : Noncopyable
+    struct ScopedStyleVar : avl::Noncopyable
     {
         ScopedStyleVar(ImGuiStyleVar idx, float val);
         ScopedStyleVar(ImGuiStyleVar idx, const ImVec2 &val);
         ~ScopedStyleVar();
     };
     
-    struct ScopedItemWidth : Noncopyable
+    struct ScopedItemWidth : avl::Noncopyable
     {
         ScopedItemWidth(float itemWidth);
         ~ScopedItemWidth();
     };
     
-    struct ScopedTextWrapPos : Noncopyable
+    struct ScopedTextWrapPos : avl::Noncopyable
     {
         ScopedTextWrapPos(float wrapPosX = 0.0f);
         ~ScopedTextWrapPos();
     };
     
-    struct ScopedId : Noncopyable
+    struct ScopedId : avl::Noncopyable
     {
         ScopedId(const std::string &name);
         ScopedId(const void *ptrId);
@@ -204,14 +210,14 @@ namespace ImGui
         ~ScopedId();
     };
     
-    struct ScopedMainMenuBar : Noncopyable
+    struct ScopedMainMenuBar : avl::Noncopyable
     {
         ScopedMainMenuBar();
         ~ScopedMainMenuBar();
         bool opened;
     };
     
-    struct ScopedMenuBar : Noncopyable 
+    struct ScopedMenuBar : avl::Noncopyable
     {
         ScopedMenuBar();
         ~ScopedMenuBar();

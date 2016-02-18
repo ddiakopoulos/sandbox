@@ -6,8 +6,6 @@
 #include "string_utils.hpp"
 #include "linear_algebra.hpp"
 #include "math_util.hpp"
-#include "geometric.hpp"
-#include "util.hpp"
 
 #include <thread>
 #include <chrono>
