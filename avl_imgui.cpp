@@ -5,13 +5,14 @@
 #include "imgui/imgui_internal.h"
 
 #include "GL_API.hpp"
+#include <GLFW/glfw3.h>
 
 // Implement singleton
-template<> ImGui::ImGuiApp * Singleton<ImGui::ImGuiApp>::single = nullptr;
+template<> gui::ImGuiApp * Singleton<gui::ImGuiApp>::single = nullptr;
 
 using namespace avl;
 
-namespace ImGui 
+namespace gui
 {
     
     ///////////////////////////////////////
@@ -387,12 +388,12 @@ namespace ImGui
 
     void Image(const GlTexture & texture, const ImVec2 & size, const ImVec2 & uv0, const ImVec2 & uv1, const ImVec4 & tint_col, const ImVec4 & border_col)
     {
-        Image((void *)(intptr_t) texture.get_gl_handle(), size, uv0, uv1, tint_col, border_col);
+        ImGui::Image((void *)(intptr_t) texture.get_gl_handle(), size, uv0, uv1, tint_col, border_col);
     }
 
     bool ImageButton(const GlTexture & texture, const ImVec2 & size, const ImVec2 & uv0, const ImVec2 & uv1, int frame_padding, const ImVec4 & bg_col, const ImVec4 & tint_col)
     {
-        return ImageButton((void *)(intptr_t) texture.get_gl_handle(), size, uv0, uv1, frame_padding, bg_col, tint_col);
+        return ImGui::ImageButton((void *)(intptr_t) texture.get_gl_handle(), size, uv0, uv1, frame_padding, bg_col, tint_col);
     }
 
     bool ListBox(const char* label, int * current_item, const std::vector<std::string> & items, int height_in_items)
@@ -404,7 +405,7 @@ namespace ImGui
             std::strcpy(cname, item.c_str());
             names.push_back(cname);
         }
-        bool result = ListBox(label, current_item, names.data(), (int) names.size(), height_in_items);
+        bool result = ImGui::ListBox(label, current_item, names.data(), (int) names.size(), height_in_items);
         for (auto &name : names) delete [] name;
         return result;
     }
@@ -413,7 +414,7 @@ namespace ImGui
     {
         char *buffer = new char[buf->size()+128];
         std::strcpy(buffer, buf->c_str());
-        bool result = InputText(label, buffer, buf->size()+128, flags, callback, user_data);
+        bool result = ImGui::InputText(label, buffer, buf->size()+128, flags, callback, user_data);
         if (result) *buf = std::string(buffer);
         delete [] buffer;
         return result;
@@ -423,7 +424,7 @@ namespace ImGui
     {
         char *buffer = new char[buf->size()+128];
         std::strcpy(buffer, buf->c_str());
-        bool result = InputTextMultiline(label, buffer, buf->size()+128, size, flags, callback, user_data);
+        bool result = ImGui::InputTextMultiline(label, buffer, buf->size()+128, size, flags, callback, user_data);
         if (result) *buf = std::string(buffer);
         delete [] buffer;
         return result;
@@ -435,7 +436,7 @@ namespace ImGui
         for (auto item : items) itemsNames += item + '\0';
         itemsNames += '\0';
         std::vector<char> charArray(itemsNames.begin(), itemsNames.end());
-        bool result = Combo(label, current_item, (const char*) &charArray[0], height_in_items);
+        bool result = ImGui::Combo(label, current_item, (const char*) &charArray[0], height_in_items);
         return result;
     }
     

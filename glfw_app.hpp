@@ -110,6 +110,9 @@ namespace avl
         int2 windowedPos;
 
         std::vector<std::exception_ptr> exceptions;
+        
+        gui::ImGuiManager igm;
+        
     };
         
     extern int Main(int argc, char * argv[]);

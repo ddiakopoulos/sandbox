@@ -7,12 +7,10 @@
 #include <vector>
 #include <map>
 
-#include "glfw_app.hpp"
 #include "linear_algebra.hpp"
 #include "util.hpp"
 
 // Implicit casts for linalg types
-
 #define IM_VEC2_CLASS_EXTRA                                             \
 ImVec2(const avl::float2 & f) { x = f.x; y = f.y; }                     \
 operator avl::float2() const { return avl::float2(x,y); }               \
@@ -44,16 +42,17 @@ namespace avl
     class GlTexture;
 }
 
-namespace ImGui
+class GLFWwindow;
+namespace gui
 {
-    
+
     struct ImGuiApp : public Singleton<ImGuiApp>
     {
         GLFWwindow * window;
         double       Time = 0.0f;
         bool         MousePressed[3] = { false, false, false };
         float        MouseWheel = 0.0f;
-        GLuint       FontTexture = 0;
+        uint32_t     FontTexture = 0;
         int          ShaderHandle = 0, VertHandle = 0, FragHandle = 0;
         int          AttribLocationTex = 0, AttribLocationProjMtx = 0;
         int          AttribLocationPosition = 0, AttribLocationUV = 0, AttribLocationColor = 0;
