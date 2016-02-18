@@ -177,6 +177,12 @@ namespace ImGui
         io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
     }
     
+    void ImGuiManager::shutdown()
+    {
+        destroy_render_objects();
+        ImGui::Shutdown();
+    }
+    
     void ImGuiManager::update_input_char(unsigned int c)
     {
         ImGuiIO & io = ImGui::GetIO();

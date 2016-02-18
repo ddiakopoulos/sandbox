@@ -7,7 +7,6 @@
 #include <vector>
 #include <map>
 
-#include "glfw_app.hpp"
 #include "GL_API.hpp"
 
 using namespace avl;
@@ -59,6 +58,7 @@ namespace ImGui
     struct ImGuiManager
     {
         void setup(GLFWwindow * win);
+        void shutdown();
         
         void update_input_mouse(int button, int action, int /*mods*/);
         void update_input_scroll(double /*xoffset*/, double yoffset);
@@ -141,8 +141,8 @@ namespace ImGui
     //   Helper Functionality   //
     //////////////////////////////
 
-    void Image(const GlTexture & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1), const ImVec2& uv1 = ImVec2(1,0), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
-    bool ImageButton(const GlTexture & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1),  const ImVec2& uv1 = ImVec2(1,0), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,1), const ImVec4& tint_col = ImVec4(1,1,1,1));
+    void Image(const avl::GlTexture & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1), const ImVec2& uv1 = ImVec2(1,0), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
+    bool ImageButton(const avl::GlTexture & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1),  const ImVec2& uv1 = ImVec2(1,0), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,1), const ImVec4& tint_col = ImVec4(1,1,1,1));
     bool ListBox(const char* label, int* current_item, const std::vector<std::string>& items, int height_in_items = -1);
     bool InputText(const char* label, std::string* buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
     bool InputTextMultiline(const char* label, std::string* buf, const ImVec2& size = ImVec2(0,0), ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
