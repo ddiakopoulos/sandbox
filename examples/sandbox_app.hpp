@@ -251,6 +251,8 @@ struct ExperimentalApp : public GLFWApp
     {
         cameraController.handle_input(event);
         
+        if (igm) igm->update_input(event);
+        
         if (event.type == InputEvent::KEY)
         {
             if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE)
@@ -298,6 +300,8 @@ struct ExperimentalApp : public GLFWApp
     void on_draw() override
     {
         glfwMakeContextCurrent(window);
+        
+        if (igm) igm->begin_frame();
         
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
@@ -459,6 +463,8 @@ struct ExperimentalApp : public GLFWApp
         }
 
         frameCount++;
+        
+        if (igm) igm->end_frame();
         
         glfwSwapBuffers(window);
     }
