@@ -5,7 +5,7 @@
 #include "imgui/imgui_internal.h"
 
 #include "GL_API.hpp"
-#include <GLFW/glfw3.h>
+#include "glfw_app.hpp"
 
 // Implement singleton
 template<> gui::ImGuiApp * Singleton<gui::ImGuiApp>::single = nullptr;
@@ -165,39 +165,73 @@ namespace gui
         ImGui::Shutdown();
     }
     
-    void ImGuiManager::update_input_mouse(int button, int action, int /*mods*/)
+    struct InputEvent
     {
-        ImGuiApp & state = ImGuiApp::get_instance();
-        if (action == GLFW_PRESS && button >= 0 && button < 3)
-            state.MousePressed[button] = true;
-    }
-    
-    void ImGuiManager::update_input_scroll(double /*xoffset*/, double yoffset)
-    {
-        ImGuiApp & state = ImGuiApp::get_instance();
-        state.MouseWheel += (float)yoffset; // Use fractional mouse wheel, 1.0 unit 5 lines.
-    }
-    
-    void ImGuiManager::update_input_key(int key, int, int action, int mods)
-    {
-        ImGuiIO & io = ImGui::GetIO();
-        if (action == GLFW_PRESS)
-            io.KeysDown[key] = true;
-        if (action == GLFW_RELEASE)
-            io.KeysDown[key] = false;
+        enum Type { CURSOR, MOUSE, KEY, CHAR, SCROLL };
         
-        (void) mods; // Modifiers are not reliable across systems
-        io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-        io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-        io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-    }
+        GLFWwindow * window;
+        int2 windowSize;
+        
+        Type type;
+        int action;
+        int mods;
+        
+        float2 cursor;
+        bool drag = false;
+        
+        uint2 value; // button, key, codepoint, scrollX, scrollY
+        
+        bool is_mouse_down() const { return action != GLFW_RELEASE; }
+        bool is_mouse_up() const { return action == GLFW_RELEASE; }
+        
+        bool using_shift_key() const { return mods & GLFW_MOD_SHIFT; };
+        bool using_control_key() const { return mods & GLFW_MOD_CONTROL; };
+        bool using_alt_key() const { return mods & GLFW_MOD_ALT; };
+        bool using_super_key() const { return mods & GLFW_MOD_SUPER; };
+    };
     
-    void ImGuiManager::update_input_char(unsigned int c)
+    void ImGuiManager::update_input(const InputEvent & e)
     {
+        ImGuiApp & state = ImGuiApp::get_instance();
         ImGuiIO & io = ImGui::GetIO();
-        if (c > 0 && c < 0x10000)  io.AddInputCharacter((unsigned short)c);
+        
+        if (e.type == InputEvent::Type::MOUSE)
+        {
+            if (e.action == GLFW_PRESS && e.value[0] >= 0 && e.value[0]  < 3)
+            {
+                state.MousePressed[e.value[0]] = true;
+            }
+        }
+        
+        if (e.type == InputEvent::Type::SCROLL)
+        {
+            state.MouseWheel += (float)e.value[1]; // Use fractional mouse wheel, 1.0 unit 5 lines.
+        }
+        
+        if (e.type == InputEvent::Type::KEY)
+        {
+            if (e.action == GLFW_PRESS)
+                io.KeysDown[e.value[0]] = true;
+            if (e.action == GLFW_RELEASE)
+                io.KeysDown[e.value[0]] = false;
+            
+            io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+            io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+            io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+        }
+        
+        if (e.type == InputEvent::Type::CHAR)
+        {
+            ImGuiIO & io = ImGui::GetIO();
+            
+            if (e.value[0] > 0 && e.value[0] < 0x10000)
+            {
+                io.AddInputCharacter((unsigned short)e.value[0]);
+            }
+        }
+
     }
-    
+
     bool ImGuiManager::create_fonts_texture()
     {
         ImGuiApp & state = ImGuiApp::get_instance();
@@ -290,11 +324,11 @@ namespace gui
         glEnableVertexAttribArray(state.AttribLocationUV);
         glEnableVertexAttribArray(state.AttribLocationColor);
         
-#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
+        #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
         glVertexAttribPointer(state.AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, pos));
         glVertexAttribPointer(state.AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv));
         glVertexAttribPointer(state.AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col));
-#undef OFFSETOF
+        #undef OFFSETOF
         
         create_fonts_texture();
         
@@ -444,7 +478,6 @@ namespace gui
         return result;
     }
     
-
     ////////////////////////////////
     //   Scoped ImGui Utilities   //
     ////////////////////////////////

@@ -65,10 +65,7 @@ namespace gui
         ImGuiManager(GLFWwindow * win);
         ~ImGuiManager();
         
-        void update_input_mouse(int button, int action, int /*mods*/);
-        void update_input_scroll(double /*xoffset*/, double yoffset);
-        void update_input_key(int key, int, int action, int mods);
-        void update_input_char(unsigned int c);
+        void update_input(const InputEvent & e);
 
         bool create_fonts_texture();
         bool create_render_objects();

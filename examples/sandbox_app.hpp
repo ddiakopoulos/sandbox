@@ -141,9 +141,7 @@ struct ExperimentalApp : public GLFWApp
     
     ExperimentalApp() : GLFWApp(1280, 720, "HDR Bloom App", 2, true)
     {
-        
-        igm.reset(new gui::ImGuiManager());
-        igm->setup(window);
+        igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
     
         glEnable(GL_FRAMEBUFFER_SRGB);
@@ -241,7 +239,7 @@ struct ExperimentalApp : public GLFWApp
     
     ~ExperimentalApp()
     {
-        if (igm) igm->shutdown();
+        
     }
     
     void on_window_resize(int2 size) override
