@@ -343,7 +343,7 @@ namespace gui
         }
     }
     
-    void ImGuiManager::new_frame()
+    void ImGuiManager::begin_frame()
     {
         ImGuiApp & state = ImGuiApp::get_instance();
         
@@ -393,6 +393,11 @@ namespace gui
         
         // Start the frame
         ImGui::NewFrame();
+    }
+    
+    void ImGuiManager::end_frame()
+    {
+        ImGui::Render();
     }
 
     //////////////////////////////

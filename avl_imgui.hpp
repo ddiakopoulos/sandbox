@@ -61,17 +61,20 @@ namespace gui
         friend class Singleton<ImGuiApp>;
     };
 
-    struct ImGuiManager
+    class ImGuiManager
     {
+        bool create_fonts_texture();
+        bool create_render_objects();
+        void destroy_render_objects();
+    public:
+        
         ImGuiManager(GLFWwindow * win);
         ~ImGuiManager();
         
         void update_input(const avl::InputEvent & e);
 
-        bool create_fonts_texture();
-        bool create_render_objects();
-        void destroy_render_objects();
-        void new_frame();
+        void begin_frame();
+        void end_frame();
     };
     
     inline void make_dark_theme()
