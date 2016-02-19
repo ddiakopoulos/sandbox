@@ -253,41 +253,8 @@ struct ExperimentalApp : public GLFWApp
         
         if (igm) igm->update_input(event);
         
-        if (event.type == InputEvent::KEY)
-        {
-            if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE)
-            {
-                middleGrey = 0.18f;
-                whitePoint = 1.1f;
-                threshold = 1.5f;
-            }
-            
-            if (event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
-                middleGrey -= 0.01f;
-            
-            if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE)
-                middleGrey += 0.01f;
-            
-            if (event.value[0] == GLFW_KEY_Q && event.action == GLFW_RELEASE)
-                whitePoint -= 0.01f;
-            
-            if (event.value[0] == GLFW_KEY_W && event.action == GLFW_RELEASE)
-                whitePoint += 0.01f;
-            
-            if (event.value[0] == GLFW_KEY_3 && event.action == GLFW_RELEASE)
-                threshold -= 0.01f;
-            
-            if (event.value[0] == GLFW_KEY_4 && event.action == GLFW_RELEASE)
-                threshold += 0.01f;
-        }
-        
-        if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS)
-        {
-            if (event.value[0] == GLFW_MOUSE_BUTTON_LEFT)
-            {
-
-            }
-        }
+        if (event.type == InputEvent::KEY) {}
+        if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS) {}
     }
     
     void on_update(const UpdateEvent & e) override
@@ -315,7 +282,6 @@ struct ExperimentalApp : public GLFWApp
         glClearColor(0.0f, 0.00f, 0.00f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        /*
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
@@ -400,9 +366,9 @@ struct ExperimentalApp : public GLFWApp
             hdr_avgLumShader->unbind();
             
             // Read luminance value
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, luminanceTex_4.get_gl_handle());
-            glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, lumValue.data());
+            //glActiveTexture(GL_TEXTURE0);
+            //glBindTexture(GL_TEXTURE_2D, luminanceTex_4.get_gl_handle());
+            //glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, lumValue.data());
         }
         
         float4 tonemap = { middleGrey, whitePoint * whitePoint, threshold, time };
@@ -450,15 +416,13 @@ struct ExperimentalApp : public GLFWApp
             brightnessView->draw(uiSurface.children[3]->bounds, int2(width, height));
             blurView->draw(uiSurface.children[4]->bounds, int2(width, height));
         }
-        */
 
-        // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
         {
-            static float f = 0.0f;
-            ImGui::Text("Hello, world!");
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-            ImGui::ColorEdit3("clear color", (float*)&clear_color);
-            //if (ImGui::Button("Test Window")) show_test_window ^= 1;
+            ImGui::Text("HDR Bloom Settings");
+            ImGui::SliderFloat("Middle Grey", &middleGrey, 0.1f, 1.0f);
+            ImGui::SliderFloat("White Point", &whitePoint, 0.1f, 2.0f);
+            ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
+            ImGui::Separator();
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         }
 
