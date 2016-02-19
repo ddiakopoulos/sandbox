@@ -165,32 +165,7 @@ namespace gui
         ImGui::Shutdown();
     }
     
-    struct InputEvent
-    {
-        enum Type { CURSOR, MOUSE, KEY, CHAR, SCROLL };
-        
-        GLFWwindow * window;
-        int2 windowSize;
-        
-        Type type;
-        int action;
-        int mods;
-        
-        float2 cursor;
-        bool drag = false;
-        
-        uint2 value; // button, key, codepoint, scrollX, scrollY
-        
-        bool is_mouse_down() const { return action != GLFW_RELEASE; }
-        bool is_mouse_up() const { return action == GLFW_RELEASE; }
-        
-        bool using_shift_key() const { return mods & GLFW_MOD_SHIFT; };
-        bool using_control_key() const { return mods & GLFW_MOD_CONTROL; };
-        bool using_alt_key() const { return mods & GLFW_MOD_ALT; };
-        bool using_super_key() const { return mods & GLFW_MOD_SUPER; };
-    };
-    
-    void ImGuiManager::update_input(const InputEvent & e)
+    void ImGuiManager::update_input(const avl::InputEvent & e)
     {
         ImGuiApp & state = ImGuiApp::get_instance();
         ImGuiIO & io = ImGui::GetIO();

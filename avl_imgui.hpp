@@ -40,6 +40,7 @@ public:
 namespace avl
 {
     class GlTexture;
+    class InputEvent;
 }
 
 class GLFWwindow;
@@ -65,7 +66,7 @@ namespace gui
         ImGuiManager(GLFWwindow * win);
         ~ImGuiManager();
         
-        void update_input(const InputEvent & e);
+        void update_input(const avl::InputEvent & e);
 
         bool create_fonts_texture();
         bool create_render_objects();
