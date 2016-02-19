@@ -1,9 +1,5 @@
 #include "index.hpp"
 
-// 1. GL_FRAMEBUFFER_SRGB?
-// 2. Proper luminance downsampling
-// 3. Blitting? / glReadPixels
-
 // ToDo
 // -------------------------
 // 1. Moving average
@@ -34,7 +30,6 @@ void luminance_offset_2x2(GlShader * shader, float2 size)
             ++idx;
         }
     }
-
     for (int n = 0; n < idx; ++n)
         shader->uniform("u_offset[" + std::to_string(n) + "]", offsets[n]);
 }
@@ -83,9 +78,10 @@ struct ExperimentalApp : public GLFWApp
     
     UIComponent uiSurface;
     
-    float middleGrey = 0.18f;
-    float whitePoint = 1.1f;
-    float threshold = 1.5f;
+    float middleGrey = 1.0f;
+    float whitePoint = 1.5f;
+    float threshold = 0.66f;
+
     float time = 0.0f;
     
     ShaderMonitor shaderMonitor;
@@ -103,7 +99,6 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<GLTextureView> brightnessView;
     std::shared_ptr<GLTextureView> blurView;
     std::shared_ptr<GLTextureView> sceneView;
-    //std::shared_ptr<GLTextureView> middleGreyView;
     
     GlMesh fullscreen_post_quad;
     
@@ -272,9 +267,7 @@ struct ExperimentalApp : public GLFWApp
         
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
-        
-        //glEnable(GL_FRAMEBUFFER_SRGB);
-        
+
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -390,9 +383,9 @@ struct ExperimentalApp : public GLFWApp
         hdr_blurShader->uniform("u_modelViewProj", Identity4x4);
         fullscreen_post_quad.draw_elements();
         hdr_blurShader->unbind();
-
-        // Output to default screen framebuffer on the last pass, non SRGB
-        //glDisable(GL_FRAMEBUFFER_SRGB);
+        
+        // Output to default screen framebuffer on the last pass
+		glEnable(GL_FRAMEBUFFER_SRGB);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
 
@@ -405,7 +398,7 @@ struct ExperimentalApp : public GLFWApp
         hdr_tonemapShader->uniform("u_viewTexel", float2(1.f / (float) width, 1.f / (float) height));
         fullscreen_post_quad.draw_elements();
         hdr_tonemapShader->unbind();
-        
+
         //std::cout << float4(lumValue[0], lumValue[1], lumValue[2], lumValue[3]) << std::endl;
         std::cout << tonemap << std::endl;
         
@@ -431,6 +424,8 @@ struct ExperimentalApp : public GLFWApp
         if (igm) igm->end_frame();
         
         glfwSwapBuffers(window);
+		glDisable(GL_FRAMEBUFFER_SRGB);
+        frameCount++;
     }
     
 };
