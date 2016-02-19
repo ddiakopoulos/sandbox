@@ -19,15 +19,16 @@ United under the arbitrarily chosen namespace "avl" (short for Anvil).
 * Reaction-diffusion CPU simulation (Gray-Scott)
 * Incubation of computer vision functions on top of [librealsense](https://www.github.com/IntelRealSense/librealsense) (minivision)
 * Decal projection on arbitrary meshes
-* HDR Postprocessing Pipeline (WIP)
+* HDR + Bloom + Tonemapping Pipeline
 * Arkano22 SSAO implementation
 * Several GLSL 330 post-processing effects: film grain, FXAA
+* Orconut-Dear-ImGui Bindings
 
 ## In Progress
 * Physically-based text rendering
+* Mesh voxelization
 * BRDF / PBR
 * Shadow Mapping: Cascaded, Exponential
-* Orconut-Dear-ImGui Bindings
 * Deferred rendering experiments (Forward+ impl)
 * CPU path tracer (+ lighting baker?)
 * Fluid simulator (GL compute shader)
@@ -43,7 +44,6 @@ United under the arbitrarily chosen namespace "avl" (short for Anvil).
 * Graph/Node editor (LabSound bindings)
 * Lua (Angelscript, etc)
 * Pathfinding algos (Recast navigation)
-* Mesh voxelization
 * Isosurface computation
 * Reaction-diffusion over time (3d)
 * Optitrak nat-net i/o
