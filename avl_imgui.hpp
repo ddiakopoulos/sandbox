@@ -62,8 +62,8 @@ namespace gui
 
     struct ImGuiManager
     {
-        void setup(GLFWwindow * win);
-        void shutdown();
+        ImGuiManager(GLFWwindow * win);
+        ~ImGuiManager();
         
         void update_input_mouse(int button, int action, int /*mods*/);
         void update_input_scroll(double /*xoffset*/, double yoffset);

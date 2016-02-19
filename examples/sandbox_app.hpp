@@ -12,6 +12,8 @@
 
 // http://www.gamedev.net/topic/674450-hdr-rendering-average-luminance/
 
+
+#include "avl_imgui.hpp"
 #include "imgui/imgui.h"
 
 // Build a 3x3 texel offset lookup table for doing a 2x downsample
@@ -105,41 +107,45 @@ struct ExperimentalApp : public GLFWApp
     
     GlMesh fullscreen_post_quad;
     
-    GlTexture       middleGreyTex;
+    GlTexture sceneColorTexture;
+    GlTexture sceneDepthTexture;
+    GlFramebuffer sceneFramebuffer;
     
-    GlTexture       sceneColorTexture;
-    GlTexture       sceneDepthTexture;
-    GlFramebuffer   sceneFramebuffer;
+    GlTexture luminanceTex_0;
+    GlFramebuffer luminance_0;
     
-    GlTexture       luminanceTex_0;
-    GlFramebuffer   luminance_0;
+    GlTexture luminanceTex_1;
+    GlFramebuffer luminance_1;
     
-    GlTexture       luminanceTex_1;
-    GlFramebuffer   luminance_1;
+    GlTexture luminanceTex_2;
+    GlFramebuffer luminance_2;
     
-    GlTexture       luminanceTex_2;
-    GlFramebuffer   luminance_2;
+    GlTexture luminanceTex_3;
+    GlFramebuffer luminance_3;
     
-    GlTexture       luminanceTex_3;
-    GlFramebuffer   luminance_3;
+    GlTexture luminanceTex_4;
+    GlFramebuffer luminance_4;
     
-    GlTexture       luminanceTex_4;
-    GlFramebuffer   luminance_4;
+    GlTexture brightTex;
+    GlFramebuffer brightFramebuffer;
     
-    GlTexture       brightTex;
-    GlFramebuffer   brightFramebuffer;
+    GlTexture blurTex;
+    GlFramebuffer blurFramebuffer;
     
-    GlTexture       blurTex;
-    GlFramebuffer   blurFramebuffer;
-    
-    GlTexture       emptyTex;
+    GlTexture emptyTex;
 
-    
     bool show_test_window = true;
     ImVec4 clear_color = ImColor(114, 144, 154);
     
-    ExperimentalApp() : GLFWApp(1280, 720, "HDR Bloom App")
+    std::unique_ptr<gui::ImGuiManager> igm;
+    
+    ExperimentalApp() : GLFWApp(1280, 720, "HDR Bloom App", 2, true)
     {
+        
+        igm.reset(new gui::ImGuiManager());
+        igm->setup(window);
+        gui::make_dark_theme();
+    
         glEnable(GL_FRAMEBUFFER_SRGB);
         
         int width, height;
@@ -233,6 +239,11 @@ struct ExperimentalApp : public GLFWApp
         gl_check_error(__FILE__, __LINE__);
     }
     
+    ~ExperimentalApp()
+    {
+        if (igm) igm->shutdown();
+    }
+    
     void on_window_resize(int2 size) override
     {
 
@@ -302,8 +313,6 @@ struct ExperimentalApp : public GLFWApp
         glClearColor(0.0f, 0.00f, 0.00f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        std::cout << "Hello!" << std::endl;
-
         /*
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
@@ -418,8 +427,6 @@ struct ExperimentalApp : public GLFWApp
         //glDisable(GL_FRAMEBUFFER_SRGB);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
-        
-        
 
         hdr_tonemapShader->bind();
         hdr_tonemapShader->texture("s_texColor", 0, sceneColorTexture);
@@ -442,11 +449,7 @@ struct ExperimentalApp : public GLFWApp
             blurView->draw(uiSurface.children[4]->bounds, int2(width, height));
         }
         */
-        
-        igm->new_frame();
-        
-        
-        // 1. Show a simple window
+
         // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
         {
             static float f = 0.0f;
@@ -456,12 +459,10 @@ struct ExperimentalApp : public GLFWApp
             //if (ImGui::Button("Test Window")) show_test_window ^= 1;
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         }
-        
-        ImGui::Render();
-        
-        glfwSwapBuffers(window);
 
         frameCount++;
+        
+        glfwSwapBuffers(window);
     }
     
 };

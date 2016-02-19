@@ -21,7 +21,7 @@ namespace gui
     
     // https://github.com/ocornut/imgui/tree/master/examples/opengl3_example
     
-    void ImGuiManager::setup(GLFWwindow * win)
+    ImGuiManager::ImGuiManager(GLFWwindow * win)
     {
         ImGuiApp & state = ImGuiApp::get_instance();
         
@@ -159,7 +159,7 @@ namespace gui
         #endif
     }
     
-    void ImGuiManager::shutdown()
+    ImGuiManager::~ImGuiManager()
     {
         destroy_render_objects();
         ImGui::Shutdown();
