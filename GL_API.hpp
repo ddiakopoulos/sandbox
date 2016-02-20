@@ -14,7 +14,7 @@
     #include <OpenGL/gl3.h>
 #endif
 
-#include "third_party/stb_image.h"
+#include "third_party/stb/stb_image.h"
 
 namespace
 {

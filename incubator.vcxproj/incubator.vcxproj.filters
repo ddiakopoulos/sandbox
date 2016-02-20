@@ -28,6 +28,9 @@
     <Filter Include="source\rendering">
       <UniqueIdentifier>{96253310-1f6d-4a4b-8ed0-6bdeb76e65c6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="third_party\imgui">
+      <UniqueIdentifier>{b12263b9-093c-4d8a-814d-4c507b45ede6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\third_party\fontstash.h">
@@ -228,6 +231,18 @@
     <ClInclude Include="..\examples\decal_app.hpp">
       <Filter>examples</Filter>
     </ClInclude>
+    <ClInclude Include="..\avl_imgui.hpp">
+      <Filter>source\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\imgui\imconfig.h">
+      <Filter>third_party\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\imgui\imgui.h">
+      <Filter>third_party\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\imgui\imgui_internal.h">
+      <Filter>third_party\imgui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
@@ -277,6 +292,15 @@
     </ClCompile>
     <ClCompile Include="..\GL_API.cpp">
       <Filter>source\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="..\avl_imgui.cpp">
+      <Filter>source\app</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\imgui\imgui.cpp">
+      <Filter>third_party\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\imgui\imgui_draw.cpp">
+      <Filter>third_party\imgui</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

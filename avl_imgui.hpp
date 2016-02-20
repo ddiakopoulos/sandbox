@@ -40,10 +40,10 @@ public:
 namespace avl
 {
     class GlTexture;
-    class InputEvent;
+    struct InputEvent;
 }
 
-class GLFWwindow;
+struct GLFWwindow;
 namespace gui
 {
 

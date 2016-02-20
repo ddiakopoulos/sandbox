@@ -22,7 +22,7 @@
 
 #define FONTSTASH_IMPLEMENTATION
 #include "fontstash.h"
-#include "stb_image.h"
+#include "third_party/stb/stb_image.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4100)  // unreferenced formal parameter

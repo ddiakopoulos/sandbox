@@ -412,11 +412,19 @@ struct ExperimentalApp : public GLFWApp
 
         {
             ImGui::Text("HDR Bloom Settings");
+			ImGui::Separator();
             ImGui::SliderFloat("Middle Grey", &middleGrey, 0.1f, 1.0f);
             ImGui::SliderFloat("White Point", &whitePoint, 0.1f, 2.0f);
             ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
             ImGui::Separator();
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::Separator();
+
+			{
+				gui::ScopedWindow("NEw Window");
+				ImGui::SliderFloat("White Point", &whitePoint, 0.1f, 2.0f);
+				ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
+			}
         }
 
         frameCount++;

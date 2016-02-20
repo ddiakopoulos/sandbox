@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\arcball.hpp" />
+    <ClInclude Include="..\avl_imgui.hpp" />
     <ClInclude Include="..\base64.hpp" />
     <ClInclude Include="..\bit_mask.hpp" />
     <ClInclude Include="..\circular_buffer.hpp" />
@@ -65,6 +66,9 @@
     <ClInclude Include="..\texture_view.hpp" />
     <ClInclude Include="..\third_party\efsw.hpp" />
     <ClInclude Include="..\third_party\fontstash.h" />
+    <ClInclude Include="..\third_party\imgui\imconfig.h" />
+    <ClInclude Include="..\third_party\imgui\imgui.h" />
+    <ClInclude Include="..\third_party\imgui\imgui_internal.h" />
     <ClInclude Include="..\third_party\json.hpp" />
     <ClInclude Include="..\third_party\murmur_hash_3.h" />
     <ClInclude Include="..\third_party\nanovg.h" />
@@ -87,6 +91,7 @@
     <ClInclude Include="..\util.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\avl_imgui.cpp" />
     <ClCompile Include="..\gizmo.cpp" />
     <ClCompile Include="..\GL_API.cpp" />
     <ClCompile Include="..\main.cpp" />
@@ -94,6 +99,8 @@
     <ClCompile Include="..\procedural_sky\hosek.cpp" />
     <ClCompile Include="..\procedural_sky\preetham.cpp" />
     <ClCompile Include="..\third_party\efsw.cpp" />
+    <ClCompile Include="..\third_party\imgui\imgui.cpp" />
+    <ClCompile Include="..\third_party\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\third_party\json.cpp" />
     <ClCompile Include="..\third_party\murmur_hash_3.cpp" />
     <ClCompile Include="..\third_party\nanovg.cpp" />

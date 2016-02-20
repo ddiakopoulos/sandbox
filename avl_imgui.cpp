@@ -14,7 +14,6 @@ using namespace avl;
 
 namespace gui
 {
-    
     ///////////////////////////////////////
     //   ImGui Renderer Implementation   //
     ///////////////////////////////////////
@@ -155,7 +154,7 @@ namespace gui
         };
         
         #ifdef _WIN32
-        io.ImeWindowHandle = glfwGetWin32Window(state.window);
+        //io.ImeWindowHandle = glfwGetWin32Window(state.window);
         #endif
     }
     
