@@ -20,7 +20,10 @@
 #define FONS_H
 
 #include <stdlib.h>
+
+#ifdef _WIN32
 #include <malloc.h>
+#endif
 
 #define FONS_INVALID -1
 

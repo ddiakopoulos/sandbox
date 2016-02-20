@@ -136,6 +136,8 @@ struct ExperimentalApp : public GLFWApp
     
     ExperimentalApp() : GLFWApp(1280, 720, "HDR Bloom App", 2, true)
     {
+        glfwSwapInterval(0);
+        
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
     
@@ -230,6 +232,8 @@ struct ExperimentalApp : public GLFWApp
         grid = RenderableGrid(1, 64, 64);
 
         gl_check_error(__FILE__, __LINE__);
+        
+        //ImGui::SetWindowPos({10, 300});
     }
     
     ~ExperimentalApp()
@@ -398,9 +402,6 @@ struct ExperimentalApp : public GLFWApp
         hdr_tonemapShader->uniform("u_viewTexel", float2(1.f / (float) width, 1.f / (float) height));
         fullscreen_post_quad.draw_elements();
         hdr_tonemapShader->unbind();
-
-        //std::cout << float4(lumValue[0], lumValue[1], lumValue[2], lumValue[3]) << std::endl;
-        std::cout << tonemap << std::endl;
         
         {
             sceneView->draw(uiSurface.children[0]->bounds, int2(width, height));
@@ -420,11 +421,6 @@ struct ExperimentalApp : public GLFWApp
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::Separator();
 
-			{
-				gui::ScopedWindow("NEw Window");
-				ImGui::SliderFloat("White Point", &whitePoint, 0.1f, 2.0f);
-				ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
-			}
         }
 
         frameCount++;
