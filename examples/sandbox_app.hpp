@@ -59,7 +59,7 @@ void luminance_offset_4x4(GlShader * shader, float2 size)
 
 std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath)
 {
-    auto shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath));
+    std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath));
     mon.add_shader(shader, vertexPath, fragPath);
     return shader;
 }

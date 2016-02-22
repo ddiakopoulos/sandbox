@@ -15,19 +15,55 @@ in vec4 v_texcoord4;
 
 out vec4 f_color;
 
+// https://imdoingitwrong.wordpress.com/2010/08/19/why-reinhard-desaturates-my-blacks-3/
+
+// a = shoulder strength
+// b = linear strength
+// c = linear angle
+// d = toe strength
+// e = toe numerator
+// f = toe denominator
+vec3 filmicTonemapOperator(vec3 color, float a, float b, float c, float d, float e, float f)
+{
+    // e/f = toe angle
+    return ((color * (a * color + b * c) + d * e) / (color * (a * color + b) + d * f)) - e / f;
+}
+
+// Filmic tonemap without gamma correction
+vec3 filmicTonemap(vec3 color)
+{
+    float a = 0.22f;
+    float b = 0.3f;
+    float c = 0.1f;
+    float d = 0.2f;
+    float e = 0.01f;
+    float f = 0.3f;
+
+    // linearWhile = linear white point value
+    vec3 linearWhite = vec3(11.2f);
+
+    vec3 num = filmicTonemapOperator(color, a, b, c, d, e, f);
+    vec3 denom = filmicTonemapOperator(linearWhite, a, b, c, d, e, f);
+    return num / denom;
+}
+
+vec3 reinhard(in vec3 inColor, in float lum, in float white, in float middle)
+{
+    // Initial luminence scaling (equation 2)
+    inColor *= middle / (0.001f + lum);
+
+    // Control white out (equation 4 nom)
+    inColor *= (1.0 + inColor / white);
+
+    // Final mapping (equation 4 denom)
+    inColor /= (1.0 + inColor);
+    
+    return inColor;
+}
+
 float toGamma(float r)
 {
     return pow(abs(r), 1.0/2.2);
-}
-
-vec3 toGamma(vec3 rgb)
-{
-    return pow(abs(rgb), vec3(1.0/2.2, 1.0/2.2, 1.0/2.2));
-}
-
-vec4 toGamma(vec4 rgba)
-{
-    return vec4(toGamma(rgba.xyz), rgba.w);
 }
 
 float reinhard2(float x, float whiteSqr)
@@ -111,17 +147,21 @@ void main()
     vec3 rgb = texture(s_texColor, v_texcoord0).rgb;
     float lum = clamp(texture(s_texLum, v_texcoord0).r, 0.1, 0.7);
 
-    vec3 Yxy = convertRGB2Yxy(rgb);
+    //vec3 Yxy = convertRGB2Yxy(rgb);
 
     float middleGrey = u_tonemap.x;
     float whiteSqr = u_tonemap.y;
     float threshold = u_tonemap.z;
     float offset = u_tonemap.w;
 
-    float lp = Yxy.x * middleGrey / (lum + 0.0001);
-    Yxy.x = reinhard2(lp, whiteSqr);
+    //float lp = Yxy.x * middleGrey / (lum + 0.0001);
+    //Yxy.x = reinhard2(lp, whiteSqr);
 
-    rgb = convertYxy2RGB(Yxy);
+    //rgb = filmicTonemap(rgb);
+
+    rgb = reinhard(rgb, lum, 1.5f, middleGrey);
+
+    //convertYxy2RGB(Yxy);
 
     vec4 blur = blur9(s_texBlur, v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4);
 

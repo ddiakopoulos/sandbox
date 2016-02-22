@@ -19,11 +19,11 @@ class ShaderMonitor
     
     struct ShaderAsset
     {
-        std::shared_ptr<GlShader> & program;
+        GlShader & program;
         std::string vertexPath;
         std::string fragmentPath;
         bool shouldRecompile = false;
-        ShaderAsset(std::shared_ptr<GlShader> & program, const std::string & v, const std::string & f) : program(program), vertexPath(v), fragmentPath(f) {};
+        ShaderAsset(GlShader & program, const std::string & v, const std::string & f) : program(program), vertexPath(v), fragmentPath(f) {};
     };
     
     struct UpdateListener : public efsw::FileWatchListener
@@ -33,7 +33,7 @@ class ShaderMonitor
         {
             if (action == efsw::Actions::Modified)
             {
-				std::cout << filename << std::endl;
+				std::cout << "Shader file updated: " << filename << std::endl;
                 if (callback) callback(filename);
             }
         }
@@ -41,7 +41,7 @@ class ShaderMonitor
 
     UpdateListener listener;
     
-    std::vector<ShaderAsset> shaders;
+    std::vector<std::unique_ptr<ShaderAsset>> shaders;
     
 public:
     
@@ -55,11 +55,9 @@ public:
         {
             for (auto & shader : shaders)
             {
-				std::cout << filename << std::endl;
-				std::cout << get_filename_with_extension(shader.vertexPath) << std::endl;
-                if (filename == get_filename_with_extension(shader.vertexPath) || filename == get_filename_with_extension(shader.fragmentPath))
+                if (filename == get_filename_with_extension(shader->vertexPath) || filename == get_filename_with_extension(shader->fragmentPath))
                 {
-                    shader.shouldRecompile = true;
+                    shader->shouldRecompile = true;
                 }
             }
         };
@@ -68,7 +66,7 @@ public:
     
     void add_shader(std::shared_ptr<GlShader> & program, const std::string & vertexShader, const std::string & fragmentShader)
     {
-        shaders.emplace_back(program, vertexShader, fragmentShader);
+        shaders.emplace_back(new ShaderAsset(*program.get(), vertexShader, fragmentShader));
     }
     
     // Call this regularly on the gl thread
@@ -76,12 +74,12 @@ public:
     {
         for (auto & shader : shaders)
         {
-            if (shader.shouldRecompile)
+            if (shader->shouldRecompile)
             {
                 try
                 {
-                    shader.program = std::make_shared<GlShader>(read_file_text(shader.vertexPath), read_file_text(shader.fragmentPath));
-                    shader.shouldRecompile = false;
+                    shader->program = GlShader(read_file_text(shader->vertexPath), read_file_text(shader->fragmentPath));
+                    shader->shouldRecompile = false;
                 }
                 catch (const std::exception & e)
                 {
