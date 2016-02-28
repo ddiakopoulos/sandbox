@@ -44,6 +44,12 @@ public:
 
     void render(float4x4 viewProj, float3 eyepoint, float farClip)
     {
+        GLboolean blendEnabled;
+        glGetBooleanv(GL_BLEND, &blendEnabled);
+        
+        GLboolean cullFaceEnabled;
+        glGetBooleanv(GL_CULL_FACE, &cullFaceEnabled);
+        
         glDisable(GL_BLEND);
         glDisable(GL_CULL_FACE);
 
@@ -54,8 +60,8 @@ public:
         
         render_internal(viewProj, sunDirection, world);
         
-        //glEnable(GL_BLEND);
-        //glEnable(GL_CULL_FACE);
+        if (blendEnabled) glEnable(GL_BLEND);
+        if (cullFaceEnabled) glEnable(GL_CULL_FACE);
     }
     
     virtual void recompute(float sunTheta, float turbidity, float albedo, float normalizedSunY) = 0;
