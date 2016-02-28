@@ -10,62 +10,6 @@
 namespace avl
 {
 
-    /////////////////////////
-    // Matrix diagonalizer //
-    /////////////////////////
-
-    // A must be a symmetric matrix.
-    // returns quaternion q such that its corresponding matrix Q
-    // can be used to Diagonalize A
-    // Diagonal matrix D = Q * A * Transpose(Q); and A = QT*D*Q
-    // The rows of q are the eigenvectors D's diagonal is the eigenvalues
-    // As per 'row' convention if double3x3 Q = qmat(q); then v*Q = q*v*conj(q)
-    template<class T> vec<T,4> diagonalizer(const mat<T,3,3> &A)
-    {
-        int maxsteps=24;  // certainly wont need that many.
-        int i;
-        vec<T,4> q(0,0,0,1);
-        for(i=0;i<maxsteps;i++)
-        {
-            auto Q = qmat(q); // v*Q == q*v*conj(q)
-            auto D = mul(transpose(Q), mul(A, Q)); // A = Q^T*D*Q
-            vec<T,3> offdiag(D(2,1),D(2,0),D(1,0)); // elements not on the diagonal
-            vec<T,3> om(std::abs(offdiag.x), std::abs(offdiag.y), std::abs(offdiag.z)); // mag of each offdiag elem
-            int k = (om.x > om.y && om.x > om.z) ? 0 : (om.y > om.z) ? 1 : 2; // index of largest element of offdiag
-            int k1 = (k+1)%3;
-            int k2 = (k+2)%3;
-            if(offdiag[k]==0.0f) break;  // diagonal already
-            T thet = (D(k2,k2)-D(k1,k1))/(2.0f*offdiag[k]);
-            T sgn = (thet>0.0f)?1.0f:-1.0f;
-            thet    *= sgn; // make it positive
-            T t = sgn /(thet +((thet<1.E6f)?std::sqrt((thet*thet)+1.0f):thet)) ; // sign(T)/(|T|+sqrt(T^2+1))
-            T c = 1.0f/std::sqrt(t*t+1.0f); //  c= 1/(t^2+1) , t=s/c 
-            if(c==1.0f) break;  // no room for improvement - reached machine precision.
-            vec<T,4> jr(0,0,0,0); // jacobi rotation for this iteration.
-            jr[k] = sgn*std::sqrt((1.0f-c)/2.0f);  // using 1/2 angle identity sin(a/2) = sqrt((1-cos(a))/2)  
-            jr[k] *= -1.0f; // since our quat-to-matrix convention was for v*M instead of M*v
-            jr.w  = std::sqrt(1.0f - (jr[k]*jr[k]));
-            if(jr.w==1.0f) break; // reached limits of doubleing point precision
-            q =  qmul(q,jr);
-            q = normalize(q); 
-        } 
-        auto ev = mul(transpose(qmat(q)), mul(A, qmat(q)));
-        if(ev(0,0)>ev(2,2))
-            q = qmul(q,normalize(vec<T,4>(0,0.7f,0,0.7f)));
-        ev = mul(transpose(qmat(q)), mul(A, qmat(q)));
-        if(ev(1,1)>ev(2,2))
-            q = qmul(q,normalize(vec<T,4>(0.7f,0,0,0.7f)));
-        ev = mul(transpose(qmat(q)), mul(A, qmat(q)));
-        if(ev(0,0)>ev(1,1))
-            q = qmul(q,normalize(vec<T,4>(0,0,0.7f,0.7f)));
-        if(qzdir(q).y<0)
-            q = qmul(q,vec<T,4>(1,0,0,0));
-        if(qydir(q).x<0)
-            q = qmul(q,vec<T,4>(0,0,1,0));
-        ev = mul(transpose(qmat(q)), mul(A, qmat(q)));
-        return q;
-    }
-
     //////////////////
     // Bounding Box //
     //////////////////
@@ -211,18 +155,6 @@ namespace avl
     inline float4 make_rotation_quat_from_pose_matrix(const float4x4 & m)
     { 
         return make_rotation_quat_from_rotation_matrix({m.x.xyz(),m.y.xyz(),m.z.xyz()}); 
-    }
-
-    // returns unit length q such that qmat(q)^t * matrix * qmat(q) is a diagonal matrix
-    inline float4 make_rotation_quat_to_diagonalize_symmetric_matrix(const float3x3 & matrix)
-    { 
-        return diagonalizer(matrix); 
-    }
-
-    // returns unit length q such that qmat(q)^t * matrix * qmat(q) is a diagonal matrix
-    inline double4 make_rotation_quat_to_diagonalize_symmetric_matrix(const double3x3 & matrix)
-    { 
-        return diagonalizer(matrix); 
     }
 
     inline float4 make_axis_angle_rotation_quat(const float4 & q)
