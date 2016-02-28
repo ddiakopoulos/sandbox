@@ -11,7 +11,7 @@ namespace avl
 {
     
     /////////////////////////////////
-    // Axis-Aligned Bounding Boxes //
+    // Axis-Aligned Bounding Areas //
     /////////////////////////////////
     
     struct Bounds2D
@@ -28,6 +28,7 @@ namespace avl
         
         float2 size() const { return max() - min(); }
         float2 center() const { return {(_min.x+_max.y)/2, (_min.y+_max.y)/2}; }
+        float area() const { return (_max.x - _min.x) * (_max.y - _min.y); }
         
         float width() const { return _max.x - _min.x; }
         float height() const { return _max.y - _min.y; }
@@ -61,7 +62,7 @@ namespace avl
         
         float width() const { return _max.x - _min.x; }
         float height() const { return _max.y - _min.y; }
-        float depth() const { return _max.z - _min.z; };
+        float depth() const { return _max.z - _min.z; }
         
         bool contains(float3 point) const
         {
@@ -138,7 +139,7 @@ namespace avl
         const float4 post = zwvsxy ? postzw : postxy;
         
         const float t = pre.x * m(0,0) + pre.y * m(1,1) + pre.z * m(2,2) + 1;
-        const float s = 1/sqrt(t) / 2;
+        const float s = 1.f / sqrt(t) / 2.f;
         const float4 qp = float4(pre.y * m(2,1) - pre.z * m(1,2), pre.z * m(0,2) - pre.x * m(2,0), pre.x * m(1,0) - pre.y * m(0,1), t) * s;
         return qmul(qp, post);
     }
