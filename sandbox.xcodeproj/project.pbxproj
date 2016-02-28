@@ -64,7 +64,7 @@
 		081204AD1BAE7C8600C7C0F4 /* geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = geometry.hpp; sourceTree = SOURCE_ROOT; };
 		081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = pid_controller.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF311BCFFA6A00A894F0 /* sketch.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sketch.hpp; sourceTree = SOURCE_ROOT; };
-		0822AF321BD389EA00A894F0 /* universal_widget.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = universal_widget.hpp; sourceTree = SOURCE_ROOT; };
+		0822AF321BD389EA00A894F0 /* space.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = space.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF331BD4212100A894F0 /* arcball.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arcball.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF351BD4382C00A894F0 /* ellipse_math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ellipse_math.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF361BD4ADBF00A894F0 /* GL_API.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GL_API.cpp; sourceTree = SOURCE_ROOT; };
@@ -432,7 +432,7 @@
 				089B85FD1BAFC70B00B3A290 /* base64.hpp */,
 				089B86151BAFD39100B3A290 /* bit_mask.hpp */,
 				0822AF311BCFFA6A00A894F0 /* sketch.hpp */,
-				0822AF321BD389EA00A894F0 /* universal_widget.hpp */,
+				0822AF321BD389EA00A894F0 /* space.hpp */,
 			);
 			name = tools;
 			sourceTree = "<group>";

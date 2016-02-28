@@ -7,37 +7,28 @@
 namespace avl
 {
     
-struct UIComponent;
-struct UIRenderEvent
+struct Space;
+    
+// NvgFont * text;
+// NvgFont * icon;
+// NVGcontext * ctx;
+    
+struct RenderEvent
 {
-    NVGcontext * ctx;
-    UIComponent * parent;
-    NvgFont * text;
-    NvgFont * icon;
+    Space * parent;
+    void * user;
 };
 
-struct UIStyleSheet
-{
-    NVGcolor textColor;
-    NVGcolor iconColor;
-    NVGcolor foregroundColor;
-    NVGcolor backgroundColor;
-    NVGcolor borderColor;
-};
-
-struct UIComponent
+struct Space
 {
     bool acceptInput = true;
     float aspectRatio = 1;
     URect placement = {{0,0},{0,0},{1,0},{1,0}};
     Bounds bounds;
-    std::vector<std::shared_ptr<UIComponent>> children;
     
-    UIStyleSheet style;
+    std::vector<std::shared_ptr<Space>> children;
     
-    UIComponent(UIStyleSheet stylesheet = UIStyleSheet()) : style(stylesheet) {}
-    
-    void add_child(const URect & placement, std::shared_ptr<UIComponent> child)
+    void add_child(const URect & placement, std::shared_ptr<Space> child)
     {
         child->placement = placement;
         children.push_back(child);
@@ -60,7 +51,7 @@ struct UIComponent
         }
     }
     
-    virtual void render(const UIRenderEvent & e) {};
+    virtual void render(const RenderEvent & e) {};
     virtual void input(const InputEvent & e) {};
     virtual void on_mouse_down(const float2 cursor) {};
     virtual void on_mouse_up(const float2 cursor) {};
