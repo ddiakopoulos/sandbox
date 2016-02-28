@@ -8,7 +8,6 @@
 
 // http://www.gamedev.net/topic/674450-hdr-rendering-average-luminance/
 
-
 #include "avl_imgui.hpp"
 #include "imgui/imgui.h"
 

@@ -101,8 +101,7 @@
 		0849FD871BE7C801000F148E /* index.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = index.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD881BE7CAAB000F148E /* arcball_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = arcball_app.hpp; path = examples/arcball_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD891BE7CAAB000F148E /* empty_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = empty_app.hpp; path = examples/empty_app.hpp; sourceTree = SOURCE_ROOT; };
-		0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = sandbox_app.hpp; path = examples/sandbox_app.hpp; sourceTree = SOURCE_ROOT; };
-		0849FD8B1BE7CAAB000F148E /* skydome_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = skydome_app.hpp; path = examples/skydome_app.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD8A1BE7CAAB000F148E /* hdr_skydome.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = hdr_skydome.hpp; path = examples/hdr_skydome.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ssao_app.hpp; path = examples/ssao_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8E1BEF19A7000F148E /* forward_lighting_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = forward_lighting_app.hpp; path = examples/forward_lighting_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8F1BEFCC64000F148E /* hdr_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = hdr_frag.glsl; path = assets/shaders/hdr_frag.glsl; sourceTree = SOURCE_ROOT; };
@@ -283,7 +282,6 @@
 				0849FD891BE7CAAB000F148E /* empty_app.hpp */,
 				0849FD881BE7CAAB000F148E /* arcball_app.hpp */,
 				0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */,
-				0849FD8B1BE7CAAB000F148E /* skydome_app.hpp */,
 				08C475791C02CFF30031E87E /* terrain_app.hpp */,
 				08C4757D1C0AD67D0031E87E /* camera_app.hpp */,
 				08C4757E1C0AD67D0031E87E /* euclidean_app.hpp */,
@@ -291,7 +289,7 @@
 				08C475941C1DFEE20031E87E /* reaction_app.hpp */,
 				0849FD8E1BEF19A7000F148E /* forward_lighting_app.hpp */,
 				08F652F41C71C4310076DF49 /* decal_app.hpp */,
-				0849FD8A1BE7CAAB000F148E /* sandbox_app.hpp */,
+				0849FD8A1BE7CAAB000F148E /* hdr_skydome.hpp */,
 				0868DFFE1C5F247C0032129B /* vision_app.hpp */,
 			);
 			name = examples;
