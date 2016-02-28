@@ -449,7 +449,7 @@ struct ExperimentalApp : public GLFWApp
             ImGui::SliderFloat("Phi", &sunPhi, 0.0f, 360.0f);
             
             ImGui::SliderFloat("Normalized Sun Y", &normalizedSunY, 0.0f, 3.14f);
-            ImGui::SliderFloat("Turbidity", &turbididy, 0.0f, 12.0f);
+            ImGui::SliderFloat("Turbidity", &turbididy, 1.0f, 6.0f);
             ImGui::SliderFloat("Albedo", &albedo, 0.01f, 2.0f);
             if(ImGui::Button("Update Sun Parameters"))
             {
@@ -460,7 +460,6 @@ struct ExperimentalApp : public GLFWApp
             
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::Separator();
-
         }
 
         frameCount++;

@@ -40,14 +40,9 @@ namespace
         double a0t1 = evaluate_spline(datasetA0 + stride * 6 * (turbidity1 - 1), stride, elevationK);
         double a1t1 = evaluate_spline(datasetA1 + stride * 6 * (turbidity1 - 1), stride, elevationK);
         
-        return
-        a0t0 * (1 - albedo) * (1 - turbidityK) +
-        a1t0 * albedo * (1 - turbidityK) +
-        a0t1 * (1 - albedo) * turbidityK +
-        a1t1 * albedo * turbidityK;
+        return a0t0 * (1 - albedo) * (1 - turbidityK) + a1t0 * albedo * (1 - turbidityK) + a0t1 * (1 - albedo) * turbidityK + a1t1 * albedo * turbidityK;
     }
     
-    // Radiance
     avl::float3 hosek_wilkie(float cos_theta, float gamma, float cos_gamma, avl::float3 A, avl::float3 B, avl::float3 C, avl::float3 D, avl::float3 E, avl::float3 F, avl::float3 G, avl::float3 H, avl::float3 I)
     {
         avl::float3 chi = (1.f + cos_gamma * cos_gamma) / pow(1.f + H * H - 2.f * cos_gamma * H, avl::float3(1.5f));
@@ -125,8 +120,8 @@ inline HosekSkyRadianceData HosekSkyRadianceData::compute(float sunTheta, float 
     
 inline PreethamSkyRadianceData PreethamSkyRadianceData::compute(float sunTheta, float turbidity, float albedo, float normalizedSunY)
 {
-    //assert(sunTheta >= 0 && sunTheta <= ANVIL_PI / 2);
-    //assert(turbidity >= 1);
+    assert(sunTheta >= 0 && sunTheta <= ANVIL_PI / 2);
+    assert(turbidity >= 1);
     
     // A.2 Skylight Distribution Coefficients and Zenith Values: compute Perez distribution coefficients
     float3 A = float3(-0.0193, -0.0167,  0.1787) * turbidity + float3(-0.2592, -0.2608, -1.4630);
@@ -148,10 +143,7 @@ inline PreethamSkyRadianceData PreethamSkyRadianceData::compute(float sunTheta, 
     Z.z /= perez(0, sunTheta, A.z, B.z, C.z, D.z, E.z);
     
     // For low dynamic range simulation, normalize luminance to have a fixed value for sun
-    if (normalizedSunY)
-    {
-        Z.z = normalizedSunY / perez(sunTheta, 0, A.z, B.z, C.z, D.z, E.z);
-    }
+    if (normalizedSunY) Z.z = normalizedSunY / perez(sunTheta, 0, A.z, B.z, C.z, D.z, E.z);
     
     return { A, B, C, D, E, Z };
 }
@@ -163,7 +155,7 @@ protected:
     
     GlMesh skyMesh;
     
-    float2 sunPosition = {80, 230}; // Theta = 0 - 180, Phi = 0 - 360
+    float2 sunPosition = {80, 230}; // Theta = 0 - 90, Phi = 0 - 360
     
     virtual void render_internal(float4x4 viewProj, float3 sunDir, float4x4 world) = 0;
     
@@ -199,6 +191,16 @@ public:
     void set_sun_position(float theta, float phi)
     {
         sunPosition = {theta, phi};
+    }
+    
+    float3 get_light_direction()
+    {
+        return -spherical(to_radians(sunPosition.x), to_radians(sunPosition.y));
+    }
+    
+    float3 get_sun_direction()
+    {
+        return spherical(to_radians(sunPosition.x), to_radians(sunPosition.y));
     }
     
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) = 0;
