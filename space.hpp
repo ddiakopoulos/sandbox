@@ -1,26 +1,19 @@
-#ifndef uwidget_h
-#define uwidget_h
+#ifndef ui_space_h
+#define ui_space_h
 
 #include "geometric.hpp"
-#include "nvg.hpp"
 
 namespace avl
 {
     
-struct Space;
-    
-// NvgFont * text;
-// NvgFont * icon;
-// NVGcontext * ctx;
-    
-struct RenderEvent
-{
-    Space * parent;
-    void * user;
-};
-
 struct Space
 {
+    struct RenderEvent
+    {
+        Space * parent;
+        void * user;
+    };
+
     bool acceptInput = true;
     float aspectRatio = 1;
     URect placement = {{0,0},{0,0},{1,0},{1,0}};
@@ -60,4 +53,4 @@ struct Space
     
 }
 
-#endif // end uwidget_h
+#endif

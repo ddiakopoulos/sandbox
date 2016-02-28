@@ -19,7 +19,7 @@
 #include "dsp_filters.hpp"
 #include "bit_mask.hpp"
 #include "file_io.hpp"
-#include "universal_widget.hpp"
+#include "space.hpp"
 #include "arcball.hpp"
 #include "sketch.hpp"
 #include "glfw_app.hpp"
