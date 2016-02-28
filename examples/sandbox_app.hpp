@@ -64,12 +64,20 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
     return shader;
 }
 
+enum class SkyType : int
+{
+    SKY_TYPE_PREETHAM = 0,
+    SKY_TYPE_HOSEK = 1
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
 
     GlCamera camera;
-    HosekProceduralSky skydome;
+    
+    std::unique_ptr<ProceduralSky> skydome;
+    
     RenderableGrid grid;
     FlyCameraController cameraController;
     
@@ -134,22 +142,25 @@ struct ExperimentalApp : public GLFWApp
     
     std::unique_ptr<gui::ImGuiManager> igm;
     
+    int skydomeSelection = 0;
+    
+    float sunTheta = 80.0f;
+    float turbididy = 4.0f;
+    float albedo = 0.1f;
+    float normalizedSunY = 1.15f;
+    
     ExperimentalApp() : GLFWApp(1280, 720, "HDR Bloom App", 2, true)
     {
         glfwSwapInterval(0);
         
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
-    
-        glEnable(GL_FRAMEBUFFER_SRGB);
         
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
         fullscreen_post_quad = make_fullscreen_quad();
-        
-        std::vector<float> greenDebugPixel = {0.f, 1.0f, 0.f, 1.0f};
         
         // Debugging views
         uiSurface.bounds = {0, 0, (float) width, (float) height};
@@ -229,11 +240,11 @@ struct ExperimentalApp : public GLFWApp
         
         models.push_back(Renderable(make_icosahedron()));
         
+        skydome.reset(new PreethamProceduralSky());
+        
         grid = RenderableGrid(1, 64, 64);
 
         gl_check_error(__FILE__, __LINE__);
-        
-        //ImGui::SetWindowPos({10, 300});
     }
     
     ~ExperimentalApp()
@@ -261,6 +272,7 @@ struct ExperimentalApp : public GLFWApp
         cameraController.update(e.timestep_ms);
         time += e.timestep_ms;
         shaderMonitor.handle_recompile();
+
     }
     
     void on_draw() override
@@ -286,7 +298,7 @@ struct ExperimentalApp : public GLFWApp
         sceneFramebuffer.bind_to_draw();
         glClear(GL_DEPTH_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear anything out of scene fbo
         {
-            skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+            skydome->render(viewProj, camera.get_eye_point(), camera.farClip);
             
             hdr_meshShader->bind();
             
@@ -412,12 +424,35 @@ struct ExperimentalApp : public GLFWApp
         }
 
         {
-            ImGui::Text("HDR Bloom Settings");
+            ImGui::Text("HDR Values");
 			ImGui::Separator();
             ImGui::SliderFloat("Middle Grey", &middleGrey, 0.1f, 1.0f);
             ImGui::SliderFloat("White Point", &whitePoint, 0.1f, 2.0f);
             ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
-            ImGui::Separator();
+            
+            ImGui::Spacing();
+            
+            ImGui::Text("Sky Model");
+            ImGui::RadioButton("Preethem", &skydomeSelection, 0); ImGui::SameLine();
+            ImGui::RadioButton("Hosek-Wilkie", &skydomeSelection, 1);
+            if(ImGui::Button("Update Model"))
+            {
+                if (skydomeSelection == (int) SkyType::SKY_TYPE_HOSEK) skydome.reset(new HosekProceduralSky());
+                if (skydomeSelection == (int) SkyType::SKY_TYPE_PREETHAM) skydome.reset(new PreethamProceduralSky());
+            }
+            ImGui::Spacing();
+            
+            ImGui::Text("Sun Parameters");
+            ImGui::SliderFloat("Theta", &sunTheta, 0.0f, 180.0f);
+            ImGui::SliderFloat("Normalized Sun Y", &normalizedSunY, 0.0f, 3.14f);
+            ImGui::SliderFloat("Turbidity", &turbididy, 0.0f, 12.0f);
+            ImGui::SliderFloat("Albedo", &albedo, 0.01f, 2.0f);
+            if(ImGui::Button("Update Sun Parameters"))
+            {
+                skydome->recompute(sunTheta, turbididy, albedo, normalizedSunY);
+            }
+            ImGui::Spacing();
+            
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::Separator();
 
