@@ -150,20 +150,16 @@ inline PreethamSkyRadianceData PreethamSkyRadianceData::compute(float sunTheta, 
 
 class ProceduralSky
 {
-
 protected:
-    
     GlMesh skyMesh;
-    
-    float2 sunPosition = {80, 230}; // Theta = 0 - 90, Phi = 0 - 360
-    
+    float2 sunPosition;
     virtual void render_internal(float4x4 viewProj, float3 sunDir, float4x4 world) = 0;
-    
 public:
     
     ProceduralSky()
     {
         skyMesh = make_sphere_mesh(1.0);
+        set_sun_position(80, 230);
     }
 
     void render(float4x4 viewProj, float3 eyepoint, float farClip)
@@ -176,31 +172,33 @@ public:
         
         glDisable(GL_BLEND);
         glDisable(GL_CULL_FACE);
-
-        float3 sunDirection = spherical(to_radians(sunPosition.x), to_radians(sunPosition.y));
         
         // Largest non-clipped sphere
         float4x4 world = make_translation_matrix(eyepoint) * make_scaling_matrix(farClip * .99);
         
-        render_internal(viewProj, sunDirection, world);
+        render_internal(viewProj, get_sun_direction(), world);
         
         if (blendEnabled) glEnable(GL_BLEND);
         if (cullFaceEnabled) glEnable(GL_CULL_FACE);
     }
     
+    // Set in degrees. Theta = 0 - 90, Phi = 0 - 360
     void set_sun_position(float theta, float phi)
     {
-        sunPosition = {theta, phi};
+        sunPosition = {to_radians(theta), to_radians(phi)};
     }
     
-    float3 get_light_direction()
+    float2 get_sun_position() const { return sunPosition; }
+
+    
+    float3 get_sun_direction() const
     {
-        return -spherical(to_radians(sunPosition.x), to_radians(sunPosition.y));
+        return spherical(sunPosition.x, sunPosition.y);
     }
     
-    float3 get_sun_direction()
+    float3 get_light_direction() const
     {
-        return spherical(to_radians(sunPosition.x), to_radians(sunPosition.y));
+        return -get_sun_direction();
     }
     
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) = 0;
@@ -242,7 +240,7 @@ public:
     
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) override
     {
-        data = HosekSkyRadianceData::compute(to_radians(sunPosition.x), turbidity, albedo, normalizedSunY);
+        data = HosekSkyRadianceData::compute(sunPosition.x, turbidity, albedo, normalizedSunY);
     }
 
 };
@@ -278,7 +276,7 @@ public:
     
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) override
     {
-        data = PreethamSkyRadianceData::compute(to_radians(sunPosition.x), turbidity, albedo, normalizedSunY);
+        data = PreethamSkyRadianceData::compute(sunPosition.x, turbidity, albedo, normalizedSunY);
     }
     
 };
