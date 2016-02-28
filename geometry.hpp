@@ -184,18 +184,18 @@ namespace avl
             }
         }
         
-        Box<float, 3> compute_bounds() const
+        Bounds3D compute_bounds() const
         {
-            Box<float, 3> bounds;
+            Bounds3D bounds;
             
-            bounds.position = float3(std::numeric_limits<float>::infinity());
-            bounds.dimensions = -bounds.position;
+            bounds._min = float3(std::numeric_limits<float>::infinity());
+            bounds._max = -bounds.min();
             
             for (const auto & vertex : vertices)
             {
                 //auto newV = pose.transform_coord(vertex);
-                bounds.position = min(bounds.position, vertex);
-                bounds.dimensions = max(bounds.dimensions, vertex);
+                bounds._min = min(bounds.min(), vertex);
+                bounds._max = max(bounds.max(), vertex);
             }
             return bounds;
         }
@@ -720,7 +720,7 @@ namespace avl
             if (std::abs(ray.direction[i]) < PLANE_EPSILON)
             {
                 // Ray is parallel to slab. No hit if r.origin not within slab
-                if ((ray.origin[i] < bounds.position[i]) || (ray.origin[i] > bounds.dimensions[i]))
+                if ((ray.origin[i] < bounds.min()[i]) || (ray.origin[i] > bounds.max()[i]))
                 {
                     return false;
                 }
@@ -729,8 +729,8 @@ namespace avl
             {
                 // Compute intersection t value of ray with near and far plane of slab
                 float ood(1.0f / ray.direction[i]);
-                float t1((bounds.position[i] - ray.origin[i]) * ood);
-                float t2((bounds.dimensions[i] - ray.origin[i]) * ood);
+                float t1((bounds.min()[i] - ray.origin[i]) * ood);
+                float t2((bounds.max()[i] - ray.origin[i]) * ood);
                 
                 // Make t1 be intersection with near plane, t2 with far plane
                 if (t1 > t2)
@@ -830,7 +830,7 @@ namespace avl
         
         auto meshBounds = mesh.compute_bounds();
         
-        if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds.position, meshBounds.dimensions))
+        if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds.min(), meshBounds.max()))
         {
             for (int f = 0; f < mesh.faces.size(); ++f)
             {

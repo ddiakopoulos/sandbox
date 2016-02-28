@@ -19,6 +19,7 @@ namespace avl
         float2 _min = {0, 0};
         float2 _max = {0, 0};
         
+        Bounds2D() {}
         Bounds2D(float2 min, float2 max) : _min(min), _max(max) {}
         Bounds2D(float x0, float y0, float x1, float y1) { _min.x = x0; _min.y = y0; _max.x = x1; _max.y = y1; }
         
@@ -28,7 +29,7 @@ namespace avl
         float2 min() const { return _min; }
         float2 max() const { return _max; }
         
-        float2 ize() const { return max() - min(); }
+        float2 size() const { return max() - min(); }
         float2 center() const { return {(_min.x+_max.y)/2, (_min.y+_max.y)/2}; }
         
         float width() const { return _max.x - _min.x; }
@@ -39,6 +40,8 @@ namespace avl
     {
         float3 _min = {0, 0, 0};
         float3 _max = {0, 0, 0};
+        
+        Bounds3D() {}
         
         float3 min() const { return _min; }
         float3 max() const { return _max; }
@@ -427,7 +430,7 @@ namespace avl
     // Twist is a rotation about the vt, and swing is a rotation around a vector perpindicular to vt
     // http://www.alinenormoyle.com/weblog/?p=726.
     // A singularity exists when swing is close to 180 degrees.
-    void decompose_swing_twist(const float4 q, const float3 vt, float4 & swing, float4 & twist)
+    inline void decompose_swing_twist(const float4 q, const float3 vt, float4 & swing, float4 & twist)
     {
         float3 p = vt * dot(vt, twist.xyz());
         twist = normalize(float4(p.x, p.y, p.z, q.w));
@@ -448,7 +451,7 @@ namespace avl
     struct URect
     {
         UCoord x0, y0, x1, y1;
-        Bounds2D resolve(const Bounds2D & r) const { return { x0.resolve(r.x0, r.x1), y0.resolve(r.y0, r.y1), x1.resolve(r.x0, r.x1), y1.resolve(r.y0, r.y1) }; }
+        Bounds2D resolve(const Bounds2D & r) const { return { x0.resolve(r.min().x, r.max().x), y0.resolve(r.min().y, r.max().y), x1.resolve(r.min().x, r.max().x), y1.resolve(r.min().y, r.max().y) }; }
         bool is_fixed_width() const { return x0.a == x1.a; }
         bool is_fixed_height() const { return y0.a == y1.a; }
         float fixed_width() const { return x1.b - x0.b; }

@@ -49,7 +49,7 @@ namespace avl
             program = GlShader(s_textureVert, s_textureFrag);
         }
         
-        void draw(Bounds rect, int2 windowSize)
+        void draw(Bounds2D rect, int2 windowSize)
         {
             program.bind();
             
@@ -57,7 +57,7 @@ namespace avl
             
             float4x4 model = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
             model = mul(make_scaling_matrix({ (float) rect.width(), (float) rect.height(), 0.f}), model);
-            model = mul(make_translation_matrix({(float) rect.x0, (float) rect.y0, 0.f}), model);
+            model = mul(make_translation_matrix({(float) rect.min().x, (float) rect.min().y, 0.f}), model);
             program.uniform("u_model", model);
             program.uniform("u_projection", projection);
             program.texture("u_texture", 0, texture, GL_TEXTURE_2D);

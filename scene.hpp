@@ -17,7 +17,7 @@ namespace avl
         float3 scale;
         Object() : scale(1, 1, 1) {}
         float4x4 get_model() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
-        Box<float, 3> bounds;
+        Bounds3D bounds;
     };
 
     struct Renderable : public Object

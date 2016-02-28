@@ -17,7 +17,7 @@ struct Space
     bool acceptInput = true;
     float aspectRatio = 1;
     URect placement = {{0,0},{0,0},{1,0},{1,0}};
-    Bounds bounds;
+    Bounds2D bounds;
     
     std::vector<std::shared_ptr<Space>> children;
     
@@ -31,7 +31,7 @@ struct Space
     {
         for (auto & child : children)
         {
-            auto size = child->bounds.get_size();
+            auto size = child->bounds.size();
             child->bounds = child->placement.resolve(bounds);
             auto childAspect = child->bounds.width() / child->bounds.height();
             if (childAspect > 0)
@@ -40,7 +40,7 @@ struct Space
                 float ypadding = (1 - std::min((child->bounds.width() / childAspect) / child->bounds.height(), 1.0f)) / 2;
                 child->bounds = URect{{xpadding, 0}, {ypadding, 0}, {1 - xpadding, 0}, {1 - ypadding, 0}}.resolve(child->bounds);
             }
-            if (child->bounds.get_size() != size) child->layout();
+            if (child->bounds.size() != size) child->layout();
         }
     }
     

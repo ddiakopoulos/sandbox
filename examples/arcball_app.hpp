@@ -27,9 +27,9 @@ struct ExperimentalApp : public GLFWApp
     {
         auto bounds = g.compute_bounds();
 
-        float3 r = 0.50f * (bounds.dimensions - bounds.position);
+        float3 r = 0.5f * (bounds.max() - bounds.min());
         
-        float3 center = bounds.position + r;
+        float3 center = bounds.min() + r;
         
         float oldRadius = std::max(r.x, std::max(r.y, r.z));
         float scale = radius / oldRadius;
