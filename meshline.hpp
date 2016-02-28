@@ -15,11 +15,6 @@ class MeshlineRenderer
 {
     GlShader shader;
     GlMesh mesh;
-    GlCamera & camera;
-    
-    float2 screenDims;
-    float linewidth;
-    float3 color;
     
     std::vector<float3> previous;
     std::vector<float3> next;
@@ -65,7 +60,7 @@ class MeshlineRenderer
 
 public:
 
-    MeshlineRenderer(GlCamera & camera, const float2 screenDims, const float linewidth, float3 color) : camera(camera), screenDims(screenDims), linewidth(linewidth), color(color)
+    MeshlineRenderer()
     {
         shader = GlShader(read_file_text("assets/shaders/meshline_vert.glsl"), read_file_text("assets/shaders/meshline_frag.glsl"));
     }
@@ -134,7 +129,7 @@ public:
         mesh = make_line_mesh(vertices);
     }
     
-    void render(const float4x4 model)
+    void render(const GlCamera & camera, const float4x4 model, const float2 screenDims, const float4 color, const float lineWidth = 24.f)
     {
         shader.bind();
 
@@ -145,7 +140,7 @@ public:
         shader.uniform("u_modelViewMat", viewMat * model);
         
         shader.uniform("resolution", screenDims);
-        shader.uniform("lineWidth", 24.0f);
+        shader.uniform("lineWidth", lineWidth);
         shader.uniform("color", color);
         shader.uniform("opacity", 1.0f);
         shader.uniform("near", camera.nearClip);
