@@ -1,5 +1,16 @@
 #include "index.hpp"
 
+// https://mynameismjp.wordpress.com/2015/02/18/shadow-sample-update/
+
+// [ ] Stencil Reflections + Shadows
+// [ ] Shadow Volumes (face / edge)
+// [ ] Simple Shadow Mapping (SSM)
+// [ ] Variance Shadow Mapping (VSM)
+// [ ] Exponential Shadow Mapping (ESM)
+// [ ] Cascaded Shadow Mapping (CSM)
+// [ ] Percentage Closer Filtering (PCF) + poisson disk sampling
+// [ ] Moment Shadow Mapping [MSM]
+
 std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath)
 {
     std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath));
