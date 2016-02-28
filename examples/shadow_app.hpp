@@ -1,5 +1,12 @@
 #include "index.hpp"
 
+std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath)
+{
+    std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath));
+    mon.add_shader(shader, vertexPath, fragPath);
+    return shader;
+}
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -7,15 +14,24 @@ struct ExperimentalApp : public GLFWApp
     GlCamera camera;
     PreethamProceduralSky skydome;
     FlyCameraController cameraController;
+    ShaderMonitor shaderMonitor;
+    std::unique_ptr<gui::ImGuiManager> igm;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Shadow Mapping App")
     {
+        glfwSwapInterval(0);
+        
+        igm.reset(new gui::ImGuiManager(window));
+        gui::make_dark_theme();
+        
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
+        
         cameraController.set_camera(&camera);
-        gl_check_error(__FILE__, __LINE__);
         camera.look_at({0, 2.5, -2.5}, {0, 2.0, 0});
+        
+        gl_check_error(__FILE__, __LINE__);
     }
     
     void on_window_resize(int2 size) override
@@ -25,12 +41,14 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & e) override
     {
+        if (igm) igm->update_input(e);
         cameraController.handle_input(e);
     }
     
     void on_update(const UpdateEvent & e) override
     {
         cameraController.update(e.timestep_ms);
+        shaderMonitor.handle_recompile();
     }
     
     void on_draw() override
@@ -40,6 +58,8 @@ struct ExperimentalApp : public GLFWApp
         auto sunPosition = skydome.get_sun_position();
         
         glfwMakeContextCurrent(window);
+        
+        if (igm) igm->begin_frame();
         
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
@@ -59,9 +79,9 @@ struct ExperimentalApp : public GLFWApp
 
         gl_check_error(__FILE__, __LINE__);
         
-        glfwSwapBuffers(window);
+        if (igm) igm->end_frame();
         
-        frameCount++;
+        glfwSwapBuffers(window);
     }
     
 };
