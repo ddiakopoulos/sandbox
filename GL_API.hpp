@@ -380,7 +380,6 @@ namespace avl
             size = float2(tex.get_size().x, tex.get_size().y);
         }
         
-        /*
         void attach(GLenum attachment, const GlRenderbuffer & rb)
         {
             if(!handle) glGenFramebuffers(1, &handle);
@@ -389,7 +388,6 @@ namespace avl
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             size = float2(rb.get_size().x, rb.get_size().y);
         }
-        */
         
         void bind_to_draw()
         {
