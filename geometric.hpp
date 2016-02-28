@@ -23,9 +23,6 @@ namespace avl
         Bounds2D(float2 min, float2 max) : _min(min), _max(max) {}
         Bounds2D(float x0, float y0, float x1, float y1) { _min.x = x0; _min.y = y0; _max.x = x1; _max.y = y1; }
         
-        bool contains(const float px, const float py) const { return px >= _min.x && py >= _min.y && px < _max.x && py < _max.y; }
-        bool contains(const float2 & point) const { return contains(point.x, point.y); }
-        
         float2 min() const { return _min; }
         float2 max() const { return _max; }
         
@@ -34,6 +31,16 @@ namespace avl
         
         float width() const { return _max.x - _min.x; }
         float height() const { return _max.y - _min.y; }
+        
+        bool contains(const float px, const float py) const { return px >= _min.x && py >= _min.y && px < _max.x && py < _max.y; }
+        bool contains(const float2 & point) const { return contains(point.x, point.y); }
+        
+        bool intersects(const Bounds2D & other) const
+        {
+            if ((_min.x <= other._min.x) && (_max.x >= other._max.x) &&
+                (_min.y <= other._min.y) && (_max.y >= other._max.y)) return true;
+            return false;
+        }
     };
     
     struct Bounds3D
@@ -42,6 +49,8 @@ namespace avl
         float3 _max = {0, 0, 0};
         
         Bounds3D() {}
+        Bounds3D(float3 min, float3 max) : _min(min), _max(max) {}
+        Bounds3D(float x0, float y0, float z0, float x1, float y1, float z1) { _min.x = x0; _min.y = y0; _min.z = z0; _max.x = x1; _max.y = y1; _max.z = z1; }
         
         float3 min() const { return _min; }
         float3 max() const { return _max; }
@@ -187,7 +196,6 @@ namespace avl
         return e;
     }
     
-    
     //////////////////////////////////////////////
     // Construct affine transformation matrices //
     //////////////////////////////////////////////
@@ -304,9 +312,8 @@ namespace avl
         float4      orientation;                                    // Orientation of an object, expressed as a rotation quaternion from the base orientation
         float3      position;                                       // Position of an object, expressed as a translation vector from the base position
         
-        Pose()                                          : Pose({0,0,0,1}, {0,0,0}) {}
-        Pose(const float4 & orientation,
-             const float3 & position)                   : orientation(orientation), position(position) {}
+        Pose()                                                      : Pose({0,0,0,1}, {0,0,0}) {}
+        Pose(const float4 & orientation, const float3 & position)   : orientation(orientation), position(position) {}
         explicit    Pose(const float4 & orientation)                : Pose(orientation, {0,0,0}) {}
         explicit    Pose(const float3 & position)                   : Pose({0,0,0,1}, position) {}
         
