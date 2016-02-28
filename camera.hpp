@@ -31,7 +31,7 @@ namespace avl
             const float right = top * aspectRatio;
             const float bottom = -top;
             const float left = -right;
-            return make_projection_matrix_from_frustrum_rh_gl(left, right, bottom, top, nearClip, farClip);
+            return make_projection_matrix(left, right, bottom, top, nearClip, farClip);
         }
         
         float4x4 get_projection_matrix(float l, float r, float b, float t) const
@@ -40,7 +40,7 @@ namespace avl
             float right = tanf(to_radians(r)) * nearClip;
             float bottom = -tanf(to_radians(b)) * nearClip;
             float top = tanf(to_radians(t)) * nearClip;
-            return make_projection_matrix_from_frustrum_rh_gl(left, right, bottom, top, nearClip, farClip);
+            return make_projection_matrix(left, right, bottom, top, nearClip, farClip);
         }
         
         void set_orientation(float4 o) { pose.orientation = normalize(o); }

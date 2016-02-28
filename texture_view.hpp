@@ -53,7 +53,7 @@ namespace avl
         {
             program.bind();
             
-            const float4x4 projection = make_orthographic_perspective_matrix(0.0f, windowSize.x, windowSize.y, 0.0f, -1.0f, 1.0f);
+            const float4x4 projection = make_orthographic_matrix(0.0f, windowSize.x, windowSize.y, 0.0f, -1.0f, 1.0f);
             
             float4x4 model = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
             model = mul(make_scaling_matrix({ (float) rect.width(), (float) rect.height(), 0.f}), model);

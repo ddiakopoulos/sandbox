@@ -72,8 +72,6 @@ namespace avl
         
     };
     
-    //template<class T> std::ostream & operator << (std::ostream & a, Bounds b) { return a << "[" << b.x0 << ", " << b.y0 << ", " << b.x1 << ", " << b.y1 << "]"; }
-    
     ////////////////////////////////////
     // Construct rotation quaternions //
     ////////////////////////////////////
@@ -228,48 +226,21 @@ namespace avl
     
     inline float4x4 make_view_matrix_from_pose(const Pose & pose); // defined below
     
-    inline float4x4 make_projection_matrix_from_frustrum_rh_gl(float left, float right, float bottom, float top, float nearZ, float farZ)
+    inline float4x4 make_projection_matrix(float l, float r, float b, float t, float n, float f)
     {
-        return
-        {
-            {2 * nearZ / (right-left), 0, 0, 0},
-            {0,2 * nearZ / (top-bottom), 0 ,0},
-            {(right + left) / (right-left), (top + bottom) / (top - bottom), -(farZ + nearZ) / (farZ - nearZ), -1},
-            {0, 0, -2 * farZ * nearZ / (farZ - nearZ), 0}
-        };
+        return {{2*n/(r-l),0,0,0}, {0,2*n/(t-b),0,0}, {(r+l)/(r-l),(t+b)/(t-b),-(f+n)/(f-n),-1}, {0,0,-2*f*n/(f-n),0}};
     }
     
-    inline float4x4 make_perspective_matrix_rh_gl(float vFovInRadians, float aspectRatio, float nearZ, float farZ)
+    inline float4x4 make_perspective_matrix(float vFovInRadians, float aspectRatio, float nearZ, float farZ)
     {
         const float top = nearZ * std::tan(vFovInRadians/2.f), right = top * aspectRatio;
-        return make_projection_matrix_from_frustrum_rh_gl(-right, right, -top, top, nearZ, farZ);
+        return make_projection_matrix(-right, right, -top, top, nearZ, farZ);
     }
     
-    inline float4x4 make_orthographic_perspective_matrix(float l, float r, float b, float t, float n, float f)
+    inline float4x4 make_orthographic_matrix(float l, float r, float b, float t, float n, float f)
     {
         return {{2/(r-l),0,0,0}, {0,2/(t-b),0,0}, {0,0,-2/(f-n),0}, {-(r+l)/(r-l),-(t+b)/(t-b),-(f+n)/(f-n),1}};
     }
-    
-    inline float3x3 get_rotation_submatrix(const float4x4 & transform)
-    {
-        return {transform.x.xyz(), transform.y.xyz(), transform.z.xyz()};
-    }
-    
-    inline float3 transform_coord(const float4x4 & transform, const float3 & coord)
-    {
-        auto r = mul(transform, float4(coord,1)); return (r.xyz() / r.w);
-    }
-    
-    inline float3 transform_vector(const float4x4 & transform, const float3 & vector)
-    {
-        return mul(transform, float4(vector,0)).xyz();
-    }
-    
-    inline float3 transform_vector(const float4 & b, const float3 & a)
-    {
-        return qmul(b, float4(a, 1)).xyz();
-    }
-    
     
     //     | 1-2Nx^2   -2NxNy  -2NxNz  -2NxD |
     // m = |  -2NxNy  1-2Ny^2  -2NyNz  -2NyD |
@@ -302,6 +273,26 @@ namespace avl
         reflectionMat(3,3) = 1.0f;
         
         return reflectionMat;
+    }
+    
+    inline float3x3 get_rotation_submatrix(const float4x4 & transform)
+    {
+        return {transform.x.xyz(), transform.y.xyz(), transform.z.xyz()};
+    }
+    
+    inline float3 transform_coord(const float4x4 & transform, const float3 & coord)
+    {
+        auto r = mul(transform, float4(coord,1)); return (r.xyz() / r.w);
+    }
+    
+    inline float3 transform_vector(const float4x4 & transform, const float3 & vector)
+    {
+        return mul(transform, float4(vector,0)).xyz();
+    }
+    
+    inline float3 transform_vector(const float4 & b, const float3 & a)
+    {
+        return qmul(b, float4(a, 1)).xyz();
     }
     
     ///////////
