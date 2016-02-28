@@ -71,10 +71,8 @@ struct RotationGizmo : public IGizmo
     void on_drag(float2 cursor, bool snap) final
     {
         float3 newEdge = compute_edge(cursor);
-        if (snap)
-            object.pose.orientation  = qmul(make_snapped_rotation_quat_between_vectors(edge1, newEdge, to_radians(15)), initialOrientation);
-        else
-            object.pose.orientation  = qmul(make_rotation_quat_between_vectors(edge1, newEdge), initialOrientation);
+        if (snap) object.pose.orientation  = qmul(make_rotation_quat_between_vectors_snapped(edge1, newEdge, to_radians(15)), initialOrientation);
+        else object.pose.orientation  = qmul(make_rotation_quat_between_vectors(edge1, newEdge), initialOrientation);
     }
     
     void on_release() final {}

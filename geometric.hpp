@@ -120,7 +120,7 @@ namespace avl
         return make_rotation_quat_axis_angle(normalize(cross(a,b)), std::acos(dot(a,b)));
     }
 
-    inline float4 make_snapped_rotation_quat_between_vectors(const float3 & from, const float3 & to, const float angle)
+    inline float4 make_rotation_quat_between_vectors_snapped(const float3 & from, const float3 & to, const float angle)
     {
         auto a = normalize(from);
         auto b = normalize(to);
