@@ -21,7 +21,7 @@ struct Space
     
     std::vector<std::shared_ptr<Space>> children;
     
-    void add_child(const URect & placement, std::shared_ptr<Space> child)
+    void add_child(const URect & placement, std::shared_ptr<Space> child = std::make_shared<Space>())
     {
         child->placement = placement;
         children.push_back(child);
