@@ -9,117 +9,98 @@
 
 namespace avl
 {
-
-    //////////////////
-    // Bounding Box //
-    //////////////////
-
-    template<class T, int M> struct Box
+    
+    /////////////////////////////////
+    // Axis-Aligned Bounding Boxes //
+    /////////////////////////////////
+    
+    struct Bounds2D
     {
-        vec<T, M> position;
-        vec<T, M> dimensions;
-
-        Box() : position((T) 0), dimensions((T) 0)  { }
-        Box(vec<T, M> pt, vec<T, M> dims) : position(pt), dimensions(dims) { }
-
-        bool contains(const vec<T, M> & qt) const
+        float2 _min = {0, 0};
+        float2 _max = {0, 0};
+        
+        Bounds2D(float2 min, float2 max) : _min(min), _max(max) {}
+        Bounds2D(float x0, float y0, float x1, float y1) { _min.x = x0; _min.y = y0; _max.x = x1; _max.y = y1; }
+        
+        bool contains(const float px, const float py) const { return px >= _min.x && py >= _min.y && px < _max.x && py < _max.y; }
+        bool contains(const float2 & point) const { return contains(point.x, point.y); }
+        
+        float2 min() const { return _min; }
+        float2 max() const { return _max; }
+        
+        float2 ize() const { return max() - min(); }
+        float2 center() const { return {(_min.x+_max.y)/2, (_min.y+_max.y)/2}; }
+        
+        float width() const { return _max.x - _min.x; }
+        float height() const { return _max.y - _min.y; }
+    };
+    
+    struct Bounds3D
+    {
+        float3 _min = {0, 0, 0};
+        float3 _max = {0, 0, 0};
+        
+        float3 min() const { return _min; }
+        float3 max() const { return _max; }
+        
+        float3 size() const { return _max - _min; }
+        float3 center() const { return (_min + _max) * 0.5f; }
+        float volume() const { return (_max.x - _min.x) * (_max.y - _min.y) * (_max.z - _min.z); }
+        
+        float width() const { return _max.x - _min.x; }
+        float height() const { return _max.y - _min.y; }
+        float depth() const { return _max.z - _min.z; };
+        
+        bool contains(float3 point) const
         {
-            for (int m = 0; m < M; m++)
-            {
-                if (qt[m] < position[m] || qt[m] >= position[m] + dimensions[m])
-                {
-                    return false;
-                }
-            }
+            if (point.x < _min.x || point.x > _max.x) return false;
+            if (point.y < _min.y || point.y > _max.y) return false;
+            if (point.z < _min.z || point.z > _max.z) return false;
             return true;
         }
         
-        bool intersects(const Box<T, M> & other) const
+        bool intersects(const Bounds3D & other) const
         {
-            vec<T, M> mn = max(min(), other.min());
-    		vec<T, M> mx = min(max(), other.max());
-    		vec<T, M> dims = mx - mn;
-    		int a = 1;
-    		for (int m = 0; m < M; m++) 
-    		{
-    			dims[m] = max(dims[m], (T) 0);
-    			a *= dims[m];
-    		}
-    		return (a > 0);
+            if ((_min.x <= other._min.x) && (_max.x >= other._max.x) &&
+                (_min.y <= other._min.y) && (_max.y >= other._max.y) &&
+                (_min.z <= other._min.z) && (_max.z >= other._max.z)) return true;
+            return false;
         }
         
-        vec<T, M> min() const { return position; }
-        vec<T, M> max() const { return position + dimensions; }
-		
-        vec<T, M> center() const 
-        {
-            return position + (0.5f * (dimensions - position));
-        }
-        
-        float volume() const
-        {
-            return (dimensions.x - position.x) * (dimensions.y - position.y) * (dimensions.z - position.z);
-        }
-    };
-    
-    struct Bounds
-    {
-        float x0;
-        float y0;
-        float x1;
-        float y1;
-        
-        Bounds() : x0(0), y0(0), x1(0), y1(0) {};
-        Bounds(float x0, float y0, float x1, float y1) : x0(x0), y0(y0), x1(x1), y1(y1) {}
-        
-        bool inside(const float px, const float py) const { return px >= x0 && py >= y0 && px < x1 && py < y1; }
-        bool inside(const float2 & point) const { return inside(point.x, point.y); }
-        
-        float2 get_min() const { return {x0,y0}; }
-        float2 get_max() const { return {x1,y1}; }
-        
-        float2 get_size() const { return get_max() - get_min(); }
-        float2 get_center() const { return {get_center_x(), get_center_y()}; }
-        
-        float get_center_x() const { return (x0+x1)/2; }
-        float get_center_y() const { return (y0+y1)/2; }
-        
-        float width() const { return x1 - x0; }
-        float height() const { return y1 - y0; }
     };
     
     //template<class T> std::ostream & operator << (std::ostream & a, Bounds b) { return a << "[" << b.x0 << ", " << b.y0 << ", " << b.x1 << ", " << b.y1 << "]"; }
-
+    
     ////////////////////////////////////
     // Construct rotation quaternions //
     ////////////////////////////////////
-
+    
     inline float4 make_rotation_quat_axis_angle(const float3 & axis, float angle)
-    { 
-        return {axis * std::sin(angle/2), std::cos(angle/2)}; 
+    {
+        return {axis * std::sin(angle/2), std::cos(angle/2)};
     }
-
+    
     inline float4 make_rotation_quat_around_x(float angle)
-    { 
-        return make_rotation_quat_axis_angle({1,0,0}, angle); 
+    {
+        return make_rotation_quat_axis_angle({1,0,0}, angle);
     }
-
+    
     inline float4 make_rotation_quat_around_y(float angle)
-    { 
-        return make_rotation_quat_axis_angle({0,1,0}, angle); 
+    {
+        return make_rotation_quat_axis_angle({0,1,0}, angle);
     }
-
+    
     inline float4 make_rotation_quat_around_z(float angle)
-    { 
-        return make_rotation_quat_axis_angle({0,0,1}, angle); 
+    {
+        return make_rotation_quat_axis_angle({0,0,1}, angle);
     }
-
+    
     inline float4 make_rotation_quat_between_vectors(const float3 & from, const float3 & to)
     {
         auto a = normalize(from), b = normalize(to);
         return make_rotation_quat_axis_angle(normalize(cross(a,b)), std::acos(dot(a,b)));
     }
-
+    
     inline float4 make_rotation_quat_between_vectors_snapped(const float3 & from, const float3 & to, const float angle)
     {
         auto a = normalize(from);
@@ -131,32 +112,32 @@ namespace avl
     inline float4 make_rotation_quat_from_rotation_matrix(const float3x3 & m)
     {
         const float magw =  m(0,0) + m(1,1) + m(2,2);
-
+        
         const bool wvsz = magw  > m(2,2);
         const float magzw  = wvsz ? magw : m(2,2);
         const float3 prezw  = wvsz ? float3(1,1,1) : float3(-1,-1,1) ;
         const float4 postzw = wvsz ? float4(0,0,0,1): float4(0,0,1,0);
-
+        
         const bool xvsy = m(0,0) > m(1,1);
         const float magxy = xvsy ? m(0,0) : m(1,1);
         const float3 prexy = xvsy ? float3(1,-1,-1) : float3(-1,1,-1) ;
         const float4 postxy = xvsy ? float4(1,0,0,0) : float4(0,1,0,0);
-
+        
         const bool zwvsxy = magzw > magxy;
         const float3 pre  = zwvsxy ? prezw  : prexy ;
         const float4 post = zwvsxy ? postzw : postxy;
-
+        
         const float t = pre.x * m(0,0) + pre.y * m(1,1) + pre.z * m(2,2) + 1;
         const float s = 1/sqrt(t) / 2;
         const float4 qp = float4(pre.y * m(2,1) - pre.z * m(1,2), pre.z * m(0,2) - pre.x * m(2,0), pre.x * m(1,0) - pre.y * m(0,1), t) * s;
         return qmul(qp, post);
     }
-
+    
     inline float4 make_rotation_quat_from_pose_matrix(const float4x4 & m)
-    { 
-        return make_rotation_quat_from_rotation_matrix({m.x.xyz(),m.y.xyz(),m.z.xyz()}); 
+    {
+        return make_rotation_quat_from_rotation_matrix({m.x.xyz(),m.y.xyz(),m.z.xyz()});
     }
-
+    
     inline float4 make_axis_angle_rotation_quat(const float4 & q)
     {
         float4 result;
@@ -205,48 +186,48 @@ namespace avl
         return e;
     }
     
-
+    
     //////////////////////////////////////////////
     // Construct affine transformation matrices //
     //////////////////////////////////////////////
-
+    
     struct Pose;
-
-    inline float4x4 make_scaling_matrix(float scaling) 
-    { 
-        return {{scaling,0,0,0}, {0,scaling,0,0}, {0,0,scaling,0}, {0,0,0,1}}; 
+    
+    inline float4x4 make_scaling_matrix(float scaling)
+    {
+        return {{scaling,0,0,0}, {0,scaling,0,0}, {0,0,scaling,0}, {0,0,0,1}};
     }
-
-    inline float4x4 make_scaling_matrix(const float3 & scaling) 
-    { 
-        return {{scaling.x,0,0,0}, {0,scaling.y,0,0}, {0,0,scaling.z,0}, {0,0,0,1}}; 
+    
+    inline float4x4 make_scaling_matrix(const float3 & scaling)
+    {
+        return {{scaling.x,0,0,0}, {0,scaling.y,0,0}, {0,0,scaling.z,0}, {0,0,0,1}};
     }
-
-    inline float4x4 make_rotation_matrix(const float4 & rotation) 
-    { 
-        return {{qxdir(rotation),0},{qydir(rotation),0},{qzdir(rotation),0},{0,0,0,1}}; 
+    
+    inline float4x4 make_rotation_matrix(const float4 & rotation)
+    {
+        return {{qxdir(rotation),0},{qydir(rotation),0},{qzdir(rotation),0},{0,0,0,1}};
     }
-
-    inline float4x4 make_rotation_matrix(const float3 & axis, float angle) 
-    { 
+    
+    inline float4x4 make_rotation_matrix(const float3 & axis, float angle)
+    {
         return make_rotation_matrix(make_rotation_quat_axis_angle(axis, angle));
     }
-
-    inline float4x4 make_translation_matrix(const float3 & translation) 
-    { 
-        return {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {translation,1}}; 
+    
+    inline float4x4 make_translation_matrix(const float3 & translation)
+    {
+        return {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {translation,1}};
     }
-
-    inline float4x4 make_rigid_transformation_matrix(const float4 & rotation, const float3 & translation) 
-    { 
-        return {{qxdir(rotation),0},{qydir(rotation),0},{qzdir(rotation),0},{translation,1}}; 
+    
+    inline float4x4 make_rigid_transformation_matrix(const float4 & rotation, const float3 & translation)
+    {
+        return {{qxdir(rotation),0},{qydir(rotation),0},{qzdir(rotation),0},{translation,1}};
     }
-
+    
     inline float4x4 make_view_matrix_from_pose(const Pose & pose); // defined below
-
+    
     inline float4x4 make_projection_matrix_from_frustrum_rh_gl(float left, float right, float bottom, float top, float nearZ, float farZ)
     {
-        return 
+        return
         {
             {2 * nearZ / (right-left), 0, 0, 0},
             {0,2 * nearZ / (top-bottom), 0 ,0},
@@ -254,31 +235,31 @@ namespace avl
             {0, 0, -2 * farZ * nearZ / (farZ - nearZ), 0}
         };
     }
-
+    
     inline float4x4 make_perspective_matrix_rh_gl(float vFovInRadians, float aspectRatio, float nearZ, float farZ)
     {
         const float top = nearZ * std::tan(vFovInRadians/2.f), right = top * aspectRatio;
         return make_projection_matrix_from_frustrum_rh_gl(-right, right, -top, top, nearZ, farZ);
     }
-
+    
     inline float4x4 make_orthographic_perspective_matrix(float l, float r, float b, float t, float n, float f)
     {
         return {{2/(r-l),0,0,0}, {0,2/(t-b),0,0}, {0,0,-2/(f-n),0}, {-(r+l)/(r-l),-(t+b)/(t-b),-(f+n)/(f-n),1}};
     }
-
-    inline float3x3 get_rotation_submatrix(const float4x4 & transform) 
-    { 
-        return {transform.x.xyz(), transform.y.xyz(), transform.z.xyz()}; 
+    
+    inline float3x3 get_rotation_submatrix(const float4x4 & transform)
+    {
+        return {transform.x.xyz(), transform.y.xyz(), transform.z.xyz()};
     }
-
-    inline float3 transform_coord(const float4x4 & transform, const float3 & coord) 
-    { 
+    
+    inline float3 transform_coord(const float4x4 & transform, const float3 & coord)
+    {
         auto r = mul(transform, float4(coord,1)); return (r.xyz() / r.w);
     }
-
-    inline float3 transform_vector(const float4x4 & transform, const float3 & vector) 
-    { 
-        return mul(transform, float4(vector,0)).xyz(); 
+    
+    inline float3 transform_vector(const float4x4 & transform, const float3 & vector)
+    {
+        return mul(transform, float4(vector,0)).xyz();
     }
     
     inline float3 transform_vector(const float4 & b, const float3 & a)
@@ -319,39 +300,39 @@ namespace avl
         
         return reflectionMat;
     }
-
+    
     ///////////
     // Poses //
     ///////////
-
+    
     struct Pose
     {
         float4      orientation;                                    // Orientation of an object, expressed as a rotation quaternion from the base orientation
         float3      position;                                       // Position of an object, expressed as a translation vector from the base position
-
-                    Pose()                                          : Pose({0,0,0,1}, {0,0,0}) {}
-                    Pose(const float4 & orientation,
-                         const float3 & position)                   : orientation(orientation), position(position) {}
+        
+        Pose()                                          : Pose({0,0,0,1}, {0,0,0}) {}
+        Pose(const float4 & orientation,
+             const float3 & position)                   : orientation(orientation), position(position) {}
         explicit    Pose(const float4 & orientation)                : Pose(orientation, {0,0,0}) {}
         explicit    Pose(const float3 & position)                   : Pose({0,0,0,1}, position) {}
-
+        
         float4x4    matrix() const                                  { return make_rigid_transformation_matrix(orientation, position); }
         float3      xdir() const                                    { return qxdir(orientation); } // Equivalent to transform_vector({1,0,0})
         float3      ydir() const                                    { return qydir(orientation); } // Equivalent to transform_vector({0,1,0})
         float3      zdir() const                                    { return qzdir(orientation); } // Equivalent to transform_vector({0,0,1})
         Pose        inverse() const                                 { auto invOri = qinv(orientation); return {invOri, qrot(invOri, -position)}; }
-
+        
         float3      transform_vector(const float3 & vec) const      { return qrot(orientation, vec); }
         float3      transform_coord(const float3 & coord) const     { return position + transform_vector(coord); }
         float3      detransform_coord(const float3 & coord) const   { return detransform_vector(coord - position); }    // Equivalent to inverse().transform_coord(coord), but faster
         float3      detransform_vector(const float3 & vec) const    { return qrot(qinv(orientation), vec); }            // Equivalent to inverse().transform_vector(vec), but faster
-
+        
         Pose        operator * (const Pose & pose) const            { return {qmul(orientation,pose.orientation), transform_coord(pose.position)}; }
     };
-
+    
     inline float4x4 make_view_matrix_from_pose(const Pose & pose)
-    { 
-        return pose.inverse().matrix(); 
+    {
+        return pose.inverse().matrix();
     }
     
     inline void look_at_pose(float3 eyePoint, float3 target, Pose & p)
@@ -467,13 +448,13 @@ namespace avl
     struct URect
     {
         UCoord x0, y0, x1, y1;
-        Bounds resolve(const Bounds & r) const { return { x0.resolve(r.x0, r.x1), y0.resolve(r.y0, r.y1), x1.resolve(r.x0, r.x1), y1.resolve(r.y0, r.y1) }; }
+        Bounds2D resolve(const Bounds2D & r) const { return { x0.resolve(r.x0, r.x1), y0.resolve(r.y0, r.y1), x1.resolve(r.x0, r.x1), y1.resolve(r.y0, r.y1) }; }
         bool is_fixed_width() const { return x0.a == x1.a; }
         bool is_fixed_height() const { return y0.a == y1.a; }
         float fixed_width() const { return x1.b - x0.b; }
         float fixed_height() const { return y1.b - y0.b; }
     };
-
+    
 }
 
 #endif // end geometric_h

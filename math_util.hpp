@@ -90,6 +90,18 @@ namespace avl
         return float3(cos(phi) * sin(theta), sin(phi) * sin(theta), cos(theta));
     }
     
+    template <typename T>
+    bool quadratic(T a, T b, T c, T & r1, T & r2)
+    {
+        T q = b * b - 4 * a * c;
+        if (q < 0) return false;
+        T sq = sqrt(q);
+        T d = 1 / (2 * a);
+        r1 = (-b + sq) * d;
+        r2 = (-b - sq) * d;
+        return true;
+    }
+
     inline float damped_spring(float target, float current, float & velocity, float delta, const float spring_constant)
     {
         float currentToTarget = target - current;
