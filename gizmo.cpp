@@ -171,11 +171,10 @@ void GizmoEditor::handle_input(const InputEvent & event, std::vector<Renderable>
                     // The handle is composed as a piece of geometry on the X axis:
                     auto p = selectedObject->pose * Pose(make_rotation_quat_between_vectors({1,0,0}, axis), {0,0,0});
                     auto localRay = p.inverse() * worldRay;
-                    float tValue = 0.0f;
                     auto hit = get_gizmo_mesh().check_hit(localRay);
                     if (std::get<0>(hit) && (std::get<1>(hit) <= bestT))
                     {
-                        bestT = tValue;
+                        bestT = std::get<1>(hit);
                         hitAxis = axis;
                     }
                 }
