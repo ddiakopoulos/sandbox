@@ -287,14 +287,12 @@ namespace avl
     }
     
     
-    //////////////////////////////////////////
     //     | 1-2Nx^2   -2NxNy  -2NxNz  -2NxD |
     // m = |  -2NxNy  1-2Ny^2  -2NyNz  -2NyD |
-    //     |  -2NxNz  -2NyNz  1-2Nz^2  -2NzD |
-    //     |    0       0       0       1    |
-    //
-    // Where (Nx,Ny,Nz,D) are the coefficients of plane equation (xNx + yNy + zNz + D = 0) &
-    // (Nx,Ny,Nz) is the normal vector of given plane.
+    //     |  -2NxNz   -2NyNz 1-2Nz^2  -2NzD |
+    //     |    0        0       0       1   |
+    // Where (Nx,Ny,Nz,D) are the coefficients of plane equation (xNx + yNy + zNz + D = 0) and
+    // (Nx, Ny, Nz) is the normal vector of given plane.
     inline float4x4 make_reflection_matrix(const float4 plane)
     {
         float4x4 reflectionMat = Zero4x4;
@@ -379,7 +377,7 @@ namespace avl
     
     class Ray
     {
-        bool signX, signY, signZ;
+        int3 signs;
         float3 invDirection;
     public:
         
@@ -396,17 +394,15 @@ namespace avl
         {
             direction = aDirection;
             invDirection = float3(1.0f / direction.x, 1.0f / direction.y, 1.0f / direction.z);
-            signX = (direction.x < 0.0f) ? 1 : 0;
-            signY = (direction.y < 0.0f) ? 1 : 0;
-            signZ = (direction.z < 0.0f) ? 1 : 0;
+            signs.x = (direction.x < 0.0f) ? 1 : 0;
+            signs.y = (direction.y < 0.0f) ? 1 : 0;
+            signs.z = (direction.z < 0.0f) ? 1 : 0;
         }
         
         const float3 & get_direction() const { return direction; }
         const float3 & get_inv_direction() const { return invDirection; }
         
-        char getSignX() const { return signX; }
-        char getSignY() const { return signY; }
-        char getSignZ() const { return signZ; }
+        int3 get_signs() { return signs; }
         
         void transform(const float4x4 & matrix)
         {
