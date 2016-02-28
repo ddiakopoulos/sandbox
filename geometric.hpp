@@ -82,6 +82,27 @@ namespace avl
         
     };
     
+    
+    /////////////////////////////////
+    // Universal Coordinate System //
+    /////////////////////////////////
+    
+    struct UCoord
+    {
+        float a, b;
+        float resolve(float min, float max) const { return min + a * (max - min) + b; }
+    };
+    
+    struct URect
+    {
+        UCoord x0, y0, x1, y1;
+        Bounds2D resolve(const Bounds2D & r) const { return { x0.resolve(r.min().x, r.max().x), y0.resolve(r.min().y, r.max().y), x1.resolve(r.min().x, r.max().x), y1.resolve(r.min().y, r.max().y) }; }
+        bool is_fixed_width() const { return x0.a == x1.a; }
+        bool is_fixed_height() const { return y0.a == y1.a; }
+        float fixed_width() const { return x1.b - x0.b; }
+        float fixed_height() const { return y1.b - y0.b; }
+    };
+    
     ////////////////////////////////////
     // Construct rotation quaternions //
     ////////////////////////////////////
@@ -151,22 +172,10 @@ namespace avl
     
     inline float4 make_axis_angle_rotation_quat(const float4 & q)
     {
-        float4 result;
-        result.w = 2.0f * (float) acosf(std::max(-1.0f, std::min(q.w, 1.0f))); // angle
+        float w = 2.0f * (float) acosf(std::max(-1.0f, std::min(q.w, 1.0f))); // angle
         float den = (float) sqrt(std::abs(1.0 - q.w * q.w));
-        if (den > 1E-5f)
-        {
-            result.x = q.x / den;
-            result.y = q.y / den;
-            result.z = q.z / den;
-        }
-        else
-        {
-            result.x = 1.0f;
-            result.y = 0.0f;
-            result.z = 0.0f;
-        }
-        return result;
+        if (den > 1E-5f) return {q.x / den, q.y / den, q.z / den, w};
+        return {1.0f, 0.f, 0.f, w};
     }
     
     inline float4 make_quat_from_euler(float roll, float pitch, float yaw)
@@ -196,6 +205,19 @@ namespace avl
         e.z = atan2(2*(q0*q3+q1*q2), 1-2*(q2*q2+q3*q3));
         return e;
     }
+
+    // Decompose rotation of q around the axis vt where q = swing * twist
+    // Twist is a rotation about vt, and swing is a rotation about a vector perpindicular to vt
+    // http://www.alinenormoyle.com/weblog/?p=726.
+    // A singularity exists when swing is close to 180 degrees.
+    inline void decompose_swing_twist(const float4 q, const float3 vt, float4 & swing, float4 & twist)
+    {
+        float3 p = vt * dot(vt, twist.xyz());
+        twist = normalize(float4(p.x, p.y, p.z, q.w));
+        if (!twist.x && !twist.y && !twist.z && !twist.w) twist = float4(0, 0, 0, 1); // singularity
+        swing = q * qconj(twist);
+    }
+    
     
     //////////////////////////////////////////////
     // Construct affine transformation matrices //
@@ -420,42 +442,6 @@ namespace avl
         auto invProj = inv(projectionMatrix);
         return {{0,0,0}, normalize(transform_coord(invProj, {vx, vy, +1}) - transform_coord(invProj, {vx, vy, -1}))};
     }
-    
-    /////////////
-    // Helpers //
-    /////////////
-    
-    // Decompose rotation of q around the axis vt where q = swing * twist
-    // Twist is a rotation about the vt, and swing is a rotation around a vector perpindicular to vt
-    // http://www.alinenormoyle.com/weblog/?p=726.
-    // A singularity exists when swing is close to 180 degrees.
-    inline void decompose_swing_twist(const float4 q, const float3 vt, float4 & swing, float4 & twist)
-    {
-        float3 p = vt * dot(vt, twist.xyz());
-        twist = normalize(float4(p.x, p.y, p.z, q.w));
-        if (!twist.x && !twist.y && !twist.z && !twist.w) twist = float4(0, 0, 0, 1); // singularity
-        swing = q * qconj(twist);
-    }
-    
-    /////////////////////////////////
-    // Universal Coordinate System //
-    /////////////////////////////////
-    
-    struct UCoord
-    {
-        float a, b;
-        float resolve(float min, float max) const { return min + a * (max - min) + b; }
-    };
-    
-    struct URect
-    {
-        UCoord x0, y0, x1, y1;
-        Bounds2D resolve(const Bounds2D & r) const { return { x0.resolve(r.min().x, r.max().x), y0.resolve(r.min().y, r.max().y), x1.resolve(r.min().x, r.max().x), y1.resolve(r.min().y, r.max().y) }; }
-        bool is_fixed_width() const { return x0.a == x1.a; }
-        bool is_fixed_height() const { return y0.a == y1.a; }
-        float fixed_width() const { return x1.b - x0.b; }
-        float fixed_height() const { return y1.b - y0.b; }
-    };
     
 }
 
