@@ -442,45 +442,16 @@ namespace avl
     // Helpers //
     /////////////
     
-    inline void find_orthonormals(const float3 normal, float3 & orthonormal1, float3 & orthonormal2)
+    // Decompose rotation of q around the axis vt where q = swing * twist
+    // Twist is a rotation about the vt, and swing is a rotation around a vector perpindicular to vt
+    // http://www.alinenormoyle.com/weblog/?p=726.
+    // A singularity exists when swing is close to 180 degrees.
+    void decompose_swing_twist(const float4 q, const float3 vt, float4 & swing, float4 & twist)
     {
-        const float4x4 OrthoX = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
-        const float4x4 OrthoY = make_rotation_matrix({0, 1, 0}, ANVIL_PI / 2);;
-        
-        float3 w = transform_vector(OrthoX, normal);
-        float d = dot(normal, w);
-        if (std::abs(d) > 0.6f)
-        {
-            w = transform_vector(OrthoY, normal);
-        }
-        
-        w = normalize(w);
-        
-        orthonormal1 = cross(normal, w);
-        orthonormal1 = normalize(orthonormal1);
-        orthonormal2 = cross(normal, orthonormal1);
-        orthonormal2 = normalize(orthonormal2);
-    }
-    
-    inline float find_quaternion_twist(float4 q, float3 axis)
-    {
-        normalize(axis);
-        
-        //get the plane the axis is a normal of
-        float3 orthonormal1, orthonormal2;
-        
-        find_orthonormals(axis, orthonormal1, orthonormal2);
-        
-        float3 transformed = transform_vector(q, orthonormal1); // orthonormal1 * q;
-        
-        //project transformed vector onto plane
-        float3 flattened = transformed - (dot(transformed, axis) * axis);
-        flattened = normalize(flattened);
-        
-        //get angle between original vector and projected transform to get angle around normal
-        float a = (float) acos(dot(orthonormal1, flattened));
-        
-        return a;
+        float3 p = vt * dot(vt, twist.xyz());
+        twist = normalize(float4(p.x, p.y, p.z, q.w));
+        if (!twist.x && !twist.y && !twist.z && !twist.w) twist = float4(0, 0, 0, 1); // singularity
+        swing = q * qconj(twist);
     }
     
     /////////////////////////////////
