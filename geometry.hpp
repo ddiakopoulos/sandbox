@@ -544,9 +544,9 @@ namespace avl
         float3 closest_point(const Ray & ray) const
         {
             float t;
-            float3 diff = ray.get_origin() - center;
-            float a = dot(ray.get_direction(), ray.get_direction());
-            float b = 2.0f * dot(diff, ray.get_direction());
+            float3 diff = ray.origin - center;
+            float a = dot(ray.direction, ray.direction);
+            float b = 2.0f * dot(diff, ray.direction);
             float c = dot(diff, diff) - radius * radius;
             float disc = b * b - 4.0f * a * c;
             
@@ -563,7 +563,7 @@ namespace avl
             }
             
             // doesn't intersect; closest point on line
-            t = dot( -diff, normalize(ray.get_direction()) );
+            t = dot( -diff, normalize(ray.direction) );
             float3 onRay = ray.calculate_position(t);
             return center + normalize( onRay - center ) * radius;
         }
@@ -789,9 +789,9 @@ namespace avl
     inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * intersection = nullptr)
     {
         float t;
-        float3 diff = ray.get_origin() - sphere.center;
-        float a = dot(ray.get_direction(), ray.get_direction());
-        float b = 2.0f * dot(diff, ray.get_direction());
+        float3 diff = ray.origin - sphere.center;
+        float a = dot(ray.direction, ray.direction);
+        float b = 2.0f * dot(diff, ray.direction);
         float c = dot(diff, diff) - sphere.radius * sphere.radius;
         float disc = b * b - 4.0f * a * c;
         
