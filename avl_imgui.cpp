@@ -171,9 +171,10 @@ namespace gui
         
         if (e.type == InputEvent::Type::MOUSE)
         {
-            if (e.action == GLFW_PRESS && e.value[0] >= 0 && e.value[0]  < 3)
+            if (e.action == GLFW_PRESS)
             {
-                state.MousePressed[e.value[0]] = true;
+                int button = clamp<int>(e.value[0], 0, 3);
+                state.MousePressed[button] = true;
             }
         }
         

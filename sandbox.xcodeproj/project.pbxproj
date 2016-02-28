@@ -69,7 +69,6 @@
 		0822AF351BD4382C00A894F0 /* ellipse_math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ellipse_math.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF361BD4ADBF00A894F0 /* GL_API.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GL_API.cpp; sourceTree = SOURCE_ROOT; };
 		0822AF381BD4B52100A894F0 /* renderable_grid.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = renderable_grid.hpp; sourceTree = SOURCE_ROOT; };
-		0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = hosek_data_rgb.inl; path = procedural_sky/hosek_data_rgb.inl; sourceTree = SOURCE_ROOT; };
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
 		08289F891BC609B80054AF3B /* GL_API.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GL_API.hpp; sourceTree = SOURCE_ROOT; };
 		082A2FF61C711A2300391672 /* camera.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = camera.hpp; sourceTree = SOURCE_ROOT; };
@@ -213,7 +212,6 @@
 				08CFD2EA1BDDF79900895E31 /* shaders */,
 				088B47BE1C42D5730007BB59 /* minivision */,
 				08CFD2DB1BDD666000895E31 /* nanovg */,
-				0822AF391BDC772D00A894F0 /* procedural_sky */,
 				08289F821BC6019B0054AF3B /* gl */,
 				085081981BB5B6F10084A1D6 /* app */,
 				0849FD991BFADE05000F148E /* gizmo */,
@@ -225,15 +223,6 @@
 			);
 			name = source;
 			path = gfx_dev;
-			sourceTree = "<group>";
-		};
-		0822AF391BDC772D00A894F0 /* procedural_sky */ = {
-			isa = PBXGroup;
-			children = (
-				08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */,
-				0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */,
-			);
-			name = procedural_sky;
 			sourceTree = "<group>";
 		};
 		08289F7D1BC5F7E40054AF3B /* tinyply */ = {
@@ -388,9 +377,10 @@
 				08F653081C743AE10076DF49 /* avl_imgui.hpp */,
 				08F653091C743AE10076DF49 /* avl_imgui.cpp */,
 				0849FD9D1BFADE59000F148E /* scene.hpp */,
-				08C475911C1CE8F30031E87E /* meshline.hpp */,
+				08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */,
 				0822AF381BD4B52100A894F0 /* renderable_grid.hpp */,
 				088B47BF1C42DDC10007BB59 /* texture_view.hpp */,
+				08C475911C1CE8F30031E87E /* meshline.hpp */,
 			);
 			name = rendering;
 			sourceTree = "<group>";

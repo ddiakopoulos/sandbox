@@ -388,6 +388,8 @@ namespace avl
         Ray() {}
         Ray(const float3 & ori, const float3 & dir) : origin(ori), direction(dir) {}
         
+        float3 inverse_direction() const { return {1.f / direction.x, 1.f / direction.y, 1.f / direction.z }; }
+        
         void transform(const float4x4 & matrix)
         {
             origin = transform_vector(matrix, origin);
@@ -404,6 +406,11 @@ namespace avl
         
         float3 calculate_position(float t) const { return origin + direction * t; }
     };
+    
+    inline std::ostream & operator << (std::ostream & o, const Ray & r)
+    {
+        return o << "{" << r.origin << " => " << r.direction << "}";
+    }
     
     inline Ray operator * (const Pose & pose, const Ray & ray)
     {

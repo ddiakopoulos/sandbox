@@ -83,19 +83,19 @@ public:
         next.clear();
         indices.clear();
         
-        for (size_t i = 0; i < l; i += 2)
+        for (uint32_t i = 0; i < l; i += 2)
         {
             side.push_back(1.f);
             side.push_back(-1.f);
         }
         
-        for (size_t i = 0; i < l; i += 2)
+        for (uint32_t i = 0; i < l; i += 2)
         {
             width.push_back(1.f);
             width.push_back(1.f);
         }
         
-        for (size_t i = 0; i < l; i += 2)
+        for (uint32_t i = 0; i < l; i += 2)
         {
             uvs.push_back(float2(float(i) / (l - 1), 0.f));
             uvs.push_back(float2(float(i) / (l - 1), 1.f));
@@ -110,14 +110,14 @@ public:
             previous.push_back(v);
         }
         
-        for (size_t i = 0; i < l - 1; i += 2)
+        for (uint32_t i = 0; i < l - 1; i += 2)
         {
             v = vertices[i];
             previous.push_back(v);
             previous.push_back(v);
         }
         
-        for (size_t i = 2; i < l; i += 2)
+        for (uint32_t i = 2; i < l; i += 2)
         {
             v = vertices[i];
             next.push_back(v);
@@ -131,7 +131,7 @@ public:
             next.push_back(v);
         }
         
-        for (size_t i = 0; i < l - 1; i ++)
+        for (uint32_t i = 0; i < l - 1; i ++)
         {
             uint32_t n = i * 2;
             indices.push_back(uint3(n + 0, n + 1, n + 2));

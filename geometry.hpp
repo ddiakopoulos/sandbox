@@ -416,7 +416,6 @@ namespace avl
         for (unsigned int i = 0; i < shapes.size(); i++)
         {
             Geometry g;
-            tinyobj::shape_t *shape = &shapes[i];
             tinyobj::mesh_t *mesh = &shapes[i].mesh;
             
             for (size_t i = 0; i < mesh->indices.size(); i += 3)
