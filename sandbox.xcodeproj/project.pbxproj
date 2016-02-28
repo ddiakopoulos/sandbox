@@ -10,7 +10,6 @@
 		080980311C4DA9120009122A /* libglfw3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 080980301C4DA9120009122A /* libglfw3.dylib */; };
 		0812049D1BADDF6800C7C0F4 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0812049C1BADDF6800C7C0F4 /* main.cpp */; };
 		0822AF371BD4ADBF00A894F0 /* GL_API.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF361BD4ADBF00A894F0 /* GL_API.cpp */; };
-		0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF3C1BDC773C00A894F0 /* hosek.cpp */; };
 		0849FD821BE7C667000F148E /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD801BE7C667000F148E /* json.cpp */; };
 		0849FD851BE7C66E000F148E /* tinyply.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD831BE7C66E000F148E /* tinyply.cpp */; };
 		0849FD9C1BFADE27000F148E /* gizmo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD9A1BFADE27000F148E /* gizmo.cpp */; };
@@ -28,7 +27,6 @@
 		08C4758D1C1C844F0031E87E /* efsw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C4758C1C1C844F0031E87E /* efsw.cpp */; };
 		08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2DC1BDD667000895E31 /* nvg.cpp */; };
 		08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E11BDD669600895E31 /* nanovg.cpp */; };
-		08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2E51BDD79F000895E31 /* preetham.cpp */; };
 		08F653061C74376E0076DF49 /* imgui_draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08F652FF1C74376E0076DF49 /* imgui_draw.cpp */; };
 		08F653071C74376E0076DF49 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08F653011C74376E0076DF49 /* imgui.cpp */; };
 		08F6530A1C743AE10076DF49 /* avl_imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08F653091C743AE10076DF49 /* avl_imgui.cpp */; };
@@ -72,8 +70,6 @@
 		0822AF361BD4ADBF00A894F0 /* GL_API.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GL_API.cpp; sourceTree = SOURCE_ROOT; };
 		0822AF381BD4B52100A894F0 /* renderable_grid.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = renderable_grid.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = hosek_data_rgb.inl; path = procedural_sky/hosek_data_rgb.inl; sourceTree = SOURCE_ROOT; };
-		0822AF3C1BDC773C00A894F0 /* hosek.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hosek.cpp; path = procedural_sky/hosek.cpp; sourceTree = SOURCE_ROOT; };
-		0822AF3D1BDC773C00A894F0 /* hosek.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = hosek.hpp; path = procedural_sky/hosek.hpp; sourceTree = SOURCE_ROOT; };
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
 		08289F891BC609B80054AF3B /* GL_API.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GL_API.hpp; sourceTree = SOURCE_ROOT; };
 		082A2FF61C711A2300391672 /* camera.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = camera.hpp; sourceTree = SOURCE_ROOT; };
@@ -155,8 +151,6 @@
 		08CFD2E01BDD669600895E31 /* nanovg_gl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg_gl.h; path = third_party/nanovg_gl.h; sourceTree = SOURCE_ROOT; };
 		08CFD2E11BDD669600895E31 /* nanovg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = nanovg.cpp; path = third_party/nanovg.cpp; sourceTree = SOURCE_ROOT; };
 		08CFD2E21BDD669600895E31 /* nanovg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nanovg.h; path = third_party/nanovg.h; sourceTree = SOURCE_ROOT; };
-		08CFD2E51BDD79F000895E31 /* preetham.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = preetham.cpp; path = procedural_sky/preetham.cpp; sourceTree = SOURCE_ROOT; };
-		08CFD2E61BDD79F000895E31 /* preetham.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = preetham.hpp; path = procedural_sky/preetham.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = procedural_sky.hpp; sourceTree = SOURCE_ROOT; };
 		08F652F41C71C4310076DF49 /* decal_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = decal_app.hpp; path = examples/decal_app.hpp; sourceTree = SOURCE_ROOT; };
 		08F652F51C7254D80076DF49 /* debug_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = debug_frag.glsl; path = assets/shaders/debug_frag.glsl; sourceTree = SOURCE_ROOT; };
@@ -237,10 +231,6 @@
 			isa = PBXGroup;
 			children = (
 				08CFD2E91BDDA60F00895E31 /* procedural_sky.hpp */,
-				08CFD2E61BDD79F000895E31 /* preetham.hpp */,
-				08CFD2E51BDD79F000895E31 /* preetham.cpp */,
-				0822AF3D1BDC773C00A894F0 /* hosek.hpp */,
-				0822AF3C1BDC773C00A894F0 /* hosek.cpp */,
 				0822AF3B1BDC773C00A894F0 /* hosek_data_rgb.inl */,
 			);
 			name = procedural_sky;
@@ -592,9 +582,7 @@
 				08F653061C74376E0076DF49 /* imgui_draw.cpp in Sources */,
 				089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */,
 				089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */,
-				0822AF401BDC773C00A894F0 /* hosek.cpp in Sources */,
 				08C475821C0AE9C50031E87E /* jo_gif.cpp in Sources */,
-				08CFD2E71BDD79F000895E31 /* preetham.cpp in Sources */,
 				0822AF371BD4ADBF00A894F0 /* GL_API.cpp in Sources */,
 				0849FDA11BFAFCC3000F148E /* tiny_obj_loader.cc in Sources */,
 				08CFD2E31BDD669600895E31 /* nanovg.cpp in Sources */,
