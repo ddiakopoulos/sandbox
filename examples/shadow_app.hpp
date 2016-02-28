@@ -35,7 +35,6 @@ struct ExperimentalApp : public GLFWApp
     
     void on_draw() override
     {
-        
         auto lightDir = skydome.get_light_direction();
         auto sunDir = skydome.get_sun_direction();
         auto sunPosition = skydome.get_sun_position();
