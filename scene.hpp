@@ -10,6 +10,13 @@
 
 namespace avl
 {
+    struct RaycastResult
+    {
+        bool hit = false;
+        float distance = std::numeric_limits<float>::max();
+        float3 normal = {0, 0, 0};
+        RaycastResult(bool h, float t, float3 n) : hit(h), distance(t), normal(n) {}
+    };
     
     struct Object
     {
@@ -38,7 +45,7 @@ namespace avl
         
         void draw() const { mesh.draw_elements(); };
         
-        std::tuple<bool, float, float3> check_hit(const Ray & worldRay) const
+        RaycastResult check_hit(const Ray & worldRay) const
         {
             auto localRay = pose.inverse() * worldRay;
             localRay.origin /= scale;
@@ -46,7 +53,7 @@ namespace avl
             float outT = 0.0f;
             float3 outNormal = {0, 0, 0};
             bool hit = intersect_ray_mesh(localRay, geom, &outT, &outNormal);
-			return std::make_tuple(hit, outT, outNormal);
+            return {hit, outT, outNormal};
         }
     };
 

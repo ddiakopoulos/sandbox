@@ -172,9 +172,9 @@ void GizmoEditor::handle_input(const InputEvent & event, std::vector<Renderable>
                     auto p = selectedObject->pose * Pose(make_rotation_quat_between_vectors({1,0,0}, axis), {0,0,0});
                     auto localRay = p.inverse() * worldRay;
                     auto hit = get_gizmo_mesh().check_hit(localRay);
-                    if (std::get<0>(hit) && (std::get<1>(hit) <= bestT))
+                    if (hit.hit && hit.distance <= bestT)
                     {
-                        bestT = std::get<1>(hit);
+                        bestT = hit.distance;
                         hitAxis = axis;
                     }
                 }
@@ -198,7 +198,7 @@ void GizmoEditor::handle_input(const InputEvent & event, std::vector<Renderable>
                     // Todo - correct z order
                     auto worldRay = sceneCamera.get_world_ray(event.cursor, float2(event.windowSize.x, event.windowSize.y));
                     auto hit = model.check_hit(worldRay);
-                    if (std::get<0>(hit))
+                    if (hit.hit)
                     {
                         selectedObject = &model;
                         break;
