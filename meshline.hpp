@@ -11,7 +11,7 @@
 namespace avl
 {
 
-class MeshLine
+class MeshlineRenderer
 {
     GlShader shader;
     GlMesh mesh;
@@ -52,22 +52,20 @@ class MeshLine
         }
         
         m.set_vertex_data(buffer.size() * sizeof(float), buffer.data(), GL_STATIC_DRAW);
-        m.set_attribute(0, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 0); // Positions
-        m.set_attribute(1, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 3); // Previous
-        m.set_attribute(2, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 6); // Next
-        m.set_attribute(3, 1, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 9); // Side
+        m.set_attribute(0, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 0);  // Positions
+        m.set_attribute(1, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 3);  // Previous
+        m.set_attribute(2, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 6);  // Next
+        m.set_attribute(3, 1, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 9);  // Side
         m.set_attribute(4, 1, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 10); // Width
         m.set_attribute(5, 2, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + 11); // Uvs
-        
-        if (indices.size() > 0)
-            m.set_elements(indices, GL_STATIC_DRAW);
+        if (indices.size() > 0) m.set_elements(indices, GL_STATIC_DRAW);
         
         return m;
     }
 
 public:
 
-    MeshLine(GlCamera & camera, const float2 screenDims, const float linewidth, float3 color) : camera(camera), screenDims(screenDims), linewidth(linewidth), color(color)
+    MeshlineRenderer(GlCamera & camera, const float2 screenDims, const float linewidth, float3 color) : camera(camera), screenDims(screenDims), linewidth(linewidth), color(color)
     {
         shader = GlShader(read_file_text("assets/shaders/meshline_vert.glsl"), read_file_text("assets/shaders/meshline_frag.glsl"));
     }
@@ -102,13 +100,10 @@ public:
         }
         
         float3 v;
-        
-        {
-            if (vertices[0] == vertices[l - 1]) v = vertices[l - 2];
-            else v = vertices[0];
-            previous.push_back(v);
-            previous.push_back(v);
-        }
+        if (vertices[0] == vertices[l - 1]) v = vertices[l - 2];
+        else v = vertices[0];
+        previous.push_back(v);
+        previous.push_back(v);
         
         for (uint32_t i = 0; i < l - 1; i += 2)
         {
@@ -124,13 +119,11 @@ public:
             next.push_back(v);
         }
         
-        {
-            if (vertices[l - 1] == vertices[0]) v = vertices[1];
-            else v = vertices[l - 1];
-            next.push_back(v);
-            next.push_back(v);
-        }
-        
+        if (vertices[l - 1] == vertices[0]) v = vertices[1];
+        else v = vertices[l - 1];
+        next.push_back(v);
+        next.push_back(v);
+
         for (uint32_t i = 0; i < l - 1; i ++)
         {
             uint32_t n = i * 2;
@@ -141,12 +134,10 @@ public:
         mesh = make_line_mesh(vertices);
     }
     
-    void draw(const float4x4 model)
+    void render(const float4x4 model)
     {
         shader.bind();
 
-        camera.nearClip = 0.1;
-        camera.farClip = 64;
         auto projMat = camera.get_projection_matrix(screenDims.x / screenDims.y);
         auto viewMat = camera.get_view_matrix();
         
