@@ -11,7 +11,7 @@
 #if defined(ANVIL_PLATFORM_WINDOWS)
 
 #elif defined(ANVIL_PLATFORM_OSX)
-    #include <OpenGL/gl3.h>
+#include <OpenGL/gl3.h>
 #endif
 
 #include "third_party/stb/stb_image.h"
@@ -114,18 +114,6 @@ namespace avl
             this->internalFormat = internal_fmt;
         }
         
-        void allocate(GLsizei width, GLsizei height, GLenum format)
-        {
-            if (format == GL_DEPTH_COMPONENT)
-            {
-                internalFormat = GL_DEPTH_COMPONENT;
-                load_data(width, height, format, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-                return;
-            }
-            internalFormat = format;
-            load_data(width, height, format, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        }
-        
         void load_data(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels, bool createMipmap = false)
         {
             if (!handle) glGenTextures(1, &handle);
@@ -184,6 +172,55 @@ namespace avl
         stbi_image_free(data);
         return tex;
     }
+    
+    /////////////////////
+    //   GlTexture3D   //
+    /////////////////////
+    
+    // As either a 3D texture or 2D array
+    class GlTexture3D : public Noncopyable
+    {
+        int3 size;
+        GLuint internalFormat;
+        GLuint handle;
+        
+    public:
+        
+        GlTexture3D() : handle() {}
+        GlTexture3D(int w, int h, int d, GLuint id) : size(w, h, d), handle(id) {}
+        GlTexture3D(GlTexture3D && r) : GlTexture3D() { *this = std::move(r); }
+        ~GlTexture3D() { if (handle) glDeleteTextures(1, &handle); }
+        GlTexture3D & operator = (GlTexture3D && r) { std::swap(handle, r.handle); std::swap(size, r.size); return *this; }
+        
+        GLuint get_gl_handle() const { return handle; }
+        
+        int3 get_size() const { return size; }
+        
+        void load_data(GLsizei width, GLsizei height, GLsizei depth, GLenum target, GLenum internalFormat, GLenum externalFormat, GLenum type, const GLvoid * pixels)
+        {
+            if (!handle) glGenTextures(1, &handle);
+            glBindTexture(target, handle);
+            glTexImage3D(target, 0, internalFormat, width, height, depth, 0, externalFormat, type, pixels);
+            
+            glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            
+            glBindTexture(target, 0);
+            
+            size = {width, height, depth};
+        }
+        
+        void parameter(GLenum target, GLenum name, GLint param)
+        {
+            if (!handle) glGenTextures(1, &handle);
+            glBindTexture(target, handle);
+            glTexParameteri(target, name, param);
+            glBindTexture(target, 0);
+        }
+        
+    };
     
     //////////////////
     //   GlShader   //
@@ -245,6 +282,11 @@ namespace avl
         void uniform(const std::string & name, const mat<float,3,3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
         void uniform(const std::string & name, const mat<float,4,4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
         
+        // New methods to operate on arrays. Fixme: add others
+        void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { check(); glUniform1fv(get_uniform_location(name), elements, scalar.data()); }
+        void uniform(const std::string & name, const int elements, const std::vector<float2> & vec) const { check(); glUniform2fv(get_uniform_location(name), elements, &vec[0].x); }
+        void uniform(const std::string & name, const int elements, const std::vector<mat<float,4,4>> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
+        
         void texture(const std::string & name, int unit, GLuint texId, GLenum textureTarget) const
         {
             check();
@@ -254,6 +296,7 @@ namespace avl
         }
         
         void texture(const char * name, int unit, const GlTexture & tex) const { texture(name, unit, tex.get_gl_handle(), GL_TEXTURE_2D); }
+        void texture(const char * name, int unit, GLenum target, const GlTexture3D & tex) const { texture(name, unit, tex.get_gl_handle(), target); }
         
         void bind() { if (program > 0) enabled = true; glUseProgram(program); }
         void unbind() { enabled = false; glUseProgram(0); }
@@ -352,7 +395,7 @@ namespace avl
     class GlFramebuffer : public Noncopyable
     {
         GLuint handle;
-        float2 size;
+        float3 size;
         
     public:
         
@@ -377,7 +420,7 @@ namespace avl
             glBindFramebuffer(GL_FRAMEBUFFER, handle);
             glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.get_gl_handle(), 0);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            size = float2(tex.get_size().x, tex.get_size().y);
+            size = float3(tex.get_size().x, tex.get_size().y, 0.f);
         }
         
         void attach(GLenum attachment, const GlRenderbuffer & rb)
@@ -386,7 +429,16 @@ namespace avl
             glBindFramebuffer(GL_FRAMEBUFFER, handle);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, rb.get_handle());
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            size = float2(rb.get_size().x, rb.get_size().y);
+            size = float3(rb.get_size().x, rb.get_size().y, 0.f);
+        }
+        
+        void attach(GLenum attachment, const GlTexture3D & tex)
+        {
+            if(!handle) glGenFramebuffers(1, &handle);
+            glBindFramebuffer(GL_FRAMEBUFFER, handle);
+            glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.get_gl_handle(), 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            size = float3(tex.get_size().x, tex.get_size().y, tex.get_size().z);
         }
         
         void bind_to_draw()
@@ -439,7 +491,7 @@ namespace avl
             indexType = 0;
         }
         
-        void draw_elements() const 
+        void draw_elements() const
         {
             GLsizei vertexCount = vstride ? ((int) vbo.size() / vstride) : 0;
             
@@ -527,7 +579,7 @@ namespace avl
         
         template<class T, int N> void set_elements(const T (&elements)[N], GLenum usage) { set_elements(N, elements, usage); }
     };
-
+    
 }
 
 #endif // end AVL_GL_API_H
