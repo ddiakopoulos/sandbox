@@ -25,13 +25,19 @@ namespace avl
         
         float4x4 get_view_matrix() const { return make_view_matrix_from_pose(pose); }
         
-        float4x4 get_projection_matrix(float aspectRatio) const
+        float4 make_frustum_coords(float aspectRatio) const
         {
             const float top = nearClip * std::tan((fov * (ANVIL_PI * 2.f) / 360.0f) / 2.0f);
             const float right = top * aspectRatio;
             const float bottom = -top;
             const float left = -right;
-            return make_projection_matrix(left, right, bottom, top, nearClip, farClip);
+            return {top, right, bottom, left};
+        }
+        
+        float4x4 get_projection_matrix(float aspectRatio) const
+        {
+            float4 f = make_frustum_coords(aspectRatio);
+            return make_projection_matrix(f[3], f[1], f[2], f[0], nearClip, farClip); // fixme
         }
         
         float4x4 get_projection_matrix(float l, float r, float b, float t) const
