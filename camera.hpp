@@ -61,11 +61,19 @@ namespace avl
             this->farClip = farClip;
         }
         
-        void look_at(float3 target) { look_at(pose.position, target); }
+        void look_at(float3 target)
+        {
+            pose = look_at_pose(pose.position, target);
+        }
         
         void look_at(float3 eyePoint, float3 target)
         {
-            look_at_pose(eyePoint, target, pose);
+            pose = look_at_pose(eyePoint, target);
+        }
+        
+        void look_at(float3 eyePoint, float3 target, float3 upDirection)
+        {
+            pose = look_at_pose(eyePoint, target, upDirection);
         }
         
         float get_focal_length() const
