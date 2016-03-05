@@ -2,6 +2,7 @@
 #define camera_h
 
 #include <vector>
+#include <array>
 #include "GL_API.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
@@ -80,6 +81,53 @@ namespace avl
         }
         
     };
+    
+    inline std::array<float3, 4> make_near_clip_coords(GlCamera & cam, float aspectRatio)
+    {
+        float3 viewDirection = normalize(cam.get_view_direction());
+        float3 eye = cam.get_eye_point();
+        
+        auto leftDir = cam.pose.xdir();
+        auto upDir = cam.pose.ydir();
+        
+        auto coords = cam.make_frustum_coords(aspectRatio);
+        
+        float frustumTop = coords[0];
+        float frustumRight = coords[1];
+        float frustumBottom	= coords[2];
+        float frustumLeft = coords[3];
+        
+        float3 topLeft = eye + (cam.nearClip * viewDirection) + (frustumTop * upDir) + (frustumLeft * leftDir);
+        float3 topRight = eye + (cam.nearClip  * viewDirection) + (frustumTop * upDir) + (frustumRight * leftDir);
+        float3 bottomLeft = eye + (cam.nearClip  * viewDirection) + (frustumBottom * upDir) + (frustumLeft * leftDir);
+        float3 bottomRight = eye + (cam.nearClip  * viewDirection) + (frustumBottom * upDir) + (frustumRight * leftDir);
+        
+        return {topLeft, topRight, bottomLeft, bottomRight};
+    }
+    
+    inline std::array<float3, 4> make_far_clip_coords(GlCamera & cam, float aspectRatio)
+    {
+        float3 viewDirection = normalize(cam.get_view_direction());
+        float3 eye = cam.get_eye_point();
+        float ratio = cam.farClip / cam.nearClip;
+        
+        auto leftDir = cam.pose.xdir();
+        auto upDir = cam.pose.ydir();
+        
+        auto coords = cam.make_frustum_coords(aspectRatio);
+        
+        float frustumTop = coords[0];
+        float frustumRight = coords[1];
+        float frustumBottom	= coords[2];
+        float frustumLeft = coords[3];
+        
+        float3 topLeft = eye + (cam.farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumLeft * leftDir);
+        float3 topRight = eye + (cam.farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumRight * leftDir);
+        float3 bottomLeft = eye + (cam.farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumLeft * leftDir);
+        float3 bottomRight = eye + (cam.farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumRight * leftDir);
+        
+        return {topLeft, topRight, bottomLeft, bottomRight};
+    }
     
     class FlyCameraController
     {
