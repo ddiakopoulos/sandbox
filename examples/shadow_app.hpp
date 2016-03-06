@@ -31,10 +31,11 @@ struct DirectionalLight
     
     DirectionalLight(const float3 dir, const float3 color, float size) : direction(dir), color(color), size(size) {}
     
-    float4x4 get_projection_matrix()
+    float4x4 get_view_proj_matrix(float3 eyePoint)
     {
+        auto p = look_at_pose(eyePoint, eyePoint + -direction);
         const float halfSize = size * 0.5f;
-        return make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize);
+        return make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize) * make_view_matrix_from_pose(p);
     }
     
 };
@@ -69,7 +70,7 @@ struct ExperimentalApp : public GLFWApp
     GlFramebuffer shadowFramebuffer;
     std::shared_ptr<DirectionalLight> sunLight;
     
-    const float shadowmapResolution = 1024.f;
+    const float shadowmapResolution = 2048;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Shadow Mapping App")
     {
@@ -104,13 +105,13 @@ struct ExperimentalApp : public GLFWApp
         skydome.recompute(2, 10.f, 1.15f);
         
         auto lightDir = skydome.get_light_direction();
-        sunLight = std::make_shared<DirectionalLight>(lightDir, float3(1, 0, 0), 33.f);
+        sunLight = std::make_shared<DirectionalLight>(lightDir, float3(.50f, .75f, .825f), 32.f);
         
         shadowDepthTexture.load_data(shadowmapResolution, shadowmapResolution, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         shadowFramebuffer.attach(GL_DEPTH_ATTACHMENT, shadowDepthTexture);
         if (!shadowFramebuffer.check_complete()) throw std::runtime_error("incomplete shadow framebuffer");
         
-        //viewA.reset(new GLTextureView(get_gl_handle()));
+        viewA.reset(new GLTextureView(shadowDepthTexture.get_gl_handle()));
         //viewB.reset(new GLTextureView(get_gl_handle()));
         //viewC.reset(new GLTextureView(get_gl_handle()));
         //viewD.reset(new GLTextureView(get_gl_handle()));
@@ -175,15 +176,41 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+    
+        float3 target = camera.pose.position;
+        
+        // Render the scene from the perspective of the light source
+        {
+            shadowFramebuffer.bind_to_draw();
+            shadowmapShader->bind();
+            
+            glClear(GL_DEPTH_BUFFER_BIT);
+            glViewport(0, 0, shadowmapResolution, shadowmapResolution);
+            
+            shadowmapShader->uniform("u_lightViewProj", sunLight->get_view_proj_matrix(target));
+            
+            for (auto & object : sceneObjects)
+            {
+                shadowmapShader->uniform("u_modelMatrix", object.get_model());
+                object.draw();
+            }
+            
+            shadowmapShader->unbind();
+            shadowFramebuffer.unbind();
+        }
         
         {
+            glViewport(0, 0, width, height);
             sceneShader->bind();
             
             sceneShader->uniform("u_viewProj", viewProj);
-            
-            sceneShader->uniform("u_dirLightViewProjectionMat", sunLight->get_projection_matrix() * view);
             sceneShader->uniform("u_directionalLight.color", sunLight->color);
             sceneShader->uniform("u_directionalLight.direction", sunLight->direction);
+            sceneShader->uniform("u_dirLightViewProjectionMat", sunLight->get_view_proj_matrix(target));
+            
+            sceneShader->uniform("u_shadowMapBias", 0.01f / shadowmapResolution);
+            sceneShader->uniform("u_shadowMapTexelSize", float2(1.0f / shadowmapResolution));
+            sceneShader->texture("s_directionalShadowMap", 0, shadowDepthTexture);
             
             for (auto & object : sceneObjects)
             {
@@ -196,20 +223,6 @@ struct ExperimentalApp : public GLFWApp
             
         }
         
-        /*
-         {
-         colorShader->bind();
-         auto pose = look_at_pose(lightFrustum.pose.position, lightDir);
-         auto model = make_view_matrix_from_pose(pose);
-         colorShader->uniform("u_modelMatrix", model);
-         colorShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-         colorShader->uniform("u_viewProj", viewProj);
-         colorShader->uniform("u_color", float3(1, 0, 0));
-         lightFrustum.draw();
-         colorShader->unbind();
-         }
-         */
-        
         {
             //ImGui::Checkbox("Show Shadowmap", &showShadowmap);
             ImGui::Separator();
@@ -220,7 +233,7 @@ struct ExperimentalApp : public GLFWApp
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         }
         
-        //viewA->draw(uiSurface.children[0]->bounds, int2(width, height), 0);
+        viewA->draw(uiSurface.children[0]->bounds, int2(width, height));
         //viewB->draw(uiSurface.children[1]->bounds, int2(width, height), 1);
         //viewC->draw(uiSurface.children[2]->bounds, int2(width, height), 2);
         //viewD->draw(uiSurface.children[3]->bounds, int2(width, height), 3);

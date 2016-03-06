@@ -50,9 +50,9 @@ float shadow_map_pcf(sampler2D shadowMap, vec2 coords, float compare, vec2 texel
     const float NUM_SAMPLES_SQUARED = NUM_SAMPLES*NUM_SAMPLES;
 
     float result = 0.0f;
-    for(float y = -SAMPLES_START; y <= SAMPLES_START; y += 1.0f)
+    for (float y = -SAMPLES_START; y <= SAMPLES_START; y += 1.0f)
     {
-        for(float x = -SAMPLES_START; x <= SAMPLES_START; x += 1.0f)
+        for (float x = -SAMPLES_START; x <= SAMPLES_START; x += 1.0f)
         {
             vec2 coordsOffset = vec2(x,y)*texelSize;
             result += shadow_map_linear(shadowMap, coords + coordsOffset, compare, texelSize);
@@ -64,12 +64,6 @@ float shadow_map_pcf(sampler2D shadowMap, vec2 coords, float compare, vec2 texel
 bool in_range(float val)
 {
     return val >= 0.0 && val <= 1.0;
-}
-
-vec4 calculate_directional_light(DirectionalLight dl, vec4 cameraSpacePosition)
-{
-    float light = max(dot(v_normal, dl.direction), 0);
-    return vec4(dl.color * light, 1.0);
 }
 
 float calculate_directional_light_shadow(vec4 cameraSpacePosition)
@@ -87,6 +81,13 @@ float calculate_directional_light_shadow(vec4 cameraSpacePosition)
     }
     
     return shadow_map_pcf(s_directionalShadowMap, uvCoords, z - u_shadowMapBias, u_shadowMapTexelSize);
+}
+
+vec4 calculate_directional_light(DirectionalLight dl, vec4 cameraSpacePosition)
+{
+    float light = max(dot(v_normal, dl.direction), 0);
+    float shadowFactor = calculate_directional_light_shadow(cameraSpacePosition);
+    return vec4(dl.color * light * shadowFactor, 1.0);
 }
 
 void main()
