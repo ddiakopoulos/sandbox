@@ -65,7 +65,11 @@ struct ExperimentalApp : public GLFWApp
     Renderable floor;
     Renderable lightFrustum;
     
+    GlTexture shadowDepthTexture;
+    GlFramebuffer shadowFramebuffer;
     std::shared_ptr<DirectionalLight> sunLight;
+    
+    const float shadowmapResolution = 1024.f;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Shadow Mapping App")
     {
@@ -100,7 +104,11 @@ struct ExperimentalApp : public GLFWApp
         skydome.recompute(2, 10.f, 1.15f);
         
         auto lightDir = skydome.get_light_direction();
-        sunLight = std::make_shared<DirectionalLight>(lightDir, float3(1, 0, 0), 25.f);
+        sunLight = std::make_shared<DirectionalLight>(lightDir, float3(1, 0, 0), 33.f);
+        
+        shadowDepthTexture.load_data(shadowmapResolution, shadowmapResolution, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        shadowFramebuffer.attach(GL_DEPTH_ATTACHMENT, shadowDepthTexture);
+        if (!shadowFramebuffer.check_complete()) throw std::runtime_error("incomplete shadow framebuffer");
         
         //viewA.reset(new GLTextureView(get_gl_handle()));
         //viewB.reset(new GLTextureView(get_gl_handle()));
@@ -165,8 +173,6 @@ struct ExperimentalApp : public GLFWApp
         
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        std::cout << sunLight->direction << std::endl;
         
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
