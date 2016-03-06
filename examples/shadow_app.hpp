@@ -60,17 +60,25 @@ struct ExperimentalApp : public GLFWApp
     
     std::shared_ptr<GlShader> sceneShader;
     std::shared_ptr<GlShader> shadowmapShader;
+    std::shared_ptr<GlShader> gaussianBlurShader;
     
     std::vector<Renderable> sceneObjects;
+    
+    GlMesh fullscreen_post_quad;
     
     Renderable floor;
     Renderable lightFrustum;
     
     GlTexture shadowDepthTexture;
     GlFramebuffer shadowFramebuffer;
+    
+    GlTexture shadowBlurTexture;
+    GlFramebuffer shadowBlurFramebuffer;
+    
     std::shared_ptr<DirectionalLight> sunLight;
     
     const float shadowmapResolution = 2048;
+    float blurSigma = 3.0f;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Shadow Mapping App")
     {
@@ -99,8 +107,11 @@ struct ExperimentalApp : public GLFWApp
         uiSurface.add_child( {{0.8335f, +10},{0, +10},{1.0000f, -10},{0.133f, +10}});
         uiSurface.layout();
         
+        fullscreen_post_quad = make_fullscreen_quad();
+        
         sceneShader = make_watched_shader(shaderMonitor, "assets/shaders/shadow/scene_vert.glsl", "assets/shaders/shadow/scene_frag.glsl");
         shadowmapShader = make_watched_shader(shaderMonitor, "assets/shaders/shadow/shadowmap_vert.glsl", "assets/shaders/shadow/shadowmap_frag.glsl");
+        gaussianBlurShader = make_watched_shader(shaderMonitor, "assets/shaders/gaussian_blur_vert.glsl", "assets/shaders/gaussian_blur_frag.glsl");
         
         skydome.recompute(2, 10.f, 1.15f);
         
@@ -111,8 +122,13 @@ struct ExperimentalApp : public GLFWApp
         shadowFramebuffer.attach(GL_DEPTH_ATTACHMENT, shadowDepthTexture);
         if (!shadowFramebuffer.check_complete()) throw std::runtime_error("incomplete shadow framebuffer");
         
+        shadowBlurTexture.load_data(shadowmapResolution, shadowmapResolution, GL_R32F, GL_RGBA, GL_FLOAT, nullptr);
+        shadowBlurFramebuffer.attach(GL_COLOR_ATTACHMENT0, shadowBlurTexture);
+        //shadowBlurFramebuffer.attach(GL_COLOR_ATTACHMENT1, shadowDepthTexture); // note this attach point
+        if (!shadowBlurFramebuffer.check_complete()) throw std::runtime_error("incomplete blur framebuffer");
+        
         viewA.reset(new GLTextureView(shadowDepthTexture.get_gl_handle()));
-        //viewB.reset(new GLTextureView(get_gl_handle()));
+        viewB.reset(new GLTextureView(shadowBlurTexture.get_gl_handle()));
         //viewC.reset(new GLTextureView(get_gl_handle()));
         //viewD.reset(new GLTextureView(get_gl_handle()));
         
@@ -165,6 +181,7 @@ struct ExperimentalApp : public GLFWApp
         
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
+        glDepthMask(GL_TRUE);
         
         float windowAspectRatio = (float) width / (float) height;
         
@@ -203,6 +220,33 @@ struct ExperimentalApp : public GLFWApp
         }
         
         {
+            shadowBlurFramebuffer.bind_to_draw();
+            glDrawBuffer(GL_COLOR_ATTACHMENT0);
+            
+            gaussianBlurShader->bind();
+            
+            // Configured for a 7x7
+            gaussianBlurShader->uniform("blurSize", 1.0f / shadowmapResolution);
+            gaussianBlurShader->uniform("sigma", blurSigma);
+            gaussianBlurShader->uniform("u_modelViewProj", Identity4x4);
+            
+            // Horizontal
+            gaussianBlurShader->texture("s_blurTexure", 0, shadowDepthTexture);
+            gaussianBlurShader->uniform("numBlurPixelsPerSide", 3.0f);
+            gaussianBlurShader->uniform("blurMultiplyVec", float2(1.0f, 0.0f));
+            fullscreen_post_quad.draw_elements();
+            
+            // Vertical
+            gaussianBlurShader->texture("s_blurTexure", 0, shadowBlurTexture);
+            gaussianBlurShader->uniform("numBlurPixelsPerSide", 3.0f);
+            gaussianBlurShader->uniform("blurMultiplyVec", float2(0.0f, 1.0f));
+            fullscreen_post_quad.draw_elements();
+
+            gaussianBlurShader->unbind();
+            shadowBlurFramebuffer.unbind();
+        }
+        
+        {
             glViewport(0, 0, width, height);
             sceneShader->bind();
             
@@ -213,7 +257,7 @@ struct ExperimentalApp : public GLFWApp
             
             sceneShader->uniform("u_shadowMapBias", 0.01f / shadowmapResolution);
             sceneShader->uniform("u_shadowMapTexelSize", float2(1.0f / shadowmapResolution));
-            sceneShader->texture("s_directionalShadowMap", 0, shadowDepthTexture);
+            sceneShader->texture("s_directionalShadowMap", 0, shadowBlurTexture);
             
             for (auto & object : sceneObjects)
             {
@@ -223,7 +267,6 @@ struct ExperimentalApp : public GLFWApp
             }
             
             sceneShader->unbind();
-            
         }
         
         {
@@ -231,13 +274,15 @@ struct ExperimentalApp : public GLFWApp
             ImGui::Separator();
             ImGui::SliderFloat("Near Clip", &camera.nearClip, 0.1f, 2.0f);
             ImGui::SliderFloat("Far Clip", &camera.farClip, 2.0f, 75.0f);
-            ImGui::DragFloat3("Light Direction", &sunLight->direction[0], 0.1f, -10.0f, 10.0f);
+            ImGui::DragFloat3("Light Direction", &sunLight->direction[0], 0.1f, -1.0f, 1.0f);
+            ImGui::Separator();
+            ImGui::SliderFloat("Blur Sigma", &blurSigma, 0.05f, 9.0f);
             ImGui::Separator();
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         }
         
         viewA->draw(uiSurface.children[0]->bounds, int2(width, height));
-        //viewB->draw(uiSurface.children[1]->bounds, int2(width, height), 1);
+        viewB->draw(uiSurface.children[1]->bounds, int2(width, height));
         //viewC->draw(uiSurface.children[2]->bounds, int2(width, height), 2);
         //viewD->draw(uiSurface.children[3]->bounds, int2(width, height), 3);
         

@@ -2,7 +2,7 @@
 
 const float pi = 3.14159265f;
 
-uniform sampler2D blurSampler;
+uniform sampler2D s_blurTexure;
 
 in vec2 v_texcoord;
 out vec4 f_color;
@@ -59,17 +59,18 @@ void main()
 
     // Central sample
     float coefficientSum = 0.0f; 
-    avgValue += texture(blurSampler, v_texcoord.xy) * incrementalGaussian.x; 
+    avgValue += texture(s_blurTexure, v_texcoord.xy) * incrementalGaussian.x; 
     coefficientSum += incrementalGaussian.x;  
     incrementalGaussian.xy *= incrementalGaussian.yz;
 
     // Other samples in the window
     for (float i = 1.0f; i <= numBlurPixelsPerSide; i++) 
     {     
-        avgValue += texture(blurSampler, v_texcoord.xy - i * blurSize * blurMultiplyVec) * incrementalGaussian.x;
-        avgValue += texture(blurSampler, v_texcoord.xy + i * blurSize * blurMultiplyVec) * incrementalGaussian.x;
+        avgValue += texture(s_blurTexure, v_texcoord.xy - i * blurSize * blurMultiplyVec) * incrementalGaussian.x;
+        avgValue += texture(s_blurTexure, v_texcoord.xy + i * blurSize * blurMultiplyVec) * incrementalGaussian.x;
         coefficientSum += 2 * incrementalGaussian.x;    
         incrementalGaussian.xy *= incrementalGaussian.yz;  
     }  
     f_color = avgValue / coefficientSum;
+    gl_FragDepth = f_color.r;
 }
