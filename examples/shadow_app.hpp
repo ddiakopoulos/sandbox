@@ -105,7 +105,7 @@ struct ExperimentalApp : public GLFWApp
         skydome.recompute(2, 10.f, 1.15f);
         
         auto lightDir = skydome.get_light_direction();
-        sunLight = std::make_shared<DirectionalLight>(lightDir, float3(.50f, .75f, .825f), 32.f);
+        sunLight = std::make_shared<DirectionalLight>(lightDir, float3(.50f, .75f, .825f), 64.f);
         
         shadowDepthTexture.load_data(shadowmapResolution, shadowmapResolution, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         shadowFramebuffer.attach(GL_DEPTH_ATTACHMENT, shadowDepthTexture);
@@ -127,7 +127,7 @@ struct ExperimentalApp : public GLFWApp
         combined.compute_normals(false);
         sceneObjects.push_back(Renderable(combined));
         
-        floor = Renderable(make_plane(24.f, 24.f, 256, 256));
+        floor = Renderable(make_plane(24.f, 24.f, 256, 256), false);
         floor.pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
         floor.pose.position = {0, -7, 0};
         sceneObjects.push_back(std::move(floor));
@@ -191,8 +191,11 @@ struct ExperimentalApp : public GLFWApp
             
             for (auto & object : sceneObjects)
             {
-                shadowmapShader->uniform("u_modelMatrix", object.get_model());
-                object.draw();
+                if (object.castsShadow)
+                {
+                    shadowmapShader->uniform("u_modelMatrix", object.get_model());
+                    object.draw();
+                }
             }
             
             shadowmapShader->unbind();

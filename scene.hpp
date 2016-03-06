@@ -31,10 +31,10 @@ namespace avl
     {
         GlMesh mesh;
         Geometry geom;
+        bool castsShadow;
         
         Renderable() {}
-        
-        Renderable(const Geometry & g) : geom(g)
+        Renderable(const Geometry & g, bool shadow = true) : geom(g), castsShadow(shadow)
         {
             rebuild_mesh();
             //mesh.set_non_indexed(GL_LINES);
