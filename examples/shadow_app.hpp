@@ -23,6 +23,22 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
     return shader;
 }
 
+struct DirectionalLight 
+{
+    float3 color;
+    float3 direction;
+    float size;
+    
+    DirectionalLight(const float3 dir, const float3 color, float size) : direction(dir), color(color), size(size) {}
+    
+    float4x4 get_projection_matrix()
+    {
+        const float halfSize = size * 0.5f;
+        return make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize);
+    }
+    
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     std::random_device rd;
@@ -48,7 +64,7 @@ struct ExperimentalApp : public GLFWApp
     Renderable floor;
     Renderable lightFrustum;
     
-    float3 lightDir;
+    std::shared_ptr<DirectionalLight> sunLight;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Shadow Mapping App")
     {
@@ -79,6 +95,9 @@ struct ExperimentalApp : public GLFWApp
         
         sceneShader = make_watched_shader(shaderMonitor, "assets/shaders/shadow/scene_vert.glsl", "assets/shaders/shadow/scene_frag.glsl");
         
+        auto lightDir = skydome.get_light_direction();
+        sunLight = std::make_shared<DirectionalLight>(lightDir, float3(1, 0, 0), 25.f);
+        
         //viewA.reset(new GLTextureView(get_gl_handle()));
         //viewB.reset(new GLTextureView(get_gl_handle()));
         //viewC.reset(new GLTextureView(get_gl_handle()));
@@ -95,27 +114,10 @@ struct ExperimentalApp : public GLFWApp
         combined.compute_normals(false);
         sceneObjects.push_back(Renderable(combined));
         
-        /*
-         auto randomGeo = load_geometry_from_ply("assets/models/geometry/SphereUniform.ply");
-         for (auto & v : randomGeo.vertices) v *= 0.0075f;
-         
-         auto r = std::uniform_real_distribution<float>(-24.0, 24.0);
-         
-         for (int i = 0; i < 32; ++i)
-         {
-         auto newObject = Renderable(randomGeo);
-         newObject.pose.position = float3(r(gen), 0, r(gen));
-         sceneObjects.push_back(std::move(newObject));
-         }
-         */
-        
-        //sceneObjects.back().pose.position = float3(0, 0, 0);
-        
-        floor = Renderable(make_plane(112.f, 112.f, 256, 256));
-        
-        lightFrustum = Renderable(make_frustum());
-        lightFrustum.pose.position = {0, 10, 0};
-        lightFrustum.mesh.set_non_indexed(GL_LINES);
+        floor = Renderable(make_plane(24.f, 24.f, 256, 256));
+        floor.pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
+        floor.pose.position = {0, -7, 0};
+        sceneObjects.push_back(std::move(floor));
         
         gl_check_error(__FILE__, __LINE__);
     }
@@ -139,9 +141,6 @@ struct ExperimentalApp : public GLFWApp
     
     void on_draw() override
     {
-        //auto lightDir = skydome.get_light_direction();
-        //auto sunDir = skydome.get_sun_direction();
-        //auto sunPosition = skydome.get_sun_position();
         
         glfwMakeContextCurrent(window);
         
@@ -151,6 +150,9 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        
         float windowAspectRatio = (float) width / (float) height;
         
         const auto proj = camera.get_projection_matrix(windowAspectRatio);
@@ -159,6 +161,31 @@ struct ExperimentalApp : public GLFWApp
         
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        std::cout << sunLight->direction << std::endl;
+        
+        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        
+        {
+            
+            sceneShader->bind();
+            
+            sceneShader->uniform("u_viewProj", viewProj);
+            
+            sceneShader->uniform("u_dirLightViewProjectionMat", sunLight->get_projection_matrix() * view);
+            sceneShader->uniform("u_directionalLight.color", sunLight->color);
+            sceneShader->uniform("u_directionalLight.direction", sunLight->direction);
+            
+            for (auto & object : sceneObjects)
+            {
+                sceneShader->uniform("u_modelMatrix", object.get_model());
+                sceneShader->uniform("u_modelMatrixIT", inv(transpose(object.get_model())));
+                object.draw();
+            }
+            
+            sceneShader->unbind();
+            
+        }
         
         /*
          {
@@ -173,8 +200,6 @@ struct ExperimentalApp : public GLFWApp
          colorShader->unbind();
          }
          */
-        
-        //skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
             //ImGui::Checkbox("Show Shadowmap", &showShadowmap);

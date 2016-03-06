@@ -190,7 +190,6 @@ public:
     
     float2 get_sun_position() const { return sunPosition; }
 
-    
     float3 get_sun_direction() const
     {
         return spherical(sunPosition.x, sunPosition.y);
