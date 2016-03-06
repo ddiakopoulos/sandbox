@@ -197,7 +197,8 @@ public:
     
     float3 get_light_direction() const
     {
-        return -get_sun_direction();
+        auto sunDir = get_sun_direction();
+        return -float3(-sunDir.x, sunDir.y, sunDir.z); // what the hell?
     }
     
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) = 0;

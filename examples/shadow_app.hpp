@@ -58,6 +58,7 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<GLTextureView> viewD;
     
     std::shared_ptr<GlShader> sceneShader;
+    std::shared_ptr<GlShader> shadowmapShader;
     
     std::vector<Renderable> sceneObjects;
     
@@ -94,6 +95,9 @@ struct ExperimentalApp : public GLFWApp
         uiSurface.layout();
         
         sceneShader = make_watched_shader(shaderMonitor, "assets/shaders/shadow/scene_vert.glsl", "assets/shaders/shadow/scene_frag.glsl");
+        shadowmapShader = make_watched_shader(shaderMonitor, "assets/shaders/shadow/shadowmap_vert.glsl", "assets/shaders/shadow/shadowmap_frag.glsl");
+        
+        skydome.recompute(2, 10.f, 1.15f);
         
         auto lightDir = skydome.get_light_direction();
         sunLight = std::make_shared<DirectionalLight>(lightDir, float3(1, 0, 0), 25.f);
@@ -167,7 +171,6 @@ struct ExperimentalApp : public GLFWApp
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
         {
-            
             sceneShader->bind();
             
             sceneShader->uniform("u_viewProj", viewProj);
@@ -206,6 +209,7 @@ struct ExperimentalApp : public GLFWApp
             ImGui::Separator();
             ImGui::SliderFloat("Near Clip", &camera.nearClip, 0.1f, 2.0f);
             ImGui::SliderFloat("Far Clip", &camera.farClip, 2.0f, 75.0f);
+            ImGui::DragFloat3("Light Direction", &sunLight->direction[0], 0.1f, -10.0f, 10.0f);
             ImGui::Separator();
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         }

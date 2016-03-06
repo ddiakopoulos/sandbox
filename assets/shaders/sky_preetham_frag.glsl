@@ -1,13 +1,8 @@
 #version 330
 
-vec3 gamma(vec3 v)
-{
-    return pow(v, vec3(1 / 2.2));
-}
-
-out vec4 out_color;
-
 in vec3 direction;
+
+out vec4 f_color;
 
 uniform vec3 A, B, C, D, E, Z;
 uniform vec3 SunDirection;
@@ -37,5 +32,5 @@ void main()
     
     vec3 R = vec3(R_r, R_g, R_b);
     
-    out_color = vec4(R, 1);
+    f_color = vec4(R, 1);
 }
