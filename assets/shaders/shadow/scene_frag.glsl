@@ -19,6 +19,19 @@ uniform sampler2D s_directionalShadowMap;
 uniform float u_shadowMapBias;
 uniform vec2 u_shadowMapTexelSize;
 
+uniform vec3 u_rimColor = vec3(1, 1, 1);
+uniform float u_rimPower = 0.95;
+
+uniform vec3 u_eye;
+
+vec3 compute_rimlight(vec3 normal, vec3 eyeDirection)
+{
+    float f = 1.0f - dot(normal, eyeDirection);
+    f = smoothstep(0.0f, 1.0f, f);
+    f = pow(f, u_rimPower);
+    return f * u_rimColor; 
+}
+
 float sample_shadow_map(sampler2D shadowMap, vec2 uv, float compare)
 {
     float depth = texture(shadowMap, uv).x;
@@ -46,19 +59,19 @@ float shadow_map_linear(sampler2D shadowMap, vec2 coords, float compare, vec2 te
 float shadow_map_pcf(sampler2D shadowMap, vec2 coords, float compare, vec2 texelSize)
 {
     const float NUM_SAMPLES = 3.0f;
-    const float SAMPLES_START = (NUM_SAMPLES-1.0f)/2.0f;
-    const float NUM_SAMPLES_SQUARED = NUM_SAMPLES*NUM_SAMPLES;
+    const float SAMPLES_START = (NUM_SAMPLES - 1.0f) / 2.0f;
+    const float NUM_SAMPLES_SQUARED = NUM_SAMPLES * NUM_SAMPLES;
 
     float result = 0.0f;
     for (float y = -SAMPLES_START; y <= SAMPLES_START; y += 1.0f)
     {
         for (float x = -SAMPLES_START; x <= SAMPLES_START; x += 1.0f)
         {
-            vec2 coordsOffset = vec2(x,y)*texelSize;
-            result += shadow_map_linear(shadowMap, coords + coordsOffset, compare, texelSize);
+            vec2 offset = vec2(x,y) * texelSize;
+            result += shadow_map_linear(shadowMap, coords + offset, compare, texelSize);
         }
     }
-    return result/NUM_SAMPLES_SQUARED;
+    return result / NUM_SAMPLES_SQUARED;
 }
 
 bool in_range(float val)
@@ -73,7 +86,7 @@ float calculate_directional_light_shadow(vec4 cameraSpacePosition)
     vec2 uvCoords;
     uvCoords.x = 0.5 * projectedCoords.x + 0.5;
     uvCoords.y = 0.5 * projectedCoords.y + 0.5;
-    float z = 0.5 * projectedCoords.z + 0.5;
+    float z = (0.5 * projectedCoords.z + 0.5) - 0.05f; // self shadow bias
     
     if (!in_range(uvCoords.x) || !in_range(uvCoords.y) || !in_range(z))
     {
@@ -94,6 +107,10 @@ void main()
 {
     vec4 ambient = vec4(0.0, 0.0, 0.0, 1.0);
     vec4 totalLighting = vec4(0.0, 0.0, 0.0, 0.0);
+
+    vec3 eyeDir = normalize(u_eye - v_world_position);
+
     totalLighting += calculate_directional_light(u_directionalLight, v_camera_directional_light);
+    totalLighting += vec4(compute_rimlight(v_normal, eyeDir), 1);
     f_color = clamp(totalLighting + ambient, 0.0, 1.0);
 }

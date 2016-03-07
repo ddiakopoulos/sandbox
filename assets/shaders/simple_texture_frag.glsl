@@ -17,14 +17,14 @@ struct PointLight
 
 uniform PointLight u_lights[2];
 
-uniform vec3 u_rimColor = vec3(1, 1, 1);
-uniform float u_rimPower = 0.99;
-
 in vec3 position; 
 in vec3 normal;
 in vec2 texCoord;
 
 out vec4 f_color;
+
+uniform vec3 u_rimColor = vec3(1, 1, 1);
+uniform float u_rimPower = 0.99;
 
 vec3 compute_rimlight(vec3 n, vec3 v)
 {

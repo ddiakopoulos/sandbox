@@ -132,6 +132,7 @@ struct ExperimentalApp : public GLFWApp
         //viewC.reset(new GLTextureView(get_gl_handle()));
         //viewD.reset(new GLTextureView(get_gl_handle()));
         
+        /*
         auto leePerryHeadModel = load_geometry_from_obj_no_texture("assets/models/leeperrysmith/lps.obj");
         Geometry combined;
         for (int i = 0; i < leePerryHeadModel.size(); ++i)
@@ -142,6 +143,14 @@ struct ExperimentalApp : public GLFWApp
         }
         combined.compute_normals(false);
         sceneObjects.push_back(Renderable(combined));
+        */
+        
+        auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
+        for (auto & vert : lucy.vertices)
+        {
+            vert *= .01f;
+        }
+        sceneObjects.push_back(Renderable(lucy));
         
         floor = Renderable(make_plane(24.f, 24.f, 256, 256), false);
         floor.pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
@@ -206,6 +215,9 @@ struct ExperimentalApp : public GLFWApp
             
             shadowmapShader->uniform("u_lightViewProj", sunLight->get_view_proj_matrix(target));
             
+            //glEnable(GL_POLYGON_OFFSET_FILL);
+            //glPolygonOffset(2.0f, 2.0f);
+            
             for (auto & object : sceneObjects)
             {
                 if (object.castsShadow)
@@ -215,6 +227,7 @@ struct ExperimentalApp : public GLFWApp
                 }
             }
             
+            //glDisable(GL_POLYGON_OFFSET_FILL);
             shadowmapShader->unbind();
             shadowFramebuffer.unbind();
         }
@@ -251,6 +264,7 @@ struct ExperimentalApp : public GLFWApp
             sceneShader->bind();
             
             sceneShader->uniform("u_viewProj", viewProj);
+            sceneShader->uniform("u_eye", camera.get_eye_point());
             sceneShader->uniform("u_directionalLight.color", sunLight->color);
             sceneShader->uniform("u_directionalLight.direction", sunLight->direction);
             sceneShader->uniform("u_dirLightViewProjectionMat", sunLight->get_view_proj_matrix(target));
