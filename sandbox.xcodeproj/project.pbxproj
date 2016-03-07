@@ -15,7 +15,6 @@
 		0849FD9C1BFADE27000F148E /* gizmo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD9A1BFADE27000F148E /* gizmo.cpp */; };
 		0849FDA11BFAFCC3000F148E /* tiny_obj_loader.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD9F1BFAFCC3000F148E /* tiny_obj_loader.cc */; };
 		085081971BB5B6EA0084A1D6 /* glfw_app.mm in Sources */ = {isa = PBXBuildFile; fileRef = 085081951BB5B6EA0084A1D6 /* glfw_app.mm */; };
-		0868E0001C5F28780032129B /* librealsense.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0868DFFF1C5F28780032129B /* librealsense.dylib */; };
 		087A4EA21BB8EC9B00975C72 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA11BB8EC9B00975C72 /* OpenGL.framework */; };
 		087A4EA41BB8ECA100975C72 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA31BB8ECA100975C72 /* GLKit.framework */; };
 		087A4EA61BB8ECA600975C72 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA51BB8ECA600975C72 /* Cocoa.framework */; };
@@ -177,7 +176,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0868E0001C5F28780032129B /* librealsense.dylib in Frameworks */,
 				087A4EA61BB8ECA600975C72 /* Cocoa.framework in Frameworks */,
 				087A4EA41BB8ECA100975C72 /* GLKit.framework in Frameworks */,
 				080980311C4DA9120009122A /* libglfw3.dylib in Frameworks */,
@@ -682,12 +680,14 @@
 		081204951BADDEC100C7C0F4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DEBUG_INFORMATION_FORMAT = dwarf;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/third_party/",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = sandbox;
 			};
 			name = Debug;
@@ -695,12 +695,14 @@
 		081204961BADDEC100C7C0F4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DEBUG_INFORMATION_FORMAT = dwarf;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/third_party/",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = sandbox;
 			};
 			name = Release;

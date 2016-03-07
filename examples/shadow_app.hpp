@@ -80,7 +80,7 @@ struct ExperimentalApp : public GLFWApp
     const float shadowmapResolution = 2048;
     float blurSigma = 3.0f;
     
-    ExperimentalApp() : GLFWApp(1280, 720, "Shadow Mapping App")
+    ExperimentalApp() : GLFWApp(1280, 720, "Shadow App")
     {
         glfwSwapInterval(0);
         
@@ -151,7 +151,7 @@ struct ExperimentalApp : public GLFWApp
             vert *= .01f;
         }
         sceneObjects.push_back(Renderable(lucy));
-        
+
         floor = Renderable(make_plane(24.f, 24.f, 256, 256), false);
         floor.pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
         floor.pose.position = {0, -7, 0};

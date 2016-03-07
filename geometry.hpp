@@ -133,7 +133,7 @@ namespace avl
                 const float2 & w1 = texCoords[face.y];
                 const float2 & w2 = texCoords[face.z];
                 
-                // std::cout << "x: " << face.x << " y: " <<  face.y << " z: " << face.z << std::endl;
+                //std::cout << "x: " << face.x << " y: " <<  face.y << " z: " << face.z << std::endl;
                 
                 float x1 = v1.x - v0.x;
                 float x2 = v2.x - v0.x;
@@ -383,11 +383,21 @@ namespace avl
                 }
             }
             
-            for (int i = 0; i < indexBuffer.size(); i+=3)
-                geo.faces.push_back(uint3(indexBuffer[i], indexBuffer[i+1], indexBuffer[i+2]));
+            if (indexBuffer.size())
+            {
+                for (int i = 0; i < indexBuffer.size(); i+=3)
+                    geo.faces.push_back(uint3(indexBuffer[i], indexBuffer[i+1], indexBuffer[i+2]));
+            }
+            else
+            {
+                geo.faces = flatFaces;
+            }
+
 
             geo.compute_normals(false);
-            geo.compute_tangents();
+            
+            if (faces.size() && flatTexCoords.size()) geo.compute_tangents();
+            
             geo.compute_bounds();
             
         }
