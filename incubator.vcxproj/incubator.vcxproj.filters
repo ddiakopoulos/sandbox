@@ -180,12 +180,6 @@
     <ClInclude Include="..\util.hpp">
       <Filter>source\app</Filter>
     </ClInclude>
-    <ClInclude Include="..\procedural_sky\hosek.hpp">
-      <Filter>source\sky</Filter>
-    </ClInclude>
-    <ClInclude Include="..\procedural_sky\preetham.hpp">
-      <Filter>source\sky</Filter>
-    </ClInclude>
     <ClInclude Include="..\examples\terrain_app.hpp">
       <Filter>examples</Filter>
     </ClInclude>
@@ -243,6 +237,9 @@
     <ClInclude Include="..\third_party\imgui\imgui_internal.h">
       <Filter>third_party\imgui</Filter>
     </ClInclude>
+    <ClInclude Include="..\examples\shadow_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
@@ -274,12 +271,6 @@
     </ClCompile>
     <ClCompile Include="..\main.cpp">
       <Filter>examples</Filter>
-    </ClCompile>
-    <ClCompile Include="..\procedural_sky\hosek.cpp">
-      <Filter>source\sky</Filter>
-    </ClCompile>
-    <ClCompile Include="..\procedural_sky\preetham.cpp">
-      <Filter>source\sky</Filter>
     </ClCompile>
     <ClCompile Include="..\glfw_app.mm">
       <Filter>source\app</Filter>
