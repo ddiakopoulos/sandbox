@@ -6,5 +6,5 @@ in vec3 normal;
 
 void main()
 {
-	f_color = (vec4(color.rgb, 1) * 0.75)+ (dot(normal, vec3(0, 1, 0)) * 0.33);
+	f_color = vec4(color, 1); //(vec4(color.rgb, 1) * 0.75)+ (dot(normal, vec3(0, 1, 0)) * 0.33);
 }

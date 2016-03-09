@@ -24,6 +24,8 @@ struct ExperimentalApp : public GLFWApp
     
     GlBuffer positionInstanceBuffer;
     
+    std::vector<float3> instanceColors;
+    
     ExperimentalApp() : GLFWApp(1280, 720, "Instanced Geometry App")
     {
         glfwSwapInterval(0);
@@ -47,15 +49,13 @@ struct ExperimentalApp : public GLFWApp
         sceneObjects[0].mesh.set_attribute(4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), ((float*) 0) + 0);
         
         // 100 instances
-        
-        std::vector<float3> instanceColors;
         for (int i = 0; i < 100; ++i)
         {
             auto c = std::uniform_real_distribution<float>(0.0f, 1.0f)(gen);
-            instanceColors.push_back(float3(c, 0, 0));
+            instanceColors.push_back(float3(1, 1, 1));
         }
         
-        positionInstanceBuffer.set_buffer_data(GL_ARRAY_BUFFER, sizeof(float) * 3 * instanceColors.size(), instanceColors.data(), GL_STATIC_DRAW);
+        positionInstanceBuffer.set_buffer_data(GL_ARRAY_BUFFER, sizeof(float) * 3 * instanceColors.size(), instanceColors.data(), GL_DYNAMIC_DRAW);
         
         gl_check_error(__FILE__, __LINE__);
     }
@@ -103,17 +103,19 @@ struct ExperimentalApp : public GLFWApp
             
             sceneShader->uniform("u_viewProj", viewProj);
 
+            // Update instance data
+            positionInstanceBuffer.bind(GL_ARRAY_BUFFER);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * 3 * instanceColors.size(), instanceColors.data());
+            positionInstanceBuffer.unbind(GL_ARRAY_BUFFER);
+            
             for (auto & object : sceneObjects)
             {
                 auto model = object.get_model();
                 sceneShader->uniform("u_modelMatrix", model);
                 sceneShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-                
-                gl_check_error(__FILE__, __LINE__);
-                
-                //glVertexAttribDivisor(5, 1);
-                gl_check_error(__FILE__, __LINE__);
+
                 object.mesh.draw_elements(100, &positionInstanceBuffer); // instanced draw
+                
                 gl_check_error(__FILE__, __LINE__);
             }
             

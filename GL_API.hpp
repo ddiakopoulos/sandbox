@@ -515,6 +515,7 @@ namespace avl
                         glBindVertexArray(vao);
                         glEnableVertexAttribArray(index);
                         glVertexAttribPointer(index, attributes[index].size, attributes[index].type, attributes[index].normalized, attributes[index].stride, attributes[index].pointer);
+                        //std::cout << index << " - " << attributes[index].size << " x " << &attributes[index].pointer << std::endl;
                     }
                 }
                 
@@ -525,14 +526,15 @@ namespace avl
                 glVertexAttribDivisor(3, 0);
                 
                 glVertexAttribDivisor(4, 1);
-                
+
                 if (indexCount)
                 {
                     ibo.bind(GL_ELEMENT_ARRAY_BUFFER);
                     if (instances && instanceBuffer)
                     {
+                        // Do I need to bind here?
                         instanceBuffer->bind(GL_ARRAY_BUFFER);
-                        glDrawElementsInstanced(mode, indexCount, indexType, nullptr, instances);
+                        glDrawElementsInstanced(mode, indexCount, indexType, 0, instances);
                         instanceBuffer->unbind(GL_ARRAY_BUFFER);
                     }
                     else glDrawElements(mode, indexCount, indexType, nullptr);
