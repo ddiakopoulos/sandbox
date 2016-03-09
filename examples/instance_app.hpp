@@ -21,9 +21,7 @@ struct ExperimentalApp : public GLFWApp
     
     std::vector<Renderable> sceneObjects;
     Renderable floor;
-    
-    GlBuffer positionInstanceBuffer;
-    
+        
     std::vector<float3> instanceColors;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Instanced Geometry App")
@@ -44,18 +42,15 @@ struct ExperimentalApp : public GLFWApp
 
         // Single sphere
         sceneObjects.push_back(Renderable(make_sphere(0.5)));
-        
-        // Set instance position attribute in location 4
-        sceneObjects[0].mesh.set_attribute(4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), ((float*) 0) + 0);
-        
+                
         // 100 instances
         for (int i = 0; i < 100; ++i)
         {
             auto c = std::uniform_real_distribution<float>(0.0f, 1.0f)(gen);
             instanceColors.push_back(float3(1, 1, 1));
         }
-        
-        positionInstanceBuffer.set_buffer_data(GL_ARRAY_BUFFER, sizeof(float) * 3 * instanceColors.size(), instanceColors.data(), GL_DYNAMIC_DRAW);
+		sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceColors.size(), instanceColors.data(), GL_DYNAMIC_DRAW);
+		sceneObjects[0].mesh.set_instance_attribute(4, 3, GL_FLOAT, GL_FALSE, sizeof(float3), 0);
         
         gl_check_error(__FILE__, __LINE__);
     }
@@ -104,9 +99,7 @@ struct ExperimentalApp : public GLFWApp
             sceneShader->uniform("u_viewProj", viewProj);
 
             // Update instance data
-            positionInstanceBuffer.bind(GL_ARRAY_BUFFER);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * 3 * instanceColors.size(), instanceColors.data());
-            positionInstanceBuffer.unbind(GL_ARRAY_BUFFER);
+			// sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceColors.size(), instanceColors.data(), GL_DYNAMIC_DRAW);
             
             for (auto & object : sceneObjects)
             {
@@ -114,7 +107,7 @@ struct ExperimentalApp : public GLFWApp
                 sceneShader->uniform("u_modelMatrix", model);
                 sceneShader->uniform("u_modelMatrixIT", inv(transpose(model)));
 
-                object.mesh.draw_elements(100, &positionInstanceBuffer); // instanced draw
+                object.mesh.draw_elements(100); // instanced draw
                 
                 gl_check_error(__FILE__, __LINE__);
             }

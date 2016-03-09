@@ -33,6 +33,7 @@
     <ClInclude Include="..\examples\empty_app.hpp" />
     <ClInclude Include="..\examples\euclidean_app.hpp" />
     <ClInclude Include="..\examples\forward_lighting_app.hpp" />
+    <ClInclude Include="..\examples\instance_app.hpp" />
     <ClInclude Include="..\examples\meshline_app.hpp" />
     <ClInclude Include="..\examples\sandbox_app.hpp" />
     <ClInclude Include="..\examples\shadow_app.hpp" />
