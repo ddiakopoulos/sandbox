@@ -491,7 +491,7 @@ namespace avl
             indexType = 0;
         }
         
-        void draw_elements() const
+        void draw_elements(int instances = 0, GlBuffer * instanceBuffer = nullptr) const
         {
             GLsizei vertexCount = vstride ? ((int) vbo.size() / vstride) : 0;
             
@@ -507,7 +507,8 @@ namespace avl
             {
                 vbo.bind(GL_ARRAY_BUFFER);
                 
-                for(GLuint index = 0; index < MAX_ATTRIBUTES; ++index)
+                
+                for (GLuint index = 0; index < MAX_ATTRIBUTES; ++index)
                 {
                     if(attributes[index].size)
                     {
@@ -516,20 +517,37 @@ namespace avl
                         glVertexAttribPointer(index, attributes[index].size, attributes[index].type, attributes[index].normalized, attributes[index].stride, attributes[index].pointer);
                     }
                 }
+                
+                // Breaking hack
+                glVertexAttribDivisor(0, 0);
+                glVertexAttribDivisor(1, 0);
+                glVertexAttribDivisor(2, 0);
+                glVertexAttribDivisor(3, 0);
+                
+                glVertexAttribDivisor(4, 1);
+                
                 if (indexCount)
                 {
                     ibo.bind(GL_ELEMENT_ARRAY_BUFFER);
-                    glDrawElements(mode, indexCount, indexType, nullptr);
+                    if (instances && instanceBuffer)
+                    {
+                        instanceBuffer->bind(GL_ARRAY_BUFFER);
+                        glDrawElementsInstanced(mode, indexCount, indexType, nullptr, instances);
+                        instanceBuffer->unbind(GL_ARRAY_BUFFER);
+                    }
+                    else glDrawElements(mode, indexCount, indexType, nullptr);
                     ibo.unbind(GL_ELEMENT_ARRAY_BUFFER);
                 }
                 else
                 {
-                    glDrawArrays(mode, 0, vertexCount);
+                    if (instances) glDrawArraysInstanced(mode, 0, vertexCount, instances);
+                    else glDrawArrays(mode, 0, vertexCount);
                 }
                 for (GLuint index = 0; index < MAX_ATTRIBUTES; ++index)
                 {
                     glDisableVertexAttribArray(index);
                 }
+                
                 vbo.unbind(GL_ARRAY_BUFFER);
             }
         }
