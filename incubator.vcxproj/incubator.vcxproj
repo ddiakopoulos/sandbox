@@ -35,6 +35,7 @@
     <ClInclude Include="..\examples\forward_lighting_app.hpp" />
     <ClInclude Include="..\examples\meshline_app.hpp" />
     <ClInclude Include="..\examples\sandbox_app.hpp" />
+    <ClInclude Include="..\examples\shadow_app.hpp" />
     <ClInclude Include="..\examples\skydome_app.hpp" />
     <ClInclude Include="..\examples\ssao_app.hpp" />
     <ClInclude Include="..\examples\terrain_app.hpp" />
@@ -55,8 +56,6 @@
     <ClInclude Include="..\pid_controller.hpp" />
     <ClInclude Include="..\procedural_mesh.hpp" />
     <ClInclude Include="..\procedural_sky.hpp" />
-    <ClInclude Include="..\procedural_sky\hosek.hpp" />
-    <ClInclude Include="..\procedural_sky\preetham.hpp" />
     <ClInclude Include="..\renderable_grid.hpp" />
     <ClInclude Include="..\running_statistics.hpp" />
     <ClInclude Include="..\scene.hpp" />
@@ -96,8 +95,6 @@
     <ClCompile Include="..\GL_API.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\nvg.cpp" />
-    <ClCompile Include="..\procedural_sky\hosek.cpp" />
-    <ClCompile Include="..\procedural_sky\preetham.cpp" />
     <ClCompile Include="..\third_party\efsw.cpp" />
     <ClCompile Include="..\third_party\imgui\imgui.cpp" />
     <ClCompile Include="..\third_party\imgui\imgui_draw.cpp" />
