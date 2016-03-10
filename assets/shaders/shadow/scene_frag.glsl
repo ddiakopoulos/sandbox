@@ -171,7 +171,7 @@ void main()
 
     vec3 eyeDir = normalize(u_eye - v_world_position);
 
-    //totalLighting += calculate_directional_light(u_directionalLight, v_camera_directional_light);
+    totalLighting += calculate_directional_light(u_directionalLight, v_camera_directional_light);
 
     for (int i = 0; i < MAX_SPOT_LIGHTS; i++)
         totalLighting += calculate_spot_light(u_spotLights[i], v_camera_spot_light[i], i);

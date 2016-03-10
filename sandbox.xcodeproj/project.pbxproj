@@ -10,7 +10,6 @@
 		080980311C4DA9120009122A /* libglfw3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 080980301C4DA9120009122A /* libglfw3.dylib */; };
 		0812049D1BADDF6800C7C0F4 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0812049C1BADDF6800C7C0F4 /* main.cpp */; };
 		0822AF371BD4ADBF00A894F0 /* GL_API.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0822AF361BD4ADBF00A894F0 /* GL_API.cpp */; };
-		0849FD821BE7C667000F148E /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD801BE7C667000F148E /* json.cpp */; };
 		0849FD851BE7C66E000F148E /* tinyply.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD831BE7C66E000F148E /* tinyply.cpp */; };
 		0849FD9C1BFADE27000F148E /* gizmo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD9A1BFADE27000F148E /* gizmo.cpp */; };
 		0849FDA11BFAFCC3000F148E /* tiny_obj_loader.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0849FD9F1BFAFCC3000F148E /* tiny_obj_loader.cc */; };
@@ -18,10 +17,6 @@
 		087A4EA21BB8EC9B00975C72 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA11BB8EC9B00975C72 /* OpenGL.framework */; };
 		087A4EA41BB8ECA100975C72 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA31BB8ECA100975C72 /* GLKit.framework */; };
 		087A4EA61BB8ECA600975C72 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 087A4EA51BB8ECA600975C72 /* Cocoa.framework */; };
-		089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B86071BAFC9AB00B3A290 /* murmur_hash_3.cpp */; };
-		089B86121BAFC9AB00B3A290 /* noise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B86091BAFC9AB00B3A290 /* noise1234.cpp */; };
-		089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */; };
-		08C4757C1C0579550031E87E /* noise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C4757A1C0579550031E87E /* noise.cpp */; };
 		08C475821C0AE9C50031E87E /* jo_gif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C475801C0AE9C50031E87E /* jo_gif.cpp */; };
 		08C4758D1C1C844F0031E87E /* efsw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08C4758C1C1C844F0031E87E /* efsw.cpp */; };
 		08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08CFD2DC1BDD667000895E31 /* nvg.cpp */; };
@@ -90,8 +85,6 @@
 		0849FD7C1BE7C1C1000F148E /* sky_hosek_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_hosek_frag.glsl; path = assets/shaders/sky_hosek_frag.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD7D1BE7C1C1000F148E /* sky_preetham_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_preetham_frag.glsl; path = assets/shaders/sky_preetham_frag.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD7E1BE7C1C1000F148E /* sky_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_vert.glsl; path = assets/shaders/sky_vert.glsl; sourceTree = SOURCE_ROOT; };
-		0849FD801BE7C667000F148E /* json.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = json.cpp; path = third_party/json.cpp; sourceTree = SOURCE_ROOT; };
-		0849FD811BE7C667000F148E /* json.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = json.hpp; path = third_party/json.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD831BE7C66E000F148E /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyply.cpp; path = third_party/tinyply.cpp; sourceTree = SOURCE_ROOT; };
 		0849FD841BE7C66E000F148E /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyply.h; path = third_party/tinyply.h; sourceTree = SOURCE_ROOT; };
 		0849FD871BE7C801000F148E /* index.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = index.hpp; sourceTree = SOURCE_ROOT; };
@@ -117,17 +110,9 @@
 		088B47BD1C42D56B0007BB59 /* vision.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vision.hpp; path = minivision/vision.hpp; sourceTree = SOURCE_ROOT; };
 		088B47BF1C42DDC10007BB59 /* texture_view.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = texture_view.hpp; sourceTree = SOURCE_ROOT; };
 		089B85FD1BAFC70B00B3A290 /* base64.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = base64.hpp; sourceTree = SOURCE_ROOT; };
-		089B86071BAFC9AB00B3A290 /* murmur_hash_3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = murmur_hash_3.cpp; path = third_party/murmur_hash_3.cpp; sourceTree = SOURCE_ROOT; };
-		089B86081BAFC9AB00B3A290 /* murmur_hash_3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = murmur_hash_3.h; path = third_party/murmur_hash_3.h; sourceTree = SOURCE_ROOT; };
-		089B86091BAFC9AB00B3A290 /* noise1234.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = noise1234.cpp; path = third_party/noise1234.cpp; sourceTree = SOURCE_ROOT; };
-		089B860A1BAFC9AB00B3A290 /* noise1234.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = noise1234.h; path = third_party/noise1234.h; sourceTree = SOURCE_ROOT; };
-		089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = simplexnoise1234.cpp; path = third_party/simplexnoise1234.cpp; sourceTree = SOURCE_ROOT; };
-		089B860C1BAFC9AB00B3A290 /* simplexnoise1234.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = simplexnoise1234.h; path = third_party/simplexnoise1234.h; sourceTree = SOURCE_ROOT; };
 		089B86141BAFD06300B3A290 /* dsp_filters.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dsp_filters.hpp; sourceTree = SOURCE_ROOT; };
 		089B86151BAFD39100B3A290 /* bit_mask.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = bit_mask.hpp; sourceTree = SOURCE_ROOT; };
 		08C475791C02CFF30031E87E /* terrain_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = terrain_app.hpp; path = examples/terrain_app.hpp; sourceTree = SOURCE_ROOT; };
-		08C4757A1C0579550031E87E /* noise.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = noise.cpp; path = third_party/noise.cpp; sourceTree = SOURCE_ROOT; };
-		08C4757B1C0579550031E87E /* noise.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = noise.h; path = third_party/noise.h; sourceTree = SOURCE_ROOT; };
 		08C4757D1C0AD67D0031E87E /* camera_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = camera_app.hpp; path = examples/camera_app.hpp; sourceTree = SOURCE_ROOT; };
 		08C4757E1C0AD67D0031E87E /* euclidean_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = euclidean_app.hpp; path = examples/euclidean_app.hpp; sourceTree = SOURCE_ROOT; };
 		08C475801C0AE9C50031E87E /* jo_gif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jo_gif.cpp; path = third_party/jo_gif.cpp; sourceTree = SOURCE_ROOT; };
@@ -283,23 +268,11 @@
 				08C4758B1C1C84420031E87E /* efsw */,
 				08C475831C0E0B580031E87E /* jo_gif */,
 				0849FD9E1BFAFC77000F148E /* tinyobj */,
-				0849FD911BF00334000F148E /* json */,
 				08289F7D1BC5F7E40054AF3B /* tinyply */,
-				089B86001BAFC96D00B3A290 /* noise1234 */,
 				089B85FF1BAFC96800B3A290 /* stb */,
-				089B85FE1BAFC95D00B3A290 /* murmur_hash */,
 				08CFD2E41BDD669A00895E31 /* nvg */,
 			);
 			name = third_party;
-			sourceTree = "<group>";
-		};
-		0849FD911BF00334000F148E /* json */ = {
-			isa = PBXGroup;
-			children = (
-				0849FD801BE7C667000F148E /* json.cpp */,
-				0849FD811BE7C667000F148E /* json.hpp */,
-			);
-			name = json;
 			sourceTree = "<group>";
 		};
 		0849FD991BFADE05000F148E /* gizmo */ = {
@@ -338,15 +311,6 @@
 			name = minivision;
 			sourceTree = "<group>";
 		};
-		089B85FE1BAFC95D00B3A290 /* murmur_hash */ = {
-			isa = PBXGroup;
-			children = (
-				089B86071BAFC9AB00B3A290 /* murmur_hash_3.cpp */,
-				089B86081BAFC9AB00B3A290 /* murmur_hash_3.h */,
-			);
-			name = murmur_hash;
-			sourceTree = "<group>";
-		};
 		089B85FF1BAFC96800B3A290 /* stb */ = {
 			isa = PBXGroup;
 			children = (
@@ -358,19 +322,6 @@
 				08F652FC1C74375D0076DF49 /* stb_truetype.h */,
 			);
 			name = stb;
-			sourceTree = "<group>";
-		};
-		089B86001BAFC96D00B3A290 /* noise1234 */ = {
-			isa = PBXGroup;
-			children = (
-				08C4757A1C0579550031E87E /* noise.cpp */,
-				08C4757B1C0579550031E87E /* noise.h */,
-				089B86091BAFC9AB00B3A290 /* noise1234.cpp */,
-				089B860A1BAFC9AB00B3A290 /* noise1234.h */,
-				089B860B1BAFC9AB00B3A290 /* simplexnoise1234.cpp */,
-				089B860C1BAFC9AB00B3A290 /* simplexnoise1234.h */,
-			);
-			name = noise1234;
 			sourceTree = "<group>";
 		};
 		08C475761C02C9200031E87E /* rendering */ = {
@@ -568,12 +519,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				08C4757C1C0579550031E87E /* noise.cpp in Sources */,
 				0849FD9C1BFADE27000F148E /* gizmo.cpp in Sources */,
 				0812049D1BADDF6800C7C0F4 /* main.cpp in Sources */,
 				08F653061C74376E0076DF49 /* imgui_draw.cpp in Sources */,
-				089B86131BAFC9AB00B3A290 /* simplexnoise1234.cpp in Sources */,
-				089B86111BAFC9AB00B3A290 /* murmur_hash_3.cpp in Sources */,
 				08C475821C0AE9C50031E87E /* jo_gif.cpp in Sources */,
 				0822AF371BD4ADBF00A894F0 /* GL_API.cpp in Sources */,
 				0849FDA11BFAFCC3000F148E /* tiny_obj_loader.cc in Sources */,
@@ -581,9 +529,7 @@
 				0849FD851BE7C66E000F148E /* tinyply.cpp in Sources */,
 				08F653071C74376E0076DF49 /* imgui.cpp in Sources */,
 				08CFD2DE1BDD667000895E31 /* nvg.cpp in Sources */,
-				089B86121BAFC9AB00B3A290 /* noise1234.cpp in Sources */,
 				085081971BB5B6EA0084A1D6 /* glfw_app.mm in Sources */,
-				0849FD821BE7C667000F148E /* json.cpp in Sources */,
 				08C4758D1C1C844F0031E87E /* efsw.cpp in Sources */,
 				08F6530A1C743AE10076DF49 /* avl_imgui.cpp in Sources */,
 			);
