@@ -580,8 +580,8 @@ namespace avl
         // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms.
         Sphere transformed(const float4x4 & transform)
         {
-            float4 tCenter = transform * float4(center, 1);
-            float4 tRadius = transform * float4(radius, 0, 0, 0);
+            float4 tCenter = mul(transform, float4(center, 1));
+            float4 tRadius = mul(transform, float4(radius, 0, 0, 0));
             return Sphere(float3(tCenter.x, tCenter.y, tCenter.z), length(tRadius));
         }
         

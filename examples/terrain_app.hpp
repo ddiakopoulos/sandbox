@@ -189,12 +189,12 @@ struct ExperimentalApp : public GLFWApp
         terrainShader->uniform("u_lightPosition", float3(0.0, 10.0, 0.0));
         terrainShader->uniform("u_clipPlane", float4(0, 0, 0, 0));
         
-		float4x4 viewProj = camera.get_projection_matrix((float)width / (float)height) * camera.get_view_matrix();
+		float4x4 viewProj = mul(camera.get_projection_matrix((float)width / (float)height), camera.get_view_matrix());
 
         {
             float4x4 model = terrainTranslationMat;
-            float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
-            float4x4 modelViewMat = camera.get_view_matrix() * model;
+            float4x4 mvp = mul(camera.get_projection_matrix((float) width / (float) height), camera.get_view_matrix(), model);
+            float4x4 modelViewMat = mul(camera.get_view_matrix(), model);
             
             terrainShader->uniform("u_mvp", mvp);
 			terrainShader->uniform("u_model", model);
@@ -206,9 +206,9 @@ struct ExperimentalApp : public GLFWApp
         }
         
         {
-            float4x4 model = Identity4x4 * make_translation_matrix({0, 12, 0}) * make_rotation_matrix({0, 1, 0}, rotationAngle * 0.99f);
-            float4x4 mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
-            float4x4 modelViewMat = camera.get_view_matrix() * model;
+            float4x4 model = mul(Identity4x4, make_translation_matrix({0, 12, 0}), make_rotation_matrix({0, 1, 0}, rotationAngle * 0.99f));
+            float4x4 mvp = mul(camera.get_projection_matrix((float) width / (float) height), camera.get_view_matrix(), model);
+            float4x4 modelViewMat = mul(camera.get_view_matrix(), model);
             
             terrainShader->uniform("u_mvp", mvp);
 			terrainShader->uniform("u_model", model);
@@ -261,7 +261,7 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.f, 0.0f, 0.0f, 1.0f);
         
-        float4x4 viewProj = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix();
+        float4x4 viewProj = mul(camera.get_projection_matrix((float) width / (float) height), camera.get_view_matrix());
         
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         
@@ -278,14 +278,14 @@ struct ExperimentalApp : public GLFWApp
             float3 pos = {0, 0, 0}; // Location of object... here, the terrain
             float4 reflectionPlane = float4(normal.x, normal.y, normal.z, 0.f);
 
-            float4x4 model = Identity4x4 * terrainTranslationMat;
+            float4x4 model = mul(Identity4x4, terrainTranslationMat);
             
 			// Take position, transform into world space with model, reflect about a world space reflection plane, then take it into the view space of the camera
 			// ViewProj takes the camera local coordinate into screen coordinates (3D to the 2D + Z)
 			// gl_position = proj * view * refl * model * position;
 
             terrainShader->bind();
-            terrainShader->uniform("u_viewProj", viewProj * make_reflection_matrix(reflectionPlane));
+            terrainShader->uniform("u_viewProj", mul(viewProj, make_reflection_matrix(reflectionPlane)));
 			terrainShader->uniform("u_model", model);
 			//terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
             terrainShader->uniform("u_eyePosition", camera.get_eye_point());            
@@ -320,8 +320,8 @@ struct ExperimentalApp : public GLFWApp
             // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             float4x4 model = make_rotation_matrix({1, 0, 0}, -ANVIL_PI / 2);
-            auto mvp = camera.get_projection_matrix((float) width / (float) height) * camera.get_view_matrix() * model;
-            float4x4 modelViewMat = camera.get_view_matrix() * model;
+            auto mvp = mul(camera.get_projection_matrix((float) width / (float) height), camera.get_view_matrix(), model);
+            float4x4 modelViewMat = mul(camera.get_view_matrix(), model);
             
             waterShader->bind();
             
