@@ -479,7 +479,7 @@ namespace avl
         {
             GLsizei vertexCount = vertexStride ? ((int) vertexBuffer.size() / vertexStride) : 0;
             
-            static GLsizei indexCount = [&]() -> GLsizei
+            GLsizei indexCount = [&]() -> GLsizei
             {
                 if (indexType == GL_UNSIGNED_BYTE) return ((int)indexBuffer.size() / sizeof(GLubyte));
                 if (indexType == GL_UNSIGNED_SHORT) return ((int)indexBuffer.size() / sizeof(GLushort));
@@ -499,6 +499,7 @@ namespace avl
                         glVertexAttribPointer(index, attributes[index].size, attributes[index].type, attributes[index].normalized, attributes[index].stride, attributes[index].pointer); // AttribPointer is relative to currently point ARRAY_BUFFER
                         glVertexAttribDivisor(index, attributes[index].is_instance ? 1 : 0);
                         glEnableVertexAttribArray(index);
+                        
                     }
                 }
                 
