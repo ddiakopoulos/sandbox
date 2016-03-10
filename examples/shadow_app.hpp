@@ -37,20 +37,18 @@ struct DirectionalLight
         const float halfSize = size * 0.5f;
         return make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize) * make_view_matrix_from_pose(p);
     }
-    
 };
 
 struct SpotLight
 {
     float3 color;
     float3 direction;
-    float size;
     
     float3 position;
     float cutoff;
     float3 attenuation; // constant, linear, quadratic
     
-    SpotLight(const float3 pos, const float3 dir, const float3 color, float size, float cut, float3 att) : position(pos), direction(dir), color(color), size(size), cutoff(cut), attenuation(att) {}
+    SpotLight(const float3 pos, const float3 dir, const float3 color, float cut, float3 att) : position(pos), direction(dir), color(color), cutoff(cut), attenuation(att) {}
     
     float4x4 get_view_proj_matrix()
     {
@@ -58,6 +56,7 @@ struct SpotLight
         return make_perspective_matrix(to_radians(cutoff * 2.0f), 1.0f, 0.1f, 1000.f) * make_view_matrix_from_pose(p);
     }
     
+    float get_cutoff() { return cosf(to_radians(cutoff)); }
 };
 
 struct ExperimentalApp : public GLFWApp
@@ -96,6 +95,7 @@ struct ExperimentalApp : public GLFWApp
     GlFramebuffer shadowBlurFramebuffer;
     
     std::shared_ptr<DirectionalLight> sunLight;
+    std::vector<std::shared_ptr<SpotLight>> spotLights;
     
     const float shadowmapResolution = 2048;
     float blurSigma = 3.0f;
@@ -137,6 +137,11 @@ struct ExperimentalApp : public GLFWApp
         
         auto lightDir = skydome.get_light_direction();
         sunLight = std::make_shared<DirectionalLight>(lightDir, float3(.50f, .75f, .825f), 64.f);
+        
+        auto spotLightA = std::make_shared<SpotLight>(float3(0.f, 10.f, 0.f), float3(0.f, -1.f, 0.f), float3(1.f, 0.f, 0.f), 30.0f, float3(1.0f, 0.0f, 0.0001f));
+        spotLights.push_back(spotLightA);
+        
+        // todo spotLightB
         
         shadowDepthTexture.load_data(shadowmapResolution, shadowmapResolution, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         shadowFramebuffer.attach(GL_DEPTH_ATTACHMENT, shadowDepthTexture);
@@ -286,6 +291,17 @@ struct ExperimentalApp : public GLFWApp
             sceneShader->uniform("u_directionalLight.color", sunLight->color);
             sceneShader->uniform("u_directionalLight.direction", sunLight->direction);
             sceneShader->uniform("u_dirLightViewProjectionMat", sunLight->get_view_proj_matrix(target));
+            
+            sceneShader->uniform("u_spotLightViewProjectionMat[0]", spotLights[0]->get_view_proj_matrix());
+            //sceneShader->uniform("u_spotLightViewProjectionMat[1]", sunLight->get_view_proj_matrix(target));
+
+            sceneShader->uniform("u_spotLights[0].color", spotLights[0]->color);
+            sceneShader->uniform("u_spotLights[0].direction", spotLights[0]->direction);
+            sceneShader->uniform("u_spotLights[0].position", spotLights[0]->position);
+            sceneShader->uniform("u_spotLights[0].cutoff", spotLights[0]->get_cutoff());
+            sceneShader->uniform("u_spotLights[0].constantAtten", spotLights[0]->attenuation.x);
+            sceneShader->uniform("u_spotLights[0].linearAtten", spotLights[0]->attenuation.y);
+            sceneShader->uniform("u_spotLights[0].quadraticAtten", spotLights[0]->attenuation.z);
             
             sceneShader->uniform("u_shadowMapBias", 0.01f / shadowmapResolution);
             sceneShader->uniform("u_shadowMapTexelSize", float2(1.0f / shadowmapResolution));
