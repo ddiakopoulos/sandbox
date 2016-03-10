@@ -129,29 +129,29 @@ namespace avl
     
     inline float4 make_rotation_quat_between_vectors(const float3 & from, const float3 & to)
     {
-        auto a = normalize(from), b = normalize(to);
-        return make_rotation_quat_axis_angle(normalize(cross(a,b)), std::acos(dot(a,b)));
+        auto a = safe_normalize(from), b = safe_normalize(to);
+        return make_rotation_quat_axis_angle(safe_normalize(cross(a,b)), std::acos(dot(a,b)));
     }
     
     inline float4 make_rotation_quat_between_vectors_snapped(const float3 & from, const float3 & to, const float angle)
     {
-        auto a = normalize(from);
-        auto b = normalize(to);
+        auto a = safe_normalize(from);
+        auto b = safe_normalize(to);
         auto snappedAcos = std::floor(std::acos(dot(a,b)) / angle) * angle;
-        return make_rotation_quat_axis_angle(normalize(cross(a,b)), snappedAcos);
+        return make_rotation_quat_axis_angle(safe_normalize(cross(a,b)), snappedAcos);
     }
     
     inline float4 make_rotation_quat_from_rotation_matrix(const float3x3 & m)
     {
-        const float magw =  m(0,0) + m(1,1) + m(2,2);
+        const float magw =  m[0][0] + m[1][1] + m[2][2];
         
-        const bool wvsz = magw  > m(2,2);
-        const float magzw  = wvsz ? magw : m(2,2);
+        const bool wvsz = magw  > m[2][2];
+        const float magzw  = wvsz ? magw : m[2][2];
         const float3 prezw  = wvsz ? float3(1,1,1) : float3(-1,-1,1) ;
         const float4 postzw = wvsz ? float4(0,0,0,1): float4(0,0,1,0);
         
-        const bool xvsy = m(0,0) > m(1,1);
-        const float magxy = xvsy ? m(0,0) : m(1,1);
+        const bool xvsy = m[0][0] > m[1][1];
+        const float magxy = xvsy ? m[0][0] : m[1][1];
         const float3 prexy = xvsy ? float3(1,-1,-1) : float3(-1,1,-1) ;
         const float4 postxy = xvsy ? float4(1,0,0,0) : float4(0,1,0,0);
         
@@ -159,9 +159,9 @@ namespace avl
         const float3 pre  = zwvsxy ? prezw  : prexy ;
         const float4 post = zwvsxy ? postzw : postxy;
         
-        const float t = pre.x * m(0,0) + pre.y * m(1,1) + pre.z * m(2,2) + 1;
+        const float t = pre.x * m[0][0] + pre.y * m[1][1] + pre.z * m[2][2] + 1;
         const float s = 1.f / sqrt(t) / 2.f;
-        const float4 qp = float4(pre.y * m(2,1) - pre.z * m(1,2), pre.z * m(0,2) - pre.x * m(2,0), pre.x * m(1,0) - pre.y * m(0,1), t) * s;
+        const float4 qp = float4(pre.y * m[1][2] - pre.z * m[2][1], pre.z * m[2][0] - pre.x * m[0][2], pre.x * m[0][1] - pre.y * m[1][0], t) * s;
         return qmul(qp, post);
     }
     
@@ -213,7 +213,7 @@ namespace avl
     inline void decompose_swing_twist(const float4 q, const float3 vt, float4 & swing, float4 & twist)
     {
         float3 p = vt * dot(vt, twist.xyz());
-        twist = normalize(float4(p.x, p.y, p.z, q.w));
+        twist = safe_normalize(float4(p.x, p.y, p.z, q.w));
         if (!twist.x && !twist.y && !twist.z && !twist.w) twist = float4(0, 0, 0, 1); // singularity
         swing = q * qconj(twist);
     }
@@ -283,25 +283,25 @@ namespace avl
     {
         float4x4 reflectionMat = Zero4x4;
         
-        reflectionMat(0,0) = (1.f-2.0f * plane[0]*plane[0]);
-        reflectionMat(0,1) = (   -2.0f * plane[0]*plane[1]);
-        reflectionMat(0,2) = (   -2.0f * plane[0]*plane[2]);
-        reflectionMat(0,3) = (   -2.0f * plane[3]*plane[0]);
-        
-        reflectionMat(1,0) = (   -2.0f * plane[1]*plane[0]);
-        reflectionMat(1,1) = (1.f-2.0f * plane[1]*plane[1]);
-        reflectionMat(1,2) = (   -2.0f * plane[1]*plane[2]);
-        reflectionMat(1,3) = (   -2.0f * plane[3]*plane[1]);
-        
-        reflectionMat(2,0) = (   -2.0f * plane[2]*plane[0]);
-        reflectionMat(2,1) = (   -2.0f * plane[2]*plane[1]);
-        reflectionMat(2,2) = (1.f-2.0f * plane[2]*plane[2]);
-        reflectionMat(2,3) = (   -2.0f * plane[3]*plane[2]);
-        
-        reflectionMat(3,0) = 0.0f;
-        reflectionMat(3,1) = 0.0f;
-        reflectionMat(3,2) = 0.0f;
-        reflectionMat(3,3) = 1.0f;
+        reflectionMat[0][0] = (1.f-2.0f * plane[0]*plane[0]);
+        reflectionMat[1][0] = (   -2.0f * plane[0]*plane[1]);
+        reflectionMat[2][0] = (   -2.0f * plane[0]*plane[2]);
+        reflectionMat[3][0] = (   -2.0f * plane[3]*plane[0]);
+
+        reflectionMat[0][1] = (   -2.0f * plane[1]*plane[0]);
+        reflectionMat[1][1] = (1.f-2.0f * plane[1]*plane[1]);
+        reflectionMat[2][1] = (   -2.0f * plane[1]*plane[2]);
+        reflectionMat[3][1] = (   -2.0f * plane[3]*plane[1]);
+
+        reflectionMat[0][2] = (   -2.0f * plane[2]*plane[0]);
+        reflectionMat[1][2] = (   -2.0f * plane[2]*plane[1]);
+        reflectionMat[2][2] = (1.f-2.0f * plane[2]*plane[2]);
+        reflectionMat[3][2] = (   -2.0f * plane[3]*plane[2]);
+
+        reflectionMat[0][3] = 0.0f;
+        reflectionMat[1][3] = 0.0f;
+        reflectionMat[2][3] = 0.0f;
+        reflectionMat[3][3] = 1.0f;
         
         return reflectionMat;
     }
@@ -362,11 +362,11 @@ namespace avl
     inline Pose look_at_pose(float3 eyePoint, float3 target, float3 worldUp = {0,1,0})
     {
         Pose p;
-        float3 zDir = normalize(eyePoint - target);
-        float3 xDir = normalize(cross(worldUp, zDir));
+        float3 zDir = safe_normalize(eyePoint - target);
+        float3 xDir = safe_normalize(cross(worldUp, zDir));
         float3 yDir = cross(zDir, xDir);
         p.position = eyePoint;
-        p.orientation = normalize(make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
+        p.orientation = safe_normalize(make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
         return p;
     }
     
@@ -413,14 +413,14 @@ namespace avl
     
     inline Ray between(const float3 & start, const float3 & end)
     {
-        return {start, normalize(end - start)};
+        return {start, safe_normalize(end - start)};
     }
     
     inline Ray ray_from_viewport_pixel(const float2 & pixelCoord, const float2 & viewportSize, const float4x4 & projectionMatrix)
     {
         float vx = pixelCoord.x * 2 / viewportSize.x - 1, vy = 1 - pixelCoord.y * 2 / viewportSize.y;
         auto invProj = inv(projectionMatrix);
-        return {{0,0,0}, normalize(transform_coord(invProj, {vx, vy, +1}) - transform_coord(invProj, {vx, vy, -1}))};
+        return {{0,0,0}, safe_normalize(transform_coord(invProj, {vx, vy, +1}) - transform_coord(invProj, {vx, vy, -1}))};
     }
     
 }
