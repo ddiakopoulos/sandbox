@@ -306,7 +306,6 @@ namespace avl
     //   GlBuffer   //
     //////////////////
     
-    // Can be used for things like a vbo, ibo, or pbo
     class GlBuffer : public Noncopyable
     {
         GLuint buffer;
@@ -462,16 +461,16 @@ namespace avl
         enum { MAX_ATTRIBUTES = 8 };
         struct Attribute { bool is_instance; GLint size; GLenum type; GLboolean normalized; GLsizei stride; const GLvoid * pointer; } attributes[MAX_ATTRIBUTES];
         
-        GlBuffer vbo, instancebo, ibo;
+        GlBuffer vertexBuffer, instanceBuffer, indexBuffer;
+        
+        GLuint vertexArrayHandle;
         GLenum mode = GL_TRIANGLES;
         GLenum indexType = 0;
-        GLsizei vstride = 0, instancestride = 0;
-        
-        GLuint vao;
+        GLsizei vertexStride = 0, instanceStride = 0;
         
     public:
         
-        GlMesh() { memset(attributes,0,sizeof(attributes)); glGenVertexArrays(1, &vao); }
+        GlMesh() { memset(attributes,0,sizeof(attributes)); glGenVertexArrays(1, &vertexArrayHandle); }
         GlMesh(GlMesh && r) : GlMesh() { *this = std::move(r); }
         ~GlMesh() {};
         
@@ -487,68 +486,68 @@ namespace avl
         void set_non_indexed(GLenum mode)
         {
             this->mode = mode;
-            ibo = {};
+            indexBuffer = {};
             indexType = 0;
         }
         
         void draw_elements(int instances = 0) const
         {
-            GLsizei vertexCount = vstride ? ((int) vbo.size() / vstride) : 0;
+            GLsizei vertexCount = vertexStride ? ((int) vertexBuffer.size() / vertexStride) : 0;
             
             static GLsizei indexCount = [&]() -> GLsizei
             {
-                if (indexType == GL_UNSIGNED_BYTE) return ((int)ibo.size() / sizeof(GLubyte));
-                if (indexType == GL_UNSIGNED_SHORT) return ((int)ibo.size() / sizeof(GLushort));
-                if (indexType == GL_UNSIGNED_INT) return ((int)ibo.size() / sizeof(GLuint));
+                if (indexType == GL_UNSIGNED_BYTE) return ((int)indexBuffer.size() / sizeof(GLubyte));
+                if (indexType == GL_UNSIGNED_SHORT) return ((int)indexBuffer.size() / sizeof(GLushort));
+                if (indexType == GL_UNSIGNED_INT) return ((int)indexBuffer.size() / sizeof(GLuint));
                 else return 0;
             }();
             
             if (vertexCount)
-            {           
-				// BEGIN stuff that only needs to be done once
-				glBindVertexArray(vao);
+            {
+                // BEGIN stuff that only needs to be done once
+                glBindVertexArray(vertexArrayHandle);
                 for (GLuint index = 0; index < MAX_ATTRIBUTES; ++index)
                 {
                     if (attributes[index].size)
                     {
-						(attributes[index].is_instance ? instancebo : vbo).bind(GL_ARRAY_BUFFER);
-						glVertexAttribPointer(index, attributes[index].size, attributes[index].type, attributes[index].normalized, attributes[index].stride, attributes[index].pointer); // AttribPointer is relative to currently point ARRAY_BUFFER
-						glVertexAttribDivisor(index, attributes[index].is_instance ? 1 : 0);
+                        (attributes[index].is_instance ? instanceBuffer : vertexBuffer).bind(GL_ARRAY_BUFFER);
+                        glVertexAttribPointer(index, attributes[index].size, attributes[index].type, attributes[index].normalized, attributes[index].stride, attributes[index].pointer); // AttribPointer is relative to currently point ARRAY_BUFFER
+                        glVertexAttribDivisor(index, attributes[index].is_instance ? 1 : 0);
                         glEnableVertexAttribArray(index);
                     }
                 }
-
+                
                 if (indexCount)
                 {
-                    ibo.bind(GL_ELEMENT_ARRAY_BUFFER);
+                    indexBuffer.bind(GL_ELEMENT_ARRAY_BUFFER);
                     if (instances) glDrawElementsInstanced(mode, indexCount, indexType, 0, instances);
                     else glDrawElements(mode, indexCount, indexType, nullptr);
-                    ibo.unbind(GL_ELEMENT_ARRAY_BUFFER);
+                    indexBuffer.unbind(GL_ELEMENT_ARRAY_BUFFER);
                 }
                 else
                 {
                     if (instances) glDrawArraysInstanced(mode, 0, vertexCount, instances);
                     else glDrawArrays(mode, 0, vertexCount);
                 }
-
+                
                 for (GLuint index = 0; index < MAX_ATTRIBUTES; ++index)
                 {
                     glDisableVertexAttribArray(index);
                 }
                 
-				glBindVertexArray(0);
+                glBindVertexArray(0);
             }
         }
         
         void set_vertex_data(GLsizeiptr size, const GLvoid * data, GLenum usage)
         {
-            vbo.set_buffer_data(GL_ARRAY_BUFFER, size, data, usage);
+            vertexBuffer.set_buffer_data(GL_ARRAY_BUFFER, size, data, usage);
         }
-
-		void set_instance_data(GLsizeiptr size, const GLvoid * data, GLenum usage)
-		{
-			instancebo.set_buffer_data(GL_ARRAY_BUFFER, size, data, usage);
-		}
+        
+        void set_instance_data(GLsizeiptr size, const GLvoid * data, GLenum usage)
+        {
+            instanceBuffer.set_buffer_data(GL_ARRAY_BUFFER, size, data, usage);
+        }
         
         void set_index_data(GLenum mode, GLenum type, GLsizei count, const GLvoid * data, GLenum usage)
         {
@@ -560,7 +559,7 @@ namespace avl
                 case GL_UNSIGNED_INT: elementSize = sizeof(uint32_t); break;
                 default: throw std::logic_error("unknown element type"); break;
             }
-            ibo.set_buffer_data(GL_ELEMENT_ARRAY_BUFFER, elementSize * count, data, usage);
+            indexBuffer.set_buffer_data(GL_ELEMENT_ARRAY_BUFFER, elementSize * count, data, usage);
             this->mode = mode;
             indexType = type;
         }
@@ -568,14 +567,14 @@ namespace avl
         void set_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
         {
             attributes[index] = {false, size, type, normalized, stride, pointer};
-            vstride = stride;
+            vertexStride = stride;
         }
-
-		void set_instance_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
-		{
-			attributes[index] = {true, size, type, normalized, stride, pointer };
-			instancestride = stride;
-		}
+        
+        void set_instance_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
+        {
+            attributes[index] = {true, size, type, normalized, stride, pointer };
+            instanceStride = stride;
+        }
         
         void set_indices(GLenum mode, GLsizei count, const uint8_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_BYTE, count, indices, usage); }
         void set_indices(GLenum mode, GLsizei count, const uint16_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_SHORT, count, indices, usage); }

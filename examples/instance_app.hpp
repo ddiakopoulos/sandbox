@@ -104,7 +104,7 @@ struct ExperimentalApp : public GLFWApp
             sceneShader->uniform("u_viewProj", viewProj);
 
             // Update instance data
-			// sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceColors.size(), instanceColors.data(), GL_DYNAMIC_DRAW);
+			//sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceColors.size(), instanceColors.data(), GL_DYNAMIC_DRAW);
             
             for (auto & object : sceneObjects)
             {
