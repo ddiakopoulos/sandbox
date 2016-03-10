@@ -40,6 +40,26 @@ struct DirectionalLight
     
 };
 
+struct SpotLight
+{
+    float3 color;
+    float3 direction;
+    float size;
+    
+    float3 position;
+    float cutoff;
+    float3 attenuation; // constant, linear, quadratic
+    
+    SpotLight(const float3 pos, const float3 dir, const float3 color, float size, float cut, float3 att) : position(pos), direction(dir), color(color), size(size), cutoff(cut), attenuation(att) {}
+    
+    float4x4 get_view_proj_matrix()
+    {
+        auto p = look_at_pose(position, position + -direction);
+        return make_perspective_matrix(to_radians(cutoff * 2.0f), 1.0f, 0.1f, 1000.f) * make_view_matrix_from_pose(p);
+    }
+    
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     std::random_device rd;
