@@ -495,7 +495,7 @@ namespace avl
         {
             GLsizei vertexCount = vstride ? ((int) vbo.size() / vstride) : 0;
             
-            GLsizei indexCount = [&]() -> GLsizei
+            static GLsizei indexCount = [&]() -> GLsizei
             {
                 if (indexType == GL_UNSIGNED_BYTE) return ((int)ibo.size() / sizeof(GLubyte));
                 if (indexType == GL_UNSIGNED_SHORT) return ((int)ibo.size() / sizeof(GLushort));
@@ -509,19 +509,15 @@ namespace avl
 				glBindVertexArray(vao);
                 for (GLuint index = 0; index < MAX_ATTRIBUTES; ++index)
                 {
-                    if(attributes[index].size)
+                    if (attributes[index].size)
                     {
-						//(use_blending ? glEnable : glDisable)(GL_BLEND);
 						(attributes[index].is_instance ? instancebo : vbo).bind(GL_ARRAY_BUFFER);
 						glVertexAttribPointer(index, attributes[index].size, attributes[index].type, attributes[index].normalized, attributes[index].stride, attributes[index].pointer); // AttribPointer is relative to currently point ARRAY_BUFFER
 						glVertexAttribDivisor(index, attributes[index].is_instance ? 1 : 0);
                         glEnableVertexAttribArray(index);
                     }
                 }
-				//ibo.bind(GL_ELEMENT_ARRAY_BUFFER);
-				// END stuff that only needs to be done once
-                
-                // Breaking hack
+
                 if (indexCount)
                 {
                     ibo.bind(GL_ELEMENT_ARRAY_BUFFER);

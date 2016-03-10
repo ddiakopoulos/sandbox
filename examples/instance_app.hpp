@@ -22,7 +22,7 @@ struct ExperimentalApp : public GLFWApp
     std::vector<Renderable> sceneObjects;
     Renderable floor;
         
-    std::vector<float3> instanceColors;
+    std::vector<float3> instanceData;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Instanced Geometry App")
     {
@@ -46,11 +46,15 @@ struct ExperimentalApp : public GLFWApp
         // 100 instances
         for (int i = 0; i < 100; ++i)
         {
-            auto c = std::uniform_real_distribution<float>(0.0f, 1.0f)(gen);
-            instanceColors.push_back(float3(1, 1, 1));
+            auto c = std::uniform_real_distribution<float>(0.0f, 1.0f);
+            auto p = std::uniform_real_distribution<float>(0.0f, 10.0f);
+            instanceData.push_back(float3(c(gen), c(gen), c(gen))); // color
+            instanceData.push_back(float3(p(gen), 1, p(gen))); // location
+            
         }
-		sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceColors.size(), instanceColors.data(), GL_DYNAMIC_DRAW);
-		sceneObjects[0].mesh.set_instance_attribute(4, 3, GL_FLOAT, GL_FALSE, sizeof(float3), 0);
+		sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceData.size(), instanceData.data(), GL_DYNAMIC_DRAW);
+		sceneObjects[0].mesh.set_instance_attribute(4, 3, GL_FLOAT, GL_FALSE, sizeof(float3), ((float*) 0) + 0); // color
+        sceneObjects[0].mesh.set_instance_attribute(5, 3, GL_FLOAT, GL_FALSE, sizeof(float3), ((float*) 0) + 3); // location
         
         gl_check_error(__FILE__, __LINE__);
     }
