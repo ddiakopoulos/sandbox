@@ -174,7 +174,7 @@ public:
         glDisable(GL_CULL_FACE);
         
         // Largest non-clipped sphere
-        float4x4 world = make_translation_matrix(eyepoint) * make_scaling_matrix(farClip * .99);
+        float4x4 world = mul(make_translation_matrix(eyepoint), make_scaling_matrix(farClip * .99));
         
         render_internal(viewProj, get_sun_direction(), world);
         

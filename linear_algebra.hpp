@@ -230,11 +230,6 @@ namespace avl
     template<class T, int M, int N> mat<T,M,N> & operator *= (mat<T,M,N> & a, T b)                     { return a=a*b; }
     template<class T, int M, int N> mat<T,M,N> & operator /= (mat<T,M,N> & a, T b)                     { return a=a/b; }
 
-    template<class T, int M, int N>        vec<T,M>     operator * (const mat<T,M,N> & a, const vec<T,N> & b)   { return mul(a,b); } // Interpret b as column vector (N x 1 matrix)
-    template<class T, int M, int N>        vec<T,N>     operator * (const vec<T,M> & a, const mat<T,M,N> & b)   { return mul(a,b); } // Interpret a as row vector (1 x M matrix)
-    template<class T, int M, int N, int P> mat<T,M,P>   operator * (const mat<T,M,N> & a, const mat<T,N,P> & b) { return mul(a,b); }
-    template<class T, int M>               mat<T,M,M> & operator *= (mat<T,M,M> & a, const mat<T,M,M> & b)      { return a=a*b; }
-
     //////////////////////
     // Matrix functions //
     //////////////////////
@@ -261,6 +256,7 @@ namespace avl
     template<class T, int M>        vec<T,2>   mul      (const vec<T,M> & a, const mat<T,M,2> & b)     { return {dot(a,b.x), dot(a,b.y)}; }
     template<class T, int M>        vec<T,3>   mul      (const vec<T,M> & a, const mat<T,M,3> & b)     { return {dot(a,b.x), dot(a,b.y), dot(a,b.z)}; }
     template<class T, int M>        vec<T,4>   mul      (const vec<T,M> & a, const mat<T,M,4> & b)     { return {dot(a,b.x), dot(a,b.y), dot(a,b.z), dot(a,b.w)}; }
+    template<class T, int M, int N, class... R> auto mul(const mat<T,M,N> & a, R... r) -> decltype(mul(a, mul(r...))) { return mul(a, mul(r...)); }
     template<class T, int M>        mat<T,M,2> transpose(const mat<T,2,M> & a)                         { return {a.getRow(0), a.getRow(1)}; }
     template<class T, int M>        mat<T,M,3> transpose(const mat<T,3,M> & a)                         { return {a.getRow(0), a.getRow(1), a.getRow(2)}; }
     template<class T, int M>        mat<T,M,4> transpose(const mat<T,4,M> & a)                         { return {a.getRow(0), a.getRow(1), a.getRow(2), a.getRow(3)}; }

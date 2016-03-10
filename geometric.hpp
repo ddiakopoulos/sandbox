@@ -387,14 +387,14 @@ namespace avl
         void transform(const float4x4 & matrix)
         {
             origin = transform_vector(matrix, origin);
-            direction = get_rotation_submatrix(matrix) * direction;
+            direction = mul(get_rotation_submatrix(matrix), direction);
         }
         
         Ray transformed(const float4x4 & matrix) const
         {
             Ray result;
             result.origin = transform_vector(matrix, origin);
-            result.direction = get_rotation_submatrix(matrix) * direction;
+            result.direction = mul(get_rotation_submatrix(matrix), direction);
             return result;
         }
         
