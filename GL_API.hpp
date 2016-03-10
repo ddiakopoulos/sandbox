@@ -47,7 +47,6 @@ namespace
 
 namespace avl
 {
-    
     ///////////////
     //   Utils   //
     ///////////////
@@ -274,17 +273,17 @@ namespace avl
         
         void uniform(const std::string & name, int scalar) const { check(); glUniform1i(get_uniform_location(name), scalar); }
         void uniform(const std::string & name, float scalar) const { check(); glUniform1f(get_uniform_location(name), scalar); }
-        
         void uniform(const std::string & name, const float2 & vec) const { check(); glUniform2fv(get_uniform_location(name), 1, &vec.x); }
         void uniform(const std::string & name, const float3 & vec) const { check(); glUniform3fv(get_uniform_location(name), 1, &vec.x); }
         void uniform(const std::string & name, const float4 & vec) const { check(); glUniform4fv(get_uniform_location(name), 1, &vec.x); }
-        
         void uniform(const std::string & name, const mat<float,3,3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
         void uniform(const std::string & name, const mat<float,4,4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
         
-        // New methods to operate on arrays. Fixme: add others
+        void uniform(const std::string & name, const int elements, const std::vector<int> & scalar) const { check(); glUniform1iv(get_uniform_location(name), elements, scalar.data()); }
         void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { check(); glUniform1fv(get_uniform_location(name), elements, scalar.data()); }
         void uniform(const std::string & name, const int elements, const std::vector<float2> & vec) const { check(); glUniform2fv(get_uniform_location(name), elements, &vec[0].x); }
+        void uniform(const std::string & name, const int elements, const std::vector<float3> & vec) const { check(); glUniform3fv(get_uniform_location(name), elements, &vec[0].x); }
+        void uniform(const std::string & name, const int elements, const std::vector<mat<float,3,3>> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
         void uniform(const std::string & name, const int elements, const std::vector<mat<float,4,4>> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
         
         void texture(const std::string & name, int unit, GLuint texId, GLenum textureTarget) const
@@ -312,21 +311,7 @@ namespace avl
         GLsizeiptr bufferLen;
         
     public:
-        
-        enum class Type : int
-        {
-            Vertex,
-            Index,
-            Pixel,
-            Uniform
-        };
-        
-        enum class Usage : int
-        {
-            Static,
-            Dynamic
-        };
-        
+
         GlBuffer() : buffer() {}
         GlBuffer(GlBuffer && r) : GlBuffer() { *this = std::move(r); }
         
@@ -470,7 +455,7 @@ namespace avl
         
     public:
         
-        GlMesh() { memset(attributes,0,sizeof(attributes)); glGenVertexArrays(1, &vertexArrayHandle); }
+        GlMesh() { memset(attributes,0 ,sizeof(attributes)); glGenVertexArrays(1, &vertexArrayHandle); }
         GlMesh(GlMesh && r) : GlMesh() { *this = std::move(r); }
         ~GlMesh() {};
         
@@ -483,9 +468,9 @@ namespace avl
             return *this;
         }
         
-        void set_non_indexed(GLenum mode)
+        void set_non_indexed(GLenum newMode)
         {
-            this->mode = mode;
+            mode = newMode;
             indexBuffer = {};
             indexType = 0;
         }
