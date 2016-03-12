@@ -59,7 +59,7 @@ namespace avl
                         for (auto j = i + 1; j < vertices.size(); ++j)
                         {
                             const float3 v1 = vertices[j];
-                            if (lengthSqr(v1 - v0) < NORMAL_EPSILON)
+                            if (length2(v1 - v0) < NORMAL_EPSILON)
                             {
                                 uniqueVertIndices[j] = uniqueVertIndices[i];
                             }
@@ -85,9 +85,9 @@ namespace avl
                 float3 e1 = v2 - v0;
                 float3 e2 = v2 - v1;
                 
-                if (lengthSqr(e0) < NORMAL_EPSILON) continue;
-                if (lengthSqr(e1) < NORMAL_EPSILON) continue;
-                if (lengthSqr(e2) < NORMAL_EPSILON) continue;
+                if (length2(e0) < NORMAL_EPSILON) continue;
+                if (length2(e1) < NORMAL_EPSILON) continue;
+                if (length2(e2) < NORMAL_EPSILON) continue;
                 
                 float3 n = cross(e0, e1);
                 
@@ -171,7 +171,7 @@ namespace avl
                 // Gram-Schmidt orthogonalize
                 tangents[i] = (tangent - normal * dot(normal, tangent));
                 
-                const float len = lengthL2(tangents[i]);
+                const float len = length(tangents[i]);
                 
                 if (len > 0.0f)
                     tangents[i] = tangents[i] / (float) sqrt(len);

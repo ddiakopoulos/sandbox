@@ -50,7 +50,7 @@ class Arcball
     {
         float norm;
         float3 onPlane = loose - axis * dot(axis, loose);
-        norm = lengthSqr(onPlane);
+        norm = length2(onPlane);
         
         if (norm > 0.0f)
         {

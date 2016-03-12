@@ -523,7 +523,7 @@ inline std::vector<float3> VoxelSubsample(const std::vector<float3> & points, fl
     for (const auto & pt : points)
     {
         // Obtain corresponding voxel
-        float3 fcoord = vfloor(pt * inverseVoxelSize);
+        float3 fcoord = floor(pt * inverseVoxelSize);
         int3 vcoord = int3(static_cast<int>(fcoord.x),static_cast<int>(fcoord.y),static_cast<int>(fcoord.z));
         auto hash = dot(vcoord, hashCoeff) & HASH_MASK;
         auto & voxel = voxelHash[hash];
