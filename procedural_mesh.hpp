@@ -138,8 +138,8 @@ inline Geometry make_cylinder(float radiusTop, float radiusBottom, float height,
         na.y = sqrt(na.x * na.x + na.z * na.z) * tanTheta;
         nb.y = sqrt(nb.x * nb.x + nb.z * nb.z) * tanTheta;
         
-        na = normalize(na);
-        nb = normalize(nb);
+        na = safe_normalize(na);
+        nb = safe_normalize(nb);
         
         for (int y = 0; y < heightSegments; y++)
         {
@@ -450,7 +450,7 @@ inline Geometry make_capsule(int segments, float radius, float length)
             ty -= halfLength;
         
         capsule.vertices.emplace_back(0, ty, -r);
-        capsule.normals.push_back(normalize(float3(0, y, -1)));
+        capsule.normals.push_back(safe_normalize(float3(0, y, -1)));
         capsule.texCoords.emplace_back(0, i / float(segments));
         
         for (int j = 1; j < doubleSegments; ++j)
@@ -465,12 +465,12 @@ inline Geometry make_capsule(int segments, float radius, float length)
                 ty -= halfLength;
             
             capsule.vertices.emplace_back(x * r, ty , z * r);
-            capsule.normals.push_back(normalize(float3(x, y, z)));
+            capsule.normals.push_back(safe_normalize(float3(x, y, z)));
             capsule.texCoords.emplace_back(j / float(segments), i / float(segments));
         }
         
         capsule.vertices.emplace_back(0, ty, -r);
-        capsule.normals.push_back(normalize(float3(0, y, -1)));
+        capsule.normals.push_back(safe_normalize(float3(0, y, -1)));
         capsule.texCoords.emplace_back(2, i / float(segments));
     }
     
@@ -478,7 +478,7 @@ inline Geometry make_capsule(int segments, float radius, float length)
     {
         float ty = -halfLength - radius;
         capsule.vertices.emplace_back(0, ty, 0);
-        capsule.normals.push_back(normalize(float3(0, -1, 0)));
+        capsule.normals.push_back(safe_normalize(float3(0, -1, 0)));
         capsule.texCoords.emplace_back((j+1) / float(segments), 1);
     }
     

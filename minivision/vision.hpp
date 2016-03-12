@@ -346,7 +346,7 @@ inline void box_filter_normalmap(const std::vector<float3> & input, std::vector<
 inline float3 compute_normal(const float3 u, const float3 v)
 {
     float3 n = cross(u, v);
-    return normalize(n);
+    return safe_normalize(n);
 }
 
 // This function derived from one found in Leo Keselman's ps1080 testing repository: https://github.com/leonidk/ps1080test
