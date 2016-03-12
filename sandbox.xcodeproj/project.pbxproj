@@ -69,6 +69,14 @@
 		08289F891BC609B80054AF3B /* GL_API.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GL_API.hpp; sourceTree = SOURCE_ROOT; };
 		082A2FF61C711A2300391672 /* camera.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = camera.hpp; sourceTree = SOURCE_ROOT; };
 		082B11B41C94B80100EE49F5 /* linalg.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = linalg.h; sourceTree = SOURCE_ROOT; };
+		082B11B51C94CD0A00EE49F5 /* instance_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = instance_frag.glsl; path = assets/shaders/instance_frag.glsl; sourceTree = SOURCE_ROOT; };
+		082B11B61C94CD0A00EE49F5 /* instance_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = instance_vert.glsl; path = assets/shaders/instance_vert.glsl; sourceTree = SOURCE_ROOT; };
+		082B11B71C94CD1300EE49F5 /* water_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = water_frag.glsl; path = assets/shaders/water_frag.glsl; sourceTree = SOURCE_ROOT; };
+		082B11B81C94CD1300EE49F5 /* water_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = water_vert.glsl; path = assets/shaders/water_vert.glsl; sourceTree = SOURCE_ROOT; };
+		082B11B91C94CD2300EE49F5 /* gaussian_blur_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = gaussian_blur_frag.glsl; path = assets/shaders/gaussian_blur_frag.glsl; sourceTree = SOURCE_ROOT; };
+		082B11BA1C94CD2300EE49F5 /* gaussian_blur_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = gaussian_blur_vert.glsl; path = assets/shaders/gaussian_blur_vert.glsl; sourceTree = SOURCE_ROOT; };
+		082B11BB1C94CD7700EE49F5 /* normal_debug_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = normal_debug_frag.glsl; path = assets/shaders/normal_debug_frag.glsl; sourceTree = SOURCE_ROOT; };
+		082B11BC1C94CD7700EE49F5 /* normal_debug_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = normal_debug_vert.glsl; path = assets/shaders/normal_debug_vert.glsl; sourceTree = SOURCE_ROOT; };
 		084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = reaction_diffusion.hpp; sourceTree = SOURCE_ROOT; };
 		084196741C1E7E1700E1FC50 /* displacement_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = displacement_frag.glsl; path = assets/shaders/displacement_frag.glsl; sourceTree = SOURCE_ROOT; };
 		084196751C1E7E1700E1FC50 /* displacement_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = displacement_vert.glsl; path = assets/shaders/displacement_vert.glsl; sourceTree = SOURCE_ROOT; };
@@ -94,7 +102,6 @@
 		0849FD8A1BE7CAAB000F148E /* hdr_skydome.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = hdr_skydome.hpp; path = examples/hdr_skydome.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ssao_app.hpp; path = examples/ssao_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8E1BEF19A7000F148E /* forward_lighting_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = forward_lighting_app.hpp; path = examples/forward_lighting_app.hpp; sourceTree = SOURCE_ROOT; };
-		0849FD8F1BEFCC64000F148E /* hdr_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = hdr_frag.glsl; path = assets/shaders/hdr_frag.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD901BEFDC8D000F148E /* procedural_mesh.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = procedural_mesh.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD9A1BFADE27000F148E /* gizmo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gizmo.cpp; sourceTree = SOURCE_ROOT; };
 		0849FD9B1BFADE27000F148E /* gizmo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = gizmo.hpp; sourceTree = SOURCE_ROOT; };
@@ -433,7 +440,6 @@
 				08C4758A1C19CF0B0031E87E /* matcap_vert.glsl */,
 				08C475871C19CCC30031E87E /* vignette_frag.glsl */,
 				08C475881C19CCC30031E87E /* vignette_vert.glsl */,
-				0849FD8F1BEFCC64000F148E /* hdr_frag.glsl */,
 				0849FD741BE7C1C1000F148E /* arkano_ssao_frag.glsl */,
 				0849FD751BE7C1C1000F148E /* filmgrain_frag.glsl */,
 				0849FD761BE7C1C1000F148E /* fxaa_frag.glsl */,
@@ -446,6 +452,14 @@
 				0849FD7E1BE7C1C1000F148E /* sky_vert.glsl */,
 				084196761C1E81C500E1FC50 /* terrain_frag_debug.glsl */,
 				084196771C1E81C500E1FC50 /* terrain_vert_debug.glsl */,
+				082B11B91C94CD2300EE49F5 /* gaussian_blur_frag.glsl */,
+				082B11BA1C94CD2300EE49F5 /* gaussian_blur_vert.glsl */,
+				082B11B71C94CD1300EE49F5 /* water_frag.glsl */,
+				082B11B81C94CD1300EE49F5 /* water_vert.glsl */,
+				082B11B51C94CD0A00EE49F5 /* instance_frag.glsl */,
+				082B11B61C94CD0A00EE49F5 /* instance_vert.glsl */,
+				082B11BB1C94CD7700EE49F5 /* normal_debug_frag.glsl */,
+				082B11BC1C94CD7700EE49F5 /* normal_debug_vert.glsl */,
 			);
 			name = shaders;
 			sourceTree = "<group>";
