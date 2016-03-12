@@ -62,7 +62,6 @@
 		0822AF311BCFFA6A00A894F0 /* sketch.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sketch.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF321BD389EA00A894F0 /* space.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = space.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF331BD4212100A894F0 /* arcball.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arcball.hpp; sourceTree = SOURCE_ROOT; };
-		0822AF351BD4382C00A894F0 /* ellipse_math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ellipse_math.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF361BD4ADBF00A894F0 /* GL_API.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GL_API.cpp; sourceTree = SOURCE_ROOT; };
 		0822AF381BD4B52100A894F0 /* renderable_grid.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = renderable_grid.hpp; sourceTree = SOURCE_ROOT; };
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
@@ -97,7 +96,7 @@
 		0849FD831BE7C66E000F148E /* tinyply.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyply.cpp; path = third_party/tinyply.cpp; sourceTree = SOURCE_ROOT; };
 		0849FD841BE7C66E000F148E /* tinyply.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyply.h; path = third_party/tinyply.h; sourceTree = SOURCE_ROOT; };
 		0849FD871BE7C801000F148E /* index.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = index.hpp; sourceTree = SOURCE_ROOT; };
-		0849FD881BE7CAAB000F148E /* arcball_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = arcball_app.hpp; path = examples/arcball_app.hpp; sourceTree = SOURCE_ROOT; };
+		0849FD881BE7CAAB000F148E /* textured_model_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = textured_model_app.hpp; path = examples/textured_model_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD891BE7CAAB000F148E /* empty_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = empty_app.hpp; path = examples/empty_app.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8A1BE7CAAB000F148E /* hdr_skydome.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = hdr_skydome.hpp; path = examples/hdr_skydome.hpp; sourceTree = SOURCE_ROOT; };
 		0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ssao_app.hpp; path = examples/ssao_app.hpp; sourceTree = SOURCE_ROOT; };
@@ -303,7 +302,7 @@
 			isa = PBXGroup;
 			children = (
 				0849FD891BE7CAAB000F148E /* empty_app.hpp */,
-				0849FD881BE7CAAB000F148E /* arcball_app.hpp */,
+				0849FD881BE7CAAB000F148E /* textured_model_app.hpp */,
 				0849FD8C1BE7CAAB000F148E /* ssao_app.hpp */,
 				08C475791C02CFF30031E87E /* terrain_app.hpp */,
 				08C4757D1C0AD67D0031E87E /* camera_app.hpp */,
@@ -407,7 +406,6 @@
 				081204971BADDEF700C7C0F4 /* geometric.hpp */,
 				084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */,
 				08C475921C1DEA570031E87E /* constant_spline.hpp */,
-				0822AF351BD4382C00A894F0 /* ellipse_math.hpp */,
 				081204A31BAE086F00C7C0F4 /* running_statistics.hpp */,
 				081204A71BAE330600C7C0F4 /* one_euro.hpp */,
 				081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */,

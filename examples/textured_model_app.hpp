@@ -25,8 +25,7 @@ struct ExperimentalApp : public GLFWApp
     ShaderMonitor shaderMonitor;
     
     GlCamera camera;
-    Sphere cameraSphere;
-    Arcball myArcball;
+    ArcballCamera myArcball;
     
     bool useNormal = false;
     bool useMatcap = false;
@@ -80,9 +79,8 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_vignette_quad = make_fullscreen_quad();
         
         gl_check_error(__FILE__, __LINE__);
-        
-        cameraSphere = Sphere({0, 0, 0}, object.bounds.volume());
-        myArcball = Arcball(&camera, cameraSphere);
+
+        myArcball = ArcballCamera(&camera);
         
         camera.look_at({0, 0, 10}, {0, 0, 0});
         //myArcball.set_constraint_axis(float3(0, 1, 0));
