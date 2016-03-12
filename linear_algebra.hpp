@@ -2,7 +2,7 @@
 #define linear_algebra_h
 
 #include "linalg.h"
-#include <iosfwd>
+#include <iostream>
 
 namespace avl
 {

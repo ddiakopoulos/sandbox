@@ -68,6 +68,7 @@
 		08289F811BC5F8370054AF3B /* file_io.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = file_io.hpp; sourceTree = SOURCE_ROOT; };
 		08289F891BC609B80054AF3B /* GL_API.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GL_API.hpp; sourceTree = SOURCE_ROOT; };
 		082A2FF61C711A2300391672 /* camera.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = camera.hpp; sourceTree = SOURCE_ROOT; };
+		082B11B41C94B80100EE49F5 /* linalg.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = linalg.h; sourceTree = SOURCE_ROOT; };
 		084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = reaction_diffusion.hpp; sourceTree = SOURCE_ROOT; };
 		084196741C1E7E1700E1FC50 /* displacement_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = displacement_frag.glsl; path = assets/shaders/displacement_frag.glsl; sourceTree = SOURCE_ROOT; };
 		084196751C1E7E1700E1FC50 /* displacement_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = displacement_vert.glsl; path = assets/shaders/displacement_vert.glsl; sourceTree = SOURCE_ROOT; };
@@ -341,6 +342,7 @@
 		08C475771C02C9650031E87E /* math */ = {
 			isa = PBXGroup;
 			children = (
+				082B11B41C94B80100EE49F5 /* linalg.h */,
 				081204991BADDEF700C7C0F4 /* math_util.hpp */,
 				081204981BADDEF700C7C0F4 /* linear_algebra.hpp */,
 				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
