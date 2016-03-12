@@ -5,14 +5,15 @@
 United under the arbitrarily chosen namespace "avl" (short for Anvil).
 
 ## Recent
-* 2D CEGUI layout system for screen debug output (textures, etc)
+* Lightweight, header-only opengl wrapper (GL_API.hpp)
+* 2D resolution-independent layout system for screen debug output (textures, etc)
 * Procedural sky dome with Preetham and Hosek-Wilkie models
 * Arcball camera
 * Opinionated gizmo editing tool for 3D scenes
 * Island terrain with a simple water shader (waves, reflections)
 * Frame capture => GIF export
 * 3D Euclidean patterns
-* GLSL Shader hot-reload (via efsw library)
+* GLSL shader program hot-reload (via efsw library)
 * Spherical environment mapping (matcap shading)
 * Library of procedural meshes (cube, sphere, cone, torus, capsule, etc)
 * Billboarded triangle mesh line renderer
@@ -23,12 +24,14 @@ United under the arbitrarily chosen namespace "avl" (short for Anvil).
 * Arkano22 SSAO implementation
 * Several GLSL 330 post-processing effects: film grain, FXAA
 * Orconut-Dear-ImGui Bindings
+* Simple PCF shadow mapping with a variety of lights (directional, spot, point)
+* Instanced rendering support
 
 ## In Progress
+* Transform-feedback particles
 * Physically-based text rendering
 * Mesh voxelization
 * BRDF / PBR
-* Shadow Mapping: Cascaded, Exponential
 * Deferred rendering experiments (Forward+ impl)
 * CPU path tracer (+ lighting baker?)
 * Fluid simulator (GL compute shader)
