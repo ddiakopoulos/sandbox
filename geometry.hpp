@@ -91,7 +91,7 @@ namespace avl
                 
                 float3 n = cross(e0, e1);
                 
-                n = normalize(n);
+                n = safe_normalize(n);
                 
                 normals[f.x] += n;
                 normals[f.y] += n;
@@ -108,7 +108,7 @@ namespace avl
             }
             
             for (auto & n : normals)
-                n = normalize(n);
+                n = safe_normalize(n);
         }
         
         // Lengyel, Eric. "Computing Tangent Space Basis Vectors for an Arbitrary Mesh".
@@ -180,7 +180,7 @@ namespace avl
             // Bitangents 
             for (size_t i = 0; i < vertices.size(); ++i)
             {
-                bitangents[i] = normalize(cross(normals[i], tangents[i]));
+                bitangents[i] = safe_normalize(cross(normals[i], tangents[i]));
             }
         }
         
@@ -572,16 +572,16 @@ namespace avl
             }
             
             // doesn't intersect; closest point on line
-            t = dot( -diff, normalize(ray.direction) );
+            t = dot( -diff, safe_normalize(ray.direction) );
             float3 onRay = ray.calculate_position(t);
-            return center + normalize( onRay - center ) * radius;
+            return center + safe_normalize( onRay - center ) * radius;
         }
         
         // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms.
         Sphere transformed(const float4x4 & transform)
         {
-            float4 tCenter = transform * float4(center, 1);
-            float4 tRadius = transform * float4(radius, 0, 0, 0);
+            float4 tCenter = mul(transform, float4(center, 1));
+            float4 tRadius = mul(transform, float4(radius, 0, 0, 0));
             return Sphere(float3(tCenter.x, tCenter.y, tCenter.z), length(tRadius));
         }
         
@@ -650,7 +650,7 @@ namespace avl
     {
         float3 first, second;
         Segment(float3 first, float3 second) : first(first), second(second) {}
-        float3 get_direction() const { return normalize (second - first); };
+        float3 get_direction() const { return safe_normalize (second - first); };
     };
     
     //////////////////////////////
@@ -863,7 +863,7 @@ namespace avl
             auto v0 = mesh.vertices[bestFace.x];
             auto v1 = mesh.vertices[bestFace.y];
             auto v2 = mesh.vertices[bestFace.z];
-            float3 n = normalize(cross(v1 - v0, v2 - v0));
+            float3 n = safe_normalize(cross(v1 - v0, v2 - v0));
             *outFaceNormal = n;
         }
         

@@ -35,7 +35,7 @@ struct DirectionalLight
     {
         auto p = look_at_pose(eyePoint, eyePoint + -direction);
         const float halfSize = size * 0.5f;
-        return make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize) * make_view_matrix_from_pose(p);
+        return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), make_view_matrix_from_pose(p));
     }
 };
 
@@ -53,7 +53,7 @@ struct SpotLight
     float4x4 get_view_proj_matrix()
     {
         auto p = look_at_pose(position, position + -direction);
-        return make_perspective_matrix(to_radians(cutoff * 2.0f), 1.0f, 0.1f, 1000.f) * make_view_matrix_from_pose(p);
+        return mul(make_perspective_matrix(to_radians(cutoff * 2.0f), 1.0f, 0.1f, 1000.f), make_view_matrix_from_pose(p));
     }
     
     float get_cutoff() { return cosf(to_radians(cutoff)); }

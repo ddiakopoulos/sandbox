@@ -170,7 +170,7 @@ struct ExperimentalApp : public GLFWApp
             auto model = object.get_model();
             matcapShader->uniform("u_viewProj", viewProj);
             matcapShader->uniform("u_modelMatrix", model);
-            matcapShader->uniform("u_modelViewMatrix", view * model);
+            matcapShader->uniform("u_modelViewMatrix", mul(view, model));
             matcapShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(model))));
             
             matcapShader->texture("u_matcapTexture", 0, matcapTex.get_gl_handle(), GL_TEXTURE_2D);

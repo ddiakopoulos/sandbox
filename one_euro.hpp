@@ -219,7 +219,7 @@ namespace avl
             float4 hatx;
 
             // destination, start, end, alpha
-            hatx = qlerp(_hatxprev, x, alpha);
+            hatx = qslerp(_hatxprev, x, alpha);
 
             // destination, source
             _hatxprev = hatx;
@@ -245,9 +245,9 @@ namespace avl
 
         typedef float scalar_type;
 
-        typedef vec<scalar_type,4> value_type;
-        typedef vec<scalar_type,4> derivative_value_type;
-        typedef vec<scalar_type,4> value_ptr_type;
+        typedef linalg::vec<scalar_type,4> value_type;
+        typedef linalg::vec<scalar_type,4> derivative_value_type;
+        typedef linalg::vec<scalar_type,4> value_ptr_type;
 
         typedef LowPassFilterQuat value_filter_type;
         typedef LowPassFilterQuat derivative_filter_type;
@@ -264,7 +264,7 @@ namespace avl
 
             float4 ip = qinv(prev);
 
-            vec<scalar_type, 4> inverse_prev((scalar_type)ip.x, (scalar_type)ip.y, (scalar_type)ip.z, (scalar_type)ip.w);
+            linalg::vec<scalar_type, 4> inverse_prev((scalar_type)ip.x, (scalar_type)ip.y, (scalar_type)ip.z, (scalar_type)ip.w);
 
             // computes quaternion product destQuat = qLeft * qRight.
             dx = current * inverse_prev;
@@ -275,7 +275,7 @@ namespace avl
             dx.z *= rate;
             dx.w = dx.w * rate + (1.0f - rate);
 
-            dx = normalize(dx);
+            dx = safe_normalize(dx);
         }
 
         static scalar_type computeDerivativeMagnitude(derivative_value_type const dx)

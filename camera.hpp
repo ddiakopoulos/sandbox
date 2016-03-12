@@ -50,7 +50,7 @@ namespace avl
             return make_projection_matrix(left, right, bottom, top, nearClip, farClip);
         }
         
-        void set_orientation(float4 o) { pose.orientation = normalize(o); }
+        void set_orientation(float4 o) { pose.orientation = safe_normalize(o); }
         
         void set_position(float3 p) { pose.position = p; }
         
@@ -92,7 +92,7 @@ namespace avl
     
     inline std::array<float3, 4> make_near_clip_coords(GlCamera & cam, float aspectRatio)
     {
-        float3 viewDirection = normalize(cam.get_view_direction());
+        float3 viewDirection = safe_normalize(cam.get_view_direction());
         float3 eye = cam.get_eye_point();
         
         auto leftDir = cam.pose.xdir();
@@ -115,7 +115,7 @@ namespace avl
     
     inline std::array<float3, 4> make_far_clip_coords(GlCamera & cam, float aspectRatio)
     {
-        float3 viewDirection = normalize(cam.get_view_direction());
+        float3 viewDirection = safe_normalize(cam.get_view_direction());
         float3 eye = cam.get_eye_point();
         float ratio = cam.farClip / cam.nearClip;
         
@@ -170,7 +170,7 @@ namespace avl
         {
             const float3 worldNorth = {0, 0, -1};
             float3 lookVec = cam->get_view_direction();
-            float3 flatLookVec = normalize(float3(lookVec.x, 0, lookVec.z));
+            float3 flatLookVec = safe_normalize(float3(lookVec.x, 0, lookVec.z));
             camYaw = std::acos(clamp(dot(worldNorth, flatLookVec), -1.0f, +1.0f)) * (flatLookVec.x > 0 ? -1 : 1);
             camPitch = std::acos(clamp(dot(lookVec, flatLookVec), -1.0f, +1.0f)) * (lookVec.y > 0 ? 1 : -1);
         }
@@ -248,7 +248,7 @@ namespace avl
         float s = (uPos - 0.5f) * imagePlaneApectRatio;
         float t = (vPos - 0.5f);
         float viewDistance = imagePlaneApectRatio / std::abs(right - left) * camera.nearClip;
-        return Ray(camera.get_eye_point(), normalize(camera.pose.xdir() * s + camera.pose.ydir() * t - (camera.get_view_direction() * viewDistance)));
+        return Ray(camera.get_eye_point(), safe_normalize(camera.pose.xdir() * s + camera.pose.ydir() * t - (camera.get_view_direction() * viewDistance)));
     }
     
     inline Ray make_ray(const GlCamera & camera, const float aspectRatio, const float2 & posPixels, const float2 & imageSizePixels)

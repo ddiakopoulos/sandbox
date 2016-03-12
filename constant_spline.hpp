@@ -105,7 +105,7 @@ public:
         t.point -= a.point;
         
         auto rd = length(t.point);
-        t.point = normalize(t.point);
+        t.point = safe_normalize(t.point);
         t.point *= distancePerStep;
         
         auto s = std::floor(rd / distancePerStep);

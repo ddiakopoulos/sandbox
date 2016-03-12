@@ -46,7 +46,7 @@ namespace
     avl::float3 hosek_wilkie(float cos_theta, float gamma, float cos_gamma, avl::float3 A, avl::float3 B, avl::float3 C, avl::float3 D, avl::float3 E, avl::float3 F, avl::float3 G, avl::float3 H, avl::float3 I)
     {
         avl::float3 chi = (1.f + cos_gamma * cos_gamma) / pow(1.f + H * H - 2.f * cos_gamma * H, avl::float3(1.5f));
-        return (1.f + A * avl::exp(B / (cos_theta + 0.01f))) * (C + D * avl::exp(E * gamma) + F * (cos_gamma * cos_gamma) + G * chi + I * (float) sqrt(std::max(0.f, cos_theta)));
+        return (1.f + A * exp(B / (cos_theta + 0.01f))) * (C + D * exp(E * gamma) + F * (cos_gamma * cos_gamma) + G * chi + I * (float) sqrt(std::max(0.f, cos_theta)));
     }
     
     float perez(float theta, float gamma, float A, float B, float C, float D, float E)
@@ -63,7 +63,7 @@ namespace
     float zenith_chromacity(const avl::float4 & c0, const avl::float4 & c1, const avl::float4 & c2, float sunTheta, float turbidity)
     {
         avl::float4 thetav = avl::float4(sunTheta * sunTheta * sunTheta, sunTheta * sunTheta, sunTheta, 1);
-        return avl::dot(avl::float3(turbidity * turbidity, turbidity, 1), avl::float3(avl::dot(thetav, c0), avl::dot(thetav, c1), avl::dot(thetav, c2)));
+        return dot(avl::float3(turbidity * turbidity, turbidity, 1), avl::float3(dot(thetav, c0), dot(thetav, c1), dot(thetav, c2)));
     }
 }
 
@@ -174,7 +174,7 @@ public:
         glDisable(GL_CULL_FACE);
         
         // Largest non-clipped sphere
-        float4x4 world = make_translation_matrix(eyepoint) * make_scaling_matrix(farClip * .99);
+        float4x4 world = mul(make_translation_matrix(eyepoint), make_scaling_matrix(farClip * .99));
         
         render_internal(viewProj, get_sun_direction(), world);
         

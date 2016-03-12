@@ -59,7 +59,7 @@ class Arcball
         }
         
         if (dot(axis, float3(0, 0, 1)) < 0.0001f) onPlane = float3(1, 0, 0);
-        else onPlane = normalize(float3(-axis.y, axis.x, 0));
+        else onPlane = safe_normalize(float3(-axis.y, axis.x, 0));
         
         return onPlane;
     }
@@ -106,13 +106,13 @@ public:
             to = constrain_to_axis(to, axisConstraint);
         }
         
-        float4 rotation = normalize(make_rotation_quat_between_vectors(from, to));
+        float4 rotation = safe_normalize(make_rotation_quat_between_vectors(from, to));
         float3 axis = axis_from_quat(rotation);
         float angle = angle_from_quat(rotation);
         
         rotation = angleAxis(angle + addition, axis);
         
-        currentQuat = normalize(qmul(rotation, initialQuat));
+        currentQuat = safe_normalize(qmul(rotation, initialQuat));
     }
     
     void reset_quat() { currentQuat = initialQuat = float4(0, 0, 0, 1); }
@@ -123,7 +123,7 @@ public:
     void set_sphere(const Sphere &s) { arcballSphere = s; }
     const Sphere& get_sphere() const { return arcballSphere; }
     
-    void set_constraint_axis(const float3 &axis) { axisConstraint = normalize(axis); useConstraints = true; }
+    void set_constraint_axis(const float3 &axis) { axisConstraint = safe_normalize(axis); useConstraints = true; }
     const float3 & get_constraint_axis() const { return axisConstraint; }
     
     void disable_constraints() { useConstraints = false; }
@@ -141,7 +141,7 @@ public:
         if (intersect_ray_sphere(ray, arcballSphere, &rayT) > 0)
         {
             // trace a ray through the pixel to the sphere
-            *resultVector = normalize(ray.calculate_position(rayT) - arcballSphere.center);
+            *resultVector = safe_normalize(ray.calculate_position(rayT) - arcballSphere.center);
             *resultAngleAddition = 0;
         }
         
@@ -163,7 +163,7 @@ public:
             float3 closestPointOnSphere = arcballSphere.closest_point(newRay);
             
             // our result point is the vector between this closest point on the sphere and its center
-            *resultVector = normalize(closestPointOnSphere - arcballSphere.center);
+            *resultVector = safe_normalize(closestPointOnSphere - arcballSphere.center);
             
             // our angle addition is the screen-space distance between the mouse and the closest point on the sphere, divided into
             // the screen-space radius of the sphere's projected ellipse, multiplied by pi

@@ -87,7 +87,7 @@ namespace avl
     // In radians
     inline float3 spherical(float theta, float phi)
     {
-        return normalize(float3(cos(phi) * sin(theta), sin(phi) * sin(theta), cos(theta)));
+        return safe_normalize(float3(cos(phi) * sin(theta), sin(phi) * sin(theta), cos(theta)));
     }
     
     template <typename T>
