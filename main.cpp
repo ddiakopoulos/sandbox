@@ -6,7 +6,7 @@
 using namespace avl;
 
 //#include "examples/empty_app.hpp"
-//#include "examples/arcball_app.hpp"
+#include "examples/arcball_app.hpp"
 //#include "examples/ssao_app.hpp"
 //#include "examples/terrain_app.hpp"
 //#include "examples/camera_app.hpp"
@@ -18,7 +18,7 @@ using namespace avl;
 //#include "examples/vision_app.hpp"
 //#include "examples/sandbox_app.hpp"
 //#include "examples/hdr_skydome.hpp"
-#include "examples/instance_app.hpp"
+//#include "examples/instance_app.hpp"
 //#include "examples/shadow_app.hpp"
 
 IMPLEMENT_MAIN(int argc, char * argv[])

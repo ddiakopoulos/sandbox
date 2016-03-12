@@ -11,7 +11,7 @@
 
     void main()
     {
-        vec4 worldPos = u_modelMatrix * vec4(instanceLocation + inPosition, 1);
+        vec4 worldPos = u_modelMatrix * vec4(inPosition, 1);
         gl_Position = u_viewProj * worldPos;
         v_normal = normalize((u_modelMatrixIT * vec4(inNormal,0)).xyz);
     }

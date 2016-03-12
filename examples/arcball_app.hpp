@@ -1,5 +1,12 @@
 #include "index.hpp"
 
+std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath, const std::string geomPath = "")
+{
+    std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath), read_file_text(geomPath));
+    mon.add_shader(shader, vertexPath, fragPath);
+    return shader;
+}
+
 struct ExperimentalApp : public GLFWApp
 {
     Renderable object;
@@ -10,10 +17,11 @@ struct ExperimentalApp : public GLFWApp
     GlTexture crateNormalTex;
     GlTexture matcapTex;
     
-    std::shared_ptr<GlShader> simpleTexturedShader;
+    std::shared_ptr<GlShader> texturedModelShader;
     std::shared_ptr<GlShader> vignetteShader;
     std::shared_ptr<GlShader> matcapShader;
-    
+    std::shared_ptr<GlShader> normalDebugShader;
+
     ShaderMonitor shaderMonitor;
     
     GlCamera camera;
@@ -22,6 +30,7 @@ struct ExperimentalApp : public GLFWApp
     
     bool useNormal = false;
     bool useMatcap = false;
+    bool useRimlight = false;
     
     void rescale_geometry(Geometry & g, float radius = 1.0f)
     {
@@ -59,12 +68,11 @@ struct ExperimentalApp : public GLFWApp
         std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
         std::cout << "Object Center: " << std::fixed << object.bounds.center() << std::endl;
         
-        simpleTexturedShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
-        shaderMonitor.add_shader(simpleTexturedShader, "assets/shaders/simple_texture_vert.glsl", "assets/shaders/simple_texture_frag.glsl");
-        
-        vignetteShader.reset(new GlShader(read_file_text("assets/shaders/vignette_vert.glsl"), read_file_text("assets/shaders/vignette_frag.glsl")));
-        matcapShader.reset(new GlShader(read_file_text("assets/shaders/matcap_vert.glsl"), read_file_text("assets/shaders/matcap_frag.glsl")));
-        
+        texturedModelShader = make_watched_shader(shaderMonitor, "assets/shaders/textured_model_vert.glsl", "assets/shaders/textured_model_frag.glsl");
+        vignetteShader = make_watched_shader(shaderMonitor, "assets/shaders/vignette_vert.glsl", "assets/shaders/vignette_frag.glsl");
+        matcapShader = make_watched_shader(shaderMonitor, "assets/shaders/matcap_vert.glsl", "assets/shaders/matcap_frag.glsl");
+        normalDebugShader = make_watched_shader(shaderMonitor, "assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
+
         crateDiffuseTex = load_image("assets/models/barrel/barrel_2_diffuse.png");
         crateNormalTex = load_image("assets/models/barrel/barrel_normal.png");
         matcapTex = load_image("assets/textures/matcap/metal_heated.png");
@@ -136,32 +144,35 @@ struct ExperimentalApp : public GLFWApp
         
         if (useMatcap == false)
         {
-            simpleTexturedShader->bind();
+            texturedModelShader->bind();
             
-            simpleTexturedShader->uniform("u_viewProj", viewProj);
-            simpleTexturedShader->uniform("u_eye", camera.get_eye_point());
+            texturedModelShader->uniform("u_viewProj", viewProj);
+            texturedModelShader->uniform("u_eye", camera.get_eye_point());
             
-            simpleTexturedShader->uniform("u_emissive", float3(.5f, 0.5f, 0.5f));
-            simpleTexturedShader->uniform("u_diffuse", float3(0.7f, 0.7f, 0.7f));
+            texturedModelShader->uniform("u_emissive", float3(.5f, 0.5f, 0.5f));
+            texturedModelShader->uniform("u_diffuse", float3(0.7f, 0.7f, 0.7f));
             
-            simpleTexturedShader->uniform("u_lights[0].position", float3(6, 10, -6));
-            simpleTexturedShader->uniform("u_lights[0].color", float3(0.7f, 0.2f, 0.2f));
+            texturedModelShader->uniform("u_lights[0].position", float3(6, 10, -6));
+            texturedModelShader->uniform("u_lights[0].color", float3(0.7f, 0.2f, 0.2f));
             
-            simpleTexturedShader->uniform("u_lights[1].position", float3(-6, 10, 6));
-            simpleTexturedShader->uniform("u_lights[1].color", float3(0.4f, 0.8f, 0.4f));
+            texturedModelShader->uniform("u_lights[1].position", float3(-6, 10, 6));
+            texturedModelShader->uniform("u_lights[1].color", float3(0.4f, 0.8f, 0.4f));
             
-            simpleTexturedShader->texture("u_diffuseTex", 0, crateDiffuseTex.get_gl_handle(), GL_TEXTURE_2D);
-            simpleTexturedShader->texture("u_normalTex", 1, crateNormalTex.get_gl_handle(), GL_TEXTURE_2D);
-            simpleTexturedShader->uniform("useNormal", useNormal);
+            texturedModelShader->texture("u_diffuseTex", 0, crateDiffuseTex.get_gl_handle(), GL_TEXTURE_2D);
+            texturedModelShader->texture("u_normalTex", 1, crateNormalTex.get_gl_handle(), GL_TEXTURE_2D);
+            texturedModelShader->uniform("u_samplefromNormalmap", useNormal);
             
+            if (useRimlight)
             {
-                auto model = object.get_model();
-                simpleTexturedShader->uniform("u_modelMatrix", model);
-                simpleTexturedShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-                object.draw();
+                texturedModelShader->uniform("u_applyRimlight", useRimlight);
             }
             
-            simpleTexturedShader->unbind();
+            auto model = object.get_model();
+            texturedModelShader->uniform("u_modelMatrix", model);
+            texturedModelShader->uniform("u_modelMatrixIT", inv(transpose(model)));
+            object.draw();
+            
+            texturedModelShader->unbind();
         }
         else
         {
@@ -172,7 +183,6 @@ struct ExperimentalApp : public GLFWApp
             matcapShader->uniform("u_modelMatrix", model);
             matcapShader->uniform("u_modelViewMatrix", mul(view, model));
             matcapShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(model))));
-            
             matcapShader->texture("u_matcapTexture", 0, matcapTex.get_gl_handle(), GL_TEXTURE_2D);
             
             object.draw();

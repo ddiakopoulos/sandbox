@@ -78,8 +78,8 @@
 		082B11BB1C94CD7700EE49F5 /* normal_debug_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = normal_debug_frag.glsl; path = assets/shaders/normal_debug_frag.glsl; sourceTree = SOURCE_ROOT; };
 		082B11BC1C94CD7700EE49F5 /* normal_debug_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = normal_debug_vert.glsl; path = assets/shaders/normal_debug_vert.glsl; sourceTree = SOURCE_ROOT; };
 		084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = reaction_diffusion.hpp; sourceTree = SOURCE_ROOT; };
-		084196741C1E7E1700E1FC50 /* displacement_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = displacement_frag.glsl; path = assets/shaders/displacement_frag.glsl; sourceTree = SOURCE_ROOT; };
-		084196751C1E7E1700E1FC50 /* displacement_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = displacement_vert.glsl; path = assets/shaders/displacement_vert.glsl; sourceTree = SOURCE_ROOT; };
+		084196741C1E7E1700E1FC50 /* reaction_displacement_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = reaction_displacement_frag.glsl; path = assets/shaders/reaction_displacement_frag.glsl; sourceTree = SOURCE_ROOT; };
+		084196751C1E7E1700E1FC50 /* reaction_displacement_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = reaction_displacement_vert.glsl; path = assets/shaders/reaction_displacement_vert.glsl; sourceTree = SOURCE_ROOT; };
 		084196761C1E81C500E1FC50 /* terrain_frag_debug.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = terrain_frag_debug.glsl; path = assets/shaders/terrain_frag_debug.glsl; sourceTree = SOURCE_ROOT; };
 		084196771C1E81C500E1FC50 /* terrain_vert_debug.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = terrain_vert_debug.glsl; path = assets/shaders/terrain_vert_debug.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD731BE6A031000F148E /* gpu_timer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = gpu_timer.hpp; sourceTree = SOURCE_ROOT; };
@@ -88,8 +88,8 @@
 		0849FD761BE7C1C1000F148E /* fxaa_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = fxaa_frag.glsl; path = assets/shaders/fxaa_frag.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD771BE7C1C1000F148E /* post_vertex.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = post_vertex.glsl; path = assets/shaders/post_vertex.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD781BE7C1C1000F148E /* simple_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = simple_frag.glsl; path = assets/shaders/simple_frag.glsl; sourceTree = SOURCE_ROOT; };
-		0849FD791BE7C1C1000F148E /* simple_texture_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = simple_texture_frag.glsl; path = assets/shaders/simple_texture_frag.glsl; sourceTree = SOURCE_ROOT; };
-		0849FD7A1BE7C1C1000F148E /* simple_texture_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = simple_texture_vert.glsl; path = assets/shaders/simple_texture_vert.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD791BE7C1C1000F148E /* textured_model_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = textured_model_frag.glsl; path = assets/shaders/textured_model_frag.glsl; sourceTree = SOURCE_ROOT; };
+		0849FD7A1BE7C1C1000F148E /* textured_model_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = textured_model_vert.glsl; path = assets/shaders/textured_model_vert.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD7B1BE7C1C1000F148E /* simple_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = simple_vert.glsl; path = assets/shaders/simple_vert.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD7C1BE7C1C1000F148E /* sky_hosek_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_hosek_frag.glsl; path = assets/shaders/sky_hosek_frag.glsl; sourceTree = SOURCE_ROOT; };
 		0849FD7D1BE7C1C1000F148E /* sky_preetham_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = sky_preetham_frag.glsl; path = assets/shaders/sky_preetham_frag.glsl; sourceTree = SOURCE_ROOT; };
@@ -486,16 +486,16 @@
 				082B11BF1C94CE4600EE49F5 /* sky */,
 				082B11BE1C94CE2500EE49F5 /* debug */,
 				082B11BD1C94CE1D00EE49F5 /* post */,
-				084196741C1E7E1700E1FC50 /* displacement_frag.glsl */,
-				084196751C1E7E1700E1FC50 /* displacement_vert.glsl */,
+				084196741C1E7E1700E1FC50 /* reaction_displacement_frag.glsl */,
+				084196751C1E7E1700E1FC50 /* reaction_displacement_vert.glsl */,
 				08C4758F1C1CE8CD0031E87E /* meshline_frag.glsl */,
 				08C475901C1CE8CD0031E87E /* meshline_vert.glsl */,
 				08C475891C19CF0B0031E87E /* matcap_frag.glsl */,
 				08C4758A1C19CF0B0031E87E /* matcap_vert.glsl */,
 				0849FD7B1BE7C1C1000F148E /* simple_vert.glsl */,
 				0849FD781BE7C1C1000F148E /* simple_frag.glsl */,
-				0849FD7A1BE7C1C1000F148E /* simple_texture_vert.glsl */,
-				0849FD791BE7C1C1000F148E /* simple_texture_frag.glsl */,
+				0849FD7A1BE7C1C1000F148E /* textured_model_vert.glsl */,
+				0849FD791BE7C1C1000F148E /* textured_model_frag.glsl */,
 				082B11B51C94CD0A00EE49F5 /* instance_frag.glsl */,
 				082B11B61C94CD0A00EE49F5 /* instance_vert.glsl */,
 			);
