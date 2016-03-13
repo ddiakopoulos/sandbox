@@ -32,5 +32,7 @@ void main()
     v_camera_directional_light = u_dirLightViewProjectionMat * worldPosition;
 
     for (int i = 0; i < MAX_SPOT_LIGHTS; i++)
+    {
         v_camera_spot_light[i] = u_spotLightViewProjectionMat[i] * worldPosition;
+    }
 }

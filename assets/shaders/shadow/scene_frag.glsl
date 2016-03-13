@@ -20,7 +20,6 @@ struct PointLight
     float quadraticAtten;
 };
 
-
 struct SpotLight
 {
     vec3 color;
@@ -42,25 +41,14 @@ out vec4 f_color;
 
 uniform DirectionalLight u_directionalLight;
 uniform SpotLight u_spotLights[MAX_SPOT_LIGHTS];
+uniform sampler2D s_spotLightShadowMap[MAX_SPOT_LIGHTS];
 
 uniform sampler2D s_directionalShadowMap;
-uniform sampler2D s_spotShadowMap;
 
 uniform float u_shadowMapBias;
 uniform vec2 u_shadowMapTexelSize;
 
-uniform vec3 u_rimColor = vec3(1, 1, 1);
-uniform float u_rimPower = 0.95;
-
 uniform vec3 u_eye;
-
-vec3 compute_rimlight(vec3 normal, vec3 eyeDirection)
-{
-    float f = 1.0f - dot(normal, eyeDirection);
-    f = smoothstep(0.0f, 1.0f, f);
-    f = pow(f, u_rimPower);
-    return f * u_rimColor; 
-}
 
 float sample_shadow_map(sampler2D shadowMap, vec2 uv, float compare)
 {
@@ -109,6 +97,18 @@ bool in_range(float val)
     return val >= 0.0 && val <= 1.0;
 }
 
+float calculate_shadow_factor(vec4 cameraSpacePosition, int i)
+{
+    vec3 projectedCoords = cameraSpacePosition.xyz / cameraSpacePosition.w;
+
+    vec2 uvCoords;
+    uvCoords.x = 0.5 * projectedCoords.x + 0.5;
+    uvCoords.y = 0.5 * projectedCoords.y + 0.5;
+    float z = (0.5 * projectedCoords.z + 0.5); // self shadow bias
+    
+    return shadow_map_pcf(s_spotLightShadowMap[i], uvCoords, z - u_shadowMapBias, u_shadowMapTexelSize);
+}
+
 vec4 calculate_point_light(vec3 position, vec3 color, float constantAtten, float linearAtten, float quadraticAtten, vec4 lightSpacePos, int i, int baseLightType)
 {
     vec3 toLightVector = position - v_world_position;
@@ -116,11 +116,10 @@ vec4 calculate_point_light(vec3 position, vec3 color, float constantAtten, float
     float attenuation = 1.0 / (constantAtten + linearAtten * d + quadraticAtten * d * d);
     float coeff = max(0.0, dot(v_normal, normalize(toLightVector)));
     
-    //float shadowFactor = 1.0;
-    //if (baseLightType == SPOT_LIGHT) shadowFactor = calcShadowFactor(lightSpacePos, i);
-    //else if (baseLightType == POINT_LIGHT) shadowFactor = calcShadowFactorCube(-toLightVector, i);
+    float shadowFactor = calculate_shadow_factor(lightSpacePos, i);
+    //else if (baseLightType == POINT_LIGHT) shadowFactor = calculate_shadow_factorCube(-toLightVector, i);
 
-    return vec4(color * attenuation * coeff, 1.0);
+    return vec4(color * attenuation * coeff * shadowFactor, 1.0);
 }
 
 vec4 calculate_spot_light(SpotLight sl, vec4 lightSpacePos, int i)
@@ -175,8 +174,6 @@ void main()
 
     for (int i = 0; i < MAX_SPOT_LIGHTS; i++)
         totalLighting += calculate_spot_light(u_spotLights[i], v_camera_spot_light[i], i);
-
-    //totalLighting += vec4(compute_rimlight(v_normal, eyeDir), 1);
 
     f_color = clamp(totalLighting + ambient, 0.0, 1.0);
 }
