@@ -11,11 +11,31 @@
 namespace avl
 {
 
+    // Force sphere point to be perpendicular to axis
+    inline float3 constrain_to_axis(const float3 & loose, const float3 & axis)
+    {
+        float norm;
+        float3 onPlane = loose - axis * dot(axis, loose);
+        norm = length2(onPlane);
+        
+        if (norm > 0.0f)
+        {
+            if (onPlane.z < 0.0f) onPlane = -onPlane;
+            return (onPlane * (1.0f / std::sqrt(norm)));
+        }
+        
+        if (dot(axis, float3(0, 0, 1)) < 0.0001f) onPlane = float3(1, 0, 0);
+        else onPlane = normalize(float3(-axis.y, axis.x, 0));
+        
+        return onPlane;
+    }
+    
     struct ArcballCamera
     {
         float2 windowSize;
         float2 initialMousePos;
         float4 initialQuat, currentQuat;
+        float3 constraintAxis = {0, 0, 0};
         
         ArcballCamera(float2 windowSize) : windowSize(windowSize) { initialQuat = currentQuat = float4(0, 0, 0, 1); }
         
@@ -29,6 +49,13 @@ namespace avl
         {
             auto a = mouse_on_sphere(initialMousePos);
             auto b = mouse_on_sphere(mousePos);
+            
+            if (length(constraintAxis))
+            {
+                a = constrain_to_axis(a, constraintAxis);
+                b = constrain_to_axis(b, constraintAxis);
+            }
+        
             auto rotation = safe_normalize(make_rotation_quat_between_vectors(a, b)); // singularity case?
             currentQuat = safe_normalize(qmul(initialQuat, rotation));
         }
