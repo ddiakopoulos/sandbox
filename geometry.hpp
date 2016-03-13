@@ -201,6 +201,23 @@ namespace avl
 
     };
     
+    inline void rescale_geometry(Geometry & g, float radius = 1.0f)
+    {
+        auto bounds = g.compute_bounds();
+        
+        float3 r = bounds.size() * 0.5f;
+        float3 center = bounds.center();
+        
+        float oldRadius = std::max(r.x, std::max(r.y, r.z));
+        float scale = radius / oldRadius;
+        
+        for (auto & v : g.vertices)
+        {
+            float3 fixed = scale * (v - center);
+            v = fixed;
+        }
+    }
+    
     inline GlMesh make_mesh_from_geometry(const Geometry & geometry)
     {
         GlMesh m;

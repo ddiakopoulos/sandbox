@@ -9,6 +9,8 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
 
 struct ExperimentalApp : public GLFWApp
 {
+    std::unique_ptr<gui::ImGuiManager> igm;
+    
     Renderable object;
     
     GlMesh fullscreen_vignette_quad;
@@ -30,23 +32,6 @@ struct ExperimentalApp : public GLFWApp
     bool useNormal = false;
     bool useMatcap = false;
     bool useRimlight = false;
-    
-    void rescale_geometry(Geometry & g, float radius = 1.0f)
-    {
-        auto bounds = g.compute_bounds();
-
-        float3 r = bounds.size() * 0.5f;
-        float3 center = bounds.center();
-        
-        float oldRadius = std::max(r.x, std::max(r.y, r.z));
-        float scale = radius / oldRadius;
-        
-        for (auto & v : g.vertices)
-        {
-            float3 fixed = scale * (v - center);
-            v = fixed;
-        }
-    }
     
     ExperimentalApp() : GLFWApp(1200, 800, "Model Viewer App")
     {
