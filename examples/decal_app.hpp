@@ -265,7 +265,7 @@ struct ExperimentalApp : public GLFWApp
         
         camera.look_at({0, 8, 24}, {0, 0, 0});
 
-        simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
+        simpleShader.reset(new GlShader(read_file_text("assets/shaders/textured_model_vert.glsl"), read_file_text("assets/shaders/textured_model_frag.glsl")));
         
         anvilTex = load_image("assets/images/polygon_heart.png");
         
@@ -341,21 +341,27 @@ struct ExperimentalApp : public GLFWApp
                 for (auto & model : proceduralModels)
                 {
                     auto worldRay = camera.get_world_ray(event.cursor, float2(event.windowSize));
-                    auto hit = model.check_hit(worldRay);
-                    if (std::get<0>(hit))
+                    
+                    RaycastResult rc = model.check_hit(worldRay);
+                    
+                    if (rc.hit)
                     {
-                        float3 position = worldRay.calculate_position(std::get<1>(hit));
-                        float3 target = (std::get<2>(hit) * float3(10, 10, 10)) + position;
+                        float3 position = worldRay.calculate_position(rc.distance);
+                        float3 target = (rc.normal * float3(10, 10, 10)) + position;
                         
                         Pose box;
 
                         // Option A: Camera to mesh (orientation artifacts, better uv projection across hard surfaces)
                         if (projType == PROJECTION_TYPE_CAMERA)
+                        {
                             box = Pose(camera.pose.orientation, position);
+                        }
 
                         // Option B: Normal to mesh (uv issues)
                         else if (projType == PROJECTION_TYPE_NORMAL)
-                            look_at_pose(position, target, box);
+                        {
+                            box = look_at_pose(position, target);
+                        }
 
                         decalModels.push_back(Renderable(make_decal_geometry(model, box, float3(0.5f))));
                     }
