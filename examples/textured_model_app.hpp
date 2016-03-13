@@ -39,6 +39,9 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
+        igm.reset(new gui::ImGuiManager(window));
+        gui::make_dark_theme();
+        
         object = Renderable(load_geometry_from_ply("assets/models/barrel/barrel.ply"));
         object.pose.position = {0, 0, 0};
         
@@ -76,6 +79,8 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
+        if (igm) igm->update_input(event);
+        
         if (event.type == InputEvent::MOUSE && event.is_mouse_down())
         {
             myArcball->mouse_down(event.cursor);
@@ -163,6 +168,12 @@ struct ExperimentalApp : public GLFWApp
             
             matcapShader->unbind();
         }
+        
+        if (igm) igm->begin_frame();
+        ImGui::Checkbox("Use Normal Texture", &useNormal);
+        ImGui::Checkbox("Use Matcap Shading", &useMatcap);
+        ImGui::Checkbox("Apply Rimlight", &useRimlight);
+        if (igm) igm->end_frame();
         
         gl_check_error(__FILE__, __LINE__);
         
