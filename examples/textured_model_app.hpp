@@ -25,7 +25,7 @@ struct ExperimentalApp : public GLFWApp
     ShaderMonitor shaderMonitor;
     
     GlCamera camera;
-    ArcballCamera myArcball;
+    ArcballCamera * myArcball;
     
     bool useNormal = false;
     bool useMatcap = false;
@@ -48,7 +48,7 @@ struct ExperimentalApp : public GLFWApp
         }
     }
     
-    ExperimentalApp() : GLFWApp(1280, 720, "Model Viewer App App")
+    ExperimentalApp() : GLFWApp(1200, 800, "Model Viewer App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -77,6 +77,8 @@ struct ExperimentalApp : public GLFWApp
         
         fullscreen_vignette_quad = make_fullscreen_quad();
         
+        myArcball = new ArcballCamera(float2(width, height));
+        
         camera.look_at({0, 0, 10}, {0, 0, 0});
         
         gl_check_error(__FILE__, __LINE__);
@@ -90,6 +92,17 @@ struct ExperimentalApp : public GLFWApp
     void on_input(const InputEvent & event) override
     {
         
+        if (event.type == InputEvent::MOUSE && event.is_mouse_down())
+        {
+            myArcball->mouse_down(event.cursor);
+        }
+        else if (event.type == InputEvent::CURSOR && event.drag)
+        {
+            myArcball->mouse_drag(event.cursor);
+            object.pose.orientation = myArcball->currentQuat;
+            std::cout << myArcball->currentQuat << std::endl;
+        }
+
     }
     
     void on_update(const UpdateEvent & e) override
