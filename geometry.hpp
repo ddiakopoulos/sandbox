@@ -193,9 +193,8 @@ namespace avl
             
             for (const auto & vertex : vertices)
             {
-                //auto newV = pose.transform_coord(vertex);
-                bounds._min = min(bounds.min(), vertex);
-                bounds._max = max(bounds.max(), vertex);
+                bounds._min = linalg::min(bounds.min(), vertex);
+                bounds._max = linalg::max(bounds.max(), vertex);
             }
             return bounds;
         }
@@ -836,9 +835,7 @@ namespace avl
         
         float2 outUv;
 
-        
         auto meshBounds = mesh.compute_bounds();
-        
         if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds.min(), meshBounds.max()))
         {
             for (int f = 0; f < mesh.faces.size(); ++f)
@@ -852,11 +849,9 @@ namespace avl
             }
         }
         
-        if (bestT == std::numeric_limits<float>::infinity())
-            return false;
+        if (bestT == std::numeric_limits<float>::infinity()) return false;
         
-        if (outRayT)
-            *outRayT = bestT;
+        if (outRayT) *outRayT = bestT;
         
         if (outFaceNormal)
         {

@@ -10,7 +10,7 @@ namespace avl
 
     inline float to_radians(float degrees) { return degrees * ANVIL_PI / 180.0f; }
     inline float to_degrees(float radians) { return radians * 180.0f / ANVIL_PI; }
-
+    
     template<typename T> 
     T min(const T& x, const T& y) 
     {
