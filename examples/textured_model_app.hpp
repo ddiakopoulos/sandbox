@@ -91,7 +91,6 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
-        
         if (event.type == InputEvent::MOUSE && event.is_mouse_down())
         {
             myArcball->mouse_down(event.cursor);
@@ -99,10 +98,8 @@ struct ExperimentalApp : public GLFWApp
         else if (event.type == InputEvent::CURSOR && event.drag)
         {
             myArcball->mouse_drag(event.cursor);
-            object.pose.orientation = myArcball->currentQuat;
-            std::cout << myArcball->currentQuat << std::endl;
+            object.pose.orientation = safe_normalize(qmul(myArcball->currentQuat, object.pose.orientation));
         }
-
     }
     
     void on_update(const UpdateEvent & e) override

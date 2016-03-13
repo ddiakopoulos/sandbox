@@ -22,14 +22,14 @@ namespace avl
         void mouse_down(const float2 & mousePos)
         {
             initialMousePos = mousePos;
-            initialQuat = currentQuat;
+            initialQuat = float4(0, 0, 0, 1);
         }
         
         void mouse_drag(const float2 & mousePos)
         {
             auto a = mouse_on_sphere(initialMousePos);
             auto b = mouse_on_sphere(mousePos);
-            auto rotation = make_rotation_quat_between_vectors(a, b);
+            auto rotation = safe_normalize(make_rotation_quat_between_vectors(a, b)); // singularity case?
             currentQuat = safe_normalize(qmul(initialQuat, rotation));
         }
         
