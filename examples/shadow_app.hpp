@@ -52,11 +52,24 @@ struct SpotLight
     
     float4x4 get_view_proj_matrix()
     {
-        auto p = look_at_pose(position, position + -direction);
+        auto p = look_at_pose(position, position + direction);
         return mul(make_perspective_matrix(to_radians(cutoff * 2.0f), 1.0f, 0.1f, 1000.f), make_view_matrix_from_pose(p));
     }
     
     float get_cutoff() { return cosf(to_radians(cutoff)); }
+};
+
+struct SpotLightFramebuffer
+{
+    GlTexture shadowDepthTexture;
+    GlFramebuffer shadowFramebuffer;
+    
+    void create(float resolution)
+    {
+        shadowDepthTexture.load_data(resolution, resolution, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        shadowFramebuffer.attach(GL_DEPTH_ATTACHMENT, shadowDepthTexture);
+        if (!shadowFramebuffer.check_complete()) throw std::runtime_error("incomplete shadow framebuffer");
+    }
 };
 
 struct ExperimentalApp : public GLFWApp
@@ -93,6 +106,8 @@ struct ExperimentalApp : public GLFWApp
     
     GlTexture shadowBlurTexture;
     GlFramebuffer shadowBlurFramebuffer;
+    
+    std::vector<std::shared_ptr<SpotLightFramebuffer>> spotLightFramebuffers;
     
     std::shared_ptr<DirectionalLight> sunLight;
     std::vector<std::shared_ptr<SpotLight>> spotLights;
@@ -137,10 +152,7 @@ struct ExperimentalApp : public GLFWApp
         
         auto lightDir = skydome.get_light_direction();
         sunLight = std::make_shared<DirectionalLight>(lightDir, float3(.50f, .75f, .825f), 64.f);
-        
-        auto spotLightA = std::make_shared<SpotLight>(float3(0.f, 10.f, 0.f), float3(0.f, -1.f, 0.f), float3(1.f, 0.f, 0.f), 30.0f, float3(1.0f, 0.0f, 0.0001f));
-        spotLights.push_back(spotLightA);
-        
+
         // todo spotLightB
         
         shadowDepthTexture.load_data(shadowmapResolution, shadowmapResolution, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
@@ -152,9 +164,20 @@ struct ExperimentalApp : public GLFWApp
         //shadowBlurFramebuffer.attach(GL_COLOR_ATTACHMENT1, shadowDepthTexture); // note this attach point
         if (!shadowBlurFramebuffer.check_complete()) throw std::runtime_error("incomplete blur framebuffer");
         
+        auto spotLightA = std::make_shared<SpotLight>(float3(0.f, 10.f, 0.f), float3(0.f, -1.f, 0.f), float3(0.766f, 0.766f, 0.005f), 30.0f, float3(1.0f, 0.0f, 0.0001f));
+        spotLights.push_back(spotLightA);
+        
+        // Single spotlight fbo
+        for (int i = 0; i < 1; ++i)
+        {
+            auto buffer = std::make_shared<SpotLightFramebuffer>();
+            buffer->create(shadowmapResolution);
+            spotLightFramebuffers.push_back(buffer);
+        }
+        
         viewA.reset(new GLTextureView(shadowDepthTexture.get_gl_handle()));
         viewB.reset(new GLTextureView(shadowBlurTexture.get_gl_handle()));
-        //viewC.reset(new GLTextureView(get_gl_handle()));
+        viewC.reset(new GLTextureView(spotLightFramebuffers[0]->shadowDepthTexture.get_gl_handle()));
         //viewD.reset(new GLTextureView(get_gl_handle()));
         
         auto leePerryHeadModel = load_geometry_from_obj_no_texture("assets/models/leeperrysmith/lps.obj");
@@ -166,7 +189,9 @@ struct ExperimentalApp : public GLFWApp
             combined = concatenate_geometry(combined, m);
         }
         combined.compute_normals(false);
-        sceneObjects.push_back(Renderable(combined));
+        auto head = Renderable(combined);
+        head.pose.position = {0, 1, 0};
+        sceneObjects.push_back(std::move(head));
         
         auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
         for (auto & vert : lucy.vertices)
@@ -228,7 +253,7 @@ struct ExperimentalApp : public GLFWApp
     
         float3 target = camera.pose.position;
         
-        // Render the scene from the perspective of the light source
+        // Render the scene from the perspective of the directional light source
         {
             shadowFramebuffer.bind_to_draw();
             shadowmapShader->bind();
@@ -237,9 +262,6 @@ struct ExperimentalApp : public GLFWApp
             glViewport(0, 0, shadowmapResolution, shadowmapResolution);
             
             shadowmapShader->uniform("u_lightViewProj", sunLight->get_view_proj_matrix(target));
-            
-            //glEnable(GL_POLYGON_OFFSET_FILL);
-            //glPolygonOffset(2.0f, 2.0f);
             
             for (auto & object : sceneObjects)
             {
@@ -250,11 +272,40 @@ struct ExperimentalApp : public GLFWApp
                 }
             }
             
-            //glDisable(GL_POLYGON_OFFSET_FILL);
             shadowmapShader->unbind();
             shadowFramebuffer.unbind();
         }
         
+
+        // Render the scene from each spot light source
+        {
+            
+            for (int i = 0; i < spotLightFramebuffers.size(); ++i)
+            {
+                spotLightFramebuffers[i]->shadowFramebuffer.bind_to_draw();
+                shadowmapShader->bind();
+                
+                glClear(GL_DEPTH_BUFFER_BIT);
+                glViewport(0, 0, shadowmapResolution, shadowmapResolution);
+                
+                shadowmapShader->uniform("u_lightViewProj", spotLights[0]->get_view_proj_matrix()); // only take the first into account for debugging
+                
+                for (auto & object : sceneObjects)
+                {
+                    if (object.castsShadow)
+                    {
+                        shadowmapShader->uniform("u_modelMatrix", object.get_model());
+                        object.draw();
+                    }
+                }
+                
+                shadowmapShader->unbind();
+                spotLightFramebuffers[i]->shadowFramebuffer.unbind();
+            }
+            
+        }
+
+        // Blur applied to the directional light shadowmap only (others later)
         {
             shadowBlurFramebuffer.bind_to_draw();
             glDrawBuffer(GL_COLOR_ATTACHMENT0);
@@ -291,9 +342,13 @@ struct ExperimentalApp : public GLFWApp
             sceneShader->uniform("u_directionalLight.color", sunLight->color);
             sceneShader->uniform("u_directionalLight.direction", sunLight->direction);
             sceneShader->uniform("u_dirLightViewProjectionMat", sunLight->get_view_proj_matrix(target));
+
+            int samplerIndex = 0;
+            sceneShader->uniform("u_shadowMapBias", 0.01f / shadowmapResolution); // fixme
+            sceneShader->uniform("u_shadowMapTexelSize", float2(1.0f / shadowmapResolution));
+            sceneShader->texture("s_directionalShadowMap", samplerIndex++, shadowBlurTexture);
             
             sceneShader->uniform("u_spotLightViewProjectionMat[0]", spotLights[0]->get_view_proj_matrix());
-            //sceneShader->uniform("u_spotLightViewProjectionMat[1]", sunLight->get_view_proj_matrix(target));
 
             sceneShader->uniform("u_spotLights[0].color", spotLights[0]->color);
             sceneShader->uniform("u_spotLights[0].direction", spotLights[0]->direction);
@@ -303,10 +358,13 @@ struct ExperimentalApp : public GLFWApp
             sceneShader->uniform("u_spotLights[0].linearAtten", spotLights[0]->attenuation.y);
             sceneShader->uniform("u_spotLights[0].quadraticAtten", spotLights[0]->attenuation.z);
             
-            sceneShader->uniform("u_shadowMapBias", 0.01f / shadowmapResolution);
-            sceneShader->uniform("u_shadowMapTexelSize", float2(1.0f / shadowmapResolution));
-            sceneShader->texture("s_directionalShadowMap", 0, shadowBlurTexture);
-            
+            for (int i = 0; i < spotLightFramebuffers.size(); ++i)
+            {
+                auto & fbo = spotLightFramebuffers[i];
+                std::string uniformLocation = "s_spotLightShadowMap[" + std::to_string(i) + "]";
+                sceneShader->texture(uniformLocation.c_str(), samplerIndex + i, fbo->shadowDepthTexture);
+            }
+
             for (auto & object : sceneObjects)
             {
                 sceneShader->uniform("u_modelMatrix", object.get_model());
@@ -318,7 +376,6 @@ struct ExperimentalApp : public GLFWApp
         }
         
         {
-            //ImGui::Checkbox("Show Shadowmap", &showShadowmap);
             ImGui::Separator();
             ImGui::SliderFloat("Near Clip", &camera.nearClip, 0.1f, 2.0f);
             ImGui::SliderFloat("Far Clip", &camera.farClip, 2.0f, 75.0f);
@@ -331,7 +388,7 @@ struct ExperimentalApp : public GLFWApp
         
         viewA->draw(uiSurface.children[0]->bounds, int2(width, height));
         viewB->draw(uiSurface.children[1]->bounds, int2(width, height));
-        //viewC->draw(uiSurface.children[2]->bounds, int2(width, height), 2);
+        viewC->draw(uiSurface.children[2]->bounds, int2(width, height));
         //viewD->draw(uiSurface.children[3]->bounds, int2(width, height), 3);
         
         gl_check_error(__FILE__, __LINE__);
