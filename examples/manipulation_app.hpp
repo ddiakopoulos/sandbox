@@ -28,25 +28,27 @@ constexpr const char colorFragmentShader[] = R"(#version 330
     }
 )";
 
+std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath, const std::string geomPath = "")
+{
+    std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath), read_file_text(geomPath));
+    mon.add_shader(shader, vertexPath, fragPath);
+    return shader;
+}
 
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
 
     GlCamera camera;
-    PreethamProceduralSky preethamSky;
     RenderableGrid grid;
     FlyCameraController cameraController;
+    ShaderMonitor shaderMonitor;
     
     std::unique_ptr<GizmoEditor> gizmoEditor;
-    
     std::vector<Renderable> proceduralModels;
-    std::vector<Renderable> debugModels;
-    
-    std::unique_ptr<GlShader> simpleShader;
-    std::unique_ptr<GlShader> colorShader;
-    
-    std::vector<LightObject> lights;
+
+    std::shared_ptr<GlShader> colorShader;
+    std::shared_ptr<GlShader> pbrShader;
     
     TexturedMesh sponza;
     
@@ -60,10 +62,9 @@ struct ExperimentalApp : public GLFWApp
         
         gizmoEditor.reset(new GizmoEditor(camera));
         
-        simpleShader.reset(new GlShader(read_file_text("assets/shaders/textured_model_vert.glsl"), read_file_text("assets/shaders/textured_model_frag.glsl")));
         colorShader.reset(new GlShader(colorVertexShader, colorFragmentShader));
         
-        sponza = load_geometry_from_obj("assets/models/sponza/sponza.obj");
+        pbrShader = make_watched_shader(shaderMonitor, "assets/shaders/untextured_pbr_vert.glsl", "assets/shaders/untextured_pbr_frag.glsl");
         
         proceduralModels.resize(6);
         for (int i = 0; i < proceduralModels.size(); ++i)
@@ -71,18 +72,6 @@ struct ExperimentalApp : public GLFWApp
             proceduralModels[i] = Renderable(make_cube());
             proceduralModels[i].pose.position = float3(5 * sin(i), +2, 5 * cos(i));
         }
-    
-        {
-            lights.resize(2);
-            
-            lights[0].color = float3(249.f / 255.f, 228.f / 255.f, 157.f / 255.f);
-            lights[0].pose.position = float3(25, 15, 0);
-            
-            lights[1].color = float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f);
-            lights[1].pose.position = float3(-25, 15, 0);
-        }
-        
-        gl_check_error(__FILE__, __LINE__);
     }
     
     void on_window_resize(int2 size) override
@@ -99,6 +88,7 @@ struct ExperimentalApp : public GLFWApp
     void on_update(const UpdateEvent & e) override
     {
         cameraController.update(e.timestep_ms);
+        shaderMonitor.handle_recompile();
     }
     
     void on_draw() override
@@ -119,54 +109,24 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
         
-        preethamSky.render(viewProj, camera.get_eye_point(), camera.farClip);
-        
-        // Simple Shader
+        // Models
         {
-            simpleShader->bind();
+            colorShader->bind();
             
-            simpleShader->uniform("u_viewProj", viewProj);
-            simpleShader->uniform("u_eye", camera.get_eye_point());
-            
-            simpleShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
-            simpleShader->uniform("u_diffuse", float3(0.4f, 0.4f, 0.4f));
-            
-            for (int i = 0; i < lights.size(); i++)
-            {
-                auto light = lights[i];
-                
-                simpleShader->uniform("u_lights[" + std::to_string(i) + "].position", light.pose.position);
-                simpleShader->uniform("u_lights[" + std::to_string(i) + "].color", light.color);
-            }
+            colorShader->uniform("u_viewProj", viewProj);
 
             for (const auto & model : proceduralModels)
             {
-                simpleShader->uniform("u_modelMatrix", model.get_model());
-                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                colorShader->uniform("u_modelMatrix", model.get_model());
+                colorShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                colorShader->uniform("u_color", {1, 1, 1});
                 model.draw();
             }
             
-            gl_check_error(__FILE__, __LINE__);
-            
-            for (const auto & model : sponza.chunks)
-            {
-                Pose p;
-                auto modelMat = p.matrix();
-                simpleShader->uniform("u_modelMatrix", modelMat);
-                simpleShader->uniform("u_modelMatrixIT", inv(transpose(modelMat)));
-                const GlTexture & tex = sponza.textures[model.materialIds[0]];
-                simpleShader->texture("u_diffuseTex", 0, tex);
-                model.mesh.draw_elements();
-            }
-            
-            gl_check_error(__FILE__, __LINE__);
-            
-            simpleShader->unbind();
+            colorShader->unbind();
         }
         
-        gl_check_error(__FILE__, __LINE__);
-        
-        // Color gizmo shader
+        // Gizmo
         {
             glEnable(GL_POLYGON_OFFSET_LINE);
             glPolygonOffset(-1, -1);
