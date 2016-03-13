@@ -50,7 +50,7 @@ struct ExperimentalApp : public GLFWApp
     
     TexturedMesh sponza;
     
-    ExperimentalApp() : GLFWApp(820, 480, "ForwardLightingSample")
+    ExperimentalApp() : GLFWApp(1200, 800, "Forward Lighting App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -60,7 +60,7 @@ struct ExperimentalApp : public GLFWApp
         
         gizmoEditor.reset(new GizmoEditor(camera));
         
-        simpleShader.reset(new GlShader(read_file_text("assets/shaders/simple_texture_vert.glsl"), read_file_text("assets/shaders/simple_texture_frag.glsl")));
+        simpleShader.reset(new GlShader(read_file_text("assets/shaders/textured_model_vert.glsl"), read_file_text("assets/shaders/textured_model_frag.glsl")));
         colorShader.reset(new GlShader(colorVertexShader, colorFragmentShader));
         
         sponza = load_geometry_from_obj("assets/models/sponza/sponza.obj");
