@@ -51,15 +51,6 @@ namespace avl
     //   Utils   //
     ///////////////
     
-    template<typename T>
-    inline GLenum to_gl(T *)
-    {
-        if      (std::is_same<T, int8_t *>::value)      return GL_UNSIGNED_BYTE;
-        else if (std::is_same<T, uint16_t *>::value)    return GL_UNSIGNED_SHORT;
-        else if (std::is_same<T, uint32_t *>::value)    return GL_UNSIGNED_INT;
-        else if (std::is_same<T, float *>::value)       return GL_FLOAT;
-    };
-    
     inline void gl_check_error(const char * file, int32_t line)
     {
         GLint error = glGetError();
