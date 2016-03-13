@@ -50,7 +50,7 @@ struct ExperimentalApp : public GLFWApp
     
     TexturedMesh sponza;
     
-    ExperimentalApp() : GLFWApp(1200, 800, "Forward Lighting App")
+    ExperimentalApp() : GLFWApp(1200, 800, "Manipulation App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
