@@ -190,7 +190,7 @@ struct ExperimentalApp : public GLFWApp
         }
         combined.compute_normals(false);
         auto head = Renderable(combined);
-        head.pose.position = {0, 1, 0};
+        head.pose.position = {0, 0, 0};
         sceneObjects.push_back(std::move(head));
         
         auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
@@ -198,7 +198,9 @@ struct ExperimentalApp : public GLFWApp
         {
             vert *= .01f;
         }
-        sceneObjects.push_back(Renderable(lucy));
+        auto statue = Renderable(lucy);
+        statue.pose.position = {0, -2, 0};
+        sceneObjects.push_back(std::move(statue));
 		
         floor = Renderable(make_plane(24.f, 24.f, 256, 256), false);
         floor.pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
