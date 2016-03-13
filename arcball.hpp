@@ -29,7 +29,6 @@ namespace avl
         {
             auto a = mouse_on_sphere(initialMousePos);
             auto b = mouse_on_sphere(mousePos);
-            
             auto rotation = make_rotation_quat_between_vectors(a, b);
             currentQuat = safe_normalize(qmul(initialQuat, rotation));
         }
