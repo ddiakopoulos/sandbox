@@ -35,33 +35,32 @@ struct ExperimentalApp : public GLFWApp
     {
         auto bounds = g.compute_bounds();
 
-        float3 r = 0.5f * (bounds.max() - bounds.min());
-        
-        float3 center = bounds.min() + r;
+        float3 r = bounds.size() * 0.5f;
+        float3 center = bounds.center();
         
         float oldRadius = std::max(r.x, std::max(r.y, r.z));
         float scale = radius / oldRadius;
         
         for (auto & v : g.vertices)
         {
-            float3 fixed = center + scale * (v - center);
+            float3 fixed = scale * (v - center);
             v = fixed;
         }
     }
     
-    ExperimentalApp() : GLFWApp(1280, 720, "Arcball Camera App")
+    ExperimentalApp() : GLFWApp(1280, 720, "Model Viewer App App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        object = Renderable(load_geometry_from_ply("assets/models/geometry/HexagonUniform.ply"));
+        object = Renderable(load_geometry_from_ply("assets/models/barrel/barrel.ply"));
         object.pose.position = {0, 0, 0};
         
         std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
         std::cout << "Object Center: " << std::fixed << object.bounds.center() << std::endl;
         
-        rescale_geometry(object.geom, 1.0f);
+        rescale_geometry(object.geom);
         object.rebuild_mesh();
         
         std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
@@ -78,12 +77,7 @@ struct ExperimentalApp : public GLFWApp
         
         fullscreen_vignette_quad = make_fullscreen_quad();
         
-        gl_check_error(__FILE__, __LINE__);
-
-        myArcball = ArcballCamera(&camera);
-        
         camera.look_at({0, 0, 10}, {0, 0, 0});
-        //myArcball.set_constraint_axis(float3(0, 1, 0));
         
         gl_check_error(__FILE__, __LINE__);
     }
@@ -95,24 +89,11 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
-        if (event.type == InputEvent::KEY)
-        {
-            if (event.value[0] == GLFW_KEY_N && event.action == GLFW_RELEASE)
-                useNormal = !useNormal;
-            if (event.value[0] == GLFW_KEY_M && event.action == GLFW_RELEASE)
-                useMatcap = !useMatcap;
-        }
-
-        if (event.type == InputEvent::CURSOR && event.drag)
-            myArcball.mouse_drag(event.cursor, event.windowSize);
         
-        if (event.type == InputEvent::MOUSE && event.is_mouse_down())
-            myArcball.mouse_down(event.cursor, event.windowSize);
     }
     
     void on_update(const UpdateEvent & e) override
     {
-        object.pose.orientation = qmul(myArcball.get_quat(), object.pose.orientation);
         shaderMonitor.handle_recompile();
     }
     
