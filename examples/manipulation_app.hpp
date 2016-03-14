@@ -81,7 +81,8 @@ struct ExperimentalApp : public GLFWApp
             pbrShader->bind();
             
             pbrShader->uniform("u_viewProj", viewProj);
-
+            pbrShader->uniform("u_eye", camera.get_eye_point());
+            
             for (const auto & model : proceduralModels)
             {
                 pbrShader->uniform("u_modelMatrix", model.get_model());
