@@ -59,6 +59,15 @@ struct SpotLight
     float get_cutoff() { return cosf(to_radians(cutoff)); }
 };
 
+struct PointLight
+{
+    float3 color;
+    float3 position;
+    float3 attenuation; // constant, linear, quadratic
+    
+    PointLight(const float3 pos, const float3 color, float3 att) : position(pos), color(color), attenuation(att) {}
+};
+
 struct SpotLightFramebuffer
 {
     GlTexture shadowDepthTexture;
