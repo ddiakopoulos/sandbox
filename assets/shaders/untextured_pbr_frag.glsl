@@ -19,7 +19,7 @@ uniform float u_specular;
 #define saturate(x) clamp(x, 0.0, 1.0)
 #define PI 3.14159265359
 
-// OrenNayar diffuse
+// Gotanda 2012, "Beyond a Simple Physically Based Blinn-Phong Model in Real-Time"
 vec3 get_diffuse(vec3 diffuseColor, float roughness4, float NoV, float NoL, float VoH)
 {
     float VoL = 2 * VoH - 1;
@@ -37,7 +37,7 @@ float get_normal_distribution(float roughness4, float NoH)
 }
 
 // Smith GGX geometric shadowing from "Physically-Based Shading at Disney"
-float get_geometric_shadowing(float roughness4, float NoV, float NoL, float VoH, vec3 L, vec3 V)
+float get_geometric_shadowing(float roughness4, float NoV, float NoL, float VoH)
 {   
     float gSmithV = NoV + sqrt(NoV * (NoV - NoV * roughness4) + roughness4);
     float gSmithL = NoL + sqrt(NoL * (NoL - NoL * roughness4) + roughness4);
@@ -74,10 +74,9 @@ void main()
 {
     vec3 eyeDir = normalize(u_eye - v_world_position);
 
-    // get the normal, light, position and half vector 
-    vec3 N = normalize(v_normal); // normal
+    vec3 N = normalize(v_normal); // normal in world space
     vec3 L = normalize(u_lightPosition - v_world_position); // light direction
-    vec3 V = normalize(v_world_position); // position
+    vec3 V = eyeDir; //normalize(-v_world_position); // position
     vec3 H = normalize(V + L); // half vector
     
     float NoL = saturate(dot(N, L));
@@ -87,21 +86,22 @@ void main()
     
     // deduce the diffuse and specular color from the base color and how metallic the material is
     vec3 diffuseColor = u_baseColor - u_baseColor * u_metallic;
-    vec3 specularColor = vec3(1, 1, 1); //mix(vec3(0.08 * u_specular), u_baseColor, u_metallic);
+    vec3 specularColor = mix(vec3(0.08 * u_specular), u_baseColor, u_metallic);
     
     // compute the BRDF
+    // f = D * F * G / (4 * (N.L) * (N.V));
     float distribution = get_normal_distribution(u_roughness, NoH);
     vec3 fresnel = get_fresnel(specularColor, VoH);
-    float geom = get_geometric_shadowing(u_roughness, NoV, NoL, VoH, L, V);
+    float geom = get_geometric_shadowing(u_roughness, NoV, NoL, VoH);
 
     // get the specular and diffuse and combine them
     vec3 diffuse = get_diffuse(diffuseColor, u_roughness, NoV, NoL, VoH);
     vec3 specular = NoL * (distribution * fresnel * geom);
-    vec3 color = u_lightColor * (diffuse + specular);
+    vec3 directLighting = u_lightColor * (diffuse + specular);
     
     // get the light attenuation from its radius
     float attenuation = get_attenuation(u_lightPosition, v_world_position, u_lightRadius);
-    color *= attenuation;
+    directLighting *= attenuation;
     
-    f_color = vec4(color, 1);
+    f_color = vec4(directLighting, 1);
 }
