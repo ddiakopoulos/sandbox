@@ -72,25 +72,24 @@ float get_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius
 
 void main()
 {
-    vec4 totalLighting = vec4(0, 0, 0, 1);
     vec3 eyeDir = normalize(u_eye - v_world_position);
 
     // get the normal, light, position and half vector 
     vec3 N = normalize(v_normal); // normal
     vec3 L = normalize(u_lightPosition - v_world_position); // light direction
     vec3 V = normalize(v_world_position); // position
-    vec3 H = normalize(L + eyeDir); // half vector
+    vec3 H = normalize(V + L); // half vector
     
     float NoL = saturate(dot(N, L));
     float NoV = saturate(dot(N, V));
     float VoH = saturate(dot(V, H));
     float NoH = saturate(dot(N, H));
     
-    // deduce the diffuse and specular color from the baseColor and how metallic the material is
+    // deduce the diffuse and specular color from the base color and how metallic the material is
     vec3 diffuseColor = u_baseColor - u_baseColor * u_metallic;
-    vec3 specularColor = mix(vec3(0.08 * u_specular), u_baseColor, u_metallic);
+    vec3 specularColor = vec3(1, 1, 1); //mix(vec3(0.08 * u_specular), u_baseColor, u_metallic);
     
-    // compute the brdf terms
+    // compute the BRDF
     float distribution = get_normal_distribution(u_roughness, NoH);
     vec3 fresnel = get_fresnel(specularColor, VoH);
     float geom = get_geometric_shadowing(u_roughness, NoV, NoL, VoH, L, V);
@@ -104,5 +103,5 @@ void main()
     float attenuation = get_attenuation(u_lightPosition, v_world_position, u_lightRadius);
     color *= attenuation;
     
-    f_color = vec4(color, 1); //clamp(totalLighting, 0.0, 1.0);
+    f_color = vec4(color, 1);
 }

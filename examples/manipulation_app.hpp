@@ -11,6 +11,8 @@ struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
 
+    std::unique_ptr<gui::ImGuiManager> igm;
+    
     GlCamera camera;
     RenderableGrid grid;
     FlyCameraController cameraController;
@@ -21,11 +23,22 @@ struct ExperimentalApp : public GLFWApp
     
     std::shared_ptr<GlShader> pbrShader;
     
+    float4 lightColor = float4(1, 1, 1, 1);
+    float4 baseColor = float4(1, 1, 1, 1);
+   
+    float metallic = 1.0f;
+    float roughness = 1.0f;
+    float specular = 1.0f;
+    
     ExperimentalApp() : GLFWApp(1200, 800, "Manipulation App")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
+        
+        igm.reset(new gui::ImGuiManager(window));
+        gui::make_dark_theme();
+        
         grid = RenderableGrid(1, 100, 100);
         cameraController.set_camera(&camera);
         
@@ -36,7 +49,7 @@ struct ExperimentalApp : public GLFWApp
         proceduralModels.resize(6);
         for (int i = 0; i < proceduralModels.size(); ++i)
         {
-            proceduralModels[i] = Renderable(make_cube());
+            proceduralModels[i] = Renderable(make_sphere(1.5f));
             proceduralModels[i].pose.position = float3(5 * sin(i), +2, 5 * cos(i));
         }
     }
@@ -48,6 +61,7 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
+        if (igm) igm->update_input(event);
         gizmoEditor->handle_input(event, proceduralModels);
         cameraController.handle_input(event);
     }
@@ -82,6 +96,15 @@ struct ExperimentalApp : public GLFWApp
             
             pbrShader->uniform("u_viewProj", viewProj);
             pbrShader->uniform("u_eye", camera.get_eye_point());
+            
+            pbrShader->uniform("u_lightPosition", float3(0, 10, 0));
+            pbrShader->uniform("u_lightColor", lightColor.xyz());
+            pbrShader->uniform("u_lightRadius", 4.0f);
+            
+            pbrShader->uniform("u_baseColor", baseColor.xyz());
+            pbrShader->uniform("u_roughness", roughness);
+            pbrShader->uniform("u_metallic", metallic);
+            pbrShader->uniform("u_specular", specular);
             
             for (const auto & model : proceduralModels)
             {
@@ -122,6 +145,14 @@ struct ExperimentalApp : public GLFWApp
         
         grid.render(proj, view, {0, -0.5, 0});
 
+        if (igm) igm->begin_frame();
+        ImGui::ColorEdit4("Light Color", &lightColor[0]);
+        ImGui::ColorEdit4("Base Color", &baseColor[0]);
+        ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f);
+        ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f);
+        ImGui::SliderFloat("Specular", &specular, 0.0f, 1.0f);
+        if (igm) igm->end_frame();
+        
         gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);
