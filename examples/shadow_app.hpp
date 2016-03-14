@@ -81,6 +81,19 @@ struct SpotLightFramebuffer
     }
 };
 
+struct PointLightFramebuffer
+{
+    GlTexture shadowDepthTexture;
+    GlFramebuffer shadowFramebuffer;
+    
+    void create(float resolution)
+    {
+        shadowDepthTexture.load_data(resolution, resolution, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        shadowFramebuffer.attach(GL_DEPTH_ATTACHMENT, shadowDepthTexture);
+        if (!shadowFramebuffer.check_complete()) throw std::runtime_error("incomplete shadow framebuffer");
+    }
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     std::random_device rd;
@@ -189,6 +202,7 @@ struct ExperimentalApp : public GLFWApp
         viewC.reset(new GLTextureView(spotLightFramebuffers[0]->shadowDepthTexture.get_gl_handle()));
         //viewD.reset(new GLTextureView(get_gl_handle()));
         
+        /*
         auto leePerryHeadModel = load_geometry_from_obj_no_texture("assets/models/leeperrysmith/lps.obj");
         Geometry combined;
         for (int i = 0; i < leePerryHeadModel.size(); ++i)
@@ -201,19 +215,22 @@ struct ExperimentalApp : public GLFWApp
         auto head = Renderable(combined);
         head.pose.position = {0, 0, 0};
         sceneObjects.push_back(std::move(head));
+        */
         
         auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
-        for (auto & vert : lucy.vertices)
-        {
-            vert *= .01f;
-        }
+        
+        rescale_geometry(lucy, 8.0f);
+        auto lucyBounds = lucy.compute_bounds();
+        
         auto statue = Renderable(lucy);
-        statue.pose.position = {0, -2, 0};
+        statue.pose.position = {0, 0, 0};
         sceneObjects.push_back(std::move(statue));
 		
-        floor = Renderable(make_plane(24.f, 24.f, 256, 256), false);
+        floor = Renderable(make_plane(32.f, 32.f, 64, 64), false);
         floor.pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
-        floor.pose.position = {0, -7, 0};
+        floor.pose.position = {0, lucyBounds.min().y, 0};
+        
+        
         sceneObjects.push_back(std::move(floor));
         
         gl_check_error(__FILE__, __LINE__);
