@@ -1,33 +1,5 @@
 #include "index.hpp"
 
-constexpr const char colorVertexShader[] = R"(#version 330
-    layout(location = 0) in vec3 vertex;
-    layout(location = 1) in vec3 vnorm;
-    uniform mat4 u_modelMatrix;
-    uniform mat4 u_modelMatrixIT;
-    uniform mat4 u_viewProj;
-    uniform vec3 u_color;
-    out vec3 color;
-    out vec3 normal;
-    void main()
-    {
-        vec4 worldPos = u_modelMatrix * vec4(vertex, 1);
-        gl_Position = u_viewProj * worldPos;
-        color = u_color * 0.80;
-        normal = normalize((u_modelMatrixIT * vec4(vnorm,0)).xyz);
-    }
-)";
-
-constexpr const char colorFragmentShader[] = R"(#version 330
-    in vec3 color;
-    out vec4 f_color;
-    in vec3 normal;
-    void main()
-    {
-        f_color = (vec4(color.rgb, 1) * 0.75)+ (dot(normal, vec3(0, 1, 0)) * 0.33);
-    }
-)";
-
 std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath, const std::string geomPath = "")
 {
     std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath), read_file_text(geomPath));
@@ -46,11 +18,8 @@ struct ExperimentalApp : public GLFWApp
     
     std::unique_ptr<GizmoEditor> gizmoEditor;
     std::vector<Renderable> proceduralModels;
-
-    std::shared_ptr<GlShader> colorShader;
-    std::shared_ptr<GlShader> pbrShader;
     
-    TexturedMesh sponza;
+    std::shared_ptr<GlShader> pbrShader;
     
     ExperimentalApp() : GLFWApp(1200, 800, "Manipulation App")
     {
@@ -61,8 +30,6 @@ struct ExperimentalApp : public GLFWApp
         cameraController.set_camera(&camera);
         
         gizmoEditor.reset(new GizmoEditor(camera));
-        
-        colorShader.reset(new GlShader(colorVertexShader, colorFragmentShader));
         
         pbrShader = make_watched_shader(shaderMonitor, "assets/shaders/untextured_pbr_vert.glsl", "assets/shaders/untextured_pbr_frag.glsl");
         
@@ -111,19 +78,19 @@ struct ExperimentalApp : public GLFWApp
         
         // Models
         {
-            colorShader->bind();
+            pbrShader->bind();
             
-            colorShader->uniform("u_viewProj", viewProj);
+            pbrShader->uniform("u_viewProj", viewProj);
 
             for (const auto & model : proceduralModels)
             {
-                colorShader->uniform("u_modelMatrix", model.get_model());
-                colorShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                colorShader->uniform("u_color", {1, 1, 1});
+                pbrShader->uniform("u_modelMatrix", model.get_model());
+                pbrShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                pbrShader->uniform("u_color", {1, 1, 1});
                 model.draw();
             }
             
-            colorShader->unbind();
+            pbrShader->unbind();
         }
         
         // Gizmo
@@ -131,9 +98,9 @@ struct ExperimentalApp : public GLFWApp
             glEnable(GL_POLYGON_OFFSET_LINE);
             glPolygonOffset(-1, -1);
             
-            colorShader->bind();
+            pbrShader->bind();
             
-            colorShader->uniform("u_viewProj", viewProj);
+            pbrShader->uniform("u_viewProj", viewProj);
             
             if (gizmoEditor->get_selected_object())
             {
@@ -142,14 +109,14 @@ struct ExperimentalApp : public GLFWApp
                 for (auto axis : {float3(1, 0, 0), float3(0, 1, 0), float3(0, 0, 1)})
                 {
                     auto p = selectedObject->pose * Pose(make_rotation_quat_between_vectors({1,0,0}, axis), {0,0,0});
-                    colorShader->uniform("u_modelMatrix", p.matrix());
-                    colorShader->uniform("u_modelMatrixIT", inv(transpose(p.matrix())));
-                    colorShader->uniform("u_color", axis);
+                    pbrShader->uniform("u_modelMatrix", p.matrix());
+                    pbrShader->uniform("u_modelMatrixIT", inv(transpose(p.matrix())));
+                    pbrShader->uniform("u_color", axis);
                     gizmoEditor->get_gizmo_mesh().draw();
                 }
             }
 
-            colorShader->unbind();
+            pbrShader->unbind();
         }
         
         grid.render(proj, view, {0, -0.5, 0});

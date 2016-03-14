@@ -230,7 +230,6 @@ struct ExperimentalApp : public GLFWApp
         floor.pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
         floor.pose.position = {0, lucyBounds.min().y, 0};
         
-        
         sceneObjects.push_back(std::move(floor));
         
         gl_check_error(__FILE__, __LINE__);
