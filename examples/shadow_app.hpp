@@ -83,15 +83,81 @@ struct SpotLightFramebuffer
 
 struct PointLightFramebuffer
 {
-    GlTexture shadowDepthTexture;
-    GlFramebuffer shadowFramebuffer;
-    
-    void create(float resolution)
+    struct CubemapCamera
     {
-        shadowDepthTexture.load_data(resolution, resolution, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        shadowFramebuffer.attach(GL_DEPTH_ATTACHMENT, shadowDepthTexture);
-        if (!shadowFramebuffer.check_complete()) throw std::runtime_error("incomplete shadow framebuffer");
+        GLenum face;
+        GlCamera faceCamera;
+    };
+    
+    std::vector<CubemapCamera> faces;
+    
+    GlTexture negativeX; // GL_TEXTURE_CUBE_MAP_NEGATIVE_X
+    GlTexture positiveX; // GL_TEXTURE_CUBE_MAP_POSITIVE_X
+    GlTexture negativeY; // GL_TEXTURE_CUBE_MAP_NEGATIVE_Y
+    GlTexture positiveY; // GL_TEXTURE_CUBE_MAP_POSITIVE_Y
+    GlTexture negativeZ; // GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+    GlTexture positiveZ; // GL_TEXTURE_CUBE_MAP_POSITIVE_Z
+    
+    GlTexture depthBuffer;
+    GlFramebuffer framebuffer;
+
+    GLuint cubeMapHandle;
+    
+    void create(float2 resolution)
+    {
+        
+        depthBuffer.load_data(resolution.x, resolution.y, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        framebuffer.attach(GL_DEPTH_ATTACHMENT, depthBuffer);
+        if (!framebuffer.check_complete()) throw std::runtime_error("incomplete framebuffer");
+        
+        glGenTextures(1, &cubeMapHandle);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandle);
+        
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        for (int i = 0; i < 6; ++i)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_R32F, resolution.x, resolution.y, 0, GL_RED, GL_FLOAT, NULL);
+        }
+        
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        
+        struct CameraInfo
+        {
+            float3 position;
+            float3 target;
+            float3 up;
+            CameraInfo(float3 p, float3 t, float3 u) : position(p), target(t), up(u) {}
+        };
+        
+        std::vector<CameraInfo> info = {
+            {{0, 0, 0}, { 1,  0,  0}, {0, -1,  0}},
+            {{0, 0, 0}, {-1,  0,  0}, {0, -1,  0}},
+            {{0, 0, 0}, { 1,  1,  0}, {0,  0,  1}},
+            {{0, 0, 0}, { 0, -1,  0}, {0,  0, -1}},
+            {{0, 0, 0}, { 0,  0,  1}, {0, -1,  0}},
+            {{0, 0, 0}, { 0,  0, -1}, {0, -1,  0}},
+        };
+        
+         for (int i = 0; i < 6; ++i)
+         {
+             CubemapCamera cc;
+             cc.face = GL_TEXTURE_CUBE_MAP_POSITIVE_X + i;
+             cc.faceCamera.look_at(info[i].position, info[i].target, info[i].up);
+             faces.push_back(cc);
+         }
     }
+    
+    void get_projection()
+    {
+        make_perspective_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f); // todo - correct aspect ratio
+    }
+    
+
 };
 
 struct ExperimentalApp : public GLFWApp
