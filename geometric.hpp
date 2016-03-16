@@ -4,7 +4,6 @@
 #define geometric_h
 
 #include "linear_algebra.hpp"
-#include "math_util.hpp"
 #include <ostream>
 
 namespace avl
@@ -281,6 +280,7 @@ namespace avl
     // (Nx, Ny, Nz) is the normal vector of given plane.
     inline float4x4 make_reflection_matrix(const float4 plane)
     {
+        static const avl::float4x4 Zero4x4 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
         float4x4 reflectionMat = Zero4x4;
         
         reflectionMat[0][0] = (1.f-2.0f * plane[0]*plane[0]);
@@ -421,6 +421,308 @@ namespace avl
         float vx = pixelCoord.x * 2 / viewportSize.x - 1, vy = 1 - pixelCoord.y * 2 / viewportSize.y;
         auto invProj = inv(projectionMatrix);
         return {{0,0,0}, safe_normalize(transform_coord(invProj, {vx, vy, +1}) - transform_coord(invProj, {vx, vy, -1}))};
+    }
+
+    ////////////////
+    //   Sphere   //
+    ////////////////
+
+    static const double SPHERE_EPSILON = 4.37114e-05;
+    
+    struct Sphere
+    {
+        float3 center;
+        float radius;
+        
+        Sphere() {}
+        Sphere(const float3 &  center, float radius) : center(center), radius(radius) {}
+        
+        // Returns the closest point on the ray to the Sphere. If ray intersects then returns the point of nearest intersection.
+        float3 closest_point(const Ray & ray) const
+        {
+            float t;
+            float3 diff = ray.origin - center;
+            float a = dot(ray.direction, ray.direction);
+            float b = 2.0f * dot(diff, ray.direction);
+            float c = dot(diff, diff) - radius * radius;
+            float disc = b * b - 4.0f * a * c;
+            
+            if (disc > 0)
+            {
+                float e = std::sqrt(disc);
+                float denom = 2 * a;
+                t = (-b - e) / denom;    // smaller root
+                
+                if (t > SPHERE_EPSILON) return ray.calculate_position(t);
+                
+                t = (-b + e) / denom;    // larger root
+                if (t > SPHERE_EPSILON) return ray.calculate_position(t);
+            }
+            
+            // doesn't intersect; closest point on line
+            t = dot( -diff, safe_normalize(ray.direction) );
+            float3 onRay = ray.calculate_position(t);
+            return center + safe_normalize( onRay - center ) * radius;
+        }
+        
+        // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms.
+        Sphere transformed(const float4x4 & transform)
+        {
+            float4 tCenter = mul(transform, float4(center, 1));
+            float4 tRadius = mul(transform, float4(radius, 0, 0, 0));
+            return Sphere(float3(tCenter.x, tCenter.y, tCenter.z), length(tRadius));
+        }
+        
+        void calculate_projection(float focalLength, float2 *outCenter, float2 *outAxisA, float2 *outAxisB) const
+        {
+            float3 o(-center.x, center.y, center.z);
+            
+            float r2 = radius * radius;
+            float z2 = o.z * o.z;
+            float l2 = dot(o, o);
+            
+            if (outCenter) *outCenter = focalLength * o.z * float2(o.x, o.y) / (z2-r2);
+            
+            if (fabs(z2 - l2) > 0.00001f)
+            {
+                if (outAxisA) *outAxisA = focalLength * sqrtf(-r2*(r2-l2)/((l2-z2)*(r2-z2)*(r2-z2))) * float2(o.x, o.y);
+                if (outAxisB) *outAxisB = focalLength * sqrtf(fabs(-r2*(r2-l2)/((l2-z2)*(r2-z2)*(r2-l2)))) * float2(-o.y, o.x);
+            }
+            
+            // approximate with circle
+            else
+            {
+                float newRadius = focalLength * radius / sqrtf(z2 - r2);
+                if (outAxisA) *outAxisA = float2(newRadius, 0);
+                if (outAxisB) *outAxisB = float2(0, newRadius);
+            }
+        }
+        
+        // Calculates the projection of the sphere (an oriented ellipse) given a focal length. Algorithm due to Iñigo Quilez.
+        void calculate_projection(float focalLength, float2 screenSizePixels, float2 * outCenter, float2 * outAxisA, float2 * outAxisB) const
+        {
+            auto toScreenPixels = [=] (float2 v, const float2 &winSizePx) {
+                float2 result = v;
+                result.x *= 1 / (winSizePx.x / winSizePx.y);
+                result += float2(0.5f);
+                result *= winSizePx;
+                return result;
+            };
+            
+            float2 center, axisA, axisB;
+            
+            calculate_projection(focalLength, &center, &axisA, &axisB);
+            if (outCenter) *outCenter = toScreenPixels(center, screenSizePixels);
+            if (outAxisA) *outAxisA = toScreenPixels(center + axisA * 0.5f, screenSizePixels) - toScreenPixels(center - axisA * 0.5f, screenSizePixels);
+            if (outAxisB) *outAxisB = toScreenPixels(center + axisB * 0.5f, screenSizePixels) - toScreenPixels(center - axisB * 0.5f, screenSizePixels);
+        }
+        
+    };
+
+    ///////////////
+    //   Plane   //
+    ///////////////
+    
+    static const double PLANE_EPSILON = 0.0001;
+    
+    struct Plane
+    {
+        float4 equation; // ax * by * cz + d form (xyz normal, w distance)
+        Plane(const float4 & equation) : equation(equation) {}
+        Plane(const float3 & normal, const float & distance) { equation = float4(normal.x, normal.y, normal.z, distance); }
+        Plane(const float3 & normal, const float3 & point) { equation = float4(normal.x, normal.y, normal.z, -dot(normal, point)); }
+        float3 get_normal() const { return float3(equation.x, equation.y, equation.z); }
+        void normalize() { float n = 1.0f / length(get_normal()); equation *= n; };
+        float get_distance() const { return equation.w; }
+        float distance_to(float3 point) const { return dot(get_normal(), point) + equation.w; };
+        bool contains(float3 point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
+    };
+
+    /////////////////
+    //   Segment   //
+    /////////////////
+    
+    struct Segment
+    {
+        float3 first, second;
+        Segment(float3 first, float3 second) : first(first), second(second) {}
+        float3 get_direction() const { return safe_normalize (second - first); };
+    };
+    
+    //////////////////////////////
+    // Ray-object intersections //
+    //////////////////////////////
+    
+    // The point where the line p0-p2 intersects the plane n&d
+    inline float3 plane_line_intersection(const float3 & n, const float d, const float3 & p0, const float3 & p1)
+    {
+        float3 dif = p1 - p0;
+        float dn = dot(n, dif);
+        float t = -(d + dot(n, p0)) / dn;
+        return p0 + (dif*t);
+    }
+    
+    // The point where the line p0-p2 intersects the plane n&d
+    inline float3 plane_line_intersection(const float4 & plane, const float3 & p0, const float3 & p1)
+    {
+        return plane_line_intersection(plane.xyz(), plane.w, p0, p1);
+    }
+    
+    inline bool intersect_ray_plane(const Ray & ray, const Plane & p, float3 * intersection, float * outT = nullptr)
+    {
+
+        float d = dot(ray.direction, p.get_normal());
+        // Make sure we're not parallel to the plane
+        if (std::abs(d) > PLANE_EPSILON)
+        {
+            float t = -p.distance_to(ray.origin) / d;
+            
+            if (t >= 0.0f)
+            {
+                if (outT) *outT = t;
+                if (intersection) *intersection = ray.origin + t * ray.direction;
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // Implementation adapted from: http://www.lighthouse3d.com/tutorials/maths/ray-triangle-intersection/
+    inline bool intersect_ray_triangle(const Ray & ray, const float3 & v0, const float3 & v1, const float3 & v2, float * outT, float2 * outUV = nullptr)
+    {
+        float3 e1 = v1 - v0, e2 = v2 - v0, h = cross(ray.direction, e2);
+        
+        float a = dot(e1, h);
+        if (fabsf(a) == 0.0f) return false; // Ray is collinear with triangle plane
+        
+        float3 s = ray.origin - v0;
+        float f = 1 / a;
+        float u = f * dot(s,h);
+        if (u < 0 || u > 1) return false; // Line intersection is outside bounds of triangle
+        
+        float3 q = cross(s, e1);
+        float v = f * dot(ray.direction, q);
+        if (v < 0 || u + v > 1) return false; // Line intersection is outside bounds of triangle
+        
+        float t = f * dot(e2, q);
+        if (t < 0) return false; // Line intersection, but not a ray intersection
+        
+        if (outT) *outT = t;
+        if (outUV) *outUV = {u,v};
+        
+        return true;
+    }
+    
+     // Real-Time Collision Detection pg. 180
+    inline bool intersect_ray_box(const Ray & ray, const Bounds3D bounds, float *outT = nullptr)
+    {
+        float tmin = 0.0f; // set to -FLT_MAX to get first hit on line
+        float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
+        
+        // For all three slabs
+        for (int i = 0; i < 3; i++)
+        {
+            if (std::abs(ray.direction[i]) < PLANE_EPSILON)
+            {
+                // Ray is parallel to slab. No hit if r.origin not within slab
+                if ((ray.origin[i] < bounds.min()[i]) || (ray.origin[i] > bounds.max()[i]))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                // Compute intersection t value of ray with near and far plane of slab
+                float ood(1.0f / ray.direction[i]);
+                float t1((bounds.min()[i] - ray.origin[i]) * ood);
+                float t2((bounds.max()[i] - ray.origin[i]) * ood);
+                
+                // Make t1 be intersection with near plane, t2 with far plane
+                if (t1 > t2)
+                {
+                    float tmp = t1;
+                    t1 = t2;
+                    t2 = tmp;
+                }
+                
+                // Compute the intersection of slab intersection intervals
+                tmin = std::max<float>(tmin, t1); // Rather than: if (t1 > tmin) tmin = t1;
+                tmax = std::min<float>(tmax, t2); // Rather than: if (t2 < tmax) tmax = t2;
+                
+                // Exit with no collision as soon as slab intersection becomes empty
+                if (tmin > tmax)
+                {
+                    return false;
+                }
+            }
+        }
+        
+        // Ray intersects all 3 slabs. Intersection t value (tmin)
+        if (outT) *outT = tmin;
+        
+        return true;
+    }
+    
+    inline bool intersect_ray_box(const Ray & ray, const float3 & boxMin, const float3 & boxMax)
+    {
+        // Determine an interval t0 <= t <= t1 in which ray(t).x is within the box extents
+        float t0 = (boxMin.x - ray.origin.x) / ray.direction.x, t1 = (boxMax.x - ray.origin.x) / ray.direction.x;
+        if(ray.direction.x < 0) std::swap(t0, t1);
+        
+        // Determine an interval t0y <= t <= t1y in which ray(t).y is within the box extents
+        float t0y = (boxMin.y - ray.origin.y) / ray.direction.y, t1y = (boxMax.y - ray.origin.y) / ray.direction.y;
+        if(ray.direction.y < 0) std::swap(t0y, t1y);
+        
+        // Intersect this interval with the previously computed interval
+        if (t0 > t1y || t0y > t1) return false;
+        t0 = std::max(t0, t0y);
+        t1 = std::min(t1, t1y);
+        
+        // Determine an interval t0z <= t <= t1z in which ray(t).z is within the box extents
+        float t0z = (boxMin.z - ray.origin.z) / ray.direction.z, t1z = (boxMax.z - ray.origin.z) / ray.direction.z;
+        if(ray.direction.z < 0) std::swap(t0z, t1z);
+        
+        // Intersect this interval with the previously computed interval
+        if (t0 > t1z || t0z > t1) return false;
+        t0 = std::max(t0, t0z);
+        t1 = std::min(t1, t1z);
+        
+        // True if the intersection interval is in front of the ray
+        return t0 > 0;
+    }
+    
+    inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * intersection = nullptr)
+    {
+        float t;
+        float3 diff = ray.origin - sphere.center;
+        float a = dot(ray.direction, ray.direction);
+        float b = 2.0f * dot(diff, ray.direction);
+        float c = dot(diff, diff) - sphere.radius * sphere.radius;
+        float disc = b * b - 4.0f * a * c;
+        
+        if (disc < 0.0f) return false;
+        else
+        {
+            float e = std::sqrt(disc);
+            float denom = 2.0f * a;
+            t = (-b - e) / denom;
+            
+            if (t > SPHERE_EPSILON)
+            {
+                if (intersection) *intersection = t;
+                return true;
+            }
+            
+            t = (-b + e) / denom;
+            if (t > SPHERE_EPSILON)
+            {
+                if (intersection) *intersection = t;
+                return true;
+            }
+        }
+        
+        if (intersection) *intersection = 0;
+        return false;
     }
     
 }
