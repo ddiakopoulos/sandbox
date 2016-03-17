@@ -105,7 +105,6 @@ struct PointLightFramebuffer
     
     void create(float2 resolution)
     {
-        
         depthBuffer.load_data(resolution.x, resolution.y, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         framebuffer.attach(GL_DEPTH_ATTACHMENT, depthBuffer);
         if (!framebuffer.check_complete()) throw std::runtime_error("incomplete framebuffer");
@@ -150,6 +149,20 @@ struct PointLightFramebuffer
              cc.faceCamera.look_at(info[i].position, info[i].target, info[i].up);
              faces.push_back(cc);
          }
+    }
+    
+    void bind(GLenum face)
+    {
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.get_handle());
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, face, cubeMapHandle, 0);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    }
+    
+    // bind for reading
+    
+    void unbind()
+    {
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
     
     void get_projection()

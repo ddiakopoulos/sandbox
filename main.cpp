@@ -17,9 +17,9 @@ using namespace avl;
 //#include "examples/vision_app.hpp"
 //#include "examples/sandbox_app.hpp"
 //#include "examples/hdr_skydome.hpp"
-//#include "examples/instance_app.hpp"
+#include "examples/instance_app.hpp"
 //#include "examples/manipulation_app.hpp"
-#include "examples/shadow_app.hpp"
+//#include "examples/shadow_app.hpp"
 
 IMPLEMENT_MAIN(int argc, char * argv[])
 {
