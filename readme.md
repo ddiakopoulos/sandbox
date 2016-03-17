@@ -2,36 +2,39 @@
 
 [![Build Status](https://travis-ci.org/ddiakopoulos/sandbox.svg?branch=master)](https://travis-ci.org/ddiakopoulos/sandbox)
 
-United under the arbitrarily chosen namespace "avl" (short for Anvil).
+A collection of C++11 classes and GLSL shaders united under the arbitrarily chosen namespace "avl" (short for Anvil). 
+
+Not all experiments are supported on both XCode and VS2015 (project files are manually maintained). GLFW is required via Homebrew on OSX, while the Windows version uses a source-code copy included directly in this repository. librealsense is an optional git submodule.
 
 ## Recent
 * Lightweight, header-only opengl wrapper (GL_API.hpp)
-* 2D resolution-independent layout system for screen debug output (textures, etc)
-* Procedural sky dome with Preetham and Hosek-Wilkie models
-* Arcball camera
-* Opinionated gizmo editing tool for 3D scenes
-* Island terrain with a simple water shader (waves, reflections)
-* Frame capture => GIF export
-* 3D Euclidean patterns
 * GLSL shader program hot-reload (via efsw library)
+* HDR + bloom + tonemapping pipeline
+* Arkano22 SSAO implementation
+* Several GLSL 330 post-processing effects: film grain, FXAA
+* 2D resolution-independent layout system for screen debug output (textures, etc)
+* Simple PCF shadow mapping with a variety of lights (directional, spot, point)
+* Instanced rendering support
+* Decal projection on arbitrary meshes
 * Spherical environment mapping (matcap shading)
 * Library of procedural meshes (cube, sphere, cone, torus, capsule, etc)
 * Billboarded triangle mesh line renderer
-* Reaction-diffusion CPU simulation (Gray-Scott)
-* Incubation of computer vision functions on top of [librealsense](https://www.github.com/IntelRealSense/librealsense) (minivision)
-* Decal projection on arbitrary meshes
-* HDR + Bloom + Tonemapping Pipeline
-* Arkano22 SSAO implementation
-* Several GLSL 330 post-processing effects: film grain, FXAA
 * Orconut-Dear-ImGui Bindings
-* Simple PCF shadow mapping with a variety of lights (directional, spot, point)
-* Instanced rendering support
+* Arcball model viewer
+* Opinionated gizmo tool for editing 3D scenes
+* Frame capture => GIF export
+* Euclidean algorithm visualized in 3D space
+* Reaction-diffusion CPU simulation (Gray-Scott)
+* Environment Simulation
+  * Procedural sky dome with Preetham and Hosek-Wilkie models
+  * Island terrain with a simple water shader (waves, reflections)
+* Incubation of computer vision functions on top of [librealsense](https://www.github.com/IntelRealSense/librealsense) (minivision)
 
 ## In Progress
+* BRDF / PBR
 * Transform-feedback particles
 * Physically-based text rendering
 * Mesh voxelization
-* BRDF / PBR
 * Deferred rendering experiments (Forward+ impl)
 * CPU path tracer (+ lighting baker?)
 * Fluid simulator (GL compute shader)
