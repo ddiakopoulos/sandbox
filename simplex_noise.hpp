@@ -7,6 +7,7 @@
 #define simplex_noise_h
 
 #include "linear_algebra.hpp"
+#include <random>
 
 // This brings back the returned noise of the dnoise functions into -1,1 range. For some reason this is not the case in Stefan Gustavson implementation
 //#define SIMPLEX_DERIVATIVES_RESCALE
@@ -32,27 +33,27 @@ float noise_ridged(const float2 & v);
 float noise_ridged(const float3 & v);
 float noise_ridged(const float4 & v);
 
-////////////////////////////////////////////////
-//   Simplex Noise Via Analytical Derivative  //
-////////////////////////////////////////////////
+/////////////////////////////////////////////////
+//   Simplex Noise Via Analytical Derivative   //
+/////////////////////////////////////////////////
 
 float2 noise_deriv(float x);
 float3 noise_deriv(const float2 & v);
 float4 noise_deriv(const float3 & v);
 std::array<float,5> noise_deriv(const float4 & v);
     
-/////////////////////////////////////////
-//   2D Simplex Worley/Cellular Noise  //
-/////////////////////////////////////////
+//////////////////////////////////////////
+//   2D Simplex Worley/Cellular Noise   //
+//////////////////////////////////////////
 
 float noise_worley(const float2 & v);
 float noise_worley(const float3 & v);
 float noise_worley(const float2 & v, float falloff);
 float noise_worley(const float3 & v, float falloff);
 
-/////////////////////////////////////////////////////////
-//   2D/3D Simplex Flow Noise with Rotating Gradients  //
-/////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////
+//   2D/3D Simplex Flow Noise with Rotating Gradients   //
+//////////////////////////////////////////////////////////
 
 float noise_flow(const float2 & v, float angle);
 float noise_flow(const float3 & v, float angle);
@@ -147,17 +148,8 @@ namespace impl
     // repeated twice to avoid wrapping the index at 255 for each lookup.
     // This needs to be exactly the same for all instances on all platforms,
     // so it's easiest to just keep it as static explicit data.
-    // This also removes the need for any initialisation of this class.
-    // Note that making this an int[] instead of a char[] might make the
-    // code run faster on platforms with a high penalty for unaligned single
-    // byte addressing. Intel x86 is generally single-byte-friendly, but
-    // some other CPUs are faster with 4-aligned reads.
-    // However, a char[] is smaller, which avoids cache trashing, and that
-    // is probably the most important aspect on most architectures.
-    // This array is accessed a *lot* by the noise functions.
-    // A vector-valued noise over 3D accesses it 96 times, and a
-    // float-valued 4D noise 64 times. We want this to fit in the cache!
-    static uint8_t s_perm_table[512] = {151,160,137,91,90,15,
+    static uint8_t s_perm_table[512] = {
+        151,160,137,91,90,15,
         131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
         190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
         88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
@@ -184,6 +176,16 @@ namespace impl
         49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
         138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
     };
+    
+    void regenerate_permutation_table(std::mt19937 & gen)
+    {
+        for (int i = 0; i < 256; i++)
+        {
+            auto num = std::uniform_int_distribution<int>(0, 255)(gen);
+            s_perm_table[i] = num;
+            s_perm_table[i + 256] = num;
+        }
+    }
     
     // Gradient tables. These could be programmed the Ken Perlin way with
     // some clever bit-twiddling, but this is more clear, and not really slower.
@@ -264,7 +266,7 @@ namespace impl
     // the noise values need to be scaled and offset to [0,1], like this:
     // float SLnoise = (noise(x,y,z) + 1.0) * 0.5;
 
-    float grad(int hash, float x) 
+    inline float grad(int hash, float x)
     {
         int h = hash & 15;
         float grad = 1.0f + (h & 7); // Gradient value 1.0, 2.0, ..., 8.0
@@ -272,7 +274,7 @@ namespace impl
         return (grad * x); // Multiply the gradient with the distance
     }
     
-    float grad(int hash, float x, float y) 
+    inline float grad(int hash, float x, float y)
     {
         int h = hash & 7; // Convert low 3 bits of hash code
         float u = h<4 ? x : y; // into 8 simple gradient directions,
@@ -280,7 +282,7 @@ namespace impl
         return ((h&1)? -u : u) + ((h&2)? -2.0f*v : 2.0f*v);
     }
     
-    float grad(int hash, float x, float y , float z) 
+    inline float grad(int hash, float x, float y , float z)
     {
         int h = hash & 15; // Convert low 4 bits of hash code into 12 simple
         float u = h<8 ? x : y; // gradient directions, and compute dot product.
@@ -288,64 +290,59 @@ namespace impl
         return ((h&1)? -u : u) + ((h&2)? -v : v);
     }
     
-    float grad(int hash, float x, float y, float z, float t) 
+    inline float grad(int hash, float x, float y, float z, float t)
     {
         int h = hash & 31; // Convert low 5 bits of hash code into 32 simple
-        float u = h<24 ? x : y; // gradient directions, and compute dot product.
-        float v = h<16 ? y : z;
-        float w = h<8 ? z : t;
-        return ((h&1)? -u : u) + ((h&2)? -v : v) + ((h&4)? -w : w);
+        float u = h < 24 ? x : y; // gradient directions, and compute dot product.
+        float v = h < 16 ? y : z;
+        float w = h < 8 ? z : t;
+        return ((h & 1) ? -u : u) + ((h & 2) ? -v : v) + ((h & 4) ? -w : w);
     }
     
     // Helper functions to compute gradients in 1D to 4D and gradients-dot-residual vectors in 2D to 4D.
-    void grad1(int hash, float *gx) 
+    inline void grad1(int hash, float *gx)
     {
         int h = hash & 15;
         *gx = 1.0f + (h & 7); // Gradient value is one of 1.0, 2.0, ..., 8.0
-        if (h&8) *gx = - *gx; // Make half of the gradients negative
+        if (h & 8) *gx = - *gx; // Make half of the gradients negative
     }
     
-    void grad2(int hash, float *gx, float *gy) 
+    inline void grad2(int hash, float *gx, float *gy)
     {
         int h = hash & 7;
         *gx = s_gradient_2_table[h][0];
         *gy = s_gradient_2_table[h][1];
-        return;
     }
     
-    void grad3(int hash, float *gx, float *gy, float *gz) 
+    inline void grad3(int hash, float *gx, float *gy, float *gz)
     {
         int h = hash & 15;
         *gx = s_gradient_3_table[h][0];
         *gy = s_gradient_3_table[h][1];
         *gz = s_gradient_3_table[h][2];
-        return;
     }
     
-    void grad4(int hash, float *gx, float *gy, float *gz, float *gw) 
+    inline void grad4(int hash, float *gx, float *gy, float *gz, float *gw)
     {
         int h = hash & 31;
         *gx = s_gradient_4_table[h][0];
         *gy = s_gradient_4_table[h][1];
         *gz = s_gradient_4_table[h][2];
         *gw = s_gradient_4_table[h][3];
-        return;
     }
-    
-    
+
     // Helper functions to compute rotated gradients and gradients-dot-residual vectors in 2D and 3D.
-    void gradrot2(int hash, float sin_t, float cos_t, float *gx, float *gy) 
+    inline void gradrot2(int hash, float sin_t, float cos_t, float *gx, float *gy)
     {
         int h = hash & 7;
         float gx0 = s_gradient_2_table[h][0];
         float gy0 = s_gradient_2_table[h][1];
         *gx = cos_t * gx0 - sin_t * gy0;
         *gy = sin_t * gx0 + cos_t * gy0;
-        return;
     }
     
-    void gradrot3(int hash, float sin_t, float cos_t, float *gx, float *gy, float *gz)
-     {
+    inline void gradrot3(int hash, float sin_t, float cos_t, float *gx, float *gy, float *gz)
+    {
         int h = hash & 15;
         float gux = s_gradient_3d_u[h][0];
         float guy = s_gradient_3d_u[h][1];
@@ -356,7 +353,6 @@ namespace impl
         *gx = cos_t * gux + sin_t * gvx;
         *gy = cos_t * guy + sin_t * gvy;
         *gz = cos_t * guz + sin_t * gvz;
-        return;
     }
     
     inline float graddotp2(float gx, float gy, float x, float y) 
@@ -368,6 +364,7 @@ namespace impl
     {
         return gx * x + gy * y + gz * z;
     }
+    
 }
 
 ///////////////////////////////////

@@ -1,5 +1,4 @@
 #include "index.hpp"
-#include "noise.h"
 #include <random>
 
 struct ExperimentalApp : public GLFWApp
@@ -68,8 +67,6 @@ struct ExperimentalApp : public GLFWApp
 
         waterMesh = Renderable(make_plane(112.f, 112.f, 256, 256));
         
-        // Seed perlin noise
-        seed((float) std::uniform_int_distribution<int>(0, 512)(gen));
         terrainMesh = make_perlin_mesh(64, 64); //Renderable(make_cube());
         
         icosahedron = Renderable(make_icosahedron());
@@ -119,7 +116,9 @@ struct ExperimentalApp : public GLFWApp
         {
             for (int z = 0; z <= gridSize; z++)
             {
-                float y = simplex2(x * 0.02f, z * 0.01f, 4.0f, 4.0f, 2.0f) * 12.5;
+                float y = ((noise::noise(float2(x * 0.1f, z * 0.1f))) + 1.0f) / 2.0f;
+                y = y * 10.0f;
+                std::cout << y << std::endl;
                 //float w = 0.54 - 0.46 * cos(ANVIL_TAU * (x * gridSize + z) / ( gridSize));
                 auto w = mask[x * gridSize + z];
                 terrain.vertices.push_back({(float)x, y * (1 - w), (float)z});
