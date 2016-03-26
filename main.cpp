@@ -8,7 +8,6 @@ using namespace avl;
 //#include "examples/empty_app.hpp"
 //#include "examples/textured_model_app.hpp"
 //#include "examples/ssao_app.hpp"
-#include "examples/terrain_app.hpp"
 //#include "examples/camera_app.hpp"
 //#include "examples/euclidean_app.hpp" // Borked on windows
 //#include "examples/meshline_app.hpp"
@@ -20,6 +19,7 @@ using namespace avl;
 //#include "examples/instance_app.hpp"
 //#include "examples/manipulation_app.hpp"
 //#include "examples/shadow_app.hpp"
+#include "examples/simplex_noise_app.hpp"
 
 IMPLEMENT_MAIN(int argc, char * argv[])
 {

@@ -162,6 +162,7 @@
 		08F653081C743AE10076DF49 /* avl_imgui.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = avl_imgui.hpp; sourceTree = SOURCE_ROOT; };
 		08F653091C743AE10076DF49 /* avl_imgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = avl_imgui.cpp; sourceTree = SOURCE_ROOT; };
 		08FFC7301CA71C88005812D6 /* simplex_noise.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = simplex_noise.hpp; sourceTree = SOURCE_ROOT; };
+		08FFC7311CA72B27005812D6 /* simplex_noise_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = simplex_noise_app.hpp; path = examples/simplex_noise_app.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -316,6 +317,7 @@
 				081EA4B51C83772A00AB2DE2 /* shadow_app.hpp */,
 				081F451B1C909BB100B33AF8 /* instance_app.hpp */,
 				0868DFFE1C5F247C0032129B /* vision_app.hpp */,
+				08FFC7311CA72B27005812D6 /* simplex_noise_app.hpp */,
 			);
 			name = examples;
 			sourceTree = "<group>";
