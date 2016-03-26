@@ -118,7 +118,6 @@ struct ExperimentalApp : public GLFWApp
             {
                 float y = ((noise::noise(float2(x * 0.1f, z * 0.1f))) + 1.0f) / 2.0f;
                 y = y * 10.0f;
-                std::cout << y << std::endl;
                 //float w = 0.54 - 0.46 * cos(ANVIL_TAU * (x * gridSize + z) / ( gridSize));
                 auto w = mask[x * gridSize + z];
                 terrain.vertices.push_back({(float)x, y * (1 - w), (float)z});
