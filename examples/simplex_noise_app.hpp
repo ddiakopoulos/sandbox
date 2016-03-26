@@ -14,9 +14,13 @@ struct ExperimentalApp : public GLFWApp
     const int texResolution = 128;
     std::vector<uint8_t> data;
 
+    std::random_device rd;
+    std::mt19937 gen;
+
     ExperimentalApp() : GLFWApp(1024, 1024, "Simplex Noise App")
     {
-
+        gen = std::mt19937(rd());
+        
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -57,7 +61,13 @@ struct ExperimentalApp : public GLFWApp
     
     void on_input(const InputEvent & event) override
     {
-
+        if (event.type == InputEvent::KEY)
+        {
+            if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE)
+            {
+                noise::regenerate_permutation_table(gen);
+            }
+        }
     }
     
     void on_update(const UpdateEvent & e) override

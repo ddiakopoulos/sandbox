@@ -177,16 +177,6 @@ namespace impl
         138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
     };
     
-    void regenerate_permutation_table(std::mt19937 & gen)
-    {
-        for (int i = 0; i < 256; i++)
-        {
-            auto num = std::uniform_int_distribution<int>(0, 255)(gen);
-            s_perm_table[i] = num;
-            s_perm_table[i + 256] = num;
-        }
-    }
-    
     // Gradient tables. These could be programmed the Ken Perlin way with
     // some clever bit-twiddling, but this is more clear, and not really slower.
     static float s_gradient_2_table[8][2] = {
@@ -367,6 +357,16 @@ namespace impl
     
 }
 
+inline void regenerate_permutation_table(std::mt19937 & gen)
+{
+    for (int i = 0; i < 256; i++)
+    {
+        auto num = std::uniform_int_distribution<int>(0, 255)(gen);
+        impl::s_perm_table[i] = num;
+        impl::s_perm_table[i + 256] = num;
+    }
+}
+    
 ///////////////////////////////////
 //   Dimensional Simplex Noise   //
 ///////////////////////////////////
