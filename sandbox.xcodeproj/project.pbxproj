@@ -161,6 +161,7 @@
 		08F653051C74376E0076DF49 /* stb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_truetype.h; path = third_party/imgui/stb_truetype.h; sourceTree = SOURCE_ROOT; };
 		08F653081C743AE10076DF49 /* avl_imgui.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = avl_imgui.hpp; sourceTree = SOURCE_ROOT; };
 		08F653091C743AE10076DF49 /* avl_imgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = avl_imgui.cpp; sourceTree = SOURCE_ROOT; };
+		08FFC7301CA71C88005812D6 /* simplex_noise.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = simplex_noise.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -405,6 +406,7 @@
 				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
 				081204971BADDEF700C7C0F4 /* geometric.hpp */,
 				084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */,
+				08FFC7301CA71C88005812D6 /* simplex_noise.hpp */,
 				08C475921C1DEA570031E87E /* constant_spline.hpp */,
 				081204A31BAE086F00C7C0F4 /* running_statistics.hpp */,
 				081204A71BAE330600C7C0F4 /* one_euro.hpp */,
