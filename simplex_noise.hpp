@@ -717,7 +717,7 @@ float noise(const float4 & v)
 namespace impl 
 {
     template<typename T>
-    inline float compute_ridge_noise(const T & input) { return 1.0f - abs(noise(input)); }
+    inline float compute_ridge_noise(const T & input) { return 1.0f - std::abs(noise(input)); }
 }
 
 float noise_ridged(float x)
