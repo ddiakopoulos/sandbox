@@ -28,6 +28,7 @@ namespace avl
         double elapsed_s;
         float timestep_ms;
         float framesPerSecond;
+        uint64_t elapsedFrames;
     };
 
     struct InputEvent

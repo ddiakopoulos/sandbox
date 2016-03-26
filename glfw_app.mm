@@ -206,6 +206,7 @@ void GLFWApp::main_loop()
             e.elapsed_s = glfwGetTime();
             e.timestep_ms = timestep;
             e.framesPerSecond = fps;
+            e.elapsedFrames = elapsedFrames;
 
             on_update(e);
             on_draw();
