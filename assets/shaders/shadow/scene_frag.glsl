@@ -178,5 +178,8 @@ void main()
     for (int i = 0; i < MAX_SPOT_LIGHTS; i++)
         totalLighting += calculate_spot_light(u_spotLights[i], v_camera_spot_light[i], i);
 
+    for (int i = 0; i < MAX_POINT_LIGHTS; i++)
+        totalLighting += calculate_point_light(u_pointLights[i], vec4(0.0, 0.0, 0.0, 0.0), i, POINT_LIGHT);
+
     f_color = clamp(totalLighting + ambient, 0.0, 1.0);
 }
