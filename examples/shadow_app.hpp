@@ -104,6 +104,8 @@ struct PointLightFramebuffer
         
         glGenTextures(1, &cubeMapHandle);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandle);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -130,7 +132,7 @@ struct PointLightFramebuffer
         std::vector<CameraInfo> info = {
             {{0, 0, 0}, { 1,  0,  0}, {0, -1,  0}},
             {{0, 0, 0}, {-1,  0,  0}, {0, -1,  0}},
-            {{0, 0, 0}, { 1,  1,  0}, {0,  0,  1}},
+            {{0, 0, 0}, { 0,  1,  0}, {0,  0,  1}},
             {{0, 0, 0}, { 0, -1,  0}, {0,  0, -1}},
             {{0, 0, 0}, { 0,  0,  1}, {0, -1,  0}},
             {{0, 0, 0}, { 0,  0, -1}, {0, -1,  0}},
@@ -210,7 +212,7 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<PointLight> pointLight;
     std::vector<std::shared_ptr<SpotLight>> spotLights;
     
-    const float shadowmapResolution = 1024;
+    const float shadowmapResolution = 2048;
     float blurSigma = 3.0f;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Shadow App")

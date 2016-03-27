@@ -57,7 +57,7 @@ uniform vec3 u_eye;
 float calculate_shadow_factor_cube(vec3 toFragment, int i)
 {
     float samp = texture(s_pointLightCubemap[i], toFragment).r;
-    float dist = length(toFragment);
+    float dist = length(toFragment) * 0.5f;
     if (dist < samp + u_shadowMapBias) return 1.0;
     else return 0.5;
 }
