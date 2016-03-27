@@ -4,12 +4,22 @@
 // https://mynameismjp.wordpress.com/2015/02/18/shadow-sample-update/
 // https://blogs.aerys.in/jeanmarc-leroux/2015/01/21/exponential-cascaded-shadow-mapping-with-webgl/
 
-// [ ] Simple Shadow Mapping (SSM)
+// [X] Simple Shadow Mapping (SSM + PCF)
 // [ ] Exponential Shadow Mapping (ESM)
 // [ ] Moment Shadow Mapping [MSM]
-// [ ] Percentage Closer Filtering (PCF) + poisson disk sampling (PCSS + PCF)
+// [ ] SSM + poisson disk sampling (PCSS + PCF)
 // [ ] Shadow Volumes (face / edge)
 // [ ] Variance Shadow Mapping (VSM) http://www.punkuser.net/vsm/vsm_paper.pdf
+
+// ToDo
+// ----
+// All lights should be able to be disabled/enabled
+// Better handling of light structs
+// Bump spot lights up to maximum 4
+// Bump point lights up to maximum 4
+// Point lights need to be shoved into a vector instead of the single one
+// Shadowmap resolution UI control
+// Sampler index management
 
 inline float mix(float a, float b, float t)
 {
@@ -114,12 +124,10 @@ struct PointLightFramebuffer
         
         for (int i = 0; i < 6; ++i)
         {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_R32F, resolution.x, resolution.y, 0, GL_RED, GL_FLOAT, nullptr);
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_R16F, resolution.x, resolution.y, 0, GL_RED, GL_UNSIGNED_SHORT, nullptr);
         }
         
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-        
-        gl_check_error(__FILE__, __LINE__);
         
         struct CameraInfo
         {
@@ -262,7 +270,6 @@ struct ExperimentalApp : public GLFWApp
         
         shadowBlurTexture.load_data(shadowmapResolution, shadowmapResolution, GL_R32F, GL_RGBA, GL_FLOAT, nullptr);
         shadowBlurFramebuffer.attach(GL_COLOR_ATTACHMENT0, shadowBlurTexture);
-        //shadowBlurFramebuffer.attach(GL_COLOR_ATTACHMENT1, shadowDepthTexture); // note this attach point
         if (!shadowBlurFramebuffer.check_complete()) throw std::runtime_error("incomplete blur framebuffer");
         
         auto spotLightA = std::make_shared<SpotLight>(float3(0.f, 10.f, 0.f), float3(0.f, -1.f, 0.f), float3(0.766f, 0.766f, 0.005f), 30.0f, float3(1.0f, 0.0f, 0.0001f));
@@ -325,16 +332,6 @@ struct ExperimentalApp : public GLFWApp
     {
         if (igm) igm->update_input(e);
         cameraController.handle_input(e);
-        
-        if (e.type == InputEvent::KEY)
-        {
-            if (e.value[0] == GLFW_KEY_1 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[0].faceCamera;
-            if (e.value[0] == GLFW_KEY_2 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[1].faceCamera;
-            if (e.value[0] == GLFW_KEY_3 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[2].faceCamera;
-            if (e.value[0] == GLFW_KEY_4 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[3].faceCamera;
-            if (e.value[0] == GLFW_KEY_5 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[4].faceCamera;
-            if (e.value[0] == GLFW_KEY_6 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[5].faceCamera;
-        }
     }
     
     void on_update(const UpdateEvent & e) override
@@ -374,7 +371,9 @@ struct ExperimentalApp : public GLFWApp
     
         float3 target = camera.pose.position;
         
-        // Render the scene from the perspective of the directional light source
+        ////////////////////////////////////////////
+        // Directional Light Shadowmap Pass (sun) //
+        ////////////////////////////////////////////
         {
             shadowFramebuffer.bind_to_draw();
             shadowmapShader->bind();
@@ -398,7 +397,9 @@ struct ExperimentalApp : public GLFWApp
         }
         
 
-        // Render the scene from each spot light source
+        ///////////////////////////////
+        // Spot Light Shadowmap Pass //
+        ///////////////////////////////
         {
             
             for (int i = 0; i < spotLightFramebuffers.size(); ++i)
@@ -426,18 +427,19 @@ struct ExperimentalApp : public GLFWApp
             
         }
         
-        // Render the scene from each point light source
+        ////////////////////////////////
+        // Point Light Shadowmap Pass //
+        ////////////////////////////////
         {
-            
             glViewport(0, 0, shadowmapResolution, shadowmapResolution);
             
             for (int i = 0; i < 6; ++i)
             {
-                pointLightFramebuffer->bind(pointLightFramebuffer->faces[i].face); // bind this face
+                pointLightFramebuffer->bind(pointLightFramebuffer->faces[i].face);
                 
                 pointLightShader->bind();
                 
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                glClear(GL_DEPTH_BUFFER_BIT);
                 
                 pointLightFramebuffer->faces[i].faceCamera.set_position(pointLight->position); // set position from light data to camera for shadow fbo
                 auto viewProj = mul(pointLightFramebuffer->get_projection(), pointLightFramebuffer->faces[i].faceCamera.get_view_matrix());
@@ -457,7 +459,6 @@ struct ExperimentalApp : public GLFWApp
                 pointLightShader->unbind();
                 pointLightFramebuffer->unbind();
             }
-            
         }
 
         // Blur applied to the directional light shadowmap only (others later)
@@ -519,6 +520,7 @@ struct ExperimentalApp : public GLFWApp
             sceneShader->uniform("u_pointLights[0].linearAtten", pointLight->attenuation.y);
             sceneShader->uniform("u_pointLights[0].quadraticAtten", pointLight->attenuation.z);
             
+            // Update the spotlight 2D sampler
             for (int i = 0; i < spotLightFramebuffers.size(); ++i)
             {
                 auto & fbo = spotLightFramebuffers[i];
@@ -526,12 +528,9 @@ struct ExperimentalApp : public GLFWApp
                 sceneShader->texture(uniformLocation.c_str(), samplerIndex + i, fbo->shadowDepthTexture);
             }
             
-            {
-                for (int i = 0; i < 6; i++)
-                {
-                    sceneShader->texture("s_pointLightCubemap[0]", 2 + i, pointLightFramebuffer->cubeMapHandle, GL_TEXTURE_CUBE_MAP);
-                }
-            }
+            // Update the pointlight cube sampler
+            for (int i = 0; i < 6; i++)
+                sceneShader->texture("s_pointLightCubemap[0]", 2 + i, pointLightFramebuffer->cubeMapHandle, GL_TEXTURE_CUBE_MAP);
             
             for (auto & object : sceneObjects)
             {

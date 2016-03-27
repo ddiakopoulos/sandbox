@@ -54,6 +54,7 @@ uniform vec2 u_shadowMapTexelSize;
 
 uniform vec3 u_eye;
 
+// http://http.developer.nvidia.com/GPUGems/gpugems_ch12.html -- better bias
 float calculate_shadow_factor_cube(vec3 toFragment, int i)
 {
     float samp = texture(s_pointLightCubemap[i], toFragment).r;
@@ -185,8 +186,8 @@ void main()
 
     //totalLighting += calculate_directional_light(u_directionalLight, v_camera_directional_light);
 
-    //for (int i = 0; i < MAX_SPOT_LIGHTS; i++)
-    //    totalLighting += calculate_spot_light(u_spotLights[i], v_camera_spot_light[i], i);
+    for (int i = 0; i < MAX_SPOT_LIGHTS; i++)
+        totalLighting += calculate_spot_light(u_spotLights[i], v_camera_spot_light[i], i);
 
     for (int i = 0; i < MAX_POINT_LIGHTS; i++)
         totalLighting += calculate_point_light(u_pointLights[i].position, u_pointLights[i].color, u_pointLights[i].constantAtten, u_pointLights[i].linearAtten, u_pointLights[i].quadraticAtten, vec4(0, 0, 0, 0), i, POINT_LIGHT);
