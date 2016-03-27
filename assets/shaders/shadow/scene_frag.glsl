@@ -1,6 +1,8 @@
 #version 330
 
 const int MAX_SPOT_LIGHTS = 2;
+const int MAX_POINT_LIGHTS = 8;
+
 const int POINT_LIGHT = 0;
 const int SPOT_LIGHT = 1;
 
@@ -43,6 +45,8 @@ uniform SpotLight u_spotLights[MAX_SPOT_LIGHTS];
 uniform sampler2D s_spotLightShadowMap[MAX_SPOT_LIGHTS];
 
 uniform sampler2D s_directionalShadowMap;
+
+uniform PointLight u_pointLights[MAX_POINT_LIGHTS];
 
 uniform float u_shadowMapBias;
 uniform vec2 u_shadowMapTexelSize;
