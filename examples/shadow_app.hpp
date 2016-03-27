@@ -285,7 +285,7 @@ struct ExperimentalApp : public GLFWApp
         // Point light init
         {
             
-            pointLight.reset(new PointLight(float3(0.f, 0.f, 0.f), float3(0, 1, 1), float3(1.0f, 0.15f, 0.002f)));
+            pointLight.reset(new PointLight(float3(0.f, 0.f, 0.f), float3(0, 1, 1), float3(1.0f, 0.05f, 0.0002f)));
             pointLightFramebuffer.reset(new PointLightFramebuffer());
             pointLightFramebuffer->create(float2(shadowmapResolution));
             
@@ -307,6 +307,13 @@ struct ExperimentalApp : public GLFWApp
         statue->pose.position = {0, 0, 0};
         sceneObjects.push_back(statue);
 		
+        auto hollowCube = load_geometry_from_ply("assets/models/geometry/CubeHollowOpen.ply");
+        for (auto & v : hollowCube.vertices) v *= 0.20f;
+        auto hCube = std::make_shared<Renderable>(hollowCube);
+        hCube->pose.position = float3(0, 0, 0);
+        hCube->pose.orientation = make_rotation_quat_around_x(ANVIL_PI / 2);
+        sceneObjects.push_back(hCube);
+        
         floor = std::make_shared<Renderable>(make_plane(32.f, 32.f, 64, 64), false);
         floor->pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
         floor->pose.position = {0, lucyBounds.min().y, 0};
