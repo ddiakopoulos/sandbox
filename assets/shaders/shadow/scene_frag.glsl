@@ -1,7 +1,7 @@
 #version 330
 
 const int MAX_SPOT_LIGHTS = 2;
-const int MAX_POINT_LIGHTS = 2;
+const int MAX_POINT_LIGHTS = 1;
 
 const int POINT_LIGHT = 0;
 const int SPOT_LIGHT = 1;
@@ -47,11 +47,20 @@ uniform sampler2D s_spotLightShadowMap[MAX_SPOT_LIGHTS];
 uniform sampler2D s_directionalShadowMap;
 
 uniform PointLight u_pointLights[MAX_POINT_LIGHTS];
+uniform samplerCube s_pointLightCubemap[MAX_POINT_LIGHTS];
 
 uniform float u_shadowMapBias;
 uniform vec2 u_shadowMapTexelSize;
 
 uniform vec3 u_eye;
+
+float calculate_shadow_factor_cube(vec3 toFragment, int i)
+{
+    float samp = texture(s_pointLightCubemap[i], toFragment).r;
+    float dist = length(toFragment);
+    if (dist < samp + u_shadowMapBias) return 1.0;
+    else return 0.5;
+}
 
 float sample_shadow_map(sampler2D shadowMap, vec2 uv, float compare)
 {
@@ -119,8 +128,9 @@ vec4 calculate_point_light(vec3 position, vec3 color, float constantAtten, float
     float attenuation = 1.0 / (constantAtten + linearAtten * d + quadraticAtten * d * d);
     float coeff = max(0.0, dot(v_normal, normalize(toLightVector)));
     
-    float shadowFactor = calculate_shadow_factor(lightSpacePos, i);
-    //else if (baseLightType == POINT_LIGHT) shadowFactor = calculate_shadow_factorCube(-toLightVector, i);
+    float shadowFactor = 1.0;
+    if (baseLightType == SPOT_LIGHT) shadowFactor = calculate_shadow_factor(lightSpacePos, i);
+    else if (baseLightType == POINT_LIGHT) shadowFactor = calculate_shadow_factor_cube(-toLightVector, i);
 
     return vec4(color * attenuation * coeff * shadowFactor, 1.0);
 }
@@ -173,10 +183,10 @@ void main()
 
     vec3 eyeDir = normalize(u_eye - v_world_position);
 
-    totalLighting += calculate_directional_light(u_directionalLight, v_camera_directional_light);
+    //totalLighting += calculate_directional_light(u_directionalLight, v_camera_directional_light);
 
-    for (int i = 0; i < MAX_SPOT_LIGHTS; i++)
-        totalLighting += calculate_spot_light(u_spotLights[i], v_camera_spot_light[i], i);
+    //for (int i = 0; i < MAX_SPOT_LIGHTS; i++)
+    //    totalLighting += calculate_spot_light(u_spotLights[i], v_camera_spot_light[i], i);
 
     for (int i = 0; i < MAX_POINT_LIGHTS; i++)
         totalLighting += calculate_point_light(u_pointLights[i].position, u_pointLights[i].color, u_pointLights[i].constantAtten, u_pointLights[i].linearAtten, u_pointLights[i].quadraticAtten, vec4(0, 0, 0, 0), i, POINT_LIGHT);

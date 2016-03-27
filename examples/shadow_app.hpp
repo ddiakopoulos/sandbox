@@ -163,16 +163,14 @@ struct PointLightFramebuffer
         gl_check_error(__FILE__, __LINE__);
     }
     
-    // bind for reading
-    
     void unbind()
     {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
     
-    void get_projection()
+    float4x4 get_projection()
     {
-        make_perspective_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f); // todo - correct aspect ratio
+        return make_perspective_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f); // todo - correct aspect ratio
     }
     
 };
@@ -197,6 +195,7 @@ struct ExperimentalApp : public GLFWApp
     
     std::shared_ptr<GlShader> sceneShader;
     std::shared_ptr<GlShader> shadowmapShader;
+    std::shared_ptr<GlShader> pointLightShader;
     std::shared_ptr<GlShader> gaussianBlurShader;
     
     GlMesh fullscreen_post_quad;
@@ -219,7 +218,7 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<PointLight> pointLight;
     std::vector<std::shared_ptr<SpotLight>> spotLights;
     
-    const float shadowmapResolution = 2048;
+    const float shadowmapResolution = 1024;
     float blurSigma = 3.0f;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Shadow App")
@@ -253,6 +252,7 @@ struct ExperimentalApp : public GLFWApp
         
         sceneShader = make_watched_shader(shaderMonitor, "assets/shaders/shadow/scene_vert.glsl", "assets/shaders/shadow/scene_frag.glsl");
         shadowmapShader = make_watched_shader(shaderMonitor, "assets/shaders/shadow/shadowmap_vert.glsl", "assets/shaders/shadow/shadowmap_frag.glsl");
+        pointLightShader = make_watched_shader(shaderMonitor, "assets/shaders/shadow/point_light_vert.glsl", "assets/shaders/shadow/point_light_frag.glsl");
         gaussianBlurShader = make_watched_shader(shaderMonitor, "assets/shaders/gaussian_blur_vert.glsl", "assets/shaders/gaussian_blur_frag.glsl");
         
         skydome.recompute(2, 10.f, 1.15f);
@@ -281,12 +281,7 @@ struct ExperimentalApp : public GLFWApp
             buffer->create(shadowmapResolution);
             spotLightFramebuffers.push_back(buffer);
         }
-        
-        viewA.reset(new GLTextureView(shadowDepthTexture.get_gl_handle()));
-        viewB.reset(new GLTextureView(shadowBlurTexture.get_gl_handle()));
-        viewC.reset(new GLTextureView(spotLightFramebuffers[0]->shadowDepthTexture.get_gl_handle()));
-        //viewD.reset(new GLTextureView(get_gl_handle()));
-        
+
         // Point light init
         {
             
@@ -298,6 +293,11 @@ struct ExperimentalApp : public GLFWApp
             sceneObjects.push_back(pointLightSphere);
         }
 
+        viewA.reset(new GLTextureView(shadowDepthTexture.get_gl_handle()));
+        viewB.reset(new GLTextureView(shadowBlurTexture.get_gl_handle()));
+        viewC.reset(new GLTextureView(spotLightFramebuffers[0]->shadowDepthTexture.get_gl_handle()));
+        viewD.reset(new GLTextureView(pointLightFramebuffer->positiveY.get_gl_handle()));
+        
         auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
         
         rescale_geometry(lucy, 8.0f);
@@ -325,6 +325,16 @@ struct ExperimentalApp : public GLFWApp
     {
         if (igm) igm->update_input(e);
         cameraController.handle_input(e);
+        
+        if (e.type == InputEvent::KEY)
+        {
+            if (e.value[0] == GLFW_KEY_1 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[0].faceCamera;
+            if (e.value[0] == GLFW_KEY_2 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[1].faceCamera;
+            if (e.value[0] == GLFW_KEY_3 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[2].faceCamera;
+            if (e.value[0] == GLFW_KEY_4 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[3].faceCamera;
+            if (e.value[0] == GLFW_KEY_5 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[4].faceCamera;
+            if (e.value[0] == GLFW_KEY_6 && e.action == GLFW_RELEASE) camera = pointLightFramebuffer->faces[5].faceCamera;
+        }
     }
     
     void on_update(const UpdateEvent & e) override
@@ -415,6 +425,40 @@ struct ExperimentalApp : public GLFWApp
             }
             
         }
+        
+        // Render the scene from each point light source
+        {
+            
+            glViewport(0, 0, shadowmapResolution, shadowmapResolution);
+            
+            for (int i = 0; i < 6; ++i)
+            {
+                pointLightFramebuffer->bind(pointLightFramebuffer->faces[i].face); // bind this face
+                
+                pointLightShader->bind();
+                
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                
+                pointLightFramebuffer->faces[i].faceCamera.set_position(pointLight->position); // set position from light data to camera for shadow fbo
+                auto viewProj = mul(pointLightFramebuffer->get_projection(), pointLightFramebuffer->faces[i].faceCamera.get_view_matrix());
+                
+                pointLightShader->uniform("u_lightWorldPosition", pointLight->position);
+                pointLightShader->uniform("u_lightViewProj", viewProj);
+                
+                for (auto & object : sceneObjects)
+                {
+                    if (object->castsShadow)
+                    {
+                        pointLightShader->uniform("u_modelMatrix", object->get_model());
+                        object->draw();
+                    }
+                }
+                
+                pointLightShader->unbind();
+                pointLightFramebuffer->unbind();
+            }
+            
+        }
 
         // Blur applied to the directional light shadowmap only (others later)
         {
@@ -481,12 +525,19 @@ struct ExperimentalApp : public GLFWApp
                 std::string uniformLocation = "s_spotLightShadowMap[" + std::to_string(i) + "]";
                 sceneShader->texture(uniformLocation.c_str(), samplerIndex + i, fbo->shadowDepthTexture);
             }
-
+            
+            {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightFramebuffer->cubeMapHandle);
+                for (int i = 0; i < 6; i++) sceneShader->uniform("s_pointLightCubemap[0]", 2 + i);
+            }
+            
             for (auto & object : sceneObjects)
             {
                 sceneShader->uniform("u_modelMatrix", object->get_model());
                 sceneShader->uniform("u_modelMatrixIT", inv(transpose(object->get_model())));
                 object->draw();
+                gl_check_error(__FILE__, __LINE__);
             }
             
             sceneShader->unbind();
@@ -506,7 +557,7 @@ struct ExperimentalApp : public GLFWApp
         viewA->draw(uiSurface.children[0]->bounds, int2(width, height));
         viewB->draw(uiSurface.children[1]->bounds, int2(width, height));
         viewC->draw(uiSurface.children[2]->bounds, int2(width, height));
-        //viewD->draw(uiSurface.children[3]->bounds, int2(width, height), 3);
+        viewD->draw(uiSurface.children[3]->bounds, int2(width, height));
         
         gl_check_error(__FILE__, __LINE__);
         
