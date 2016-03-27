@@ -290,22 +290,7 @@ struct ExperimentalApp : public GLFWApp
         
         pointLightFramebuffer.reset(new PointLightFramebuffer());
         pointLightFramebuffer->create(float2(shadowmapResolution));
-        
-        /*
-        auto leePerryHeadModel = load_geometry_from_obj_no_texture("assets/models/leeperrysmith/lps.obj");
-        Geometry combined;
-        for (int i = 0; i < leePerryHeadModel.size(); ++i)
-        {
-            auto & m = leePerryHeadModel[i];
-            for (auto & v : m.vertices) v *= 25.f;
-            combined = concatenate_geometry(combined, m);
-        }
-        combined.compute_normals(false);
-        auto head = Renderable(combined);
-        head.pose.position = {0, 0, 0};
-        sceneObjects.push_back(std::move(head));
-        */
-        
+
         auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
         
         rescale_geometry(lucy, 8.0f);
@@ -343,7 +328,6 @@ struct ExperimentalApp : public GLFWApp
     
     void on_draw() override
     {
-        
         glfwMakeContextCurrent(window);
         
         if (igm) igm->begin_frame();
