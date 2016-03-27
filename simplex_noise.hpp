@@ -1852,7 +1852,6 @@ namespace impl
             freq *= lacunarity;
             amp *= gain;
         }
-        
         return sum;
     }
 }
@@ -1886,15 +1885,13 @@ float2 noise_fb_deriv(float x, uint8_t octaves, float lacunarity, float gain)
     float2 sum = float2(0.0f);
     float freq = 1.0f;
     float amp = 0.5f;
-    
-    for(uint8_t i = 0; i < octaves; i++)
+    for (uint8_t i = 0; i < octaves; i++)
     {
         float2 n = noise_deriv(x * freq);
         sum += n*amp;
         freq *= lacunarity;
         amp *= gain;
     }
-    
     return sum;
 }
 
@@ -1904,7 +1901,7 @@ float3 noise_fb_deriv(const float2 & v, uint8_t octaves, float lacunarity, float
     float freq = 1.0f;
     float amp = 0.5f;
     
-    for(uint8_t i = 0; i < octaves; i++)
+    for (uint8_t i = 0; i < octaves; i++)
     {
         float3 n = noise_deriv(v * freq);
         sum += n*amp;
@@ -1920,7 +1917,6 @@ float4 noise_fb_deriv(const float3 & v, uint8_t octaves, float lacunarity, float
     float4 sum = float4(0.0f);
     float freq = 1.0f;
     float amp = 0.5f;
-    
     for (uint8_t i = 0; i < octaves; i++)
     {
         float4 n = noise_deriv(v * freq);
@@ -1928,7 +1924,6 @@ float4 noise_fb_deriv(const float3 & v, uint8_t octaves, float lacunarity, float
         freq *= lacunarity;
         amp *= gain;
     }
-    
     return sum;
 }
 
@@ -1937,10 +1932,9 @@ std::array<float,5> noise_fb_deriv(const float4 & v, uint8_t octaves, float lacu
     std::array<float,5> sum = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
     float freq  = 1.0f;
     float amp   = 0.5f;
-    
     for (uint8_t i = 0; i < octaves; i++)
     {
-        std::array<float,5> n = noise_deriv(v * freq);
+        auto n = noise_deriv(v * freq);
         sum[0] += n[0]*amp;
         sum[1] += n[1]*amp;
         sum[2] += n[2]*amp;
@@ -1949,7 +1943,6 @@ std::array<float,5> noise_fb_deriv(const float4 & v, uint8_t octaves, float lacu
         freq *= lacunarity;
         amp *= gain;
     }
-    
     return sum;
 }
 
@@ -1972,7 +1965,6 @@ namespace impl
         float freq = 1.0;
         float amp = 0.5;
         float prev = 1.0;
-        
         for (uint8_t i = 0; i < octaves; i++)
         {
             float n = ridge(noise(input * freq), ridgeOffset);
@@ -2016,7 +2008,6 @@ float noise_iq_fb(const float2 & v, uint8_t octaves, float lacunarity, float gai
     float dx = 0.0;
     float dy = 0.0;
     float freq  = 1.0;
-
     for (uint8_t i = 0; i < octaves; i++) 
     {
         float3 d = noise_deriv(v * freq);
@@ -2026,7 +2017,6 @@ float noise_iq_fb(const float2 & v, uint8_t octaves, float lacunarity, float gai
         freq *= lacunarity;
         amp *= gain;
     }
-    
     return sum;
 }
 
@@ -2038,7 +2028,6 @@ float noise_iq_fb(const float3 & v, uint8_t octaves, float lacunarity, float gai
     float dy = 0.0;
     float dz = 0.0;
     float freq  = 1.0;
-
     for (uint8_t i = 0; i < octaves; i++) 
     {
         float4 d = noise_deriv(v * freq);
@@ -2049,7 +2038,6 @@ float noise_iq_fb(const float3 & v, uint8_t octaves, float lacunarity, float gai
         freq *= lacunarity;
         amp *= gain;
     }
-    
     return sum;
 }
 
@@ -2059,7 +2047,6 @@ float noise_iq_fb(const float2 & v, uint8_t octaves, const float2x2 & mat, float
     float amp = 1.0;
     float2 pos = v;
     float2 noiseAccum = float2(0.0);
-
     for (uint8_t i = 0; i < octaves; i++)
     {
         float3 n = noise_deriv(pos);
