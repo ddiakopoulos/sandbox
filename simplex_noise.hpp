@@ -1,5 +1,5 @@
-// See COPYING file for attribution information. 
-// This file incorporates code from: Simon Geilfus, Stefan Gustavson, Robert Bridson, and Iñigo Quilez.
+// This file incorporates Public Domain and BSD-2 code from: Simon Geilfus, Stefan Gustavson, Robert Bridson, and Iñigo Quilez.
+// See COPYING file for attribution information.
 
 #pragma once
 
@@ -415,13 +415,11 @@ float noise(const float2 & v)
     // Determine which simplex we are in.
     int i1, j1; // Offsets for second (middle) corner of simplex in (i,j) coords
     if (x0>y0) {i1=1; j1=0;} // lower triangle, XY order: (0,0)->(1,0)->(1,1)
-    else 
-    {i1=0; j1=1;} // upper triangle, YX order: (0,0)->(0,1)->(1,1)
+    else {i1=0; j1=1;} // upper triangle, YX order: (0,0)->(0,1)->(1,1)
     
     // A step of (1,0) in (i,j) means a step of (1-c,-c) in (x,y), and
     // a step of (0,1) in (i,j) means a step of (-c,1-c) in (x,y), where
     // c = (3-sqrt(3))/6
-    
     float x1 = x0 - i1 + G2; // Offsets for middle corner in (x,y) unskewed coords
     float y1 = y0 - j1 + G2;
     float x2 = x0 - 1.0f + 2.0f * G2; // Offsets for last corner in (x,y) unskewed coords
@@ -640,6 +638,7 @@ float noise(const float4 & v)
     j3 = impl::s_simplex_table[c][1]>=1 ? 1 : 0;
     k3 = impl::s_simplex_table[c][2]>=1 ? 1 : 0;
     l3 = impl::s_simplex_table[c][3]>=1 ? 1 : 0;
+    
     // The fifth corner has all coordinate offsets = 1, so no need to look that up.
     
     float x1 = x0 - i1 + G4; // Offsets for second corner in (x,y,z,w) coords
@@ -885,6 +884,7 @@ float3 noise_deriv(const float2 & v)
 #else
     return float3(40.0f * (n0 + n1 + n2), dnoise_dx, dnoise_dy); // TODO: The scale factor is preliminary!
 #endif
+    
 }
 
 float4 noise_deriv(const float3 & v)
@@ -917,19 +917,17 @@ float4 noise_deriv(const float3 & v)
     int i2, j2, k2; // Offsets for third corner of simplex in (i,j,k) coords
     
     // TODO: This code would benefit from a backport from the GLSL version!
-    if (x0>=y0) {
-        if (y0>=z0)
-        { i1=1; j1=0; k1=0; i2=1; j2=1; k2=0; } // X Y Z order
+    if (x0>=y0)
+    {
+        if (y0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=1; k2=0; } // X Y Z order
         else if (x0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=0; k2=1; } // X Z Y order
-        else 
-        { i1=0; j1=0; k1=1; i2=1; j2=0; k2=1; } // Z X Y order
+        else  { i1=0; j1=0; k1=1; i2=1; j2=0; k2=1; } // Z X Y order
     }
     else 
     { // x0<y0
         if (y0<z0) { i1=0; j1=0; k1=1; i2=0; j2=1; k2=1; } // Z Y X order
         else if (x0<z0) { i1=0; j1=1; k1=0; i2=0; j2=1; k2=1; } // Y Z X order
-        else 
-        { i1=0; j1=1; k1=0; i2=1; j2=1; k2=0; } // Y X Z order
+        else  { i1=0; j1=1; k1=0; i2=1; j2=1; k2=0; } // Y X Z order
     }
     
     // A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
@@ -1340,8 +1338,7 @@ float noise_flow(const float2 & v, float angle)
     // Determine which simplex we are in.
     int i1, j1; // Offsets for second (middle) corner of simplex in (i,j) coords
     if (x0 > y0) { i1 = 1; j1 = 0; } // lower triangle, XY order: (0,0)->(1,0)->(1,1)
-    else 
-    { i1 = 0; j1 = 1; }      // upper triangle, YX order: (0,0)->(0,1)->(1,1)
+    else { i1 = 0; j1 = 1; } // upper triangle, YX order: (0,0)->(0,1)->(1,1)
     
     // A step of (1,0) in (i,j) means a step of (1-c,-c) in (x,y), and
     // a step of (0,1) in (i,j) means a step of (-c,1-c) in (x,y), where
@@ -1425,20 +1422,17 @@ float noise_flow(const float3 & v, float angle)
     int i1, j1, k1; // Offsets for second corner of simplex in (i,j,k) coords
     int i2, j2, k2; // Offsets for third corner of simplex in (i,j,k) coords
     
-    // TODO: This code would benefit from a backport from the GLSL version!
-    if (x0>=y0) {
-        if (y0>=z0)
-        { i1=1; j1=0; k1=0; i2=1; j2=1; k2=0; } // X Y Z order
-        else if (x0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=0; k2=1; } // X Z Y order
-        else 
-        { i1=0; j1=0; k1=1; i2=1; j2=0; k2=1; } // Z X Y order
+    if (x0>=y0)
+    {
+        if (y0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=1; k2=0; }             // X Y Z order
+        else if (x0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=0; k2=1; }        // X Z Y order
+        else { i1=0; j1=0; k1=1; i2=1; j2=0; k2=1; }                    // Z X Y order
     }
     else 
-    { // x0<y0
-        if (y0<z0) { i1=0; j1=0; k1=1; i2=0; j2=1; k2=1; } // Z Y X order
-        else if (x0<z0) { i1=0; j1=1; k1=0; i2=0; j2=1; k2=1; } // Y Z X order
-        else 
-        { i1=0; j1=1; k1=0; i2=1; j2=1; k2=0; } // Y X Z order
+    {
+        if (y0<z0) { i1=0; j1=0; k1=1; i2=0; j2=1; k2=1; }              // Z Y X order
+        else if (x0<z0) { i1=0; j1=1; k1=0; i2=0; j2=1; k2=1; }         // Y Z X order
+        else  { i1=0; j1=1; k1=0; i2=1; j2=1; k2=0; }                   // Y X Z order
     }
     
     // A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
@@ -1608,6 +1602,7 @@ float3 noise_flow_deriv(const float2 & v, float angle)
     dnoise_dy += temp2 * y2;
     dnoise_dx *= -8.0f;
     dnoise_dy *= -8.0f;
+    
     // This corrects a bug in the original implementation
     dnoise_dx += t40 * gx0 + t41 * gx1 + t42 * gx2;
     dnoise_dy += t40 * gy0 + t41 * gy1 + t42 * gy2;
@@ -1653,17 +1648,15 @@ float4 noise_flow_deriv(const float3 & v, float angle)
     // TODO: This code would benefit from a backport from the GLSL version!
     if (x0>=y0) 
     {
-        if (y0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=1; k2=0; } // X Y Z order
-        else if (x0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=0; k2=1; } // X Z Y order
-        else 
-        { i1=0; j1=0; k1=1; i2=1; j2=0; k2=1; } // Z X Y order
+        if (y0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=1; k2=0; }             // X Y Z order
+        else if (x0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=0; k2=1; }        // X Z Y order
+        else  { i1=0; j1=0; k1=1; i2=1; j2=0; k2=1; }                   // Z X Y order
     }
     else 
     {
-        if (y0<z0) { i1=0; j1=0; k1=1; i2=0; j2=1; k2=1; } // Z Y X order
-        else if (x0<z0) { i1=0; j1=1; k1=0; i2=0; j2=1; k2=1; } // Y Z X order
-        else 
-        { i1=0; j1=1; k1=0; i2=1; j2=1; k2=0; } // Y X Z order
+        if (y0<z0) { i1=0; j1=0; k1=1; i2=0; j2=1; k2=1; }              // Z Y X order
+        else if (x0<z0) { i1=0; j1=1; k1=0; i2=0; j2=1; k2=1; }         // Y Z X order
+        else  { i1=0; j1=1; k1=0; i2=1; j2=1; k2=0; }                   // Y X Z order
     }
     
     // A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
@@ -1847,7 +1840,7 @@ float3 curl(const float3 & v, const std::function<float3(const float3&)> &potent
 namespace impl 
 {
     template<typename T>
-    float compute_fractal_brownian(const T &input, uint8_t octaves, float lacunarity, float gain)
+    float compute_fractal_brownian(const T & input, uint8_t octaves, float lacunarity, float gain)
     {
         float sum  = 0.0f;
         float freq = 1.0f;
@@ -1973,7 +1966,7 @@ namespace impl
     }
     
     template<typename T>
-    float compute_ridged_multi_fractal(const T &input, float ridgeOffset, uint8_t octaves, float lacunarity, float gain)
+    float compute_ridged_multi_fractal(const T & input, float ridgeOffset, uint8_t octaves, float lacunarity, float gain)
     {
         float sum = 0;
         float freq = 1.0;
