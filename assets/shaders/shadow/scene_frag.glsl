@@ -179,7 +179,7 @@ void main()
         totalLighting += calculate_spot_light(u_spotLights[i], v_camera_spot_light[i], i);
 
     for (int i = 0; i < MAX_POINT_LIGHTS; i++)
-        totalLighting += calculate_point_light(u_pointLights[i], vec4(0.0, 0.0, 0.0, 0.0), i, POINT_LIGHT);
+        totalLighting += calculate_point_light(u_pointLights[i].position, u_pointLights[i].color, u_pointLights[i].constantAtten, u_pointLights[i].linearAtten, u_pointLights[i].quadraticAtten, vec4(0, 0, 0, 0), i, POINT_LIGHT);
 
     f_color = clamp(totalLighting + ambient, 0.0, 1.0);
 }
