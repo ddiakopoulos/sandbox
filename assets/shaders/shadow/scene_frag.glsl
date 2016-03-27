@@ -6,15 +6,14 @@ const int SPOT_LIGHT = 1;
 
 struct DirectionalLight
 {
-    vec3 color;
     vec3 direction;
+    vec3 color;
 };
 
 struct PointLight
 {
-    vec3 color;
-    vec3 direction;
     vec3 position;
+    vec3 color;
     float constantAtten;
     float linearAtten;
     float quadraticAtten;
@@ -22,9 +21,9 @@ struct PointLight
 
 struct SpotLight
 {
-    vec3 color;
     vec3 direction;
     vec3 position;
+    vec3 color;
     float cutoff;
     float constantAtten;
     float linearAtten;

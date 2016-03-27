@@ -463,6 +463,12 @@ struct ExperimentalApp : public GLFWApp
             sceneShader->uniform("u_spotLights[0].linearAtten", spotLights[0]->attenuation.y);
             sceneShader->uniform("u_spotLights[0].quadraticAtten", spotLights[0]->attenuation.z);
             
+            sceneShader->uniform("u_pointLights[0].color", pointLight->color);
+            sceneShader->uniform("u_pointLights[0].position", pointLight->position);
+            sceneShader->uniform("u_pointLights[0].constantAtten", pointLight->attenuation.x);
+            sceneShader->uniform("u_pointLights[0].linearAtten", pointLight->attenuation.y);
+            sceneShader->uniform("u_pointLights[0].quadraticAtten", pointLight->attenuation.z);
+            
             for (int i = 0; i < spotLightFramebuffers.size(); ++i)
             {
                 auto & fbo = spotLightFramebuffers[i];
