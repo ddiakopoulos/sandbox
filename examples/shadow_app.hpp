@@ -125,6 +125,8 @@ struct PointLightFramebuffer
         
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
         
+        gl_check_error(__FILE__, __LINE__);
+        
         struct CameraInfo
         {
             float3 position;
@@ -149,6 +151,8 @@ struct PointLightFramebuffer
              cc.faceCamera.look_at(info[i].position, info[i].target, info[i].up);
              faces.push_back(cc);
          }
+        
+        gl_check_error(__FILE__, __LINE__);
     }
     
     void bind(GLenum face)
@@ -156,6 +160,7 @@ struct PointLightFramebuffer
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.get_handle());
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, face, cubeMapHandle, 0);
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
+        gl_check_error(__FILE__, __LINE__);
     }
     
     // bind for reading
@@ -170,7 +175,6 @@ struct PointLightFramebuffer
         make_perspective_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f); // todo - correct aspect ratio
     }
     
-
 };
 
 struct ExperimentalApp : public GLFWApp
@@ -209,6 +213,8 @@ struct ExperimentalApp : public GLFWApp
     GlFramebuffer shadowBlurFramebuffer;
     
     std::vector<std::shared_ptr<SpotLightFramebuffer>> spotLightFramebuffers;
+    
+    std::shared_ptr<PointLightFramebuffer> pointLightFramebuffer;
     
     std::shared_ptr<DirectionalLight> sunLight;
     std::vector<std::shared_ptr<SpotLight>> spotLights;
@@ -280,6 +286,10 @@ struct ExperimentalApp : public GLFWApp
         viewB.reset(new GLTextureView(shadowBlurTexture.get_gl_handle()));
         viewC.reset(new GLTextureView(spotLightFramebuffers[0]->shadowDepthTexture.get_gl_handle()));
         //viewD.reset(new GLTextureView(get_gl_handle()));
+        
+        
+        pointLightFramebuffer.reset(new PointLightFramebuffer());
+        pointLightFramebuffer->create(float2(shadowmapResolution));
         
         /*
         auto leePerryHeadModel = load_geometry_from_obj_no_texture("assets/models/leeperrysmith/lps.obj");
