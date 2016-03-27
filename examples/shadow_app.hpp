@@ -199,12 +199,11 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<GlShader> shadowmapShader;
     std::shared_ptr<GlShader> gaussianBlurShader;
     
-    std::vector<Renderable> sceneObjects;
-    
     GlMesh fullscreen_post_quad;
     
-    Renderable floor;
-    Renderable lightFrustum;
+    std::vector<std::shared_ptr<Renderable>> sceneObjects;
+    std::shared_ptr<Renderable> floor;
+    std::shared_ptr<Renderable> pointLightSphere;
     
     GlTexture shadowDepthTexture;
     GlFramebuffer shadowFramebuffer;
@@ -291,9 +290,12 @@ struct ExperimentalApp : public GLFWApp
         // Point light init
         {
             
-            pointLight.reset(new PointLight(float3(0.f, 5.0f, -5.0f), float3(1, 1, 0), float3(1.0f, 0.0f, 0.0001f)));
+            pointLight.reset(new PointLight(float3(0.f, 0.f, 0.f), float3(0, 1, 1), float3(1.0f, 0.15f, 0.002f)));
             pointLightFramebuffer.reset(new PointLightFramebuffer());
             pointLightFramebuffer->create(float2(shadowmapResolution));
+            
+            pointLightSphere = std::make_shared<Renderable>(make_sphere(0.5f));
+            sceneObjects.push_back(pointLightSphere);
         }
 
         auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
@@ -301,15 +303,15 @@ struct ExperimentalApp : public GLFWApp
         rescale_geometry(lucy, 8.0f);
         auto lucyBounds = lucy.compute_bounds();
         
-        auto statue = Renderable(lucy);
-        statue.pose.position = {0, 0, 0};
-        sceneObjects.push_back(std::move(statue));
+        auto statue = std::make_shared<Renderable>(lucy);
+        statue->pose.position = {0, 0, 0};
+        sceneObjects.push_back(statue);
 		
-        floor = Renderable(make_plane(32.f, 32.f, 64, 64), false);
-        floor.pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
-        floor.pose.position = {0, lucyBounds.min().y, 0};
+        floor = std::make_shared<Renderable>(make_plane(32.f, 32.f, 64, 64), false);
+        floor->pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
+        floor->pose.position = {0, lucyBounds.min().y, 0};
         
-        sceneObjects.push_back(std::move(floor));
+        sceneObjects.push_back(floor);
         
         gl_check_error(__FILE__, __LINE__);
     }
@@ -329,6 +331,10 @@ struct ExperimentalApp : public GLFWApp
     {
         cameraController.update(e.timestep_ms);
         shaderMonitor.handle_recompile();
+        
+        auto elapsed = e.elapsed_s * 0.95f;
+        pointLight->position = float3(cos(elapsed) * 10, 5.0f, sin(elapsed) * 10);
+        pointLightSphere->pose.position = pointLight->position;
     }
     
     void on_draw() override
@@ -370,10 +376,10 @@ struct ExperimentalApp : public GLFWApp
             
             for (auto & object : sceneObjects)
             {
-                if (object.castsShadow)
+                if (object->castsShadow)
                 {
-                    shadowmapShader->uniform("u_modelMatrix", object.get_model());
-                    object.draw();
+                    shadowmapShader->uniform("u_modelMatrix", object->get_model());
+                    object->draw();
                 }
             }
             
@@ -397,10 +403,10 @@ struct ExperimentalApp : public GLFWApp
                 
                 for (auto & object : sceneObjects)
                 {
-                    if (object.castsShadow)
+                    if (object->castsShadow)
                     {
-                        shadowmapShader->uniform("u_modelMatrix", object.get_model());
-                        object.draw();
+                        shadowmapShader->uniform("u_modelMatrix", object->get_model());
+                        object->draw();
                     }
                 }
                 
@@ -478,9 +484,9 @@ struct ExperimentalApp : public GLFWApp
 
             for (auto & object : sceneObjects)
             {
-                sceneShader->uniform("u_modelMatrix", object.get_model());
-                sceneShader->uniform("u_modelMatrixIT", inv(transpose(object.get_model())));
-                object.draw();
+                sceneShader->uniform("u_modelMatrix", object->get_model());
+                sceneShader->uniform("u_modelMatrixIT", inv(transpose(object->get_model())));
+                object->draw();
             }
             
             sceneShader->unbind();

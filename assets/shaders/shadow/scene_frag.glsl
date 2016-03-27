@@ -1,7 +1,7 @@
 #version 330
 
 const int MAX_SPOT_LIGHTS = 2;
-const int MAX_POINT_LIGHTS = 8;
+const int MAX_POINT_LIGHTS = 2;
 
 const int POINT_LIGHT = 0;
 const int SPOT_LIGHT = 1;
