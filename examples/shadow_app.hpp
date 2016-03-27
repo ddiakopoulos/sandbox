@@ -217,6 +217,7 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<PointLightFramebuffer> pointLightFramebuffer;
     
     std::shared_ptr<DirectionalLight> sunLight;
+    std::shared_ptr<PointLight> pointLight;
     std::vector<std::shared_ptr<SpotLight>> spotLights;
     
     const float shadowmapResolution = 2048;
@@ -287,9 +288,13 @@ struct ExperimentalApp : public GLFWApp
         viewC.reset(new GLTextureView(spotLightFramebuffers[0]->shadowDepthTexture.get_gl_handle()));
         //viewD.reset(new GLTextureView(get_gl_handle()));
         
-        
-        pointLightFramebuffer.reset(new PointLightFramebuffer());
-        pointLightFramebuffer->create(float2(shadowmapResolution));
+        // Point light init
+        {
+            
+            pointLight.reset(new PointLight(float3(0.f, 5.0f, -5.0f), float3(1, 1, 0), float3(1.0f, 0.0f, 0.0001f)));
+            pointLightFramebuffer.reset(new PointLightFramebuffer());
+            pointLightFramebuffer->create(float2(shadowmapResolution));
+        }
 
         auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
         
