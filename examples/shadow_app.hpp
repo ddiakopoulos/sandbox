@@ -91,13 +91,6 @@ struct PointLightFramebuffer
     
     std::vector<CubemapCamera> faces;
     
-    GlTexture negativeX; // GL_TEXTURE_CUBE_MAP_NEGATIVE_X
-    GlTexture positiveX; // GL_TEXTURE_CUBE_MAP_POSITIVE_X
-    GlTexture negativeY; // GL_TEXTURE_CUBE_MAP_NEGATIVE_Y
-    GlTexture positiveY; // GL_TEXTURE_CUBE_MAP_POSITIVE_Y
-    GlTexture negativeZ; // GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
-    GlTexture positiveZ; // GL_TEXTURE_CUBE_MAP_POSITIVE_Z
-    
     GlTexture depthBuffer;
     GlFramebuffer framebuffer;
 
@@ -111,16 +104,15 @@ struct PointLightFramebuffer
         
         glGenTextures(1, &cubeMapHandle);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandle);
-        
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
+        
         for (int i = 0; i < 6; ++i)
         {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_R32F, resolution.x, resolution.y, 0, GL_RED, GL_FLOAT, NULL);
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_R32F, resolution.x, resolution.y, 0, GL_RED, GL_FLOAT, nullptr);
         }
         
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
@@ -296,7 +288,7 @@ struct ExperimentalApp : public GLFWApp
         viewA.reset(new GLTextureView(shadowDepthTexture.get_gl_handle()));
         viewB.reset(new GLTextureView(shadowBlurTexture.get_gl_handle()));
         viewC.reset(new GLTextureView(spotLightFramebuffers[0]->shadowDepthTexture.get_gl_handle()));
-        viewD.reset(new GLTextureView(pointLightFramebuffer->positiveY.get_gl_handle()));
+        viewD.reset(new GLTextureView(pointLightFramebuffer->depthBuffer.get_gl_handle()));
         
         auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
         
@@ -314,11 +306,10 @@ struct ExperimentalApp : public GLFWApp
         hCube->pose.orientation = make_rotation_quat_around_x(ANVIL_PI / 2);
         sceneObjects.push_back(hCube);
         
-        floor = std::make_shared<Renderable>(make_plane(32.f, 32.f, 64, 64), false);
-        floor->pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
-        floor->pose.position = {0, lucyBounds.min().y, 0};
-        
-        sceneObjects.push_back(floor);
+        //floor = std::make_shared<Renderable>(make_plane(32.f, 32.f, 64, 64), false);
+        //floor->pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);
+        //floor->pose.position = {0, lucyBounds.min().y, 0};
+        //sceneObjects.push_back(floor);
         
         gl_check_error(__FILE__, __LINE__);
     }
@@ -350,7 +341,7 @@ struct ExperimentalApp : public GLFWApp
         shaderMonitor.handle_recompile();
         
         auto elapsed = e.elapsed_s * 0.95f;
-        pointLight->position = float3(cos(elapsed) * 10, 5.0f, sin(elapsed) * 10);
+        pointLight->position = float3(cos(elapsed) * 6, 5.0f, sin(elapsed) * 6);
         pointLightSphere->pose.position = pointLight->position;
     }
     
@@ -534,9 +525,10 @@ struct ExperimentalApp : public GLFWApp
             }
             
             {
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightFramebuffer->cubeMapHandle);
-                for (int i = 0; i < 6; i++) sceneShader->uniform("s_pointLightCubemap[0]", 2 + i);
+                for (int i = 0; i < 6; i++)
+                {
+                    sceneShader->texture("s_pointLightCubemap[0]", 2 + i, pointLightFramebuffer->cubeMapHandle, GL_TEXTURE_CUBE_MAP);
+                }
             }
             
             for (auto & object : sceneObjects)
