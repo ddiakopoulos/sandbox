@@ -17,17 +17,20 @@ Not all experiments are supported on both XCode and VS2015 (project files are ma
 * Instanced rendering support
 * Decal projection on arbitrary meshes
 * Spherical environment mapping (matcap shading)
-* Library of procedural meshes (cube, sphere, cone, torus, capsule, etc)
 * Billboarded triangle mesh line renderer
 * Orconut-Dear-ImGui Bindings
-* Arcball model viewer
+* Library of procedural meshes (cube, sphere, cone, torus, capsule, etc)
+* Simplex noise generator (flow, derivative, curl, worley, fractal, and more)
 * Opinionated gizmo tool for editing 3D scenes
 * Frame capture => GIF export
-* Euclidean algorithm visualized in 3D space
 * Reaction-diffusion CPU simulation (Gray-Scott)
 * Environment Simulation
   * Procedural sky dome with Preetham and Hosek-Wilkie models
   * Island terrain with a simple water shader (waves, reflections)
+* Algorithms & Filters
+    * Euclidean patterns
+    * PID controller
+    * One-euro, complimentary, single/double exponential
 * Incubation of computer vision functions on top of [librealsense](https://www.github.com/IntelRealSense/librealsense) (minivision)
 
 ## In Progress

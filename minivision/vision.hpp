@@ -12,6 +12,36 @@
 // tofix - for prototyping
 using namespace avl;
 
+// Diagonal to vertical fov
+inline float dfov_to_vfov(float diagonalFov, float aspectRatio)
+{
+    return 2.f * atan(tan(diagonalFov / 2.f) / sqrt(1.f + aspectRatio * aspectRatio));
+}
+
+// Diagonal to horizontal fov
+inline float dfov_to_hfov(float diagonalFov, float aspectRatio)
+{
+    return 2.f * atan(tan(diagonalFov / 2.f) / sqrt(1.f + 1.f / (aspectRatio * aspectRatio)));
+}
+
+// Vertical to diagonal fov
+inline float vfov_to_dfov(float vFov, float aspectRatio)
+{
+    return 2.f * atan(tan(vFov / 2.f) * sqrt(1.f + aspectRatio * aspectRatio));
+}
+
+// Horizontal to diagonal fov
+inline float hfov_to_dfov(float hFov, float aspectRatio)
+{
+    return 2.f * atan(tan(hFov / 2.f) * sqrt(1.f + 1.f / (aspectRatio * aspectRatio)));
+}
+
+// Horizontal to vertical fov
+inline float hfov_to_vfov(float hFov, float aspectRatio)
+{
+    return 2.f * atan(tan(hFov / 2.f) / aspectRatio );
+}
+
 // 3x3
 struct kernel
 {
