@@ -112,7 +112,7 @@ float noise_ridged_mf(const float4 & v, float ridgeOffset = 1.0f, uint8_t octave
 
 float noise_iq_fb(const float2 & v, uint8_t octaves = 4, float lacunarity = 2.0f, float gain = 0.5f);
 float noise_iq_fb(const float3 & v, uint8_t octaves = 4, float lacunarity = 2.0f, float gain = 0.5f);
-float noise_iq_fb(const float2 & v, uint8_t octaves = 4, const float2x2 & mat = float2x2({1.6, -1.2}, {1.2, 1.6}), float gain = 0.5f); // mat2 to transform each octave
+float noise_iq_fb(const float2 & v, uint8_t octaves = 4, const float2x2 & mat = float2x2({1.6f, -1.2f}, {1.2f, 1.6f}), float gain = 0.5f); // mat2 to transform each octave
 
 ///////////////
 //   Utils   //

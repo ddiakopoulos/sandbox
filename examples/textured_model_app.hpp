@@ -67,10 +67,10 @@ struct ExperimentalApp : public GLFWApp
         matcapShader = make_watched_shader(shaderMonitor, "assets/shaders/matcap_vert.glsl", "assets/shaders/matcap_frag.glsl");
         normalDebugShader = make_watched_shader(shaderMonitor, "assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
 
-        modelDiffuseTexture = load_image("assets/textures/modular_panel/modular_panel_diffuse.png");
-        modelNormalTexture = load_image("assets/textures/modular_panel/modular_panel_normal.png");
-        modelSpecularTexture = load_image("assets/textures/modular_panel/modular_panel_specular.png");
-        modelGlossTexture = load_image("assets/textures/modular_panel/modular_panel_gloss.png");
+        modelDiffuseTexture = load_image("assets/textures/gametextures/modular_panel/diffuse.png");
+        modelNormalTexture = load_image("assets/textures/gametextures/modular_panel/normal.png");
+        modelSpecularTexture = load_image("assets/textures/gametextures/modular_panel/specular.png");
+        modelGlossTexture = load_image("assets/textures/gametextures/modular_panel/gloss.png");
         
         matcapTex = load_image("assets/textures/matcap/metal_heated.png");
         
