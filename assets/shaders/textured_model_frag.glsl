@@ -46,6 +46,7 @@ uniform sampler2D u_emissiveTex;
 uniform int u_enableDiffuseTex = 1;
 uniform int u_enableNormalTex = 1;
 uniform int u_enableSpecularTex = 1;
+uniform int u_enableGlossTex = 1;
 uniform int u_enableEmissiveTex = 1;
 
 //uniform int u_enableGlossTex = 0;

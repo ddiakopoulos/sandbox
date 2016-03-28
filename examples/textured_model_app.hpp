@@ -18,7 +18,7 @@ struct ExperimentalApp : public GLFWApp
     GlTexture modelDiffuseTexture;
     GlTexture modelNormalTexture;
     GlTexture modelSpecularTexture;
-    GlTexture modelEmissiveTexture;
+    GlTexture modelGlossTexture;
     
     GlTexture matcapTex;
     
@@ -70,7 +70,7 @@ struct ExperimentalApp : public GLFWApp
         modelDiffuseTexture = load_image("assets/textures/modular_panel/modular_panel_diffuse.png");
         modelNormalTexture = load_image("assets/textures/modular_panel/modular_panel_normal.png");
         modelSpecularTexture = load_image("assets/textures/modular_panel/modular_panel_specular.png");
-        //modelEmissiveTexture = load_image("assets/textures/modular_panel/modular_panel_emissive.png");
+        modelGlossTexture = load_image("assets/textures/modular_panel/modular_panel_gloss.png");
         
         matcapTex = load_image("assets/textures/matcap/metal_heated.png");
         
@@ -162,11 +162,12 @@ struct ExperimentalApp : public GLFWApp
             texturedModelShader->uniform("u_enableNormalTex", 1);
             texturedModelShader->uniform("u_enableSpecularTex", 1);
             texturedModelShader->uniform("u_enableEmissiveTex", 0);
+            texturedModelShader->uniform("u_enableGlossTex", 1);
             
             texturedModelShader->texture("u_diffuseTex", 0, modelDiffuseTexture.get_gl_handle(), GL_TEXTURE_2D);
             texturedModelShader->texture("u_normalTex", 1, modelNormalTexture.get_gl_handle(), GL_TEXTURE_2D);
             texturedModelShader->texture("u_specularTex", 2, modelSpecularTexture.get_gl_handle(), GL_TEXTURE_2D);
-            texturedModelShader->texture("u_emissiveTex", 3, modelEmissiveTexture.get_gl_handle(), GL_TEXTURE_2D);
+            texturedModelShader->texture("u_glossTex", 3, modelGlossTexture.get_gl_handle(), GL_TEXTURE_2D);
             
             /*
             if (useRimlight)
