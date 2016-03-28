@@ -4,7 +4,7 @@
 #define glfw_app_h
 
 #include "string_utils.hpp"
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include "math_util.hpp"
 
 #include <thread>

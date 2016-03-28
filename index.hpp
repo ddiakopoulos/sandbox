@@ -2,7 +2,7 @@
 #include "GL_API.hpp"
 #include "string_utils.hpp"
 #include "geometric.hpp"
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include "math_util.hpp"
 #include "circular_buffer.hpp"
 #include "concurrent_queue.hpp"

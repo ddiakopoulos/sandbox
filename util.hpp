@@ -4,7 +4,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 
 #define ANVIL_PI            3.1415926535897931
 #define ANVIL_HALF_PI       1.5707963267948966
@@ -56,14 +56,6 @@
     #define GL_PUSH_ALL_ATTRIB();
     #define GL_POP_ATTRIB();
 #endif
-
-static const avl::float4x4 Identity4x4 = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
-static const avl::float3x3 Identity3x3 = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-static const avl::float2x2 Identity2x2 = {{1, 0}, {0, 1}};
-
-static const avl::float4x4 Zero4x4 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
-static const avl::float3x3 Zero3x3 = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
-static const avl::float2x2 Zero2x2 = {{0, 0}, {0, 0}};
 
 namespace avl
 {

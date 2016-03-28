@@ -42,7 +42,7 @@
 		080980301C4DA9120009122A /* libglfw3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw3.dylib; path = ../../../../usr/local/lib/libglfw3.dylib; sourceTree = "<group>"; };
 		0812048D1BADDEC100C7C0F4 /* sandbox */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sandbox; sourceTree = BUILT_PRODUCTS_DIR; };
 		081204971BADDEF700C7C0F4 /* geometric.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = geometric.hpp; sourceTree = SOURCE_ROOT; };
-		081204981BADDEF700C7C0F4 /* linear_algebra.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = linear_algebra.hpp; sourceTree = SOURCE_ROOT; };
+		081204981BADDEF700C7C0F4 /* linalg_util.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = linalg_util.hpp; sourceTree = SOURCE_ROOT; };
 		081204991BADDEF700C7C0F4 /* math_util.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = math_util.hpp; sourceTree = SOURCE_ROOT; };
 		0812049C1BADDF6800C7C0F4 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = SOURCE_ROOT; };
 		0812049F1BADF68B00C7C0F4 /* circular_buffer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = circular_buffer.hpp; sourceTree = SOURCE_ROOT; };
@@ -404,7 +404,7 @@
 			children = (
 				082B11B41C94B80100EE49F5 /* linalg.h */,
 				081204991BADDEF700C7C0F4 /* math_util.hpp */,
-				081204981BADDEF700C7C0F4 /* linear_algebra.hpp */,
+				081204981BADDEF700C7C0F4 /* linalg_util.hpp */,
 				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
 				081204971BADDEF700C7C0F4 /* geometric.hpp */,
 				084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */,

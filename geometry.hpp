@@ -1,7 +1,7 @@
 #ifndef geometry_h
 #define geometry_h
 
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include "string_utils.hpp"

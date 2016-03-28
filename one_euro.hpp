@@ -3,7 +3,7 @@
 #ifndef one_euro_filter_h
 #define one_euro_filter_h
 
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 
 namespace avl
 {

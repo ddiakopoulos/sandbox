@@ -3,7 +3,7 @@
 #ifndef geometric_h
 #define geometric_h
 
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include <ostream>
 
 namespace avl

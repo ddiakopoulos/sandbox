@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include "util.hpp"
 
 // Implicit casts for linalg types

@@ -1,7 +1,7 @@
 #ifndef procedural_mesh_h
 #define procedural_mesh_h
 
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include <assert.h>

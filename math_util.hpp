@@ -2,7 +2,7 @@
 #define math_util_h
 
 #include "util.hpp"
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include <algorithm>
 
 namespace avl

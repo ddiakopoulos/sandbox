@@ -2,7 +2,7 @@
 #define sketch_h
 
 #include <vector>
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
 

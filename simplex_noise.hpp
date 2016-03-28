@@ -6,7 +6,7 @@
 #ifndef simplex_noise_h
 #define simplex_noise_h
 
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include <random>
 
 // This brings back the returned noise of the dnoise functions into -1,1 range. For some reason this is not the case in Stefan Gustavson implementation

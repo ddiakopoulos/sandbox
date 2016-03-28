@@ -1,7 +1,7 @@
 #ifndef procedural_sky_h
 #define procedural_sky_h
 
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include "math_util.hpp"
 #include "util.hpp"
 #include "GL_API.hpp"

@@ -6,7 +6,7 @@
 #include <array>
 #include <algorithm>
 
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include "math_util.hpp"
 
 // tofix - for prototyping

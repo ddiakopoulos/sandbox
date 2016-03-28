@@ -1,7 +1,7 @@
 #ifndef arcball_h
 #define arcball_h
 
-#include "linear_algebra.hpp"
+#include "linalg_util.hpp"
 #include "math_util.hpp"
 #include "util.hpp"
 #include "geometric.hpp"
