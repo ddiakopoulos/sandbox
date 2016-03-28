@@ -402,11 +402,11 @@
 		08C475771C02C9650031E87E /* math */ = {
 			isa = PBXGroup;
 			children = (
-				082B11B41C94B80100EE49F5 /* linalg.h */,
 				081204991BADDEF700C7C0F4 /* math_util.hpp */,
+				082B11B41C94B80100EE49F5 /* linalg.h */,
 				081204981BADDEF700C7C0F4 /* linalg_util.hpp */,
-				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
 				081204971BADDEF700C7C0F4 /* geometric.hpp */,
+				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
 				084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */,
 				08FFC7301CA71C88005812D6 /* simplex_noise.hpp */,
 				08C475921C1DEA570031E87E /* constant_spline.hpp */,

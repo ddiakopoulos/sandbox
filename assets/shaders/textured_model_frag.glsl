@@ -5,6 +5,8 @@ const int NUM_LIGHTS = 2;
 in vec3 v_position; 
 in vec3 v_normal;
 in vec2 v_texcoord;
+in vec3 v_tangent;
+in vec3 v_bitangent;
 
 struct PointLight
 {
