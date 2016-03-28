@@ -45,8 +45,10 @@ struct ExperimentalApp : public GLFWApp
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
         
-        object = Renderable(make_cube());
-        //object = Renderable(load_geometry_from_ply("assets/models/barrel/barrel.ply"));
+        auto cube = load_geometry_from_ply("assets/models/geometry/CubeUniform.ply");
+        for (auto & v : cube.vertices) v *= 0.20f;
+        
+        object = Renderable(cube);
         object.pose.position = {0, 0, 0};
         
         std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
@@ -66,7 +68,7 @@ struct ExperimentalApp : public GLFWApp
         modelDiffuseTexture = load_image("assets/textures/modular_panel/modular_panel_diffuse.png");
         modelNormalTexture = load_image("assets/textures/modular_panel/modular_panel_normal.png");
         modelSpecularTexture = load_image("assets/textures/modular_panel/modular_panel_specular.png");
-        //modelEmissiveTexture = load_image("assets/textures/modular_panel/modular_panel_emissive.png");
+        modelEmissiveTexture = load_image("assets/textures/modular_panel/modular_panel_height.png");
         
         matcapTex = load_image("assets/textures/matcap/metal_heated.png");
         
@@ -135,33 +137,34 @@ struct ExperimentalApp : public GLFWApp
             texturedModelShader->uniform("u_viewProj", viewProj);
             texturedModelShader->uniform("u_eye", camera.get_eye_point());
             
-            texturedModelShader->uniform("u_ambientLight", float3(0.0f, 0.0f, 0.0f));
+            texturedModelShader->uniform("u_ambientLight", float3(1.0f, 1.0f, 1.0f));
             
-            texturedModelShader->uniform("u_rimLight.enable", 0);
+            texturedModelShader->uniform("u_rimLight.enable", int(useRimlight));
             texturedModelShader->uniform("u_rimLight.color", float3(1.0f));
             texturedModelShader->uniform("u_rimLight.power", 0.99f);
             
             texturedModelShader->uniform("u_material.diffuseIntensity", float3(1.0f, 1.0f, 1.0f));
             texturedModelShader->uniform("u_material.ambientIntensity", float3(1.0f, 1.0f, 1.0f));
-            texturedModelShader->uniform("u_material.specularIntensity;", float3(1.0f, 1.0f, 1.0f));
+            texturedModelShader->uniform("u_material.specularIntensity", float3(1.0f, 1.0f, 1.0f));
             texturedModelShader->uniform("u_material.specularPower", 128.0f);
             
             texturedModelShader->uniform("u_pointLights[0].position", float3(6, 10, -6));
-            texturedModelShader->uniform("u_pointLights[0].diffuseColor", float3(0.7f, 0.2f, 0.2f));
-            texturedModelShader->uniform("u_pointLights[0].specularColor", float3(0.7f, 0.2f, 0.2f));
+            texturedModelShader->uniform("u_pointLights[0].diffuseColor", float3(1.f, 0.0f, 0.0f));
+            texturedModelShader->uniform("u_pointLights[0].specularColor", float3(1.f, 0.0f, 0.0f));
             
             texturedModelShader->uniform("u_pointLights[1].position", float3(-6, 10, 6));
-            texturedModelShader->uniform("u_pointLights[1].diffuseColor", float3(0.4f, 0.8f, 0.4f));
-            texturedModelShader->uniform("u_pointLights[1].specularColor", float3(0.4f, 0.8f, 0.4f));
+            texturedModelShader->uniform("u_pointLights[1].diffuseColor", float3(0.0f, 0.0f, 1.f));
+            texturedModelShader->uniform("u_pointLights[1].specularColor", float3(0.0f, 0.0f, 1.f));
 
             texturedModelShader->uniform("u_enableDiffuseTex", 1);
             texturedModelShader->uniform("u_enableNormalTex", 1);
             texturedModelShader->uniform("u_enableSpecularTex", 1);
+            texturedModelShader->uniform("u_enableEmissiveTex", 0);
             
             texturedModelShader->texture("u_diffuseTex", 0, modelDiffuseTexture.get_gl_handle(), GL_TEXTURE_2D);
             texturedModelShader->texture("u_normalTex", 1, modelNormalTexture.get_gl_handle(), GL_TEXTURE_2D);
-            texturedModelShader->texture("u_specularTex", 0, modelSpecularTexture.get_gl_handle(), GL_TEXTURE_2D);
-            //texturedModelShader->texture("u_emissiveTex", 1, crateNormalTex.get_gl_handle(), GL_TEXTURE_2D);
+            texturedModelShader->texture("u_specularTex", 2, modelSpecularTexture.get_gl_handle(), GL_TEXTURE_2D);
+            texturedModelShader->texture("u_emissiveTex", 3, modelEmissiveTexture.get_gl_handle(), GL_TEXTURE_2D);
             
             /*
             if (useRimlight)

@@ -42,17 +42,14 @@ uniform sampler2D u_specularTex;
 uniform sampler2D u_emissiveTex;
 
 uniform int u_enableDiffuseTex = 1;
-uniform int u_enableNormalTex = 0;
-uniform int u_enableSpecularTex = 0;
-uniform int u_enableEmissiveTex = 0;
+uniform int u_enableNormalTex = 1;
+uniform int u_enableSpecularTex = 1;
+uniform int u_enableEmissiveTex = 1;
 
 //uniform int u_enableGlossTex = 0;
 //uniform int u_enableAmbientOcclusionTex = 0;
 
 out vec4 f_color;
-
-// float ao = texture( uAmbientOcclusion, vec2( vUv.x, 1.0 + vUv.y ) ).r;
-// vec3 color = ao * saturate( vec3( 0.05 ) + shadows * 3.0 * ( diffuse + specular ) );
 
 vec3 compute_rimlight(vec3 n, vec3 v)
 {
@@ -66,7 +63,7 @@ void main()
 {
     vec3 eyeDir = normalize(u_eye - v_position);
 
-    vec4 ambientLight = vec4(u_material.ambientIntensity, 1.0) * vec4(u_ambientLight, 1.0);
+    vec4 ambientLight = vec4(u_material.ambientIntensity * u_ambientLight, 1.0);
     vec4 diffuseLight = vec4(0.0);
     vec4 specularLight = vec4(0.0);
     vec4 emissiveLight = vec4(0.0);
@@ -98,10 +95,9 @@ void main()
         specularSample = texture(u_specularTex, v_texcoord);
     }
 
-    vec4 emissiveSample = vec4(0.0);
     if (u_enableEmissiveTex == 1)
     {
-        emissiveSample = texture(u_emissiveTex, v_texcoord);
+        emissiveLight = texture(u_emissiveTex, v_texcoord);
     }
 
     if (u_rimLight.enable == 1)
@@ -109,5 +105,5 @@ void main()
         diffuseLight += vec4(compute_rimlight(normalSample, eyeDir), 1);
     }
 
-    f_color = (emissiveLight * emissiveSample) + (ambientLight * diffuseSample) + (diffuseLight * diffuseSample) + (specularLight * specularSample);
+    f_color = (ambientLight * diffuseSample) + (diffuseLight * diffuseSample) + (specularLight * specularSample) + (emissiveLight);
 }

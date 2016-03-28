@@ -155,8 +155,8 @@ namespace avl
         GlTexture tex;
         switch(nBytes)
         {
-            case 3: tex.load_data(width, height, GL_RGB, GL_UNSIGNED_BYTE, data, false); break;
-            case 4: tex.load_data(width, height, GL_RGBA, GL_UNSIGNED_BYTE, data, false); break;
+            case 3: tex.load_data(width, height, GL_RGB, GL_UNSIGNED_BYTE, data, true); break;
+            case 4: tex.load_data(width, height, GL_RGBA, GL_UNSIGNED_BYTE, data, true); break;
         }
         
         stbi_image_free(data);
