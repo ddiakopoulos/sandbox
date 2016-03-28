@@ -47,6 +47,8 @@ struct ExperimentalApp : public GLFWApp
         
         auto cube = load_geometry_from_ply("assets/models/geometry/CubeUniform.ply");
         for (auto & v : cube.vertices) v *= 0.20f;
+        cube.compute_bounds();
+        cube.compute_tangents();
         
         object = Renderable(cube);
         object.pose.position = {0, 0, 0};

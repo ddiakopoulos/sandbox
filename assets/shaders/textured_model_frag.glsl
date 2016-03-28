@@ -61,6 +61,12 @@ vec3 compute_rimlight(vec3 n, vec3 v)
     return f * u_rimLight.color; 
 }
 
+vec3 sample_normal_texture(sampler2D normalTexture, vec2 texCoord, vec3 tangent, vec3 bitangent, vec3 normal)
+{
+    vec3 tSpaceNorm = texture(normalTexture, texCoord).xyz * 2 - 1;
+    return normalize(normalize(tangent) * tSpaceNorm.x + normalize(bitangent) * tSpaceNorm.y + normalize(normal) * tSpaceNorm.z);
+}
+
 void main()
 {
     vec3 eyeDir = normalize(u_eye - v_position);
