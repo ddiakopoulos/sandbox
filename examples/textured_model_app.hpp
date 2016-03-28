@@ -68,7 +68,7 @@ struct ExperimentalApp : public GLFWApp
         modelDiffuseTexture = load_image("assets/textures/modular_panel/modular_panel_diffuse.png");
         modelNormalTexture = load_image("assets/textures/modular_panel/modular_panel_normal.png");
         modelSpecularTexture = load_image("assets/textures/modular_panel/modular_panel_specular.png");
-        modelEmissiveTexture = load_image("assets/textures/modular_panel/modular_panel_height.png");
+        //modelEmissiveTexture = load_image("assets/textures/modular_panel/modular_panel_emissive.png");
         
         matcapTex = load_image("assets/textures/matcap/metal_heated.png");
         
@@ -150,11 +150,11 @@ struct ExperimentalApp : public GLFWApp
             
             texturedModelShader->uniform("u_pointLights[0].position", float3(6, 10, -6));
             texturedModelShader->uniform("u_pointLights[0].diffuseColor", float3(1.f, 0.0f, 0.0f));
-            texturedModelShader->uniform("u_pointLights[0].specularColor", float3(1.f, 0.0f, 0.0f));
+            texturedModelShader->uniform("u_pointLights[0].specularColor", float3(1.f, 1.0f, 1.0f));
             
             texturedModelShader->uniform("u_pointLights[1].position", float3(-6, 10, 6));
             texturedModelShader->uniform("u_pointLights[1].diffuseColor", float3(0.0f, 0.0f, 1.f));
-            texturedModelShader->uniform("u_pointLights[1].specularColor", float3(0.0f, 0.0f, 1.f));
+            texturedModelShader->uniform("u_pointLights[1].specularColor", float3(1.0f, 1.0f, 1.f));
 
             texturedModelShader->uniform("u_enableDiffuseTex", 1);
             texturedModelShader->uniform("u_enableNormalTex", 1);
