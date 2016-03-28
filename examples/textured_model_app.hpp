@@ -15,8 +15,11 @@ struct ExperimentalApp : public GLFWApp
     
     GlMesh fullscreen_vignette_quad;
     
-    GlTexture crateDiffuseTex;
-    GlTexture crateNormalTex;
+    GlTexture modelDiffuseTexture;
+    GlTexture modelNormalTexture;
+    GlTexture modelSpecularTexture;
+    GlTexture modelEmissiveTexture;
+    
     GlTexture matcapTex;
     
     std::shared_ptr<GlShader> texturedModelShader;
@@ -42,7 +45,8 @@ struct ExperimentalApp : public GLFWApp
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
         
-        object = Renderable(load_geometry_from_ply("assets/models/barrel/barrel.ply"));
+        object = Renderable(make_cube());
+        //object = Renderable(load_geometry_from_ply("assets/models/barrel/barrel.ply"));
         object.pose.position = {0, 0, 0};
         
         std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
@@ -59,15 +63,18 @@ struct ExperimentalApp : public GLFWApp
         matcapShader = make_watched_shader(shaderMonitor, "assets/shaders/matcap_vert.glsl", "assets/shaders/matcap_frag.glsl");
         normalDebugShader = make_watched_shader(shaderMonitor, "assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
 
-        crateDiffuseTex = load_image("assets/models/barrel/barrel_2_diffuse.png");
-        crateNormalTex = load_image("assets/models/barrel/barrel_normal.png");
+        modelDiffuseTexture = load_image("assets/textures/modular_panel/modular_panel_diffuse.png");
+        modelNormalTexture = load_image("assets/textures/modular_panel/modular_panel_normal.png");
+        modelSpecularTexture = load_image("assets/textures/modular_panel/modular_panel_specular.png");
+        //modelEmissiveTexture = load_image("assets/textures/modular_panel/modular_panel_emissive.png");
+        
         matcapTex = load_image("assets/textures/matcap/metal_heated.png");
         
         fullscreen_vignette_quad = make_fullscreen_quad();
         
         myArcball = new ArcballCamera(float2(width, height));
         
-        camera.look_at({0, 0, 10}, {0, 0, 0});
+        camera.look_at({0, 0, 5}, {0, 0, 0});
         
         gl_check_error(__FILE__, __LINE__);
     }
@@ -128,23 +135,40 @@ struct ExperimentalApp : public GLFWApp
             texturedModelShader->uniform("u_viewProj", viewProj);
             texturedModelShader->uniform("u_eye", camera.get_eye_point());
             
-            texturedModelShader->uniform("u_emissive", float3(.5f, 0.5f, 0.5f));
-            texturedModelShader->uniform("u_diffuse", float3(0.7f, 0.7f, 0.7f));
+            texturedModelShader->uniform("u_ambientLight", float3(0.0f, 0.0f, 0.0f));
             
-            texturedModelShader->uniform("u_lights[0].position", float3(6, 10, -6));
-            texturedModelShader->uniform("u_lights[0].color", float3(0.7f, 0.2f, 0.2f));
+            texturedModelShader->uniform("u_rimLight.enable", 0);
+            texturedModelShader->uniform("u_rimLight.color", float3(1.0f));
+            texturedModelShader->uniform("u_rimLight.power", 0.99f);
             
-            texturedModelShader->uniform("u_lights[1].position", float3(-6, 10, 6));
-            texturedModelShader->uniform("u_lights[1].color", float3(0.4f, 0.8f, 0.4f));
+            texturedModelShader->uniform("u_material.diffuseIntensity", float3(1.0f, 1.0f, 1.0f));
+            texturedModelShader->uniform("u_material.ambientIntensity", float3(1.0f, 1.0f, 1.0f));
+            texturedModelShader->uniform("u_material.specularIntensity;", float3(1.0f, 1.0f, 1.0f));
+            texturedModelShader->uniform("u_material.specularPower", 128.0f);
             
-            texturedModelShader->texture("u_diffuseTex", 0, crateDiffuseTex.get_gl_handle(), GL_TEXTURE_2D);
-            texturedModelShader->texture("u_normalTex", 1, crateNormalTex.get_gl_handle(), GL_TEXTURE_2D);
-            texturedModelShader->uniform("u_samplefromNormalmap", useNormal);
+            texturedModelShader->uniform("u_pointLights[0].position", float3(6, 10, -6));
+            texturedModelShader->uniform("u_pointLights[0].diffuseColor", float3(0.7f, 0.2f, 0.2f));
+            texturedModelShader->uniform("u_pointLights[0].specularColor", float3(0.7f, 0.2f, 0.2f));
             
+            texturedModelShader->uniform("u_pointLights[1].position", float3(-6, 10, 6));
+            texturedModelShader->uniform("u_pointLights[1].diffuseColor", float3(0.4f, 0.8f, 0.4f));
+            texturedModelShader->uniform("u_pointLights[1].specularColor", float3(0.4f, 0.8f, 0.4f));
+
+            texturedModelShader->uniform("u_enableDiffuseTex", 1);
+            texturedModelShader->uniform("u_enableNormalTex", 1);
+            texturedModelShader->uniform("u_enableSpecularTex", 1);
+            
+            texturedModelShader->texture("u_diffuseTex", 0, modelDiffuseTexture.get_gl_handle(), GL_TEXTURE_2D);
+            texturedModelShader->texture("u_normalTex", 1, modelNormalTexture.get_gl_handle(), GL_TEXTURE_2D);
+            texturedModelShader->texture("u_specularTex", 0, modelSpecularTexture.get_gl_handle(), GL_TEXTURE_2D);
+            //texturedModelShader->texture("u_emissiveTex", 1, crateNormalTex.get_gl_handle(), GL_TEXTURE_2D);
+            
+            /*
             if (useRimlight)
             {
                 texturedModelShader->uniform("u_applyRimlight", useRimlight);
             }
+            */
             
             auto model = object.get_model();
             texturedModelShader->uniform("u_modelMatrix", model);

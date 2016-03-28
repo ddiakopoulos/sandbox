@@ -179,12 +179,12 @@ vec4 calculate_directional_light(DirectionalLight dl, vec4 cameraSpacePosition)
 
 void main()
 {
-    vec4 ambient = vec4(0.0, 0.0, 0.0, 1.0);
-    vec4 totalLighting = vec4(0.0, 0.0, 0.0, 0.0);
+    vec4 ambient = vec4(0.33, 0.25, 0.15, 1.0);
+    vec4 totalLighting = vec4(0.0, 0.0, 0.0, 1.0);
 
     vec3 eyeDir = normalize(u_eye - v_world_position);
 
-    //totalLighting += calculate_directional_light(u_directionalLight, v_camera_directional_light);
+    totalLighting += calculate_directional_light(u_directionalLight, v_camera_directional_light);
 
     for (int i = 0; i < MAX_SPOT_LIGHTS; i++)
         totalLighting += calculate_spot_light(u_spotLights[i], v_camera_spot_light[i], i);
