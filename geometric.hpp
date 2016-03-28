@@ -634,11 +634,6 @@ namespace avl
         return true;
     }
     
-    inline bool intersect_ray_box(const Ray & ray, const float3 & boxMin, const float3 & boxMax)
-    {
-        return intersect_ray_box(ray, Bounds3D(boxMin, boxMax));
-    }
-    
     inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * intersection = nullptr)
     {
         float t;
@@ -677,7 +672,7 @@ namespace avl
     }
     
     // Implementation adapted from: http://www.lighthouse3d.com/tutorials/maths/ray-triangle-intersection/
-    inline bool intersect_ray_triangle(const Ray & ray, const float3 & v0, const float3 & v1, const float3 & v2, float * outT, float2 * outUV = nullptr)
+    inline bool intersect_ray_triangle(const Ray & ray, const float3 & v0, const float3 & v1, const float3 & v2, float * outT = nullptr, float2 * outUV = nullptr)
     {
         float3 e1 = v1 - v0, e2 = v2 - v0, h = cross(ray.direction, e2);
         

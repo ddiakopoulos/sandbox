@@ -563,7 +563,7 @@ namespace avl
         float2 outUv;
 
         auto meshBounds = mesh.compute_bounds();
-        if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds.min(), meshBounds.max()))
+        if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds))
         {
             for (int f = 0; f < mesh.faces.size(); ++f)
             {
