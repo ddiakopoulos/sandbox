@@ -177,6 +177,10 @@ namespace avl
         return {1.0f, 0.f, 0.f, w};
     }
     
+    //////////////////////////
+    // Quaternion Utilities //
+    //////////////////////////
+    
     inline float4 make_quat_from_euler(float roll, float pitch, float yaw)
     {
         double sy = sin(yaw * 0.5);
@@ -216,7 +220,6 @@ namespace avl
         if (!twist.x && !twist.y && !twist.z && !twist.w) twist = float4(0, 0, 0, 1); // singularity
         swing = q * qconj(twist);
     }
-    
     
     //////////////////////////////////////////////
     // Construct affine transformation matrices //
@@ -554,7 +557,7 @@ namespace avl
     /////////////////////////////////
     
     // The point where the line p0-p2 intersects the plane n&d
-    inline float3 plane_line_intersection(const float3 & n, const float d, const float3 & p0, const float3 & p1)
+    inline float3 intersect_plane_line(const float3 & n, const float & d, const float3 & p0, const float3 & p1)
     {
         float3 dif = p1 - p0;
         float dn = dot(n, dif);
@@ -562,9 +565,9 @@ namespace avl
         return p0 + (dif*t);
     }
     
-    inline float3 plane_line_intersection(const float4 & plane, const float3 & p0, const float3 & p1)
+    inline float3 intersect_plane_line(const float4 & plane, const float3 & p0, const float3 & p1)
     {
-        return plane_line_intersection(plane.xyz(), plane.w, p0, p1);
+        return intersect_plane_line(plane.xyz(), plane.w, p0, p1);
     }
     
     //////////////////////////////
@@ -628,13 +631,11 @@ namespace avl
             }
         }
         
-        // Ray intersects all 3 slabs. Intersection t value (tmin)
         if (outT) *outT = tmin;
-        
         return true;
     }
     
-    inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * intersection = nullptr)
+    inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * outT = nullptr)
     {
         float t;
         float3 diff = ray.origin - sphere.center;
@@ -655,19 +656,19 @@ namespace avl
             t = (-b - e) / denom;
             if (t > SPHERE_EPSILON)
             {
-                if (intersection) *intersection = t;
+                if (outT) *outT = t;
                 return true;
             }
             
             t = (-b + e) / denom;
             if (t > SPHERE_EPSILON)
             {
-                if (intersection) *intersection = t;
+                if (outT) *outT = t;
                 return true;
             }
         }
         
-        if (intersection) *intersection = 0;
+        if (outT) *outT = 0;
         return false;
     }
     
