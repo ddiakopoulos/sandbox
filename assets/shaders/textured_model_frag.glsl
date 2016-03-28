@@ -85,7 +85,7 @@ void main()
     vec3 normalSample = v_normal;
     if (u_enableNormalTex == 1)
     {
-        normalSample = normalize(v_normal * texture(u_normalTex, v_texcoord).rgb);
+        normalSample = sample_normal_texture(u_normalTex, v_texcoord, v_tangent, v_bitangent, v_normal);
     }
     
     for (int i = 0; i < NUM_LIGHTS; ++i)
