@@ -692,7 +692,7 @@ namespace avl
     {
         Geometry plane;
         
-        auto curve = BezierCurve(float3(0.0f, 0.0f, 0.0f), float3(1.0f, 1.0f, 0.0f), float3(2.0f, 1.0f, 0.0f), float3(3.0f, 0.0f, 0.0f));
+        auto curve = BezierCurve(float3(0.0f, 0.0f, 0.0f), float3(0.667f, 0.25f, 0.0f), float3(1.33f, 0.25f, 0.0f), float3(2.0f, 0.0f, 0.0f));
         
         const int numSegments = curve.num_steps();
         const int numSlices = numSegments + 1;
@@ -706,6 +706,9 @@ namespace avl
         {
             float t = (float)i / (float)numSegments;
             float3 point = curve.point(t);
+            
+            std::cout << point << std::endl;
+            
             float3 tang = normalize(curve.derivative(t));
             float3 norm = float3(0.0f, 1.0f, 0.0f);
             float3 biNorm = cross(tang, norm);
@@ -719,33 +722,21 @@ namespace avl
             
             plane.normals[index] = norm;
             plane.normals[index + 1] = norm;
+            
             plane.texCoords[index] = float2(t, 0.0f);
             plane.texCoords[index + 1] = float2(t, 1.0f);
         }
         
         // Set up indices
-        const int numIndices = 6 * numSegments;
-        
-        std::vector<uint32_t> indices(numIndices);
-        
         for (int i = 0; i < numSegments; i++)
         {
-            int tIndex = i * 6; // Starting triangle index of this segment
             int vIndex = i * 2; // Starting vertex index of this segment
             
-            indices[tIndex] = vIndex;
-            indices[tIndex + 1] = vIndex + 1;
-            indices[tIndex + 2] = vIndex + 2;
+            auto f1 = uint3(vIndex + 0, vIndex + 1, vIndex + 2);
+            auto f2 = uint3(vIndex + 1, vIndex + 3, vIndex + 2);
             
-            indices[tIndex + 3] = vIndex + 1;
-            indices[tIndex + 4] = vIndex + 3;
-            indices[tIndex + 5] = vIndex + 2;
-        }
-        
-        for (int i = 0; i < indices.size(); i+=6)
-        {
-            plane.faces.push_back(uint3(indices[i + 0], indices[i + 1], indices[i + 2]));
-            plane.faces.push_back(uint3(indices[i + 3], indices[i + 4], indices[i + 5]));
+            plane.faces.push_back(f1);
+            plane.faces.push_back(f2);
         }
         
         plane.compute_tangents();
