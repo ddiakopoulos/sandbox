@@ -306,14 +306,17 @@ struct ExperimentalApp : public GLFWApp
         
         auto statue = std::make_shared<Renderable>(lucy);
         statue->pose.position = {0, 0, 0};
-        sceneObjects.push_back(statue);
+        //sceneObjects.push_back(statue);
 		
         auto hollowCube = load_geometry_from_ply("assets/models/geometry/CubeHollowOpen.ply");
         for (auto & v : hollowCube.vertices) v *= 0.20f;
         auto hCube = std::make_shared<Renderable>(hollowCube);
         hCube->pose.position = float3(0, 0, 0);
         hCube->pose.orientation = make_rotation_quat_around_x(ANVIL_PI / 2);
-        sceneObjects.push_back(hCube);
+        //sceneObjects.push_back(hCube);
+        
+        auto curvedMesh = make_curved_plane(2, 1, 8, 8);
+        sceneObjects.push_back(std::make_shared<Renderable>(curvedMesh));
         
         //floor = std::make_shared<Renderable>(make_plane(32.f, 32.f, 64, 64), false);
         //floor->pose.orientation = make_rotation_quat_axis_angle({1, 0, 0}, -ANVIL_PI / 2);

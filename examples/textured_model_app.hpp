@@ -50,7 +50,7 @@ struct ExperimentalApp : public GLFWApp
         cube.compute_bounds();
         cube.compute_tangents();
         
-        object = Renderable(cube);
+        object = Renderable(make_curved_plane());
         object.pose.position = {0, 0, 0};
         
         std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
@@ -67,10 +67,10 @@ struct ExperimentalApp : public GLFWApp
         matcapShader = make_watched_shader(shaderMonitor, "assets/shaders/matcap_vert.glsl", "assets/shaders/matcap_frag.glsl");
         normalDebugShader = make_watched_shader(shaderMonitor, "assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
 
-        modelDiffuseTexture = load_image("assets/textures/gametextures/modular_panel/diffuse.png");
-        modelNormalTexture = load_image("assets/textures/gametextures/modular_panel/normal.png");
-        modelSpecularTexture = load_image("assets/textures/gametextures/modular_panel/specular.png");
-        modelGlossTexture = load_image("assets/textures/gametextures/modular_panel/gloss.png");
+        modelDiffuseTexture = load_image("assets/textures/modular_panel/diffuse.png");
+        modelNormalTexture = load_image("assets/textures/modular_panel/normal.png");
+        modelSpecularTexture = load_image("assets/textures/modular_panel/specular.png");
+        modelGlossTexture = load_image("assets/textures/modular_panel/gloss.png");
         
         matcapTex = load_image("assets/textures/matcap/metal_heated.png");
         
