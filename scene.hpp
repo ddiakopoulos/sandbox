@@ -32,6 +32,7 @@ namespace avl
         GlMesh mesh;
         Geometry geom;
         bool castsShadow;
+        bool isEmissive = false;
         
         Renderable() {}
         Renderable(const Geometry & g, bool shadow = true) : geom(g), castsShadow(shadow)

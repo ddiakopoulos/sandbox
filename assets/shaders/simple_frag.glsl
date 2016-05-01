@@ -20,7 +20,7 @@ out vec4 f_color;
 void main()
 {
     vec3 eyeDir = normalize(u_eye - position);
-    vec3 light = u_emissive;
+    vec3 light = vec3(0, 0, 0); //u_emissive;
     for(int i = 0; i < 2; ++i)
     {
         vec3 lightDir = normalize(u_lights[i].position - position);
@@ -29,5 +29,5 @@ void main()
         vec3 halfDir = normalize(lightDir + eyeDir);
         light += u_lights[i].color * u_diffuse * pow(max(dot(normal, halfDir), 0), 128);
     }
-    f_color = vec4(light, 1);
+    f_color = vec4(light + u_emissive, 1);
 }

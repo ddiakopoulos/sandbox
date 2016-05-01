@@ -489,6 +489,7 @@ struct ExperimentalApp : public GLFWApp
             fullscreen_post_quad.draw_elements();
 
             gaussianBlurShader->unbind();
+            
             shadowBlurFramebuffer.unbind();
         }
         

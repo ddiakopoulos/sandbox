@@ -1,4 +1,4 @@
-#version 330 core
+#version 330
 
 const float pi = 3.14159265f;
 
