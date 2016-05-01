@@ -135,7 +135,7 @@
 		08C4758F1C1CE8CD0031E87E /* meshline_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = meshline_frag.glsl; path = assets/shaders/meshline_frag.glsl; sourceTree = SOURCE_ROOT; };
 		08C475901C1CE8CD0031E87E /* meshline_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = meshline_vert.glsl; path = assets/shaders/meshline_vert.glsl; sourceTree = SOURCE_ROOT; };
 		08C475911C1CE8F30031E87E /* meshline.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = meshline.hpp; sourceTree = SOURCE_ROOT; };
-		08C475921C1DEA570031E87E /* constant_spline.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = constant_spline.hpp; sourceTree = SOURCE_ROOT; };
+		08C475921C1DEA570031E87E /* splines.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = splines.hpp; sourceTree = SOURCE_ROOT; };
 		08C475931C1DF7DF0031E87E /* meshline_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = meshline_app.hpp; path = examples/meshline_app.hpp; sourceTree = SOURCE_ROOT; };
 		08C475941C1DFEE20031E87E /* reaction_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = reaction_app.hpp; path = examples/reaction_app.hpp; sourceTree = SOURCE_ROOT; };
 		08CFD2DC1BDD667000895E31 /* nvg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nvg.cpp; sourceTree = SOURCE_ROOT; };
@@ -411,7 +411,7 @@
 				081204AD1BAE7C8600C7C0F4 /* geometry.hpp */,
 				084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */,
 				08FFC7301CA71C88005812D6 /* simplex_noise.hpp */,
-				08C475921C1DEA570031E87E /* constant_spline.hpp */,
+				08C475921C1DEA570031E87E /* splines.hpp */,
 				081204A31BAE086F00C7C0F4 /* running_statistics.hpp */,
 				081204A71BAE330600C7C0F4 /* one_euro.hpp */,
 				081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */,

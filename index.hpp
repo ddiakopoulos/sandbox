@@ -32,7 +32,7 @@
 #include "scene.hpp"
 #include "gizmo.hpp"
 #include "shader_monitor.hpp"
-#include "constant_spline.hpp"
+#include "splines.hpp"
 #include "meshline.hpp"
 #include "reaction_diffusion.hpp"
 #include "vision.hpp"
