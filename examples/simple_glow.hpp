@@ -126,8 +126,8 @@ struct ExperimentalApp : public GLFWApp
         sceneColorTexture.load_data(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         sceneDepthTexture.load_data(width, height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
-        blurTex.load_data(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        emissiveTex.load_data(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        blurTex.load_data(width / 2, height / 2, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        emissiveTex.load_data(width / 2, height / 2, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     
         sceneFramebuffer.attach(GL_COLOR_ATTACHMENT0, sceneColorTexture);
         sceneFramebuffer.attach(GL_DEPTH_ATTACHMENT, sceneDepthTexture);
@@ -159,13 +159,11 @@ struct ExperimentalApp : public GLFWApp
         lights[1].color = float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f);
         lights[1].pose.position = float3(-25, 15, 0);
         
-        auto cube = make_cube();
-        
-        Renderable modelOne = Renderable(cube);
+        Renderable modelOne = Renderable(make_cube());
         modelOne.isEmissive = false;
         modelOne.pose = Pose(float4(0, 0, 0, 1), float3(-4, 0, 4));
         
-        Renderable modelTwo = Renderable(cube);
+        Renderable modelTwo = Renderable(make_sphere(1.0));
         modelTwo.isEmissive = true;
         modelTwo.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 0));
         
@@ -220,6 +218,7 @@ struct ExperimentalApp : public GLFWApp
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
@@ -237,7 +236,6 @@ struct ExperimentalApp : public GLFWApp
             
             simpleShader->uniform("u_emissive", float3(0.0f, 0.0f, 0.0f));
             simpleShader->uniform("u_diffuse", float3(0.4f, 0.425f, 0.415f));
-            simpleShader->uniform("useNormal", 0);
             
             for (int i = 0; i < lights.size(); i++)
             {
@@ -248,9 +246,12 @@ struct ExperimentalApp : public GLFWApp
             
             for (const auto & model : models)
             {
-                simpleShader->uniform("u_modelMatrix", model.get_model());
-                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                model.draw();
+                if (!model.isEmissive)
+                {
+                    simpleShader->uniform("u_modelMatrix", model.get_model());
+                    simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                    model.draw();
+                }
             }
             
             simpleShader->unbind();
@@ -267,9 +268,8 @@ struct ExperimentalApp : public GLFWApp
             simpleShader->uniform("u_eye", camera.get_eye_point());
             simpleShader->uniform("u_viewProj", viewProj);
             
-            simpleShader->uniform("u_emissive", float3(1.0f, 0.0f, 0.0f));
+            simpleShader->uniform("u_emissive", float3(1.0f, 1.0f, 1.0f));
             simpleShader->uniform("u_diffuse", float3(1.0f, 1.0f, 1.0f));
-            simpleShader->uniform("useNormal", 0);
             
             for (const auto & model : models)
             {
@@ -295,18 +295,18 @@ struct ExperimentalApp : public GLFWApp
             
             // Configured for a 7x7
             blurShader->uniform("blurSize", 1.0f / (width / 2.0f));
-            blurShader->uniform("sigma", 12.0f);
+            blurShader->uniform("sigma", 5.0f);
             blurShader->uniform("u_modelViewProj", Identity4x4);
             
             // Horizontal
             blurShader->texture("s_blurTexure", 0, emissiveTex);
-            blurShader->uniform("numBlurPixelsPerSide", 5.0f);
+            blurShader->uniform("numBlurPixelsPerSide", 6.0f);
             blurShader->uniform("blurMultiplyVec", float2(1.0f, 0.0f));
             fullscreen_post_quad.draw_elements();
             
             // Vertical
             blurShader->texture("s_blurTexure", 0, blurTex);
-            blurShader->uniform("numBlurPixelsPerSide", 5.0f);
+            blurShader->uniform("numBlurPixelsPerSide", 6.0f);
             blurShader->uniform("blurMultiplyVec", float2(0.0f, 1.0f));
             fullscreen_post_quad.draw_elements();
             

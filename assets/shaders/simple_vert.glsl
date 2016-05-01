@@ -4,16 +4,16 @@ uniform mat4 u_modelMatrix;
 uniform mat4 u_modelMatrixIT;
 uniform mat4 u_viewProj;
 
-layout(location = 0) in vec3 v_position;
-layout(location = 1) in vec3 v_normal;
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inNormal;
 
-out vec3 position;
-out vec3 normal;
+out vec3 v_position;
+out vec3 v_normal;
 
 void main()
 {
-    vec4 worldPos = u_modelMatrix * vec4(v_position, 1);
+    vec4 worldPos = u_modelMatrix * vec4(inPosition, 1);
     gl_Position = u_viewProj * worldPos;
-    position = worldPos.xyz;
-    normal = normalize((u_modelMatrixIT * vec4(v_normal,0)).xyz);
+    v_position = worldPos.xyz;
+    v_normal = normalize((u_modelMatrixIT * vec4(inNormal,0)).xyz);
 }

@@ -8,5 +8,5 @@ out vec4 f_color;
 
 void main()
 {
-    f_color = mix(texture(s_texColor, texCoord), texture(s_texGlow, texCoord), 0.5);
+    f_color = texture(s_texColor, texCoord) + texture(s_texGlow, texCoord);
 }
