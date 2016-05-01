@@ -81,6 +81,7 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<GlShader> simpleShader;
     std::shared_ptr<GlShader> blurShader;
     std::shared_ptr<GlShader> compositeShader;
+    std::shared_ptr<GlShader> emissiveTexShader;
 
     std::shared_ptr<GLTextureView> blurView;
 
@@ -97,7 +98,10 @@ struct ExperimentalApp : public GLFWApp
     GlFramebuffer emissiveFramebuffer;
     
     GlTexture emptyTex;
-
+    
+    GlTexture modelGlowTexture;
+    GlTexture modelDiffuse;
+    
     std::unique_ptr<gui::ImGuiManager> igm;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Emissive Object App", 2, true)
@@ -112,6 +116,9 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         
         fullscreen_post_quad = make_fullscreen_quad();
+        
+        modelGlowTexture = load_image("assets/textures/modular_panel/height.png");
+        modelDiffuse = load_image("assets/textures/modular_panel/diffuse.png");
         
         // Debugging views
         uiSurface.bounds = {0, 0, (float) width, (float) height};
@@ -149,6 +156,7 @@ struct ExperimentalApp : public GLFWApp
         simpleShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/simple_frag.glsl");
         blurShader = make_watched_shader(shaderMonitor, "assets/shaders/gaussian_blur_vert.glsl", "assets/shaders/gaussian_blur_frag.glsl");
         compositeShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/composite_frag.glsl");
+        emissiveTexShader = make_watched_shader(shaderMonitor, "assets/shaders/emissive_texture_vert.glsl", "assets/shaders/emissive_texture_frag.glsl");
         
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
@@ -161,9 +169,9 @@ struct ExperimentalApp : public GLFWApp
         
         Renderable modelOne = Renderable(make_cube());
         modelOne.isEmissive = false;
-        modelOne.pose = Pose(float4(0, 0, 0, 1), float3(-4, 0, 4));
+        modelOne.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 0));
         
-        Renderable modelTwo = Renderable(make_sphere(1.0));
+        Renderable modelTwo = Renderable(make_cube());
         modelTwo.isEmissive = true;
         modelTwo.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 0));
         
@@ -263,25 +271,24 @@ struct ExperimentalApp : public GLFWApp
         emissiveFramebuffer.bind_to_draw();
         glClear(GL_COLOR_BUFFER_BIT);
         {
-            simpleShader->bind();
-            
-            simpleShader->uniform("u_eye", camera.get_eye_point());
-            simpleShader->uniform("u_viewProj", viewProj);
-            
-            simpleShader->uniform("u_emissive", float3(1.0f, 1.0f, 1.0f));
-            simpleShader->uniform("u_diffuse", float3(1.0f, 1.0f, 1.0f));
+            emissiveTexShader->bind();
+
+            emissiveTexShader->uniform("u_viewProj", viewProj);
+            emissiveTexShader->uniform("u_emissivePower", 1.0f);
+            emissiveTexShader->texture("s_emissiveTex", 0, modelGlowTexture);
+            emissiveTexShader->texture("s_diffuseTex", 1, modelDiffuse);
             
             for (const auto & model : models)
             {
                 if (model.isEmissive)
                 {
-                    simpleShader->uniform("u_modelMatrix", model.get_model());
-                    simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                    emissiveTexShader->uniform("u_modelMatrix", model.get_model());
+                    emissiveTexShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
                     model.draw();
                 }
             }
             
-            simpleShader->unbind();
+            emissiveTexShader->unbind();
         }
         
         // Disable culling and depth testing for post processing
