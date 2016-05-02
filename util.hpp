@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <random>
 #include "linalg_util.hpp"
 
 #define ANVIL_PI            3.1415926535897931
@@ -59,6 +60,18 @@
 
 namespace avl
 {
+    
+    class RandomGenerator
+    {
+        std::random_device rd;
+        std::mt19937 gen;
+        std::uniform_real_distribution<float> distribution;
+    public:
+        RandomGenerator() : rd(), gen(rd()), distribution(0.0f, 1.0f) { }
+        float random_float() { return static_cast<float>(distribution(gen)); }
+        int random_int(int max) { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }
+    };
+    
     struct as_string
     {
         std::ostringstream ss;

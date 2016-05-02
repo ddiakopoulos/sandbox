@@ -6,24 +6,12 @@
 #define poisson_disk_sampling_h
 
 #include "geometric.hpp"
+#include "util.hpp"
 #include <functional>
-#include <random>
 
 namespace poisson
 {
-    using namespace linalg;
-    using namespace linalg::aliases;
-    
-    class RandomGenerator
-    {
-        std::random_device rd;
-        std::mt19937 gen;
-        std::uniform_real_distribution<float> distribution;
-    public:
-        RandomGenerator() : rd(), gen(rd()), distribution(0.0f, 1.0f) { }
-        float random_float() { return static_cast<float>(distribution(gen)); }
-        int random_int(int max) { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }
-    };
+    using namespace avl;
 
     class Grid 
     {
