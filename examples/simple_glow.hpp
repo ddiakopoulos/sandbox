@@ -219,11 +219,16 @@ struct ExperimentalApp : public GLFWApp
         auto b = Bounds3D(float3(-10, -10, -10), float3(10, 10, 10));
         auto pd_dist = make_poisson_disk_distribution(b, initialSet, 6, 1.0f);
         
+        for (auto p : pd_dist)
+        {
+            std::cout << p << std::endl;
+        }
+        
         for (const auto & point : pd_dist)
         {
             Renderable newModel = Renderable(make_sphere(0.15));
             newModel.isEmissive = false;
-            newModel.pose = Pose(float4(0, 0, 0, 1), float3(point.x, 0, point.y));
+            newModel.pose = Pose(float4(0, 0, 0, 1), float3(point.x, point.z, point.y));
             models.push_back(std::move(newModel));
         }
         

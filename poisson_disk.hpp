@@ -263,9 +263,9 @@ namespace
                     float angle1 = r.random_float() * ANVIL_PI * 2.0f;
                     float angle2 = r.random_float() * ANVIL_PI * 2.0f;
                     
-                    float newX = center.x + cos(angle1) * sin(angle2) * randRadius;
-                    float newY = center.y + cos(angle1) * sin(angle2) * randRadius;
-                    float newZ = center.z + cos(angle2) * randRadius;
+                    float newX = center.x + randRadius * cos(angle1) * sin(angle2);
+                    float newY = center.y + randRadius * sin(angle1) * sin(angle2);
+                    float newZ = center.z + randRadius * cos(angle2);
                     
                     float3 newPoint = {newX, newY, newZ};
                     
