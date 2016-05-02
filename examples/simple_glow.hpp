@@ -215,8 +215,8 @@ struct ExperimentalApp : public GLFWApp
         models.push_back(std::move(modelOne));
         models.push_back(std::move(modelTwo));
         
-        std::vector<float2> initialSet = {};
-        auto b = Bounds2D(float2(-10, -10), float2(10, 10));
+        std::vector<float3> initialSet = {};
+        auto b = Bounds3D(float3(-10, -10, -10), float3(10, 10, 10));
         auto pd_dist = make_poisson_disk_distribution(b, initialSet, 6, 1.0f);
         
         for (const auto & point : pd_dist)
