@@ -21,6 +21,7 @@ Not all experiments are supported on both XCode and VS2015 (project files are ma
 * Orconut-Dear-ImGui Bindings
 * Library of procedural meshes (cube, sphere, cone, torus, capsule, etc)
 * Simplex noise generator (flow, derivative, curl, worley, fractal, and more)
+* 2D & 3D poisson disk distribution generator
 * Opinionated gizmo tool for editing 3D scenes
 * Frame capture => GIF export
 * Reaction-diffusion CPU simulation (Gray-Scott)
