@@ -38,6 +38,7 @@
     <ClInclude Include="..\examples\reaction_app.hpp" />
     <ClInclude Include="..\examples\shadow_app.hpp" />
     <ClInclude Include="..\examples\simplex_noise_app.hpp" />
+    <ClInclude Include="..\examples\simple_glow.hpp" />
     <ClInclude Include="..\examples\ssao_app.hpp" />
     <ClInclude Include="..\examples\terrain_app.hpp" />
     <ClInclude Include="..\examples\textured_model_app.hpp" />
@@ -51,12 +52,13 @@
     <ClInclude Include="..\gpu_timer.hpp" />
     <ClInclude Include="..\human_time.hpp" />
     <ClInclude Include="..\index.hpp" />
-    <ClInclude Include="..\linear_algebra.hpp" />
+    <ClInclude Include="..\linalg_util.hpp" />
     <ClInclude Include="..\math_util.hpp" />
     <ClInclude Include="..\minivision\vision.hpp" />
     <ClInclude Include="..\nvg.hpp" />
     <ClInclude Include="..\one_euro.hpp" />
     <ClInclude Include="..\pid_controller.hpp" />
+    <ClInclude Include="..\poisson_disk.hpp" />
     <ClInclude Include="..\procedural_mesh.hpp" />
     <ClInclude Include="..\procedural_sky.hpp" />
     <ClInclude Include="..\renderable_grid.hpp" />

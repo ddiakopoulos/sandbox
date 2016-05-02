@@ -81,9 +81,6 @@
     <ClInclude Include="..\geometric.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\linear_algebra.hpp">
-      <Filter>source\math</Filter>
-    </ClInclude>
     <ClInclude Include="..\math_util.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
@@ -239,6 +236,15 @@
     </ClInclude>
     <ClInclude Include="..\examples\vision_app.hpp">
       <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\linalg_util.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\simple_glow.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\poisson_disk.hpp">
+      <Filter>source\math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
