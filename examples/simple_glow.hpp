@@ -104,8 +104,45 @@ struct ExperimentalApp : public GLFWApp
     
     std::unique_ptr<gui::ImGuiManager> igm;
     
+    std::random_device rd;
+    std::mt19937 gen;
+    
+    std::vector<float3> create_curve(float rMin = 3.f, float rMax = 12.f)
+    {
+        
+        RandomGenerator r;
+        
+        std::vector<float3> curve;
+        ConstantSpline s;
+        
+        s.p0 = float3(0, 0, 0);
+        s.p1 = s.p0 + float3( .5f - r.random_float(), .5f - r.random_float(), .5f - r.random_float());
+        s.p2 = s.p1 + float3( .5f - r.random_float(), .5f - r.random_float(), .5f - r.random_float());
+        s.p3 = s.p2 + float3( .5f - r.random_float(), .5f - r.random_float(), .5f - r.random_float());
+        
+        s.p0 *= rMin + r.random_float() * rMax;
+        s.p1 *= rMin + r.random_float() * rMax;
+        s.p2 *= rMin + r.random_float() * rMax;
+        s.p3 *= rMin + r.random_float() * rMax;
+        
+        s.calculate(.001f);
+        s.calculate_distances();
+        s.reticulate(256);
+        
+        auto sPoints = s.get_spline();
+        
+        for (const auto & p : sPoints)
+        {
+            curve.push_back(p);
+            curve.push_back(p);
+        }
+        
+        return curve;
+    }
+    
     ExperimentalApp() : GLFWApp(1280, 720, "Emissive Object App", 2, true)
     {
+        
         glfwSwapInterval(0);
         
         igm.reset(new gui::ImGuiManager(window));
@@ -177,6 +214,18 @@ struct ExperimentalApp : public GLFWApp
         
         models.push_back(std::move(modelOne));
         models.push_back(std::move(modelTwo));
+        
+        std::vector<float2> initialSet = {};
+        auto b = Bounds2D(float2(-10, -10), float2(10, 10));
+        auto pd_dist = make_poisson_disk_distribution(b, initialSet, 6, 1.0f);
+        
+        for (const auto & point : pd_dist)
+        {
+            Renderable newModel = Renderable(make_sphere(0.15));
+            newModel.isEmissive = false;
+            newModel.pose = Pose(float4(0, 0, 0, 1), float3(point.x, 0, point.y));
+            models.push_back(std::move(newModel));
+        }
         
         grid = RenderableGrid(1, 64, 64);
 

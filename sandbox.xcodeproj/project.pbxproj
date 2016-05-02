@@ -77,6 +77,7 @@
 		082B11BB1C94CD7700EE49F5 /* normal_debug_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = normal_debug_frag.glsl; path = assets/shaders/normal_debug_frag.glsl; sourceTree = SOURCE_ROOT; };
 		082B11BC1C94CD7700EE49F5 /* normal_debug_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = normal_debug_vert.glsl; path = assets/shaders/normal_debug_vert.glsl; sourceTree = SOURCE_ROOT; };
 		084133DF1CD5A8BF00F3BB10 /* simple_glow.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = simple_glow.hpp; path = examples/simple_glow.hpp; sourceTree = SOURCE_ROOT; };
+		084133E01CD67DD100F3BB10 /* poisson_disk.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = poisson_disk.hpp; sourceTree = SOURCE_ROOT; };
 		084196731C1E7AB800E1FC50 /* reaction_diffusion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = reaction_diffusion.hpp; sourceTree = SOURCE_ROOT; };
 		084196741C1E7E1700E1FC50 /* reaction_displacement_frag.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = reaction_displacement_frag.glsl; path = assets/shaders/reaction_displacement_frag.glsl; sourceTree = SOURCE_ROOT; };
 		084196751C1E7E1700E1FC50 /* reaction_displacement_vert.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = reaction_displacement_vert.glsl; path = assets/shaders/reaction_displacement_vert.glsl; sourceTree = SOURCE_ROOT; };
@@ -426,6 +427,7 @@
 				0849FD901BEFDC8D000F148E /* procedural_mesh.hpp */,
 				082A2FF61C711A2300391672 /* camera.hpp */,
 				08C475861C14F68A0031E87E /* shader_monitor.hpp */,
+				084133E01CD67DD100F3BB10 /* poisson_disk.hpp */,
 				0849FD731BE6A031000F148E /* gpu_timer.hpp */,
 				0822AF331BD4212100A894F0 /* arcball.hpp */,
 				0812049F1BADF68B00C7C0F4 /* circular_buffer.hpp */,
