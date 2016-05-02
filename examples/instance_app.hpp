@@ -43,7 +43,7 @@ struct ExperimentalApp : public GLFWApp
 
         std::vector<float3> initialSet = {};
         auto b = Bounds3D(float3(-10, -10, -10), float3(10, 10, 10));
-        auto pd_dist = make_poisson_disk_distribution(b, initialSet, 6, 1.0f);
+        auto pd_dist = make_poisson_disk_distribution(b, initialSet, 2, 1.0f);
         
         // Single sphere
         sceneObjects.push_back(Renderable(make_sphere(0.5)));
