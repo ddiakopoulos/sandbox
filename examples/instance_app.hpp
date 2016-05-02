@@ -41,18 +41,22 @@ struct ExperimentalApp : public GLFWApp
         
         sceneShader = make_watched_shader(shaderMonitor, "assets/shaders/instance_vert.glsl", "assets/shaders/instance_frag.glsl");
 
+        std::vector<float3> initialSet = {};
+        auto b = Bounds3D(float3(-10, -10, -10), float3(10, 10, 10));
+        auto pd_dist = make_poisson_disk_distribution(b, initialSet, 6, 1.0f);
+        
         // Single sphere
         sceneObjects.push_back(Renderable(make_sphere(0.5)));
-                
-        // 100 instances
-        for (int i = 0; i < 100; ++i)
+
+        for (auto pt : pd_dist)
         {
             auto c = std::uniform_real_distribution<float>(0.0f, 1.0f);
-            auto p = std::uniform_real_distribution<float>(2.f, 10.0f);
             instanceData.push_back(float3(c(gen), c(gen), c(gen))); // color
-            instanceData.push_back(float3(p(gen), 1, p(gen))); // location
-            
+            instanceData.push_back(pt); // location
         }
+        
+        numInstances = (int) pd_dist.size();
+        
 		sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceData.size(), instanceData.data(), GL_DYNAMIC_DRAW);
 		sceneObjects[0].mesh.set_instance_attribute(4, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), ((float*) 0) + 0); // color
         sceneObjects[0].mesh.set_instance_attribute(5, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), ((float*) 0) + 3); // location
