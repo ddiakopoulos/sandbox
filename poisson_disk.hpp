@@ -1,4 +1,4 @@
-// See COPYING file for attribution information, Based on https://github.com/simongeilfus/PoissonDiskDistribution
+// See COPYING file for attribution information - based on https://github.com/simongeilfus/PoissonDiskDistribution (Simon Geilfus, MIT License)
 
 #pragma once
 
@@ -9,7 +9,7 @@
 #include <functional>
 #include <random>
 
-namespace 
+namespace poisson
 {
     using namespace linalg;
     using namespace linalg::aliases;
@@ -31,17 +31,25 @@ namespace
         int2 numCells, offset;
         Bounds2D bounds;
         uint32_t kValue, cellSize;
-
     public:
 
-        Grid(const Bounds2D & bounds, uint32_t k) { resize(bounds, k); }
+        Grid(const Bounds2D & bounds, uint32_t k)
+        {
+            this->bounds = bounds;
+            kValue = k;
+            cellSize = 1 << k;
+            offset = int2(abs(bounds.min()));
+            numCells = int2(ceil(float2(bounds.size()) / (float) cellSize));
+            grid.clear();
+            grid.resize(numCells.x * numCells.y);
+        }
 
         void add(const float2 & position)
         {
             int x = uint32_t(position.x + offset.x) >> kValue;
             int y = uint32_t(position.y + offset.y) >> kValue;
             int j = x + numCells.x * y;
-            if(j < grid.size()) grid[j].push_back(position);
+            if (j < grid.size()) grid[j].push_back(position);
         }
 
         bool has_neighbors(const float2 & p, float radius)
@@ -59,28 +67,11 @@ namespace
                 {
                     for (auto cell : grid[x + numCells.x * y])
                     {
-                        if (length2(p - cell) < sqRadius)
-                            return true;
+                        if (length2(p - cell) < sqRadius) return true;
                     }
                 }
             }
             return false;
-        }
-
-        void resize(const Bounds2D & bounds, uint32_t k)
-        {
-            this->bounds = bounds;
-            resize(k);
-        }
-
-        void resize(uint32_t k)
-        {
-            kValue = k;
-            cellSize = 1 << k;
-            offset = int2(abs(bounds.min()));
-            numCells = int2(ceil(float2(bounds.size()) / (float) cellSize));
-            grid.clear();
-            grid.resize(numCells.x * numCells.y);
         }
     };
     
@@ -90,10 +81,18 @@ namespace
         int3 numCells, offset;
         Bounds3D bounds;
         uint32_t kValue, cellSize;
-        
     public:
         
-        Volume(const Bounds3D & bounds, uint32_t k) { resize(bounds, k); }
+        Volume(const Bounds3D & bounds, uint32_t k)
+        {
+            this->bounds = bounds;
+            kValue = k;
+            cellSize = 1 << k;
+            offset = int3(abs(bounds.min()));
+            numCells = int3(ceil(float3(bounds.size()) / (float) cellSize));
+            volume.clear();
+            volume.resize(numCells.x * numCells.y * numCells.z);
+        }
         
         void add(const float3 & position)
         {
@@ -101,7 +100,7 @@ namespace
             int y = uint32_t(position.y + offset.y) >> kValue;
             int z = uint32_t(position.z + offset.z) >> kValue;
             int j = z * numCells.x * numCells.y + y * numCells.x + x;
-            if(j < volume.size()) volume[j].push_back(position);
+            if (j < volume.size()) volume[j].push_back(position);
         }
         
         bool has_neighbors(const float3 & p, float radius)
@@ -121,29 +120,12 @@ namespace
                     {
                         for (auto cell : volume[z * numCells.x * numCells.y + y * numCells.x + x])
                         {
-                            if (length2(p - cell) < sqRadius)
-                                return true;
+                            if (length2(p - cell) < sqRadius) return true;
                         }
                     }
                 }
             }
             return false;
-        }
-        
-        void resize(const Bounds3D & bounds, uint32_t k)
-        {
-            this->bounds = bounds;
-            resize(k);
-        }
-        
-        void resize(uint32_t k)
-        {
-            kValue = k;
-            cellSize = 1 << k;
-            offset = int3(abs(bounds.min()));
-            numCells = int3(ceil(float3(bounds.size()) / (float) cellSize));
-            volume.clear();
-            volume.resize(numCells.x * numCells.y * numCells.z);
         }
     };
     
@@ -160,7 +142,7 @@ namespace
             RandomGenerator r;
             
             // add the initial points
-            for(auto p : initialSet)
+            for (auto p : initialSet)
             {
                 processingList.push_back(p);
                 outputList.push_back(p);
@@ -168,7 +150,7 @@ namespace
             }
             
             // if there's no initial points add the center point
-            if(!processingList.size())
+            if (!processingList.size())
             {
                 processingList.push_back(bounds.center());
                 outputList.push_back(bounds.center());
@@ -176,7 +158,7 @@ namespace
             }
             
             // while there's points in the processing list
-            while(processingList.size())
+            while (processingList.size())
             {
                 // pick a random point in the processing list
                 int randPoint = r.random_int(int(processingList.size()) - 1);
@@ -190,7 +172,7 @@ namespace
                 
                 // spawn k points in an anulus around that point
                 // the higher k is, the higher the packing will be and slower the algorithm
-                for(int i = 0; i < k; i++)
+                for (int i = 0; i < k; i++)
                 {
                     float randRadius = separation * (1.0f + r.random_float());
                     float randAngle = r.random_float() * ANVIL_PI * 2.0f;
@@ -198,7 +180,7 @@ namespace
                     
                     // check if the new random point is in the window bounds
                     // and if it has no neighbors that are too close to them
-                    if(bounds.contains(newPoint) && !grid.has_neighbors(newPoint, separation))
+                    if (bounds.contains(newPoint) && !grid.has_neighbors(newPoint, separation))
                     {
                         if (boundsFunction && boundsFunction(newPoint)) continue;
                         
@@ -209,7 +191,6 @@ namespace
                     }
                 }
             }
-            
             return outputList;
         }
     };
@@ -226,38 +207,31 @@ namespace
             Volume grid(bounds, 3);
             RandomGenerator r;
             
-            // add the initial points
-            for(auto p : initialSet)
+            for (auto p : initialSet)
             {
                 processingList.push_back(p);
                 outputList.push_back(p);
                 grid.add(p);
             }
             
-            // if there's no initial points add the center point
-            if(!processingList.size())
+            if (!processingList.size())
             {
                 processingList.push_back(bounds.center());
                 outputList.push_back(bounds.center());
                 grid.add(bounds.center());
             }
             
-            // while there's points in the processing list
-            while(processingList.size())
+            while (processingList.size())
             {
-                // pick a random point in the processing list
                 int randPoint = r.random_int(int(processingList.size()) - 1);
                 float3 center = processingList[randPoint];
                 
-                // remove it
                 processingList.erase(processingList.begin() + randPoint);
                 
                 if (distFunction)
                     separation = distFunction(center);
-                
-                // spawn k points in an anulus around that point
-                // the higher k is, the higher the packing will be and slower the algorithm
-                for(int i = 0; i < k; i++)
+
+                for (int i = 0; i < k; i++)
                 {
                     float randRadius = separation * (1.0f + r.random_float());
                     float angle1 = r.random_float() * ANVIL_PI * 2.0f;
@@ -266,23 +240,17 @@ namespace
                     float newX = center.x + randRadius * cos(angle1) * sin(angle2);
                     float newY = center.y + randRadius * sin(angle1) * sin(angle2);
                     float newZ = center.z + randRadius * cos(angle2);
-                    
                     float3 newPoint = {newX, newY, newZ};
                     
-                    // check if the new random point is in the window bounds
-                    // and if it has no neighbors that are too close to them
-                    if(bounds.contains(newPoint) && !grid.has_neighbors(newPoint, separation))
+                    if (bounds.contains(newPoint) && !grid.has_neighbors(newPoint, separation))
                     {
                         if (boundsFunction && boundsFunction(newPoint)) continue;
-                        
-                        // if the point has no close neighbors add it to the processing list, output list and grid
                         processingList.push_back(newPoint);
                         outputList.push_back(newPoint);
                         grid.add(newPoint);
                     }
                 }
             }
-            
             return outputList;
         }
     };
@@ -294,13 +262,13 @@ namespace
 // If no initialSet of points is provided the area center will be used as the initial point.
 inline std::vector<float2> make_poisson_disk_distribution(const Bounds2D & bounds, const std::vector<float2> & initialSet, int k, float separation = 1.0)
 {
-    ::PoissonDiskGenerator2D gen;
+    poisson::PoissonDiskGenerator2D gen;
     return gen.build(bounds, initialSet, k, separation);
 }
 
 inline std::vector<float3> make_poisson_disk_distribution(const Bounds3D & bounds, const std::vector<float3> & initialSet, int k, float separation = 1.0)
 {
-    ::PoissonDiskGenerator3D gen;
+    poisson::PoissonDiskGenerator3D gen;
     return gen.build(bounds, initialSet, k, separation);
 }
 
