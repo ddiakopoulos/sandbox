@@ -145,20 +145,20 @@ struct OneEuroFilterVector : public impl::OneEuroFilter< impl::VectorFilterable<
     {
         linalg::vec<T, N> dx;
 
-        if (firstTime)
+        if (this->firstTime)
         {
-            firstTime = false;
+            this->firstTime = false;
             impl::VectorFilterable<T, N>::set_dx_identity(dx);
         }
         else
         {
-            impl::VectorFilterable<T, N>::compute_derivative(dx, xFilter.hatxprev(), x, dt);
+            impl::VectorFilterable<T, N>::compute_derivative(dx, this->xFilter.hatxprev(), x, dt);
         }
 
-        float derivMag = impl::VectorFilterable<T, N>::compute_derivative_mag(dxFilter.filter(dx, alpha(dt, derivCutoff)));
-        float cutoff = minCutoff + betaCoeff * derivMag;
+        float derivMag = impl::VectorFilterable<T, N>::compute_derivative_mag(this->dxFilter.filter(dx, this->alpha(dt, this->derivCutoff)));
+        float cutoff = this->minCutoff + this->betaCoeff * derivMag;
 
-        auto returnedVal = xFilter.filter(x, alpha(dt, cutoff));
+        auto returnedVal = this->xFilter.filter(x, this->alpha(dt, cutoff));
         return returnedVal;
     }
 };
@@ -174,21 +174,21 @@ struct OneEuroFilterQuaternion : public impl::OneEuroFilter<impl::QuatFilterable
     {
         linalg::vec<T, 4> dx;
 
-        if (firstTime)
+        if (this->firstTime)
         {
-            firstTime = false;
+            this->firstTime = false;
             hatxPrev = x;
             impl::QuatFilterable<T, 4>::set_dx_identity(dx);
         }
         else
         {
-            impl::QuatFilterable<T, 4>::compute_derivative(dx, xFilter.hatxprev(), x, dt);
+            impl::QuatFilterable<T, 4>::compute_derivative(dx, this->xFilter.hatxprev(), x, dt);
         }
 
-        float derivMag = impl::QuatFilterable<T, 4>::compute_derivative_mag(dxFilter.filter(dx, alpha(dt, derivCutoff)));
-        float cutoff = minCutoff + betaCoeff * derivMag;
+        float derivMag = impl::QuatFilterable<T, 4>::compute_derivative_mag(this->dxFilter.filter(dx, this->alpha(dt, this->derivCutoff)));
+        float cutoff = this->minCutoff + this->betaCoeff * derivMag;
 
-        linalg::vec<T, 4> hatx = linalg::qslerp(hatxPrev, x, alpha(dt, cutoff));
+        linalg::vec<T, 4> hatx = linalg::qslerp(hatxPrev, x, this->alpha(dt, cutoff));
         hatxPrev = hatx;
         return hatxPrev;
     }
