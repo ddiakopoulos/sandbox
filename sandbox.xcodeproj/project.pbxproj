@@ -62,6 +62,7 @@
 		081CBA2F1CE7967900E3C731 /* sdf_mesh_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = sdf_mesh_app.hpp; path = examples/sdf_mesh_app.hpp; sourceTree = SOURCE_ROOT; };
 		081CBA311CE7986300E3C731 /* volumetric_light_scatter_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = volumetric_light_scatter_app.hpp; path = examples/volumetric_light_scatter_app.hpp; sourceTree = SOURCE_ROOT; };
 		081CBA321CE798AC00E3C731 /* one_euro.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = one_euro.hpp; sourceTree = SOURCE_ROOT; };
+		081CBA331CE79D1500E3C731 /* movement_tracker.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = movement_tracker.hpp; sourceTree = SOURCE_ROOT; };
 		081EA4B51C83772A00AB2DE2 /* shadow_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = shadow_app.hpp; path = examples/shadow_app.hpp; sourceTree = SOURCE_ROOT; };
 		081F451B1C909BB100B33AF8 /* instance_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = instance_app.hpp; path = examples/instance_app.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF311BCFFA6A00A894F0 /* sketch.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sketch.hpp; sourceTree = SOURCE_ROOT; };
@@ -435,6 +436,7 @@
 				081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */,
 				089B86141BAFD06300B3A290 /* dsp_filters.hpp */,
 				081CBA321CE798AC00E3C731 /* one_euro.hpp */,
+				081CBA331CE79D1500E3C731 /* movement_tracker.hpp */,
 			);
 			name = math;
 			sourceTree = "<group>";
