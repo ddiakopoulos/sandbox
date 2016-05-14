@@ -32,29 +32,4 @@ Not all experiments are supported on both XCode and VS2015 (project files are ma
     * Euclidean patterns
     * PID controller
     * One-euro, complimentary, single/double exponential
-* Incubation of computer vision functions on top of [librealsense](https://www.github.com/IntelRealSense/librealsense) (minivision)
-
-## In Progress
-* BRDF / PBR
-* Transform-feedback particles
-* Physically-based text rendering
-* Mesh voxelization
-* Deferred rendering experiments (Forward+ impl)
-* CPU path tracer (+ lighting baker?)
-* Fluid simulator (GL compute shader)
-* L-System + particles
-* Spherical harmonic lighting experiment
-* Dual contouring + terrain deformation (ref. impl)
-* Animation curve editor (Tinyspline)
-* Better water shading (refraction, normals, sun position, skybox reflections)
-* Bruneton Sky Model
-* UI layout via cassowary constraint solver (Rhea library)
-* Procedural clouds
-* Impulse response raytracer
-* Graph/Node editor (LabSound bindings)
-* Lua (Angelscript, etc)
-* Pathfinding algos (Recast navigation)
-* Isosurface computation
-* Reaction-diffusion over time (3d)
-* Optitrak nat-net i/o
-* Automatic UV generation (Foo library)
+* Incubation of computer vision utilities on top of [librealsense](https://www.github.com/IntelRealSense/librealsense) (minivision)
