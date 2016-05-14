@@ -1,273 +1,92 @@
-// See COPYING file for attribution information
+#pragma once
 
 #ifndef one_euro_filter_h
 #define one_euro_filter_h
 
 #include "linalg_util.hpp"
 
-namespace avl
+// Quoted from https://hal.inria.fr/hal-00670496/file/CHI2012-casiez.pdf:
+// "To minimize jitter and lag when tracking human motion, the two parameters can be set using a simple
+// two-step procedure. First is set to 0 and fcmin to a reasonable middle-ground value such as 1 Hz.
+// Then the body part is held steady or moved at a very low speed while fcmin is adjusted to re-move
+// jitter and preserve an acceptable lag during these slow movements. Next, the body part is moved
+// quickly in different directions while is increased with a focus on minimizing lag. Note that
+// parameters fcmin and have clear conceptual relationships: if high speed lag is a problem,
+// increase; if slow speed jitter is a problem, decrease fcmin."
+
+namespace impl
 {
-    template<int dimension = 3, typename Scalar = float>
+    using namespace linalg;
+
+    template<typename T, int N>
     class LowPassFilter
     {
+	protected:
+        bool firstTime;
+        vec<T, N> value;
+        static const int dimension = N;
+
     public:
+        LowPassFilter() : firstTime(true) { }
 
-        typedef Scalar scalar_type;
-        typedef Scalar value_type[dimension];
-        typedef const scalar_type *return_type;
+        void reset() { firstTime = true; }
 
-        LowPassFilter() : _firstTime(true) { }
-
-        void reset()
+        vec<T, N> filter(const vec<T, N> x, float alpha)
         {
-            _firstTime = true;
-        }
-
-        return_type filter(const value_type x, scalar_type alpha)
-        {
-            if (_firstTime)
+            if (firstTime)
             {
-                _firstTime = false;
-                memcpy(_hatxprev, x, sizeof(_hatxprev));
+                firstTime = false;
+				value = x;
             }
 
-            value_type hatx;
+			vec<T, N> hatx;
             for (int i = 0; i < dimension; ++i)
-            {
-                hatx[i] = alpha * x[i] + (1 - alpha) * _hatxprev[i];
-            }
+                hatx[i] = alpha * x[i] + (1 - alpha) * value[i];
 
-            memcpy(_hatxprev, hatx, sizeof(_hatxprev));
-            return _hatxprev;
+			value = hatx;
+            return value;
         }
 
-        return_type hatxprev()
+		vec<T, N> hatxprev()
         {
-            return _hatxprev;
+            return value;
         }
-
-    private:
-
-        bool _firstTime;
-        value_type _hatxprev;
-
     };
 
-    typedef LowPassFilter<> LowPassFilterVec;
-
-    template<int dimension = 3, typename Scalar = float>
-    class VectorFilterable
+    template<typename T, int N>
+    struct VectorFilterable : public LowPassFilter<T, N>
     {
-
-    public:
-
-        typedef Scalar scalar_type;
-        typedef Scalar value_type[dimension];
-        typedef value_type derivative_value_type;
-        typedef Scalar *value_ptr_type;
-        typedef LowPassFilter<dimension, Scalar> value_filter_type;
-        typedef LowPassFilter<dimension, Scalar> derivative_filter_type;
-        typedef typename value_filter_type::return_type value_filter_return_type;
-
-        static void setDxIdentity(value_ptr_type dx)
+        static void set_dx_identity(vec<T, N> & dx)
         {
-            for (int i = 0; i < dimension; ++i)
-            {
-                dx[i] = 0;
-            }
+            for (int i = 0; i < LowPassFilter<T, N>::dimension; ++i) dx[i] = 0;
         }
 
-        static void computeDerivative(derivative_value_type dx, value_filter_return_type prev, const value_type current, scalar_type dt)
+        static void compute_derivative(vec<T, N> dx, vec<T, N> prev, const  vec<T, N> current, float dt)
         {
-            for (int i = 0; i < dimension; ++i)
-            {
-                dx[i] = (current[i] - prev[i]) / dt;
-            }
+            for (int i = 0; i < LowPassFilter<T, N>::dimension; ++i) dx[i] = (current[i] - prev[i]) / dt;
         }
-        static scalar_type computeDerivativeMagnitude(derivative_value_type const dx)
+        static float compute_derivative_mag(vec<T, N> const dx)
         {
-            scalar_type sqnorm = 0;
-            for (int i = 0; i < dimension; ++i)
-            {
-                sqnorm += dx[i] * dx[i];
-            }
+            float sqnorm = 0;
+            for (int i = 0; i < LowPassFilter<T, N>::dimension; ++i) sqnorm += dx[i] * dx[i];
             return sqrtf(sqnorm);
         }
 
     };
 
-    template<typename Filterable = VectorFilterable<> >
-    class OneEuroFilter
+    template<typename T, int N>
+    struct QuatFilterable : public LowPassFilter<T, N>
     {
+        static void set_dx_identity(vec<T, N> & dx) { dx = {0, 0, 0, 1}; }
 
-    public:
-
-        typedef Filterable contents;
-        typedef typename Filterable::scalar_type scalar_type;
-        typedef typename Filterable::value_type value_type;
-        typedef typename Filterable::derivative_value_type derivative_value_type;
-        typedef typename Filterable::value_ptr_type value_ptr_type;
-        typedef typename Filterable::derivative_filter_type derivative_filter_type;
-        typedef typename Filterable::value_filter_type value_filter_type;
-        typedef typename value_filter_type::return_type value_filter_return_type;
-
-        OneEuroFilter(scalar_type mincutoff, scalar_type beta, scalar_type dcutoff) :
-            _firstTime(true),
-            _mincutoff(mincutoff), _dcutoff(dcutoff),
-            _beta(beta) {};
-
-        OneEuroFilter() : _firstTime(true), _mincutoff(1), _dcutoff(1), _beta(0.5) {};
-
-        void reset()
+        static void compute_derivative(vec<T, 4> dx, vec<T, 4> prev, const vec<T, 4> current, float dt)
         {
-            _firstTime = true;
-        }
+            float rate = 1.0f / dt;
 
-        void setMinCutoff(scalar_type mincutoff)
-        {
-            _mincutoff = mincutoff;
-        }
-
-        scalar_type getMinCutoff() const
-        {
-            return _mincutoff;
-        }
-
-        void setBeta(scalar_type beta)
-        {
-            _beta = beta;
-        }
-
-        scalar_type getBeta() const
-        {
-            return _beta;
-        }
-
-        void setDerivativeCutoff(scalar_type dcutoff)
-        {
-            _dcutoff = dcutoff;
-        }
-
-        scalar_type getDerivativeCutoff() const
-        {
-            return _dcutoff;
-        }
-
-        void setParams(scalar_type mincutoff, scalar_type beta, scalar_type dcutoff)
-        {
-            _mincutoff = mincutoff;
-            _beta = beta;
-            _dcutoff = dcutoff;
-        }
-
-        const value_filter_return_type filter(scalar_type dt, const value_type x)
-        {
-            derivative_value_type dx;
-
-            if (_firstTime)
-            {
-                _firstTime = false;
-                Filterable::setDxIdentity(dx);
-            }
-            else
-            {
-                Filterable::computeDerivative(dx, _xfilt.hatxprev(), x, dt);
-            }
-
-            scalar_type derivative_magnitude = Filterable::computeDerivativeMagnitude(_dxfilt.filter(dx, alpha(dt, _dcutoff)));
-            scalar_type cutoff = _mincutoff + _beta * derivative_magnitude;
-
-            auto returnedVal = _xfilt.filter(x, alpha(dt, cutoff));
-            return returnedVal;
-        }
-
-    private:
-
-        static scalar_type alpha(scalar_type dt, scalar_type cutoff)
-        {
-            scalar_type tau = scalar_type(1) / (scalar_type(2) * M_PI * cutoff);
-            return scalar_type(1) / (scalar_type(1) + tau / dt);
-        }
-
-        bool _firstTime;
-        scalar_type _mincutoff, _dcutoff;
-        scalar_type _beta;
-        value_filter_type _xfilt;
-        derivative_filter_type _dxfilt;
-
-    };
-
-    typedef OneEuroFilter<> OneEuroFilterVec;
-
-    class LowPassFilterQuat
-    {
-
-    public:
-
-        typedef const float4 return_type;
-
-        LowPassFilterQuat() : _firstTime(true) { }
-
-        return_type filter(const float4 x, float alpha)
-        {
-            if (_firstTime)
-            {
-                _firstTime = false;
-                _hatxprev = x;
-            }
-
-            float4 hatx;
-
-            // destination, start, end, alpha
-            hatx = qslerp(_hatxprev, x, alpha);
-
-            // destination, source
-            _hatxprev = hatx;
-
-            return _hatxprev;
-        }
-
-        return_type hatxprev()
-        {
-            return _hatxprev;
-        }
-
-    private:
-
-        bool _firstTime;
-        float4 _hatxprev;
-    };
-
-    class QuatFilterable
-    {
-
-    public:
-
-        typedef float scalar_type;
-
-        typedef linalg::vec<scalar_type,4> value_type;
-        typedef linalg::vec<scalar_type,4> derivative_value_type;
-        typedef linalg::vec<scalar_type,4> value_ptr_type;
-
-        typedef LowPassFilterQuat value_filter_type;
-        typedef LowPassFilterQuat derivative_filter_type;
-        typedef value_filter_type::return_type value_filter_return_type;
-
-        static void setDxIdentity(value_ptr_type &dx)
-        {
-            dx = {0, 0, 0, 1};
-        }
-
-        static void computeDerivative(derivative_value_type dx, value_filter_return_type prev, const value_type current, scalar_type dt)
-        {
-            scalar_type rate = 1.0f / dt;
-
-            float4 ip = qinv(prev);
-
-            linalg::vec<scalar_type, 4> inverse_prev((scalar_type)ip.x, (scalar_type)ip.y, (scalar_type)ip.z, (scalar_type)ip.w);
+            vec<T, 4> inverse_prev = qinv(prev);
 
             // computes quaternion product destQuat = qLeft * qRight.
-            dx = current * inverse_prev;
+            dx = qmul(current, inverse_prev);
 
             // nlerp instead of slerp
             dx.x *= rate;
@@ -275,19 +94,105 @@ namespace avl
             dx.z *= rate;
             dx.w = dx.w * rate + (1.0f - rate);
 
-            dx = safe_normalize(dx);
+            dx = linalg::normalize(dx);
         }
 
-        static scalar_type computeDerivativeMagnitude(derivative_value_type const dx)
+        static float compute_derivative_mag(vec<T, N> const dx)
         {
-            // Should be safe since the quaternion we're given has been normalized.
-            return 2.0f * acosf(static_cast<float>(dx.w));
+			return 2.0f * acosf(static_cast<float>(dx.w)); // Should be safe since the quaternion we're given has been normalized.
         }
-
     };
 
-    typedef OneEuroFilter<QuatFilterable> OneEuroFilterQuat;
+    template<typename Filterable>
+    class OneEuroFilter
+    {
+	protected:
+		bool firstTime = true;
+		float minCutoff;
+		float derivCutoff;
+		float betaCoeff;
 
+		Filterable xFilter;
+		Filterable dxFilter;
+
+        static float alpha(float dt, float cutoff)
+        {
+            float myTau = 1.f / 2.f * ((ANVIL_TAU * 0.5f) * cutoff);
+            return 1.f / (1.f + myTau / dt);
+        }
+
+    public:
+        OneEuroFilter(float mincutoff, float beta, float dcutoff) : minCutoff(mincutoff), derivCutoff(dcutoff), betaCoeff(beta) {};
+
+        void reset() { firstTime = true; }
+
+        void set_parameters(float mincutoff, float beta, float dcutoff)
+        {
+            minCutoff = mincutoff;
+            betaCoeff = beta;
+            derivCutoff = dcutoff;
+        }
+    };
+
+}
+
+template<typename T, int N>
+struct OneEuroFilterVector : public impl::OneEuroFilter< impl::VectorFilterable<T, N> >
+{
+    OneEuroFilterVector() : impl::OneEuroFilter< impl::VectorFilterable<T, N> >(1.0f, 0.05f, 1.0f) { }
+
+    const linalg::vec<T, N> filter(float dt, const linalg::vec<T, N> x)
+    {
+        linalg::vec<T, N> dx;
+
+        if (firstTime)
+        {
+            firstTime = false;
+            impl::VectorFilterable<T, N>::set_dx_identity(dx);
+        }
+        else
+        {
+            impl::VectorFilterable<T, N>::compute_derivative(dx, xFilter.hatxprev(), x, dt);
+        }
+
+        float derivMag = impl::VectorFilterable<T, N>::compute_derivative_mag(dxFilter.filter(dx, alpha(dt, derivCutoff)));
+        float cutoff = minCutoff + betaCoeff * derivMag;
+
+        auto returnedVal = xFilter.filter(x, alpha(dt, cutoff));
+        return returnedVal;
+    }
 };
+
+template<typename T>
+struct OneEuroFilterQuaternion : public impl::OneEuroFilter<impl::QuatFilterable<T, 4>>
+{
+    OneEuroFilterQuaternion() : impl::OneEuroFilter< impl::QuatFilterable<T, 4> >(1.0f, 0.05f, 1.0f) { }
+
+    linalg::vec<T, 4> hatxPrev;
+
+    const linalg::vec<T, 4> filter(float dt, const linalg::vec<T, 4> x)
+    {
+        linalg::vec<T, 4> dx;
+
+        if (firstTime)
+        {
+            firstTime = false;
+            hatxPrev = x;
+            impl::QuatFilterable<T, 4>::set_dx_identity(dx);
+        }
+        else
+        {
+            impl::QuatFilterable<T, 4>::compute_derivative(dx, xFilter.hatxprev(), x, dt);
+        }
+
+        float derivMag = impl::QuatFilterable<T, 4>::compute_derivative_mag(dxFilter.filter(dx, alpha(dt, derivCutoff)));
+        float cutoff = minCutoff + betaCoeff * derivMag;
+
+        linalg::vec<T, 4> hatx = linalg::qslerp(hatxPrev, x, alpha(dt, cutoff));
+        hatxPrev = hatx;
+        return hatxPrev;
+    }
+};
+
 
 #endif // end one_euro_filter_h

@@ -52,7 +52,6 @@
 		081204A41BAE09F300C7C0F4 /* time_keeper.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = time_keeper.hpp; sourceTree = SOURCE_ROOT; };
 		081204A51BAE0C1700C7C0F4 /* human_time.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = human_time.hpp; sourceTree = SOURCE_ROOT; };
 		081204A61BAE0CC100C7C0F4 /* signal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = signal.hpp; sourceTree = SOURCE_ROOT; };
-		081204A71BAE330600C7C0F4 /* one_euro.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = one_euro.hpp; sourceTree = SOURCE_ROOT; };
 		081204A81BAE336600C7C0F4 /* util.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = util.hpp; sourceTree = SOURCE_ROOT; };
 		081204A91BAE367900C7C0F4 /* string_utils.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = string_utils.hpp; sourceTree = SOURCE_ROOT; };
 		081204AD1BAE7C8600C7C0F4 /* geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = geometry.hpp; sourceTree = SOURCE_ROOT; };
@@ -62,6 +61,7 @@
 		081CBA2E1CE7967900E3C731 /* lightmapping_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = lightmapping_app.hpp; path = examples/lightmapping_app.hpp; sourceTree = SOURCE_ROOT; };
 		081CBA2F1CE7967900E3C731 /* sdf_mesh_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = sdf_mesh_app.hpp; path = examples/sdf_mesh_app.hpp; sourceTree = SOURCE_ROOT; };
 		081CBA311CE7986300E3C731 /* volumetric_light_scatter_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = volumetric_light_scatter_app.hpp; path = examples/volumetric_light_scatter_app.hpp; sourceTree = SOURCE_ROOT; };
+		081CBA321CE798AC00E3C731 /* one_euro.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = one_euro.hpp; sourceTree = SOURCE_ROOT; };
 		081EA4B51C83772A00AB2DE2 /* shadow_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = shadow_app.hpp; path = examples/shadow_app.hpp; sourceTree = SOURCE_ROOT; };
 		081F451B1C909BB100B33AF8 /* instance_app.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = instance_app.hpp; path = examples/instance_app.hpp; sourceTree = SOURCE_ROOT; };
 		0822AF311BCFFA6A00A894F0 /* sketch.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sketch.hpp; sourceTree = SOURCE_ROOT; };
@@ -432,9 +432,9 @@
 				08FFC7301CA71C88005812D6 /* simplex_noise.hpp */,
 				08C475921C1DEA570031E87E /* splines.hpp */,
 				081204A31BAE086F00C7C0F4 /* running_statistics.hpp */,
-				081204A71BAE330600C7C0F4 /* one_euro.hpp */,
 				081204AE1BAE92C300C7C0F4 /* pid_controller.hpp */,
 				089B86141BAFD06300B3A290 /* dsp_filters.hpp */,
+				081CBA321CE798AC00E3C731 /* one_euro.hpp */,
 			);
 			name = math;
 			sourceTree = "<group>";
