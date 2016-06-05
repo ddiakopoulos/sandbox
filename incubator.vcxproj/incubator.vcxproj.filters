@@ -19,9 +19,6 @@
     <Filter Include="source\app">
       <UniqueIdentifier>{11a7ec82-191b-4beb-ba51-981dacc2f378}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\sky">
-      <UniqueIdentifier>{56b58ccd-80db-4de5-adf4-0638975646e8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\minivision">
       <UniqueIdentifier>{acc63d00-0662-45cd-b463-f30156bab688}</UniqueIdentifier>
     </Filter>
@@ -96,9 +93,6 @@
     <ClInclude Include="..\dsp_filters.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\ellipse_math.hpp">
-      <Filter>source\math</Filter>
-    </ClInclude>
     <ClInclude Include="..\glfw_app.hpp">
       <Filter>source\app</Filter>
     </ClInclude>
@@ -126,9 +120,6 @@
     <ClInclude Include="..\human_time.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\procedural_mesh.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\signal.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
@@ -142,9 +133,6 @@
       <Filter>source\tools</Filter>
     </ClInclude>
     <ClInclude Include="..\try_locker.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\universal_widget.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
     <ClInclude Include="..\bit_mask.hpp">
@@ -161,9 +149,6 @@
     </ClInclude>
     <ClInclude Include="..\minivision\vision.hpp">
       <Filter>source\minivision</Filter>
-    </ClInclude>
-    <ClInclude Include="..\procedural_sky.hpp">
-      <Filter>source\sky</Filter>
     </ClInclude>
     <ClInclude Include="..\index.hpp">
       <Filter>source</Filter>
@@ -244,6 +229,27 @@
       <Filter>examples</Filter>
     </ClInclude>
     <ClInclude Include="..\poisson_disk.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\procedural_mesh.hpp">
+      <Filter>source\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\meshline.hpp">
+      <Filter>source\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\movement_tracker.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reaction_diffusion.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\simplex_noise.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\procedural_sky.hpp">
+      <Filter>source\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\splines.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
   </ItemGroup>

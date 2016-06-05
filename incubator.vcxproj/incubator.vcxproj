@@ -26,7 +26,6 @@
     <ClInclude Include="..\circular_buffer.hpp" />
     <ClInclude Include="..\concurrent_queue.hpp" />
     <ClInclude Include="..\dsp_filters.hpp" />
-    <ClInclude Include="..\ellipse_math.hpp" />
     <ClInclude Include="..\examples\camera_app.hpp" />
     <ClInclude Include="..\examples\decal_app.hpp" />
     <ClInclude Include="..\examples\empty_app.hpp" />
@@ -54,18 +53,23 @@
     <ClInclude Include="..\index.hpp" />
     <ClInclude Include="..\linalg_util.hpp" />
     <ClInclude Include="..\math_util.hpp" />
+    <ClInclude Include="..\meshline.hpp" />
     <ClInclude Include="..\minivision\vision.hpp" />
+    <ClInclude Include="..\movement_tracker.hpp" />
     <ClInclude Include="..\nvg.hpp" />
     <ClInclude Include="..\one_euro.hpp" />
     <ClInclude Include="..\pid_controller.hpp" />
     <ClInclude Include="..\poisson_disk.hpp" />
     <ClInclude Include="..\procedural_mesh.hpp" />
     <ClInclude Include="..\procedural_sky.hpp" />
+    <ClInclude Include="..\reaction_diffusion.hpp" />
     <ClInclude Include="..\renderable_grid.hpp" />
     <ClInclude Include="..\running_statistics.hpp" />
     <ClInclude Include="..\scene.hpp" />
     <ClInclude Include="..\signal.hpp" />
+    <ClInclude Include="..\simplex_noise.hpp" />
     <ClInclude Include="..\sketch.hpp" />
+    <ClInclude Include="..\splines.hpp" />
     <ClInclude Include="..\string_utils.hpp" />
     <ClInclude Include="..\texture_view.hpp" />
     <ClInclude Include="..\third_party\efsw.hpp" />
@@ -88,7 +92,6 @@
     <ClInclude Include="..\third_party\tiny_obj_loader.h" />
     <ClInclude Include="..\time_keeper.hpp" />
     <ClInclude Include="..\try_locker.hpp" />
-    <ClInclude Include="..\universal_widget.hpp" />
     <ClInclude Include="..\util.hpp" />
   </ItemGroup>
   <ItemGroup>
