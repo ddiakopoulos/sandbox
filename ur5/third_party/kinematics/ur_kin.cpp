@@ -11,7 +11,6 @@ const double d4 =  0.10915;
 const double d5 =  0.09465;
 const double d6 =  0.0823;
 
-
 void URKinematics::forward(const double * q, double * T) 
 {
     double s1 = sin(*q), c1 = cos(*q); q++;
