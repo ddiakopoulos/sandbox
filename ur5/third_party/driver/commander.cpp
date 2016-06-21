@@ -42,11 +42,15 @@ inline void print_debug(std::string inp)
 }
 
 Commander::Commander(std::condition_variable & rt_msg_cond,
-        std::condition_variable & msg_cond, std::string host,
-        uint32_t reverse_port, double servoj_time,
-        uint32_t safety_count_max, double max_time_step, double min_payload,
-        double max_payload) :
-        REVERSE_PORT(reverse_port), maximum_time_step(max_time_step), minimum_payload(min_payload), maximum_payload(max_payload), servoj_time(servoj_time) 
+		std::condition_variable & msg_cond, 
+		std::string host,
+		uint32_t reverse_port, 
+		double servoj_time,
+		uint32_t safety_count_max, 
+		double max_time_step, 
+		double min_payload,
+		double max_payload) :
+		REVERSE_PORT(reverse_port), maximum_time_step(max_time_step), minimum_payload(min_payload), maximum_payload(max_payload), servoj_time(servoj_time) 
 {
     realtimeInterface.reset(new RealtimeLink(rt_msg_cond, host, safety_count_max));
     configurationInterface.reset(new Link(msg_cond, host));

@@ -29,9 +29,6 @@
 
 class RobotStateRealtime 
 {
-
-private:
-
     struct State
     {
         double version = 1.0;                           // Protocol version

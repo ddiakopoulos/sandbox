@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ur_utils.h"
+#include "kinematic_model.hpp"
 #include "ur5/third_party/driver/commander.h"
 
 #include <vector>
@@ -9,25 +10,35 @@
 #include <mutex>
 #include <deque>
 #include <memory>
+#include <atomic>
 
 using namespace avl;
-
-struct JointPose
-{
-    float3 offset;
-    float3 axis;
-    float3 position;
-    float4 rotation;
-};
 
 class UniversalRoboticsDriver
 {
     void run();
-
+	std::thread robotThread;
+	std::mutex robotMutex;
+	std::atomic<bool> shouldExit;
 public:
 
+	UR5KinematicModel model;
+
+	std::atomic<bool> dataReady = false;
+	bool started = false;
+	bool move = false;
+
+	std::deque<std::vector<double>> posBuffer;
+	std::deque<std::vector<double>> speedBuffers;
+
+	std::unique_ptr<Commander> robot;
+	std::condition_variable rt_msg_cond;
+	std::condition_variable msg_cond;
+
+	std::vector<double> currentSpeed; // per joint
+	double acceleration = 0.0;
+
     UniversalRoboticsDriver();
-    ~UniversalRoboticsDriver();
 
     void setup(std::string ipAddress, double minPayload = 0.0, double maxPayload = 1.0);
     void disconnect();
@@ -35,31 +46,59 @@ public:
     void start();
     void stop();
 
-    float4 get_calculated_tcp_orientation();
-    void set_tool_offset(float3 localPos);
+    void set_joint_positions(std::vector<double> & pos)
+	{
+		std::lock_guard<std::mutex> lock(robotMutex);
+		posBuffer.push_back(pos);
+	}
 
-    void move_joints(std::vector<double> pos);
-    void set_speeds(std::vector<double> speeds, double acceleration = 100.0);
+    void set_joint_speeds(std::vector<double> & speeds, double acceleration = 100.0)
+	{
+		std::lock_guard<std::mutex> lock(robotMutex);
+		currentSpeed = speeds;
+		acceleration = acceleration;
+		move = true;
+	}
 
-    JointPose get_tool_pose();
+    JointPose get_tool_pose()
+	{
+		std::lock_guard<std::mutex> lock(robotMutex);
+		return model.toolpoint; // tool
+	}
 
-    UR5KinematicModel model;
+	float4 get_tool_center_point_orientation()
+	{
+		float4 ret;
+		std::lock_guard<std::mutex> lock(robotMutex);
+		ret = model.calculatedTCP.rotation; // dtoolpoint
+		return ret;
+	}
 
-    bool dataReady;
-    bool started;
-    bool move;
+    std::vector<double> get_toolpoints_raw()
+	{
+		std::vector<double> ret;
+		std::lock_guard<std::mutex> lock(robotMutex);
+		model.toolPointRaw.swap_front();
+		ret = model.toolPointRaw.front_data();
+		return ret;
+	}
 
-    std::vector<double> get_toolpoints_raw();
-    std::vector<double> get_joint_positions();
-    std::vector<double> get_joint_angles();
+    std::vector<double> get_joint_positions()
+	{
+		std::vector<double> ret;
+		std::lock_guard<std::mutex> lock(robotMutex);
+		model.jointsRaw.swap_front();
+		ret = model.jointsRaw.front_data();
+		return ret;
+	}
 
-    std::deque<std::vector<double>> posBuffer;
-    std::deque<std::vector<double>> speedBuffers;
+    std::vector<double> get_joint_angles()
+	{
+		std::vector<double> ret;
+		std::lock_guard<std::mutex> lock(robotMutex);
+		model.jointsProcessed.swap_front();
+		ret = model.jointsProcessed.front_data();
+		return ret;
+	}
 
-    std::unique_ptr<Commander> robot;
-    std::condition_variable rt_msg_cond;
-    std::condition_variable msg_cond;
-
-    std::vector<double> currentSpeed;
-    double acceleration;
 };

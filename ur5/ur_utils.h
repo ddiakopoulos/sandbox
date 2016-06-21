@@ -3,6 +3,14 @@
 #include "linalg_util.hpp"
 #include "math_util.hpp"
 
+struct JointPose
+{
+	float3 offset;
+	float3 axis;
+	float3 position;
+	float4 rotation;
+};
+
 namespace avl
 {
     // Converts a column-major 4x4 matrix to a row-major array in UR world coords

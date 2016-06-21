@@ -6,15 +6,14 @@
 #include "linalg_util.hpp"
 #include "math_util.hpp"
 
-template<class T> 
-class TripleBuffer
+template<class T> class TripleBuffer
 {
     volatile bool updated = false;
     T front, middle, back;
     std::mutex mutex;
 public:
-    const T * front_data() const { return front.data(); }
-    T * back_data() { return back.data(); }
+    const T & front_data() const { return front.data(); }
+    T & back_data() { return back.data(); }
 
     void initialize(const T & t) 
     {
