@@ -26,7 +26,7 @@ namespace avl
     float4x4 to_engine(double * T)
     {
         float4x4 output;
-        for(int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++)
         {
             output[i][0] = T[i + 0];
             output[i][1] = T[i + 4];
