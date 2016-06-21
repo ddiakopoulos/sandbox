@@ -62,7 +62,7 @@ void RealtimeLink::halt()
     linkthread.join();
 }
 
-void RealtimeLink::addCommandToQueue(std::string inp) 
+void RealtimeLink::enqueue_command(std::string inp) 
 {
     int bytes_written;
     if (inp.back() != '\n') 
@@ -79,11 +79,11 @@ void RealtimeLink::addCommandToQueue(std::string inp)
     }
 }
 
-void RealtimeLink::setSpeed(double q0, double q1, double q2, double q3, double q4, double q5, double acc) 
+void RealtimeLink::set_speed(double q0, double q1, double q2, double q3, double q4, double q5, double acc) 
 {
     char cmd[1024];
     sprintf(cmd, "speedj([%1.5f, %1.5f, %1.5f, %1.5f, %1.5f, %1.5f], %f, 0.02)\n", q0, q1, q2, q3, q4, q5, acc);
-    addCommandToQueue((std::string) (cmd));
+    enqueue_command((std::string) (cmd));
 
     if (q0 != 0. || q1 != 0. || q2 != 0. || q3 != 0. || q4 != 0. || q5 != 0.) 
     {
@@ -114,7 +114,7 @@ void RealtimeLink::run()
                 robot_state->unpack(buf.data());
                 if (safety_count == safety_count_max) 
                 {
-                    setSpeed(0., 0., 0., 0., 0., 0.);
+                    set_speed(0.f, 0.f, 0.f, 0.f, 0.f, 0.f);
                 }
                 safety_count += 1;
             } 
@@ -126,12 +126,12 @@ void RealtimeLink::run()
         }
     }
 
-    setSpeed(0.f, 0.f, 0.f, 0.f, 0.f, 0.f);
+    set_speed(0.f, 0.f, 0.f, 0.f, 0.f, 0.f);
 
     closesocket(sockfd);
 }
 
-void RealtimeLink::setSafetyCountMax(uint32_t inp) 
+void RealtimeLink::set_safety_count_max(uint32_t inp) 
 {
     safety_count_max = inp;
 }

@@ -59,9 +59,9 @@ public:
     bool start();
     void halt();
 
-    void setSpeed(double q0, double q1, double q2, double q3, double q4, double q5, double acc = 100.);
-    void addCommandToQueue(std::string inp);
-    void setSafetyCountMax(uint32_t inp);
+    void set_speed(double q0, double q1, double q2, double q3, double q4, double q5, double acc = 100.);
+    void enqueue_command(std::string inp);
+    void set_safety_count_max(uint32_t inp);
 
 };
 
