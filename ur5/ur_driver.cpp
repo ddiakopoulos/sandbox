@@ -84,6 +84,13 @@ void UniversalRoboticsDriver::run()
 			// Update toolpoint position
 			//model.toolpoint.position = float3(model.toolPointRaw.back_data()[0], model.toolPointRaw.back_data()[1], model.toolPointRaw.back_data()[2]);
 
+
+			if (move) 
+			{
+				robot->set_speed(currentSpeed[0], currentSpeed[1], currentSpeed[2], currentSpeed[3], currentSpeed[4], currentSpeed[5], acceleration);
+				move = false;
+			}
+
 			// Update controller
 			robot->realtimeInterface->robot_state->setControllerUpdated();
 
@@ -92,5 +99,4 @@ void UniversalRoboticsDriver::run()
 			model.toolPointRaw.swap_back();
 		}
 	}
-	
 }

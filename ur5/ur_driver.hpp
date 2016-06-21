@@ -28,7 +28,6 @@ public:
 	bool started = false;
 	bool move = false;
 
-	std::deque<std::vector<double>> posBuffer;
 	std::deque<std::vector<double>> speedBuffers;
 
 	std::unique_ptr<Commander> robot;
@@ -45,12 +44,6 @@ public:
 
     void start();
     void stop();
-
-    void set_joint_positions(std::vector<double> & pos)
-	{
-		std::lock_guard<std::mutex> lock(robotMutex);
-		posBuffer.push_back(pos);
-	}
 
     void set_joint_speeds(std::vector<double> & speeds, double acceleration = 100.0)
 	{
