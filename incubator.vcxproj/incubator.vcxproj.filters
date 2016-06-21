@@ -28,6 +28,18 @@
     <Filter Include="third_party\imgui">
       <UniqueIdentifier>{b12263b9-093c-4d8a-814d-4c507b45ede6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ur5">
+      <UniqueIdentifier>{e577ae3d-8964-424c-935d-594680055580}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ur5\driver">
+      <UniqueIdentifier>{95a1dc60-3ff8-4c39-9ec8-dbc564d0d0cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ur5\kinematics">
+      <UniqueIdentifier>{9174116a-5a54-4ee9-bd76-e67abe2780a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ur5\src">
+      <UniqueIdentifier>{050bcbc0-584f-4787-bf85-91420b8041a0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\third_party\fontstash.h">
@@ -254,6 +266,12 @@
     </ClInclude>
     <ClInclude Include="..\oriented_bounding_box.hpp">
       <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\universal_robotics_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ur5\triple_buffer.hpp">
+      <Filter>ur5\src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -41,6 +41,7 @@
     <ClInclude Include="..\examples\ssao_app.hpp" />
     <ClInclude Include="..\examples\terrain_app.hpp" />
     <ClInclude Include="..\examples\textured_model_app.hpp" />
+    <ClInclude Include="..\examples\universal_robotics_app.hpp" />
     <ClInclude Include="..\examples\vision_app.hpp" />
     <ClInclude Include="..\file_io.hpp" />
     <ClInclude Include="..\geometric.hpp" />
@@ -93,6 +94,7 @@
     <ClInclude Include="..\third_party\tiny_obj_loader.h" />
     <ClInclude Include="..\time_keeper.hpp" />
     <ClInclude Include="..\try_locker.hpp" />
+    <ClInclude Include="..\ur5\triple_buffer.hpp" />
     <ClInclude Include="..\util.hpp" />
   </ItemGroup>
   <ItemGroup>
