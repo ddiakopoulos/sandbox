@@ -93,7 +93,7 @@ void URKinematics::forward_all(const double * q, double * T1, double * T2, doubl
         *T3 = c23*c1; T3++;
         *T3 = -s23*c1; T3++;
         *T3 = s1; T3++;
-        *T3 =c1*(a3*c23 + a2*c2); T3++;
+        *T3 = c1*(a3*c23 + a2*c2); T3++;
         *T3 = c23*s1; T3++;
         *T3 = -s23*s1; T3++;
         *T3 = -c1; T3++;
@@ -150,7 +150,7 @@ void URKinematics::forward_all(const double * q, double * T1, double * T2, doubl
     
     if (T6 != nullptr) 
     {
-        *T6 =   c6*(s1*s5 + c234*c1*c5) - s234*c1*s6; T6++;
+        *T6 = c6*(s1*s5 + c234*c1*c5) - s234*c1*s6; T6++;
         *T6 = - s6*(s1*s5 + c234*c1*c5) - s234*c1*c6; T6++;
         *T6 = c5*s1 - c234*c1*s5; T6++;
         *T6 = d6*(c5*s1 - c234*c1*s5) + c1*(a3*c23 + a2*c2) + d4*s1 + d5*s234*c1; T6++;
