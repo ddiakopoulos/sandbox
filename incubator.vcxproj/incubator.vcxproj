@@ -94,6 +94,14 @@
     <ClInclude Include="..\third_party\tiny_obj_loader.h" />
     <ClInclude Include="..\time_keeper.hpp" />
     <ClInclude Include="..\try_locker.hpp" />
+    <ClInclude Include="..\ur5\third_party\driver\portable_endian.h" />
+    <ClInclude Include="..\ur5\third_party\driver\robot_state.h" />
+    <ClInclude Include="..\ur5\third_party\driver\robot_state_realtime.h" />
+    <ClInclude Include="..\ur5\third_party\driver\link.h" />
+    <ClInclude Include="..\ur5\third_party\driver\commander.h" />
+    <ClInclude Include="..\ur5\third_party\driver\realtime_link.h" />
+    <ClInclude Include="..\ur5\third_party\driver\simple_socket.hpp" />
+    <ClInclude Include="..\ur5\third_party\kinematics\ur_kin.h" />
     <ClInclude Include="..\ur5\triple_buffer.hpp" />
     <ClInclude Include="..\util.hpp" />
   </ItemGroup>
@@ -111,6 +119,13 @@
     <ClCompile Include="..\third_party\nanovg.cpp" />
     <ClCompile Include="..\third_party\tinyply.cpp" />
     <ClCompile Include="..\third_party\tiny_obj_loader.cc" />
+    <ClCompile Include="..\ur5\third_party\driver\robot_state.cpp" />
+    <ClCompile Include="..\ur5\third_party\driver\robot_state_realtime.cpp" />
+    <ClCompile Include="..\ur5\third_party\driver\link.cpp" />
+    <ClCompile Include="..\ur5\third_party\driver\commander.cpp" />
+    <ClCompile Include="..\ur5\third_party\driver\realtime_link.cpp" />
+    <ClCompile Include="..\ur5\third_party\driver\simple_socket.cpp" />
+    <ClCompile Include="..\ur5\third_party\kinematics\ur_kin.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\glfw_app.mm">

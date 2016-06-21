@@ -273,6 +273,30 @@
     <ClInclude Include="..\ur5\triple_buffer.hpp">
       <Filter>ur5\src</Filter>
     </ClInclude>
+    <ClInclude Include="..\ur5\third_party\kinematics\ur_kin.h">
+      <Filter>ur5\kinematics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ur5\third_party\driver\robot_state.h">
+      <Filter>ur5\driver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ur5\third_party\driver\portable_endian.h">
+      <Filter>ur5\driver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ur5\third_party\driver\robot_state_realtime.h">
+      <Filter>ur5\driver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ur5\third_party\driver\realtime_link.h">
+      <Filter>ur5\driver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ur5\third_party\driver\link.h">
+      <Filter>ur5\driver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ur5\third_party\driver\commander.h">
+      <Filter>ur5\driver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ur5\third_party\driver\simple_socket.hpp">
+      <Filter>ur5\driver</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
@@ -316,6 +340,27 @@
     </ClCompile>
     <ClCompile Include="..\third_party\imgui\imgui_draw.cpp">
       <Filter>third_party\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ur5\third_party\kinematics\ur_kin.cpp">
+      <Filter>ur5\kinematics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ur5\third_party\driver\robot_state.cpp">
+      <Filter>ur5\driver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ur5\third_party\driver\robot_state_realtime.cpp">
+      <Filter>ur5\driver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ur5\third_party\driver\realtime_link.cpp">
+      <Filter>ur5\driver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ur5\third_party\driver\link.cpp">
+      <Filter>ur5\driver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ur5\third_party\driver\commander.cpp">
+      <Filter>ur5\driver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ur5\third_party\driver\simple_socket.cpp">
+      <Filter>ur5\driver</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
