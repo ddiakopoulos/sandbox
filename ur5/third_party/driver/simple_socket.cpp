@@ -55,17 +55,17 @@ int open_tcp_port(short portno)
     struct sockaddr_in serv_addr;
 
     sockfd = internal_socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (sockfd < 0)
-        return -1;
+    if (sockfd < 0) return -1;
     bzero(&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(portno);
-    if (bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+    if (bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) 
+    {
         return -1;
     }
 
-    listen(sockfd, 4);
+    listen(sockfd, 5);
     return sockfd;
 }
 

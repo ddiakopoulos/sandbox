@@ -34,7 +34,7 @@ private:
 
     struct State
     {
-        double version;                                 // Protocol version
+        double version = 1.0;                           // Protocol version
 
         double time;                                    // Time elapsed since the controller was started
 
@@ -73,13 +73,12 @@ private:
 
 	std::mutex val_lock; // Locks the variables while unpack parses data;
 
-	std::condition_variable* pMsg_cond; //Signals that new vars are available
-	bool data_published; //to avoid spurious wakes
+	std::condition_variable* pMsg_cond; // Signals that new vars are available
+	bool data_published; // To avoid spurious wakes
 	bool controller_updated; //to avoid spurious wakes
 
 	std::vector<double> unpackVector(uint8_t * buf, int start_index, int nr_of_vals);
 	std::vector<bool> unpackDigitalInputBits(int64_t data);
-	double ntohd(uint64_t nf);
 
 public:
 
