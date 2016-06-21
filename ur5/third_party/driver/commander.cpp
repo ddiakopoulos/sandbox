@@ -97,7 +97,7 @@ bool Commander::execute_trajectory(std::vector<double> inp_timestamps, std::vect
     }
     executing_traj = false;
 
-    //Signal robot to stop driverProg()
+    // Signal robot to stop driverProg()
     Commander::closeServo(positions);
     return true;
 }
@@ -129,7 +129,7 @@ void Commander::servoj(std::vector<double> positions, int keepalive)
     buf[6 * 4 + 1] = (tmp >> 8) & 0xff;
     buf[6 * 4 + 2] = (tmp >> 16) & 0xff;
     buf[6 * 4 + 3] = (tmp >> 24) & 0xff;
-    bytes_written = sendall(sockfd, buf.data(), 28, NULL); // uchar / char
+    bytes_written = sendall(acceptedfd, buf.data(), 28, NULL); // uchar / char
 }
 
 void Commander::stop_trajectory() 
