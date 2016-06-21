@@ -39,6 +39,8 @@
 #pragma once
 
 #include "ikfast.h"
+#include "linalg_util.hpp"
+#include "math_util.hpp"
 
 // These kinematics find the tranfrom from the base link to the end effector.
 // Though the raw D-H parameters specify a transform from the 0th link to the 6th link,
