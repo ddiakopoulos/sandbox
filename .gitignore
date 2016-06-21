@@ -44,3 +44,5 @@ notes.md
 imgui.ini
 
 intermediate/
+*.db
+*.opendb
