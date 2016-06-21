@@ -19,7 +19,7 @@
 #include "realtime_link.h"
 #include "simple_socket.hpp"
 
- RealtimeLink::RealtimeLink(std::condition_variable & msg_cond, std::string host, unsigned int safety_count_max) 
+ RealtimeLink::RealtimeLink(std::condition_variable & msg_cond, std::string host, uint32_t safety_count_max) 
  {
     robot_state = new RobotStateRealtime(msg_cond);
 

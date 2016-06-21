@@ -39,7 +39,7 @@ RobotState::RobotState(std::condition_variable & msg_cond)
     robotModeRunning = robot_state_type_v30::ROBOT_MODE_RUNNING;
 }
 
-void RobotState::unpack(uint8_t* buf, unsigned int buf_length) 
+void RobotState::unpack(uint8_t * buf, unsigned int buf_length) 
 {
     // Returns missing bytes to unpack a message, or 0 if all data was parsed
     unsigned int offset = 0;
@@ -68,7 +68,6 @@ void RobotState::unpack(uint8_t* buf, unsigned int buf_length)
                 break;
         }
         offset += len;
-
     }
 }
 
@@ -356,7 +355,6 @@ double RobotState::getVersion()
     ver = versionData.major_version + 0.1 * versionData.minor_version + .0000001 * versionData.svn_revision;
     val_lock_.unlock();
     return ver;
-
 }
 
 void RobotState::finishedReading() 
@@ -364,16 +362,14 @@ void RobotState::finishedReading()
     new_data_available_ = false;
 }
 
-bool RobotState::getNewDataAvailable() {
+bool RobotState::getNewDataAvailable() 
+{
     return new_data_available_;
 }
 
 bool RobotState::isReady() 
 {
-    if (robotMode.robotMode == robotModeRunning) 
-    {
-        return true;
-    }
+    if (robotMode.robotMode == robotModeRunning) return true;
     return false;
 }
 

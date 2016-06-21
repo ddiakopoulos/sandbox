@@ -29,8 +29,6 @@
 #include <mutex>
 #include <condition_variable>
 #include <iostream>
-#include <errno.h>
-#include <fcntl.h>
 #include <sys/types.h>
 
 class RealtimeLink 
@@ -62,7 +60,6 @@ public:
     void set_speed(double q0, double q1, double q2, double q3, double q4, double q5, double acc = 100.);
     void enqueue_command(std::string inp);
     void set_safety_count_max(uint32_t inp);
-
 };
 
 #endif

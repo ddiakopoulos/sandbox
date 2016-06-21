@@ -51,9 +51,9 @@ public:
 	Commander(std::condition_variable & rt_msg_cond,
 			std::condition_variable & msg_cond, 
             std::string host,
-			unsigned int reverse_port = 50007, 
+			uint32_t reverse_port = 50007, 
             double servoj_time = 0.016, 
-            unsigned int safety_count_max = 12, 
+            uint32_t safety_count_max = 12, 
             double max_time_step = 0.08, 
             double min_payload = 0.,
 			double max_payload = 1.);

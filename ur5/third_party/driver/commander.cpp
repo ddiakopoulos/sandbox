@@ -326,7 +326,7 @@ bool Commander::setPayload(double m)
         print_debug(buf);
         return true;
     } 
-    else  return false;
+    else return false;
 }
 
 void Commander::setMinPayload(double m) 
