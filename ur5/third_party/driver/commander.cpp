@@ -43,8 +43,8 @@ inline void print_debug(std::string inp)
 
 Commander::Commander(std::condition_variable & rt_msg_cond,
         std::condition_variable & msg_cond, std::string host,
-        unsigned int reverse_port, double servoj_time,
-        unsigned int safety_count_max, double max_time_step, double min_payload,
+        uint32_t reverse_port, double servoj_time,
+        uint32_t safety_count_max, double max_time_step, double min_payload,
         double max_payload) :
         REVERSE_PORT(reverse_port), maximum_time_step(max_time_step), minimum_payload(min_payload), maximum_payload(max_payload), servoj_time(servoj_time) 
 {
@@ -62,7 +62,7 @@ bool Commander::execute_trajectory(std::vector<double> inp_timestamps, std::vect
 {
     std::chrono::high_resolution_clock::time_point t0, t;
     std::vector<double> positions;
-    unsigned int j;
+    uint32_t j;
 
     if (!Commander::uploadProg()) 
     {
