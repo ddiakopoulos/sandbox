@@ -92,7 +92,7 @@ bool Commander::execute_trajectory(std::vector<double> inp_timestamps, std::vect
         Commander::servoj(positions);
 
         // Oversample with 4 * sample_time
-        std::this_thread::sleep_for( std::chrono::milliseconds((int) ((servoj_time * 1000) / 4.)));
+        std::this_thread::sleep_for(std::chrono::milliseconds((int) ((servoj_time * 1000) / 4.0)));
         t = std::chrono::high_resolution_clock::now();
     }
     executing_traj = false;
@@ -221,12 +221,12 @@ bool Commander::openServo()
 
     if (acceptedfd < 0) 
     {
-        std::cout <<"Error on accepting reverse communication" << std::endl;
+        std::cout << "Error on accepting reverse communication" << std::endl;
         return false;
     }
     else
     {
-       std::cout <<"Connected reverse communication" << std::endl; 
+       std::cout << "Connected reverse communication" << std::endl; 
     }
 
     reverse_connected = true;
@@ -274,7 +274,8 @@ void Commander::setJointNames(std::vector<std::string> jn)
     joint_names = jn;
 }
 
-void Commander::setToolVoltage(unsigned int v) {
+void Commander::setToolVoltage(unsigned int v) 
+{
     char buf[256];
     sprintf(buf, "sec setOut():\n\tset_tool_voltage(%d)\nend\n", v);
     realtimeInterface->enqueue_command(buf);
@@ -292,6 +293,7 @@ void Commander::setFlag(unsigned int n, bool b)
 void Commander::setDigitalOut(unsigned int n, bool b) 
 {
     char buf[256];
+
     if (firmware_version < 2) 
         sprintf(buf, "sec setOut():\n\tset_digital_out(%d, %s)\nend\n", n, b ? "True" : "False");
     else if (n > 9) 
@@ -300,6 +302,7 @@ void Commander::setDigitalOut(unsigned int n, bool b)
         sprintf(buf, "sec setOut():\n\tset_tool_digital_out(%d, %s)\nend\n",  n - 8, b ? "True" : "False");
     else 
         sprintf(buf, "sec setOut():\n\tset_standard_digital_out(%d, %s)\nend\n", n, b ? "True" : "False");
+
     realtimeInterface->enqueue_command(buf);
     print_debug(buf);
 }
