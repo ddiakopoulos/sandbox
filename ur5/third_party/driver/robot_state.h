@@ -25,6 +25,7 @@
 #include <string.h>
 #include <mutex>
 #include <condition_variable>
+#include "portable_endian.h"
 
 enum class message_type : int 
 {
@@ -60,22 +61,7 @@ enum class robot_message_type : int
     ROBOT_MESSAGE_RUNTIME_EXCEPTION = 10
 };
 
-enum class robot_state_type : int 
-{
-    ROBOT_RUNNING_MODE = 0,
-    ROBOT_FREEDRIVE_MODE = 1,
-    ROBOT_READY_MODE = 2,
-    ROBOT_INITIALIZING_MODE = 3,
-    ROBOT_SECURITY_STOPPED_MODE = 4,
-    ROBOT_EMERGENCY_STOPPED_MODE = 5,
-    ROBOT_FATAL_ERROR_MODE = 6,
-    ROBOT_NO_POWER_MODE = 7,
-    ROBOT_NOT_CONNECTED_MODE = 8,
-    ROBOT_SHUTDOWN_MODE = 9,
-    ROBOT_SAFEGUARD_STOP_MODE = 10
-};
-
-enum class robot_state_type : int 
+enum class robot_state_type_v30 : int 
 {
     ROBOT_MODE_DISCONNECTED = 0,
     ROBOT_MODE_CONFIRM_SAFETY = 1,
@@ -92,7 +78,7 @@ struct version_message
 {
     uint64_t timestamp;
     int8_t source;
-    int8_t robot_message_type;
+    robot_message_type rmt;
     int8_t project_name_size;
     char project_name[15];
     uint8_t major_version;
@@ -136,7 +122,7 @@ struct robot_mode_data
     bool isProtectiveStopped;
     bool isProgramRunning;
     bool isProgramPaused;
-    uint8_t robotMode;
+    robot_state_type_v30 robotMode;
     uint8_t controlMode;
     double targetSpeedFraction;
     double speedScaling;
@@ -144,58 +130,21 @@ struct robot_mode_data
 
 class RobotState 
 {
-    version_message version_msg_;
-    masterboard_data mb_data_;
-    robot_mode_data robot_mode_;
-
     std::recursive_mutex val_lock_; // Locks the variables while unpack parses data;
-
-    std::condition_variable * pMsg_cond_; //Signals that new vars are available
-    bool new_data_available_; //to avoid spurious wakes
-    uint8_t robot_mode_running_;
-
-    double ntohd(uint64_t nf);
+    std::condition_variable * pMsg_cond_; // Signals that new vars are available
+    bool new_data_available_; // To avoid spurious wakes
 
 public:
 
     RobotState(std::condition_variable & msg_cond);
-    ~RobotState();
+
+    version_message versionData;
+    masterboard_data boardData;
+    robot_mode_data robotMode;
+    robot_state_type_v30 robotModeRunning;
 
     double getVersion();
-    double getTime();
 
-    std::vector<double> getQTarget();
-    int getDigitalInputBits();
-    int getDigitalOutputBits();
-    char getAnalogInputRange0();
-    char getAnalogInputRange1();
-    double getAnalogInput0();
-    double getAnalogInput1();
-    char getAnalogOutputDomain0();
-    char getAnalogOutputDomain1();
-    double getAnalogOutput0();
-    double getAnalogOutput1();
-    std::vector<double> getVActual();
-    float getMasterBoardTemperature();
-    float getRobotVoltage48V();
-    float getRobotCurrent();
-    float getMasterIOCurrent();
-    uint8_t getSafetyMode();
-    uint8_t getInReducedMode();
-    char getEuromap67InterfaceInstalled();
-    int getEuromapInputBits();
-    int getEuromapOutputBits();
-    float getEuromapVoltage();
-    float getEuromapCurrent();
-
-    bool isRobotConnected();
-    bool isRealRobotEnabled();
-    bool isPowerOnRobot();
-    bool isEmergencyStopped();
-    bool isProtectiveStopped();
-    bool isProgramRunning();
-    bool isProgramPaused();
-    uint8_t getRobotMode();
     bool isReady();
 
     void setDisconnected();
