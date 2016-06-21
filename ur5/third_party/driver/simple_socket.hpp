@@ -1,3 +1,8 @@
+#pragma once
+
+#ifndef simple_socket_h
+#define simple_socket_h
+
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -29,3 +34,5 @@ int readall(int sockfd, char * buffer, int bufLen, int flags);
 bool set_nonblock(int socket, int blocking);
 int addr_eq(struct sockaddr_in * a, struct sockaddr_in * b);
 int socket_ready(int sock, int timeout);
+
+#endif

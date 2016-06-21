@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef UR_REALTIME_COMMUNICATION_H_
-#define UR_REALTIME_COMMUNICATION_H_
+#ifndef realtime_link_h
+#define realtime_link_h
 
 #include "robot_state_realtime.h"
 

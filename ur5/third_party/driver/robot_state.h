@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef ROBOT_STATE_H_
-#define ROBOT_STATE_H_
+#ifndef robot_state_h
+#define robot_state_h
 
 #include <inttypes.h>
 #include <vector>

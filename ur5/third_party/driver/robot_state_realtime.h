@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef ROBOT_STATE_RT_H_
-#define ROBOT_STATE_RT_H_
+#ifndef robot_state_realtime_h
+#define robot_state_realtime_h
 
 #include <inttypes.h>
 #include <vector>
@@ -102,4 +102,4 @@ public:
 	void unpack(uint8_t * buf);
 };
 
-#endif /* ROBOT_STATE_RT_H_ */
+#endif /* robot_state_realtime_h */
