@@ -8,7 +8,6 @@
 #include <thread>
 #include <condition_variable>
 #include <mutex>
-#include <deque>
 #include <memory>
 #include <atomic>
 
@@ -27,8 +26,6 @@ public:
 	std::atomic<bool> dataReady = false;
 	bool started = false;
 	bool move = false;
-
-	std::deque<std::vector<double>> speedBuffers;
 
 	std::unique_ptr<Commander> robot;
 	std::condition_variable rt_msg_cond;

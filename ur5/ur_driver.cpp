@@ -61,6 +61,7 @@ void UniversalRoboticsDriver::run()
 
 			dataReady = true;
 
+			// Store the new robot info into the active kinematic model
 			model.jointsRaw.back_data() = robot->realtimeInterface->robot_state->getState().q_actual;
 			model.jointsProcessed.back_data() = model.jointsRaw.back_data();
 			model.toolPointRaw.back_data() = robot->realtimeInterface->robot_state->getState().tool_vector_actual; // x, y, z, rx, ry, rz
@@ -82,9 +83,7 @@ void UniversalRoboticsDriver::run()
 			// todo - tool epsilon fix
 
 			// Update toolpoint position
-			//model.toolpoint.position = float3(model.toolPointRaw.back_data()[0], model.toolPointRaw.back_data()[1], model.toolPointRaw.back_data()[2]);
-
-
+			// model.toolpoint.position = float3(model.toolPointRaw.back_data()[0], model.toolPointRaw.back_data()[1], model.toolPointRaw.back_data()[2]);
 			if (move) 
 			{
 				robot->set_speed(currentSpeed[0], currentSpeed[1], currentSpeed[2], currentSpeed[3], currentSpeed[4], currentSpeed[5], acceleration);

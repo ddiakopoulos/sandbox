@@ -35,7 +35,7 @@ class Commander
 	std::vector<std::string> joint_names;
 	std::string ip_addr;
 
-	const uint32_t REVERSE_PORT;
+	const uint32_t reverse_port;
 
 	int sockfd = -1;
     int acceptedfd = -1;

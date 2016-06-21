@@ -50,12 +50,12 @@ Commander::Commander(std::condition_variable & rt_msg_cond,
 		double max_time_step, 
 		double min_payload,
 		double max_payload) :
-		REVERSE_PORT(reverse_port), maximum_time_step(max_time_step), minimum_payload(min_payload), maximum_payload(max_payload), servoj_time(servoj_time) 
+		reverse_port(reverse_port), maximum_time_step(max_time_step), minimum_payload(min_payload), maximum_payload(max_payload), servoj_time(servoj_time) 
 {
     realtimeInterface.reset(new RealtimeLink(rt_msg_cond, host, safety_count_max));
     configurationInterface.reset(new Link(msg_cond, host));
 
-    sockfd = open_tcp_port(REVERSE_PORT);
+    sockfd = open_tcp_port(reverse_port);
     if (sockfd < 0) 
     {
         std::cout << "ERROR opening socket for reverse communication" << std::endl;
@@ -188,7 +188,7 @@ bool Commander::uploadProg()
     cmd_str += "\t\tend\n";
     cmd_str += "\tend\n";
 
-    sprintf(buf, "\tsocket_open(\"%s\", %i)\n", ip_addr.c_str(), REVERSE_PORT);
+    sprintf(buf, "\tsocket_open(\"%s\", %i)\n", ip_addr.c_str(), reverse_port);
     cmd_str += buf;
 
     cmd_str += "\tthread_servo = run servoThread()\n";
@@ -249,9 +249,7 @@ bool Commander::start()
 {
     if (!configurationInterface->start()) return false;
     if (!realtimeInterface->start()) return false;
-
-    print_debug("Listening on " + std::to_string(REVERSE_PORT) + "\n");
-
+    print_debug("Listening on " + std::to_string(reverse_port) + "\n");
     return true;
 }
 
