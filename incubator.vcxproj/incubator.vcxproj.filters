@@ -255,6 +255,9 @@
     <ClInclude Include="..\examples\render_experiments.hpp">
       <Filter>examples</Filter>
     </ClInclude>
+    <ClInclude Include="..\examples\glass_material_app.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">

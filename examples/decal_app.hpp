@@ -1,5 +1,4 @@
 #include "index.hpp"
-#include "noise1234.h"
 
 struct DecalVertex
 {
