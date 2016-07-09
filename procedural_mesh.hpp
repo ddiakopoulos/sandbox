@@ -549,8 +549,8 @@ namespace avl
                 plane.faces.push_back({indexOffset + 0, indexOffset + 2, indexOffset + 3});
                 
                 // Back faces
-                //plane.faces.push_back({indexOffset + 2, indexOffset + 1, indexOffset + 0});
-                //plane.faces.push_back({indexOffset + 3, indexOffset + 2, indexOffset + 0});
+                plane.faces.push_back({indexOffset + 2, indexOffset + 1, indexOffset + 0});
+                plane.faces.push_back({indexOffset + 3, indexOffset + 2, indexOffset + 0});
                 
                 indexOffset += 4;
             }
