@@ -22,7 +22,8 @@ struct ExperimentalApp : public GLFWApp
 
     std::shared_ptr<GlShader> glassMaterialShader;
 
-    std::vector<Renderable> models;
+    std::vector<Renderable> glassModels;
+    std::vector<Renderable> regularModels;
 
     ExperimentalApp() : GLFWApp(1280, 800, "Glass Material App")
     {
@@ -37,10 +38,13 @@ struct ExperimentalApp : public GLFWApp
         cameraController.set_camera(&camera);
         camera.look_at({0, 2.5, -2.5}, {0, 2.0, 0});
 
-        Renderable modelOne = Renderable(make_cube());
-        modelOne.isEmissive = false;
-        modelOne.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 0));
-        models.push_back(std::move(modelOne));
+        Renderable cubeModel = Renderable(make_cube());
+        cubeModel.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 0));
+        glassModels.push_back(std::move(cubeModel));
+
+        Renderable sphereModel = Renderable(make_sphere(1.0));
+        sphereModel.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 3));
+        regularModels.push_back(std::move(sphereModel));
 
         glassMaterialShader = make_watched_shader(shaderMonitor, "assets/shaders/glass_vert.glsl", "assets/shaders/glass_frag.glsl");
 
@@ -88,12 +92,17 @@ struct ExperimentalApp : public GLFWApp
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
 
         {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
             glassMaterialShader->bind();
             
             glassMaterialShader->uniform("u_eye", camera.get_eye_point());
             glassMaterialShader->uniform("u_viewProj", viewProj);
 
-            for (const auto & model : models)
+            // fb->setBlend(true, BlendEquation::ADD, BlendArgument::SRC_ALPHA, BlendArgument::ONE_MINUS_SRC_ALPHA);
+
+            for (const auto & model : glassModels)
             {
                 glassMaterialShader->uniform("u_modelMatrix", model.get_model());
                 glassMaterialShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
@@ -101,6 +110,11 @@ struct ExperimentalApp : public GLFWApp
             }
             
             glassMaterialShader->unbind();
+        }
+
+        {
+            glDisable(GL_BLEND);
+
         }
 
         grid.render(proj, view);
