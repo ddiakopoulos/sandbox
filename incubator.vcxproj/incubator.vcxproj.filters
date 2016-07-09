@@ -225,9 +225,6 @@
     <ClInclude Include="..\linalg_util.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\examples\simple_glow.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
     <ClInclude Include="..\poisson_disk.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
@@ -254,6 +251,9 @@
     </ClInclude>
     <ClInclude Include="..\oriented_bounding_box.hpp">
       <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\render_experiments.hpp">
+      <Filter>examples</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

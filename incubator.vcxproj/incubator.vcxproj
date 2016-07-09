@@ -37,7 +37,7 @@
     <ClInclude Include="..\examples\reaction_app.hpp" />
     <ClInclude Include="..\examples\shadow_app.hpp" />
     <ClInclude Include="..\examples\simplex_noise_app.hpp" />
-    <ClInclude Include="..\examples\simple_glow.hpp" />
+    <ClInclude Include="..\examples\render_experiments.hpp" />
     <ClInclude Include="..\examples\ssao_app.hpp" />
     <ClInclude Include="..\examples\terrain_app.hpp" />
     <ClInclude Include="..\examples\textured_model_app.hpp" />

@@ -3,6 +3,21 @@
 #include "avl_imgui.hpp"
 #include "imgui/imgui.h"
 
+struct Billboard
+{
+	GlMesh mesh;
+	Pose pose;
+	float3 scale = {1, 1, 1};
+
+	Billboard()
+	{
+        mesh = make_plane_mesh(2, 2, 4, 4);
+	}
+
+	float4x4 get_model_matrix() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
+};
+
+
 // Build a 3x3 texel offset lookup table for performing a 2x downsample
 void luminance_offset_2x2(GlShader * shader, float2 size)
 {
@@ -83,6 +98,8 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<GlShader> compositeShader;
     std::shared_ptr<GlShader> emissiveTexShader;
 
+   std::shared_ptr<GlShader> particleSystemShader;
+
     std::shared_ptr<GLTextureView> blurView;
 
     GlMesh fullscreen_post_quad;
@@ -107,40 +124,9 @@ struct ExperimentalApp : public GLFWApp
     std::random_device rd;
     std::mt19937 gen;
     
-    std::vector<float3> create_curve(float rMin = 3.f, float rMax = 12.f)
-    {
-        
-        RandomGenerator r;
-        
-        std::vector<float3> curve;
-        ConstantSpline s;
-        
-        s.p0 = float3(0, 0, 0);
-        s.p1 = s.p0 + float3( .5f - r.random_float(), .5f - r.random_float(), .5f - r.random_float());
-        s.p2 = s.p1 + float3( .5f - r.random_float(), .5f - r.random_float(), .5f - r.random_float());
-        s.p3 = s.p2 + float3( .5f - r.random_float(), .5f - r.random_float(), .5f - r.random_float());
-        
-        s.p0 *= rMin + r.random_float() * rMax;
-        s.p1 *= rMin + r.random_float() * rMax;
-        s.p2 *= rMin + r.random_float() * rMax;
-        s.p3 *= rMin + r.random_float() * rMax;
-        
-        s.calculate(.001f);
-        s.calculate_distances();
-        s.reticulate(256);
-        
-        auto sPoints = s.get_spline();
-        
-        for (const auto & p : sPoints)
-        {
-            curve.push_back(p);
-            curve.push_back(p);
-        }
-        
-        return curve;
-    }
-    
-    ExperimentalApp() : GLFWApp(1280, 720, "Emissive Object App", 2, true)
+    Billboard bb;
+
+    ExperimentalApp() : GLFWApp(1280, 720, "Render Experiments App", 2, true)
     {
         
         glfwSwapInterval(0);
@@ -154,8 +140,8 @@ struct ExperimentalApp : public GLFWApp
         
         fullscreen_post_quad = make_fullscreen_quad();
         
-        modelGlowTexture = load_image("assets/textures/modular_panel/height.png");
-        modelDiffuse = load_image("assets/textures/modular_panel/diffuse.png");
+       // modelGlowTexture = load_image("assets/textures/modular_panel/height.png");
+       // modelDiffuse = load_image("assets/textures/modular_panel/diffuse.png");
         
         // Debugging views
         uiSurface.bounds = {0, 0, (float) width, (float) height};
@@ -194,7 +180,8 @@ struct ExperimentalApp : public GLFWApp
         blurShader = make_watched_shader(shaderMonitor, "assets/shaders/gaussian_blur_vert.glsl", "assets/shaders/gaussian_blur_frag.glsl");
         compositeShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/composite_frag.glsl");
         emissiveTexShader = make_watched_shader(shaderMonitor, "assets/shaders/emissive_texture_vert.glsl", "assets/shaders/emissive_texture_frag.glsl");
-        
+        particleSystemShader = make_watched_shader(shaderMonitor, "assets/shaders/billboard_vert.glsl", "assets/shaders/particle_forcefield_frag.glsl");
+
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
         
@@ -240,6 +227,7 @@ struct ExperimentalApp : public GLFWApp
         if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS) {}
     }
     
+
     void on_update(const UpdateEvent & e) override
     {
         cameraController.update(e.timestep_ms);
@@ -295,13 +283,26 @@ struct ExperimentalApp : public GLFWApp
                 {
                     simpleShader->uniform("u_modelMatrix", model.get_model());
                     simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                    model.draw();
+                   // model.draw();
                 }
             }
             
             simpleShader->unbind();
             
             grid.render(proj, view);
+        }
+
+        {
+            particleSystemShader->bind();
+            bb.pose.orientation = camera.get_pose().orientation;
+            auto model = bb.get_model_matrix();
+            particleSystemShader->uniform("u_modelMatrix", model);
+            particleSystemShader->uniform("u_modelMatrixIT", inv(transpose(model)));
+            particleSystemShader->uniform("u_viewProj", viewProj);
+            particleSystemShader->uniform("u_time", time);
+            particleSystemShader->uniform("u_emissive_color", float4(1, 1, 1, 1));
+            bb.mesh.draw_elements();
+            particleSystemShader->unbind();
         }
 
         // Render out emissive objects
@@ -321,7 +322,7 @@ struct ExperimentalApp : public GLFWApp
                 {
                     emissiveTexShader->uniform("u_modelMatrix", model.get_model());
                     emissiveTexShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                    model.draw();
+                   // model.draw();
                 }
             }
             
