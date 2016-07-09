@@ -98,7 +98,9 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<GlShader> compositeShader;
     std::shared_ptr<GlShader> emissiveTexShader;
 
-   std::shared_ptr<GlShader> particleSystemShader;
+    std::shared_ptr<GlShader> particleSystemShader;
+
+    std::shared_ptr<GlShader> glassMaterialShader;
 
     std::shared_ptr<GLTextureView> blurView;
 
@@ -128,7 +130,6 @@ struct ExperimentalApp : public GLFWApp
 
     ExperimentalApp() : GLFWApp(1280, 720, "Render Experiments App", 2, true)
     {
-        
         glfwSwapInterval(0);
         
         igm.reset(new gui::ImGuiManager(window));
@@ -181,6 +182,7 @@ struct ExperimentalApp : public GLFWApp
         compositeShader = make_watched_shader(shaderMonitor, "assets/shaders/post_vertex.glsl", "assets/shaders/composite_frag.glsl");
         emissiveTexShader = make_watched_shader(shaderMonitor, "assets/shaders/emissive_texture_vert.glsl", "assets/shaders/emissive_texture_frag.glsl");
         particleSystemShader = make_watched_shader(shaderMonitor, "assets/shaders/billboard_vert.glsl", "assets/shaders/particle_forcefield_frag.glsl");
+        glassMaterialShader = make_watched_shader(shaderMonitor, "assets/shaders/glass_vert.glsl", "assets/shaders/glass_frag.glsl");
 
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
         emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
@@ -227,7 +229,6 @@ struct ExperimentalApp : public GLFWApp
         if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS) {}
     }
     
-
     void on_update(const UpdateEvent & e) override
     {
         cameraController.update(e.timestep_ms);
