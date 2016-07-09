@@ -12,7 +12,6 @@
 namespace avl
 {
 
-//@tofix - windows adds a trailing slash to paths returned by efsw!
 class ShaderMonitor
 {
     std::unique_ptr<efsw::FileWatcher> fileWatcher;
@@ -55,7 +54,7 @@ public:
         {
             for (auto & shader : shaders)
             {
-                if (filename == get_filename_with_extension(shader->vertexPath) || filename == get_filename_with_extension(shader->fragmentPath))
+                if (get_filename_with_extension(filename) == get_filename_with_extension(shader->vertexPath) || get_filename_with_extension(filename) == get_filename_with_extension(shader->fragmentPath))
                 {
                     shader->shouldRecompile = true;
                 }

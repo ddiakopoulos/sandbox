@@ -16,11 +16,11 @@ using namespace avl;
 //#include "examples/vision_app.hpp"
 //#include "examples/sandbox_app.hpp"
 //#include "examples/hdr_skydome.hpp"
-#include "examples/instance_app.hpp"
+//#include "examples/instance_app.hpp"
 //#include "examples/manipulation_app.hpp"
 //#include "examples/shadow_app.hpp"
 //#include "examples/simplex_noise_app.hpp"
-//#include "examples/simple_glow.hpp"
+#include "examples/render_experiments.hpp"
 
 IMPLEMENT_MAIN(int argc, char * argv[])
 {
