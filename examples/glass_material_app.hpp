@@ -51,17 +51,17 @@ public:
     {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.get_handle());
         glViewport(0, 0, resolution.x , resolution.y);
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+        //glDrawBuffer(GL_COLOR_ATTACHMENT0);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-        auto projMat = make_perspective_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f); 
+        auto projMatrix = make_perspective_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f); 
         for (int i = 0; i < 6; ++i)
         {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, faces[i].first, cubeMapHandle, 0);
             auto viewMatrix = make_view_matrix_from_pose(faces[i].second);
 
-            if (render) render(viewMatrix, projMat);
+            if (render) render(viewMatrix, projMatrix);
         }
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -75,46 +75,6 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
     std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath));
     mon.add_shader(shader, vertexPath, fragPath);
     return shader;
-}
-
-class Skybox
-{
-	GlShader program;
-	GlMesh mesh;
-public:
-	Skybox()
-    {
-
-    }
-	void draw(const float4x4 & projection, const float4 & viewOrientation, GlTexture & tex) const
-    {
-
-    }
-};
-
-
-inline GlTexture make_cubemap()
-{
-	GlTexture skybox_tex;
-
-    int size;
-    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex.get_gl_handle());
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 0);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/negative_x.png", size).data());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/positive_x.png", size).data());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/negative_y.png", size).data());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/positive_y.png", size).data());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/negative_z.png", size).data());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/positive_z.png", size).data());
-
-	return skybox_tex;
 }
 
 struct ExperimentalApp : public GLFWApp
@@ -219,19 +179,15 @@ struct ExperimentalApp : public GLFWApp
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
-        
-        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
-
-        gl_check_error(__FILE__, __LINE__);
-        
-        auto draw_cubes = [&](float4x4 vp)
+       
+        auto draw_cubes = [&](float3 eye, float4x4 vp, float3 emissive)
         {
            simpleShader->bind();
             
-            simpleShader->uniform("u_eye", camera.get_eye_point());
+            simpleShader->uniform("u_eye", eye);
             simpleShader->uniform("u_viewProj", vp);
             
-            simpleShader->uniform("u_emissive", float3(0.0f, 0.0f, 0.0f));
+            simpleShader->uniform("u_emissive", emissive);
             simpleShader->uniform("u_diffuse", float3(0.4f, 0.425f, 0.415f));
             
             for (int i = 0; i < 2; i++)
@@ -256,8 +212,8 @@ struct ExperimentalApp : public GLFWApp
 
             cubeCamera->render = [&](float4x4 viewMatrix, float4x4 projMatrix)
             {
-                grid.render(projMatrix, viewMatrix);
-                draw_cubes(mul(projMatrix, viewMatrix));
+                //grid.render(projMatrix, viewMatrix);
+                draw_cubes(float3(0, 0, 0), mul(projMatrix, viewMatrix), float3(1, 1, 1));
                 //skydome.render(mul(projMatrix, viewMatrix), float3{0, 0, 0}, camera.farClip);
             };
 
@@ -265,6 +221,9 @@ struct ExperimentalApp : public GLFWApp
         }
 
         glViewport(0, 0, width, height);
+
+        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+
         {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -286,9 +245,9 @@ struct ExperimentalApp : public GLFWApp
             glDisable(GL_BLEND);
         }
 
-        draw_cubes(viewProj);
+        draw_cubes(camera.get_eye_point(), viewProj, float3(0, 0, 0));
             
-        grid.render(proj, view);
+        //grid.render(proj, view);
 
         gl_check_error(__FILE__, __LINE__);
 
