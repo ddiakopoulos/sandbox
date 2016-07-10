@@ -125,50 +125,57 @@ inline GlTexture load_cubemap()
     return tex;
 }
 
-
-
 // http://mathworld.wolfram.com/Superellipse.html
+// https://en.wikipedia.org/wiki/Superformula
 struct SuperFormula
 {
-    SuperFormula(const float m, const float n1, const float n2, const float n3, const float a = 1.0f, const float b = 1.0f) : m(m), n1(n1),n2(n2),n3(n3), a(a),b(b)
-    {}
-
-    float operator() (const float x) const 
+    SuperFormula(const float m, const float n1, const float n2, const float n3, const float a = 1.0f, const float b = 1.0f) : m(m), n1(n1), n2(n2), n3(n3), a(a),b(b) {}
+   
+    float operator() (const float phi) const 
     {
-        const float r = m * x / 4.0f;
+        const float r = m * phi / 4.0f;
 
-        float ta = std::cos(r) / a;
-        ta = std::pow(std::abs(ta), n2);
+        // 1.0 / a?
+        float ta = std::abs(std::cos(r) * (1.0 / a));
+        ta = std::pow(ta, n2);
 
-        float tb = std::sin(r) / b;
-        tb = std::pow(std::abs(tb), n3);
+        float tb = std::abs(std::sin(r) * (1.0 / b));
+        tb = std::pow(tb, n3);
 
-        return std::pow(ta + tb,-1.0f / n1);
+        return std::pow(ta + tb, -1.0f / n1);
     }
 
     float m,n1,n2,n3,a,b;
 };
 
-// https://en.wikipedia.org/wiki/Superformula
-inline Geometry make_supershape_3d(const int segments, const float m, const float n1, const float n2, const float n3, const float a, const float b)
+// http://paulbourke.net/geometry/supershape/
+inline Geometry make_supershape_3d(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
 {
     Geometry shape;
         
-    SuperFormula f(m, n1, n2, n3, a, b);
+    SuperFormula r1(m, n1, n2, n3, a, b);
+    SuperFormula r2(m, n1, n2, n3, a, b);
 
-    const float delta = ANVIL_TAU / segments;
+    float alpha = ANVIL_PI;
+    float beta = ANVIL_PI;
+
     for (int i = 0; i < segments; ++i) 
     {
-        float theta =i * delta;
-        float r = f(theta);
-        shape.vertices.push_back(float3(cos(theta) * r,sin(theta) * r,0));
+        alpha -= ANVIL_PI / 2.0f;
+        beta -= ANVIL_PI;
+
+        float x = r1(alpha) * cos(alpha) * r2(beta) * cos(beta);
+        float y = r1(alpha) * sin(alpha) * r2(beta) * cos(beta);
+        float z = r2(alpha) * sin(beta);
+        shape.vertices.emplace_back(x, y, z);
+        std::cout << shape.vertices.back() << std::endl;
     }
 
     shape.compute_normals();
     return shape;
 }
     
-inline GlMesh make_supershape_3d_mesh(const int segments, const float m, const float n1, const float n2, const float n3, const float a, const float b)
+inline GlMesh make_supershape_3d_mesh(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
 {
     auto mesh = make_mesh_from_geometry(make_supershape_3d(segments, m, n1, n2, n3, a, b));
     mesh.set_non_indexed(GL_LINES);
@@ -234,7 +241,7 @@ struct ExperimentalApp : public GLFWApp
         iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(-8, 0, 0));
 
         {
-            Renderable m2 = Renderable(make_sphere(1.0));
+            Renderable m2 = Renderable(make_supershape_3d(32, 3, 2, 5, 7));
             m2.pose = Pose(float4(0, 0, 0, 1), float3(8, 0, 0));
             regularModels.push_back(std::move(m2));
 
@@ -287,7 +294,7 @@ struct ExperimentalApp : public GLFWApp
         
         if (igm) igm->begin_frame();
 
-        glEnable(GL_CULL_FACE);
+        //glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
 
         int width, height;
