@@ -125,6 +125,22 @@ inline GlTexture load_cubemap()
     return tex;
 }
 
+inline Geometry make_supershape_3d()
+{
+    Geometry supershape;
+        
+
+    supershape.compute_normals();
+    return supershape;
+}
+    
+inline GlMesh make_supershape_3d_mesh()
+{
+    auto m = make_mesh_from_geometry(make_supershape_3d());
+    m.set_non_indexed(GL_LINES);
+    return m;
+}
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
