@@ -163,13 +163,13 @@ inline Geometry make_supershape_3d(const int segments, const float m, const floa
     float lat_inc = ANVIL_PI / segments;
 
     // Longitude
-    for (int i = 0; i < segments; ++i) 
+    for (int i = 0; i < segments + 1; ++i) 
     {
         float r1 = f1(theta);
         float phi = -ANVIL_PI / 2.0f; // reset phi 
 
         // Latitude
-        for (int j = 0; j < segments; ++j) 
+        for (int j = 0; j < segments + 1; ++j) 
         {
             float r2 = f2(phi);
 
@@ -185,9 +185,8 @@ inline Geometry make_supershape_3d(const int segments, const float m, const floa
         theta += lon_inc;
     }
 
-    int latitude_index = 0;
-
     std::vector<uint4> quads;
+    int latitude_index = 0;
 
     for (int i = 0; i < segments * (segments + 1); ++i)
     {
@@ -198,6 +197,7 @@ inline Geometry make_supershape_3d(const int segments, const float m, const floa
             uint32_t c = i + segments + 1 + 1;
             uint32_t d = i + segments + 1;
             quads.push_back(uint4(a, b, c, d));
+            std::cout << quads.back() << std::endl;
             latitude_index++;
         }
         else
@@ -212,7 +212,7 @@ inline Geometry make_supershape_3d(const int segments, const float m, const floa
         shape.faces.push_back({q.x,q.z,q.w});
     }
 
-    //shape.compute_normals(false);
+    shape.compute_normals(false);
     return shape;
 }
     
