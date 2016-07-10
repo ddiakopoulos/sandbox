@@ -149,31 +149,70 @@ struct SuperFormula
 };
 
 // http://paulbourke.net/geometry/supershape/
+
 inline Geometry make_supershape_3d(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
 {
     Geometry shape;
         
-    SuperFormula r1(m, n1, n2, n3, a, b);
-    SuperFormula r2(m, n1, n2, n3, a, b);
+    SuperFormula f1(m, n1, n2, n3, a, b);
+    SuperFormula f2(m, n1, n2, n3, a, b);
 
-    float alpha = ANVIL_TAU / segments;
-    float beta = ANVIL_PI / segments;;
+    float theta = -ANVIL_PI;
 
+    float lon_inc = 2 * ANVIL_PI / segments;
+    float lat_inc = ANVIL_PI / segments;
+
+    // Longitude
     for (int i = 0; i < segments; ++i) 
     {
-        float t1 = alpha * i;
-        float t2 = beta * i;
+        float r1 = f1(theta);
+        float phi = -ANVIL_PI / 2.0f; // reset phi 
 
-        float x = r1(t1) * cos(t1) * r2(t2) * cos(t2);
-        float y = r1(t1) * sin(t1) * r2(t2) * cos(t2);
-        float z = r2(t1) * sin(t2);
+        // Latitude
+        for (int j = 0; j < segments; ++j) 
+        {
+            float r2 = f2(phi);
 
-        shape.vertices.emplace_back(x, y, z);
+            float radius = r1 * r2; // spherical product
+            float x =  radius * cos(theta) * cos(phi);
+            float y =  radius * sin(theta) * cos(phi);
+            float z =  r2 * sin(phi);
+            shape.vertices.emplace_back(x, y, z);
+            std::cout << shape.vertices.back() << std::endl;
+            phi += lat_inc;
+        }
 
-        std::cout << shape.vertices.back() << std::endl;
+        theta += lon_inc;
     }
 
-    shape.compute_normals();
+    int latitude_index = 0;
+
+    std::vector<uint4> quads;
+
+    for (int i = 0; i < segments * (segments + 1); ++i)
+    {
+        if (latitude_index < segments)
+        {
+            uint32_t a = i;
+            uint32_t b = i + 1;
+            uint32_t c = i + segments + 1 + 1;
+            uint32_t d = i + segments + 1;
+            quads.push_back(uint4(a, b, c, d));
+            latitude_index++;
+        }
+        else
+        {
+            latitude_index = 0;
+        }
+    }
+
+    for(auto & q : quads)
+    {
+        shape.faces.push_back({q.x,q.y,q.z});
+        shape.faces.push_back({q.x,q.z,q.w});
+    }
+
+    //shape.compute_normals(false);
     return shape;
 }
     
@@ -243,7 +282,7 @@ struct ExperimentalApp : public GLFWApp
         iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(-8, 0, 0));
 
         {
-            Renderable m2 = Renderable(make_supershape_3d(128, 8, 0.5, 0.5, 8));
+            Renderable m2 = Renderable(make_supershape_3d(32, 8, 0.5, 0.5, 8));
             m2.pose = Pose(float4(0, 0, 0, 1), float3(8, 0, 0));
             regularModels.push_back(std::move(m2));
 
