@@ -125,20 +125,54 @@ inline GlTexture load_cubemap()
     return tex;
 }
 
-inline Geometry make_supershape_3d()
-{
-    Geometry supershape;
-        
 
-    supershape.compute_normals();
-    return supershape;
+
+// http://mathworld.wolfram.com/Superellipse.html
+struct SuperFormula
+{
+    SuperFormula(const float m, const float n1, const float n2, const float n3, const float a = 1.0f, const float b = 1.0f) : m(m), n1(n1),n2(n2),n3(n3), a(a),b(b)
+    {}
+
+    float operator() (const float x) const 
+    {
+        const float r = m * x / 4.0f;
+
+        float ta = std::cos(r) / a;
+        ta = std::pow(std::abs(ta), n2);
+
+        float tb = std::sin(r) / b;
+        tb = std::pow(std::abs(tb), n3);
+
+        return std::pow(ta + tb,-1.0f / n1);
+    }
+
+    float m,n1,n2,n3,a,b;
+};
+
+// https://en.wikipedia.org/wiki/Superformula
+inline Geometry make_supershape_3d(const int segments, const float m, const float n1, const float n2, const float n3, const float a, const float b)
+{
+    Geometry shape;
+        
+    SuperFormula f(m, n1, n2, n3, a, b);
+
+    const float delta = ANVIL_TAU / segments;
+    for (int i = 0; i < segments; ++i) 
+    {
+        float theta =i * delta;
+        float r = f(theta);
+        shape.vertices.push_back(float3(cos(theta) * r,sin(theta) * r,0));
+    }
+
+    shape.compute_normals();
+    return shape;
 }
     
-inline GlMesh make_supershape_3d_mesh()
+inline GlMesh make_supershape_3d_mesh(const int segments, const float m, const float n1, const float n2, const float n3, const float a, const float b)
 {
-    auto m = make_mesh_from_geometry(make_supershape_3d());
-    m.set_non_indexed(GL_LINES);
-    return m;
+    auto mesh = make_mesh_from_geometry(make_supershape_3d(segments, m, n1, n2, n3, a, b));
+    mesh.set_non_indexed(GL_LINES);
+    return mesh;
 }
 
 struct ExperimentalApp : public GLFWApp
