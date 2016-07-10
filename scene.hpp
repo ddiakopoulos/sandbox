@@ -38,7 +38,7 @@ namespace avl
         Renderable(const Geometry & g, bool shadow = true) : geom(g), castsShadow(shadow)
         {
             rebuild_mesh();
-            //mesh.set_non_indexed(GL_LINES);
+            //mesh.set_non_indexed(GL_POINTS);
             //glPointSize(8);
         }
         

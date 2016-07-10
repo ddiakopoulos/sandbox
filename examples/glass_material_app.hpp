@@ -156,18 +156,20 @@ inline Geometry make_supershape_3d(const int segments, const float m, const floa
     SuperFormula r1(m, n1, n2, n3, a, b);
     SuperFormula r2(m, n1, n2, n3, a, b);
 
-    float alpha = ANVIL_PI;
-    float beta = ANVIL_PI;
+    float alpha = ANVIL_TAU / segments;
+    float beta = ANVIL_PI / segments;;
 
     for (int i = 0; i < segments; ++i) 
     {
-        alpha -= ANVIL_PI / 2.0f;
-        beta -= ANVIL_PI;
+        float t1 = alpha * i;
+        float t2 = beta * i;
 
-        float x = r1(alpha) * cos(alpha) * r2(beta) * cos(beta);
-        float y = r1(alpha) * sin(alpha) * r2(beta) * cos(beta);
-        float z = r2(alpha) * sin(beta);
+        float x = r1(t1) * cos(t1) * r2(t2) * cos(t2);
+        float y = r1(t1) * sin(t1) * r2(t2) * cos(t2);
+        float z = r2(t1) * sin(t2);
+
         shape.vertices.emplace_back(x, y, z);
+
         std::cout << shape.vertices.back() << std::endl;
     }
 
@@ -178,7 +180,7 @@ inline Geometry make_supershape_3d(const int segments, const float m, const floa
 inline GlMesh make_supershape_3d_mesh(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
 {
     auto mesh = make_mesh_from_geometry(make_supershape_3d(segments, m, n1, n2, n3, a, b));
-    mesh.set_non_indexed(GL_LINES);
+    mesh.set_non_indexed(GL_POINTS);
     return mesh;
 }
 
@@ -241,7 +243,7 @@ struct ExperimentalApp : public GLFWApp
         iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(-8, 0, 0));
 
         {
-            Renderable m2 = Renderable(make_supershape_3d(32, 3, 2, 5, 7));
+            Renderable m2 = Renderable(make_supershape_3d(128, 8, 0.5, 0.5, 8));
             m2.pose = Pose(float4(0, 0, 0, 1), float3(8, 0, 0));
             regularModels.push_back(std::move(m2));
 
