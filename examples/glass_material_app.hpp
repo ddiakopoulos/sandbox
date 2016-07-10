@@ -18,7 +18,7 @@ public:
     GlTexture colorBuffer;
     GlTexture depthBuffer;
 
-    std::function<void(float4x4 viewMatrix, float4x4 projMatrix)> render;
+    std::function<void(float3 eyePosition, float4x4 viewMatrix, float4x4 projMatrix)> render;
 
     CubemapCamera(float2 resolution) : resolution(resolution)
     {
@@ -60,7 +60,7 @@ public:
         gl_check_error(__FILE__, __LINE__);
     }
 
-    void update()
+    void update(float3 eyePosition)
     {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.get_handle());
         glViewport(0, 0, resolution.x , resolution.y);
@@ -73,7 +73,7 @@ public:
             glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, faces[i].first, cubeMapHandle, 0);
             auto viewMatrix = make_view_matrix_from_pose(faces[i].second);
 
-            if (render) render(viewMatrix, projMatrix);
+            if (render) render(eyePosition, viewMatrix, projMatrix);
         }
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -87,6 +87,32 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
     std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath));
     mon.add_shader(shader, vertexPath, fragPath);
     return shader;
+}
+
+inline GlTexture load_cubemap()
+{
+    GlTexture tex;
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex.get_gl_handle());
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    int size;
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB, 2048, 2048, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/positive_x.jpg", size).data());
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, 2048, 2048, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/negative_x.jpg", size).data());
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, 2048, 2048, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/positive_y.jpg", size).data());
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, 2048, 2048, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/negative_y.jpg", size).data());
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, 2048, 2048, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/positive_z.jpg", size).data());
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB, 2048, 2048, 0, GL_RGB, GL_UNSIGNED_BYTE, load_image_data("assets/images/cubemap/negative_z.jpg", size).data());
+    
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+    return tex;
 }
 
 struct ExperimentalApp : public GLFWApp
@@ -111,11 +137,15 @@ struct ExperimentalApp : public GLFWApp
     std::vector<Renderable> glassModels;
     std::vector<Renderable> regularModels;
 
+    GlTexture cubeTex;
+
     ExperimentalApp() : GLFWApp(1280, 800, "Glass Material App")
     {
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
         
+        cubeTex = load_cubemap();
+
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -229,14 +259,14 @@ struct ExperimentalApp : public GLFWApp
         };
 
         // Render/Update cube camera
-        cubeCamera->render = [&](float4x4 viewMatrix, float4x4 projMatrix)
+        cubeCamera->render = [&](float3 eyePosition, float4x4 viewMatrix, float4x4 projMatrix)
         {
             grid.render(projMatrix, viewMatrix);
-            skydome.render(mul(projMatrix, viewMatrix), float3{0, 0, 0}, camera.farClip);
-            draw_cubes(float3(0, 0, 0), mul(projMatrix, viewMatrix), float3(1, 1, 0));
+            skydome.render(mul(projMatrix, viewMatrix), eyePosition, camera.farClip);
+            draw_cubes(eyePosition, mul(projMatrix, viewMatrix), float3(1, 1, 0));
         };
 
-        cubeCamera->update();
+        cubeCamera->update(float3(0, 0, 0)); // render from a camera positioned @ {0, 0, 0}
 
         glViewport(0, 0, width, height);
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
@@ -249,7 +279,7 @@ struct ExperimentalApp : public GLFWApp
             
             glassMaterialShader->uniform("u_eye", camera.get_eye_point());
             glassMaterialShader->uniform("u_viewProj", viewProj);
-            glassMaterialShader->texture("u_cubemapTex", 0, cubeCamera->get_cubemap_handle(), GL_TEXTURE_CUBE_MAP);
+            glassMaterialShader->texture("u_cubemapTex", 0, cubeTex.get_gl_handle(), GL_TEXTURE_CUBE_MAP);
 
             for (const auto & model : glassModels)
             {
