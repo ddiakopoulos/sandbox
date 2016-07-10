@@ -149,7 +149,6 @@ struct SuperFormula
 };
 
 // http://paulbourke.net/geometry/supershape/
-
 inline Geometry make_supershape_3d(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
 {
     Geometry shape;
@@ -178,7 +177,6 @@ inline Geometry make_supershape_3d(const int segments, const float m, const floa
             float y =  radius * sin(theta) * cos(phi);
             float z =  r2 * sin(phi);
             shape.vertices.emplace_back(x, y, z);
-            std::cout << shape.vertices.back() << std::endl;
             phi += lat_inc;
         }
 
@@ -187,7 +185,6 @@ inline Geometry make_supershape_3d(const int segments, const float m, const floa
 
     std::vector<uint4> quads;
     int latitude_index = 0;
-
     for (int i = 0; i < segments * (segments + 1); ++i)
     {
         if (latitude_index < segments)
@@ -197,25 +194,21 @@ inline Geometry make_supershape_3d(const int segments, const float m, const floa
             uint32_t c = i + segments + 1 + 1;
             uint32_t d = i + segments + 1;
             quads.push_back(uint4(a, b, c, d));
-            std::cout << quads.back() << std::endl;
             latitude_index++;
         }
-        else
-        {
-            latitude_index = 0;
-        }
+        else latitude_index = 0;
     }
 
-    for(auto & q : quads)
+    for (auto & q : quads)
     {
-        shape.faces.push_back({q.x,q.y,q.z});
-        shape.faces.push_back({q.x,q.z,q.w});
+        shape.faces.push_back({q.w,q.z,q.x});
+        shape.faces.push_back({q.z,q.y,q.x});
     }
 
-    shape.compute_normals(false);
+    shape.compute_normals(true);
     return shape;
 }
-    
+
 inline GlMesh make_supershape_3d_mesh(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
 {
     auto mesh = make_mesh_from_geometry(make_supershape_3d(segments, m, n1, n2, n3, a, b));
