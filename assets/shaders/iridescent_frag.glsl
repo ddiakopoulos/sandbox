@@ -1,5 +1,3 @@
-// https://vimeo.com/83798053
-
 #version 330
 
 in vec3 v_position, v_normal;
@@ -114,13 +112,14 @@ float map(float value, float oMin, float oMax, float iMin, float iMax)
     return iMin + ((value - oMin) / (oMax - oMin)) * (iMax - iMin);
 }
 
+// https://vimeo.com/83798053
 vec3 compute_iridescence(float orientation, vec3 position)
 {
-    vec3 color;
     float frequency = 4.0;
     float offset = 4.0 * (0.05 * u_time);
     float noiseInc = 1.0;
 
+    vec3 color;
     color.x = abs(cos(orientation * frequency + fbm(position) * noiseInc + 1 + offset));
     color.y = abs(cos(orientation * frequency + fbm(position) * noiseInc + 2 + offset));
     color.z = abs(cos(orientation * frequency + fbm(position) * noiseInc + 3 + offset));
@@ -137,5 +136,5 @@ void main()
     vec4 iridescentColor = vec4(compute_iridescence(facingRatio, v_position), 1.0) * 
                             map(pow(facingRatio, u_iridescentPower), 0.0, 1.0, 0.5, 1); // or 1 - pow
 
-    f_color = vec4(iridescentColor.xyz, 1.0);
+    f_color = iridescentColor;
 }
