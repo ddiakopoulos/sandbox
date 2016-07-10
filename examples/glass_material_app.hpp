@@ -158,7 +158,7 @@ inline Geometry make_supershape_3d(const int segments, const float m, const floa
 
     float theta = -ANVIL_PI;
 
-    float lon_inc = 2 * ANVIL_PI / segments;
+    float lon_inc = ANVIL_TAU / segments;
     float lat_inc = ANVIL_PI / segments;
 
     // Longitude
@@ -216,6 +216,11 @@ inline GlMesh make_supershape_3d_mesh(const int segments, const float m, const f
     return mesh;
 }
 
+static int ssM;
+static int ssN1;
+static int ssN2;
+static int ssN3;
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -271,11 +276,11 @@ struct ExperimentalApp : public GLFWApp
         reflectiveSphere.pose = Pose(float4(0, 0, 0, 1), float3(0, 2, 0));
         glassModels.push_back(std::move(reflectiveSphere));
 
-        iridescentModel = Renderable(make_torus());
+        iridescentModel = Renderable(make_supershape_3d(16, 7, 2, 8, 4));
         iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(-8, 0, 0));
 
         {
-            Renderable m2 = Renderable(make_supershape_3d(32, 8, 0.5, 0.5, 8));
+            Renderable m2 = Renderable(make_supershape_3d(16, 7, 2, 8, 4));
             m2.pose = Pose(float4(0, 0, 0, 1), float3(8, 0, 0));
             regularModels.push_back(std::move(m2));
 
@@ -301,7 +306,7 @@ struct ExperimentalApp : public GLFWApp
     {
       
     }
-    
+
     void on_input(const InputEvent & event) override
     {
         cameraController.handle_input(event);
@@ -310,7 +315,8 @@ struct ExperimentalApp : public GLFWApp
         {
             if (event.value[0] == GLFW_KEY_SPACE)
             {
-                cubeCamera->export_pngs();
+                //cubeCamera->export_pngs();
+                iridescentModel = Renderable(make_supershape_3d(16, ssM, ssN1, ssN1, ssN3));
             }
         }
     }
@@ -337,6 +343,11 @@ struct ExperimentalApp : public GLFWApp
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(1.0f, 0.1f, 0.0f, 1.0f);
+
+        ImGui::SliderInt("M", &ssM, 1, 30);
+        ImGui::SliderInt("N1", &ssN1, 1, 30);
+        ImGui::SliderInt("N2", &ssN2, 1, 30);
+        ImGui::SliderInt("N3", &ssN3, 1, 30);
 
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
