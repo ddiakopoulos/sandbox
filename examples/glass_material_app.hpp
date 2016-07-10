@@ -180,7 +180,7 @@ struct ExperimentalApp : public GLFWApp
         reflectiveSphere.pose = Pose(float4(0, 0, 0, 1), float3(0, 2, 0));
         glassModels.push_back(std::move(reflectiveSphere));
 
-        iridescentModel = Renderable(make_cube());
+        iridescentModel = Renderable(make_torus());
         iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(-8, 0, 0));
 
         {
