@@ -1,7 +1,6 @@
 #include "index.hpp"
 #include "stb/stb_image_write.h"
 
-
 class CubemapCamera
 {
     GlFramebuffer framebuffer;
@@ -9,6 +8,20 @@ class CubemapCamera
     GLuint cubeMapHandle;
     float2 resolution;
     std::vector<std::pair<GLenum, Pose>> faces;
+    bool shouldCapture = false;
+
+    void save_pngs()
+    {
+        const std::vector<std::string> faceNames = {{"positive_x"}, {"negative_x"}, {"positive_y"}, {"negative_y"}, {"positive_z"}, {"negative_z"}};
+        std::vector<uint8_t> data(resolution.x * resolution.y * 3);
+        for (int i = 0; i < 6; ++i)
+        {
+            glGetTexImage(faces[i].first, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+            stbi_write_png(std::string(faceNames[i] + ".png").c_str(), resolution.x, resolution.y, 3, data.data(), resolution.x * 3);
+            data.clear();
+        }
+        shouldCapture = false;
+    }
 
 public:
 
@@ -53,6 +66,8 @@ public:
      }
 
      GLuint get_cubemap_handle() const { return cubeMapHandle; }
+     
+     void export_pngs() { shouldCapture = true; }
 
      void update(float3 eyePosition)
      {
@@ -66,11 +81,15 @@ public:
         {
             glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, faces[i].first, cubeMapHandle, 0);
             auto viewMatrix = make_view_matrix_from_pose(faces[i].second);
+
             if (render) render(eyePosition, viewMatrix, projMatrix);
         }
 
+        if (shouldCapture) save_pngs();
+
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
+
 };
 
 std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath)
@@ -194,6 +213,13 @@ struct ExperimentalApp : public GLFWApp
     {
         cameraController.handle_input(event);
         if (igm) igm->update_input(event);
+        if (event.type == InputEvent::Type::KEY)
+        {
+            if (event.value[0] == GLFW_KEY_SPACE)
+            {
+                cubeCamera->export_pngs();
+            }
+        }
     }
     
     void on_update(const UpdateEvent & e) override
@@ -270,7 +296,7 @@ struct ExperimentalApp : public GLFWApp
             
             glassMaterialShader->uniform("u_eye", camera.get_eye_point());
             glassMaterialShader->uniform("u_viewProj", viewProj);
-            glassMaterialShader->texture("u_cubemapTex", 0, cubeTex.get_gl_handle(), GL_TEXTURE_CUBE_MAP);
+            glassMaterialShader->texture("u_cubemapTex", 0, cubeCamera->get_cubemap_handle(), GL_TEXTURE_CUBE_MAP); // cubeTex.get_gl_handle()
 
             for (const auto & model : glassModels)
             {
