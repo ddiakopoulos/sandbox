@@ -23,6 +23,9 @@ using namespace avl;
 //#include "examples/render_experiments.hpp"
 #include "examples/glass_material_app.hpp"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb/stb_image_write.h"
+
 IMPLEMENT_MAIN(int argc, char * argv[])
 {
     ExperimentalApp app;

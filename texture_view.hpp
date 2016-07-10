@@ -26,7 +26,7 @@ out vec4 f_color;
 void main()
 {
     vec4 sample = texture(u_texture, texCoord);
-    f_color = vec4(sample.r, sample.r, sample.r, 1.0);
+    f_color = vec4(sample.r, sample.g, sample.b, 1.0); 
 }
 )";
 

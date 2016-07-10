@@ -1,14 +1,22 @@
 #include "index.hpp"
+#include "stb/stb_image_write.h"
+
+//std::vector<uint8_t> data(1024 * 1024 * 3);
+//glGetTexImage(faces[i].first, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+//stbi_write_png(std::string(std::to_string(i) + ".png").c_str(), 1024, 1024, 3, data.data(), 1024 * 3);
 
 class CubemapCamera
 {
-    GlTexture colorBuffer;
+
     GlFramebuffer framebuffer;
     GLuint cubeMapHandle;
     float2 resolution;
     std::vector<std::pair<GLenum, Pose>> faces;
 
 public:
+
+    GlTexture colorBuffer;
+    GlTexture depthBuffer;
 
     std::function<void(float4x4 viewMatrix, float4x4 projMatrix)> render;
 
@@ -17,7 +25,9 @@ public:
         this->resolution = resolution;
 
         colorBuffer.load_data(resolution.x, resolution.y, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        //depthBuffer.load_data(resolution.x, resolution.y, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         framebuffer.attach(GL_COLOR_ATTACHMENT0, colorBuffer);
+        //framebuffer.attach(GL_DEPTH_ATTACHMENT, depthBuffer);
         if (!framebuffer.check_complete()) throw std::runtime_error("incomplete framebuffer");
         
         gl_check_error(__FILE__, __LINE__);
@@ -32,7 +42,10 @@ public:
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
         
-        for (int i = 0; i < 6; ++i) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, resolution.x, resolution.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        for (int i = 0; i < 6; ++i) 
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, resolution.x, resolution.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        }
         
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
@@ -51,13 +64,12 @@ public:
     {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.get_handle());
         glViewport(0, 0, resolution.x , resolution.y);
-        //glDrawBuffer(GL_COLOR_ATTACHMENT0);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         auto projMatrix = make_perspective_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f); 
         for (int i = 0; i < 6; ++i)
         {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, faces[i].first, cubeMapHandle, 0);
             auto viewMatrix = make_view_matrix_from_pose(faces[i].second);
 
@@ -89,6 +101,7 @@ struct ExperimentalApp : public GLFWApp
     RenderableGrid grid;
     FlyCameraController cameraController;
     ShaderMonitor shaderMonitor;
+    Space uiSurface;
 
     std::shared_ptr<CubemapCamera> cubeCamera;
 
@@ -102,33 +115,43 @@ struct ExperimentalApp : public GLFWApp
     {
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
-
+        
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
+
+         // Debugging views
+        uiSurface.bounds = {0, 0, (float) width, (float) height};
+        uiSurface.add_child( {{0.0000f, +10},{0, +10},{0.1667f, -10},{0.133f, +10}});
+        uiSurface.add_child( {{0.1667f, +10},{0, +10},{0.3334f, -10},{0.133f, +10}});
+        uiSurface.add_child( {{0.3334f, +10},{0, +10},{0.5009f, -10},{0.133f, +10}});
+        uiSurface.add_child( {{0.5000f, +10},{0, +10},{0.6668f, -10},{0.133f, +10}});
+        uiSurface.add_child( {{0.6668f, +10},{0, +10},{0.8335f, -10},{0.133f, +10}});
+        uiSurface.add_child( {{0.8335f, +10},{0, +10},{1.0000f, -10},{0.133f, +10}});
+        uiSurface.layout();
 
         grid = RenderableGrid(1, 100, 100);
         cameraController.set_camera(&camera);
         camera.look_at({0, 2.5, -2.5}, {0, 2.0, 0});
 
-        Renderable cubeModel = Renderable(make_sphere(2.0));
-        cubeModel.pose = Pose(float4(0, 0, 0, 1), float3(0, 2, 0));
-        glassModels.push_back(std::move(cubeModel));
+        Renderable reflectiveSphere = Renderable(make_cube());
+        reflectiveSphere.pose = Pose(float4(0, 0, 0, 1), float3(0, 2, 0));
+        glassModels.push_back(std::move(reflectiveSphere));
 
         {
             Renderable m1 = Renderable(make_cube());
             m1.pose = Pose(float4(0, 0, 0, 1), float3(-8, 0, 0));
             regularModels.push_back(std::move(m1));
 
-            Renderable m2 = Renderable(make_cube());
+            Renderable m2 = Renderable(make_sphere(1.0));
             m2.pose = Pose(float4(0, 0, 0, 1), float3(8, 0, 0));
             regularModels.push_back(std::move(m2));
 
-            Renderable m3 = Renderable(make_cube());
+            Renderable m3 = Renderable(make_capsule(12, 1, 1));
             m3.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, -8));
             regularModels.push_back(std::move(m3));
 
-            Renderable m4 = Renderable(make_cube());
+            Renderable m4 = Renderable(make_3d_ring());
             m4.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 8));
             regularModels.push_back(std::move(m4));
         }
@@ -158,7 +181,6 @@ struct ExperimentalApp : public GLFWApp
         time += e.timestep_ms;
         shaderMonitor.handle_recompile();
     }
-    
 
     void on_draw() override
     {
@@ -182,7 +204,7 @@ struct ExperimentalApp : public GLFWApp
        
         auto draw_cubes = [&](float3 eye, float4x4 vp, float3 emissive)
         {
-           simpleShader->bind();
+            simpleShader->bind();
             
             simpleShader->uniform("u_eye", eye);
             simpleShader->uniform("u_viewProj", vp);
@@ -206,22 +228,17 @@ struct ExperimentalApp : public GLFWApp
             simpleShader->unbind();
         };
 
-        // A very roundabout way of capturing the cubemap of the sky, despite it being a procedural implementation. It's mostly because
-        // most of the math is done in the shader instead of generated in C++ per the original raytraced impl.
+        // Render/Update cube camera
+        cubeCamera->render = [&](float4x4 viewMatrix, float4x4 projMatrix)
         {
+            grid.render(projMatrix, viewMatrix);
+            skydome.render(mul(projMatrix, viewMatrix), float3{0, 0, 0}, camera.farClip);
+            draw_cubes(float3(0, 0, 0), mul(projMatrix, viewMatrix), float3(1, 1, 0));
+        };
 
-            cubeCamera->render = [&](float4x4 viewMatrix, float4x4 projMatrix)
-            {
-                //grid.render(projMatrix, viewMatrix);
-                draw_cubes(float3(0, 0, 0), mul(projMatrix, viewMatrix), float3(1, 1, 1));
-                //skydome.render(mul(projMatrix, viewMatrix), float3{0, 0, 0}, camera.farClip);
-            };
-
-            cubeCamera->update();
-        }
+        cubeCamera->update();
 
         glViewport(0, 0, width, height);
-
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
 
         {
@@ -246,8 +263,8 @@ struct ExperimentalApp : public GLFWApp
         }
 
         draw_cubes(camera.get_eye_point(), viewProj, float3(0, 0, 0));
-            
-        //grid.render(proj, view);
+
+        grid.render(proj, view);
 
         gl_check_error(__FILE__, __LINE__);
 

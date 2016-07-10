@@ -1,3 +1,5 @@
+// https://github.com/McNopper/OpenGL/tree/master/Example11/shader
+
 #version 330
 
 uniform mat4 u_modelMatrix;
@@ -26,17 +28,18 @@ uniform vec3 u_eye;
 
 void main()
 {
-
     v_position = (u_modelMatrix * vec4(inPosition, 1)).xyz;
+
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal,0)).xyz);
     v_texcoord = inTexcoord;
 
-    vec3 incident = normalize(vec3(v_position) - u_eye);
-	v_refraction = refract(incident, v_normal, eta);
-	v_reflection = reflect(incident, v_normal);
+    vec3 incident = normalize(v_position - u_eye);
 
-	// Schlick approximation
-	v_fresnel = R0 + (1.0 - R0) * pow((1.0 - dot(-incident, v_normal)), 5.0);
+    v_refraction = refract(incident, v_normal, eta);
+    v_reflection = reflect(incident, v_normal);
 
-    gl_Position = u_viewProj * vec4(v_position,1);
+    // Schlick approximation
+    v_fresnel = R0 + (1.0 - R0) * pow((1.0 - dot(-incident, v_normal)), 5.0);
+
+    gl_Position = u_viewProj * vec4(v_position, 1);
 }
