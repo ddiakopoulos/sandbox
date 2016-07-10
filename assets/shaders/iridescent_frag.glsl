@@ -4,9 +4,11 @@
 
 in vec3 v_position, v_normal;
 in vec2 v_texcoord;
+in vec3 v_eyeDir;
+
 out vec4 f_color;
 
-uniform float u_iridescentRatio = 1.0;
+uniform float u_iridescentPower = 1.0;
 uniform float u_time;
 
 // Noise via https://www.shadertoy.com/view/4dS3Wd
@@ -115,7 +117,7 @@ float map(float value, float oMin, float oMax, float iMin, float iMax)
 vec3 compute_iridescence(float orientation, vec3 position)
 {
     vec3 color;
-    float frequency = 3.0;
+    float frequency = 4.0;
     float offset = 4.0 * (0.05 * u_time);
     float noiseInc = 1.0;
 
@@ -130,13 +132,10 @@ void main()
 {   
     vec3 vert = gl_FrontFacing ? normalize(-v_position) : normalize(v_position);
 
-    float facingRatio = dot(v_normal, vert);
+    float facingRatio = dot(v_normal, v_eyeDir); // or v_normal with vert for a patterned look
 
     vec4 iridescentColor = vec4(compute_iridescence(facingRatio, v_position), 1.0) * 
-                            map(pow(1 - facingRatio, 1.0/0.75), 0.0, 1.0, 0.1, 1);
+                            map(pow(facingRatio, u_iridescentPower), 0.0, 1.0, 0.5, 1); // or 1 - pow
 
-    vec4 transparentIridescence = iridescentColor * u_iridescentRatio;
-    vec4 nonTransprentIridescence = vec4(mix(vec3(1, 0, 1), iridescentColor.rgb, u_iridescentRatio), 1.0);
-
-    f_color = gl_FrontFacing ? transparentIridescence : transparentIridescence;
+    f_color = vec4(iridescentColor.xyz, 1.0);
 }

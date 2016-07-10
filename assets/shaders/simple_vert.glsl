@@ -14,6 +14,7 @@ layout(location = 5) in vec3 inBitangent;
 
 out vec3 v_position, v_normal;
 out vec2 v_texcoord;
+out vec3 v_eyeDir;
 
 void main()
 {
@@ -21,5 +22,6 @@ void main()
     v_position = worldPos.xyz;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal,0)).xyz);
     v_texcoord = inTexcoord;
+    v_eyeDir = normalize(u_eye - worldPos.xyz);
     gl_Position = u_viewProj * worldPos;
 }
