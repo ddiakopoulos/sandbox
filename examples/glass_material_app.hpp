@@ -208,7 +208,7 @@ struct ExperimentalApp : public GLFWApp
     
     void on_window_resize(int2 size) override
     {
-
+      
     }
     
     void on_input(const InputEvent & event) override
@@ -316,6 +316,7 @@ struct ExperimentalApp : public GLFWApp
             
             iridescentShader->uniform("u_eye", camera.get_eye_point());
             iridescentShader->uniform("u_viewProj", viewProj);
+            iridescentShader->uniform("u_time", time);
 
             auto mm = iridescentModel.get_model();
             iridescentShader->uniform("u_modelMatrix", mm);
