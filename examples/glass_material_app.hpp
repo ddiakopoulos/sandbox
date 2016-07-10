@@ -141,11 +141,13 @@ struct ExperimentalApp : public GLFWApp
 
     std::shared_ptr<CubemapCamera> cubeCamera;
 
+    std::shared_ptr<GlShader> iridescentShader;
     std::shared_ptr<GlShader> glassMaterialShader;
     std::shared_ptr<GlShader> simpleShader;
 
     std::vector<Renderable> glassModels;
     std::vector<Renderable> regularModels;
+    Renderable iridescentModel;
 
     GlTexture cubeTex;
 
@@ -154,7 +156,7 @@ struct ExperimentalApp : public GLFWApp
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
         
-        cubeTex = load_cubemap();
+        //cubeTex = load_cubemap();
 
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -178,11 +180,10 @@ struct ExperimentalApp : public GLFWApp
         reflectiveSphere.pose = Pose(float4(0, 0, 0, 1), float3(0, 2, 0));
         glassModels.push_back(std::move(reflectiveSphere));
 
-        {
-            Renderable m1 = Renderable(make_cube());
-            m1.pose = Pose(float4(0, 0, 0, 1), float3(-8, 0, 0));
-            regularModels.push_back(std::move(m1));
+        iridescentModel = Renderable(make_cube());
+        iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(-8, 0, 0));
 
+        {
             Renderable m2 = Renderable(make_sphere(1.0));
             m2.pose = Pose(float4(0, 0, 0, 1), float3(8, 0, 0));
             regularModels.push_back(std::move(m2));
@@ -198,6 +199,7 @@ struct ExperimentalApp : public GLFWApp
 
         glassMaterialShader = make_watched_shader(shaderMonitor, "assets/shaders/glass_vert.glsl", "assets/shaders/glass_frag.glsl");
         simpleShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/simple_frag.glsl");
+        iridescentShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/iridescent_frag.glsl");
 
         cubeCamera.reset(new CubemapCamera({1024, 1024}));
 
@@ -307,6 +309,20 @@ struct ExperimentalApp : public GLFWApp
 
             glassMaterialShader->unbind();
             glDisable(GL_BLEND);
+        }
+
+        {
+            iridescentShader->bind();
+            
+            iridescentShader->uniform("u_eye", camera.get_eye_point());
+            iridescentShader->uniform("u_viewProj", viewProj);
+
+            auto mm = iridescentModel.get_model();
+            iridescentShader->uniform("u_modelMatrix", mm);
+            iridescentShader->uniform("u_modelMatrixIT", inv(transpose(mm)));
+            iridescentModel.draw();
+    
+            iridescentShader->unbind();
         }
 
         draw_cubes(camera.get_eye_point(), viewProj, float3(0, 0, 0));
