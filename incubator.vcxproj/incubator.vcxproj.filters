@@ -54,18 +54,6 @@
     <ClInclude Include="..\third_party\oscpkt_udp.hpp">
       <Filter>third_party</Filter>
     </ClInclude>
-    <ClInclude Include="..\third_party\stb_image.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\stb_image_resize.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\stb_image_write.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\stb_truetype.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
     <ClInclude Include="..\third_party\tiny_obj_loader.h">
       <Filter>third_party</Filter>
     </ClInclude>
@@ -143,9 +131,6 @@
     </ClInclude>
     <ClInclude Include="..\util.hpp">
       <Filter>source\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\efsw.hpp">
-      <Filter>third_party</Filter>
     </ClInclude>
     <ClInclude Include="..\minivision\vision.hpp">
       <Filter>source\minivision</Filter>
@@ -257,6 +242,9 @@
     </ClInclude>
     <ClInclude Include="..\examples\glass_material_app.hpp">
       <Filter>examples</Filter>
+    </ClInclude>
+    <ClInclude Include="..\camera.hpp">
+      <Filter>source\rendering</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

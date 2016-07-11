@@ -23,6 +23,7 @@
     <ClInclude Include="..\avl_imgui.hpp" />
     <ClInclude Include="..\base64.hpp" />
     <ClInclude Include="..\bit_mask.hpp" />
+    <ClInclude Include="..\camera.hpp" />
     <ClInclude Include="..\circular_buffer.hpp" />
     <ClInclude Include="..\concurrent_queue.hpp" />
     <ClInclude Include="..\dsp_filters.hpp" />
@@ -74,7 +75,6 @@
     <ClInclude Include="..\splines.hpp" />
     <ClInclude Include="..\string_utils.hpp" />
     <ClInclude Include="..\texture_view.hpp" />
-    <ClInclude Include="..\third_party\efsw.hpp" />
     <ClInclude Include="..\third_party\fontstash.h" />
     <ClInclude Include="..\third_party\imgui\imconfig.h" />
     <ClInclude Include="..\third_party\imgui\imgui.h" />
@@ -86,10 +86,6 @@
     <ClInclude Include="..\third_party\nanovg_gl_utils.h" />
     <ClInclude Include="..\third_party\oscpkt.hpp" />
     <ClInclude Include="..\third_party\oscpkt_udp.hpp" />
-    <ClInclude Include="..\third_party\stb_image.h" />
-    <ClInclude Include="..\third_party\stb_image_resize.h" />
-    <ClInclude Include="..\third_party\stb_image_write.h" />
-    <ClInclude Include="..\third_party\stb_truetype.h" />
     <ClInclude Include="..\third_party\tinyply.h" />
     <ClInclude Include="..\third_party\tiny_obj_loader.h" />
     <ClInclude Include="..\time_keeper.hpp" />
