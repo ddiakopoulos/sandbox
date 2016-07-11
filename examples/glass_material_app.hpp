@@ -125,97 +125,6 @@ inline GlTexture load_cubemap()
     return tex;
 }
 
-// http://mathworld.wolfram.com/Superellipse.html
-// https://en.wikipedia.org/wiki/Superformula
-struct SuperFormula
-{
-    SuperFormula(const float m, const float n1, const float n2, const float n3, const float a = 1.0f, const float b = 1.0f) : m(m), n1(n1), n2(n2), n3(n3), a(a),b(b) {}
-   
-    float operator() (const float phi) const 
-    {
-        const float r = m * phi / 4.0f;
-
-        // 1.0 / a?
-        float ta = std::abs(std::cos(r) * (1.0 / a));
-        ta = std::pow(ta, n2);
-
-        float tb = std::abs(std::sin(r) * (1.0 / b));
-        tb = std::pow(tb, n3);
-
-        return std::pow(ta + tb, -1.0f / n1);
-    }
-
-    float m,n1,n2,n3,a,b;
-};
-
-// http://paulbourke.net/geometry/supershape/
-inline Geometry make_supershape_3d(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
-{
-    Geometry shape;
-        
-    SuperFormula f1(m, n1, n2, n3, a, b);
-    SuperFormula f2(m, n1, n2, n3, a, b);
-
-    float theta = -ANVIL_PI;
-
-    float lon_inc = ANVIL_TAU / segments;
-    float lat_inc = ANVIL_PI / segments;
-
-    // Longitude
-    for (int i = 0; i < segments + 1; ++i) 
-    {
-        float r1 = f1(theta);
-        float phi = -ANVIL_PI / 2.0f; // reset phi 
-
-        // Latitude
-        for (int j = 0; j < segments + 1; ++j) 
-        {
-            float r2 = f2(phi);
-
-            float radius = r1 * r2; // spherical product
-            float x =  radius * cos(theta) * cos(phi);
-            float y =  radius * sin(theta) * cos(phi);
-            float z =  r2 * sin(phi);
-            shape.vertices.emplace_back(x, y, z);
-            phi += lat_inc;
-        }
-
-        theta += lon_inc;
-    }
-
-    std::vector<uint4> quads;
-    int latitude_index = 0;
-    for (int i = 0; i < segments * (segments + 1); ++i)
-    {
-        if (latitude_index < segments)
-        {
-            uint32_t a = i;
-            uint32_t b = i + 1;
-            uint32_t c = i + segments + 1 + 1;
-            uint32_t d = i + segments + 1;
-            quads.push_back(uint4(a, b, c, d));
-            latitude_index++;
-        }
-        else latitude_index = 0;
-    }
-
-    for (auto & q : quads)
-    {
-        shape.faces.push_back({q.w,q.z,q.x});
-        shape.faces.push_back({q.z,q.y,q.x});
-    }
-
-    shape.compute_normals(true);
-    return shape;
-}
-
-inline GlMesh make_supershape_3d_mesh(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
-{
-    auto mesh = make_mesh_from_geometry(make_supershape_3d(segments, m, n1, n2, n3, a, b));
-    mesh.set_non_indexed(GL_POINTS);
-    return mesh;
-}
-
 static int ssM;
 static int ssN1;
 static int ssN2;
@@ -316,7 +225,7 @@ struct ExperimentalApp : public GLFWApp
             if (event.value[0] == GLFW_KEY_SPACE)
             {
                 //cubeCamera->export_pngs();
-                iridescentModel = Renderable(make_supershape_3d(16, ssM, ssN1, ssN1, ssN3));
+                iridescentModel = Renderable(make_supershape_3d(16, ssM, ssN1, ssN2, ssN3));
             }
         }
     }

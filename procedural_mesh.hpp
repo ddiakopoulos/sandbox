@@ -639,7 +639,6 @@ namespace avl
         axis.vertices.emplace_back(0.0, 0.0, 0.0);
         axis.vertices.emplace_back(0.0, 0.0, 1.0);
         
-        // X = Blue, Y = Green, Z = Red
         axis.colors.emplace_back(0.0, 0.0, 1.0, 1.0);
         axis.colors.emplace_back(0.0, 0.0, 1.0, 1.0);
         axis.colors.emplace_back(0.0, 1.0, 0.0, 1.0);
@@ -746,6 +745,93 @@ namespace avl
         g.faces = {{0, 1, 2}, {3, 4, 5}};
         //g.texCoords = {{0, 0}, {1, 0}, {0, 1}, {0, 1}, {1, 0}, {1, 1}};
         return make_mesh_from_geometry(g);
+    }
+
+    // http://mathworld.wolfram.com/Superellipse.html
+    // https://en.wikipedia.org/wiki/Superformula
+    class SuperFormula
+    {
+        float m, n1, n2, n3, a, b;
+    public:
+        SuperFormula(const float m, const float n1, const float n2, const float n3, const float a = 1.0f, const float b = 1.0f) : m(m), n1(n1), n2(n2), n3(n3), a(a), b(b) {}
+        
+        float operator() (const float phi) const 
+        {
+            const float r = m * phi / 4.0f;
+
+            float t1 = std::abs(std::cos(r) * (1.0 / a));
+            t1 = std::pow(t1, n2);
+
+            float t2 = std::abs(std::sin(r) * (1.0 / b));
+            t2 = std::pow(t2, n3);
+
+            return std::pow(t1 + t2, -1.0f / n1);
+        }
+    };
+
+    // http://paulbourke.net/geometry/supershape/
+    inline Geometry make_supershape_3d(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
+    {
+        Geometry shape;
+        
+        SuperFormula f1(m, n1, n2, n3, a, b);
+        SuperFormula f2(m, n1, n2, n3, a, b);
+
+        float theta = -ANVIL_PI;
+        float lon_inc = ANVIL_TAU / segments;
+        float lat_inc = ANVIL_PI / segments;
+
+        // Longitude
+        for (int i = 0; i < segments + 1; ++i) 
+        {
+            const float r1 = f1(theta);
+            float phi = -ANVIL_PI / 2.0f; // reset phi 
+
+            // Latitude
+            for (int j = 0; j < segments + 1; ++j) 
+            {
+                const float r2 = f2(phi);
+                const float radius = r1 * r2; // spherical product
+                const float x = radius * cos(theta) * cos(phi);
+                const float y = radius * sin(theta) * cos(phi);
+                const float z = r2 * sin(phi);
+                shape.vertices.emplace_back(x, y, z);
+                phi += lat_inc;
+            }
+
+            theta += lon_inc;
+        }
+
+        std::vector<uint4> quads;
+        int latIdx = 0;
+        for (int i = 0; i < segments * (segments + 1); ++i)
+        {
+            if (latIdx < segments)
+            {
+                uint32_t a = i;
+                uint32_t b = i + 1;
+                uint32_t c = i + segments + 1 + 1;
+                uint32_t d = i + segments + 1;
+                quads.push_back(uint4(a, b, c, d));
+                latIdx++;
+            }
+            else latIdx = 0;
+        }
+
+        for (auto & q : quads)
+        {
+            shape.faces.push_back({q.w,q.z,q.x});
+            shape.faces.push_back({q.z,q.y,q.x});
+        }
+
+        shape.compute_normals(true);
+        return shape;
+    }
+
+    inline GlMesh make_supershape_3d_mesh(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
+    {
+        auto mesh = make_mesh_from_geometry(make_supershape_3d(segments, m, n1, n2, n3, a, b));
+        return mesh;
     }
     
 }
