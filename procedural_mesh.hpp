@@ -759,10 +759,10 @@ namespace avl
         {
             const float r = m * phi / 4.0f;
 
-            float t1 = std::abs(std::cos(r) * (1.0 / a));
+            float t1 = std::abs(std::cos(r) / (1.0 / a));
             t1 = std::pow(t1, n2);
 
-            float t2 = std::abs(std::sin(r) * (1.0 / b));
+            float t2 = std::abs(std::sin(r) / (1.0 / b));
             t2 = std::pow(t2, n3);
 
             return std::pow(t1 + t2, -1.0f / n1);

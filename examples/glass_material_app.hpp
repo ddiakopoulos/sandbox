@@ -38,6 +38,64 @@ static int ssN1;
 static int ssN2;
 static int ssN3;
 
+struct FogShaderParams
+{
+    GlTexture gradientTex;
+
+	float startDistance = 0.0f;
+	float endDistance = 64.0f;
+	int textureWidth = 32;
+
+	float heightFogThickness = 1.15f;
+	float heightFogFalloff = 0.1f;
+	float heightFogBaseHeight = -16.0f;
+
+    float3 color = {1, 1, 1};
+
+    void set_uniforms(GlShader & prog)
+    {
+        if (!gradientTex.get_gl_handle()) generate_gradient_tex();
+
+        float scale = 1.0f / (endDistance - startDistance);
+		float add = -startDistance / (endDistance - startDistance);
+
+        prog.bind();
+        prog.uniform("u_gradientFogScaleAdd", float2(scale, add));
+        prog.uniform("u_gradientFogLimitColor", float3(1, 1, 1));
+        prog.uniform("u_heightFogParams", float3(heightFogThickness, heightFogFalloff, heightFogBaseHeight));
+        prog.uniform("u_heightFogColor", color); // use color above
+        prog.texture("s_gradientFogTexture", 0, gradientTex.get_gl_handle(), GL_TEXTURE_2D); 
+        prog.unbind();
+    }
+
+    void generate_gradient_tex()
+    {
+        glBindTexture(GL_TEXTURE_2D, gradientTex.get_gl_handle());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        std::vector<float4> gradient(textureWidth);
+        auto gradientFunc = [](float t) { return 0.0 * (1 - t) + 1.0 * t; };
+
+        float ds = 1.0f / (textureWidth - 1);
+        float s = 0.0f;
+        for (int i = 0; i < textureWidth; i++)
+        {
+            const auto g = gradientFunc(s);
+            gradient[i] = float4(g, g, g, 1);
+            std::cout << gradient[i] << std::endl;
+            s += ds;
+        }
+
+       gradientTex.load_data(textureWidth, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, gradient.data());
+    }
+
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -63,6 +121,7 @@ struct ExperimentalApp : public GLFWApp
     Renderable iridescentModel;
 
     GlTexture cubeTex;
+    FogShaderParams fog;
 
     ExperimentalApp() : GLFWApp(1280, 800, "Glass Material App")
     {
@@ -174,7 +233,7 @@ struct ExperimentalApp : public GLFWApp
         {
             simpleShader->bind();
             
-            simpleShader->uniform("u_eye", eye);
+            simpleShader->uniform("u_eye", eye); 
             simpleShader->uniform("u_viewProj", vp);
             
             simpleShader->uniform("u_emissive", emissive);
@@ -205,6 +264,8 @@ struct ExperimentalApp : public GLFWApp
         };
 
         cubeCamera->update(float3(0, 0, 0)); // render from a camera positioned @ {0, 0, 0}
+
+        fog.set_uniforms(*simpleShader.get());
 
         glViewport(0, 0, width, height);
         skydome.render(viewProj, camera.get_eye_point(), camera.farClip);

@@ -1,4 +1,5 @@
 #include "util.hpp"
+#include "glfw_app.hpp"
 #include "GL_API.hpp"
 #include "string_utils.hpp"
 #include "geometric.hpp"
@@ -22,7 +23,6 @@
 #include "space.hpp"
 #include "arcball.hpp"
 #include "sketch.hpp"
-#include "glfw_app.hpp"
 #include "renderable_grid.hpp"
 #include "procedural_sky.hpp"
 #include "nvg.hpp"
