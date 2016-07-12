@@ -73,20 +73,20 @@ struct FogShaderParams
         glBindTexture(GL_TEXTURE_2D, gradientTex.get_gl_handle());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        std::vector<float4> gradient(textureWidth);
+        std::vector<uint4> gradient(textureWidth);
         auto gradientFunc = [](float t) { return 0.0 * (1 - t) + 1.0 * t; };
 
         float ds = 1.0f / (textureWidth - 1);
         float s = 0.0f;
         for (int i = 0; i < textureWidth; i++)
         {
-            const auto g = gradientFunc(s);
-            gradient[i] = float4(g, g, g, 1);
+            const auto g = gradientFunc(s) * 255;
+            gradient[i] = uint4(255, g, g, 255);
             std::cout << gradient[i] << std::endl;
             s += ds;
         }
@@ -148,11 +148,11 @@ struct ExperimentalApp : public GLFWApp
         cameraController.set_camera(&camera);
         camera.look_at({0, 2.5, -2.5}, {0, 2.0, 0});
 
-        Renderable reflectiveSphere = Renderable(make_cube());
+        Renderable reflectiveSphere = Renderable(make_torus(32));
         reflectiveSphere.pose = Pose(float4(0, 0, 0, 1), float3(0, 2, 0));
         glassModels.push_back(std::move(reflectiveSphere));
 
-        iridescentModel = Renderable(make_supershape_3d(16, 7, 2, 8, 4));
+        iridescentModel = Renderable(make_sphere(1.0));
         iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(-8, 0, 0));
 
         {

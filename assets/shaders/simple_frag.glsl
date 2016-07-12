@@ -1,6 +1,5 @@
 #version 330
 
-
 uniform vec3 u_heightFogColor;
 uniform sampler2D s_gradientFogTexture;
 
@@ -18,7 +17,7 @@ vec3 apply_fog(vec3 c, vec2 coord, float fogMultiplier)
 
 vec3 apply_fog(vec3 c, vec2 coord)
 {
-    return apply_fog(c, coord, 8.0);
+    return apply_fog(c, coord, 1.0);
 }
 
 ///////////
@@ -44,7 +43,7 @@ out vec4 f_color;
 void main()
 {
     vec3 eyeDir = normalize(u_eye - v_position);
-    vec3 light = vec3(0, 0, 0); //u_emissive;
+    vec3 light = vec3(0, 0, 0);
     for(int i = 0; i < 2; ++i)
     {
         vec3 lightDir = normalize(u_lights[i].position - v_position);
@@ -54,5 +53,5 @@ void main()
         light += u_lights[i].color * u_diffuse * pow(max(dot(v_normal, halfDir), 0), 128);
     }
     //f_color = vec4(light + u_emissive, 1.0);
-    f_color = vec4(apply_fog(light + u_emissive, v_fogCoord), 1.0);
+    f_color = vec4(apply_fog(vec3(0, 0, 0), v_fogCoord), 1.0);
 }
