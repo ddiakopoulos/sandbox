@@ -210,13 +210,17 @@ struct ExperimentalApp : public GLFWApp
         
         if (igm) igm->begin_frame();
 
-        //glEnable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
+
+       glEnable(GL_BLEND);
+       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(1.0f, 0.1f, 0.0f, 1.0f);
 
@@ -268,11 +272,12 @@ struct ExperimentalApp : public GLFWApp
         fog.set_uniforms(*simpleShader.get());
 
         glViewport(0, 0, width, height);
-        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
 
+        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        grid.render(proj, view);
+        draw_cubes(camera.get_eye_point(), viewProj, float3(0, 0, 0));
+        
         {
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             glassMaterialShader->bind();
             
@@ -305,9 +310,6 @@ struct ExperimentalApp : public GLFWApp
     
             iridescentShader->unbind();
         }
-
-        draw_cubes(camera.get_eye_point(), viewProj, float3(0, 0, 0));
-        grid.render(proj, view);
 
         gl_check_error(__FILE__, __LINE__);
         if (igm) igm->end_frame();

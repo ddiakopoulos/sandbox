@@ -20,6 +20,6 @@ void main()
     vec4 refractionColor = texture(u_cubemapTex, normalize(-v_refraction));
     vec4 reflectionColor = texture(u_cubemapTex, normalize(v_reflection));
 
-    f_color = mix(refractionColor, reflectionColor, v_fresnel);
-    f_color.a = 1.0; // u_glassAlpha
+    f_color = reflectionColor; //mix(refractionColor, reflectionColor, v_fresnel);
+    f_color.a = 0.90; // u_glassAlpha
 }

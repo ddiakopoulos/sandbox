@@ -39,7 +39,7 @@ void main()
     v_reflection = reflect(incident, v_normal);
 
     // Schlick approximation
-    v_fresnel = R0 + (1.0 - R0) * pow((1.0 - dot(-incident, v_normal)), 5.0);
+    v_fresnel = R0 + (1.0 - R0) * pow((1.0 - dot(-incident, v_normal)), 1.0);
 
     gl_Position = u_viewProj * vec4(v_position, 1);
 }
