@@ -229,6 +229,34 @@ struct ExperimentalApp : public GLFWApp
         ImGui::SliderInt("N2", &ssN2, 1, 30);
         ImGui::SliderInt("N3", &ssN3, 1, 30);
 
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("Asset Selector"))
+        {
+            static ImGuiTextFilter filter("shaders/");
+            filter.Draw();
+            const char * lines[] = { 
+                "assets/shaders/lit", 
+                "assets/shaders/bumped", 
+                "assets/models/fbx/geometry_01/mesh_1", 
+                "assets/models/fbx/geometry_02/mesh_1", 
+                "textures/a", 
+                "textures/b", 
+                "scriptable/actions/audio/play_sound", 
+                "scriptable/actions/audio/stop_sound" 
+            };
+
+            static float value = 0.0f;
+
+            for (int i = 0; i < 8; i++)
+            {
+                if (filter.PassFilter(lines[i]))
+                {
+                    if (ImGui::Selectable(lines[i])) value = 1.0f;
+                }
+            }
+        }
+
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
