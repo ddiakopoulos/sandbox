@@ -89,22 +89,8 @@ inline bool compute_parabolic_curve(float3 p0, float3 v0, float3 a, float dist, 
         float3 castHit;
         bool cast = linecast(last, next, castHit, g);
 
-        //std::cout << "Cast: " << cast << std::endl;
-        
-        /*
-        // We successfully linecasted against the mesh, but we might not be near where the parabola and the linecast
-        // so ensure there's a sufficiently small distance
-        if (false)
-        //if (cast && distance(castHit, next) <= 0.1)
-        {
-            //curve.push_back(castHit);
-            //return cast;
-        }
-        else 
-         */  
         if (cast && distance(castHit, next) <= 0.1)
         {
-            std::cout << "Stopped @ I - " << i << std::endl;
             curve.push_back(castHit);
             return true;
         }
@@ -155,23 +141,19 @@ float clamp_initial_velocity(float3 & velocity, float3 & velocity_normalized)
     return angle;
 }
 
-Geometry make_parabolic_geometry(const std::vector<float3> & points, const float3 fwd, const float uvoffset)
+inline Geometry make_parabolic_geometry(const std::vector<float3> & points, const float3 fwd, const float uvoffset)
 {
     Geometry g;
     g.vertices.resize(points.size() * 2);
     g.texCoords.resize(points.size() * 2);
 
     const float3 right = normalize(cross(fwd, float3(0, 1, 0)));
-
     const float3 thickness = float3(0.5);
 
     for (int x = 0; x < 11; x++)
     {
         g.vertices[2 * x] = points[x] - right * thickness;
         g.vertices[2 * x + 1] = points[x] + right * thickness;
-
-        std::cout << "Vert 1: " <<  g.vertices[2 * x] << std::endl;
-        std::cout << "Vert 2: " <<  g.vertices[2 * x + 1] << std::endl;
 
         float uvoffset_mod = uvoffset;
         if (x == points.size() - 1 && x > 1) 
@@ -211,12 +193,9 @@ Geometry make_parabolic_geometry(const std::vector<float3> & points, const float
         indices[12 * x + 11] = p3;
     }
 
-    std::cout << "Indices Size: " << indices.size() << std::endl;
-
     for (int i = 0; i < indices.size(); i+=3)
     {
          g.faces.emplace_back(indices[i + 0], indices[i + 1], indices[i + 2]);
-         std::cout << g.faces.back() << std::endl;
     }
 
     g.compute_normals();
@@ -225,9 +204,9 @@ Geometry make_parabolic_geometry(const std::vector<float3> & points, const float
     return g;
 }
 
-Geometry make_parabolic_pointer(float deltaTime, Geometry & g)
+inline Geometry make_parabolic_pointer(float deltaTime, Geometry & g)
 {
-    // 1. Calculate Parabola Points
+    // Todo - accept transform
     float3 position = float3(0, 4, 0);
 
     float3 velocity = float3(0, 0, -1) * float3(10.0); // transform local to world 
@@ -243,13 +222,12 @@ Geometry make_parabolic_pointer(float deltaTime, Geometry & g)
 
     auto r = compute_parabolic_curve(position, velocity, acceleration, pointSpacing, pointCount, g, points);
 
-    std::cout << "Points" << std::endl;
+    std::cout << "Parabola Points: " << std::endl;
     for (auto p : points) std::cout << p << std::endl;
     std::cout << "-------------------------------------------------------" << std::endl;
 
     float3 selectedPoint = points[points.size()-1];
 
-    // Draw parabola (BEFORE the outside faces of the selection pad, to avoid depth issues)
     return make_parabolic_geometry(points, velocity, fmod(deltaTime, .01));
 }
 
