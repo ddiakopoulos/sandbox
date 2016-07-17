@@ -163,15 +163,13 @@ inline int solve_ballistic_arc(const float3 proj_pos, const float proj_speed, co
 // gravity (out float): gravity necessary to projectile to hit precisely max_height
 //
 // return (bool): true if a valid solution was found
-inline bool solve_ballistic_arc_lateral(float3 proj_pos, float lateral_speed, float3 target_pos, float max_height, out float3 fire_velocity, out float gravity) 
+inline bool solve_ballistic_arc_lateral(const float3 proj_pos, const float lateral_speed, const float3 target_pos, const float max_height, float3 & fire_velocity, float & gravity) 
 {
-    Debug.Assert(proj_pos != target_pos && lateral_speed > 0 && max_height > proj_pos.y, "solve_ballistic_arc called with invalid data");
-
-    gravity = 0.f;
+    if (proj_pos == target_pos || lateral_speed < 0 || max_height < proj_pos.y) throw std::range_error("invalid initial conditions");
 
     float3 diff = target_pos - proj_pos;
     float3 diffXZ = float3(diff.x, 0.f, diff.z);
-    float lateralDist = diffXZ.magnitude;
+    float lateralDist = length(diffXZ);
 
     if (lateralDist == 0) return false;
 
@@ -203,12 +201,10 @@ inline bool solve_ballistic_arc_lateral(float3 proj_pos, float lateral_speed, fl
 // impact_point (out float3): point where moving target will be hit
 //
 // return (bool): true if a valid solution was found
-inline bool solve_ballistic_arc_lateral(float3 proj_pos, float lateral_speed, float3 target, float3 target_velocity, float max_height_offset, out float3 fire_velocity, out float gravity, out float3 impact_point) 
+inline bool solve_ballistic_arc_lateral(const float3 proj_pos, const float lateral_speed, const float3 target, const float3 target_velocity, const float max_height_offset,
+    float3 & fire_velocity, float & gravity, float3 & impact_point) 
 {
-    Debug.Assert(proj_pos != target && lateral_speed > 0, "solve_ballistic_arc_lateral called with invalid data");
-
-    // Initialize output variables
-    gravity = 0.f;
+    if (proj_pos == target || lateral_speed < 0) throw std::range_error("invalid initial conditions");
 
     // Ground plane terms
     float3 targetVelXZ = float3(target_velocity.x, 0.f, target_velocity.z);
@@ -216,10 +212,10 @@ inline bool solve_ballistic_arc_lateral(float3 proj_pos, float lateral_speed, fl
     diffXZ.y = 0;
 
     float c0 = dot(targetVelXZ, targetVelXZ) - lateral_speed*lateral_speed;
-    float c1 = 2f * dot(diffXZ, targetVelXZ);
+    float c1 = 2.f * dot(diffXZ, targetVelXZ);
     float c2 = dot(diffXZ, diffXZ);
     double t0, t1;
-    int n = solve_quadric(c0, c1, c2, out t0, out t1);
+    int n = solve_quadratic(c0, c1, c2, t0, t1);
 
     // Pick smallest, positive time
     bool valid0 = n > 0 && t0 > 0;
