@@ -81,8 +81,11 @@ inline bool compute_parabolic_curve(const float3 p0, const float3 v0, const floa
         // The linecast might be far off in the distance, so end our search at a hit suitably close to 
         // a hit near the curve. Might need to fix the 0.1 epsilon later depending on
         // the complexity of other meshes
+
+        std::cout << "Cond: " << distance(castHit, next) << std::endl;
         if (cast && distance(castHit, next) <= 0.1)
         {
+            std::cout << "End Condition: " << distance(castHit, next) << std::endl;
             curve.push_back(castHit);
             return true;
         }
@@ -142,7 +145,7 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
     const float3 right = normalize(cross(fwd, float3(0, 1, 0)));
     const float3 thickness = float3(0.5);
 
-    for (int x = 0; x < 11; x++)
+    for (int x = 0; x < points.size(); x++)
     {
         g.vertices[2 * x] = points[x] - right * thickness;
         g.vertices[2 * x + 1] = points[x] + right * thickness;
@@ -196,22 +199,26 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
     return g;
 }
 
-inline Geometry make_parabolic_pointer(const float deltaTime, const Geometry & g)
-{
-    // Todo - accept transform
-    float3 position = float3(0, 4, 0);
 
-    float3 velocity = float3(0, 0, -1) * float3(10.0); // transform local to world 
-    float3 velocity_normalized = normalize(velocity);;
+struct ParabolicPointerParams
+{
+    float3 position = {0, 5, 0};
+    float3 velocity = {0, 0, -1};
+    float pointSpacing = 1.0f;
+    float pointCount = 32.f;
+};
+
+inline Geometry make_parabolic_pointer(const Geometry & navMesh, ParabolicPointerParams & params)
+{
+    float3 v = params.velocity * float3(10.0); // transform local to world 
+    float3 v_n = normalize(v);
     //float currentAngle = clamp_initial_velocity(velocity, velocity_normalized);
     //std::cout << "Current Angle: " << currentAngle << std::endl;
 
     float3 acceleration =  float3(0, 1, 0) * -9.8f;
-    float pointSpacing = 1.0f;
-    float pointCount = 32;
 
     std::vector<float3> points;
-    auto r = compute_parabolic_curve(position, velocity, acceleration, pointSpacing, pointCount, g, points);
+    auto r = compute_parabolic_curve(params.position, v, acceleration, params.pointSpacing, params.pointCount, navMesh, points);
 
     std::cout << "Parabola Points: " << std::endl;
     for (auto p : points) std::cout << p << std::endl;
@@ -219,7 +226,7 @@ inline Geometry make_parabolic_pointer(const float deltaTime, const Geometry & g
 
     float3 selectedPoint = points[points.size()-1];
 
-    return make_parabolic_geometry(points, velocity, fmod(deltaTime, .01));
+    return make_parabolic_geometry(points, v, 0.1);
 }
 
 #endif // end parabolic_pointer_hpp

@@ -126,6 +126,8 @@ struct ExperimentalApp : public GLFWApp
     Geometry pointerGeometry;
     Renderable pointerRenderable, parabolicPointerRenderable;
 
+    ParabolicPointerParams params;
+
     ExperimentalApp() : GLFWApp(1280, 800, "Glass Material App")
     {
         igm.reset(new gui::ImGuiManager(window));
@@ -187,7 +189,7 @@ struct ExperimentalApp : public GLFWApp
 
         pointerRenderable = Renderable(pointerGeometry);
 
-        parabolicPointerRenderable = make_parabolic_pointer(0.0f, pointerGeometry);
+        parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
 
         glassMaterialShader = make_watched_shader(shaderMonitor, "assets/shaders/glass_vert.glsl", "assets/shaders/glass_frag.glsl");
         simpleShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/simple_frag.glsl");
@@ -250,6 +252,32 @@ struct ExperimentalApp : public GLFWApp
         ImGui::SliderInt("N3", &ssN3, 1, 30);
 
         ImGui::Spacing();
+
+        ImGui::BeginGroup();
+
+        if (ImGui::SliderFloat3("Position", &params.position.x, -5, 5))
+        {
+            parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
+        }
+
+        if (ImGui::SliderFloat3("Velocity", &params.velocity.x, -5, 5))
+        {
+            parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
+        }
+
+        if (ImGui::SliderFloat("Point Spacing", &params.pointSpacing, 0.5, 2.0))
+        {
+            parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
+        }
+
+        if (ImGui::SliderFloat("Point Count", &params.pointCount, 16, 64))
+        {
+            parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
+        }
+
+        ImGui::EndGroup();
+
+
 
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
