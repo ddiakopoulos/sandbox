@@ -36,44 +36,33 @@ inline float3 parabolic_curve_derivative(float3 v0, float3 a, float t)
     return ret;
 }
 
-inline float3 project_onto_plane(const float3 & planeNormal, const float3 & vector)
+inline float3 project_onto_plane(const float3 planeNormal, const float3 vector)
 {
     return vector - (dot(vector, planeNormal) * planeNormal);
 }
 
-inline bool linecast(float3 p1, float3 p2, float3 & hitPoint, Geometry & g)
+inline bool linecast(const float3 p1, const float3 p2, float3 & hitPoint, const Geometry & g)
 {
-    //float3 dir = normalize(p2 - p1);
-    //Ray r(p1, dir);
-
     Ray r = between(p1, p2);
 
     float outT = 0.0f;
     float3 outNormal = {0, 0, 0};
-
-    std::cout << "Test Ray: " << r << std::endl;
-
-    // If hit
     if (intersect_ray_mesh(r, g, &outT, &outNormal))
     {
         hitPoint = r.calculate_position(outT);
-        std::cout << "Out T" << outT << std::endl;
-        std::cout << "Hit At: " << hitPoint << std::endl;
-        std::cout << "Hit Normal: " << outNormal << std::endl;
         return true;
     }
     hitPoint = float3(0, 0, 0);
     return false;
 }
 
-// Sample a bunch of points along a parabolic curve until you hit the ground. At that point, cut off the parabola.
-// p0: starting point of parabola
-// v0: initial parabola velocity
-// a: initial acceleration
-// dist: distance between sample points
-// points: number of sample points
-// curve: List that will be populated by new points
-inline bool compute_parabolic_curve(float3 p0, float3 v0, float3 a, float dist, int points, Geometry & g, std::vector<float3> & curve)
+// Sample points along a parabolic curve until the supplied mesh has been hit.
+// p0     - starting point of parabola
+// v0     - initial parabola velocity
+// accel  - initial acceleration
+// dist   - distance between sample points
+// points - number of sample points
+inline bool compute_parabolic_curve(const float3 p0, const float3 v0, const float3 accel, const float dist, const int points, const Geometry & g, std::vector<float3> & curve)
 {
     curve.clear();
     curve.push_back(p0);
@@ -83,12 +72,15 @@ inline bool compute_parabolic_curve(float3 p0, float3 v0, float3 a, float dist, 
 
     for (int i = 0; i < points; i++)
     {
-        t += dist / length(parabolic_curve_derivative(v0, a, t));
-        float3 next = parabolic_curve(p0, v0, a, t);
+        t += dist / length(parabolic_curve_derivative(v0, accel, t));
+        float3 next = parabolic_curve(p0, v0, accel, t);
 
         float3 castHit;
         bool cast = linecast(last, next, castHit, g);
 
+        // The linecast might be far off in the distance, so end our search at a hit suitably close to 
+        // a hit near the curve. Might need to fix the 0.1 epsilon later depending on
+        // the complexity of other meshes
         if (cast && distance(castHit, next) <= 0.1)
         {
             curve.push_back(castHit);
@@ -204,7 +196,7 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
     return g;
 }
 
-inline Geometry make_parabolic_pointer(float deltaTime, Geometry & g)
+inline Geometry make_parabolic_pointer(const float deltaTime, const Geometry & g)
 {
     // Todo - accept transform
     float3 position = float3(0, 4, 0);
@@ -219,7 +211,6 @@ inline Geometry make_parabolic_pointer(float deltaTime, Geometry & g)
     float pointCount = 32;
 
     std::vector<float3> points;
-
     auto r = compute_parabolic_curve(position, velocity, acceleration, pointSpacing, pointCount, g, points);
 
     std::cout << "Parabola Points: " << std::endl;
