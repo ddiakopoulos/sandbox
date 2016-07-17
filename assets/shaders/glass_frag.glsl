@@ -64,7 +64,7 @@ void main()
     vec3 transluency = translucent_brdf(-v_normal, v_position, vec3(1, 0, 0));
 
     f_color = mix(refractionColor, reflectionColor, v_fresnel);
-    f_color.rgb *= transluency;
+    //f_color.rgb *= transluency;
     f_color.a = 0.90;
 
     //f_color = vec4(transluency, 1.0);

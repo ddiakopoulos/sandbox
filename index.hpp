@@ -43,3 +43,4 @@
 #include "poisson_disk.hpp"
 #include "movement_tracker.hpp"
 #include "oriented_bounding_box.hpp"
+#include "solvers.hpp"
