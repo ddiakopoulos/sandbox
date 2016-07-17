@@ -43,18 +43,21 @@ inline float3 project_onto_plane(const float3 & planeNormal, const float3 & vect
 
 inline bool linecast(float3 p1, float3 p2, float3 & hitPoint, Geometry & g)
 {
-    float3 dir = normalize(p2 - p1);
-    Ray r(p1, dir);
+    //float3 dir = normalize(p2 - p1);
+    //Ray r(p1, dir);
+
+    Ray r = between(p1, p2);
 
     float outT = 0.0f;
     float3 outNormal = {0, 0, 0};
 
-    std::cout << "Linecast Ray: " << r << std::endl;
+    std::cout << "Test Ray: " << r << std::endl;
 
     // If hit
     if (intersect_ray_mesh(r, g, &outT, &outNormal))
     {
         hitPoint = r.calculate_position(outT);
+        std::cout << "Out T" << outT << std::endl;
         std::cout << "Hit At: " << hitPoint << std::endl;
         std::cout << "Hit Normal: " << outNormal << std::endl;
         return true;
@@ -82,26 +85,28 @@ inline bool compute_parabolic_curve(float3 p0, float3 v0, float3 a, float dist, 
     {
         t += dist / length(parabolic_curve_derivative(v0, a, t));
         float3 next = parabolic_curve(p0, v0, a, t);
-        std::cout << "Curve: " << next << std::endl;
-    }
-
-    t = 0.0;
-    for (int i = 0; i < points; i++)
-    {
-        t += dist / length(parabolic_curve_derivative(v0, a, t));
-        float3 next = parabolic_curve(p0, v0, a, t);
-
-        //std::cout << "Last Point: " << last << std::endl;
-        std::cout << "Next Point: " << next << std::endl;
 
         float3 castHit;
         bool cast = linecast(last, next, castHit, g);
+
         //std::cout << "Cast: " << cast << std::endl;
+        
+        /*
+        // We successfully linecasted against the mesh, but we might not be near where the parabola and the linecast
+        // so ensure there's a sufficiently small distance
         if (false)
+        //if (cast && distance(castHit, next) <= 0.1)
         {
-            std::cout << "Hit Point:  " << castHit << std::endl;
+            //curve.push_back(castHit);
+            //return cast;
+        }
+        else 
+         */  
+        if (cast && distance(castHit, next) <= 0.1)
+        {
+            std::cout << "Stopped @ I - " << i << std::endl;
             curve.push_back(castHit);
-            return cast;
+            return true;
         }
         else curve.push_back(next);
         last = next;
@@ -158,12 +163,15 @@ Geometry make_parabolic_geometry(const std::vector<float3> & points, const float
 
     const float3 right = normalize(cross(fwd, float3(0, 1, 0)));
 
-    const float thickness = 1.0f;
+    const float3 thickness = float3(0.5);
 
-    for (int x = 0; x < points.size(); x++)
+    for (int x = 0; x < 11; x++)
     {
-        g.vertices[2 * x] = points[x] - right * float3(thickness) / float3(2);
-        g.vertices[2 * x + 1] = points[x] + right * float3(thickness) / float3(2);
+        g.vertices[2 * x] = points[x] - right * thickness;
+        g.vertices[2 * x + 1] = points[x] + right * thickness;
+
+        std::cout << "Vert 1: " <<  g.vertices[2 * x] << std::endl;
+        std::cout << "Vert 2: " <<  g.vertices[2 * x + 1] << std::endl;
 
         float uvoffset_mod = uvoffset;
         if (x == points.size() - 1 && x > 1) 
@@ -205,7 +213,7 @@ Geometry make_parabolic_geometry(const std::vector<float3> & points, const float
 
     std::cout << "Indices Size: " << indices.size() << std::endl;
 
-    for (int i = 0; i < indices.size() / 3; i+=3)
+    for (int i = 0; i < indices.size(); i+=3)
     {
          g.faces.emplace_back(indices[i + 0], indices[i + 1], indices[i + 2]);
          std::cout << g.faces.back() << std::endl;
@@ -229,7 +237,7 @@ Geometry make_parabolic_pointer(float deltaTime, Geometry & g)
 
     float3 acceleration =  float3(0, 1, 0) * -9.8f;
     float pointSpacing = 1.0f;
-    float pointCount = 64;
+    float pointCount = 32;
 
     std::vector<float3> points;
 
