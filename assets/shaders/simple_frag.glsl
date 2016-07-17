@@ -53,5 +53,5 @@ void main()
         light += u_lights[i].color * u_diffuse * pow(max(dot(v_normal, halfDir), 0), 128);
     }
     //f_color = vec4(light + u_emissive, 1.0);
-    f_color = vec4(apply_fog(vec3(0, 0, 0), v_fogCoord), 1.0);
+    f_color = vec4(1, 1, 1, 1); ////vec4(apply_fog(vec3(0, 0, 0), v_fogCoord), 1.0);
 }

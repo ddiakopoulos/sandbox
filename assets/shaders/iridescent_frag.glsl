@@ -136,5 +136,5 @@ void main()
     vec4 iridescentColor = vec4(compute_iridescence(facingRatio, v_position), 1.0) * 
                             map(pow(facingRatio, u_iridescentPower), 0.0, 1.0, 0.5, 1); // or 1 - pow
 
-    f_color = iridescentColor;
+    f_color = vec4(1, 0, 0, 1); // iridescentColor;
 }

@@ -577,7 +577,6 @@ namespace avl
     
     inline bool intersect_ray_plane(const Ray & ray, const Plane & p, float3 * intersection, float * outT = nullptr)
     {
-
         float d = dot(ray.direction, p.get_normal());
         // Make sure we're not parallel to the plane
         if (std::abs(d) > PLANE_EPSILON)
@@ -698,7 +697,7 @@ namespace avl
         
         return true;
     }
-    
+
 }
 
 #endif // end geometric_h

@@ -87,7 +87,7 @@ struct FogShaderParams
         {
             const auto g = gradientFunc(s) * 255;
             gradient[i] = uint4(255, g, g, 255);
-            std::cout << gradient[i] << std::endl;
+            //std::cout << gradient[i] << std::endl;
             s += ds;
         }
 
@@ -123,6 +123,9 @@ struct ExperimentalApp : public GLFWApp
     GlTexture cubeTex;
     FogShaderParams fog;
 
+    Geometry pointerGeometry;
+    Renderable pointerRenderable, parabolicPointerRenderable;
+
     ExperimentalApp() : GLFWApp(1280, 800, "Glass Material App")
     {
         igm.reset(new gui::ImGuiManager(window));
@@ -153,8 +156,13 @@ struct ExperimentalApp : public GLFWApp
         glassModels.push_back(std::move(reflectiveSphere));
 
         iridescentModel = Renderable(make_sphere(1.0));
-        iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(-8, 0, 0));
+        iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 0));
 
+        Renderable m2 = Renderable(make_axis());
+        m2.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 0));
+        regularModels.push_back(std::move(m2));
+
+        /*
         {
             Renderable m2 = Renderable(make_supershape_3d(16, 7, 2, 8, 4));
             m2.pose = Pose(float4(0, 0, 0, 1), float3(8, 0, 0));
@@ -168,6 +176,18 @@ struct ExperimentalApp : public GLFWApp
             m4.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 8));
             regularModels.push_back(std::move(m4));
         }
+        */
+
+        pointerGeometry = make_plane(48, 48, 96, 96);
+        for (auto & p : pointerGeometry.vertices)
+        {
+            float4x4 model = make_rotation_matrix({1, 0, 0}, -ANVIL_PI / 2);
+            p = transform_coord(model, p);
+        }
+
+        pointerRenderable = Renderable(pointerGeometry);
+
+        parabolicPointerRenderable = make_parabolic_pointer(0.0f, pointerGeometry);
 
         glassMaterialShader = make_watched_shader(shaderMonitor, "assets/shaders/glass_vert.glsl", "assets/shaders/glass_frag.glsl");
         simpleShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/simple_frag.glsl");
@@ -231,32 +251,6 @@ struct ExperimentalApp : public GLFWApp
 
         ImGui::Spacing();
 
-        if (ImGui::CollapsingHeader("Asset Selector"))
-        {
-            static ImGuiTextFilter filter("shaders/");
-            filter.Draw();
-            const char * lines[] = { 
-                "assets/shaders/lit", 
-                "assets/shaders/bumped", 
-                "assets/models/fbx/geometry_01/mesh_1", 
-                "assets/models/fbx/geometry_02/mesh_1", 
-                "textures/a", 
-                "textures/b", 
-                "scriptable/actions/audio/play_sound", 
-                "scriptable/actions/audio/stop_sound" 
-            };
-
-            static float value = 0.0f;
-
-            for (int i = 0; i < 8; i++)
-            {
-                if (filter.PassFilter(lines[i]))
-                {
-                    if (ImGui::Selectable(lines[i])) value = 1.0f;
-                }
-            }
-        }
-
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
@@ -269,7 +263,7 @@ struct ExperimentalApp : public GLFWApp
             simpleShader->uniform("u_viewProj", vp);
             
             simpleShader->uniform("u_emissive", emissive);
-            simpleShader->uniform("u_diffuse", float3(0.4f, 0.425f, 0.415f));
+            simpleShader->uniform("u_diffuse", float3(0.0f, 1.0f, 0.0f));
             
             for (int i = 0; i < 2; i++)
             {
@@ -283,6 +277,8 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
                 model.draw();
             }
+
+             pointerRenderable.draw(); // ground plane
             
             simpleShader->unbind();
         };
@@ -290,8 +286,8 @@ struct ExperimentalApp : public GLFWApp
         // Render/Update cube camera
         cubeCamera->render = [&](float3 eyePosition, float4x4 viewMatrix, float4x4 projMatrix)
         {
-            grid.render(projMatrix, viewMatrix);
-            skydome.render(mul(projMatrix, viewMatrix), eyePosition, camera.farClip);
+            //grid.render(projMatrix, viewMatrix);
+            //skydome.render(mul(projMatrix, viewMatrix), eyePosition, camera.farClip);
             draw_cubes(eyePosition, mul(projMatrix, viewMatrix), float3(1, 1, 0));
         };
 
@@ -301,10 +297,12 @@ struct ExperimentalApp : public GLFWApp
 
         glViewport(0, 0, width, height);
 
-        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        //skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         grid.render(proj, view);
-        draw_cubes(camera.get_eye_point(), viewProj, float3(0, 0, 0));
+
+        draw_cubes(camera.get_eye_point(), viewProj, float3(1, 1, 1));
         
+        /*
         {
 
             glassMaterialShader->bind();
@@ -317,12 +315,14 @@ struct ExperimentalApp : public GLFWApp
             {
                 glassMaterialShader->uniform("u_modelMatrix", model.get_model());
                 glassMaterialShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                model.draw();
+                //model.draw();
             }
 
             glassMaterialShader->unbind();
             glDisable(GL_BLEND);
         }
+
+        */
 
         {
             iridescentShader->bind();
@@ -334,8 +334,11 @@ struct ExperimentalApp : public GLFWApp
             auto mm = iridescentModel.get_model();
             iridescentShader->uniform("u_modelMatrix", mm);
             iridescentShader->uniform("u_modelMatrixIT", inv(transpose(mm)));
-            iridescentModel.draw();
-    
+
+            //iridescentModel.draw();
+
+            parabolicPointerRenderable.draw();
+
             iridescentShader->unbind();
         }
 

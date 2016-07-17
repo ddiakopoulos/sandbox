@@ -592,7 +592,6 @@ namespace avl
         return true;
     }
 
-    
 }
 
 #endif // geometry_h

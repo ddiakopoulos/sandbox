@@ -45,3 +45,4 @@
 #include "oriented_bounding_box.hpp"
 #include "solvers.hpp"
 #include "trajectory.hpp"
+#include "parabolic_pointer.hpp"
