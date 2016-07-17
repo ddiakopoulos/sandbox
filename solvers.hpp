@@ -8,7 +8,6 @@
 #include "linalg_util.hpp"
 #include "util.hpp"
 
-
 // https://github.com/erich666/GraphicsGems/blob/240a34f2ad3fa577ef57be74920db6c4b00605e4/gems/Roots3And4.c
 
 inline bool is_zero(double d) { return d > -double(1e-9) && d < double(1e-9); }

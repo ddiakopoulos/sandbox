@@ -72,6 +72,7 @@
     <ClInclude Include="..\signal.hpp" />
     <ClInclude Include="..\simplex_noise.hpp" />
     <ClInclude Include="..\sketch.hpp" />
+    <ClInclude Include="..\solvers.hpp" />
     <ClInclude Include="..\splines.hpp" />
     <ClInclude Include="..\string_utils.hpp" />
     <ClInclude Include="..\texture_view.hpp" />
@@ -89,6 +90,7 @@
     <ClInclude Include="..\third_party\tinyply.h" />
     <ClInclude Include="..\third_party\tiny_obj_loader.h" />
     <ClInclude Include="..\time_keeper.hpp" />
+    <ClInclude Include="..\trajectory.hpp" />
     <ClInclude Include="..\try_locker.hpp" />
     <ClInclude Include="..\util.hpp" />
   </ItemGroup>

@@ -246,6 +246,12 @@
     <ClInclude Include="..\camera.hpp">
       <Filter>source\rendering</Filter>
     </ClInclude>
+    <ClInclude Include="..\solvers.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\trajectory.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
