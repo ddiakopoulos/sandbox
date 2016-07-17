@@ -6,6 +6,8 @@
 #include <vector>
 #include <numeric>
 #include "linalg_util.hpp"
+#include "util.hpp"
+
 
 // https://github.com/erich666/GraphicsGems/blob/240a34f2ad3fa577ef57be74920db6c4b00605e4/gems/Roots3And4.c
 
@@ -13,7 +15,7 @@ inline bool is_zero(double d) { return d > -double(1e-9) && d < double(1e-9); }
 
 // Solve linear equation: c0 + c1 * x = 0
 // Returns number of solutions
-int solveLinear(const double c0, const double c1, double & s0)
+int solve_linear(const double c0, const double c1, double & s0)
 {
     if (std::fabs(c1) < double(1e-9)) return 0;
     s0 = -c0 / c1;
