@@ -10,7 +10,6 @@
 #include "GL_API.hpp"
 #include "geometric.hpp"
 
-
 // Parabolic motion equation, y = p0 + v0*t + 1/2at^2
 inline float parabolic_curve(float p0, float v0, float a, float t) 
 { 
@@ -50,7 +49,9 @@ inline bool linecast(const float3 p1, const float3 p2, float3 & hitPoint, const 
     if (intersect_ray_mesh(r, g, &outT, &outNormal))
     {
         hitPoint = r.calculate_position(outT);
-        return true;
+        // Proximity check (ray could be far away -- is it consistent with the next point?)
+        if (distance(hitPoint, p2) <= 1.0) return true;
+        else return false;
     }
     hitPoint = float3(0, 0, 0);
     return false;
@@ -78,14 +79,8 @@ inline bool compute_parabolic_curve(const float3 p0, const float3 v0, const floa
         float3 castHit;
         bool cast = linecast(last, next, castHit, g);
 
-        // The linecast might be far off in the distance, so end our search at a hit suitably close to 
-        // a hit near the curve. Might need to fix the 0.1 epsilon later depending on
-        // the complexity of other meshes
-
-        std::cout << "Cond: " << distance(castHit, next) << std::endl;
-        if (cast && distance(castHit, next) <= 0.1)
+        if (cast)
         {
-            std::cout << "End Condition: " << distance(castHit, next) << std::endl;
             curve.push_back(castHit);
             return true;
         }
@@ -96,16 +91,23 @@ inline bool compute_parabolic_curve(const float3 p0, const float3 v0, const floa
     return false;
 }
 
+inline float angle_between(float3 a, float3 b, float3 origin)
+{
+    auto da = normalize(a);
+    auto db = normalize(b);
+    return std::acos(dot(da, db));
+}
+
 // Clamps the given velocity vector so that it can't be more than 45 degrees above the horizontal.
 // This is done so that it is easier to leverage the maximum distance (at the 45 degree angle) of parabolic motion.
 // Returns angle with reference to the XZ plane
-float clamp_initial_velocity(float3 & velocity, float3 & velocity_normalized) 
+float clamp_initial_velocity(const float3 origin, float3 & velocity, float3 & velocity_normalized) 
 {
     // Project the initial velocity onto the XZ plane.
     float3 velocity_fwd = project_onto_plane(float3(0, 1, 0), velocity);
 
     // Find the angle between the XZ plane and the velocity
-    float angle = to_degrees(uangle(velocity_fwd, velocity)); 
+    float angle = to_degrees(angle_between(velocity_fwd, velocity, origin)); 
     std::cout << "Clamped angle is: " << angle << std::endl;
 
     // Calculate positivity/negativity of the angle using the cross product
@@ -132,7 +134,6 @@ float clamp_initial_velocity(float3 & velocity, float3 & velocity_normalized)
         velocity_normalized = normalize(velocity);
     }
 
-    std::cout << "Returned Angle is: " << angle << std::endl;
     return angle;
 }
 
@@ -204,29 +205,36 @@ struct ParabolicPointerParams
 {
     float3 position = {0, 5, 0};
     float3 velocity = {0, 0, -1};
-    float pointSpacing = 1.0f;
-    float pointCount = 32.f;
+    float pointSpacing = 0.5f;
+    float pointCount = 64.f;
 };
 
 inline Geometry make_parabolic_pointer(const Geometry & navMesh, ParabolicPointerParams & params)
 {
     float3 v = params.velocity * float3(10.0); // transform local to world 
     float3 v_n = normalize(v);
-    //float currentAngle = clamp_initial_velocity(velocity, velocity_normalized);
-    //std::cout << "Current Angle: " << currentAngle << std::endl;
+    // float currentAngle = clamp_initial_velocity(params.position, v, v_n);
 
     float3 acceleration =  float3(0, 1, 0) * -9.8f;
 
     std::vector<float3> points;
-    auto r = compute_parabolic_curve(params.position, v, acceleration, params.pointSpacing, params.pointCount, navMesh, points);
 
-    std::cout << "Parabola Points: " << std::endl;
-    for (auto p : points) std::cout << p << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
+    bool gotCurve = compute_parabolic_curve(params.position, v, acceleration, params.pointSpacing, params.pointCount, navMesh, points);
 
+    std::cout << gotCurve << " --- " << points.size() << std::endl;
     float3 selectedPoint = points[points.size()-1];
 
-    return make_parabolic_geometry(points, v, 0.1);
+    Geometry pointerGeometry;
+    if (gotCurve)
+    {
+        pointerGeometry = make_parabolic_geometry(points, v, 0.1);
+    }
+
+    //std::cout << "Parabola Points: " << std::endl;
+    //for (auto p : points) std::cout << p << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
+
+    return pointerGeometry;
 }
 
 #endif // end parabolic_pointer_hpp

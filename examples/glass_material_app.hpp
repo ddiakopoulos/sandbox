@@ -260,7 +260,7 @@ struct ExperimentalApp : public GLFWApp
             parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
         }
 
-        if (ImGui::SliderFloat3("Velocity", &params.velocity.x, -5, 5))
+        if (ImGui::SliderFloat3("Velocity", &params.velocity.x, -1.f, 1.f))
         {
             parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
         }
