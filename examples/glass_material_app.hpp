@@ -115,9 +115,12 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<GlShader> iridescentShader;
     std::shared_ptr<GlShader> glassMaterialShader;
     std::shared_ptr<GlShader> simpleShader;
+	std::shared_ptr<GlShader> debugShader;
 
     std::vector<Renderable> glassModels;
     std::vector<Renderable> regularModels;
+	std::vector<Renderable> debugModels;
+
     Renderable iridescentModel;
 
     GlTexture cubeTex;
@@ -160,9 +163,9 @@ struct ExperimentalApp : public GLFWApp
         iridescentModel = Renderable(make_sphere(1.0));
         iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 0));
 
-        Renderable m2 = Renderable(make_axis());
-        m2.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 0));
-        regularModels.push_back(std::move(m2));
+        Renderable debugAxis = Renderable(make_axis(), false, GL_LINES);
+        debugAxis.pose = Pose(float4(0, 0, 0, 1), float3(0, 1, 0));
+        debugModels.push_back(std::move(debugAxis));
 
         /*
         {
@@ -194,6 +197,7 @@ struct ExperimentalApp : public GLFWApp
         glassMaterialShader = make_watched_shader(shaderMonitor, "assets/shaders/glass_vert.glsl", "assets/shaders/glass_frag.glsl");
         simpleShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/simple_frag.glsl");
         iridescentShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/iridescent_frag.glsl");
+		debugShader = make_watched_shader(shaderMonitor, "assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
 
         cubeCamera.reset(new CubemapCamera({1024, 1024}));
 
@@ -330,6 +334,18 @@ struct ExperimentalApp : public GLFWApp
 
         draw_cubes(camera.get_eye_point(), viewProj, float3(1, 1, 1));
         
+		{
+		    debugShader->bind();
+            debugShader->uniform("u_viewProj", viewProj);
+            for (const auto & model : debugModels)
+            {
+                debugShader->uniform("u_modelMatrix", model.get_model());
+                debugShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                model.draw();
+            }
+            debugShader->unbind();
+		}
+
         /*
         {
 

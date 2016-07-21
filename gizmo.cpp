@@ -10,7 +10,7 @@ using namespace avl;
 struct TranslationGizmo : public IGizmo
 {
     Renderable & object;
-    Raycast rc;
+    ViewportRaycast rc;
     
     float3 axis;
     float3 initialPosition;
@@ -27,7 +27,7 @@ struct TranslationGizmo : public IGizmo
         return distance;
     }
     
-    TranslationGizmo(Raycast rc, Renderable & object, const float3 & axis, const float2 & cursor) : rc(rc), object(object), axis(qrot(object.pose.orientation, axis)), initialPosition(object.pose.position)
+    TranslationGizmo(ViewportRaycast rc, Renderable & object, const float3 & axis, const float2 & cursor) : rc(rc), object(object), axis(qrot(object.pose.orientation, axis)), initialPosition(object.pose.position)
     {
         initialOffset = compute_offset(cursor);
     }
@@ -49,7 +49,7 @@ struct TranslationGizmo : public IGizmo
 struct RotationGizmo : public IGizmo
 {
     Renderable & object;
-    Raycast rc;
+    ViewportRaycast rc;
     
     float3 axis, edge1;
     float4 initialOrientation;
@@ -63,7 +63,7 @@ struct RotationGizmo : public IGizmo
         return ray.calculate_position(t) - object.pose.position;
     }
     
-    RotationGizmo(Raycast rc, Renderable & object, const float3 & axis, const float2 & cursor) : rc(rc), object(object), axis(qrot(object.pose.orientation, axis)), initialOrientation(object.pose.orientation)
+    RotationGizmo(ViewportRaycast rc, Renderable & object, const float3 & axis, const float2 & cursor) : rc(rc), object(object), axis(qrot(object.pose.orientation, axis)), initialOrientation(object.pose.orientation)
     {
         edge1 = compute_edge(cursor);
     }
@@ -86,7 +86,7 @@ struct RotationGizmo : public IGizmo
 struct ScalingGizmo : public IGizmo
 {
     Renderable & object;
-    Raycast rc;
+    ViewportRaycast rc;
     
     float3 axis, initialScale, scaleDirection;
     float initialFactor;
@@ -102,7 +102,7 @@ struct ScalingGizmo : public IGizmo
         return distance;
     }
     
-    ScalingGizmo(Raycast rc, Renderable & object, const float3 & axis, const float2 & cursor) : rc(rc), object(object), axis(qrot(object.pose.orientation, axis)), initialScale(object.scale)
+    ScalingGizmo(ViewportRaycast rc, Renderable & object, const float3 & axis, const float2 & cursor) : rc(rc), object(object), axis(qrot(object.pose.orientation, axis)), initialScale(object.scale)
     {
         scaleDirection = axis;
         initialFactor = compute_scale(cursor);
@@ -133,7 +133,7 @@ GizmoEditor::~GizmoEditor()
 
 }
 
-std::shared_ptr<IGizmo> GizmoEditor::make_gizmo(Raycast & rc, Renderable & object, const float3 & axis, const float2 & cursor)
+std::shared_ptr<IGizmo> GizmoEditor::make_gizmo(ViewportRaycast & rc, Renderable & object, const float3 & axis, const float2 & cursor)
 {
     switch (gizmoMode)
     {
@@ -180,7 +180,7 @@ void GizmoEditor::handle_input(const InputEvent & event, std::vector<Renderable>
                 }
                 if (bestT > 0.f && length(hitAxis) > 0)
                 {
-                    Raycast raycast(sceneCamera, float2(event.windowSize.x, event.windowSize.y));
+                    ViewportRaycast raycast(sceneCamera, float2(event.windowSize.x, event.windowSize.y));
                     activeGizmo = make_gizmo(raycast, *selectedObject, hitAxis, event.cursor);
                 }
                 else

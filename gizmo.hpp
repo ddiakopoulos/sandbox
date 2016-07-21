@@ -43,7 +43,7 @@ namespace avl
         Renderable rotationMesh;
         Renderable scalingMesh;
 
-        std::shared_ptr<IGizmo> make_gizmo(Raycast & rc, Renderable & object, const float3 & axis, const float2 & cursor);
+        std::shared_ptr<IGizmo> make_gizmo(ViewportRaycast & rc, Renderable & object, const float3 & axis, const float2 & cursor);
         
         void make_gizmo_meshes();
         

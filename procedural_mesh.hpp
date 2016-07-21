@@ -645,7 +645,14 @@ namespace avl
         axis.colors.emplace_back(0.0, 1.0, 0.0, 1.0);
         axis.colors.emplace_back(1.0, 0.0, 0.0, 1.0);
         axis.colors.emplace_back(1.0, 0.0, 0.0, 1.0);
-        
+
+		axis.normals.emplace_back(0.0, 0.0, 1.0);
+        axis.normals.emplace_back(0.0, 0.0, 1.0);
+        axis.normals.emplace_back(0.0, 1.0, 0.0);
+        axis.normals.emplace_back(0.0, 1.0, 0.0);
+        axis.normals.emplace_back(1.0, 0.0, 0.0);
+        axis.normals.emplace_back(1.0, 0.0, 0.0);
+
         return axis;
     }
     
