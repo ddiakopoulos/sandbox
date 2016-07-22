@@ -46,3 +46,4 @@
 #include "solvers.hpp"
 #include "trajectory.hpp"
 #include "parabolic_pointer.hpp"
+#include "parallel_transport_frames.hpp"

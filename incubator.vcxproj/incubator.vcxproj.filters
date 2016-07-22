@@ -28,6 +28,9 @@
     <Filter Include="third_party\imgui">
       <UniqueIdentifier>{b12263b9-093c-4d8a-814d-4c507b45ede6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\virtual-reality">
+      <UniqueIdentifier>{a8333473-545f-4b2a-ae82-220df8cabecc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\third_party\fontstash.h">
@@ -253,6 +256,9 @@
       <Filter>source\math</Filter>
     </ClInclude>
     <ClInclude Include="..\parabolic_pointer.hpp">
+      <Filter>source\virtual-reality</Filter>
+    </ClInclude>
+    <ClInclude Include="..\parallel_transport_frames.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
   </ItemGroup>

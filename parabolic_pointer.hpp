@@ -209,7 +209,7 @@ struct ParabolicPointerParams
     float pointCount = 64.f;
 };
 
-inline Geometry make_parabolic_pointer(const Geometry & navMesh, ParabolicPointerParams & params)
+inline Geometry make_parabolic_pointer(const Geometry & navMesh, const ParabolicPointerParams & params)
 {
     float3 v = params.velocity * float3(10.0); // transform local to world 
     float3 v_n = normalize(v);
