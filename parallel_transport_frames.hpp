@@ -3,6 +3,7 @@
 
 #include "util.hpp"
 #include "linalg_util.hpp"
+#include "splines.hpp"
 
 // Compute a set of reference frames defined by their transformation matrix along a 
 // curve. It is designed so that the array of points and the array of matrices used 
@@ -54,7 +55,7 @@ static inline float4x4 ptf_next_frame(const float4x4 & prevMatrix, const float3 
     float3 axis;
     float r = 0;
 
-    if((length(prevTangent) != 0) && (length(curTangent) != 0)) 
+    if((length(prevTangent) != 0.0f) && (length(curTangent) != 0.0f)) 
     {
         normalize(prevTangent);
         normalize(curTangent);
@@ -67,12 +68,11 @@ static inline float4x4 ptf_next_frame(const float4x4 & prevMatrix, const float3 
         axis = cross(prevTangent, curTangent);
     }
 
-    if((length(axis) != 0) && (r != 0)) 
+    if((length(axis) != 0.0f) && (r != 0.0f)) 
     {
         float4x4 R  = make_rotation_matrix(axis, r);
         float4x4 Tj = make_translation_matrix(curPoint);
         float4x4 Ti = make_translation_matrix(-prevPoint);
-
         return mul(mul(Tj, R, Ti), prevMatrix); // order?
     }
     else 
@@ -90,18 +90,31 @@ static inline float4x4 ptf_last_frame(const float4x4 & prevMatrix, const float3 
     return mul(make_translation_matrix(lastPoint - prevPoint), prevMatrix);
 }
 
-
-inline std::vector<float4x4> make_parallel_transport_frame(const float size = 8.0f)
+inline std::vector<float4x4> make_parallel_transport_frame(const int segments = 32)
 {
+	BezierCurve curve({0.0f, 0.0f, 0.0f}, {0.667f, 0.25f, 0.0f}, {1.33f, 0.25f, 0.0f}, {2.0f, 0.0f, 0.0f});
+
     std::vector<float3> mPs; // Points in spline
     std::vector<float3> mTs; // Tangents in spline
     std::vector<float4x4> frames; // Coordinate frame at each spline sample
 
+    // Build the spline
+    float dt = 1.0f / float(segments);
+    for (int i = 0; i < segments; ++i) 
+	{
+        float t = i*dt;
+        float3 P = curve.point(t);
+        mPs.push_back(P);
+        
+        float3 T = curve.derivative(t);
+        mTs.push_back(normalize(T));
+	}
+
     int n = mPs.size();
-	frames.resize(n);
+    frames.resize(n);
 
     // Require at least 3 points to start
-    if(n >= 3) 
+    if (n >= 3) 
     {
         // First
         frames[0] = ptf_first_frame(mPs[0], mPs[1],  mPs[2]);
@@ -116,9 +129,9 @@ inline std::vector<float4x4> make_parallel_transport_frame(const float size = 8.
 
         // Last
         frames[n - 1] = ptf_last_frame(frames[n - 2], mPs[n - 2], mPs[n - 1]);
-	}
+    }
 
-	return frames;
+    return frames;
 }
 
 #endif // end parallel_transport_frames_hpp
