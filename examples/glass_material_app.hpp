@@ -135,8 +135,8 @@ struct ExperimentalApp : public GLFWApp
 
     ExperimentalApp() : GLFWApp(1280, 800, "Glass Material App")
     {
-
-		ptf = make_parallel_transport_frame(32);
+		std::array<float3, 4> controlPoints = {float3(0.0f, 0.0f, 0.0f), float3(0.667f, 0.25f, 0.0f), float3(1.33f, 0.25f, 0.0f), float3(2.0f, 0.0f, 0.0f)};
+		ptf = make_parallel_transport_frame_bezier(controlPoints, 32);
 
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();

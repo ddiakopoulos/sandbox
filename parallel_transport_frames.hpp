@@ -90,9 +90,9 @@ static inline float4x4 ptf_last_frame(const float4x4 & prevMatrix, const float3 
     return mul(make_translation_matrix(lastPoint - prevPoint), prevMatrix);
 }
 
-inline std::vector<float4x4> make_parallel_transport_frame(const int segments = 32)
+inline std::vector<float4x4> make_parallel_transport_frame_bezier(const std::array<float3, 4> control, const int segments = 32)
 {
-	BezierCurve curve({0.0f, 0.0f, 0.0f}, {0.667f, 0.25f, 0.0f}, {1.33f, 0.25f, 0.0f}, {2.0f, 0.0f, 0.0f});
+	BezierCurve curve(control[0], control[1], control[2], control[3]);
 
     std::vector<float3> mPs; // Points in spline
     std::vector<float3> mTs; // Tangents in spline
@@ -119,7 +119,6 @@ inline std::vector<float4x4> make_parallel_transport_frame(const int segments = 
         // First
         frames[0] = ptf_first_frame(mPs[0], mPs[1],  mPs[2]);
 
-        // Make the remaining frames - saving the last
         for (int i = 1; i < n - 1; ++i) 
         {
             float3 prevT = mTs[i - 1];
