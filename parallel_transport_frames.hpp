@@ -55,7 +55,7 @@ static inline float4x4 ptf_next_frame(const float4x4 & prevMatrix, const float3 
     float3 axis;
     float r = 0;
 
-    if((length(prevTangent) != 0.0f) && (length(curTangent) != 0.0f)) 
+    if ((length(prevTangent) != 0.0f) && (length(curTangent) != 0.0f)) 
     {
         normalize(prevTangent);
         normalize(curTangent);
@@ -68,7 +68,7 @@ static inline float4x4 ptf_next_frame(const float4x4 & prevMatrix, const float3 
         axis = cross(prevTangent, curTangent);
     }
 
-    if((length(axis) != 0.0f) && (r != 0.0f)) 
+    if ((length(axis) != 0.0f) && (r != 0.0f)) 
     {
         float4x4 R  = make_rotation_matrix(axis, r);
         float4x4 Tj = make_translation_matrix(curPoint);

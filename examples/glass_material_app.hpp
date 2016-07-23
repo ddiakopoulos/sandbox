@@ -120,6 +120,7 @@ struct ExperimentalApp : public GLFWApp
     std::vector<Renderable> glassModels;
     std::vector<Renderable> regularModels;
 	std::vector<Renderable> debugModels;
+	std::vector<Renderable> ptfBoxes;
 
     Renderable iridescentModel;
 
@@ -130,9 +131,13 @@ struct ExperimentalApp : public GLFWApp
     Renderable pointerRenderable, parabolicPointerRenderable;
 
     ParabolicPointerParams params;
+	std::vector<float4x4> ptf;
 
     ExperimentalApp() : GLFWApp(1280, 800, "Glass Material App")
     {
+
+		ptf = make_parallel_transport_frame(32);
+
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
         
@@ -167,6 +172,12 @@ struct ExperimentalApp : public GLFWApp
         debugAxis.pose = Pose(float4(0, 0, 0, 1), float3(0, 1, 0));
         debugModels.push_back(std::move(debugAxis));
 
+		for (int i = 0; i < ptf.size(); ++i)
+		{
+			Renderable p = Renderable(make_cube());
+			//p.pose = Pose(float4(0, 0, 0, 1), float3(8, 0, 0));
+			ptfBoxes.push_back(std::move(p));
+		}
         /*
         {
             Renderable m2 = Renderable(make_supershape_3d(16, 7, 2, 8, 4));
@@ -343,6 +354,16 @@ struct ExperimentalApp : public GLFWApp
                 debugShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
                 model.draw();
             }
+
+			for (int i = 0; i < ptfBoxes.size(); ++i)
+            {
+				auto & model = ptfBoxes[i];
+				auto modelMat = ptf[i];
+                debugShader->uniform("u_modelMatrix", mul(modelMat, make_scaling_matrix(0.01)));
+                debugShader->uniform("u_modelMatrixIT", inv(transpose(modelMat)));
+                model.draw();
+            }
+
             debugShader->unbind();
 		}
 
