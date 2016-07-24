@@ -1,5 +1,7 @@
 #include "index.hpp"
 
+#include <future>
+
 std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath)
 {
     std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath));
@@ -42,6 +44,9 @@ struct ExperimentalApp : public GLFWApp
     ParabolicPointerParams params;
 	std::vector<float4x4> ptf;
      
+	std::future<Geometry> pointerFuture;
+	bool regeneratePointer = false;
+
 	struct Light
 	{
 		float3 position;
@@ -125,6 +130,27 @@ struct ExperimentalApp : public GLFWApp
         cameraController.update(e.timestep_ms);
         time += e.timestep_ms;
         shaderMonitor.handle_recompile();
+
+		 // If a new mesh is ready, retrieve it
+		if (pointerFuture.valid())
+		{
+			auto status = pointerFuture.wait_for(std::chrono::seconds(0));
+			if (status != std::future_status::timeout)
+			{
+				auto m = pointerFuture.get();
+				supershape = m;
+				pointerFuture = {};
+			}
+		}
+
+		// If we don't currently have a background task, begin working on the next mesh
+		if (!pointerFuture.valid() && regeneratePointer) 
+		{
+			pointerFuture = std::async([]() {
+				return make_supershape_3d(16, ssM, ssN1, ssN2, ssN3);
+			});
+		}
+
     }
 
     void on_draw() override
@@ -143,10 +169,10 @@ struct ExperimentalApp : public GLFWApp
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(1.0f, 0.1f, 0.0f, 1.0f);
 
-		if (ImGui::SliderInt("M", &ssM, 1, 30)) supershape = make_supershape_3d(16, ssM, ssN1, ssN2, ssN3);
-		if (ImGui::SliderInt("N1", &ssN1, 1, 30)) supershape = make_supershape_3d(16, ssM, ssN1, ssN2, ssN3);
-		if (ImGui::SliderInt("N2", &ssN2, 1, 30)) supershape = make_supershape_3d(16, ssM, ssN1, ssN2, ssN3);
-		if (ImGui::SliderInt("N3", &ssN3, 1, 30)) supershape = make_supershape_3d(16, ssM, ssN1, ssN2, ssN3);
+		if (ImGui::SliderInt("M", &ssM, 1, 30)) regeneratePointer = true;
+		if (ImGui::SliderInt("N1", &ssN1, 1, 30)) regeneratePointer = true;
+		if (ImGui::SliderInt("N2", &ssN2, 1, 30)) regeneratePointer = true;
+		if (ImGui::SliderInt("N3", &ssN3, 1, 30)) regeneratePointer = true;
 
 		ImGui::Spacing();
 
