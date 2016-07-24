@@ -57,6 +57,8 @@ struct ExperimentalApp : public GLFWApp
 
     GlTexture cubeTex;
 
+	int2 sunPos = {70, 110};
+
 	struct Light
 	{
 		float3 position;
@@ -76,14 +78,10 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
-         // Debugging views
+         // Debugging views for offscreen surfaces
         uiSurface.bounds = {0, 0, (float) width, (float) height};
         uiSurface.add_child( {{0.0000f, +10},{0, +10},{0.1667f, -10},{0.133f, +10}});
         uiSurface.add_child( {{0.1667f, +10},{0, +10},{0.3334f, -10},{0.133f, +10}});
-        uiSurface.add_child( {{0.3334f, +10},{0, +10},{0.5009f, -10},{0.133f, +10}});
-        uiSurface.add_child( {{0.5000f, +10},{0, +10},{0.6668f, -10},{0.133f, +10}});
-        uiSurface.add_child( {{0.6668f, +10},{0, +10},{0.8335f, -10},{0.133f, +10}});
-        uiSurface.add_child( {{0.8335f, +10},{0, +10},{1.0000f, -10},{0.133f, +10}});
         uiSurface.layout();
 
         grid = RenderableGrid(1, 100, 100);
@@ -106,7 +104,7 @@ struct ExperimentalApp : public GLFWApp
         regularModels.push_back(std::move(cubeA));
 
         Renderable cubeB = Renderable(make_cube());
-		cubeB.pose = Pose(make_rotation_quat_axis_angle({1, 0, }, ANVIL_PI / 4), float3(-5, 0, 0));
+		cubeB.pose = Pose(make_rotation_quat_axis_angle({1, 0, 1}, ANVIL_PI / 4), float3(-5, 0, 0));
         regularModels.push_back(std::move(cubeB));
 
         glassMaterialShader = make_watched_shader(shaderMonitor, "assets/shaders/glass_vert.glsl", "assets/shaders/glass_frag.glsl");
@@ -165,6 +163,9 @@ struct ExperimentalApp : public GLFWApp
 		const float4x4 view = camera.get_view_matrix();
 		const float4x4 viewProj = mul(proj, view);
         
+		if (ImGui::SliderInt("Sun Theta", &sunPos.x, 0, 90)) skydome.set_sun_position(sunPos.x, sunPos.y);
+		if (ImGui::SliderInt("Sun Phi", &sunPos.y, 0, 360)) skydome.set_sun_position(sunPos.x, sunPos.y);
+
         auto draw_cubes = [&](float3 eye, float4x4 vp)
         {
             simpleShader->bind();

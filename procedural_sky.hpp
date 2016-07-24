@@ -75,7 +75,7 @@ struct HosekSkyRadianceData
 {
     float3 A, B, C, D, E, F, G, H, I;
     float3 Z;
-    static HosekSkyRadianceData compute(float sunTheta, float turbidity, float albedo, float normalizedSunY);
+    static HosekSkyRadianceData compute(float3 sun_direction, float turbidity, float albedo, float normalizedSunY);
 };
     
 // A Practical Analytic Model for Daylight (A. J. Preetham, Peter Shirley, Brian Smits)
@@ -83,14 +83,16 @@ struct PreethamSkyRadianceData
 {
     float3 A, B, C, D, E;
     float3 Z;
-    static PreethamSkyRadianceData compute(float sunTheta, float turbidity, float albedo, float normalizedSunY);
+    static PreethamSkyRadianceData compute(float3 sun_direction, float turbidity, float albedo, float normalizedSunY);
 };
 
-inline HosekSkyRadianceData HosekSkyRadianceData::compute(float sunTheta, float turbidity, float albedo, float normalizedSunY)
+inline HosekSkyRadianceData HosekSkyRadianceData::compute(float3 sun_direction, float turbidity, float albedo, float normalizedSunY)
 {
     float3 A, B, C, D, E, F, G, H, I;
     float3 Z;
     
+	const float sunTheta = std::acos(clamp(sun_direction.y, 0.f, 1.f));
+
     for (int i = 0; i < 3; ++i)
     {
         A[i] = evaluate(datasetsRGB[i] + 0, 9, turbidity, albedo, sunTheta);
@@ -118,11 +120,12 @@ inline HosekSkyRadianceData HosekSkyRadianceData::compute(float sunTheta, float 
     return {A, B, C, D, E, F, G, H, I, Z};
 }
     
-inline PreethamSkyRadianceData PreethamSkyRadianceData::compute(float sunTheta, float turbidity, float albedo, float normalizedSunY)
+inline PreethamSkyRadianceData PreethamSkyRadianceData::compute(float3 sun_direction, float turbidity, float albedo, float normalizedSunY)
 {
-    assert(sunTheta >= 0 && sunTheta <= ANVIL_PI / 2);
     assert(turbidity >= 1);
     
+	const float sunTheta = std::acos(clamp(sun_direction.y, 0.f, 1.f));
+
     // A.2 Skylight Distribution Coefficients and Zenith Values: compute Perez distribution coefficients
     float3 A = float3(-0.0193, -0.0167,  0.1787) * turbidity + float3(-0.2592, -0.2608, -1.4630);
     float3 B = float3(-0.0665, -0.0950, -0.3554) * turbidity + float3( 0.0008,  0.0092,  0.4275);
@@ -148,18 +151,24 @@ inline PreethamSkyRadianceData PreethamSkyRadianceData::compute(float sunTheta, 
     return { A, B, C, D, E, Z };
 }
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 class ProceduralSky
 {
+
 protected:
+
     GlMesh skyMesh;
     float2 sunPosition;
     virtual void render_internal(float4x4 viewProj, float3 sunDir, float4x4 world) = 0;
+
 public:
     
     ProceduralSky()
     {
         skyMesh = make_sphere_mesh(1.0);
-        set_sun_position(80, 230);
+        set_sun_position(70, 110);
     }
 
     void render(float4x4 viewProj, float3 eyepoint, float farClip)
@@ -188,19 +197,18 @@ public:
         sunPosition = {to_radians(theta), to_radians(phi)};
     }
     
-    float2 get_sun_position() const { return sunPosition; }
+	// Get in degrees
+    float2 get_sun_position() const 
+	{ 
+		return float2(to_degrees(sunPosition.x), to_degrees(sunPosition.y)); 
+	}
 
     float3 get_sun_direction() const
     {
-        return spherical(sunPosition.x, sunPosition.y);
+		// phi, theta
+		return qrot(rotation_quat(float3(0,1,0), sunPosition.y), qrot(rotation_quat(float3(-1,0,0), sunPosition.x), float3(0,0,1)));
     }
-    
-    float3 get_light_direction() const
-    {
-        auto sunDir = get_sun_direction();
-        return -float3(-sunDir.x, sunDir.y, sunDir.z); // what the hell?
-    }
-    
+
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) = 0;
 
 };
@@ -240,7 +248,7 @@ public:
     
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) override
     {
-        data = HosekSkyRadianceData::compute(sunPosition.x, turbidity, albedo, normalizedSunY);
+        data = HosekSkyRadianceData::compute(get_sun_direction(), turbidity, albedo, normalizedSunY);
     }
 
 };
@@ -276,7 +284,7 @@ public:
     
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) override
     {
-        data = PreethamSkyRadianceData::compute(sunPosition.x, turbidity, albedo, normalizedSunY);
+        data = PreethamSkyRadianceData::compute(get_sun_direction(), turbidity, albedo, normalizedSunY);
     }
     
 };

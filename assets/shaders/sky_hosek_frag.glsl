@@ -1,10 +1,5 @@
 #version 330
 
-vec3 gamma(vec3 v)
-{
-    return pow(v, vec3(1 / 2.2));
-}
-
 out vec4 out_color;
 
 in vec3 direction;
@@ -22,10 +17,8 @@ vec3 HosekWilkie(float cos_theta, float gamma, float cos_gamma)
 void main()
 {
 	vec3 V = normalize(direction);
-    vec3 sunDir = vec3(SunDirection.x, -SunDirection.y, SunDirection.z);
-    
 	float cos_theta = clamp(V.y, 0, 1);
-	float cos_gamma = dot(V, sunDir);
+	float cos_gamma = dot(V, SunDirection);
 	float gamma_ = acos(cos_gamma);
 
 	vec3 R = Z * HosekWilkie(cos_theta, gamma_, cos_gamma);
