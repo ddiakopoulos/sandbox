@@ -31,6 +31,7 @@
     <ClInclude Include="..\examples\decal_app.hpp" />
     <ClInclude Include="..\examples\empty_app.hpp" />
     <ClInclude Include="..\examples\euclidean_app.hpp" />
+    <ClInclude Include="..\examples\geometric_algo_dev.hpp" />
     <ClInclude Include="..\examples\glass_material_app.hpp" />
     <ClInclude Include="..\examples\hdr_skydome.hpp" />
     <ClInclude Include="..\examples\instance_app.hpp" />

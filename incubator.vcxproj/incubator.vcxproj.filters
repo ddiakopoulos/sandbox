@@ -261,6 +261,9 @@
     <ClInclude Include="..\parallel_transport_frames.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
+    <ClInclude Include="..\examples\geometric_algo_dev.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">

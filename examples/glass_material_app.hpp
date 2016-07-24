@@ -33,69 +33,6 @@ inline GlTexture load_cubemap()
     return tex;
 }
 
-static int ssM;
-static int ssN1;
-static int ssN2;
-static int ssN3;
-
-struct FogShaderParams
-{
-    GlTexture gradientTex;
-
-	float startDistance = 0.0f;
-	float endDistance = 64.0f;
-	int textureWidth = 32;
-
-	float heightFogThickness = 1.15f;
-	float heightFogFalloff = 0.1f;
-	float heightFogBaseHeight = -16.0f;
-
-    float3 color = {1, 1, 1};
-
-    void set_uniforms(GlShader & prog)
-    {
-        if (!gradientTex.get_gl_handle()) generate_gradient_tex();
-
-        float scale = 1.0f / (endDistance - startDistance);
-		float add = -startDistance / (endDistance - startDistance);
-
-        prog.bind();
-        prog.uniform("u_gradientFogScaleAdd", float2(scale, add));
-        prog.uniform("u_gradientFogLimitColor", float3(1, 1, 1));
-        prog.uniform("u_heightFogParams", float3(heightFogThickness, heightFogFalloff, heightFogBaseHeight));
-        prog.uniform("u_heightFogColor", color); // use color above
-        prog.texture("s_gradientFogTexture", 0, gradientTex.get_gl_handle(), GL_TEXTURE_2D); 
-        prog.unbind();
-    }
-
-    void generate_gradient_tex()
-    {
-        glBindTexture(GL_TEXTURE_2D, gradientTex.get_gl_handle());
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        std::vector<uint4> gradient(textureWidth);
-        auto gradientFunc = [](float t) { return 0.0 * (1 - t) + 1.0 * t; };
-
-        float ds = 1.0f / (textureWidth - 1);
-        float s = 0.0f;
-        for (int i = 0; i < textureWidth; i++)
-        {
-            const auto g = gradientFunc(s) * 255;
-            gradient[i] = uint4(255, g, g, 255);
-            //std::cout << gradient[i] << std::endl;
-            s += ds;
-        }
-
-       gradientTex.load_data(textureWidth, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, gradient.data());
-    }
-
-};
-
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -112,32 +49,24 @@ struct ExperimentalApp : public GLFWApp
 
     std::shared_ptr<CubemapCamera> cubeCamera;
 
-    std::shared_ptr<GlShader> iridescentShader;
     std::shared_ptr<GlShader> glassMaterialShader;
     std::shared_ptr<GlShader> simpleShader;
-	std::shared_ptr<GlShader> debugShader;
 
     std::vector<Renderable> glassModels;
     std::vector<Renderable> regularModels;
-	std::vector<Renderable> debugModels;
-	std::vector<Renderable> ptfBoxes;
-
-    Renderable iridescentModel;
 
     GlTexture cubeTex;
-    FogShaderParams fog;
 
-    Geometry pointerGeometry;
-    Renderable pointerRenderable, parabolicPointerRenderable;
+	struct Light
+	{
+		float3 position;
+		float3 color;
+	};
 
-    ParabolicPointerParams params;
-	std::vector<float4x4> ptf;
+	Light lights[2];
 
     ExperimentalApp() : GLFWApp(1280, 800, "Glass Material App")
     {
-		std::array<float3, 4> controlPoints = {float3(0.0f, 0.0f, 0.0f), float3(0.667f, 0.25f, 0.0f), float3(1.33f, 0.25f, 0.0f), float3(2.0f, 0.0f, 0.0f)};
-		ptf = make_parallel_transport_frame_bezier(controlPoints, 32);
-
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
         
@@ -161,54 +90,27 @@ struct ExperimentalApp : public GLFWApp
         cameraController.set_camera(&camera);
         camera.look_at({0, 2.5, -2.5}, {0, 2.0, 0});
 
-        Renderable reflectiveSphere = Renderable(make_torus(32));
+		lights[0] = {{0, 10, -10}, {0, 0, 1}};
+		lights[1] = {{0, 10, 10}, {0, 1, 0}};
+
+        Renderable reflectiveSphere = Renderable(make_sphere(2.f));
         reflectiveSphere.pose = Pose(float4(0, 0, 0, 1), float3(0, 2, 0));
         glassModels.push_back(std::move(reflectiveSphere));
 
-        iridescentModel = Renderable(make_sphere(1.0));
-        iridescentModel.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 0));
-
         Renderable debugAxis = Renderable(make_axis(), false, GL_LINES);
         debugAxis.pose = Pose(float4(0, 0, 0, 1), float3(0, 1, 0));
-        debugModels.push_back(std::move(debugAxis));
+        regularModels.push_back(std::move(debugAxis));
 
-		for (int i = 0; i < ptf.size(); ++i)
-		{
-			Renderable p = Renderable(make_cube());
-			//p.pose = Pose(float4(0, 0, 0, 1), float3(8, 0, 0));
-			ptfBoxes.push_back(std::move(p));
-		}
-        /*
-        {
-            Renderable m2 = Renderable(make_supershape_3d(16, 7, 2, 8, 4));
-            m2.pose = Pose(float4(0, 0, 0, 1), float3(8, 0, 0));
-            regularModels.push_back(std::move(m2));
+        Renderable cubeA = Renderable(make_cube());
+        cubeA.pose = Pose(make_rotation_quat_axis_angle({1, 0, 1}, ANVIL_PI / 3), float3(5, 0, 0));
+        regularModels.push_back(std::move(cubeA));
 
-            Renderable m3 = Renderable(make_capsule(12, 1, 1));
-            m3.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, -8));
-            regularModels.push_back(std::move(m3));
-
-            Renderable m4 = Renderable(make_3d_ring());
-            m4.pose = Pose(float4(0, 0, 0, 1), float3(0, 0, 8));
-            regularModels.push_back(std::move(m4));
-        }
-        */
-
-        pointerGeometry = make_plane(48, 48, 96, 96);
-        for (auto & p : pointerGeometry.vertices)
-        {
-            float4x4 model = make_rotation_matrix({1, 0, 0}, -ANVIL_PI / 2);
-            p = transform_coord(model, p);
-        }
-
-        pointerRenderable = Renderable(pointerGeometry);
-
-        parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
+        Renderable cubeB = Renderable(make_cube());
+		cubeB.pose = Pose(make_rotation_quat_axis_angle({1, 0, 1}, ANVIL_PI / 4), float3(-5, 0, 0));
+        regularModels.push_back(std::move(cubeB));
 
         glassMaterialShader = make_watched_shader(shaderMonitor, "assets/shaders/glass_vert.glsl", "assets/shaders/glass_frag.glsl");
         simpleShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/simple_frag.glsl");
-        iridescentShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/iridescent_frag.glsl");
-		debugShader = make_watched_shader(shaderMonitor, "assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
 
         cubeCamera.reset(new CubemapCamera({1024, 1024}));
 
@@ -228,8 +130,7 @@ struct ExperimentalApp : public GLFWApp
         {
             if (event.value[0] == GLFW_KEY_SPACE)
             {
-                //cubeCamera->export_pngs();
-                iridescentModel = Renderable(make_supershape_3d(16, ssM, ssN1, ssN2, ssN3));
+                cubeCamera->export_pngs();
             }
         }
     }
@@ -243,75 +144,41 @@ struct ExperimentalApp : public GLFWApp
 
     void on_draw() override
     {
-        glfwMakeContextCurrent(window);
+		glfwMakeContextCurrent(window);
         
-        if (igm) igm->begin_frame();
+		if (igm) igm->begin_frame();
 
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_DEPTH_TEST);
 
-       glEnable(GL_BLEND);
-       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        int width, height;
-        glfwGetWindowSize(window, &width, &height);
-        glViewport(0, 0, width, height);
+		int width, height;
+		glfwGetWindowSize(window, &width, &height);
+		glViewport(0, 0, width, height);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClearColor(1.0f, 0.1f, 0.0f, 1.0f);
+
+		const auto proj = camera.get_projection_matrix((float) width / (float) height);
+		const float4x4 view = camera.get_view_matrix();
+		const float4x4 viewProj = mul(proj, view);
         
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(1.0f, 0.1f, 0.0f, 1.0f);
-
-        ImGui::SliderInt("M", &ssM, 1, 30);
-        ImGui::SliderInt("N1", &ssN1, 1, 30);
-        ImGui::SliderInt("N2", &ssN2, 1, 30);
-        ImGui::SliderInt("N3", &ssN3, 1, 30);
-
-        ImGui::Spacing();
-
-        ImGui::BeginGroup();
-
-        if (ImGui::SliderFloat3("Position", &params.position.x, -5, 5))
-        {
-            parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
-        }
-
-        if (ImGui::SliderFloat3("Velocity", &params.velocity.x, -1.f, 1.f))
-        {
-            parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
-        }
-
-        if (ImGui::SliderFloat("Point Spacing", &params.pointSpacing, 0.5, 2.0))
-        {
-            parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
-        }
-
-        if (ImGui::SliderFloat("Point Count", &params.pointCount, 16, 64))
-        {
-            parabolicPointerRenderable = make_parabolic_pointer(pointerGeometry, params);
-        }
-
-        ImGui::EndGroup();
-
-
-
-        const auto proj = camera.get_projection_matrix((float) width / (float) height);
-        const float4x4 view = camera.get_view_matrix();
-        const float4x4 viewProj = mul(proj, view);
-        
-        auto draw_cubes = [&](float3 eye, float4x4 vp, float3 emissive)
+        auto draw_cubes = [&](float3 eye, float4x4 vp)
         {
             simpleShader->bind();
             
             simpleShader->uniform("u_eye", eye); 
             simpleShader->uniform("u_viewProj", vp);
             
-            simpleShader->uniform("u_emissive", emissive);
-            simpleShader->uniform("u_diffuse", float3(0.0f, 1.0f, 0.0f));
+            simpleShader->uniform("u_emissive", float3(0, 0, 0));
+            simpleShader->uniform("u_diffuse", float3(0.33f, 0.33f, 0.33f));
             
             for (int i = 0; i < 2; i++)
             {
-                simpleShader->uniform("u_lights[" + std::to_string(i) + "].position", float3(0, 10, 0));
-                simpleShader->uniform("u_lights[" + std::to_string(i) + "].color", float3(1, 0, 1));
+                simpleShader->uniform("u_lights[" + std::to_string(i) + "].position", lights[i].position);
+                simpleShader->uniform("u_lights[" + std::to_string(i) + "].color", lights[i].color);
             }
             
             for (const auto & model : regularModels)
@@ -320,8 +187,6 @@ struct ExperimentalApp : public GLFWApp
                 simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
                 model.draw();
             }
-
-             pointerRenderable.draw(); // ground plane
             
             simpleShader->unbind();
         };
@@ -329,82 +194,37 @@ struct ExperimentalApp : public GLFWApp
         // Render/Update cube camera
         cubeCamera->render = [&](float3 eyePosition, float4x4 viewMatrix, float4x4 projMatrix)
         {
-            //grid.render(projMatrix, viewMatrix);
-            //skydome.render(mul(projMatrix, viewMatrix), eyePosition, camera.farClip);
-            draw_cubes(eyePosition, mul(projMatrix, viewMatrix), float3(1, 1, 0));
+            skydome.render(mul(projMatrix, viewMatrix), eyePosition, camera.farClip);
+			draw_cubes(eyePosition, mul(projMatrix, viewMatrix));
         };
 
-        cubeCamera->update(float3(0, 0, 0)); // render from a camera positioned @ {0, 0, 0}
-
-        fog.set_uniforms(*simpleShader.get());
+        cubeCamera->update(camera.get_eye_point()); // render from a camera positioned @ {0, 0, 0}
 
         glViewport(0, 0, width, height);
-
-        //skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
         grid.render(proj, view);
 
-        draw_cubes(camera.get_eye_point(), viewProj, float3(1, 1, 1));
+        draw_cubes(camera.get_eye_point(), viewProj);
         
-		{
-		    debugShader->bind();
-            debugShader->uniform("u_viewProj", viewProj);
-            for (const auto & model : debugModels)
-            {
-                debugShader->uniform("u_modelMatrix", model.get_model());
-                debugShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                model.draw();
-            }
-
-			for (int i = 0; i < ptfBoxes.size(); ++i)
-            {
-				auto & model = ptfBoxes[i];
-				auto modelMat = ptf[i];
-                debugShader->uniform("u_modelMatrix", mul(modelMat, make_scaling_matrix(0.01)));
-                debugShader->uniform("u_modelMatrixIT", inv(transpose(modelMat)));
-                model.draw();
-            }
-
-            debugShader->unbind();
-		}
-
-        /*
+		// Glass material
         {
-
             glassMaterialShader->bind();
             
             glassMaterialShader->uniform("u_eye", camera.get_eye_point());
             glassMaterialShader->uniform("u_viewProj", viewProj);
+
+			// Can set from either a pre-loaded cubemap, or one capured from the cubeCamera
             glassMaterialShader->texture("u_cubemapTex", 0, cubeCamera->get_cubemap_handle(), GL_TEXTURE_CUBE_MAP); // cubeTex.get_gl_handle()
 
             for (const auto & model : glassModels)
             {
                 glassMaterialShader->uniform("u_modelMatrix", model.get_model());
                 glassMaterialShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                //model.draw();
+                model.draw();
             }
 
             glassMaterialShader->unbind();
             glDisable(GL_BLEND);
-        }
-
-        */
-
-        {
-            iridescentShader->bind();
-            
-            iridescentShader->uniform("u_eye", camera.get_eye_point());
-            iridescentShader->uniform("u_viewProj", viewProj);
-            iridescentShader->uniform("u_time", time);
-
-            auto mm = iridescentModel.get_model();
-            iridescentShader->uniform("u_modelMatrix", mm);
-            iridescentShader->uniform("u_modelMatrixIT", inv(transpose(mm)));
-
-            //iridescentModel.draw();
-
-            parabolicPointerRenderable.draw();
-
-            iridescentShader->unbind();
         }
 
         gl_check_error(__FILE__, __LINE__);
