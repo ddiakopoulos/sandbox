@@ -97,6 +97,8 @@ struct ExperimentalApp : public GLFWApp
 
     ExperimentalApp() : GLFWApp(1280, 800, "Geometric Algorithm Development App")
     {
+		glfwSwapInterval(0);
+
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
         
@@ -152,17 +154,13 @@ struct ExperimentalApp : public GLFWApp
 
 		// Initialize objects for ballistic trajectory tests
 		{
-			turret.source = Renderable(make_cube());
+			turret.source = Renderable(make_tetrahedron());
 			turret.source.pose = Pose({-5, 2, 5});
 
-			turret.target = Renderable(make_tetrahedron());
+			turret.target = Renderable(make_cube());
 			turret.target.pose = Pose({0, 0, 40});
 
-			turret.bullet = Renderable(make_sphere(0.25f));
-
-			turret.projectile.p = turret.source.pose;
-			turret.projectile.lastPos = turret.source.pose.position;
-			turret.projectile.gravity = 9.8f;
+			turret.bullet = Renderable(make_sphere(1.0f));
 		}
 
         gl_check_error(__FILE__, __LINE__);
@@ -182,10 +180,12 @@ struct ExperimentalApp : public GLFWApp
     void on_update(const UpdateEvent & e) override
     {
 		// Around 60 fps
-		if (turret.fired)
+		if (fixedTimer.milliseconds().count() >= 16 && turret.fired)
 		{
-			turret.projectile.fixed_update(e.timestep_ms);
-			std::cout << turret.projectile.p.position << std::endl;
+			float timestep_ms = fixedTimer.milliseconds().count() / 1000.f;
+			turret.projectile.fixed_update(timestep_ms);
+			std::cout << timestep_ms << std::endl;
+			//std::cout << turret.projectile.p.position << std::endl;
 			fixedTimer.reset();
 		}
 
@@ -231,10 +231,13 @@ struct ExperimentalApp : public GLFWApp
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(1.0f, 0.1f, 0.0f, 1.0f);
 
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
 		ImGui::SliderFloat("Projectile Velocity", &turret.velocity, 0.f, 100.f);
 
 		if (ImGui::Button("Fire"))
 		{
+			turret.projectile = BallisticProjectile();
 			turret.projectile.p = turret.source.pose;
 			turret.projectile.lastPos = turret.source.pose.position;
 			turret.projectile.gravity = 0.0;
