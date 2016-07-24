@@ -764,6 +764,7 @@ namespace avl
         
         float operator() (const float phi) const 
         {
+			/*
             const float r = m * phi / 4.0f;
 
             float t1 = std::abs(std::cos(r) / (1.0 / a));
@@ -773,6 +774,11 @@ namespace avl
             t2 = std::pow(t2, n3);
 
             return std::pow(t1 + t2, -1.0f / n1);
+			*/
+
+			float raux1 = std::pow(std::abs(1.f / a * std::cos(m * phi / 4.f)), n2) + std::pow(std::abs(1.f / b * std::sin(m * phi / 4.f)), n3);
+			float r1 = std::pow(std::abs(raux1), -1.0f / n1);
+			return r1;
         }
     };
 

@@ -228,6 +228,8 @@ inline Geometry make_parabolic_pointer(const Geometry & navMesh, const Parabolic
     if (gotCurve)
     {
         pointerGeometry = make_parabolic_geometry(points, v, 0.1);
+		pointerGeometry.compute_bounds();
+		pointerGeometry.compute_normals();
     }
 
     //std::cout << "Parabola Points: " << std::endl;

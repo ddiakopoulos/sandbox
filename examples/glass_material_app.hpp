@@ -106,7 +106,7 @@ struct ExperimentalApp : public GLFWApp
         regularModels.push_back(std::move(cubeA));
 
         Renderable cubeB = Renderable(make_cube());
-		cubeB.pose = Pose(make_rotation_quat_axis_angle({1, 0, 1}, ANVIL_PI / 4), float3(-5, 0, 0));
+		cubeB.pose = Pose(make_rotation_quat_axis_angle({1, 0, }, ANVIL_PI / 4), float3(-5, 0, 0));
         regularModels.push_back(std::move(cubeB));
 
         glassMaterialShader = make_watched_shader(shaderMonitor, "assets/shaders/glass_vert.glsl", "assets/shaders/glass_frag.glsl");
