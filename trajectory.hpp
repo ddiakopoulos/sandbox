@@ -35,8 +35,8 @@ inline float ballistic_range(float speed, float gravity, float initial_height)
 
 // Solve firing angles for a ballistic projectile with speed and gravity to hit a fixed position.
 //
-// proj_pos (float3): point projectile will fire from
-// proj_speed (float): scalar speed of projectile
+// origin (float3): point projectile will fire from
+// speed (float): scalar speed of projectile
 // target (float3): point projectile is trying to hit
 // gravity (float): force of gravity, positive down
 //

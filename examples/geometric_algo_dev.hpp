@@ -27,6 +27,7 @@ struct ExperimentalApp : public GLFWApp
     RenderableGrid grid;
     FlyCameraController cameraController;
     ShaderMonitor shaderMonitor;
+	TimeKeeper fixedTimer;
 
     std::shared_ptr<GlShader> simpleShader;
 	std::shared_ptr<GlShader> normalDebugShader;
@@ -47,6 +48,45 @@ struct ExperimentalApp : public GLFWApp
 	std::future<Geometry> pointerFuture;
 	bool regeneratePointer = false;
 
+	struct BallisticProjectile 
+	{
+		Pose p;
+		float3 lastPos;
+		float3 impulse;
+		float gravity;
+
+		void fixed_update(float dt) 
+		{
+			// verlet integration
+			float3 accel = -gravity * float3(0, 1, 0);
+			float3 curPos = p.position;
+			float3 newPos = curPos + (curPos - lastPos) + impulse*dt + accel*dt*dt;
+			lastPos = curPos;
+
+			p.position = newPos;
+
+			impulse = float3(0, 0, 0);
+		}
+
+		void add_impulse(float3 i) 
+		{
+			impulse += i;
+		}
+	};
+
+	struct Turret
+	{
+		Renderable target;
+		Renderable source;
+		Renderable bullet;
+		BallisticProjectile projectile;
+		float velocity = 50.f;
+		bool fired = false;
+	};
+
+
+	Turret turret;
+
 	struct Light
 	{
 		float3 position;
@@ -60,6 +100,8 @@ struct ExperimentalApp : public GLFWApp
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
         
+		fixedTimer.start();
+
 		lights[0] = {{0, 10, -10}, {0, 0, 1}};
 		lights[1] = {{0, 10, 10}, {0, 1, 0}};
 
@@ -108,6 +150,21 @@ struct ExperimentalApp : public GLFWApp
 			parabolicPointer = make_parabolic_pointer(worldSurface, params);
 		}
 
+		// Initialize objects for ballistic trajectory tests
+		{
+			turret.source = Renderable(make_cube());
+			turret.source.pose = Pose({-5, 2, 5});
+
+			turret.target = Renderable(make_tetrahedron());
+			turret.target.pose = Pose({0, 0, 40});
+
+			turret.bullet = Renderable(make_sphere(0.25f));
+
+			turret.projectile.p = turret.source.pose;
+			turret.projectile.lastPos = turret.source.pose.position;
+			turret.projectile.gravity = 9.8f;
+		}
+
         gl_check_error(__FILE__, __LINE__);
     }
     
@@ -124,6 +181,14 @@ struct ExperimentalApp : public GLFWApp
     
     void on_update(const UpdateEvent & e) override
     {
+		// Around 60 fps
+		if (turret.fired)
+		{
+			turret.projectile.fixed_update(e.timestep_ms);
+			std::cout << turret.projectile.p.position << std::endl;
+			fixedTimer.reset();
+		}
+
         cameraController.update(e.timestep_ms);
         time += e.timestep_ms;
         shaderMonitor.handle_recompile();
@@ -148,7 +213,6 @@ struct ExperimentalApp : public GLFWApp
 				return make_supershape_3d(16, ssM, ssN1, ssN2, ssN3);
 			});
 		}
-
     }
 
     void on_draw() override
@@ -167,6 +231,38 @@ struct ExperimentalApp : public GLFWApp
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(1.0f, 0.1f, 0.0f, 1.0f);
 
+		ImGui::SliderFloat("Projectile Velocity", &turret.velocity, 0.f, 100.f);
+
+		if (ImGui::Button("Fire"))
+		{
+			turret.projectile.p = turret.source.pose;
+			turret.projectile.lastPos = turret.source.pose.position;
+			turret.projectile.gravity = 0.0;
+
+			/*
+			float3 firingSolutionLow;
+			float3 firingSolutionHigh;
+			auto numSolutions = solve_ballistic_arc(turret.source.pose.position, turret.velocity, turret.target.pose.position, 9.8f, firingSolutionLow, firingSolutionHigh);
+			*/
+			
+			float3 fireVelocity;
+			float gravity;
+			auto canFire = solve_ballistic_arc_lateral(turret.source.pose.position, turret.velocity, turret.target.pose.position, 10.f, fireVelocity, gravity);
+
+			//std::cout << "Num Solutions: " << numSolutions << std::endl;
+			//std::cout << "Low Solution: " << firingSolutionLow << std::endl;
+			std::cout << "Fire Velocity: " << fireVelocity << std::endl;
+
+			if (canFire)
+			{
+				turret.projectile.gravity = gravity;
+				turret.projectile.add_impulse(fireVelocity);
+				turret.fired = true;
+			}
+		}
+
+		ImGui::Spacing();
+
 		if (ImGui::SliderInt("M", &ssM, 1, 30)) regeneratePointer = true;
 		if (ImGui::SliderInt("N1", &ssN1, 1, 30)) regeneratePointer = true;
 		if (ImGui::SliderInt("N2", &ssN2, 1, 30)) regeneratePointer = true;
@@ -176,17 +272,17 @@ struct ExperimentalApp : public GLFWApp
 
 		ImGui::BeginGroup();
 
-			if (ImGui::SliderFloat3("Position", &params.position.x, -5, 5))
-				parabolicPointer = make_parabolic_pointer(worldSurface, params);
+		if (ImGui::SliderFloat3("Position", &params.position.x, -5, 5))
+			parabolicPointer = make_parabolic_pointer(worldSurface, params);
 
-			if (ImGui::SliderFloat3("Velocity", &params.velocity.x, -1.f, 1.f))
-				parabolicPointer = make_parabolic_pointer(worldSurface, params);
+		if (ImGui::SliderFloat3("Velocity", &params.velocity.x, -1.f, 1.f))
+			parabolicPointer = make_parabolic_pointer(worldSurface, params);
 
-			if (ImGui::SliderFloat("Point Spacing", &params.pointSpacing, 0.5, 2.0))
-				parabolicPointer = make_parabolic_pointer(worldSurface, params);
+		if (ImGui::SliderFloat("Point Spacing", &params.pointSpacing, 0.5, 2.0))
+			parabolicPointer = make_parabolic_pointer(worldSurface, params);
 
-			if (ImGui::SliderFloat("Point Count", &params.pointCount, 16, 64))
-				parabolicPointer = make_parabolic_pointer(worldSurface, params);
+		if (ImGui::SliderFloat("Point Count", &params.pointCount, 16, 64))
+			parabolicPointer = make_parabolic_pointer(worldSurface, params);
 
         ImGui::EndGroup();
 
@@ -219,6 +315,21 @@ struct ExperimentalApp : public GLFWApp
 				simpleShader->uniform("u_modelMatrix", model.get_model());
 				simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
 				model.draw();
+			}
+
+			{
+				simpleShader->uniform("u_modelMatrix", turret.source.get_model());
+				simpleShader->uniform("u_modelMatrixIT", inv(transpose(turret.source.get_model())));
+				turret.source.draw();
+
+				simpleShader->uniform("u_modelMatrix", turret.target.get_model());
+				simpleShader->uniform("u_modelMatrixIT", inv(transpose(turret.target.get_model())));
+				turret.target.draw();
+
+				auto projectileMat = turret.projectile.p.matrix();
+				simpleShader->uniform("u_modelMatrix", projectileMat);
+				simpleShader->uniform("u_modelMatrixIT", inv(transpose(projectileMat)));
+				turret.bullet.draw();
 			}
 
 			simpleShader->unbind();
