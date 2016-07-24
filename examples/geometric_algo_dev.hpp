@@ -120,9 +120,6 @@ struct ExperimentalApp : public GLFWApp
     {
         cameraController.handle_input(event);
         if (igm) igm->update_input(event);
-        if (event.type == InputEvent::Type::KEY)
-        {
-        }
     }
     
     void on_update(const UpdateEvent & e) override
@@ -139,6 +136,7 @@ struct ExperimentalApp : public GLFWApp
 			{
 				auto m = pointerFuture.get();
 				supershape = m;
+				supershape.pose.position = {0, 2, -2};
 				pointerFuture = {};
 			}
 		}
