@@ -81,7 +81,6 @@ namespace avl
         
     };
     
-    
     /////////////////////////////////
     // Universal Coordinate System //
     /////////////////////////////////
@@ -357,6 +356,11 @@ namespace avl
         Pose        operator * (const Pose & pose) const            { return {qmul(orientation,pose.orientation), transform_coord(pose.position)}; }
     };
     
+	inline std::ostream & operator << (std::ostream & o, const Pose & r)
+    {
+        return o << "{" << r.position << ", " << r.orientation << "}";
+    }
+
     inline float4x4 make_view_matrix_from_pose(const Pose & pose)
     {
         return pose.inverse().matrix();
@@ -372,6 +376,14 @@ namespace avl
         p.orientation = safe_normalize(make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
         return p;
     }
+
+	inline Pose make_pose_from_transform_matrix(float4x4 transform)
+	{
+		Pose p;
+		p.position = transform[3].xyz();
+		p.orientation = make_rotation_quat_from_rotation_matrix(get_rotation_submatrix(transform));
+		return p;
+	}
     
     /////////////
     //   Ray   //

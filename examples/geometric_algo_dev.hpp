@@ -163,6 +163,11 @@ struct ExperimentalApp : public GLFWApp
 			turret.bullet = Renderable(make_sphere(1.0f));
 		}
 
+		float4x4 tMat = mul(make_translation_matrix({3, 4, 5}), make_rotation_matrix({0, 0, 1}, ANVIL_PI / 2));
+		auto p = make_pose_from_transform_matrix(tMat);
+		std::cout << tMat << std::endl;
+		std::cout << p << std::endl;
+
         gl_check_error(__FILE__, __LINE__);
     }
     
