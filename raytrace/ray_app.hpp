@@ -62,7 +62,7 @@ struct DirectionalLight
 
 struct Scene
 {
-	float3 sky;
+	float3 environment;
 	float3 ambient;
 	DirectionalLight dirLight;
 	std::vector<RaytracedSphere> spheres;
@@ -86,6 +86,18 @@ struct Scene
 			light += dirLight.compute_phong(hit, eyeDir);
 		}
 		return light;
+	}
+
+	float3 get_ray(const Ray & ray)
+	{
+		HitResult best;
+		for (auto & s : spheres)
+		{
+			auto hit = s.intersects(ray);
+			if (hit.d < best.d) best = hit;
+		}
+		best.location = ray.origin + ray.direction * best.d;
+		return best() ? compute_diffuse(best, ray.origin) : environment;
 	}
 };
 
