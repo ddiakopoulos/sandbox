@@ -49,6 +49,29 @@ struct RaytracedSphere : public Sphere
 	}
 };
 
+struct DirectionalLight
+{
+	float3 dir;
+	float3 color;
+
+	// Lambertian material
+	float3 compute_phong(const HitResult & hit, const float3 & eyeDir)
+	{
+		float3 half = normalize(dir + eyeDir);
+		float diff = max(dot(hit.normal, dir), 0.0f);
+		float spec = pow(max(dot(hit.normal, half), 0.0f), 128.0f);
+		return hit.m->diffuse * color * (diff + spec);
+	}
+};
+
+struct Scene
+{
+	float3 sky;
+	float3 ambient;
+	DirectionalLight dirLight;
+	std::vector<RaytracedSphere> spheres;
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
