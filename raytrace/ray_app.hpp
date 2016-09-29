@@ -10,6 +10,13 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
     return shader;
 }
 
+struct PixelCollection
+{
+	std::vector<float3> pixelBuffer;
+	PixelCollection(int width, int height) : pixelBuffer(width * height) { }
+	// Todo - save image
+};
+
 struct Material
 {
 	float3 diffuse;
@@ -27,11 +34,14 @@ struct HitResult
 	bool operator()(void) { return d < std::numeric_limits<float>::infinity(); }
 };
 
-struct RaytracedSurface
+struct RaytracedSphere : public Sphere
 {
-	std::vector<float3> pixelBuffer;
+	Material m;
 
-	RaytracedSurface(int width, int height) : pixelBuffer(width * height) { }
+	bool query_occlusion(const Ray & ray) const 
+	{ 
+		return intersect_ray_sphere(ray, *this, nullptr);
+	}
 };
 
 struct ExperimentalApp : public GLFWApp
