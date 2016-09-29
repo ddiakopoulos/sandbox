@@ -1,5 +1,8 @@
 #include "index.hpp"
 
+// ToDo
+// [ ] Decouple window size / framebuffer size for gl render target
+
 std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath, const std::string geomPath = "")
 {
     std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath), read_file_text(geomPath));
@@ -15,6 +18,7 @@ struct ExperimentalApp : public GLFWApp
 
 	std::shared_ptr<GlTexture> renderSurface;
 	std::shared_ptr<GLTextureView> renderView;
+	std::vector<uint8_t> pixelBuffer;
 
     GlCamera camera;
     FlyCameraController cameraController;
@@ -26,6 +30,7 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
+		pixelBuffer.resize(1200 * 800 * 3);
 		renderSurface.reset(new GlTexture());
 		renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
@@ -73,6 +78,7 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 viewProj = mul(proj, view);
 
         {
+			renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, pixelBuffer.data());
 			Bounds2D renderArea = { 0, 0, (float)width, (float)height };
 			renderView->draw(renderArea, { 1200, 800 });
         }
