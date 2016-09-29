@@ -24,7 +24,6 @@ struct Material
 
 struct HitResult
 {
-
 	float d = std::numeric_limits<float>::infinity();
 	float3 location, normal;
 
@@ -42,6 +41,21 @@ struct RaytracedSphere : public Sphere
 	{ 
 		return intersect_ray_sphere(ray, *this, nullptr);
 	}
+
+	HitResult intersects(const Ray & ray) const
+	{
+		float outT; 
+		float3 normal;
+		if (intersect_ray_sphere(ray, *this, &outT))
+		{
+			HitResult(outT, float3(0, 0, 0));
+		}
+		else
+		{
+			HitResult(); // nothing
+		}
+	}
+
 };
 
 struct ExperimentalApp : public GLFWApp
