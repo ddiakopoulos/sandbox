@@ -10,17 +10,24 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
     return shader;
 }
 
-struct RayTracedSurface
+struct HitResult
 {
+	float d = std::numeric_limits<float>::infinity();
+	float3 point, normal;
 
+	HitResult() {}
+	HitResult(float d, float3 normal) : d(d), normal(normal) {}
+
+	bool operator()(void) { return d < std::numeric_limits<float>::infinity(); }
+};
+
+struct RaytracedSurface
+{
 	std::vector<float3> pixelBuffer;
 
-	RayTracedSurface(int width, int height) : pixelBuffer(width * height)
-	{
-
-	}
-
+	RaytracedSurface(int width, int height) : pixelBuffer(width * height) { }
 };
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
