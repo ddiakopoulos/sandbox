@@ -10,6 +10,17 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
     return shader;
 }
 
+struct RayTracedSurface
+{
+
+	std::vector<float3> pixelBuffer;
+
+	RayTracedSurface(int width, int height) : pixelBuffer(width * height)
+	{
+
+	}
+
+};
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -18,7 +29,7 @@ struct ExperimentalApp : public GLFWApp
 
 	std::shared_ptr<GlTexture> renderSurface;
 	std::shared_ptr<GLTextureView> renderView;
-	std::vector<uint8_t> pixelBuffer;
+
 
     GlCamera camera;
     FlyCameraController cameraController;
@@ -30,7 +41,6 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
-		pixelBuffer.resize(1200 * 800 * 3);
 		renderSurface.reset(new GlTexture());
 		renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
