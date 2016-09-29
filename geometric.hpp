@@ -356,6 +356,16 @@ namespace avl
         Pose        operator * (const Pose & pose) const            { return {qmul(orientation,pose.orientation), transform_coord(pose.position)}; }
     };
     
+	inline bool operator == (const Pose & a, const Pose & b)
+	{
+		return (a.position == b.position) && (a.orientation == b.orientation);
+	}
+
+	inline bool operator != (const Pose & a, const Pose & b)
+	{
+		return (a.position != b.position) || (a.orientation != b.orientation);
+	}
+
 	inline std::ostream & operator << (std::ostream & o, const Pose & r)
     {
         return o << "{" << r.position << ", " << r.orientation << "}";
