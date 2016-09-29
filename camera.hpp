@@ -150,8 +150,8 @@ namespace avl
         
     public:
         
+		bool enableSpring = true;
         float movementSpeed = 21.00f;
-        
         float3 lastLook;
         
         FlyCameraController() {}
@@ -225,12 +225,19 @@ namespace avl
             auto current = cam->get_pose().position;
             auto target = cam->get_pose().transform_coord(move);
             
-            float springyX = damped_spring(target.x, current.x, velocity.x, delta, 0.99);
-            float springyY = damped_spring(target.y, current.y, velocity.y, delta, 0.99);
-            float springyZ = damped_spring(target.z, current.z, velocity.z, delta, 0.99);
-            
-            float3 dampedLocation = {springyX, springyY, springyZ};
-            cam->set_position(dampedLocation);
+			if (enableSpring)
+			{
+				float springyX = damped_spring(target.x, current.x, velocity.x, delta, 0.99);
+				float springyY = damped_spring(target.y, current.y, velocity.y, delta, 0.99);
+				float springyZ = damped_spring(target.z, current.z, velocity.z, delta, 0.99);
+
+				float3 dampedLocation = { springyX, springyY, springyZ };
+				cam->set_position(dampedLocation);
+			}
+			else
+			{
+				cam->set_position(target);
+			}
             
             float3 lookVec;
             lookVec.x = cam->get_eye_point().x - 1.f * cosf(camPitch) * sinf(camYaw);

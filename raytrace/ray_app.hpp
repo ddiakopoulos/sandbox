@@ -6,7 +6,7 @@
 // ToDo
 // ----------------------------------------------------------------------------
 // [ ] Decouple window size / framebuffer size for gl render target
-// [ ] Raytraced scene - spheres with phong shading
+// [X] Raytraced scene - spheres with phong shading
 // [ ] Occlusion support
 // [ ] Add other objects (box, plane, disc)
 // [ ] Add tri-meshes (Mitsuba object, cornell box, lucy statue from *.obj)
@@ -46,7 +46,11 @@ struct HitResult
 struct RaytracedSphere : public Sphere
 {
 	Material m;
-	bool query_occlusion(const Ray & ray) const  { return intersect_ray_sphere(ray, *this, nullptr); }
+	bool query_occlusion(const Ray & ray) const 
+	{
+		return intersect_ray_sphere(ray, *this, nullptr); 
+	}
+
 	HitResult intersects(const Ray & ray)
 	{
 		float outT; 
@@ -66,7 +70,7 @@ struct DirectionalLight
 	{
 		float3 half = normalize(dir + eyeDir);
 		float diff = max(dot(hit.normal, dir), 0.0f);
-		float spec = pow(max(dot(hit.normal, half), 0.0f), 128.0f);
+		float spec = pow(max(dot(hit.normal, half), 0.0f), 32.0f);
 		return hit.m->diffuse * color * (diff + spec);
 	}
 };
@@ -82,7 +86,10 @@ struct Scene
 	{
 		for (auto & s : spheres)
 		{
-			if (s.query_occlusion(ray)) return true;
+			if (s.query_occlusion(ray))
+			{
+				return true;
+			}
 		}
 		return false;
 	}
@@ -124,8 +131,8 @@ struct Film
 	void trace(Scene & scene, const int2 & coord)
 	{
 		auto halfDims = float2(size - 1) * 0.5f;
-		auto aspectRatio = (float)size.x / size.y;
-		auto viewDirection = normalize(float3((coord.x - halfDims.x) * aspectRatio / halfDims.x, (halfDims.y - coord.y) / halfDims.y, -1));
+		auto aspectRatio = (float) size.x / (float) size.y;
+		auto viewDirection = normalize(float3((coord.x - halfDims.x) * aspectRatio / halfDims.x, (halfDims.y - coord.y) / halfDims.y, -1)); // screen-space ray
 		samples[coord.y * size.x + coord.x] = scene.get_ray(view * Ray{ { 0,0,0 }, viewDirection });
 	}
 
@@ -133,11 +140,12 @@ struct Film
 	{
 		if (currentLine < size.y)
 		{
-			for (int x = 0; x < size.x; ++x) 
-				trace(scene, { x, currentLine });
+			for (int x = 0; x < size.x; ++x) trace(scene, { x, currentLine });
 			++currentLine;
 		}
 	}
+
+	bool exposure_finished() { return currentLine == size.y; }
 };
 
 struct ExperimentalApp : public GLFWApp
@@ -162,20 +170,25 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
-		camera.look_at({ 0, 0, -5 }, { 0, 0, 0 });
+		camera.look_at({ 0, 0, -6 }, { 0, 0, 0 });
+		cameraController.set_camera(&camera);
+		cameraController.enableSpring = false;
+		cameraController.movementSpeed = 0.1f;
 
-		scene.dirLight.dir = float3(-0.25, -0.5, 0.1);
+		scene.dirLight.dir = normalize(float3(0, -1.0, 0));
 		scene.dirLight.color = float3(1, 1, 0.25);
-		scene.ambient = float3(0.25, 0.25, 0.25);
-		scene.environment = float3(0, 0, 1); 
+		scene.ambient = float3(0.1, 0.1, 0.1);
+		scene.environment = float3(85.f / 255.f, 29.f / 255.f, 255.f / 255.f); 
 
 		RaytracedSphere a;
 		RaytracedSphere b;
 
-		a.radius = b.radius = 2.0;
-		a.m.diffuse = b.m.diffuse = float3(1, 0, 1);
-		a.center = float3(-1, 0.f, -1.5);
-		b.center = float3(+1, 0.f, -1.5);
+		a.radius = 1.0;
+		b.radius = 1.0;
+		a.m.diffuse = float3(1, 0, 0);
+		b.m.diffuse = float3(0, 1, 0);
+		a.center = float3(-1, 0.f, -1.0);
+		b.center = float3(+1, 0.f, -2.0);
 
 		scene.spheres.push_back(a);
 		scene.spheres.push_back(b);
@@ -188,14 +201,9 @@ struct ExperimentalApp : public GLFWApp
         
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
-        
-        cameraController.set_camera(&camera);
     }
     
-    void on_window_resize(int2 size) override
-    {
-
-    }
+    void on_window_resize(int2 size) override { }
     
     void on_input(const InputEvent & event) override
     {
@@ -207,6 +215,12 @@ struct ExperimentalApp : public GLFWApp
     {
         cameraController.update(e.timestep_ms);
         shaderMonitor.handle_recompile();
+
+		// Check if camera position has changed
+		if (camera.get_pose().position != film->view.position)
+		{
+			film.reset(new Film(1200, 800, camera.get_pose()));
+		}
     }
     
     void on_draw() override
@@ -221,25 +235,27 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
      
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.f, 0.f, 0.f, 1.0f);
 
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
 
+		if (!film->exposure_finished())
         {
-			for (int i = 0; i < 16; ++i)
+			// Work group size per frame
+			for (int i = 0; i < 128; ++i)
 			{
 				film->raytrace_scanline(scene);
 			}
-
 			renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
-			Bounds2D renderArea = { 0, 0, (float)width, (float)height };
-			renderView->draw(renderArea, { 1200, 800 });
         }
 
+		Bounds2D renderArea = { 0, 0, (float)width, (float)height };
+		renderView->draw(renderArea, { 1200, 800 });
+
         if (igm) igm->begin_frame();
-        // ImGui Controls
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         if (igm) igm->end_frame();
         
         gl_check_error(__FILE__, __LINE__);
