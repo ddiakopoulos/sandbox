@@ -26,9 +26,10 @@ struct HitResult
 {
 	float d = std::numeric_limits<float>::infinity();
 	float3 location, normal;
+	Material * m;
 
 	HitResult() {}
-	HitResult(float d, float3 normal) : d(d), normal(normal) {}
+	HitResult(float d, float3 normal, Material * m) : d(d), normal(normal), m(m) {}
 
 	bool operator()(void) { return d < std::numeric_limits<float>::infinity(); }
 };
@@ -45,10 +46,10 @@ struct RaytracedSphere : public Sphere
 	HitResult intersects(const Ray & ray) const
 	{
 		float outT; 
-		float3 normal;
-		if (intersect_ray_sphere(ray, *this, &outT))
+		float3 outNormal;
+		if (intersect_ray_sphere(ray, *this, &outT, &outNormal))
 		{
-			return HitResult(outT, float3(0, 0, 0));
+			return HitResult(outT, outNormal, &m);
 		}
 		else
 		{
