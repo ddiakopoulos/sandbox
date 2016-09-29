@@ -48,14 +48,13 @@ struct RaytracedSphere : public Sphere
 		float3 normal;
 		if (intersect_ray_sphere(ray, *this, &outT))
 		{
-			HitResult(outT, float3(0, 0, 0));
+			return HitResult(outT, float3(0, 0, 0));
 		}
 		else
 		{
-			HitResult(); // nothing
+			return HitResult(); // nothing
 		}
 	}
-
 };
 
 struct ExperimentalApp : public GLFWApp

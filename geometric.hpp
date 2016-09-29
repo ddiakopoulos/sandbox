@@ -647,7 +647,7 @@ namespace avl
         return true;
     }
     
-    inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * outT = nullptr)
+    inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * outT = nullptr, float3 * outNormal = nullptr)
     {
         float t;
         float3 diff = ray.origin - sphere.center;
@@ -656,10 +656,7 @@ namespace avl
         float c = dot(diff, diff) - sphere.radius * sphere.radius;
         float disc = b * b - 4.0f * a * c;
         
-        if (disc < 0.0f)
-        {
-            return false;
-        }
+        if (disc < 0.0f) return false;
         else
         {
             float e = std::sqrt(disc);
@@ -669,6 +666,7 @@ namespace avl
             if (t > SPHERE_EPSILON)
             {
                 if (outT) *outT = t;
+				if (outNormal) *outNormal = t ? ((ray.direction * t - diff) / sphere.radius) : normalize(ray.direction * t - diff);
                 return true;
             }
             
@@ -676,11 +674,13 @@ namespace avl
             if (t > SPHERE_EPSILON)
             {
                 if (outT) *outT = t;
+				if (outNormal) *outNormal = t ? ((ray.direction * t - diff) / sphere.radius) : normalize(ray.direction * t - diff);
                 return true;
             }
         }
         
         if (outT) *outT = 0;
+		if (outNormal) *outNormal = float3(0, 0, 0);
         return false;
     }
     
