@@ -1,7 +1,25 @@
 #include "index.hpp"
 
+// Reference
+// http://graphics.pixar.com/library/HQRenderingCourse/paper.pdf
+
 // ToDo
+// ----------------------------------------------------------------------------
 // [ ] Decouple window size / framebuffer size for gl render target
+// [ ] Raytraced scene - spheres with phong shading
+// [ ] Occlusion support
+// [ ] Add other objects (box, plane, disc)
+// [ ] Add tri-meshes (Mitsuba object, cornell box, lucy statue from *.obj)
+// [ ] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
+// [ ] Reflective objects, glossy
+// [ ] KDTree + OpenMP
+// [ ] More materials: matte, reflective, transparent & png textures
+// [ ] BVH Structure
+// [ ] New camera models: pinhole, fisheye, spherical
+// [ ] New light types: point, area
+// [ ] Portals (hehe)
+// [ ] Bidirectional path tracing / photon mapping
+// [ ] Embree acceleration
 
 std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath, const std::string geomPath = "")
 {
@@ -10,11 +28,10 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
     return shader;
 }
 
-struct PixelCollection
+struct Film
 {
-	std::vector<float3> pixelBuffer;
-	PixelCollection(int width, int height) : pixelBuffer(width * height) { }
-	// Todo - save image
+	std::vector<float3> samples;
+	Film(int width, int height) : samples(width * height) { }
 };
 
 struct Material
