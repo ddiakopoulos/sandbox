@@ -28,12 +28,6 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
     return shader;
 }
 
-struct Film
-{
-	std::vector<float3> samples;
-	Film(int width, int height) : samples(width * height) { }
-};
-
 struct Material
 {
 	float3 diffuse;
@@ -118,6 +112,34 @@ struct Scene
 	}
 };
 
+struct Film
+{
+	std::vector<float3> samples;
+	int2 size;
+	Pose view;
+	int currentLine = 0;
+
+	Film(int width, int height, Pose view) : samples(width * height), size({ width, height }), view(view) { }
+
+	void trace(Scene & scene, const int2 & coord)
+	{
+		auto halfDims = float2(size - 1) * 0.5f;
+		auto aspectRatio = (float)size.x / size.y;
+		auto viewDirection = normalize(float3((coord.x - halfDims.x) * aspectRatio / halfDims.x, (halfDims.y - coord.y) / halfDims.y, -1));
+		samples[coord.y * size.x + coord.x] = scene.get_ray(view * Ray{ { 0,0,0 }, viewDirection });
+	}
+
+	void raytrace_scanline(Scene & scene)
+	{
+		if (currentLine < size.y)
+		{
+			for (int x = 0; x < size.x; ++x) 
+				trace(scene, { x, currentLine });
+			++currentLine;
+		}
+	}
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     uint64_t frameCount = 0;
@@ -126,6 +148,9 @@ struct ExperimentalApp : public GLFWApp
 
 	std::shared_ptr<GlTexture> renderSurface;
 	std::shared_ptr<GLTextureView> renderView;
+
+	std::shared_ptr<Film> film;
+	Scene scene;
 
     GlCamera camera;
     FlyCameraController cameraController;
@@ -137,10 +162,29 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
-		renderSurface.reset(new GlTexture());
-		renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+		camera.look_at({ 0, 0, -5 }, { 0, 0, 0 });
 
+		scene.dirLight.dir = float3(-0.25, -0.5, 0.1);
+		scene.dirLight.color = float3(1, 1, 0.25);
+		scene.ambient = float3(0.25, 0.25, 0.25);
+		scene.environment = float3(0, 0, 1); 
+
+		RaytracedSphere a;
+		RaytracedSphere b;
+
+		a.radius = b.radius = 2.0;
+		a.m.diffuse = b.m.diffuse = float3(1, 0, 1);
+		a.center = float3(-1, 0.f, -1.5);
+		b.center = float3(+1, 0.f, -1.5);
+
+		scene.spheres.push_back(a);
+		scene.spheres.push_back(b);
+
+		renderSurface.reset(new GlTexture());
+		renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
 		renderView.reset(new GLTextureView(renderSurface->get_gl_handle()));
+		
+		film = std::make_shared<Film>(1200, 800, camera.get_pose());
         
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
@@ -184,7 +228,12 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 viewProj = mul(proj, view);
 
         {
-			renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, pixelBuffer.data());
+			for (int i = 0; i < 16; ++i)
+			{
+				film->raytrace_scanline(scene);
+			}
+
+			renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
 			Bounds2D renderArea = { 0, 0, (float)width, (float)height };
 			renderView->draw(renderArea, { 1200, 800 });
         }
