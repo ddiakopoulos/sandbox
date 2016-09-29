@@ -12,7 +12,10 @@ struct ExperimentalApp : public GLFWApp
     uint64_t frameCount = 0;
 
     std::unique_ptr<gui::ImGuiManager> igm;
-    
+
+	std::shared_ptr<GlTexture> renderSurface;
+	std::shared_ptr<GLTextureView> renderView;
+
     GlCamera camera;
     FlyCameraController cameraController;
     ShaderMonitor shaderMonitor;
@@ -22,6 +25,11 @@ struct ExperimentalApp : public GLFWApp
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
+
+		renderSurface.reset(new GlTexture());
+		renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+		renderView.reset(new GLTextureView(renderSurface->get_gl_handle()));
         
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
@@ -65,7 +73,8 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 viewProj = mul(proj, view);
 
         {
-            // Gl Rendering
+			Bounds2D renderArea = { 0, 0, (float)width, (float)height };
+			renderView->draw(renderArea, { 1200, 800 });
         }
 
         if (igm) igm->begin_frame();
