@@ -22,7 +22,8 @@ using namespace avl;
 //#include "examples/simplex_noise_app.hpp"
 //#include "examples/render_experiments.hpp"
 //#include "examples/glass_material_app.hpp"
-#include "geometric_algo_dev.hpp"
+//#include "geometric_algo_dev.hpp"
+#include "raytrace/ray_app.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"

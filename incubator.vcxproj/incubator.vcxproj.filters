@@ -31,6 +31,9 @@
     <Filter Include="source\virtual-reality">
       <UniqueIdentifier>{a8333473-545f-4b2a-ae82-220df8cabecc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="raytrace">
+      <UniqueIdentifier>{45272ebb-feed-4d84-823b-15c63712a6ae}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\third_party\fontstash.h">
@@ -264,6 +267,9 @@
     <ClInclude Include="..\examples\geometric_algo_dev.hpp">
       <Filter>examples</Filter>
     </ClInclude>
+    <ClInclude Include="..\raytrace\ray_app.hpp">
+      <Filter>raytrace</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
@@ -287,9 +293,6 @@
     <ClCompile Include="..\gizmo.cpp">
       <Filter>source\tools</Filter>
     </ClCompile>
-    <ClCompile Include="..\main.cpp">
-      <Filter>examples</Filter>
-    </ClCompile>
     <ClCompile Include="..\glfw_app.mm">
       <Filter>source\app</Filter>
     </ClCompile>
@@ -308,5 +311,6 @@
     <ClCompile Include="..\third_party\imgui\imgui_draw.cpp">
       <Filter>third_party\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="..\main.cpp" />
   </ItemGroup>
 </Project>
