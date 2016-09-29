@@ -450,7 +450,7 @@ namespace avl
         float radius;
         
         Sphere() {}
-        Sphere(const float3 &  center, float radius) : center(center), radius(radius) {}
+        Sphere(const float3 & center, float radius) : center(center), radius(radius) {}
         
         // Returns the closest point on the ray to the Sphere. If ray intersects then returns the point of nearest intersection.
         float3 closest_point(const Ray & ray) const

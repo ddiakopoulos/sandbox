@@ -10,10 +10,16 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
     return shader;
 }
 
+struct Material
+{
+	float3 diffuse;
+};
+
 struct HitResult
 {
+
 	float d = std::numeric_limits<float>::infinity();
-	float3 point, normal;
+	float3 location, normal;
 
 	HitResult() {}
 	HitResult(float d, float3 normal) : d(d), normal(normal) {}
