@@ -27,19 +27,15 @@ struct HitResult
 	float d = std::numeric_limits<float>::infinity();
 	float3 location, normal;
 	Material * m;
-
 	HitResult() {}
 	HitResult(float d, float3 normal, Material * m) : d(d), normal(normal), m(m) {}
-
-	bool operator()(void) { return d < std::numeric_limits<float>::infinity(); }
+	bool operator() (void) { return d < std::numeric_limits<float>::infinity(); }
 };
 
 struct RaytracedSphere : public Sphere
 {
 	Material m;
-
-	bool query_occlusion(const Ray & ray) const  {  return intersect_ray_sphere(ray, *this, nullptr); }
-
+	bool query_occlusion(const Ray & ray) const  { return intersect_ray_sphere(ray, *this, nullptr); }
 	HitResult intersects(const Ray & ray)
 	{
 		float outT; 
@@ -70,6 +66,27 @@ struct Scene
 	float3 ambient;
 	DirectionalLight dirLight;
 	std::vector<RaytracedSphere> spheres;
+
+	bool query_occlusion(const Ray & ray)
+	{
+		for (auto & s : spheres)
+		{
+			if (s.query_occlusion(ray)) return true;
+		}
+		return false;
+	}
+
+	float3 compute_diffuse(const HitResult & hit, const float3 & view)
+	{
+		float3 light = hit.m->diffuse * ambient;
+
+		if (!query_occlusion({ hit.location, dirLight.dir }))
+		{
+			float3 eyeDir = normalize(view - hit.location);
+			light += dirLight.compute_phong(hit, eyeDir);
+		}
+		return light;
+	}
 };
 
 struct ExperimentalApp : public GLFWApp
