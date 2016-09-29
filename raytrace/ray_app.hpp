@@ -38,23 +38,14 @@ struct RaytracedSphere : public Sphere
 {
 	Material m;
 
-	bool query_occlusion(const Ray & ray) const 
-	{ 
-		return intersect_ray_sphere(ray, *this, nullptr);
-	}
+	bool query_occlusion(const Ray & ray) const  {  return intersect_ray_sphere(ray, *this, nullptr); }
 
-	HitResult intersects(const Ray & ray) const
+	HitResult intersects(const Ray & ray)
 	{
 		float outT; 
 		float3 outNormal;
-		if (intersect_ray_sphere(ray, *this, &outT, &outNormal))
-		{
-			return HitResult(outT, outNormal, &m);
-		}
-		else
-		{
-			return HitResult(); // nothing
-		}
+		if (intersect_ray_sphere(ray, *this, &outT, &outNormal)) return HitResult(outT, outNormal, &m);
+		else return HitResult(); // nothing
 	}
 };
 
@@ -66,7 +57,6 @@ struct ExperimentalApp : public GLFWApp
 
 	std::shared_ptr<GlTexture> renderSurface;
 	std::shared_ptr<GLTextureView> renderView;
-
 
     GlCamera camera;
     FlyCameraController cameraController;
