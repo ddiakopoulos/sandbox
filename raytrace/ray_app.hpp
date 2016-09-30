@@ -58,28 +58,26 @@ struct RaytracedMesh
 {
     Geometry & g;
     Bounds3D bounds;
+    Material m;
 
-    RaytracedMesh(Geometry & g) : g(g)
+    RaytracedMesh(Geometry & g) : g(std::move(g))
     {
         bounds = g.compute_bounds();
     }
 
     bool query_occlusion(const Ray & ray) const
     {
-        // early out on bounds
-        return intersect_ray_sphere(ray, *this, nullptr);
+        return intersect_ray_mesh(ray, g, nullptr, nullptr);
     }
 
-    /*
     HitResult intersects(const Ray & ray)
     {
         float outT;
         float3 outNormal;
-        if (intersect_ray_sphere(ray, *this, &outT, &outNormal)) return HitResult(outT, outNormal, &m);
+        // intersect_ray_mesh() takes care of early out using bounding box & rays from inside
+        if (intersect_ray_mesh(ray, g, &outT, &outNormal)) return HitResult(outT, outNormal, &m);
         else return HitResult();
     }
-    */
-
 };
      
 struct DirectionalLight
@@ -106,13 +104,7 @@ struct Scene
 
 	bool query_occlusion(const Ray & ray)
 	{
-		for (auto & s : spheres)
-		{
-			if (s.query_occlusion(ray))
-			{
-				return true;
-			}
-		}
+		for (auto & s : spheres) if (s.query_occlusion(ray)) { return true; }
 		return false;
 	}
 
@@ -120,6 +112,7 @@ struct Scene
 	{
 		float3 light = hit.m->diffuse * ambient;
 
+        // make sure that we can trace a ray from the hit location towards the light
 		if (!query_occlusion({ hit.location, dirLight.dir }))
 		{
 			float3 eyeDir = normalize(view - hit.location);
