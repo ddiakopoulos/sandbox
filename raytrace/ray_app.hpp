@@ -22,9 +22,23 @@
 // [ ] Bidirectional path tracing / photon mapping
 // [ ] Embree acceleration
 
+RandomGenerator gen;
+
 struct Material
 {
 	float3 diffuse;
+
+    Ray get_reflected_ray(const Ray & r, const float3 & p, const float3 & n)
+    {
+        // perfect specular reflection
+        float roughness = 0.75;
+        float3 refl = r.direction - n * 2.0f * dot(n, r.direction);
+        refl = normalize(
+            float3(refl.x + (gen.random_float() - 0.5f) * roughness,
+                   refl.y + (gen.random_float() - 0.5f) * roughness,
+                   refl.z + (gen.random_float() - 0.5f) * roughness));
+        return Ray(p, refl);
+    }
 };
 
 struct HitResult
@@ -40,11 +54,7 @@ struct HitResult
 struct RaytracedSphere : public Sphere
 {
 	Material m;
-	bool query_occlusion(const Ray & ray) const
-	{
-		return intersect_ray_sphere(ray, *this, nullptr);
-	}
-
+    RaytracedSphere() {}
 	HitResult intersects(const Ray & ray)
 	{
 		float outT;
@@ -66,11 +76,6 @@ struct RaytracedMesh
         bounds = g.compute_bounds();
     }
 
-    bool query_occlusion(const Ray & ray)
-    {
-        return intersect_ray_mesh(ray, g, nullptr, nullptr, &bounds);
-    }
-
     HitResult intersects(const Ray & ray)
     {
         float outT;
@@ -85,15 +90,6 @@ struct DirectionalLight
 {
 	float3 dir;
 	float3 color;
-
-	// Lambertian material
-	float3 compute_phong(const HitResult & hit, const float3 & eyeDir)
-	{
-		float3 half = normalize(dir + eyeDir);
-		float diff = max(dot(hit.normal, dir), 0.0f);
-		float spec = pow(max(dot(hit.normal, half), 0.0f), 32.0f);
-		return hit.m->diffuse * color * (diff + spec);
-	}
 };
 
 struct Scene
@@ -104,27 +100,7 @@ struct Scene
 	std::vector<RaytracedSphere> spheres;
     std::vector<RaytracedMesh> meshes;
 
-	bool query_occlusion(const Ray & ray)
-	{
-		for (auto & s : spheres) if (s.query_occlusion(ray)) { return true; } 
-        for (auto & m : meshes) if (m.query_occlusion(ray)) { return true; }
-		return false;
-	}
-
-	float3 compute_diffuse(const HitResult & hit, const float3 & view)
-	{
-		float3 light = hit.m->diffuse * ambient;
-
-        // make sure that we can trace a ray from the hit location towards the light
-		if (!query_occlusion({ hit.location, dirLight.dir }))
-		{
-			float3 eyeDir = normalize(view - hit.location);
-			light += dirLight.compute_phong(hit, eyeDir);
-		}
-		return light;
-	}
-
-	float3 get_ray(const Ray & ray)
+	float3 trace_ray(const Ray & ray)
 	{
 		HitResult best;
 		for (auto & s : spheres)
@@ -137,8 +113,17 @@ struct Scene
             auto hit = m.intersects(ray);
             if (hit.d < best.d) best = hit;
         }
-		best.location = ray.origin + ray.direction * best.d;
-		return best() ? compute_diffuse(best, ray.origin) : environment;
+
+        best.location = ray.origin + ray.direction * best.d;
+        
+        // Reasonable/valid ray-material interaction:
+        if (best())
+        {
+            float3 light = best.m->diffuse * ambient;
+            Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal);
+            return light * trace_ray(reflected);
+        }
+        else return environment; // otherwise return environment color
 	}
 };
 
@@ -151,20 +136,28 @@ struct Film
 
 	Film(int width, int height, Pose view) : samples(width * height), size({ width, height }), view(view) { }
 
+    Ray make_ray_for_coordinate(const int2 & coord) const
+    {
+        auto halfDims = float2(size - 1) * 0.5f;
+        auto aspectRatio = (float)size.x / (float)size.y;
+        auto viewDirection = normalize(float3((coord.x - halfDims.x) * aspectRatio / halfDims.x, (halfDims.y - coord.y) / halfDims.y, -1)); // screen-space ray
+        return view * Ray(float3(0, 0, 0), viewDirection);
+    }
+
 	// Records the result of a ray traced through the camera origin (view) for a given pixel coordinate
 	void trace(Scene & scene, const int2 & coord)
 	{
-		auto halfDims = float2(size - 1) * 0.5f;
-		auto aspectRatio = (float)size.x / (float)size.y;
-		auto viewDirection = normalize(float3((coord.x - halfDims.x) * aspectRatio / halfDims.x, (halfDims.y - coord.y) / halfDims.y, -1)); // screen-space ray
-		samples[coord.y * size.x + coord.x] = scene.get_ray(view * Ray{ { 0,0,0 }, viewDirection });
+		samples[coord.y * size.x + coord.x] = scene.trace_ray(make_ray_for_coordinate(coord));
 	}
 
 	void raytrace_scanline(Scene & scene)
 	{
 		if (currentLine < size.y)
 		{
-			for (int x = 0; x < size.x; ++x) trace(scene, { x, currentLine });
+            for (int x = 0; x < size.x; ++x)
+            {
+                trace(scene, int2(x, currentLine));
+            }
 			++currentLine;
 		}
 	}
@@ -215,9 +208,10 @@ struct ExperimentalApp : public GLFWApp
 		a.center = float3(-1, 0.f, -1.0);
 		b.center = float3(+1, 0.f, -2.0);
 
-		//scene.spheres.push_back(a);
-		//scene.spheres.push_back(b);
+		scene.spheres.push_back(a);
+        scene.spheres.push_back(b);
 
+        /*
         auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
         rescale_geometry(shaderball, 2.f);
 
@@ -225,6 +219,7 @@ struct ExperimentalApp : public GLFWApp
         shaderballTrimesh.m.diffuse = float3(0, 1, 0);
         shaderballTrimesh.position = float3(0, 0, 0);
         scene.meshes.push_back(shaderballTrimesh);
+        */
 
 		renderSurface.reset(new GlTexture());
 		renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
@@ -276,6 +271,11 @@ struct ExperimentalApp : public GLFWApp
 			}
 			renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
 		}
+        else
+        {
+            // Reset
+            film->currentLine = 0;
+        }
 
 		Bounds2D renderArea = { 0, 0, (float) WIDTH, (float) HEIGHT };
 		renderView->draw(renderArea, { width, height });
