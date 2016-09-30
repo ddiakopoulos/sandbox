@@ -120,7 +120,7 @@ struct Scene
     std::vector<RaytracedSphere> spheres;
     std::vector<RaytracedMesh> meshes;
 
-    float3 trace_ray(const Ray & ray)
+    float3 trace_ray(const Ray & ray, int depth)
     {
         HitResult best;
         for (auto & p : planes)
@@ -145,9 +145,24 @@ struct Scene
         if (best())
         {
             if (length(best.m->emissive) > 0.01) return best.m->emissive;
+
             float3 light = (best.m->diffuse * ambient);
+
+            // max refl
+            float p = (light.x > light.y && light.x > light.z) ? light.x : (light.y > light.z) ? light.y : light.z;
+
+            // Russian-roulette termination
+            if (++depth > 5) 
+            {
+                if (gen.random_float() < (p * 0.90f)) 
+                {
+                    light = light * (0.90f / p);
+                }
+                else return best.m->emissive;
+            }
+
             Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal);
-            return light * trace_ray(reflected);
+            return light * trace_ray(reflected, depth);
         }
         else return environment; // otherwise return environment color
     }
@@ -158,7 +173,6 @@ struct Film
     std::vector<float3> samples;
     int2 size;
     Pose view;
-    int currentLine = 0;
 
     Film(int width, int height, Pose view) : samples(width * height), size({ width, height }), view(view) { }
 
@@ -177,7 +191,7 @@ struct Film
         float3 sample;
         for (int s = 0; s < numSamples; ++s)
         {
-            sample = sample + scene.trace_ray(make_ray_for_coordinate(coord));
+            sample = sample + scene.trace_ray(make_ray_for_coordinate(coord), 0);
         }
         samples[coord.y * size.x + coord.x] = sample * invSamples;
     }
@@ -248,7 +262,7 @@ struct ExperimentalApp : public GLFWApp
         shaderballTrimesh.m.diffuse = float3(0, 1, 0);
         shaderballTrimesh.position = float3(0, 0, 0);
         scene.meshes.push_back(shaderballTrimesh);
-        */                        
+        */
 
         renderSurface.reset(new GlTexture());
         renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
