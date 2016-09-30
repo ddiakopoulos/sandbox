@@ -66,10 +66,21 @@ struct HitResult
     bool operator() (void) { return d < std::numeric_limits<float>::infinity(); }
 };
 
+struct RaytracedPlane : public Plane
+{
+    Material m;
+    HitResult intersects(const Ray & ray)
+    {
+        float outT;
+        float3 outNormal;
+        if (intersect_ray_plane(ray, *this)) return HitResult(outT, outNormal, &m);
+        else return HitResult(); // nothing
+    }
+};
+
 struct RaytracedSphere : public Sphere
 {
     Material m;
-    RaytracedSphere() {}
     HitResult intersects(const Ray & ray)
     {
         float outT;
@@ -105,12 +116,18 @@ struct Scene
 {
     float3 environment;
     float3 ambient;
+    std::vector<RaytracedPlane> planes;
     std::vector<RaytracedSphere> spheres;
     std::vector<RaytracedMesh> meshes;
 
     float3 trace_ray(const Ray & ray)
     {
         HitResult best;
+        for (auto & p : planes)
+        {
+            auto hit = p.intersects(ray);
+            if (hit.d < best.d) best = hit;
+        }
         for (auto & s : spheres)
         {
             auto hit = s.intersects(ray);
@@ -196,6 +213,11 @@ struct ExperimentalApp : public GLFWApp
 
         scene.ambient = float3(1.0, 1.0, 1.0);
         scene.environment = float3(85.f / 255.f, 29.f / 255.f, 255.f / 255.f);
+
+        RaytracedPlane floor;
+        floor.equation = float4(0, -1, 0, 0);
+        floor.m.diffuse = float3(1, 1, 1);
+        //scene.planes.push_back(floor);
 
         RaytracedSphere a;
         RaytracedSphere b;

@@ -552,7 +552,8 @@ namespace avl
     
     struct Plane
     {
-        float4 equation; // ax * by * cz + d form (xyz normal, w distance)
+        float4 equation = { 0, 0, 0, 0 }; // ax * by * cz + d form (xyz normal, w distance)
+        Plane() {}
         Plane(const float4 & equation) : equation(equation) {}
         Plane(const float3 & normal, const float & distance) { equation = float4(normal.x, normal.y, normal.z, distance); }
         Plane(const float3 & normal, const float3 & point) { equation = float4(normal.x, normal.y, normal.z, -dot(normal, point)); }
@@ -597,7 +598,7 @@ namespace avl
     // Ray-object intersections //
     //////////////////////////////
     
-    inline bool intersect_ray_plane(const Ray & ray, const Plane & p, float3 * intersection, float * outT = nullptr)
+    inline bool intersect_ray_plane(const Ray & ray, const Plane & p, float3 * intersection = nullptr, float * outT = nullptr)
     {
         float d = dot(ray.direction, p.get_normal());
         // Make sure we're not parallel to the plane
