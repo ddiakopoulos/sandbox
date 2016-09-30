@@ -26,7 +26,8 @@ RandomGenerator gen;
 
 struct Material
 {
-    float3 diffuse;
+    float3 diffuse = { 0, 0, 0 };
+    float3 emissive = { 0, 0, 0 };
 
     Ray get_reflected_ray(const Ray & r, const float3 & p, const float3 & n)
     {
@@ -111,7 +112,8 @@ struct Scene
         // Reasonable/valid ray-material interaction:
         if (best())
         {
-            float3 light = best.m->diffuse * ambient;
+            if (length(best.m->emissive) > 0.01) return best.m->emissive;
+            float3 light = (best.m->diffuse * ambient);
             Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal);
             return light * trace_ray(reflected);
         }
@@ -182,16 +184,24 @@ struct ExperimentalApp : public GLFWApp
 
         RaytracedSphere a;
         RaytracedSphere b;
+        RaytracedSphere c;
 
         a.radius = 1.0;
-        b.radius = 1.0;
         a.m.diffuse = float3(1, 0, 0);
-        b.m.diffuse = float3(0, 1, 0);
         a.center = float3(-1, 0.f, -1.0);
+
+        b.radius = 1.0;
+        b.m.diffuse = float3(0, 1, 0);
         b.center = float3(+1, 0.f, -2.0);
+
+        c.radius = 0.5;
+        c.m.diffuse = float3(0, 0, 0);
+        c.m.emissive = float3(1, 1, 1);
+        c.center = float3(+1, -1.75f, -2.0);
 
         scene.spheres.push_back(a);
         scene.spheres.push_back(b);
+        scene.spheres.push_back(c);
 
         /*
         auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
@@ -201,7 +211,7 @@ struct ExperimentalApp : public GLFWApp
         shaderballTrimesh.m.diffuse = float3(0, 1, 0);
         shaderballTrimesh.position = float3(0, 0, 0);
         scene.meshes.push_back(shaderballTrimesh);
-        */
+        */                        
 
         renderSurface.reset(new GlTexture());
         renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
@@ -244,7 +254,7 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.f, 0.f, 0.f, 1.0f);
 
-        const float numSamples = 4.f;
+        const float numSamples = 16.f;
 
         for (int y = 0; y < film->size.y; ++y)
         {
