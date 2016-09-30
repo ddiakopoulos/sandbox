@@ -33,10 +33,9 @@ struct Material
         // perfect specular reflection
         float roughness = 0.925;
         float3 refl = r.direction - n * 2.0f * dot(n, r.direction);
-        refl = normalize(
-            float3(refl.x + (gen.random_float() - 0.5f) * roughness,
-                refl.y + (gen.random_float() - 0.5f) * roughness,
-                refl.z + (gen.random_float() - 0.5f) * roughness));
+        refl = normalize(float3(refl.x + (gen.random_float() - 0.5f) * roughness,
+                                refl.y + (gen.random_float() - 0.5f) * roughness,
+                                refl.z + (gen.random_float() - 0.5f) * roughness));
         return Ray(p, refl);
     }
 };
@@ -86,17 +85,10 @@ struct RaytracedMesh
     }
 };
 
-struct DirectionalLight
-{
-    float3 dir;
-    float3 color;
-};
-
 struct Scene
 {
     float3 environment;
     float3 ambient;
-    DirectionalLight dirLight;
     std::vector<RaytracedSphere> spheres;
     std::vector<RaytracedMesh> meshes;
 
@@ -180,14 +172,12 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
-        camera.look_at({ 0, 0, -6 }, { 0, 0, 0 });
+        camera.look_at({ 0, 0, -3 }, { 0, 0, 0 });
         cameraController.set_camera(&camera);
         cameraController.enableSpring = false;
-        cameraController.movementSpeed = 0.1f;
+        cameraController.movementSpeed = 0.25f;
 
-        scene.dirLight.dir = normalize(float3(0, -1.0, 0));
-        scene.dirLight.color = float3(1, 1, 0.25);
-        scene.ambient = float3(0.1, 0.1, 0.1);
+        scene.ambient = float3(1.0, 1.0, 1.0);
         scene.environment = float3(85.f / 255.f, 29.f / 255.f, 255.f / 255.f);
 
         RaytracedSphere a;
@@ -254,7 +244,7 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.f, 0.f, 0.f, 1.0f);
 
-        const float numSamples = 1.f;
+        const float numSamples = 4.f;
 
         for (int y = 0; y < film->size.y; ++y)
         {
@@ -262,8 +252,8 @@ struct ExperimentalApp : public GLFWApp
             {
                 film->trace_samples(scene, int2(x, y), numSamples);
             }
-            renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
         }
+        renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
 
         Bounds2D renderArea = { 0, 0, (float)WIDTH, (float)HEIGHT };
         renderView->draw(renderArea, { width, height });
@@ -272,8 +262,6 @@ struct ExperimentalApp : public GLFWApp
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::InputFloat3("Camera Position", &camera.get_pose().position[0]);
         ImGui::InputFloat4("Camera Orientation", &camera.get_pose().orientation[0]);
-        ImGui::SliderFloat3("Light Direction", &scene.dirLight.dir[0], -1.0f, 1.0f);
-        ImGui::ColorEdit3("Light Color", &scene.dirLight.color[0]);
         ImGui::ColorEdit3("Ambient", &scene.ambient[0]);
         if (igm) igm->end_frame();
 
