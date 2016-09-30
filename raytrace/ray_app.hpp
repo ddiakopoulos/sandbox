@@ -54,6 +54,34 @@ struct RaytracedSphere : public Sphere
 	}
 };
 
+struct RaytracedMesh
+{
+    Geometry & g;
+    Bounds3D bounds;
+
+    RaytracedMesh(Geometry & g) : g(g)
+    {
+        bounds = g.compute_bounds();
+    }
+
+    bool query_occlusion(const Ray & ray) const
+    {
+        // early out on bounds
+        return intersect_ray_sphere(ray, *this, nullptr);
+    }
+
+    /*
+    HitResult intersects(const Ray & ray)
+    {
+        float outT;
+        float3 outNormal;
+        if (intersect_ray_sphere(ray, *this, &outT, &outNormal)) return HitResult(outT, outNormal, &m);
+        else return HitResult();
+    }
+    */
+
+};
+     
 struct DirectionalLight
 {
 	float3 dir;
@@ -164,6 +192,13 @@ struct ExperimentalApp : public GLFWApp
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
+
+        /*
+        
+        auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
+        rescale_geometry(lucy, 8.0f);
+        auto lucyBounds = lucy.compute_bounds();
+        */
 
 		camera.look_at({ 0, 0, -6 }, { 0, 0, 0 });
 		cameraController.set_camera(&camera);
