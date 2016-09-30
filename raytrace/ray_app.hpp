@@ -59,6 +59,7 @@ struct RaytracedMesh
     Geometry & g;
     Bounds3D bounds;
     Material m;
+    float3 position;
 
     RaytracedMesh(Geometry & g) : g(std::move(g))
     {
@@ -101,6 +102,7 @@ struct Scene
 	float3 ambient;
 	DirectionalLight dirLight;
 	std::vector<RaytracedSphere> spheres;
+    std::vector<RaytracedMesh> meshes;
 
 	bool query_occlusion(const Ray & ray)
 	{
@@ -186,13 +188,6 @@ struct ExperimentalApp : public GLFWApp
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 
-        /*
-        
-        auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
-        rescale_geometry(lucy, 8.0f);
-        auto lucyBounds = lucy.compute_bounds();
-        */
-
 		camera.look_at({ 0, 0, -6 }, { 0, 0, 0 });
 		cameraController.set_camera(&camera);
 		cameraController.enableSpring = false;
@@ -213,8 +208,16 @@ struct ExperimentalApp : public GLFWApp
 		a.center = float3(-1, 0.f, -1.0);
 		b.center = float3(+1, 0.f, -2.0);
 
-		scene.spheres.push_back(a);
-		scene.spheres.push_back(b);
+		//scene.spheres.push_back(a);
+		//scene.spheres.push_back(b);
+
+        auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
+        rescale_geometry(lucy, 2.f);
+
+        RaytracedMesh lucyTrimesh(lucy);
+        lucyTrimesh.m.diffuse = float3(0, 1, 0);
+        lucyTrimesh.position = float3(0, 0, 0);
+        scene.meshes.push_back(lucyTrimesh);
 
 		renderSurface.reset(new GlTexture());
 		renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_FLOAT, nullptr);

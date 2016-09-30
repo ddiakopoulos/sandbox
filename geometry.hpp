@@ -393,31 +393,20 @@ namespace avl
             else
             {
                 geo.vertices.reserve(flatVerts.size());
-                for (auto v : flatVerts)
-                {
-                    geo.vertices.push_back(v);
-                }
+                for (auto v : flatVerts) geo.vertices.push_back(v);
             }
             
             if (indexBuffer.size())
             {
-                for (int i = 0; i < indexBuffer.size(); i+=3)
-                    geo.faces.push_back(uint3(indexBuffer[i], indexBuffer[i+1], indexBuffer[i+2]));
+                for (int i = 0; i < indexBuffer.size(); i+=3) geo.faces.push_back(uint3(indexBuffer[i], indexBuffer[i+1], indexBuffer[i+2]));
             }
-            else
-            {
-                geo.faces = flatFaces;
-            }
-
+            else geo.faces = flatFaces;
 
             geo.compute_normals(false);
-            
             if (faces.size() && flatTexCoords.size()) geo.compute_tangents();
-            
             geo.compute_bounds();
-            
         }
-        catch (std::exception e)
+        catch (const std::exception & e)
         {
             ANVIL_ERROR("[tinyply] Caught exception:" << e.what());
         }
