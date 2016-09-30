@@ -5,12 +5,12 @@
 
 // ToDo
 // ----------------------------------------------------------------------------
-// [ ] Decouple window size / framebuffer size for gl render target
+// [X] Decouple window size / framebuffer size for gl render target
 // [X] Raytraced scene - spheres with phong shading
 // [X] Occlusion support
 // [X] ImGui Controls
 // [ ] Add other objects (box, plane, disc)
-// [ ] Add tri-meshes (Mitsuba object, cornell box, lucy statue from *.obj)
+// [X] Add tri-meshes (Mitsuba object, cornell box, lucy statue from *.obj)
 // [ ] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
 // [ ] Reflective objects, glossy
 // [ ] KDTree + OpenMP
@@ -172,10 +172,11 @@ struct Film
 	bool exposure_finished() { return currentLine == size.y; }
 };
 
+#define WIDTH int(640)
+#define HEIGHT int(480)
+
 struct ExperimentalApp : public GLFWApp
 {
-	uint64_t frameCount = 0;
-
 	std::unique_ptr<gui::ImGuiManager> igm;
 
 	std::shared_ptr<GlTexture> renderSurface;
@@ -188,7 +189,7 @@ struct ExperimentalApp : public GLFWApp
 	FlyCameraController cameraController;
 	ShaderMonitor shaderMonitor;
 
-	ExperimentalApp() : GLFWApp(1200, 800, "Raytracing App")
+	ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Raytracing App")
 	{
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
@@ -217,19 +218,19 @@ struct ExperimentalApp : public GLFWApp
 		//scene.spheres.push_back(a);
 		//scene.spheres.push_back(b);
 
-        auto lucy = load_geometry_from_ply("assets/models/stanford/lucy.ply");
-        rescale_geometry(lucy, 2.f);
+        auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
+        rescale_geometry(shaderball, 2.f);
 
-        RaytracedMesh lucyTrimesh(lucy);
-        lucyTrimesh.m.diffuse = float3(0, 1, 0);
-        lucyTrimesh.position = float3(0, 0, 0);
-        scene.meshes.push_back(lucyTrimesh);
+        RaytracedMesh shaderballTrimesh(shaderball);
+        shaderballTrimesh.m.diffuse = float3(0, 1, 0);
+        shaderballTrimesh.position = float3(0, 0, 0);
+        scene.meshes.push_back(shaderballTrimesh);
 
 		renderSurface.reset(new GlTexture());
-		renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
+		renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
 		renderView.reset(new GLTextureView(renderSurface->get_gl_handle()));
 
-		film = std::make_shared<Film>(1200, 800, camera.get_pose());
+		film = std::make_shared<Film>(WIDTH, HEIGHT, camera.get_pose());
 
 		igm.reset(new gui::ImGuiManager(window));
 		gui::make_dark_theme();
@@ -251,16 +252,13 @@ struct ExperimentalApp : public GLFWApp
 		// Check if camera position has changed
 		if (camera.get_pose() != film->view)
 		{
-			film.reset(new Film(1200, 800, camera.get_pose()));
+			film.reset(new Film(WIDTH, HEIGHT, camera.get_pose()));
 		}
 	}
 
 	void on_draw() override
 	{
 		glfwMakeContextCurrent(window);
-
-		glEnable(GL_CULL_FACE);
-		glEnable(GL_DEPTH_TEST);
 
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
@@ -276,11 +274,11 @@ struct ExperimentalApp : public GLFWApp
 			{
 				film->raytrace_scanline(scene);
 			}
-			renderSurface->load_data(1200, 800, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
+			renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
 		}
 
-		Bounds2D renderArea = { 0, 0, (float)width, (float)height };
-		renderView->draw(renderArea, { 1200, 800 });
+		Bounds2D renderArea = { 0, 0, (float) WIDTH, (float) HEIGHT };
+		renderView->draw(renderArea, { width, height });
 
 		if (igm) igm->begin_frame();
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -291,9 +289,7 @@ struct ExperimentalApp : public GLFWApp
         ImGui::ColorEdit3("Ambient", &scene.ambient[0]);
 		if (igm) igm->end_frame();
 
-		gl_check_error(__FILE__, __LINE__);
 		glfwSwapBuffers(window);
-		frameCount++;
 	}
 
 };
