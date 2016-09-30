@@ -151,6 +151,7 @@ struct Scene
             // max refl
             float p = (light.x > light.y && light.x > light.z) ? light.x : (light.y > light.z) ? light.y : light.z;
 
+            /*
             // Russian-roulette termination
             if (++depth > 5) 
             {
@@ -160,6 +161,7 @@ struct Scene
                 }
                 else return best.m->emissive;
             }
+            */
 
             Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal);
             return light * trace_ray(reflected, depth);
@@ -213,9 +215,13 @@ struct ExperimentalApp : public GLFWApp
     GlCamera camera;
     FlyCameraController cameraController;
     ShaderMonitor shaderMonitor;
+    std::vector<int2> coordinates;
+    const float numSamples = 32.f;
 
     ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Raytracing App")
     {
+        glfwSwapInterval(0);
+
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -223,7 +229,7 @@ struct ExperimentalApp : public GLFWApp
         camera.look_at({ 0, 0, -3 }, { 0, 0, 0 });
         cameraController.set_camera(&camera);
         cameraController.enableSpring = false;
-        cameraController.movementSpeed = 0.25f;
+        cameraController.movementSpeed = 0.01f;
 
         scene.ambient = float3(1.0, 1.0, 1.0);
         scene.environment = float3(85.f / 255.f, 29.f / 255.f, 255.f / 255.f);
@@ -270,6 +276,14 @@ struct ExperimentalApp : public GLFWApp
 
         film = std::make_shared<Film>(WIDTH, HEIGHT, camera.get_pose());
 
+        for (int y = 0; y < film->size.y; ++y)
+        {
+            for (int x = 0; x < film->size.x; ++x)
+            {
+                coordinates.push_back(int2(x, y));
+            }
+        }
+
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
     }
@@ -291,6 +305,14 @@ struct ExperimentalApp : public GLFWApp
         if (camera.get_pose() != film->view)
         {
             film.reset(new Film(WIDTH, HEIGHT, camera.get_pose()));
+            coordinates.clear();
+            for (int y = 0; y < film->size.y; ++y)
+            {
+                for (int x = 0; x < film->size.x; ++x)
+                {
+                    coordinates.push_back(int2(x, y));
+                }
+            }
         }
     }
 
@@ -305,17 +327,19 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.f, 0.f, 0.f, 1.0f);
 
-        const float numSamples = 1.f;
-
-        for (int y = 0; y < film->size.y; ++y)
+        if (coordinates.size() > 1)
         {
-            for (int x = 0; x < film->size.x; ++x)
+            for (int g = 0; g < 64; g++)
             {
-                film->trace_samples(scene, int2(x, y), numSamples);
+                auto randomIdx = gen.random_int(coordinates.size() - 1);
+                auto randomCoord = coordinates[randomIdx];
+                coordinates.erase(coordinates.begin() + randomIdx);
+                film->trace_samples(scene, randomCoord, numSamples);
             }
-        }
-        renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
 
+            renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
+        }
+           
         Bounds2D renderArea = { 0, 0, (float)WIDTH, (float)HEIGHT };
         renderView->draw(renderArea, { width, height });
 
