@@ -8,6 +8,7 @@
 // [ ] Decouple window size / framebuffer size for gl render target
 // [X] Raytraced scene - spheres with phong shading
 // [X] Occlusion support
+// [X] ImGui Controls
 // [ ] Add other objects (box, plane, disc)
 // [ ] Add tri-meshes (Mitsuba object, cornell box, lucy statue from *.obj)
 // [ ] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
@@ -234,7 +235,7 @@ struct ExperimentalApp : public GLFWApp
 		if (!film->exposure_finished())
 		{
 			// Work group size per frame
-			for (int i = 0; i < 128; ++i)
+			for (int i = 0; i < film->size.y; ++i)
 			{
 				film->raytrace_scanline(scene);
 			}
@@ -246,6 +247,11 @@ struct ExperimentalApp : public GLFWApp
 
 		if (igm) igm->begin_frame();
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::InputFloat3("Camera Position", &camera.get_pose().position[0]);
+        ImGui::InputFloat4("Camera Orientation", &camera.get_pose().orientation[0]);
+        ImGui::SliderFloat3("Light Direction", &scene.dirLight.dir[0], -1.0f, 1.0f);
+        ImGui::ColorEdit3("Light Color", &scene.dirLight.color[0]);
+        ImGui::ColorEdit3("Ambient", &scene.ambient[0]);
 		if (igm) igm->end_frame();
 
 		gl_check_error(__FILE__, __LINE__);
