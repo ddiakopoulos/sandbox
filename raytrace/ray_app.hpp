@@ -56,7 +56,7 @@ struct RaytracedSphere : public Sphere
 
 struct RaytracedMesh
 {
-    Geometry & g;
+    Geometry g;
     Bounds3D bounds;
     Material m;
     float3 position;
@@ -66,9 +66,9 @@ struct RaytracedMesh
         bounds = g.compute_bounds();
     }
 
-    bool query_occlusion(const Ray & ray) const
+    bool query_occlusion(const Ray & ray)
     {
-        return intersect_ray_mesh(ray, g, nullptr, nullptr);
+        return intersect_ray_mesh(ray, g, nullptr, nullptr, &bounds);
     }
 
     HitResult intersects(const Ray & ray)
@@ -76,7 +76,7 @@ struct RaytracedMesh
         float outT;
         float3 outNormal;
         // intersect_ray_mesh() takes care of early out using bounding box & rays from inside
-        if (intersect_ray_mesh(ray, g, &outT, &outNormal)) return HitResult(outT, outNormal, &m);
+        if (intersect_ray_mesh(ray, g, &outT, &outNormal, &bounds)) return HitResult(outT, outNormal, &m);
         else return HitResult();
     }
 };
@@ -106,7 +106,8 @@ struct Scene
 
 	bool query_occlusion(const Ray & ray)
 	{
-		for (auto & s : spheres) if (s.query_occlusion(ray)) { return true; }
+		for (auto & s : spheres) if (s.query_occlusion(ray)) { return true; } 
+        for (auto & m : meshes) if (m.query_occlusion(ray)) { return true; }
 		return false;
 	}
 
@@ -131,6 +132,11 @@ struct Scene
 			auto hit = s.intersects(ray);
 			if (hit.d < best.d) best = hit;
 		}
+        for (auto & m : meshes)
+        {
+            auto hit = m.intersects(ray);
+            if (hit.d < best.d) best = hit;
+        }
 		best.location = ray.origin + ray.direction * best.d;
 		return best() ? compute_diffuse(best, ray.origin) : environment;
 	}
@@ -266,7 +272,7 @@ struct ExperimentalApp : public GLFWApp
 		if (!film->exposure_finished())
 		{
 			// Work group size per frame
-			for (int i = 0; i < film->size.y; ++i)
+			for (int i = 0; i < 8; ++i)
 			{
 				film->raytrace_scanline(scene);
 			}

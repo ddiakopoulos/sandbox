@@ -544,14 +544,13 @@ namespace avl
         return s;
     }
 
-    inline bool intersect_ray_mesh(const Ray & ray, const Geometry & mesh, float * outRayT = nullptr, float3 * outFaceNormal = nullptr)
+    inline bool intersect_ray_mesh(const Ray & ray, const Geometry & mesh, float * outRayT = nullptr, float3 * outFaceNormal = nullptr, Bounds3D * bounds = nullptr)
     {
         float bestT = std::numeric_limits<float>::infinity(), t;
         uint3 bestFace = {0, 0, 0};
-        
         float2 outUv;
 
-        auto meshBounds = mesh.compute_bounds();
+        Bounds3D meshBounds = (bounds) ? *bounds : mesh.compute_bounds();
         if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds))
         {
             for (int f = 0; f < mesh.faces.size(); ++f)
