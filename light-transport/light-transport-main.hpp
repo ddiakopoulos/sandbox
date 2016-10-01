@@ -60,26 +60,6 @@ struct Material
     }
 };
 
-struct RaytracedMesh : public Traceable
-{
-    Geometry g;
-    Bounds3D bounds;
-
-    RaytracedMesh(Geometry & g) : g(std::move(g))
-    {
-        bounds = g.compute_bounds();
-    }
-
-	virtual RayIntersection intersects(const Ray & ray) override final
-    {
-        float outT;
-        float3 outNormal;
-        // intersect_ray_mesh() takes care of early out using bounding box & rays from inside
-        if (intersect_ray_mesh(ray, g, &outT, &outNormal, &bounds)) return RayIntersection(outT, outNormal, &m);
-        else return RayIntersection();
-    }
-};
-
 ///////////////
 //   Scene   //
 ///////////////
@@ -212,11 +192,6 @@ struct ExperimentalApp : public GLFWApp
 
         scene.ambient = float3(1.0, 1.0, 1.0);
         scene.environment = float3(85.f / 255.f, 29.f / 255.f, 255.f / 255.f);
-
-        RaytracedPlane floor;
-        floor.equation = float4(0, -1, 0, 0);
-        floor.m.diffuse = float3(1, 1, 1);
-        //scene.planes.push_back(floor);
 
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> b = std::make_shared<RaytracedSphere>();

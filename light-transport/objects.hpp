@@ -21,17 +21,7 @@ struct Traceable
 {
 	Material m;
 	virtual RayIntersection intersects(const Ray & ray) { return RayIntersection(); };
-};
-
-struct RaytracedPlane : public Plane, public Traceable
-{
-	virtual RayIntersection intersects(const Ray & ray) override final
-	{
-		float outT;
-		float3 outNormal;
-		if (intersect_ray_plane(ray, *this)) return RayIntersection(outT, outNormal, &m);
-		else return RayIntersection(); // nothing
-	}
+	virtual Bounds3D world_bounds() const { return Bounds3D(); }; // FIXME: this will return local bounds for the time being
 };
 
 struct RaytracedSphere : public Sphere, public Traceable
@@ -41,8 +31,38 @@ struct RaytracedSphere : public Sphere, public Traceable
 		float outT;
 		float3 outNormal;
 		if (intersect_ray_sphere(ray, *this, &outT, &outNormal)) return RayIntersection(outT, outNormal, &m);
-		else return RayIntersection(); // nothing
+		else return RayIntersection();
+	}
+	virtual Bounds3D world_bounds() const override final
+	{
+		return Bounds3D(center - radius, center + radius);
 	}
 };
+
+struct RaytracedMesh : public Traceable
+{
+	Geometry g;
+	Bounds3D bounds;
+
+	RaytracedMesh(Geometry & g) : g(std::move(g))
+	{
+		bounds = g.compute_bounds();
+	}
+
+	virtual RayIntersection intersects(const Ray & ray) override final
+	{
+		float outT;
+		float3 outNormal;
+		// intersect_ray_mesh() takes care of early out using bounding box & rays from inside
+		if (intersect_ray_mesh(ray, g, &outT, &outNormal, &bounds)) return RayIntersection(outT, outNormal, &m);
+		else return RayIntersection();
+	}
+
+	virtual Bounds3D world_bounds() const override final
+	{
+		return bounds;
+	}
+};
+
 
 #endif
