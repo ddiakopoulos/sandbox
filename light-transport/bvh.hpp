@@ -37,6 +37,9 @@ class BVH
 	std::vector<std::shared_ptr<Traceable>> objects;
 	bool initialized = false;
 
+	float leafThreshold = 1.f;
+	Node * root;
+
 public:
 
 	BVH(std::vector<std::shared_ptr<Traceable>> objects) : objects(objects) {}
@@ -64,7 +67,7 @@ public:
 
 	}
 
-	RayIntersection intersect_p(const Ray & ray)
+	bool intersect_p(const Ray & ray)
 	{
 
 	}
