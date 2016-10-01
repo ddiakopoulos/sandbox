@@ -86,6 +86,14 @@ namespace avl
 			else if (d.y > d.z) return 1;
 			else return 2;
 		}
+
+		Bounds3D add(const Bounds3D & other) const
+		{
+			Bounds3D result;
+			result._min = linalg::min(_min, other._min);
+			result._max = linalg::max(_max, other._max);
+			return result;
+		}
     };
     
     /////////////////////////////////
