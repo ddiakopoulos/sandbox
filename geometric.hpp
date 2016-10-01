@@ -70,7 +70,7 @@ namespace avl
             if (point.z < _min.z || point.z > _max.z) return false;
             return true;
         }
-        
+
         bool intersects(const Bounds3D & other) const
         {
             if ((_min.x <= other._min.x) && (_max.x >= other._max.x) &&
@@ -78,7 +78,14 @@ namespace avl
                 (_min.z <= other._min.z) && (_max.z >= other._max.z)) return true;
             return false;
         }
-        
+
+		uint32_t maximum_extent() const
+		{
+			auto d = _max - _min;
+			if (d.x > d.y && d.x > d.z) return 0;
+			else if (d.y > d.z) return 1;
+			else return 2;
+		}
     };
     
     /////////////////////////////////
