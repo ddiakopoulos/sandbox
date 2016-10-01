@@ -16,7 +16,10 @@ class BVH
 	{
 		uint32_t split;
 		ObjectComparator(const uint32_t axis = 0) : split(axis) { }
-		bool operator() (const Traceable * a, const Traceable * b) const { return true; }
+		bool operator() (const std::shared_ptr<Traceable> & a, const std::shared_ptr<Traceable> & b) const
+		{ 
+			return a->world_bounds().center()[split] < b->world_bounds().center()[split];
+		}
 	};
 
 	struct Node
