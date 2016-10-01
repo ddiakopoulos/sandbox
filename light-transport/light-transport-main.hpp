@@ -174,15 +174,31 @@ struct Film
     std::vector<float3> samples;
     int2 size;
     Pose view;
+	float FoV = ANVIL_PI / 2;
 
     Film(int width, int height, Pose view) : samples(width * height), size({ width, height }), view(view) { }
 
+	void set_field_of_view(float degrees)
+	{
+		FoV = std::tan(to_radians(degrees) * 0.5f);
+	}
+
+	// http://computergraphics.stackexchange.com/questions/2130/anti-aliasing-filtering-in-ray-tracing
     Ray make_ray_for_coordinate(const int2 & coord) const
     {
-        auto halfDims = float2(size - 1) * 0.5f;
-        auto aspectRatio = (float)size.x / (float)size.y;
-        auto viewDirection = normalize(float3((coord.x - halfDims.x) * aspectRatio / halfDims.x, (halfDims.y - coord.y) / halfDims.y, -1)); // screen-space ray
-        return view * Ray(float3(0, 0, 0), viewDirection);
+		auto aspectRatio = (float)size.x / (float)size.y;
+
+		// Apply a tent filter for anti-aliasing
+		float r1 = 2.0f * gen.random_float();
+		float dx = (r1 < 1.0f) ? (std::sqrt(r1) - 1.0f) : (1.0f - std::sqrt(2.0f - r1));
+		float r2 = 2.0f * gen.random_float();
+		float dy = (r2 < 1.0f) ? (std::sqrt(r2) - 1.0f) : (1.0f - std::sqrt(2.0f - r2));
+	
+		auto xNorm = ((size.x * 0.5f - coord.x + dx) / size.x * aspectRatio) * FoV;
+		auto yNorm = ((size.y * 0.5f - coord.y + dy) / size.y) * FoV;
+		auto vNorm = normalize(float3(xNorm, yNorm, -1.0f));
+ 
+        return view * Ray(float3(0, 0, 0), vNorm);
     }
 
     // Records the result of a ray traced through the camera origin (view) for a given pixel coordinate
@@ -218,6 +234,7 @@ struct ExperimentalApp : public GLFWApp
 
     int numSamples = 128;
 	int workgroupSize = 64;
+	float fieldOfView = 90;
 
     ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
     {
@@ -353,6 +370,11 @@ struct ExperimentalApp : public GLFWApp
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::InputFloat3("Camera Position", &camera.get_pose().position[0]);
         ImGui::InputFloat4("Camera Orientation", &camera.get_pose().orientation[0]);
+		if (ImGui::SliderFloat("Camera FoV", &fieldOfView, 45.f, 120.f))
+		{
+			reset_film();
+			film->set_field_of_view(fieldOfView);
+		}
 		if (ImGui::SliderInt("SPP", &numSamples, 1, 1024)) reset_film(); 
 		if (ImGui::SliderInt("Work Group Size", &workgroupSize, 1, 256)) reset_film();
         ImGui::ColorEdit3("Ambient", &scene.ambient[0]);
