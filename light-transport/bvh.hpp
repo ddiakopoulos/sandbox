@@ -19,6 +19,21 @@ class BVH
 		bool operator()(const Traceable * a, const Traceable * b) const { return true; }
 	};
 
+
+	struct Node
+	{
+		Node * left;
+		Node * right;
+		Bounds3D bounds;
+		int axis = 0;
+		float position = 0.f;
+		std::vector<std::shared_ptr<Traceable>> objects;
+
+		Node(int axis = 0, float position = 0.f) : axis(axis), position(position) {}
+
+		bool is_leaf() {}
+	};
+
 	std::vector<std::shared_ptr<Traceable>> objects;
 	bool initialized = false;
 public:
