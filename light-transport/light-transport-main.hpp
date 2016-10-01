@@ -71,7 +71,7 @@ struct Scene
                 else return best.m->emissive;
             }
 
-            Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal);
+            Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal, gen);
             return light * trace_ray(reflected, depth);
         }
         else return environment; // otherwise return environment color

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "geometric.hpp"
+#include "util.hpp"
 
 struct Material
 {
@@ -11,7 +12,7 @@ struct Material
 	float3 emissive = { 0, 0, 0 };
 
 	// Math borrowed from Kevin Beason's `smallpt`
-	Ray get_reflected_ray(const Ray & r, const float3 & p, const float3 & n)
+	Ray get_reflected_ray(const Ray & r, const float3 & p, const float3 & n, RandomGenerator & gen)
 	{
 		/*
 		// ideal specular reflection

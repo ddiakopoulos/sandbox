@@ -4,6 +4,8 @@
 #pragma once
 
 #include "geometric.hpp"
+#include "geometry.hpp"
+#include "light-transport/material.hpp"
 
 using namespace avl;
 

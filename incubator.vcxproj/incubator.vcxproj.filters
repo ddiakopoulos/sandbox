@@ -270,6 +270,15 @@
     <ClInclude Include="..\light-transport\light-transport-main.hpp">
       <Filter>light-transport</Filter>
     </ClInclude>
+    <ClInclude Include="..\light-transport\bvh.hpp">
+      <Filter>light-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="..\light-transport\objects.hpp">
+      <Filter>light-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="..\light-transport\material.hpp">
+      <Filter>light-transport</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
