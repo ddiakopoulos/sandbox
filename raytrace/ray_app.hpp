@@ -2,6 +2,7 @@
 
 // Reference
 // http://graphics.pixar.com/library/HQRenderingCourse/paper.pdf
+// http://fileadmin.cs.lth.se/cs/Education/EDAN30/lectures/S2-bvh.pdf
 
 // ToDo
 // ----------------------------------------------------------------------------
@@ -9,17 +10,17 @@
 // [X] Whitted Raytraced scene - spheres with phong shading
 // [X] Occlusion support
 // [X] ImGui Controls
+// [X] Add tri-meshes (Shaderball, cornell box, lucy statue from *.obj)
+// [X] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
+// [ ] Realtime GL preview
 // [ ] Add other objects (box, plane, disc)
-// [X] Add tri-meshes (Mitsuba object, cornell box, lucy statue from *.obj)
-// [ ] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
 // [ ] Reflective objects, glossy
-// [ ] KDTree + OpenMP
 // [ ] More materials: matte, reflective, transparent & png textures
-// [ ] BVH Structure
+// [ ] BVH Accelerator
 // [ ] New camera models: pinhole, fisheye, spherical
 // [ ] New light types: point, area
 // [ ] Portals (hehe)
-// [ ] Bidirectional path tracing / photon mapping
+// [ ] Bidirectional path tracing
 // [ ] Embree acceleration
 
 RandomGenerator gen;
@@ -151,7 +152,6 @@ struct Scene
             // max refl
             float p = (light.x > light.y && light.x > light.z) ? light.x : (light.y > light.z) ? light.y : light.z;
 
-            /*
             // Russian-roulette termination
             if (++depth > 5) 
             {
@@ -161,7 +161,6 @@ struct Scene
                 }
                 else return best.m->emissive;
             }
-            */
 
             Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal);
             return light * trace_ray(reflected, depth);
@@ -216,7 +215,7 @@ struct ExperimentalApp : public GLFWApp
     FlyCameraController cameraController;
     ShaderMonitor shaderMonitor;
     std::vector<int2> coordinates;
-    const float numSamples = 32.f;
+    const float numSamples = 256.f;
 
     ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Raytracing App")
     {
@@ -254,25 +253,26 @@ struct ExperimentalApp : public GLFWApp
         c.radius = 0.5;
         c.m.diffuse = float3(0, 0, 0);
         c.m.emissive = float3(1, 1, 1);
-        c.center = float3(+1, -1.75f, -2.0);
+        c.center = float3(-1, -1.75f, -2.0);
 
         scene.spheres.push_back(a);
         scene.spheres.push_back(b);
         scene.spheres.push_back(c);
 
-        /*
         auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
         rescale_geometry(shaderball, 2.f);
 
+		/*
         RaytracedMesh shaderballTrimesh(shaderball);
         shaderballTrimesh.m.diffuse = float3(0, 1, 0);
         shaderballTrimesh.position = float3(0, 0, 0);
         scene.meshes.push_back(shaderballTrimesh);
-        */
+		*/
 
         renderSurface.reset(new GlTexture());
         renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
         renderView.reset(new GLTextureView(renderSurface->get_gl_handle()));
+
 
         film = std::make_shared<Film>(WIDTH, HEIGHT, camera.get_pose());
 
