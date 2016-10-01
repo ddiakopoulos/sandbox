@@ -99,7 +99,6 @@ struct RaytracedMesh : public Traceable
 {
     Geometry g;
     Bounds3D bounds;
-    float3 position;
 
     RaytracedMesh(Geometry & g) : g(std::move(g))
     {
@@ -168,14 +167,14 @@ struct Film
     Pose view;
 	float FoV = ANVIL_PI / 2;
 
-    Film(int width, int height, Pose view) : samples(width * height), size({ width, height }), view(view) { }
+    Film(int2 size, Pose view) : samples(size.x * size.y), size(size), view(view) { }
 
 	void set_field_of_view(float degrees) { FoV = std::tan(to_radians(degrees) * 0.5f); }
 
 	// http://computergraphics.stackexchange.com/questions/2130/anti-aliasing-filtering-in-ray-tracing
     Ray make_ray_for_coordinate(const int2 & coord) const
     {
-		auto aspectRatio = (float)size.x / (float)size.y;
+		auto aspectRatio = (float) size.x / (float) size.y;
 
 		// Apply a tent filter for anti-aliasing
 		float r1 = 2.0f * gen.random_float();
@@ -185,7 +184,7 @@ struct Film
 	
 		auto xNorm = ((size.x * 0.5f - coord.x + dx) / size.x * aspectRatio) * FoV;
 		auto yNorm = ((size.y * 0.5f - coord.y + dy) / size.y) * FoV;
-		auto vNorm = normalize(float3(xNorm, yNorm, -1.0f));
+		auto vNorm = float3(xNorm, yNorm, -1.0f);
  
         return view * Ray(float3(0, 0, 0), vNorm);
     }
@@ -273,7 +272,6 @@ struct ExperimentalApp : public GLFWApp
 		/*
         RaytracedMesh shaderballTrimesh(shaderball);
         shaderballTrimesh.m.diffuse = float3(0, 1, 0);
-        shaderballTrimesh.position = float3(0, 0, 0);
         scene.meshes.push_back(shaderballTrimesh);
 		*/
 
@@ -281,7 +279,7 @@ struct ExperimentalApp : public GLFWApp
         renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
         renderView.reset(new GLTextureView(renderSurface->get_gl_handle(), true));
 
-        film = std::make_shared<Film>(WIDTH, HEIGHT, camera.get_pose());
+		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
 
         for (int y = 0; y < film->size.y; ++y)
         {
@@ -317,7 +315,7 @@ struct ExperimentalApp : public GLFWApp
 
 	void reset_film()
 	{
-		film.reset(new Film(WIDTH, HEIGHT, camera.get_pose()));
+		film.reset(new Film({ WIDTH, HEIGHT }, camera.get_pose()));
 		coordinates.clear();
 		for (int y = 0; y < film->size.y; ++y)
 		{
