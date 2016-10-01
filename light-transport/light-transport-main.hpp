@@ -215,9 +215,11 @@ struct ExperimentalApp : public GLFWApp
     FlyCameraController cameraController;
     ShaderMonitor shaderMonitor;
     std::vector<int2> coordinates;
-    const float numSamples = 256.f;
 
-    ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Raytracing App")
+    int numSamples = 128;
+	int workgroupSize = 64;
+
+    ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
     {
         glfwSwapInterval(0);
 
@@ -225,7 +227,7 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
-        camera.look_at({ 0, 0, -3 }, { 0, 0, 0 });
+        camera.look_at({ 0, +1.25, -4 }, { 0, 0, 0 });
         cameraController.set_camera(&camera);
         cameraController.enableSpring = false;
         cameraController.movementSpeed = 0.01f;
@@ -244,16 +246,16 @@ struct ExperimentalApp : public GLFWApp
 
         a.radius = 1.0;
         a.m.diffuse = float3(1, 0, 0);
-        a.center = float3(-1, 0.f, -1.0);
+        a.center = float3(-1, -1.f, -2.5);
 
         b.radius = 1.0;
         b.m.diffuse = float3(0, 1, 0);
-        b.center = float3(+1, 0.f, -2.0);
+        b.center = float3(+1, -1.f, -2.5);
 
         c.radius = 0.5;
         c.m.diffuse = float3(0, 0, 0);
         c.m.emissive = float3(1, 1, 1);
-        c.center = float3(-1, -1.75f, -2.0);
+        c.center = float3(0, 1.00f, -2.5);
 
         scene.spheres.push_back(a);
         scene.spheres.push_back(b);
@@ -271,8 +273,7 @@ struct ExperimentalApp : public GLFWApp
 
         renderSurface.reset(new GlTexture());
         renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
-        renderView.reset(new GLTextureView(renderSurface->get_gl_handle()));
-
+        renderView.reset(new GLTextureView(renderSurface->get_gl_handle(), true));
 
         film = std::make_shared<Film>(WIDTH, HEIGHT, camera.get_pose());
 
@@ -304,17 +305,22 @@ struct ExperimentalApp : public GLFWApp
         // Check if camera position has changed
         if (camera.get_pose() != film->view)
         {
-            film.reset(new Film(WIDTH, HEIGHT, camera.get_pose()));
-            coordinates.clear();
-            for (int y = 0; y < film->size.y; ++y)
-            {
-                for (int x = 0; x < film->size.x; ++x)
-                {
-                    coordinates.push_back(int2(x, y));
-                }
-            }
+			reset_film();
         }
     }
+
+	void reset_film()
+	{
+		film.reset(new Film(WIDTH, HEIGHT, camera.get_pose()));
+		coordinates.clear();
+		for (int y = 0; y < film->size.y; ++y)
+		{
+			for (int x = 0; x < film->size.x; ++x)
+			{
+				coordinates.push_back(int2(x, y));
+			}
+		}
+	}
 
     void on_draw() override
     {
@@ -347,6 +353,8 @@ struct ExperimentalApp : public GLFWApp
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::InputFloat3("Camera Position", &camera.get_pose().position[0]);
         ImGui::InputFloat4("Camera Orientation", &camera.get_pose().orientation[0]);
+		if (ImGui::SliderInt("SPP", &numSamples, 1, 1024)) reset_film(); 
+		if (ImGui::SliderInt("Work Group Size", &workgroupSize, 1, 256)) reset_film();
         ImGui::ColorEdit3("Ambient", &scene.ambient[0]);
         if (igm) igm->end_frame();
 

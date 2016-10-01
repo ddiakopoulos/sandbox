@@ -54,6 +54,7 @@
     <ClInclude Include="..\gpu_timer.hpp" />
     <ClInclude Include="..\human_time.hpp" />
     <ClInclude Include="..\index.hpp" />
+    <ClInclude Include="..\light-transport\light-transport-main.hpp" />
     <ClInclude Include="..\linalg_util.hpp" />
     <ClInclude Include="..\math_util.hpp" />
     <ClInclude Include="..\meshline.hpp" />
@@ -68,7 +69,6 @@
     <ClInclude Include="..\poisson_disk.hpp" />
     <ClInclude Include="..\procedural_mesh.hpp" />
     <ClInclude Include="..\procedural_sky.hpp" />
-    <ClInclude Include="..\raytrace\ray_app.hpp" />
     <ClInclude Include="..\reaction_diffusion.hpp" />
     <ClInclude Include="..\renderable_grid.hpp" />
     <ClInclude Include="..\running_statistics.hpp" />

@@ -31,7 +31,7 @@
     <Filter Include="source\virtual-reality">
       <UniqueIdentifier>{a8333473-545f-4b2a-ae82-220df8cabecc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="raytrace">
+    <Filter Include="light-transport">
       <UniqueIdentifier>{45272ebb-feed-4d84-823b-15c63712a6ae}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -267,8 +267,8 @@
     <ClInclude Include="..\examples\geometric_algo_dev.hpp">
       <Filter>examples</Filter>
     </ClInclude>
-    <ClInclude Include="..\raytrace\ray_app.hpp">
-      <Filter>raytrace</Filter>
+    <ClInclude Include="..\light-transport\light-transport-main.hpp">
+      <Filter>light-transport</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

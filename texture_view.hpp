@@ -19,6 +19,20 @@ void main()
 }
 )";
 
+static const char s_textureVertFlip[] = R"(#version 330
+layout(location = 0) in vec3 position;
+layout(location = 3) in vec2 uvs;
+uniform mat4 u_model;
+uniform mat4 u_projection;
+out vec2 texCoord;
+void main()
+{
+    texCoord = vec2(uvs.x, 1 - uvs.y);
+    gl_Position = u_projection * u_model * vec4(position.xy, 0.0, 1.0);
+    
+}
+)";
+
 static const char s_textureFrag[] = R"(#version 330
 uniform sampler2D u_texture;
 in vec2 texCoord;
@@ -66,14 +80,14 @@ namespace avl
         GlMesh mesh;
         GLuint texture;
         
-        GLTextureView(GLuint tex) : texture(tex)
+        GLTextureView(GLuint tex, bool flip = false) : texture(tex)
         {
             Geometry g;
             g.vertices = { {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
             g.texCoords = { {0.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f} };
             g.faces = {{0, 1, 2}, {3, 4, 5}};
             mesh = make_mesh_from_geometry(g);
-            program = GlShader(s_textureVert, s_textureFrag);
+            program = flip ? GlShader(s_textureVertFlip, s_textureFrag) : GlShader(s_textureVert, s_textureFrag);
         }
         
         void draw(Bounds2D rect, int2 windowSize)

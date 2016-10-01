@@ -23,7 +23,7 @@ using namespace avl;
 //#include "examples/render_experiments.hpp"
 //#include "examples/glass_material_app.hpp"
 //#include "geometric_algo_dev.hpp"
-#include "raytrace/ray_app.hpp"
+#include "light-transport/light-transport-main.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
