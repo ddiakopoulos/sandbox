@@ -10,15 +10,16 @@
 // [X] Whitted Raytraced scene - spheres with phong shading
 // [X] Occlusion support
 // [X] ImGui Controls
-// [X] Add tri-meshes (Shaderball, cornell box, lucy statue from *.obj)
+// [X] Add tri-meshes (Shaderball, lucy statue from *.obj)
 // [X] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
-// [ ] Realtime GL preview
 // [ ] Add other objects (box, plane, disc)
 // [ ] Reflective objects, glossy
 // [ ] More materials: matte, reflective, transparent & png textures
 // [ ] BVH Accelerator
+// [ ] Cornell Box Loader
 // [ ] New camera models: pinhole, fisheye, spherical
 // [ ] New light types: point, area
+// [ ] Realtime GL preview
 // [ ] Portals (hehe)
 // [ ] Bidirectional path tracing
 // [ ] Embree acceleration
@@ -67,6 +68,10 @@ struct RayIntersection
     bool operator() (void) { return d < std::numeric_limits<float>::infinity(); }
 };
 
+/////////////////
+//   Objects   //
+/////////////////
+
 struct Traceable
 {
 	Material m;
@@ -114,6 +119,10 @@ struct RaytracedMesh : public Traceable
         else return RayIntersection();
     }
 };
+
+///////////////
+//   Scene   //
+///////////////
 
 struct Scene
 {
@@ -205,6 +214,10 @@ struct Film
 #define WIDTH int(640)
 #define HEIGHT int(480)
 
+//////////////////////////
+//   Main Application   //
+//////////////////////////
+
 struct ExperimentalApp : public GLFWApp
 {
     std::unique_ptr<gui::ImGuiManager> igm;
@@ -266,10 +279,9 @@ struct ExperimentalApp : public GLFWApp
         scene.objects.push_back(b);
         scene.objects.push_back(c);
 
-        auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
-        rescale_geometry(shaderball, 2.f);
-
 		/*
+		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
+		rescale_geometry(shaderball, 2.f);
         RaytracedMesh shaderballTrimesh(shaderball);
         shaderballTrimesh.m.diffuse = float3(0, 1, 0);
         scene.meshes.push_back(shaderballTrimesh);
