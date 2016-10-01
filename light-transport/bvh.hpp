@@ -14,28 +14,29 @@ class BVH
 
 	struct ObjectComparator
 	{
-		int split;
-		ObjectComparator(const int axis = 0) : split(axis) { }
-		bool operator()(const Traceable * a, const Traceable * b) const { return true; }
+		uint32_t split;
+		ObjectComparator(const uint32_t axis = 0) : split(axis) { }
+		bool operator() (const Traceable * a, const Traceable * b) const { return true; }
 	};
-
 
 	struct Node
 	{
-		Node * left;
-		Node * right;
+		Node * left = nullptr;
+		Node * right = nullptr;
 		Bounds3D bounds;
-		int axis = 0;
+		uint32_t axis = 0;
 		float position = 0.f;
 		std::vector<std::shared_ptr<Traceable>> objects;
 
-		Node(int axis = 0, float position = 0.f) : axis(axis), position(position) {}
+		Node(const uint32_t axis = 0, const float position = 0.f) : axis(axis), position(position) {}
+		~Node() { if (left) delete left; if (right) delete right; }
 
-		bool is_leaf() {}
+		bool is_leaf() const { return (left == nullptr && right == nullptr); }
 	};
 
 	std::vector<std::shared_ptr<Traceable>> objects;
 	bool initialized = false;
+
 public:
 
 	BVH(std::vector<std::shared_ptr<Traceable>> objects) : objects(objects) {}
@@ -45,6 +46,11 @@ public:
 	{
 		// ... 
 		initialized = true;
+	}
+
+	void build_recursive(Node * node, uint32_t depth, std::vector<std::shared_ptr<Traceable>> & objects)
+	{
+
 	}
 
 	// Compute entire bounds of BVH in world space
