@@ -57,45 +57,48 @@ struct Material
     }
 };
 
-struct HitResult
+struct RayIntersection
 {
     float d = std::numeric_limits<float>::infinity();
     float3 location, normal;
-    Material * m;
-    HitResult() {}
-    HitResult(float d, float3 normal, Material * m) : d(d), normal(normal), m(m) {}
+	Material * m = nullptr;
+	RayIntersection() {}
+	RayIntersection(float d, float3 normal, Material * m) : d(d), normal(normal), m(m) {}
     bool operator() (void) { return d < std::numeric_limits<float>::infinity(); }
 };
 
-struct RaytracedPlane : public Plane
+struct Traceable
 {
-    Material m;
-    HitResult intersects(const Ray & ray)
+	Material m;
+	virtual RayIntersection intersects(const Ray & ray) { return RayIntersection(); };
+};
+
+struct RaytracedPlane : public Plane, public Traceable
+{
+	virtual RayIntersection intersects(const Ray & ray) override final
     {
         float outT;
         float3 outNormal;
-        if (intersect_ray_plane(ray, *this)) return HitResult(outT, outNormal, &m);
-        else return HitResult(); // nothing
+        if (intersect_ray_plane(ray, *this)) return RayIntersection(outT, outNormal, &m);
+        else return RayIntersection(); // nothing
     }
 };
 
-struct RaytracedSphere : public Sphere
+struct RaytracedSphere : public Sphere, public Traceable
 {
-    Material m;
-    HitResult intersects(const Ray & ray)
+	virtual RayIntersection intersects(const Ray & ray) override final
     {
         float outT;
         float3 outNormal;
-        if (intersect_ray_sphere(ray, *this, &outT, &outNormal)) return HitResult(outT, outNormal, &m);
-        else return HitResult(); // nothing
+        if (intersect_ray_sphere(ray, *this, &outT, &outNormal)) return RayIntersection(outT, outNormal, &m);
+        else return RayIntersection(); // nothing
     }
 };
 
-struct RaytracedMesh
+struct RaytracedMesh : public Traceable
 {
     Geometry g;
     Bounds3D bounds;
-    Material m;
     float3 position;
 
     RaytracedMesh(Geometry & g) : g(std::move(g))
@@ -103,13 +106,13 @@ struct RaytracedMesh
         bounds = g.compute_bounds();
     }
 
-    HitResult intersects(const Ray & ray)
+	virtual RayIntersection intersects(const Ray & ray) override final
     {
         float outT;
         float3 outNormal;
         // intersect_ray_mesh() takes care of early out using bounding box & rays from inside
-        if (intersect_ray_mesh(ray, g, &outT, &outNormal, &bounds)) return HitResult(outT, outNormal, &m);
-        else return HitResult();
+        if (intersect_ray_mesh(ray, g, &outT, &outNormal, &bounds)) return RayIntersection(outT, outNormal, &m);
+        else return RayIntersection();
     }
 };
 
@@ -117,26 +120,15 @@ struct Scene
 {
     float3 environment;
     float3 ambient;
-    std::vector<RaytracedPlane> planes;
-    std::vector<RaytracedSphere> spheres;
-    std::vector<RaytracedMesh> meshes;
 
+    std::vector<std::shared_ptr<Traceable>> objects;
     float3 trace_ray(const Ray & ray, int depth)
     {
-        HitResult best;
-        for (auto & p : planes)
+		RayIntersection best;
+
+        for (auto & obj : objects)
         {
-            auto hit = p.intersects(ray);
-            if (hit.d < best.d) best = hit;
-        }
-        for (auto & s : spheres)
-        {
-            auto hit = s.intersects(ray);
-            if (hit.d < best.d) best = hit;
-        }
-        for (auto & m : meshes)
-        {
-            auto hit = m.intersects(ray);
+            auto hit = obj->intersects(ray);
             if (hit.d < best.d) best = hit;
         }
 
@@ -178,10 +170,7 @@ struct Film
 
     Film(int width, int height, Pose view) : samples(width * height), size({ width, height }), view(view) { }
 
-	void set_field_of_view(float degrees)
-	{
-		FoV = std::tan(to_radians(degrees) * 0.5f);
-	}
+	void set_field_of_view(float degrees) { FoV = std::tan(to_radians(degrees) * 0.5f); }
 
 	// http://computergraphics.stackexchange.com/questions/2130/anti-aliasing-filtering-in-ray-tracing
     Ray make_ray_for_coordinate(const int2 & coord) const
@@ -257,26 +246,26 @@ struct ExperimentalApp : public GLFWApp
         floor.m.diffuse = float3(1, 1, 1);
         //scene.planes.push_back(floor);
 
-        RaytracedSphere a;
-        RaytracedSphere b;
-        RaytracedSphere c;
+		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
+		std::shared_ptr<RaytracedSphere> b = std::make_shared<RaytracedSphere>();
+		std::shared_ptr<RaytracedSphere> c = std::make_shared<RaytracedSphere>();
 
-        a.radius = 1.0;
-        a.m.diffuse = float3(1, 0, 0);
-        a.center = float3(-1, -1.f, -2.5);
+        a->radius = 1.0;
+        a->m.diffuse = float3(1, 0, 0);
+        a->center = float3(-1, -1.f, -2.5);
 
-        b.radius = 1.0;
-        b.m.diffuse = float3(0, 1, 0);
-        b.center = float3(+1, -1.f, -2.5);
+        b->radius = 1.0;
+        b->m.diffuse = float3(0, 1, 0);
+        b->center = float3(+1, -1.f, -2.5);
 
-        c.radius = 0.5;
-        c.m.diffuse = float3(0, 0, 0);
-        c.m.emissive = float3(1, 1, 1);
-        c.center = float3(0, 1.00f, -2.5);
+        c->radius = 0.5;
+        c->m.diffuse = float3(0, 0, 0);
+        c->m.emissive = float3(1, 1, 1);
+        c->center = float3(0, 1.00f, -2.5);
 
-        scene.spheres.push_back(a);
-        scene.spheres.push_back(b);
-        scene.spheres.push_back(c);
+        scene.objects.push_back(a);
+        scene.objects.push_back(b);
+        scene.objects.push_back(c);
 
         auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
         rescale_geometry(shaderball, 2.f);
