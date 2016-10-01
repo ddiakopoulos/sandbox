@@ -1,4 +1,6 @@
 #include "index.hpp"
+#include "light-transport/objects.hpp"
+#include "light-transport/bvh.hpp"
 
 // Reference
 // http://graphics.pixar.com/library/HQRenderingCourse/paper.pdf
@@ -55,48 +57,6 @@ struct Material
         float3 v = cross(NdotL, u);
         float3 d = normalize(u * cos(r1) * r2s + v * std::sin(r1) * r2s + NdotL * std::sqrt(1.f - r2)); // random reflection ray
         return Ray(p, d);
-    }
-};
-
-struct RayIntersection
-{
-    float d = std::numeric_limits<float>::infinity();
-    float3 location, normal;
-	Material * m = nullptr;
-	RayIntersection() {}
-	RayIntersection(float d, float3 normal, Material * m) : d(d), normal(normal), m(m) {}
-    bool operator() (void) { return d < std::numeric_limits<float>::infinity(); }
-};
-
-/////////////////
-//   Objects   //
-/////////////////
-
-struct Traceable
-{
-	Material m;
-	virtual RayIntersection intersects(const Ray & ray) { return RayIntersection(); };
-};
-
-struct RaytracedPlane : public Plane, public Traceable
-{
-	virtual RayIntersection intersects(const Ray & ray) override final
-    {
-        float outT;
-        float3 outNormal;
-        if (intersect_ray_plane(ray, *this)) return RayIntersection(outT, outNormal, &m);
-        else return RayIntersection(); // nothing
-    }
-};
-
-struct RaytracedSphere : public Sphere, public Traceable
-{
-	virtual RayIntersection intersects(const Ray & ray) override final
-    {
-        float outT;
-        float3 outNormal;
-        if (intersect_ray_sphere(ray, *this, &outT, &outNormal)) return RayIntersection(outT, outNormal, &m);
-        else return RayIntersection(); // nothing
     }
 };
 
