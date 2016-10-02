@@ -637,7 +637,7 @@ namespace avl
     }
     
      // Real-Time Collision Detection pg. 180
-    inline bool intersect_ray_box(const Ray & ray, const Bounds3D bounds, float *outT = nullptr)
+    inline bool intersect_ray_box(const Ray & ray, const Bounds3D bounds, float * outTmin = nullptr, float * outTmax = nullptr)
     {
         float tmin = 0.0f; // set to -FLT_MAX to get first hit on line
         float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
@@ -674,7 +674,8 @@ namespace avl
             }
         }
         
-        if (outT) *outT = tmin;
+        if (outTmin) *outTmin = tmin;
+		if (outTmax) *outTmax = tmax;
         return true;
     }
     
