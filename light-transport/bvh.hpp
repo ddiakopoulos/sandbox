@@ -97,7 +97,7 @@ public:
 	void debug_traverse(const Node * node) const
 	{
 		if (!node) return;
-		std::cout << node->bounds << std::endl;
+		std::cout << node->bounds << ", is leaf " << node->is_leaf() << std::endl;
 		if (node->left) debug_traverse(node->left);
 		if (node->right) debug_traverse(node->right);
 	}
@@ -116,6 +116,33 @@ public:
 	bool intersect_p(const Ray & ray)
 	{
 		return false; // fixme
+	}
+
+	void traverse(Node * node, const Ray & ray, RayIntersection & result)
+	{
+		if (node->is_leaf())
+		{
+			for (auto & n : node->data)
+			{
+				RayIntersection r = n->intersects(ray);
+				if (r())
+				{
+					result = r;
+				}
+			}
+		}
+		else
+		{
+			if (intersect_ray_box(ray, node->left->bounds))
+				traverse(node->left, ray, result);
+			if (intersect_ray_box(ray, node->right->bounds))
+				traverse(node->right, ray, result);
+		}
+	}
+
+	void traverse_p(Node * node, const Ray & ray, RayIntersection & result)
+	{
+
 	}
 };
 
