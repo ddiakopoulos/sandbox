@@ -194,19 +194,17 @@ struct ExperimentalApp : public GLFWApp
         c->m.emissive = float3(1, 1, 1);
         c->center = float3(0, 1.00f, -2.5);
 
-        scene.objects.push_back(a);
-        scene.objects.push_back(b);
-        scene.objects.push_back(c);
+        //scene.objects.push_back(a);
+        //scene.objects.push_back(b);
+        //scene.objects.push_back(c);
 
-		scene.accelerate();
-
-		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
-		rescale_geometry(shaderball, 2.f);
-        RaytracedMesh shaderballTrimesh(shaderball);
-        shaderballTrimesh.m.diffuse = float3(0, 1, 0);
-        scene.meshes.push_back(shaderballTrimesh);
-		*/
+		rescale_geometry(shaderball, 1.f);
+		std::shared_ptr<RaytracedMesh> shaderballTrimesh = std::make_shared<RaytracedMesh>(shaderball);
+        shaderballTrimesh->m.diffuse = float3(0, 1, 0);
+        scene.objects.push_back(shaderballTrimesh);
+		
+		scene.accelerate();
 
         renderSurface.reset(new GlTexture());
         renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);

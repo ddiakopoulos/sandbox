@@ -46,7 +46,7 @@ struct RaytracedMesh : public Traceable
 	Geometry g;
 	Bounds3D bounds;
 
-	RaytracedMesh(Geometry & g) : g(std::move(g))
+	RaytracedMesh(Geometry & g) : g(g)
 	{
 		bounds = g.compute_bounds();
 	}
