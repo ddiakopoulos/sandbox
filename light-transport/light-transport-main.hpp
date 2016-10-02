@@ -39,16 +39,31 @@ struct Scene
     float3 ambient;
 
     std::vector<std::shared_ptr<Traceable>> objects;
+	std::unique_ptr<BVH> bvhAccelerator;
+
+	void accelerate()
+	{
+		bvhAccelerator.reset(new BVH(objects));
+		bvhAccelerator->build();
+		bvhAccelerator->debug_traverse(bvhAccelerator->get_root());
+	}
+
     float3 trace_ray(const Ray & ray, int depth)
     {
 		RayIntersection best;
 
-        for (auto & obj : objects)
-        {
-            auto hit = obj->intersects(ray);
-            if (hit.d < best.d) best = hit;
-        }
-
+		if (bvhAccelerator)
+		{
+			best = bvhAccelerator->intersect(ray);
+		}
+		else
+		{
+			for (auto & obj : objects)
+			{
+				auto hit = obj->intersects(ray);
+				if (hit.d < best.d) best = hit;
+			}
+		}
         best.location = ray.origin + ray.direction * best.d;
 
         // Reasonable/valid ray-material interaction:
@@ -183,9 +198,7 @@ struct ExperimentalApp : public GLFWApp
         scene.objects.push_back(b);
         scene.objects.push_back(c);
 
-		BVH bvhAccelerator = { scene.objects };
-		bvhAccelerator.build();
-		bvhAccelerator.debug_traverse(bvhAccelerator.get_root());
+		scene.accelerate();
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");

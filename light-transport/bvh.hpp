@@ -110,7 +110,9 @@ public:
 
 	RayIntersection intersect(const Ray & ray)
 	{
-		return RayIntersection(); // fixme
+		RayIntersection result;
+		traverse(root, ray, result);
+		return result;
 	}
 
 	bool intersect_p(const Ray & ray)
@@ -120,6 +122,7 @@ public:
 
 	void traverse(Node * node, const Ray & ray, RayIntersection & result)
 	{
+		// Test directly against object
 		if (node->is_leaf())
 		{
 			for (auto & n : node->data)
@@ -131,6 +134,7 @@ public:
 				}
 			}
 		}
+		// Otherwise continue traversal
 		else
 		{
 			if (intersect_ray_box(ray, node->left->bounds))
