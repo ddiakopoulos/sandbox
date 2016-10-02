@@ -50,8 +50,15 @@ struct Scene
 		bvhAccelerator->debug_traverse(bvhAccelerator->get_root());
 	}
 
-    float3 trace_ray(const Ray & ray, int depth)
+	const int maxRecursion = 5;
+
+    float3 trace_ray(const Ray & ray, float weight, int depth)
     {
+		if (depth >= maxRecursion || weight <= 0.0f)
+		{
+			return float3(0, 0, 0);
+		}
+
 		RayIntersection best;
 
 		if (bvhAccelerator)
@@ -71,27 +78,26 @@ struct Scene
         // Reasonable/valid ray-material interaction:
         if (best())
         {
-            if (length(best.m->emissive) > 0.01) return best.m->emissive;
-
-            float3 light = (best.m->diffuse * ambient);
+            float3 Kd = ((best.m->diffuse * ambient) * 0.99f); // avoid 1.0 dMax case
 
             // max refl
-            float p = (light.x > light.y && light.x > light.z) ? light.x : (light.y > light.z) ? light.y : light.z;
+            float dMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z;
 
-            // Russian-roulette termination
-            if (++depth > 5) 
-            {
-                if (gen.random_float() < (p * 0.90f)) 
-                {
-                    light = light * (0.90f / p);
-                }
-                else return best.m->emissive;
-            }
+			// Russian roulette termination
+			float p = gen.random_float();
+			p = (p != 0.0f) ? p : 0.0001f;
+			p = (p != 1.0f) ? p : 0.9999f;
+			if (weight < p)
+			{
+				return (1.0f / p) * best.m->emissive;
+			}
 
             Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal, gen);
-            return light * trace_ray(reflected, depth);
+
+			// Fixme - proper radiance
+            return Kd * trace_ray(reflected, weight * dMax, depth + 1);
         }
-        else return environment; // otherwise return environment color
+        else return weight * environment; // otherwise return environment color
     }
 };
 
@@ -131,7 +137,7 @@ struct Film
         float3 sample;
         for (int s = 0; s < numSamples; ++s)
         {
-            sample = sample + scene.trace_ray(make_ray_for_coordinate(coord), 0);
+            sample = sample + scene.trace_ray(make_ray_for_coordinate(coord), 1.0f, 0);
         }
 		samples[coord.y * size.x + coord.x] = sample * invSamples;
     }
@@ -159,7 +165,7 @@ struct ExperimentalApp : public GLFWApp
     ShaderMonitor shaderMonitor;
     std::vector<int2> coordinates;
 
-    int numSamples = 32;
+    int numSamples = 128;
 	int workgroupSize = 64;
 	float fieldOfView = 90;
 
@@ -174,7 +180,7 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
-        camera.look_at({ 0, +1.25, -4 }, { 0, 0, 0 });
+        camera.look_at({ 0, +1.25, -3 }, { 0, 0, 0 });
         cameraController.set_camera(&camera);
         cameraController.enableSpring = false;
         cameraController.movementSpeed = 0.01f;
@@ -205,6 +211,10 @@ struct ExperimentalApp : public GLFWApp
 
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
 		rescale_geometry(shaderball, 1.f);
+		for (auto & v : shaderball.vertices)
+		{
+			v = transform_coord(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), v);
+		}
 		std::shared_ptr<RaytracedMesh> shaderballTrimesh = std::make_shared<RaytracedMesh>(shaderball);
         shaderballTrimesh->m.diffuse = float3(0, 1, 0);
         scene.objects.push_back(shaderballTrimesh);
@@ -302,7 +312,6 @@ struct ExperimentalApp : public GLFWApp
 			if (coordinates.size())
 			{
 				auto randomIdx = gen.random_int(coordinates.size() - 1);
-				std::cout << randomIdx << std::endl;
 				auto randomCoord = coordinates[randomIdx];
 				coordinates.erase(coordinates.begin() + randomIdx);
 				group.push_back(randomCoord);
