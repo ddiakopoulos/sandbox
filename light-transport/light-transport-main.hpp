@@ -2,6 +2,8 @@
 #include "light-transport/objects.hpp"
 #include "light-transport/bvh.hpp"
 #include "light-transport/material.hpp"
+#include <future>
+#include <atomic>
 
 // Reference
 // http://graphics.pixar.com/library/HQRenderingCourse/paper.pdf
@@ -27,7 +29,7 @@
 // [ ] Bidirectional path tracing
 // [ ] Embree acceleration
 
-RandomGenerator gen;
+static thread_local RandomGenerator gen;
 
 ///////////////
 //   Scene   //
@@ -131,7 +133,7 @@ struct Film
         {
             sample = sample + scene.trace_ray(make_ray_for_coordinate(coord), 0);
         }
-        samples[coord.y * size.x + coord.x] = sample * invSamples;
+		samples[coord.y * size.x + coord.x] = sample * invSamples;
     }
 };
 
@@ -157,13 +159,16 @@ struct ExperimentalApp : public GLFWApp
     ShaderMonitor shaderMonitor;
     std::vector<int2> coordinates;
 
-    int numSamples = 128;
+    int numSamples = 32;
 	int workgroupSize = 64;
 	float fieldOfView = 90;
 
+	std::mutex coordinateLock;
+	std::vector<std::thread> renderWorkers;
+
     ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
     {
-        glfwSwapInterval(0);
+        glfwSwapInterval(1);
 
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -213,16 +218,45 @@ struct ExperimentalApp : public GLFWApp
 		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
 
         for (int y = 0; y < film->size.y; ++y)
-        {
+		{
             for (int x = 0; x < film->size.x; ++x)
             {
                 coordinates.push_back(int2(x, y));
             }
         }
 
+		size_t pixelGroupSize = (WIDTH * HEIGHT) / 4;
+
+		std::cout << "Pixel Group Size is: " << pixelGroupSize << std::endl;
+		std::cout << "Total Pixels: " << coordinates.size() << std::endl;
+
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
+
+		for (int i = 0; i < 8; ++i)
+		{
+			renderWorkers.push_back(std::thread(&ExperimentalApp::render_func, this));
+		}
+
+		std::for_each(renderWorkers.begin(), renderWorkers.end(), [](std::thread &t)
+		{
+			t.detach();
+		});
+
     }
+
+	void render_func()
+	{
+		std::vector<int2> pixelCoords = make_work_group();
+		while (pixelCoords.size())
+		{
+			for (auto coord : pixelCoords)
+			{
+				film->trace_samples(scene, coord, numSamples);
+			}
+			pixelCoords = make_work_group();
+		}
+	}
 
     void on_window_resize(int2 size) override { }
 
@@ -240,21 +274,41 @@ struct ExperimentalApp : public GLFWApp
         // Check if camera position has changed
         if (camera.get_pose() != film->view)
         {
-			reset_film();
+			//reset_film();
         }
     }
 
 	void reset_film()
 	{
+		/*
 		film.reset(new Film({ WIDTH, HEIGHT }, camera.get_pose()));
 		coordinates.clear();
 		for (int y = 0; y < film->size.y; ++y)
 		{
 			for (int x = 0; x < film->size.x; ++x)
 			{
-				coordinates.push_back(int2(x, y));
+				//coordinates.push_back(int2(x, y));
 			}
 		}
+		*/
+	}
+
+	std::vector<int2> make_work_group()
+	{
+		std::lock_guard<std::mutex> guard(coordinateLock);
+		std::vector<int2> group;
+		for (int w = 0; w < 1024; w++)
+		{
+			if (coordinates.size())
+			{
+				auto randomIdx = gen.random_int(coordinates.size() - 1);
+				std::cout << randomIdx << std::endl;
+				auto randomCoord = coordinates[randomIdx];
+				coordinates.erase(coordinates.begin() + randomIdx);
+				group.push_back(randomCoord);
+			}
+		}
+		return group;
 	}
 
     void on_draw() override
@@ -268,19 +322,8 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.f, 0.f, 0.f, 1.0f);
 
-        if (coordinates.size() > 1)
-        {
-            for (int g = 0; g < 64; g++)
-            {
-                auto randomIdx = gen.random_int(coordinates.size() - 1);
-                auto randomCoord = coordinates[randomIdx];
-                coordinates.erase(coordinates.begin() + randomIdx);
-                film->trace_samples(scene, randomCoord, numSamples);
-            }
+        renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
 
-            renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
-        }
-           
         Bounds2D renderArea = { 0, 0, (float)WIDTH, (float)HEIGHT };
         renderView->draw(renderArea, { width, height });
 
