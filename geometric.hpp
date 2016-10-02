@@ -95,7 +95,12 @@ namespace avl
 			return result;
 		}
     };
-    
+
+	inline std::ostream & operator << (std::ostream & o, const Bounds3D & b)
+	{
+		return o << "{" << b.min() << " to " << b.max() << "}";
+	}
+
     /////////////////////////////////
     // Universal Coordinate System //
     /////////////////////////////////

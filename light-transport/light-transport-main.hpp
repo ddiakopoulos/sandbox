@@ -183,6 +183,10 @@ struct ExperimentalApp : public GLFWApp
         scene.objects.push_back(b);
         scene.objects.push_back(c);
 
+		BVH bvhAccelerator = { scene.objects };
+		bvhAccelerator.build();
+		bvhAccelerator.debug_traverse(bvhAccelerator.get_root());
+
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
 		rescale_geometry(shaderball, 2.f);

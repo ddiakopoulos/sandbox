@@ -9,9 +9,11 @@
 
 using namespace avl;
 
+// ToDo
+// [ ] Serialize / deserialize
+
 class BVH
 {
-
 	struct ObjectComparator
 	{
 		uint32_t split;
@@ -41,12 +43,14 @@ class BVH
 	bool initialized = false;
 
 	float leafThreshold = 1.f;
-	Node * root;
+	Node * root = nullptr;
 
 public:
 
 	BVH(std::vector<std::shared_ptr<Traceable>> objects) : objects(objects) {}
 	~BVH() { if (root) delete root; }
+
+	Node * get_root() { if (root) return root; }
 
 	void build()
 	{
@@ -90,20 +94,28 @@ public:
 		build_recursive(node->right, depth + 1, rightList);
 	}
 
+	void debug_traverse(const Node * node) const
+	{
+		if (!node) return;
+		std::cout << node->bounds << std::endl;
+		if (node->left) debug_traverse(node->left);
+		if (node->right) debug_traverse(node->right);
+	}
+
 	// Compute entire bounds of BVH in world space
 	Bounds3D world_bounds() const
 	{
-
+		return Bounds3D(); // fixme
 	}
 
 	RayIntersection intersect(const Ray & ray)
 	{
-
+		return RayIntersection(); // fixme
 	}
 
 	bool intersect_p(const Ray & ray)
 	{
-
+		return false; // fixme
 	}
 };
 
