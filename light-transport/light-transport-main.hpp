@@ -31,6 +31,14 @@
 
 static RandomGenerator gen;
 
+struct PerfTimer
+{
+    TimeKeeper t;
+    std::string msg;
+    PerfTimer(const std::string & msg) : msg(msg) { t.start(); }
+    ~PerfTimer() { t.stop(); std::cout << "[Timer] - " << msg << " took " << t.milliseconds().count() << " ms" << std::endl; }
+};
+
 ///////////////
 //   Scene   //
 ///////////////
@@ -80,7 +88,7 @@ struct Scene
 		{
 			float3 Kd = ((best.m->diffuse * ambient) * 0.99f); // avoid 1.0 dMax case
 
-															   // max refl
+            // max refl
 			float dMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z;
 
 			// Russian roulette termination
@@ -95,7 +103,7 @@ struct Scene
 			Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal, gen);
 
 			// Fixme - proper radiance
-			return  best.m->emissive + (Kd * trace_ray(reflected, weight * dMax, depth + 1));
+			return (best.m->emissive) + (Kd * trace_ray(reflected, weight * dMax, depth + 1));
 		}
 		else return weight * environment; // otherwise return environment color
 	}
@@ -165,6 +173,7 @@ struct ExperimentalApp : public GLFWApp
 
 	std::shared_ptr<Film> film;
 	Scene scene;
+    TimeKeeper sceneTimer;
 
 	GlCamera camera;
 	FlyCameraController cameraController;
@@ -180,6 +189,8 @@ struct ExperimentalApp : public GLFWApp
 
 	ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
 	{
+        PerfTimer("Application Constructor");
+        
 		glfwSwapInterval(1);
 
 		int width, height;
@@ -235,7 +246,10 @@ struct ExperimentalApp : public GLFWApp
 		*/
 
 		// Traverse + build BVH accelerator for the objects we've added to the scene
-		scene.accelerate();
+        {
+            PerfTimer("BVH Generation");
+            scene.accelerate();
+        }
 
 		// Generate a vector of all possible pixel locations to raytrace
 		for (int y = 0; y < film->size.y; ++y)
@@ -269,10 +283,13 @@ struct ExperimentalApp : public GLFWApp
 		renderSurface.reset(new GlTexture());
 		renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
 		renderView.reset(new GLTextureView(renderSurface->get_gl_handle(), true));
+        
+        sceneTimer.start();
 	}
 
 	~ExperimentalApp()
 	{
+        sceneTimer.stop();
 		earlyExit = true;
 		std::for_each(renderWorkers.begin(), renderWorkers.end(), [](std::thread & t)
 		{
@@ -289,7 +306,7 @@ struct ExperimentalApp : public GLFWApp
 		{
 			if (coordinates.size())
 			{
-				auto randomIdx = gen.random_int(coordinates.size() - 1);
+				auto randomIdx = gen.random_int((int) coordinates.size() - 1);
 				auto randomCoord = coordinates[randomIdx];
 				coordinates.erase(coordinates.begin() + randomIdx);
 				group.push_back(randomCoord);
@@ -351,6 +368,7 @@ struct ExperimentalApp : public GLFWApp
 		renderView->draw(renderArea, { width, height });
 
 		if (igm) igm->begin_frame();
+        ImGui::Text("Application Runtime %.3lld seconds", sceneTimer.seconds().count());
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::InputFloat3("Camera Position", &camera.get_pose().position[0]);
 		ImGui::InputFloat4("Camera Orientation", &camera.get_pose().orientation[0]);
