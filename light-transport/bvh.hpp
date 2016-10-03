@@ -7,10 +7,9 @@
 #include <vector>
 #include <memory>
 
-using namespace avl;
-
 // ToDo
-// [ ] Serialize / deserialize
+// [ ] serialize / deserialize for large scenes
+// [ ] intersect_p
 
 class BVH
 {
@@ -50,7 +49,7 @@ public:
 	BVH(std::vector<std::shared_ptr<Traceable>> objects) : objects(objects) {}
 	~BVH() { if (root) delete root; }
 
-	Node * get_root() { if (root) return root; }
+	Node * get_root() { if (root) return root; else return nullptr; }
 
 	void build()
 	{
@@ -105,7 +104,7 @@ public:
 	// Compute entire bounds of BVH in world space
 	Bounds3D world_bounds() const
 	{
-		return Bounds3D(); // fixme
+		return Bounds3D(); // todo
 	}
 
 	RayIntersection intersect(const Ray & ray)
@@ -115,6 +114,9 @@ public:
 		return result;
 	}
 
+	// the _p variant is designed to quick traversal and shouldn't need to return the full amount
+	// of data in a RayIntersection. It requires some lower level, optimized variants of ray-triangle, etc.
+	// Probably best to attack this once Embree integration is complete.
 	bool intersect_p(const Ray & ray)
 	{
 		return false; // fixme
@@ -128,22 +130,18 @@ public:
 			for (auto & n : node->data)
 			{
 				RayIntersection r = n->intersects(ray);
-				if (r())
-				{
-					result = r;
-				}
+				if (r()) result = r;
 			}
 		}
 		// Otherwise continue traversal
 		else
 		{
-			if (intersect_ray_box(ray, node->left->bounds))
-				traverse(node->left, ray, result);
-			if (intersect_ray_box(ray, node->right->bounds))
-				traverse(node->right, ray, result);
+			if (intersect_ray_box(ray, node->left->bounds)) traverse(node->left, ray, result);
+			if (intersect_ray_box(ray, node->right->bounds)) traverse(node->right, ray, result);
 		}
 	}
 
+	// See note about intersect_p
 	void traverse_p(Node * node, const Ray & ray, RayIntersection & result)
 	{
 

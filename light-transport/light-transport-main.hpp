@@ -17,6 +17,7 @@
 // [X] ImGui Controls
 // [X] Add tri-meshes (Shaderball, lucy statue from *.obj)
 // [X] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
+// [ ] Timers for various functions (accel vs non-accel)
 // [ ] Proper radiance based materials (bdrf)
 // [X] BVH Accelerator
 // [ ] Cornell Box Loader
@@ -170,8 +171,7 @@ struct ExperimentalApp : public GLFWApp
     ShaderMonitor shaderMonitor;
     std::vector<int2> coordinates;
 
-    int numSamples = 4096;
-	int workgroupSize = 64;
+    int samplesPerPixel = 1024;
 	float fieldOfView = 90;
 
 	std::mutex coordinateLock;
@@ -254,7 +254,7 @@ struct ExperimentalApp : public GLFWApp
 			{
 				for (auto coord : pixelCoords)
 				{
-					film->trace_samples(scene, coord, numSamples);
+					film->trace_samples(scene, coord, samplesPerPixel);
 				}
 				pixelCoords = generate_bag_of_pixels();
 			}
@@ -359,7 +359,7 @@ struct ExperimentalApp : public GLFWApp
 			reset_film();
 			film->set_field_of_view(fieldOfView);
 		}
-		if (ImGui::SliderInt("SPP", &numSamples, 1, 1024)) reset_film(); 
+		if (ImGui::SliderInt("SPP", &samplesPerPixel, 1, 1024)) reset_film();
         ImGui::ColorEdit3("Ambient", &scene.ambient[0]);
         if (igm) igm->end_frame();
 
