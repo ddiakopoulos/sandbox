@@ -29,7 +29,7 @@
 // [ ] Bidirectional path tracing
 // [ ] Embree acceleration
 
-static thread_local RandomGenerator gen;
+static RandomGenerator gen;
 
 ///////////////
 //   Scene   //
@@ -176,7 +176,7 @@ struct ExperimentalApp : public GLFWApp
 
 	std::mutex coordinateLock;
 	std::vector<std::thread> renderWorkers;
-	std::atomic<bool> earlyExit = false;
+    std::atomic<bool> earlyExit = {false};
 
 	ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
 	{

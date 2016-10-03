@@ -122,6 +122,10 @@
 		087A4EA11BB8EC9B00975C72 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		087A4EA31BB8ECA100975C72 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		087A4EA51BB8ECA600975C72 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		0881401E1DA2CFD1003EC318 /* bvh.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = bvh.hpp; path = "light-transport/bvh.hpp"; sourceTree = SOURCE_ROOT; };
+		0881401F1DA2CFD1003EC318 /* light-transport-main.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = "light-transport-main.hpp"; path = "light-transport/light-transport-main.hpp"; sourceTree = SOURCE_ROOT; };
+		088140201DA2CFD1003EC318 /* material.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = material.hpp; path = "light-transport/material.hpp"; sourceTree = SOURCE_ROOT; };
+		088140211DA2CFD1003EC318 /* objects.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = objects.hpp; path = "light-transport/objects.hpp"; sourceTree = SOURCE_ROOT; };
 		088B47BD1C42D56B0007BB59 /* vision.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vision.hpp; path = minivision/vision.hpp; sourceTree = SOURCE_ROOT; };
 		088B47BF1C42DDC10007BB59 /* texture_view.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = texture_view.hpp; sourceTree = SOURCE_ROOT; };
 		089B85FD1BAFC70B00B3A290 /* base64.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = base64.hpp; sourceTree = SOURCE_ROOT; };
@@ -208,6 +212,7 @@
 		0812048F1BADDEC100C7C0F4 /* source */ = {
 			isa = PBXGroup;
 			children = (
+				0881401D1DA2CF87003EC318 /* light-transport */,
 				0849FD8D1BE7CB2B000F148E /* third_party */,
 				0849FD861BE7C6F0000F148E /* examples */,
 				08CFD2EA1BDDF79900895E31 /* shaders */,
@@ -384,6 +389,17 @@
 				081204A81BAE336600C7C0F4 /* util.hpp */,
 			);
 			name = app;
+			sourceTree = "<group>";
+		};
+		0881401D1DA2CF87003EC318 /* light-transport */ = {
+			isa = PBXGroup;
+			children = (
+				0881401E1DA2CFD1003EC318 /* bvh.hpp */,
+				0881401F1DA2CFD1003EC318 /* light-transport-main.hpp */,
+				088140201DA2CFD1003EC318 /* material.hpp */,
+				088140211DA2CFD1003EC318 /* objects.hpp */,
+			);
+			name = "light-transport";
 			sourceTree = "<group>";
 		};
 		088B47BE1C42D5730007BB59 /* minivision */ = {
@@ -657,7 +673,7 @@
 					"$(inherited)",
 					/usr/local/lib,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = "";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
@@ -698,7 +714,7 @@
 					"$(inherited)",
 					/usr/local/lib,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = "";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/** $(SRCROOT)/librealsense/include /usr/local/include /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include";
@@ -715,7 +731,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MACOSX_DEPLOYMENT_TARGET = "";
 				PRODUCT_NAME = sandbox;
 			};
 			name = Debug;
@@ -730,7 +746,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MACOSX_DEPLOYMENT_TARGET = "";
 				PRODUCT_NAME = sandbox;
 			};
 			name = Release;
