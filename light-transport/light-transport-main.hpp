@@ -17,14 +17,13 @@
 // [X] ImGui Controls
 // [X] Add tri-meshes (Shaderball, lucy statue from *.obj)
 // [X] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
-// [ ] Add other objects (box, plane, disc)
-// [ ] Reflective objects, glossy
-// [ ] More materials: matte, reflective, transparent & png textures
-// [ ] BVH Accelerator
+// [ ] Proper radiance based materials (bdrf)
+// [X] BVH Accelerator
 // [ ] Cornell Box Loader
 // [ ] New camera models: pinhole, fisheye, spherical
 // [ ] New light types: point, area
 // [ ] Realtime GL preview
+// [ ] Add other primatives (box, plane, disc)
 // [ ] Portals (hehe)
 // [ ] Bidirectional path tracing
 // [ ] Embree acceleration
@@ -95,7 +94,7 @@ struct Scene
             Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal, gen);
 
 			// Fixme - proper radiance
-            return Kd * trace_ray(reflected, weight * dMax, depth + 1);
+            return  best.m->emissive + (Kd * trace_ray(reflected, weight * dMax, depth + 1));
         }
         else return weight * environment; // otherwise return environment color
     }
@@ -108,9 +107,15 @@ struct Film
     Pose view;
 	float FoV = ANVIL_PI / 2;
 
-    Film(int2 size, Pose view) : samples(size.x * size.y), size(size), view(view) { }
+    Film(const int2 & size, const Pose & view) : samples(size.x * size.y), size(size), view(view) { }
 
 	void set_field_of_view(float degrees) { FoV = std::tan(to_radians(degrees) * 0.5f); }
+
+	void reset(const Pose & newView)
+	{
+		view = newView;
+		std::fill(samples.begin(), samples.end() + 4, float3(0, 0, 0));
+	}
 
 	// http://computergraphics.stackexchange.com/questions/2130/anti-aliasing-filtering-in-ray-tracing
     Ray make_ray_for_coordinate(const int2 & coord) const
@@ -165,12 +170,13 @@ struct ExperimentalApp : public GLFWApp
     ShaderMonitor shaderMonitor;
     std::vector<int2> coordinates;
 
-    int numSamples = 128;
+    int numSamples = 4096;
 	int workgroupSize = 64;
 	float fieldOfView = 90;
 
 	std::mutex coordinateLock;
 	std::vector<std::thread> renderWorkers;
+	std::atomic<bool> earlyExit = false;
 
     ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
     {
@@ -180,10 +186,16 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
-        camera.look_at({ 0, +1.25, -3 }, { 0, 0, 0 });
+		igm.reset(new gui::ImGuiManager(window));
+		gui::make_dark_theme();
+
+		// Setup GL camera
+        camera.look_at({ 0, +1.25, -5 }, { 0, 0, 0 });
         cameraController.set_camera(&camera);
         cameraController.enableSpring = false;
         cameraController.movementSpeed = 0.01f;
+
+		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
 
         scene.ambient = float3(1.0, 1.0, 1.0);
         scene.environment = float3(85.f / 255.f, 29.f / 255.f, 255.f / 255.f);
@@ -205,10 +217,11 @@ struct ExperimentalApp : public GLFWApp
         c->m.emissive = float3(1, 1, 1);
         c->center = float3(0, 1.00f, -2.5);
 
-        //scene.objects.push_back(a);
-        //scene.objects.push_back(b);
-        //scene.objects.push_back(c);
+        scene.objects.push_back(a);
+        scene.objects.push_back(b);
+        scene.objects.push_back(c);
 
+		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
 		rescale_geometry(shaderball, 1.f);
 		for (auto & v : shaderball.vertices)
@@ -216,94 +229,59 @@ struct ExperimentalApp : public GLFWApp
 			v = transform_coord(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), v);
 		}
 		std::shared_ptr<RaytracedMesh> shaderballTrimesh = std::make_shared<RaytracedMesh>(shaderball);
-        shaderballTrimesh->m.diffuse = float3(0, 1, 0);
+        shaderballTrimesh->m.diffuse = float3(1, 1, 1);
+		shaderballTrimesh->m.diffuse = float3(0.1, 0.1, 0.1);
         scene.objects.push_back(shaderballTrimesh);
-		
+		*/
+
+		// Traverse + build BVH accelerator for the objects we've added to the scene
 		scene.accelerate();
 
-        renderSurface.reset(new GlTexture());
-        renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
-        renderView.reset(new GLTextureView(renderSurface->get_gl_handle(), true));
-
-		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
-
-        for (int y = 0; y < film->size.y; ++y)
-		{
-            for (int x = 0; x < film->size.x; ++x)
-            {
-                coordinates.push_back(int2(x, y));
-            }
-        }
-
-		size_t pixelGroupSize = (WIDTH * HEIGHT) / 4;
-
-		std::cout << "Pixel Group Size is: " << pixelGroupSize << std::endl;
-		std::cout << "Total Pixels: " << coordinates.size() << std::endl;
-
-        igm.reset(new gui::ImGuiManager(window));
-        gui::make_dark_theme();
-
-		for (int i = 0; i < 8; ++i)
-		{
-			renderWorkers.push_back(std::thread(&ExperimentalApp::render_func, this));
-		}
-
-		std::for_each(renderWorkers.begin(), renderWorkers.end(), [](std::thread &t)
-		{
-			t.detach();
-		});
-
-    }
-
-	void render_func()
-	{
-		std::vector<int2> pixelCoords = make_work_group();
-		while (pixelCoords.size())
-		{
-			for (auto coord : pixelCoords)
-			{
-				film->trace_samples(scene, coord, numSamples);
-			}
-			pixelCoords = make_work_group();
-		}
-	}
-
-    void on_window_resize(int2 size) override { }
-
-    void on_input(const InputEvent & event) override
-    {
-        if (igm) igm->update_input(event);
-        cameraController.handle_input(event);
-    }
-
-    void on_update(const UpdateEvent & e) override
-    {
-        cameraController.update(e.timestep_ms);
-        shaderMonitor.handle_recompile();
-
-        // Check if camera position has changed
-        if (camera.get_pose() != film->view)
-        {
-			//reset_film();
-        }
-    }
-
-	void reset_film()
-	{
-		/*
-		film.reset(new Film({ WIDTH, HEIGHT }, camera.get_pose()));
-		coordinates.clear();
+		// Generate a vector of all possible pixel locations to raytrace
 		for (int y = 0; y < film->size.y; ++y)
 		{
 			for (int x = 0; x < film->size.x; ++x)
 			{
-				//coordinates.push_back(int2(x, y));
+				coordinates.push_back(int2(x, y));
 			}
 		}
-		*/
+
+		// Lambda to take a bag of pixels and render them
+		auto renderFunc = [this]()
+		{
+			std::vector<int2> pixelCoords = generate_bag_of_pixels();
+			while (pixelCoords.size() && earlyExit == false)
+			{
+				for (auto coord : pixelCoords)
+				{
+					film->trace_samples(scene, coord, numSamples);
+				}
+				pixelCoords = generate_bag_of_pixels();
+			}
+		};
+
+		for (int i = 0; i < std::thread::hardware_concurrency(); ++i)
+		{
+			renderWorkers.push_back(std::thread(renderFunc));
+		}
+
+		// Create a GL texture to which we can render
+		renderSurface.reset(new GlTexture());
+		renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
+		renderView.reset(new GLTextureView(renderSurface->get_gl_handle(), true));
+    }
+
+	~ExperimentalApp()
+	{
+		earlyExit = true;
+		std::for_each(renderWorkers.begin(), renderWorkers.end(), [](std::thread & t)
+		{
+			if (t.joinable()) t.join();
+		});
 	}
 
-	std::vector<int2> make_work_group()
+	// Return a vector of 1024 randomly selected coordinates from the total that we need to render.
+	std::vector<int2> generate_bag_of_pixels()
 	{
 		std::lock_guard<std::mutex> guard(coordinateLock);
 		std::vector<int2> group;
@@ -320,6 +298,43 @@ struct ExperimentalApp : public GLFWApp
 		return group;
 	}
 
+    void on_window_resize(int2 size) override 
+	{ 
+
+	}
+
+    void on_input(const InputEvent & event) override
+    {
+        if (igm) igm->update_input(event);
+        cameraController.handle_input(event);
+    }
+
+    void on_update(const UpdateEvent & e) override
+    {
+        cameraController.update(e.timestep_ms);
+        shaderMonitor.handle_recompile();
+
+        // Check if camera position has changed
+        if (camera.get_pose() != film->view)
+        {
+			reset_film();
+        }
+    }
+
+	void reset_film()
+	{
+		std::lock_guard<std::mutex> guard(coordinateLock);
+		coordinates.clear();
+		for (int y = 0; y < film->size.y; ++y)
+		{
+			for (int x = 0; x < film->size.x; ++x)
+			{
+				coordinates.push_back(int2(x, y));
+			}
+		}
+		film->reset(camera.get_pose());
+	}
+
     void on_draw() override
     {
         glfwMakeContextCurrent(window);
@@ -332,7 +347,6 @@ struct ExperimentalApp : public GLFWApp
         glClearColor(0.f, 0.f, 0.f, 1.0f);
 
         renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
-
         Bounds2D renderArea = { 0, 0, (float)WIDTH, (float)HEIGHT };
         renderView->draw(renderArea, { width, height });
 
@@ -346,7 +360,6 @@ struct ExperimentalApp : public GLFWApp
 			film->set_field_of_view(fieldOfView);
 		}
 		if (ImGui::SliderInt("SPP", &numSamples, 1, 1024)) reset_film(); 
-		if (ImGui::SliderInt("Work Group Size", &workgroupSize, 1, 256)) reset_film();
         ImGui::ColorEdit3("Ambient", &scene.ambient[0]);
         if (igm) igm->end_frame();
 
