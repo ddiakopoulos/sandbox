@@ -31,12 +31,27 @@
 
 static RandomGenerator gen;
 
-struct PerfTimer
+class ScopedTimer
 {
-    TimeKeeper t;
-    std::string msg;
-    PerfTimer(const std::string & msg) : msg(msg) { t.start(); }
-    ~PerfTimer() { t.stop(); std::cout << "[Timer] - " << msg << " took " << t.milliseconds().count() << " ms" << std::endl; }
+    std::string message;
+    std::chrono::high_resolution_clock::time_point t0;
+public:
+    ScopedTimer(std::string message) : message{std::move(message)}, t0{std::chrono::high_resolution_clock::now()} {}
+    ~ScopedTimer()
+    {
+        std::cout << message << " completed in " << std::to_string((std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - t0).count() * 1000)) << " ms" << std::endl;
+    }
+};
+
+class PerfTimer
+{
+    std::chrono::high_resolution_clock::time_point t0;
+    double timestamp = 0.f;
+public:
+    PerfTimer() {};
+    const double & get() { return timestamp; }
+    void start() { t0 = std::chrono::high_resolution_clock::now(); }
+    void stop() { timestamp = std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - t0).count() * 1000; }
 };
 
 ///////////////
@@ -186,10 +201,11 @@ struct ExperimentalApp : public GLFWApp
 	std::mutex coordinateLock;
 	std::vector<std::thread> renderWorkers;
     std::atomic<bool> earlyExit = {false};
+    std::map<std::thread::id, PerfTimer> renderTimers;
 
 	ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
 	{
-        PerfTimer("Application Constructor");
+        ScopedTimer("Application Constructor");
         
 		glfwSwapInterval(1);
 
@@ -247,7 +263,7 @@ struct ExperimentalApp : public GLFWApp
 
 		// Traverse + build BVH accelerator for the objects we've added to the scene
         {
-            PerfTimer("BVH Generation");
+            ScopedTimer("BVH Generation");
             scene.accelerate();
         }
 
@@ -260,23 +276,9 @@ struct ExperimentalApp : public GLFWApp
 			}
 		}
 
-		// Lambda to take a bag of pixels and render them
-		auto renderFunc = [this]()
-		{
-			std::vector<int2> pixelCoords = generate_bag_of_pixels();
-			while (pixelCoords.size() && earlyExit == false)
-			{
-				for (auto coord : pixelCoords)
-				{
-					film->trace_samples(scene, coord, samplesPerPixel);
-				}
-				pixelCoords = generate_bag_of_pixels();
-			}
-		};
-
 		for (int i = 0; i < std::thread::hardware_concurrency(); ++i)
 		{
-			renderWorkers.push_back(std::thread(renderFunc));
+            renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));
 		}
 
 		// Create a GL texture to which we can render
@@ -286,6 +288,21 @@ struct ExperimentalApp : public GLFWApp
         
         sceneTimer.start();
 	}
+    
+    void threaded_render(std::vector<int2> pixelCoords)
+    {
+        auto & timer = renderTimers[std::this_thread::get_id()];
+        while (pixelCoords.size() && earlyExit == false)
+        {
+            for (auto coord : pixelCoords)
+            {
+                timer.start();
+                film->trace_samples(scene, coord, samplesPerPixel);
+                timer.stop();
+            }
+            pixelCoords = generate_bag_of_pixels();
+        }
+    }
 
 	~ExperimentalApp()
 	{
@@ -379,6 +396,10 @@ struct ExperimentalApp : public GLFWApp
 		}
 		if (ImGui::SliderInt("SPP", &samplesPerPixel, 1, 1024)) reset_film();
 		ImGui::ColorEdit3("Ambient", &scene.ambient[0]);
+        for (auto & t : renderTimers)
+        {
+            ImGui::Text("%#010x %.3f", t.first, t.second.get());
+        }
 		if (igm) igm->end_frame();
 
 		glfwSwapBuffers(window);
