@@ -9,6 +9,7 @@
 // http://graphics.pixar.com/library/HQRenderingCourse/paper.pdf
 // http://fileadmin.cs.lth.se/cs/Education/EDAN30/lectures/S2-bvh.pdf
 // http://www.cs.utah.edu/~edwards/research/mcRendering.pdf
+// http://computergraphics.stackexchange.com/questions/2130/anti-aliasing-filtering-in-ray-tracing
 
 // ToDo
 // ----------------------------------------------------------------------------
@@ -133,7 +134,7 @@ struct Scene
 struct Film
 {
 	std::vector<float3> samples;
-	int2 size;
+	float2 size;
 	Pose view;
 	float FoV = ANVIL_PI / 2;
 
@@ -144,23 +145,22 @@ struct Film
 	void reset(const Pose & newView)
 	{
 		view = newView;
-		std::fill(samples.begin(), samples.end() + 4, float3(0, 0, 0));
+		std::fill(samples.begin(), samples.end(), float3(0, 0, 0));
 	}
 
-	// http://computergraphics.stackexchange.com/questions/2130/anti-aliasing-filtering-in-ray-tracing
-	Ray make_ray_for_coordinate(const int2 & coord) const
+	Ray make_ray_for_coordinate(const int2 & coord, UniformRandomGenerator & gen) const
 	{
-		auto aspectRatio = (float)size.x / (float)size.y;
+		const float aspectRatio = size.x / size.y;
 
-		// Apply a tent filter for anti-aliasing
-		float r1 = 2.0f * gen.random_float();
-		float dx = (r1 < 1.0f) ? (std::sqrt(r1) - 1.0f) : (1.0f - std::sqrt(2.0f - r1));
-		float r2 = 2.0f * gen.random_float();
-		float dy = (r2 < 1.0f) ? (std::sqrt(r2) - 1.0f) : (1.0f - std::sqrt(2.0f - r2));
+		// Jitter the sampling direction and apply a tent filter for anti-aliasing
+		const float r1 = 2.0f * gen.random_float(); 
+		const float dx = (r1 < 1.0f) ? (std::sqrt(r1) - 1.0f) : (1.0f - std::sqrt(2.0f - r1));
+		const float r2 = 2.0f * gen.random_float();
+		const float dy = (r2 < 1.0f) ? (std::sqrt(r2) - 1.0f) : (1.0f - std::sqrt(2.0f - r2));
 
-		auto xNorm = ((size.x * 0.5f - coord.x + dx) / size.x * aspectRatio) * FoV;
-		auto yNorm = ((size.y * 0.5f - coord.y + dy) / size.y) * FoV;
-		auto vNorm = float3(xNorm, yNorm, -1.0f);
+		const float xNorm = ((size.x * 0.5f - float(coord.x) + dx) / size.x * aspectRatio) * FoV;
+		const float yNorm = ((size.y * 0.5f - float(coord.y) + dy) / size.y) * FoV;
+		const float3 vNorm = normalize(float3(xNorm, yNorm, -1.0f));
 
 		return view * Ray(float3(0, 0, 0), vNorm);
 	}
@@ -176,8 +176,13 @@ struct Film
 		float3 radiance;
 		for (int s = 0; s < numSamples; ++s)
 		{
-			radiance = radiance + scene.trace_ray(make_ray_for_coordinate(coord), gen, 1.0f, 0);
+			radiance = radiance + scene.trace_ray(make_ray_for_coordinate(coord, gen), gen, 1.0f, 0);
 		}
+
+		// Gamma correction
+		//radiance = pow(radiance, 1.0f / 2.2f);
+		//radiance = clamp(radiance, 0.f, 1.f);
+
 		samples[coord.y * size.x + coord.x] = radiance * invSamples;
 	}
 };
@@ -241,6 +246,7 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedSphere> b = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> c = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedBox> box = std::make_shared<RaytracedBox>();
+		std::shared_ptr<RaytracedBox> box2 = std::make_shared<RaytracedBox>();
 
 		a->radius = 0.50;
 		a->m.diffuse = float3(1, 0, 0);
@@ -259,10 +265,15 @@ struct ExperimentalApp : public GLFWApp
 		box->_min = float3(-2.5, -0.1, -2.5);
 		box->_max = float3(+2.5, +0.0, +2.5);
 
+		box2->m.diffuse = float3(1, 0, 1);
+		box2->_min = float3(-3, -1, -1.0);
+		box2->_max = float3(-2, +1, +1.0);
+
 		scene.objects.push_back(a);
 		scene.objects.push_back(b);
 		scene.objects.push_back(c);
 		scene.objects.push_back(box);
+		scene.objects.push_back(box2);
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
@@ -292,7 +303,7 @@ struct ExperimentalApp : public GLFWApp
 			}
 		}
 
-		const int numWorkers = 1;// std::thread::hardware_concurrency();
+		const int numWorkers = 1; // std::thread::hardware_concurrency();
 		for (int i = 0; i < numWorkers; ++i)
 		{
             renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));

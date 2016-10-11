@@ -48,7 +48,7 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
     
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 0);
     
     glfwSetErrorCallback(s_error_callback);
     
