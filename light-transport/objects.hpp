@@ -41,6 +41,21 @@ struct RaytracedSphere : public Sphere, public Traceable
 	}
 };
 
+struct RaytracedBox : public Bounds3D, public Traceable
+{
+	virtual RayIntersection intersects(const Ray & ray) override final
+	{
+		float outTMin, outTMax;
+		float3 outNormal;
+		if (intersect_ray_box(ray, *this, &outTMin, &outTMax, &outNormal)) return RayIntersection(outTMin, outNormal, &m);
+		else return RayIntersection();
+	}
+	virtual Bounds3D world_bounds() const override final
+	{
+		return *this;
+	}
+};
+
 struct RaytracedMesh : public Traceable
 {
 	Geometry g;

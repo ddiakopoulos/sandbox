@@ -637,58 +637,77 @@ namespace avl
     }
     
      // Real-Time Collision Detection pg. 180
-    inline bool intersect_ray_box(const Ray & ray, const Bounds3D bounds, float * outTmin = nullptr, float * outTmax = nullptr)
+    inline bool intersect_ray_box(const Ray & ray, const Bounds3D bounds, float * outTmin = nullptr, float * outTmax = nullptr, float3 * outNormal = nullptr)
     {
         float tmin = 0.0f; // set to -FLT_MAX to get first hit on line
         float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
-        
+		float3 n;
+		float3 normal(0, 0, 0);
+
         // For all three slabs
-        for (int i = 0; i < 3; i++)
+		int slab = 0;
+        for (slab = 0; slab < 3; slab++)
         {
-            if (std::abs(ray.direction[i]) < PLANE_EPSILON)
+            if (std::abs(ray.direction[slab]) < PLANE_EPSILON)
             {
                 // Ray is parallel to slab. No hit if r.origin not within slab
-                if ((ray.origin[i] < bounds.min()[i]) || (ray.origin[i] > bounds.max()[i])) return false;
+                if ((ray.origin[slab] < bounds.min()[slab]) || (ray.origin[slab] > bounds.max()[slab])) return false;
             }
             else
             {
                 // Compute intersection t value of ray with near and far plane of slab
-                float ood(1.0f / ray.direction[i]);
-                float t1((bounds.min()[i] - ray.origin[i]) * ood);
-                float t2((bounds.max()[i] - ray.origin[i]) * ood);
+                const float invDist = 1.0f / ray.direction[slab];
+                float t1 = (bounds.min()[slab] - ray.origin[slab]) * invDist;
+                float t2 = (bounds.max()[slab] - ray.origin[slab]) * invDist;
                 
-                // Make t1 be intersection with near plane, t2 with far plane
-                if (t1 > t2)
-                {
-                    float tmp = t1;
-                    t1 = t2;
-                    t2 = tmp;
-                }
-                
-                // Compute the intersection of slab intersection intervals
-                tmin = std::max<float>(tmin, t1); // Rather than: if (t1 > tmin) tmin = t1;
-                tmax = std::min<float>(tmax, t2); // Rather than: if (t2 < tmax) tmax = t2;
-                
-                // Exit with no collision as soon as slab intersection becomes empty
-                if (tmin > tmax) return false;
+				n.x = (slab == 0) ? bounds.min()[slab] : 0.0f;
+				n.y = (slab == 1) ? bounds.min()[slab] : 0.0f;
+				n.z = (slab == 2) ? bounds.min()[slab] : 0.0f;
+
+				// Swap t1 and t2 if need so that t1 is intersection with near plane and
+				// t2 with far plane
+				if (t1 > t2) 
+				{
+					std::swap(t1, t2);
+					n = -n;
+				}
+
+				// Compute the intersection of the of slab intersection interval with previous slabs
+				if (t1 > tmin) 
+				{
+					tmin = t1;
+					normal = n;
+				}
+				tmax = min(tmax, t2);
+
+				// If the slabs intersection is empty, there is no hit
+				if (tmin > tmax) return false;
             }
         }
         
         if (outTmin) *outTmin = tmin;
 		if (outTmax) *outTmax = tmax;
+		if (outNormal)
+		{
+			*outNormal = tmin ? normalize(normal) : float3(0, 0, 0);
+		}
+
         return true;
     }
     
     inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * outT = nullptr, float3 * outNormal = nullptr)
     {
         float t;
-        float3 diff = ray.origin - sphere.center;
-        float a = dot(ray.direction, ray.direction);
-        float b = 2.0f * dot(diff, ray.direction);
-        float c = dot(diff, diff) - sphere.radius * sphere.radius;
-        float disc = b * b - 4.0f * a * c;
+        const float3 diff = ray.origin - sphere.center;
+        const float a = dot(ray.direction, ray.direction);
+        const float b = 2.0f * dot(diff, ray.direction);
+        const float c = dot(diff, diff) - sphere.radius * sphere.radius;
+        const float disc = b * b - 4.0f * a * c;
         
-        if (disc < 0.0f) return false;
+		if (disc < 0.0f)
+		{
+			return false;
+		}
         else
         {
             float e = std::sqrt(disc);

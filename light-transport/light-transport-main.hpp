@@ -206,7 +206,7 @@ struct ExperimentalApp : public GLFWApp
 	ShaderMonitor shaderMonitor;
 	std::vector<int2> coordinates;
 
-	int samplesPerPixel = 1024;
+	int samplesPerPixel = 32;
 	float fieldOfView = 90;
 
 	std::mutex coordinateLock;
@@ -241,6 +241,7 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> b = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> c = std::make_shared<RaytracedSphere>();
+		std::shared_ptr<RaytracedBox> box = std::make_shared<RaytracedBox>();
 
 		a->radius = 1.0;
 		a->m.diffuse = float3(1, 0, 0);
@@ -255,9 +256,14 @@ struct ExperimentalApp : public GLFWApp
 		c->m.emissive = float3(1, 1, 1);
 		c->center = float3(0, 1.00f, -2.5);
 
-		scene.objects.push_back(a);
-		scene.objects.push_back(b);
-		scene.objects.push_back(c);
+		box->m.diffuse = float3(1, 1, 0);
+		box->_min = float3(-1, +0.5, -2.5);
+		box->_max = float3(+1, -0.5, -0);
+
+		//scene.objects.push_back(a);
+		//scene.objects.push_back(b);
+		//scene.objects.push_back(c);
+		scene.objects.push_back(box);
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
@@ -287,7 +293,8 @@ struct ExperimentalApp : public GLFWApp
 			}
 		}
 
-		for (int i = 0; i < std::thread::hardware_concurrency(); ++i)
+		const int numWorkers = 1; //std::thread::hardware_concurrency();
+		for (int i = 0; i < numWorkers; ++i)
 		{
             renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));
 		}
