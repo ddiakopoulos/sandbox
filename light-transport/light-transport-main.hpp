@@ -29,7 +29,7 @@
 // [ ] Bidirectional path tracing
 // [ ] Embree acceleration
 
-static RandomGenerator gen;
+UniformRandomGenerator gen;
 
 class ScopedTimer
 {
@@ -75,7 +75,7 @@ struct Scene
 
 	const int maxRecursion = 5;
 
-	float3 trace_ray(const Ray & ray, float weight, int depth)
+	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, float weight, int depth)
 	{
 		if (depth >= maxRecursion || weight <= 0.0f)
 		{
@@ -118,7 +118,7 @@ struct Scene
 			Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal, gen);
 
 			// Fixme - proper radiance
-			return (best.m->emissive) + (Kd * trace_ray(reflected, weight * dMax, depth + 1));
+			return (best.m->emissive) + (Kd * trace_ray(reflected, gen, weight * dMax, depth + 1));
 		}
 		else return weight * environment; // otherwise return environment color
 	}
@@ -160,13 +160,13 @@ struct Film
 	}
 
 	// Records the result of a ray traced through the camera origin (view) for a given pixel coordinate
-	void trace_samples(Scene & scene, const int2 & coord, float numSamples)
+	void trace_samples(Scene & scene, UniformRandomGenerator & gen, const int2 & coord, float numSamples)
 	{
 		const float invSamples = 1.f / numSamples;
 		float3 sample;
 		for (int s = 0; s < numSamples; ++s)
 		{
-			sample = sample + scene.trace_ray(make_ray_for_coordinate(coord), 1.0f, 0);
+			sample = sample + scene.trace_ray(make_ray_for_coordinate(coord), gen, 1.0f, 0);
 		}
 		samples[coord.y * size.x + coord.x] = sample * invSamples;
 	}
@@ -297,7 +297,7 @@ struct ExperimentalApp : public GLFWApp
             for (auto coord : pixelCoords)
             {
                 timer.start();
-                film->trace_samples(scene, coord, samplesPerPixel);
+                film->trace_samples(scene, gen, coord, samplesPerPixel);
                 timer.stop();
             }
             pixelCoords = generate_bag_of_pixels();

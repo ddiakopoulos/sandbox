@@ -127,7 +127,7 @@ namespace poisson
             std::vector<float2> processingList;
             std::vector<float2> outputList;
             Grid grid(bounds, 3);
-            RandomGenerator r;
+			UniformRandomGenerator r;
             
             // add the initial points
             for (auto p : initialSet)
@@ -193,7 +193,7 @@ namespace poisson
             std::vector<float3> processingList;
             std::vector<float3> outputList;
             Volume grid(bounds, 3);
-            RandomGenerator r;
+			UniformRandomGenerator r;
             
             for (auto p : initialSet)
             {
