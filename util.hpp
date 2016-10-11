@@ -68,7 +68,7 @@ namespace avl
         std::uniform_real_distribution<float> distribution;
     public:
 		UniformRandomGenerator() : rd(), gen(rd()), distribution(0.0f, 1.0f) { }
-        float random_float() { return static_cast<float>(distribution(gen)); }
+        float random_float() { return distribution(gen); }
         int random_int(int max) { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }
     };
     

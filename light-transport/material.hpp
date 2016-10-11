@@ -31,7 +31,7 @@ struct Material
 		float r2s = sqrt(r2); // distance from center
 
 		// u is perpendicular to w && v is perpendicular to u and w
-		float3 u = normalize(cross((abs(NdotL.x) > .10f ? float3(0, 1, 0) : float3(1, 1, 1)), NdotL));
+		float3 u = normalize(cross((abs(NdotL.x) > 0.1f ? float3(0, 1, 0) : float3(1, 1, 1)), NdotL));
 		float3 v = cross(NdotL, u);
         float3 d = normalize(u * std::cos(r1) * r2s + v * std::sin(r1) * r2s + NdotL * std::sqrt(1.f - r2)); // random reflection ray
 		return Ray(p, d);

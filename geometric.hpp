@@ -689,7 +689,7 @@ namespace avl
 		if (outTmax) *outTmax = tmax;
 		if (outNormal)
 		{
-			*outNormal = tmin ? normalize(normal) : float3(0, 0, 0);
+			*outNormal = (tmin) ? normalize(normal) : float3(0, 0, 0);
 		}
 
         return true;

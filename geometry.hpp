@@ -550,8 +550,8 @@ namespace avl
         uint3 bestFace = {0, 0, 0};
         float2 outUv;
 
-        Bounds3D meshBounds = (bounds) ? *bounds : mesh.compute_bounds();
-        if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds))
+        Bounds3D meshBounds = (bounds) ? *bounds : mesh.compute_bounds(); 
+        if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds)) // not contains?
         {
             for (int f = 0; f < mesh.faces.size(); ++f)
             {

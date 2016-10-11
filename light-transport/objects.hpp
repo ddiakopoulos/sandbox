@@ -6,6 +6,7 @@
 #include "geometric.hpp"
 #include "geometry.hpp"
 #include "light-transport/material.hpp"
+// http://stackoverflow.com/questions/2656601/why-do-my-raytraced-spheres-have-dark-lines-when-lit-with-multiple-light-sources
 
 using namespace avl;
 

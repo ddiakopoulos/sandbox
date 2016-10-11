@@ -81,13 +81,9 @@ struct Scene
 	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, float weight, int depth)
 	{
 		// Early exit
-		if (depth >= maxRecursion || weight <= 0.0f)
-		{
-			return float3(0, 0, 0);
-		}
+		if (depth >= maxRecursion || weight <= 0.0f) return float3(0, 0, 0);
 
 		RayIntersection best;
-
 		if (bvhAccelerator)
 		{
 			best = bvhAccelerator->intersect(ray);
@@ -100,7 +96,9 @@ struct Scene
 				if (hit.d < best.d) best = hit;
 			}
 		}
-		best.location = ray.origin + ray.direction * best.d;
+		best.location = ray.direction * best.d + ray.origin;
+
+		float3 radiance;
 
 		// Reasonable/valid ray-material interaction:
 		if (best())
@@ -119,15 +117,16 @@ struct Scene
 				return (1.0f / p) * best.m->emissive;
 			}
 
+			// Continue tracing with reflected ray
 			Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal, gen);
-
-			// Fixme - proper radiance
 			return (best.m->emissive) + (Kd * trace_ray(reflected, gen, weight * KdMax, depth + 1));
 		}
 		else
 		{
-			return weight * environment; // otherwise return environment color
+			radiance = weight * environment; // otherwise return environment color
 		}
+
+		return radiance;
 	}
 };
 
@@ -206,7 +205,7 @@ struct ExperimentalApp : public GLFWApp
 	ShaderMonitor shaderMonitor;
 	std::vector<int2> coordinates;
 
-	int samplesPerPixel = 32;
+	int samplesPerPixel = 48;
 	float fieldOfView = 90;
 
 	std::mutex coordinateLock;
@@ -228,41 +227,41 @@ struct ExperimentalApp : public GLFWApp
 		gui::make_dark_theme();
 
 		// Setup GL camera
-		camera.look_at({ 0, +1.25, -5 }, { 0, 0, 0 });
+		camera.look_at({ 0, +1.25, -3 }, { 0, 0, 0 });
 		cameraController.set_camera(&camera);
 		cameraController.enableSpring = false;
 		cameraController.movementSpeed = 0.01f;
 
 		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
 
-		scene.ambient = float3(1.0, 1.0, 1.0);
-		scene.environment = float3(85.f / 255.f, 29.f / 255.f, 255.f / 255.f);
+		scene.ambient = float3(1.f);
+		scene.environment = float3(1.f);
 
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> b = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> c = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedBox> box = std::make_shared<RaytracedBox>();
 
-		a->radius = 1.0;
+		a->radius = 0.50;
 		a->m.diffuse = float3(1, 0, 0);
-		a->center = float3(-1, -1.f, -2.5);
+		a->center = float3(-1, .50f, 1);
 
-		b->radius = 1.0;
+		b->radius = 0.50;
 		b->m.diffuse = float3(0, 1, 0);
-		b->center = float3(+1, -1.f, -2.5);
+		b->center = float3(+1, 0.50f, 1);
 
 		c->radius = 0.5;
 		c->m.diffuse = float3(0, 0, 0);
-		c->m.emissive = float3(1, 1, 1);
-		c->center = float3(0, 1.00f, -2.5);
+		c->m.emissive = float3(1, 1, 0);
+		c->center = float3(0, 1.75f, 0);
 
-		box->m.diffuse = float3(1, 1, 0);
-		box->_min = float3(-1, +0.5, -2.5);
-		box->_max = float3(+1, -0.5, -0);
+		box->m.diffuse = float3(1, 1, 1);
+		box->_min = float3(-2.5, -0.1, -2.5);
+		box->_max = float3(+2.5, +0.0, +2.5);
 
-		//scene.objects.push_back(a);
-		//scene.objects.push_back(b);
-		//scene.objects.push_back(c);
+		scene.objects.push_back(a);
+		scene.objects.push_back(b);
+		scene.objects.push_back(c);
 		scene.objects.push_back(box);
 
 		/*
@@ -293,7 +292,7 @@ struct ExperimentalApp : public GLFWApp
 			}
 		}
 
-		const int numWorkers = 1; //std::thread::hardware_concurrency();
+		const int numWorkers = 1;// std::thread::hardware_concurrency();
 		for (int i = 0; i < numWorkers; ++i)
 		{
             renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));
