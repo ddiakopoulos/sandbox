@@ -8,6 +8,7 @@
 // Reference
 // http://graphics.pixar.com/library/HQRenderingCourse/paper.pdf
 // http://fileadmin.cs.lth.se/cs/Education/EDAN30/lectures/S2-bvh.pdf
+// http://www.cs.utah.edu/~edwards/research/mcRendering.pdf
 
 // ToDo
 // ----------------------------------------------------------------------------
@@ -19,8 +20,9 @@
 // [X] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
 // [ ] Timers for various functions (accel vs non-accel)
 // [ ] Proper radiance based materials (bdrf)
+// [ ] Sampling Scheme
 // [X] BVH Accelerator
-// [ ] Cornell Box Loader
+// [ ] Cornell Box Loader, texture mapping & normals
 // [ ] New camera models: pinhole, fisheye, spherical
 // [ ] New light types: point, area
 // [ ] Realtime GL preview
@@ -75,8 +77,10 @@ struct Scene
 
 	const int maxRecursion = 5;
 
+	// Returns the incoming radiance of `Ray` via unidirectional path tracing
 	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, float weight, int depth)
 	{
+		// Early exit
 		if (depth >= maxRecursion || weight <= 0.0f)
 		{
 			return float3(0, 0, 0);
@@ -101,10 +105,10 @@ struct Scene
 		// Reasonable/valid ray-material interaction:
 		if (best())
 		{
-			float3 Kd = ((best.m->diffuse * ambient) * 0.99f); // avoid 1.0 dMax case
+			float3 Kd = (best.m->diffuse * ambient) * 0.99f; // avoid 1.0 dMax case
 
             // max refl
-			float dMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z;
+			float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z;
 
 			// Russian roulette termination
 			float p = gen.random_float();
@@ -118,9 +122,12 @@ struct Scene
 			Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal, gen);
 
 			// Fixme - proper radiance
-			return (best.m->emissive) + (Kd * trace_ray(reflected, gen, weight * dMax, depth + 1));
+			return (best.m->emissive) + (Kd * trace_ray(reflected, gen, weight * KdMax, depth + 1));
 		}
-		else return weight * environment; // otherwise return environment color
+		else
+		{
+			return weight * environment; // otherwise return environment color
+		}
 	}
 };
 
@@ -162,13 +169,17 @@ struct Film
 	// Records the result of a ray traced through the camera origin (view) for a given pixel coordinate
 	void trace_samples(Scene & scene, UniformRandomGenerator & gen, const int2 & coord, float numSamples)
 	{
+		// Integrating a cosine factor about a hemisphere yields Pi. 
+		// The probability density function (PDF) of a cosine-weighted hemi is 1.f / Pi,
+		// resulting in a final weight of 1.f / numSamples for Monte-Carlo integration.
 		const float invSamples = 1.f / numSamples;
-		float3 sample;
+
+		float3 radiance;
 		for (int s = 0; s < numSamples; ++s)
 		{
-			sample = sample + scene.trace_ray(make_ray_for_coordinate(coord), gen, 1.0f, 0);
+			radiance = radiance + scene.trace_ray(make_ray_for_coordinate(coord), gen, 1.0f, 0);
 		}
-		samples[coord.y * size.x + coord.x] = sample * invSamples;
+		samples[coord.y * size.x + coord.x] = radiance * invSamples;
 	}
 };
 
