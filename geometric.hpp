@@ -636,44 +636,43 @@ namespace avl
         return false;
     }
     
-     // Real-Time Collision Detection pg. 180
-    inline bool intersect_ray_box(const Ray & ray, const Bounds3D bounds, float * outTmin = nullptr, float * outTmax = nullptr, float3 * outNormal = nullptr)
-    {
-        float tmin = 0.0f; // set to -FLT_MAX to get first hit on line
-        float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
+	// Real-Time Collision Detection pg. 180
+	inline bool intersect_ray_box(const Ray & ray, const Bounds3D bounds, float * outTmin = nullptr, float * outTmax = nullptr, float3 * outNormal = nullptr)
+	{
+		float tmin = 0.f; // set to -FLT_MAX to get first hit on line
+		float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
 		float3 n;
 		float3 normal(0, 0, 0);
 
-        // For all three slabs
-		int slab = 0;
-        for (slab = 0; slab < 3; slab++)
-        {
-            if (std::abs(ray.direction[slab]) < PLANE_EPSILON)
-            {
-                // Ray is parallel to slab. No hit if r.origin not within slab
-                if ((ray.origin[slab] < bounds.min()[slab]) || (ray.origin[slab] > bounds.max()[slab])) return false;
-            }
-            else
-            {
-                // Compute intersection t value of ray with near and far plane of slab
-                const float invDist = 1.0f / ray.direction[slab];
-                float t1 = (bounds.min()[slab] - ray.origin[slab]) * invDist;
-                float t2 = (bounds.max()[slab] - ray.origin[slab]) * invDist;
-                
-				n.x = (slab == 0) ? bounds.min()[slab] : 0.0f;
-				n.y = (slab == 1) ? bounds.min()[slab] : 0.0f;
-				n.z = (slab == 2) ? bounds.min()[slab] : 0.0f;
+		// For all three slabs
+		for (int i = 0; i < 3; ++i)
+		{
+			if (std::abs(ray.direction[i]) < PLANE_EPSILON)
+			{
+				// Ray is parallel to slab. No hit if r.origin not within slab
+				if ((ray.origin[i] < bounds.min()[i]) || (ray.origin[i] > bounds.max()[i])) return false;
+			}
+			else
+			{
+				// Compute intersection t value of ray with near and far plane of slab
+				const float invDist = 1.0f / ray.direction[i];
+				float t1 = (bounds.min()[i] - ray.origin[i]) * invDist;
+				float t2 = (bounds.max()[i] - ray.origin[i]) * invDist;
+
+				n.x = (i == 0) ? bounds.min()[i] : 0.0f;
+				n.y = (i == 1) ? bounds.min()[i] : 0.0f;
+				n.z = (i == 2) ? bounds.min()[i] : 0.0f;
 
 				// Swap t1 and t2 if need so that t1 is intersection with near plane and
 				// t2 with far plane
-				if (t1 > t2) 
+				if (t1 > t2)
 				{
 					std::swap(t1, t2);
 					n = -n;
 				}
 
 				// Compute the intersection of the of slab intersection interval with previous slabs
-				if (t1 > tmin) 
+				if (t1 > tmin)
 				{
 					tmin = t1;
 					normal = n;
@@ -682,18 +681,15 @@ namespace avl
 
 				// If the slabs intersection is empty, there is no hit
 				if (tmin > tmax) return false;
-            }
-        }
-        
-        if (outTmin) *outTmin = tmin;
-		if (outTmax) *outTmax = tmax;
-		if (outNormal)
-		{
-			*outNormal = (tmin) ? normalize(normal) : float3(0, 0, 0);
+			}
 		}
 
-        return true;
-    }
+		if (outTmin) *outTmin = tmin;
+		if (outTmax) *outTmax = tmax;
+		if (outNormal)*outNormal = (tmin) ? normalize(normal) : float3(0, 0, 0);
+
+		return true;
+	}
     
     inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * outT = nullptr, float3 * outNormal = nullptr)
     {

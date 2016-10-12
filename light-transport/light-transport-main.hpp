@@ -79,55 +79,46 @@ struct Scene
 	const int maxRecursion = 5;
 
 	// Returns the incoming radiance of `Ray` via unidirectional path tracing
-	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, float weight, int depth)
+	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, const float weight, const int depth)
 	{
-		// Early exit
+		// Early exit with no radiance
 		if (depth >= maxRecursion || weight <= 0.0f) return float3(0, 0, 0);
 
-		RayIntersection best;
+		RayIntersection intersection;
 		if (bvhAccelerator)
 		{
-			best = bvhAccelerator->intersect(ray);
+			intersection = bvhAccelerator->intersect(ray);
 		}
 		else
 		{
 			for (auto & obj : objects)
 			{
-				auto hit = obj->intersects(ray);
-				if (hit.d < best.d) best = hit;
+				RayIntersection newHit = obj->intersects(ray);
+				if (newHit.d < intersection.d) intersection = newHit;
 			}
 		}
-		best.location = ray.direction * best.d + ray.origin;
 
-		float3 radiance;
-
-		// Reasonable/valid ray-material interaction:
-		if (best())
+		// Assuming no intersection, early exit with the environment color
+		if (!intersection())
 		{
-			float3 Kd = (best.m->diffuse * ambient) * 0.99f; // avoid 1.0 dMax case
-
-            // max refl
-			float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z;
-
-			// Russian roulette termination
-			float p = gen.random_float();
-			p = (p != 0.0f) ? p : 0.0001f;
-			p = (p != 1.0f) ? p : 0.9999f;
-			if (weight < p)
-			{
-				return (1.0f / p) * best.m->emissive;
-			}
-
-			// Continue tracing with reflected ray
-			Ray reflected = best.m->get_reflected_ray(ray, best.location, best.normal, gen);
-			return (best.m->emissive) + (Kd * trace_ray(reflected, gen, weight * KdMax, depth + 1));
-		}
-		else
-		{
-			radiance = weight * environment; // otherwise return environment color
+			return weight * environment;
 		}
 
-		return radiance;
+		const Material m = *intersection.m;
+
+		float3 Kd = (m.diffuse * ambient) * 0.99f; // avoid 1.0 dMax case
+		float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
+
+		// Russian roulette termination
+		float p = gen.random_float();
+		p = (p != 0.0f) ? p : 0.0001f;
+		p = (p != 1.0f) ? p : 0.9999f;
+		if (weight < p) return (1.0f / p) * m.emissive;
+
+		// Continue tracing with reflected ray
+		const float3 hitPoint = ray.direction * intersection.d + ray.origin;
+		Ray reflected = m.get_reflected_ray(ray, hitPoint, intersection.normal, gen);
+		return (m.emissive) + (Kd * trace_ray(reflected, gen, weight * KdMax, depth + 1));
 	}
 };
 
@@ -153,16 +144,16 @@ struct Film
 		const float aspectRatio = size.x / size.y;
 
 		// Jitter the sampling direction and apply a tent filter for anti-aliasing
-		const float r1 = 2.0f * gen.random_float(); 
+		const float r1 = 2.0f * gen.random_float() *  gen.random_float();
 		const float dx = (r1 < 1.0f) ? (std::sqrt(r1) - 1.0f) : (1.0f - std::sqrt(2.0f - r1));
-		const float r2 = 2.0f * gen.random_float();
+		const float r2 = 2.0f * gen.random_float() *  gen.random_float();
 		const float dy = (r2 < 1.0f) ? (std::sqrt(r2) - 1.0f) : (1.0f - std::sqrt(2.0f - r2));
 
 		const float xNorm = ((size.x * 0.5f - float(coord.x) + dx) / size.x * aspectRatio) * FoV;
 		const float yNorm = ((size.y * 0.5f - float(coord.y) + dy) / size.y) * FoV;
-		const float3 vNorm = normalize(float3(xNorm, yNorm, -1.0f));
+		const float3 vNorm = float3(xNorm, yNorm, -1.0f);
 
-		return view * Ray(float3(0, 0, 0), vNorm);
+		return view * Ray(float3(0.f), vNorm);
 	}
 
 	// Records the result of a ray traced through the camera origin (view) for a given pixel coordinate
@@ -210,7 +201,7 @@ struct ExperimentalApp : public GLFWApp
 	ShaderMonitor shaderMonitor;
 	std::vector<int2> coordinates;
 
-	int samplesPerPixel = 48;
+	int samplesPerPixel = 128;
 	float fieldOfView = 90;
 
 	std::mutex coordinateLock;
@@ -247,6 +238,7 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedSphere> c = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedBox> box = std::make_shared<RaytracedBox>();
 		std::shared_ptr<RaytracedBox> box2 = std::make_shared<RaytracedBox>();
+		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
 		a->radius = 0.50;
 		a->m.diffuse = float3(1, 0, 0);
@@ -266,25 +258,29 @@ struct ExperimentalApp : public GLFWApp
 		box->_max = float3(+2.5, +0.0, +2.5);
 
 		box2->m.diffuse = float3(1, 0, 1);
-		box2->_min = float3(-3, -1, -1.0);
-		box2->_max = float3(-2, +1, +1.0);
+		box2->_min = float3(-2.6, +0.0, -2.5);
+		box2->_max = float3(-2.5, +2.5, +2.5);
 
+		plane->m.diffuse = float3(0, 0.25, 0.25);
+		plane->equation = float4(0, 1, 0, 0.1f);
+
+		//scene.objects.push_back(plane);
+
+		scene.objects.push_back(box);
+		scene.objects.push_back(box2);
 		scene.objects.push_back(a);
 		scene.objects.push_back(b);
 		scene.objects.push_back(c);
-		scene.objects.push_back(box);
-		scene.objects.push_back(box2);
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
 		rescale_geometry(shaderball, 1.f);
 		for (auto & v : shaderball.vertices)
 		{
-		v = transform_coord(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), v);
+			v = transform_coord(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), v);
 		}
 		std::shared_ptr<RaytracedMesh> shaderballTrimesh = std::make_shared<RaytracedMesh>(shaderball);
 		shaderballTrimesh->m.diffuse = float3(1, 1, 1);
-		shaderballTrimesh->m.diffuse = float3(0.1, 0.1, 0.1);
 		scene.objects.push_back(shaderballTrimesh);
 		*/
 
@@ -293,6 +289,7 @@ struct ExperimentalApp : public GLFWApp
             ScopedTimer("BVH Generation");
             scene.accelerate();
         }
+
 
 		// Generate a vector of all possible pixel locations to raytrace
 		for (int y = 0; y < film->size.y; ++y)
@@ -303,7 +300,7 @@ struct ExperimentalApp : public GLFWApp
 			}
 		}
 
-		const int numWorkers = 1; // std::thread::hardware_concurrency();
+		const int numWorkers = std::thread::hardware_concurrency();
 		for (int i = 0; i < numWorkers; ++i)
 		{
             renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));

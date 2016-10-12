@@ -6,14 +6,13 @@
 #include "geometric.hpp"
 #include "geometry.hpp"
 #include "light-transport/material.hpp"
-// http://stackoverflow.com/questions/2656601/why-do-my-raytraced-spheres-have-dark-lines-when-lit-with-multiple-light-sources
 
 using namespace avl;
 
 struct RayIntersection
 {
 	float d = std::numeric_limits<float>::infinity();
-	float3 location, normal;
+	float3 normal;
 	Material * m = nullptr;
 	RayIntersection() {}
 	RayIntersection(float d, float3 normal, Material * m) : d(d), normal(normal), m(m) {}
@@ -25,6 +24,21 @@ struct Traceable
 	Material m;
 	virtual RayIntersection intersects(const Ray & ray) { return RayIntersection(); };
 	virtual Bounds3D world_bounds() const { return Bounds3D(); }; // FIXME: this will return local bounds for the time being
+};
+
+struct RaytracedPlane : public Plane, public Traceable
+{
+	virtual RayIntersection intersects(const Ray & ray)  override final
+	{
+		float outT;
+		float3 outIntersection;
+		if (intersect_ray_plane(ray, *this, &outIntersection, &outT)) return RayIntersection(outT, get_normal(), &m);
+		else return RayIntersection();
+	}
+	virtual Bounds3D world_bounds() const override final
+	{
+		return Bounds3D();
+	}
 };
 
 struct RaytracedSphere : public Sphere, public Traceable

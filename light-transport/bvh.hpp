@@ -115,7 +115,7 @@ public:
 	}
 
 	// the _p variant is designed to quick traversal and shouldn't need to return the full amount
-	// of data in a RayIntersection. It requires some lower level, optimized variants of ray-triangle, etc.
+	// of data in a RayIntersection. It requires a lower lever optimized variant of ray-triangle, etc.
 	// Probably best to attack this once Embree integration is complete.
 	bool intersect_p(const Ray & ray)
 	{
