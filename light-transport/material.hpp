@@ -14,6 +14,7 @@ struct Material
 	// Math borrowed from Kevin Beason's `smallpt`
 	Ray get_reflected_ray(const Ray & r, const float3 & p, const float3 & n, UniformRandomGenerator & gen) const
 	{
+		/*
 		// ideal specular reflection
 		float roughness = 0.925;
 		float3 refl = r.direction - n * 2.0f * dot(n, r.direction);
@@ -21,6 +22,7 @@ struct Material
 		refl.y + (gen.random_float() - 0.5f) * roughness,
 		refl.z + (gen.random_float() - 0.5f) * roughness));
 		return Ray(p, refl);
+		*/
 
 		// ideal diffuse reflection
 		float3 NdotL = clamp(dot(n, r.direction) < 0.0f ? n : n * -1.f, 0.f, 1.f); // orient the surface normal

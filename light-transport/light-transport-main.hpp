@@ -115,10 +115,17 @@ struct Scene
 		p = (p != 1.0f) ? p : 0.9999f;
 		if (weight < p) return (1.0f / p) * m.emissive;
 
-		// Continue tracing with reflected ray
 		const float3 hitPoint = ray.direction * intersection.d + ray.origin;
-		Ray reflected = m.get_reflected_ray(ray, hitPoint, intersection.normal, gen);
-		return (m.emissive) + (Kd * trace_ray(reflected, gen, weight * KdMax, depth + 1));
+		Ray Wr = m.get_reflected_ray(ray, hitPoint, intersection.normal, gen);
+
+		float3 Lr;
+		if (length(Wr.direction) > 0.0f)
+		{
+
+			Lr = trace_ray(Wr, gen, weight * KdMax, depth + 1);
+		}
+
+		return clamp((1.0f / (1.0f - p)) * m.emissive + Kd * (weight * Lr), 0.f, 1.f);
 	}
 };
 
@@ -126,14 +133,14 @@ struct Film
 {
 	std::vector<float3> samples;
 	float2 size;
-	Pose view;
+	Pose view = {};
 	float FoV = ANVIL_PI / 2;
 
 	Film(const int2 & size, const Pose & view) : samples(size.x * size.y), size(size), view(view) { }
 
 	void set_field_of_view(float degrees) { FoV = std::tan(to_radians(degrees) * 0.5f); }
 
-	void reset(const Pose & newView)
+	void reset(const Pose newView)
 	{
 		view = newView;
 		std::fill(samples.begin(), samples.end(), float3(0, 0, 0));
@@ -144,16 +151,16 @@ struct Film
 		const float aspectRatio = size.x / size.y;
 
 		// Jitter the sampling direction and apply a tent filter for anti-aliasing
-		const float r1 = 2.0f * gen.random_float() *  gen.random_float();
+		const float r1 = 2.0f * gen.random_float();
 		const float dx = (r1 < 1.0f) ? (std::sqrt(r1) - 1.0f) : (1.0f - std::sqrt(2.0f - r1));
-		const float r2 = 2.0f * gen.random_float() *  gen.random_float();
+		const float r2 = 2.0f * gen.random_float();
 		const float dy = (r2 < 1.0f) ? (std::sqrt(r2) - 1.0f) : (1.0f - std::sqrt(2.0f - r2));
 
 		const float xNorm = ((size.x * 0.5f - float(coord.x) + dx) / size.x * aspectRatio) * FoV;
 		const float yNorm = ((size.y * 0.5f - float(coord.y) + dy) / size.y) * FoV;
-		const float3 vNorm = float3(xNorm, yNorm, -1.0f);
+		const float3 vNorm = float3(xNorm, yNorm, 1.0f);
 
-		return view * Ray(float3(0.f), vNorm);
+		return view * Ray(float3(0.f), normalize(vNorm));
 	}
 
 	// Records the result of a ray traced through the camera origin (view) for a given pixel coordinate
@@ -223,10 +230,10 @@ struct ExperimentalApp : public GLFWApp
 		gui::make_dark_theme();
 
 		// Setup GL camera
-		camera.look_at({ 0, +1.25, -3 }, { 0, 0, 0 });
 		cameraController.set_camera(&camera);
 		cameraController.enableSpring = false;
 		cameraController.movementSpeed = 0.01f;
+		camera.look_at({ 0, +1.25, -4.5 }, { 0, 0, 0 });
 
 		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
 
@@ -240,18 +247,18 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedBox> box2 = std::make_shared<RaytracedBox>();
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
-		a->radius = 0.50;
+		a->radius = 0.5f;
 		a->m.diffuse = float3(1, 0, 0);
-		a->center = float3(-1, .50f, 1);
+		a->center = float3(-1, 0.5f, 1);
 
-		b->radius = 0.50;
+		b->radius = 0.5f;
 		b->m.diffuse = float3(0, 1, 0);
-		b->center = float3(+1, 0.50f, 1);
+		b->center = float3(+1, 0.5f, 1);
 
-		c->radius = 0.5;
+		c->radius = 0.5f;
 		c->m.diffuse = float3(0, 0, 0);
 		c->m.emissive = float3(1, 1, 0);
-		c->center = float3(0, 1.75f, 0);
+		c->center = float3(0, 1.75f, -1);
 
 		box->m.diffuse = float3(1, 1, 1);
 		box->_min = float3(-2.5, -0.1, -2.5);
@@ -264,13 +271,13 @@ struct ExperimentalApp : public GLFWApp
 		plane->m.diffuse = float3(0, 0.25, 0.25);
 		plane->equation = float4(0, 1, 0, 0.1f);
 
-		//scene.objects.push_back(plane);
+		scene.objects.push_back(plane);
 
 		scene.objects.push_back(box);
-		scene.objects.push_back(box2);
+		//scene.objects.push_back(box2);
 		scene.objects.push_back(a);
 		scene.objects.push_back(b);
-		scene.objects.push_back(c);
+		//scene.objects.push_back(c);
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
@@ -317,7 +324,7 @@ struct ExperimentalApp : public GLFWApp
     void threaded_render(std::vector<int2> pixelCoords)
     {
         auto & timer = renderTimers[std::this_thread::get_id()];
-        while (pixelCoords.size() && earlyExit == false)
+        while (earlyExit == false)
         {
             for (auto coord : pixelCoords)
             {
@@ -366,18 +373,17 @@ struct ExperimentalApp : public GLFWApp
 	{
 		if (igm) igm->update_input(event);
 		cameraController.handle_input(event);
+		
+		if (event.type == InputEvent::KEY &&  event.action == GLFW_RELEASE)
+		{
+			if (camera.get_pose() != film->view) reset_film();
+		}
 	}
 
 	void on_update(const UpdateEvent & e) override
 	{
 		cameraController.update(e.timestep_ms);
 		shaderMonitor.handle_recompile();
-
-		// Check if camera position has changed
-		if (camera.get_pose() != film->view)
-		{
-			reset_film();
-		}
 	}
 
 	void reset_film()

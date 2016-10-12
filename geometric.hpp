@@ -399,11 +399,11 @@ namespace avl
     inline Pose look_at_pose(float3 eyePoint, float3 target, float3 worldUp = {0,1,0})
     {
         Pose p;
-        float3 zDir = safe_normalize(eyePoint - target);
-        float3 xDir = safe_normalize(cross(worldUp, zDir));
+        float3 zDir = normalize(eyePoint - target);
+        float3 xDir = normalize(cross(worldUp, zDir));
         float3 yDir = cross(zDir, xDir);
         p.position = eyePoint;
-        p.orientation = safe_normalize(make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
+        p.orientation = normalize(make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
         return p;
     }
 
