@@ -551,7 +551,7 @@ namespace avl
         float2 outUv;
 
         Bounds3D meshBounds = (bounds) ? *bounds : mesh.compute_bounds(); 
-        if (meshBounds.contains(ray.origin) || intersect_ray_box(ray, meshBounds)) // not contains?
+        if (!meshBounds.contains(ray.origin) && intersect_ray_box(ray, meshBounds))
         {
             for (int f = 0; f < mesh.faces.size(); ++f)
             {

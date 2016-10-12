@@ -206,7 +206,7 @@ struct ExperimentalApp : public GLFWApp
 	ShaderMonitor shaderMonitor;
 	std::vector<int2> coordinates;
 
-	int samplesPerPixel = 128;
+	int samplesPerPixel = 24;
 	float fieldOfView = 90;
 
 	std::mutex coordinateLock;
@@ -261,8 +261,6 @@ struct ExperimentalApp : public GLFWApp
 		box->m.diffuse = float3(1, 0.95, 0.924);
 		box->_min = float3(-2.66, 0.1, -2.66);
 		box->_max = float3(+2.66, +0.0, +2.66);
-		std::cout << box->volume() << std::endl;
-		std::cout << box->size() << std::endl;
 
 		box2->m.diffuse = float3(1, 0, 1);
 		box2->_min = float3(-2.6, -2.50, -2.5);
@@ -284,7 +282,7 @@ struct ExperimentalApp : public GLFWApp
 		rescale_geometry(shaderball, 1.f);
 		for (auto & v : shaderball.vertices)
 		{
-		v = transform_coord(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), v);
+			//v = transform_coord(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), v);
 		}
 		std::shared_ptr<RaytracedMesh> shaderballTrimesh = std::make_shared<RaytracedMesh>(shaderball);
 		shaderballTrimesh->m.diffuse = float3(1, 1, 1);
@@ -294,7 +292,7 @@ struct ExperimentalApp : public GLFWApp
 		// Traverse + build BVH accelerator for the objects we've added to the scene
 		{
 			ScopedTimer("BVH Generation");
-			//scene.accelerate();
+			scene.accelerate();
 		}
 
 		// Generate a vector of all possible pixel locations to raytrace

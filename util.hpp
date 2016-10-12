@@ -67,9 +67,12 @@ namespace avl
         std::mt19937_64 gen;
 		std::uniform_real_distribution<float> full { 0.f, 1.f };
 		std::uniform_real_distribution<float> safe { 0.001, 0.999f };
+		std::uniform_real_distribution<float> two_pi { 0.f, ANVIL_TWO_PI };
     public:
 		UniformRandomGenerator() : rd(), gen(rd()) { }
         float random_float() { return full(gen); }
+		float random_float(float max) { std::uniform_real_distribution<float> custom(0.f, max); return custom(gen); }
+		float random_float_sphere() { return two_pi(gen); }
 		float random_float_safe() { return safe(gen); }
         int random_int(int max) { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }
     };
