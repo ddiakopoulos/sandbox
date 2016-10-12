@@ -18,21 +18,20 @@
 // [X] Occlusion support
 // [X] ImGui Controls
 // [X] Add tri-meshes (Shaderball, lucy statue from *.obj)
-// [X] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
+// [X] Path tracing (Monte Carlo)
 // [ ] Timers for various functions (accel vs non-accel)
 // [ ] Proper radiance based materials (bdrf)
-// [ ] Sampling Scheme
 // [X] BVH Accelerator
 // [ ] Cornell Box Loader, texture mapping & normals
 // [ ] New camera models: pinhole, fisheye, spherical
-// [ ] New light types: point, area
+// [ ] New light system: point, area
 // [ ] Realtime GL preview
-// [ ] Add other primatives (box, plane, disc)
+// [ ] Add other primatives (cone, disc)
 // [ ] Portals (hehe)
 // [ ] Bidirectional path tracing
 // [ ] Embree acceleration
 
-UniformRandomGenerator gen;
+static UniformRandomGenerator random_gen;
 
 class ScopedTimer
 {
@@ -121,7 +120,6 @@ struct Scene
 		float3 Lr;
 		if (length(Wr.direction) > 0.0f)
 		{
-
 			Lr = trace_ray(Wr, gen, weight * KdMax, depth + 1);
 		}
 
@@ -253,7 +251,7 @@ struct ExperimentalApp : public GLFWApp
 
 		b->radius = 0.5f;
 		b->m.diffuse = float3(0, 1, 0);
-		b->center = float3(+1, 0.66f, 1);
+		b->center = float3(+1, 0.66f, 0.5);
 
 		c->radius = 0.5f;
 		c->m.diffuse = float3(0, 0, 0);
@@ -271,15 +269,14 @@ struct ExperimentalApp : public GLFWApp
 		box2->_max = float3(-2.5, 0, +2.5);
 
 		plane->m.diffuse = float3(0, 0.25, 0.25);
-		plane->equation = float4(0, 1, 0, 0.1f);
+		plane->equation = float4(0, -1, 0, 0.25f);
 
 		scene.objects.push_back(plane);
-
-		scene.objects.push_back(box);
 		//scene.objects.push_back(box2);
 		scene.objects.push_back(a);
 		scene.objects.push_back(b);
-		//scene.objects.push_back(c);
+		scene.objects.push_back(c);
+		scene.objects.push_back(box);
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
@@ -330,7 +327,7 @@ struct ExperimentalApp : public GLFWApp
             for (auto coord : pixelCoords)
             {
                 timer.start();
-                film->trace_samples(scene, gen, coord, samplesPerPixel);
+                film->trace_samples(scene, random_gen, coord, samplesPerPixel);
                 timer.stop();
             }
             pixelCoords = generate_bag_of_pixels();
@@ -356,7 +353,7 @@ struct ExperimentalApp : public GLFWApp
 		{
 			if (coordinates.size())
 			{
-				auto randomIdx = gen.random_int((int) coordinates.size() - 1);
+				auto randomIdx = random_gen.random_int((int) coordinates.size() - 1);
 				auto randomCoord = coordinates[randomIdx];
 				coordinates.erase(coordinates.begin() + randomIdx);
 				group.push_back(randomCoord);
@@ -426,7 +423,7 @@ struct ExperimentalApp : public GLFWApp
 			reset_film();
 			film->set_field_of_view(fieldOfView);
 		}
-		if (ImGui::SliderInt("SPP", &samplesPerPixel, 1, 1024)) reset_film();
+		if (ImGui::SliderInt("SPP", &samplesPerPixel, 1, 8192)) reset_film();
 		ImGui::ColorEdit3("Ambient", &scene.ambient[0]);
         for (auto & t : renderTimers)
         {

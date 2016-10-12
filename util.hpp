@@ -64,11 +64,14 @@ namespace avl
     class UniformRandomGenerator
     {
         std::random_device rd;
-        std::mt19937 gen;
-        std::uniform_real_distribution<float> distribution;
+        std::mt19937_64 gen;
+        std::uniform_real_distribution<double> distribution;
     public:
-		UniformRandomGenerator() : rd(), gen(rd()), distribution(0.0f, 1.0f) { }
-        float random_float() { return distribution(gen); }
+		UniformRandomGenerator() : rd(), gen(rd()), distribution{ 0.0f, 1.00f } { }
+        float random_float() { 
+			auto n = static_cast<float>(distribution(gen));
+			return n;
+		}
         int random_int(int max) { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }
     };
     

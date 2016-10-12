@@ -62,7 +62,12 @@ struct RaytracedBox : public Bounds3D, public Traceable
 	{
 		float outTMin, outTMax;
 		float3 outNormal;
-		if (intersect_ray_box(ray, *this, &outTMin, &outTMax, &outNormal)) return RayIntersection(outTMin, outNormal, &m);
+		if (intersect_ray_box(ray, *this, &outTMin, &outTMax, &outNormal))
+		{
+			//std::cout << "Min " << outTMin << std::endl;
+			//std::cout << "Max " << outTMax << std::endl;
+			return RayIntersection(outTMin, outNormal, &m);
+		}
 		else return RayIntersection();
 	}
 	virtual Bounds3D world_bounds() const override final
