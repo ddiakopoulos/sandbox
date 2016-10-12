@@ -160,7 +160,7 @@ struct Film
 		const float yNorm = ((size.y * 0.5f - float(coord.y) + dy) / size.y) * FoV;
 		const float3 vNorm = float3(xNorm, yNorm, 1.0f);
 
-		return view * Ray(float3(0.f), normalize(vNorm));
+		return view * Ray(float3(0.f), -normalize(vNorm));
 	}
 
 	// Records the result of a ray traced through the camera origin (view) for a given pixel coordinate
@@ -233,7 +233,7 @@ struct ExperimentalApp : public GLFWApp
 		cameraController.set_camera(&camera);
 		cameraController.enableSpring = false;
 		cameraController.movementSpeed = 0.01f;
-		camera.look_at({ 0, +1.25, -4.5 }, { 0, 0, 0 });
+		camera.look_at({ 0, +1.25, 4.5 }, { 0, 0, 0 });
 
 		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
 
@@ -249,24 +249,26 @@ struct ExperimentalApp : public GLFWApp
 
 		a->radius = 0.5f;
 		a->m.diffuse = float3(1, 0, 0);
-		a->center = float3(-1, 0.5f, 1);
+		a->center = float3(-1, 0.66f, 1);
 
 		b->radius = 0.5f;
 		b->m.diffuse = float3(0, 1, 0);
-		b->center = float3(+1, 0.5f, 1);
+		b->center = float3(+1, 0.66f, 1);
 
 		c->radius = 0.5f;
 		c->m.diffuse = float3(0, 0, 0);
 		c->m.emissive = float3(1, 1, 0);
 		c->center = float3(0, 1.75f, -1);
 
-		box->m.diffuse = float3(1, 1, 1);
-		box->_min = float3(-2.5, -0.1, -2.5);
-		box->_max = float3(+2.5, +0.0, +2.5);
+		box->m.diffuse = float3(1, 0.95, 0.924);
+		box->_min = float3(-2.66, 0.1, -2.66);
+		box->_max = float3(+2.66, +0.0, +2.66);
+		std::cout << box->volume() << std::endl;
+		std::cout << box->size() << std::endl;
 
 		box2->m.diffuse = float3(1, 0, 1);
-		box2->_min = float3(-2.6, +0.0, -2.5);
-		box2->_max = float3(-2.5, +2.5, +2.5);
+		box2->_min = float3(-2.6, -2.50, -2.5);
+		box2->_max = float3(-2.5, 0, +2.5);
 
 		plane->m.diffuse = float3(0, 0.25, 0.25);
 		plane->equation = float4(0, 1, 0, 0.1f);
@@ -297,7 +299,6 @@ struct ExperimentalApp : public GLFWApp
             scene.accelerate();
         }
 
-
 		// Generate a vector of all possible pixel locations to raytrace
 		for (int y = 0; y < film->size.y; ++y)
 		{
@@ -316,7 +317,7 @@ struct ExperimentalApp : public GLFWApp
 		// Create a GL texture to which we can render
 		renderSurface.reset(new GlTexture());
 		renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
-		renderView.reset(new GLTextureView(renderSurface->get_gl_handle(), true));
+		renderView.reset(new GLTextureView(renderSurface->get_gl_handle(), false));
         
         sceneTimer.start();
 	}
