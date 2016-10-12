@@ -65,13 +65,12 @@ namespace avl
     {
         std::random_device rd;
         std::mt19937_64 gen;
-        std::uniform_real_distribution<double> distribution;
+		std::uniform_real_distribution<float> full { 0.f, 1.f };
+		std::uniform_real_distribution<float> safe { 0.001, 0.999f };
     public:
-		UniformRandomGenerator() : rd(), gen(rd()), distribution{ 0.0f, 1.00f } { }
-        float random_float() { 
-			auto n = static_cast<float>(distribution(gen));
-			return n;
-		}
+		UniformRandomGenerator() : rd(), gen(rd()) { }
+        float random_float() { return full(gen); }
+		float random_float_safe() { return safe(gen); }
         int random_int(int max) { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }
     };
     

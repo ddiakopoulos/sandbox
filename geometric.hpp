@@ -620,16 +620,16 @@ namespace avl
     
     inline bool intersect_ray_plane(const Ray & ray, const Plane & p, float3 * intersection = nullptr, float * outT = nullptr)
     {
-        float d = dot(ray.direction, p.get_normal());
+        const float d = dot(ray.direction, p.get_normal());
         // Make sure we're not parallel to the plane
         if (std::abs(d) > PLANE_EPSILON)
         {
-            float t = -p.distance_to(ray.origin) / d;
+            const float t = -p.distance_to(ray.origin) / d;
             
             if (t >= 0.0f)
             {
                 if (outT) *outT = t;
-                if (intersection) *intersection = ray.origin + t * ray.direction;
+                if (intersection) *intersection = ray.origin + (t * ray.direction);
                 return true;
             }
         }
