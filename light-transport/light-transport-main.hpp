@@ -105,25 +105,37 @@ struct Scene
 			return weight * environment;
 		}
 
-		const Material m = *intersection.m;
+		Material m = *intersection.m;
 
-		float3 Kd = (m.diffuse * ambient) * 0.99f; // avoid 1.0 dMax case
+		float3 Kd = (m.Kd * ambient) * 0.99f; // avoid 1.0 dMax case
 		float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
 
 		// Russian roulette termination
 		float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
-		if (weight < p) return (1.0f / p) * m.emissive;
+		if (weight < p) return (1.0f / p) * m.Ke;
 
-		const float3 hitPoint = ray.direction * intersection.d + ray.origin;
-		Ray Wr = m.get_reflected_ray(ray, hitPoint, intersection.normal, gen);
+		const float3 Wo = -ray.direction;
+		const float3 P = ray.direction * intersection.d + ray.origin;
+		const float3 N = intersection.normal;
+
+		float pdf = m.pdf(); // proability density function
+
+		float3 Wr; // reflected
+		float3 Wt; // transmitted
+		m.sample_Wi(Wo, N, Wr, Wt, gen);
+	
+		float brdf;
+		float btdf;
+		m.bsdf_Wr(P, N, Wr, Wt, Wo, brdf, btdf, gen);
 
 		float3 Lr;
-		if (length(Wr.direction) > 0.0f)
+		if (length(Wr) > 0.0f)
 		{
-			Lr = trace_ray(Wr, gen, weight * KdMax, depth + 1);
+			Ray r = Ray(P, Wr);
+			Lr = trace_ray(r, gen, weight * KdMax, depth + 1);
 		}
 
-		return clamp((1.0f / (1.0f - p)) * m.emissive + Kd * (weight * Lr), 0.f, 1.f);
+		return clamp((1.0f / (1.0f - p)) * m.Ke + Kd * weight * Lr, 0.f, 1.f);
 	}
 };
 
@@ -246,27 +258,27 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
 		a->radius = 0.5f;
-		a->m.diffuse = float3(1, 0, 0);
+		a->m.Kd = float3(1, 0, 0);
 		a->center = float3(-1, 0.66f, 1);
 
 		b->radius = 0.5f;
-		b->m.diffuse = float3(0, 1, 0);
+		b->m.Kd = float3(0, 1, 0);
 		b->center = float3(+1, 0.66f, 1);
 
 		c->radius = 0.5f;
-		c->m.diffuse = float3(0, 0, 0);
-		c->m.emissive = float3(1, 1, 0);
+		c->m.Kd = float3(0, 0, 0);
+		c->m.Ke = float3(1, 1, 0);
 		c->center = float3(0, 1.75f, -1);
 
-		box->m.diffuse = float3(1, 0.95, 0.924);
+		box->m.Kd = float3(1, 0.95, 0.924);
 		box->_min = float3(-2.66, 0.1, -2.66);
 		box->_max = float3(+2.66, +0.0, +2.66);
 
-		box2->m.diffuse = float3(1, 0, 1);
+		box2->m.Kd = float3(1, 0, 1);
 		box2->_min = float3(-2.6, -2.50, -2.5);
 		box2->_max = float3(-2.5, 0, +2.5);
 
-		plane->m.diffuse = float3(1, 1, 0.5);
+		plane->m.Kd = float3(1, 1, 0.5);
 		plane->equation = float4(0, 1, 0, -0.1f);
 
 		scene.objects.push_back(plane);
@@ -292,7 +304,7 @@ struct ExperimentalApp : public GLFWApp
 		// Traverse + build BVH accelerator for the objects we've added to the scene
 		{
 			ScopedTimer("BVH Generation");
-			scene.accelerate();
+			//scene.accelerate();
 		}
 
 		// Generate a vector of all possible pixel locations to raytrace
