@@ -12,11 +12,12 @@ using namespace avl;
 struct RayIntersection
 {
 	float d = std::numeric_limits<float>::infinity();
+	float maxt = 128.f;
 	float3 normal;
 	Material * m = nullptr;
 	RayIntersection() {}
 	RayIntersection(float d, float3 normal, Material * m) : d(d), normal(normal), m(m) {}
-	bool operator() (void) { return d < std::numeric_limits<float>::infinity(); }
+	bool operator() (void) { return (d < std::numeric_limits<float>::infinity() && d < maxt); }
 };
 
 struct Traceable
@@ -62,12 +63,7 @@ struct RaytracedBox : public Bounds3D, public Traceable
 	{
 		float outTMin, outTMax;
 		float3 outNormal;
-		if (intersect_ray_box(ray, *this, &outTMin, &outTMax, &outNormal))
-		{
-			//std::cout << "Min " << outTMin << std::endl;
-			//std::cout << "Max " << outTMax << std::endl;
-			return RayIntersection(outTMin, outNormal, &m);
-		}
+		if (intersect_ray_box(ray, *this, &outTMin, &outTMax, &outNormal)) { return RayIntersection(outTMin, outNormal, &m); }
 		else return RayIntersection();
 	}
 	virtual Bounds3D world_bounds() const override final

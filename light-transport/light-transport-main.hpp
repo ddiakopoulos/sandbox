@@ -120,14 +120,15 @@ struct Scene
 
 		float pdf = m.pdf(); // proability density function
 
-		float3 Wr; // reflected
-		float3 Wt; // transmitted
+		float3 Wr; // reflected vector
+		float3 Wt; // transmitted vector
 		m.sample_Wi(Wo, N, Wr, Wt, gen);
 	
 		float brdf;
 		float btdf;
 		m.bsdf_Wr(P, N, Wr, Wt, Wo, brdf, btdf, gen);
 
+		// Reflected illuminance
 		float3 Lr;
 		if (length(Wr) > 0.0f)
 		{
@@ -135,7 +136,15 @@ struct Scene
 			Lr = trace_ray(r, gen, weight * KdMax, depth + 1);
 		}
 
-		return clamp((1.0f / (1.0f - p)) * m.Ke + Kd * weight * Lr, 0.f, 1.f);
+		// Transmitted illuminance
+		float3 Lt;
+		if (length(Wt) > 0.0f)
+		{
+			Ray r = Ray(P, Wt);
+			Lt = trace_ray(r, gen, weight, depth + 1);
+		}
+
+		return clamp((1.0f / (1.0f - p)) * m.Ke + Kd * (weight * (brdf / pdf) * Lr + (btdf / pdf) * Lt), 0.f, 1.f);
 	}
 };
 
@@ -170,7 +179,7 @@ struct Film
 		const float yNorm = ((size.y * 0.5f - float(coord.y) + dy) / size.y) * FoV;
 		const float3 vNorm = float3(xNorm, yNorm, 1.0f);
 
-		return view * Ray(float3(0.f), -normalize(vNorm));
+		return view * Ray(float3(0.f), -(vNorm));
 	}
 
 	// Records the result of a ray traced through the camera origin (view) for a given pixel coordinate
@@ -192,6 +201,7 @@ struct Film
 		//radiance = clamp(radiance, 0.f, 1.f);
 
 		samples[coord.y * size.x + coord.x] = radiance * invSamples;
+		//std::cout << radiance * invSamples << std::endl;
 	}
 };
 
@@ -279,15 +289,15 @@ struct ExperimentalApp : public GLFWApp
 		box2->_max = float3(-2.5, 0, +2.5);
 
 		plane->m.Kd = float3(1, 1, 0.5);
-		plane->equation = float4(0, 1, 0, -0.1f);
+		plane->equation = float4(0, 1, 0, -0.0999f);
 
-		scene.objects.push_back(plane);
+		//scene.objects.push_back(plane);
 
-		//scene.objects.push_back(box);
+		scene.objects.push_back(box);
 		//scene.objects.push_back(box2);
 		scene.objects.push_back(a);
 		scene.objects.push_back(b);
-		//scene.objects.push_back(c);
+		scene.objects.push_back(c);
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
@@ -297,7 +307,7 @@ struct ExperimentalApp : public GLFWApp
 			//v = transform_coord(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), v);
 		}
 		std::shared_ptr<RaytracedMesh> shaderballTrimesh = std::make_shared<RaytracedMesh>(shaderball);
-		shaderballTrimesh->m.diffuse = float3(1, 1, 1);
+		shaderballTrimesh->m.Kd = float3(1, 1, 1);
 		scene.objects.push_back(shaderballTrimesh);
 		*/
 
@@ -358,6 +368,7 @@ struct ExperimentalApp : public GLFWApp
 	// Return a vector of 1024 randomly selected coordinates from the total that we need to render.
 	std::vector<int2> generate_bag_of_pixels()
 	{
+		/*
 		std::lock_guard<std::mutex> guard(coordinateLock);
 		std::vector<int2> group;
 		for (int w = 0; w < 1024; w++)
@@ -368,6 +379,18 @@ struct ExperimentalApp : public GLFWApp
 				auto randomCoord = coordinates[randomIdx];
 				coordinates.erase(coordinates.begin() + randomIdx);
 				group.push_back(randomCoord);
+			}
+		}
+		return group;
+		*/
+
+		std::lock_guard<std::mutex> guard(coordinateLock);
+		std::vector<int2> group;
+		for (int h = 0; h < HEIGHT; h++)
+		{
+			for (int w = 0; w < WIDTH; w++)
+			{
+				group.push_back(coordinates[h * WIDTH + w]);
 			}
 		}
 		return group;

@@ -52,7 +52,7 @@ struct Material
 		btdf = 0.0f;
 	}
 
-	// Evaluate p(x)
+	// Evaluate the probability density function - p(x)
 	float pdf() const
 	{
 		return 1.f / ANVIL_TWO_PI;

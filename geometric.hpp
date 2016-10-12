@@ -621,18 +621,20 @@ namespace avl
     inline bool intersect_ray_plane(const Ray & ray, const Plane & p, float3 * intersection = nullptr, float * outT = nullptr)
     {
         const float d = dot(ray.direction, p.get_normal());
+
         // Make sure we're not parallel to the plane
         if (std::abs(d) > PLANE_EPSILON)
         {
             const float t = -p.distance_to(ray.origin) / d;
             
-            if (t >= 0.0f)
+            if (t >= PLANE_EPSILON)
             {
                 if (outT) *outT = t;
                 if (intersection) *intersection = ray.origin + (t * ray.direction);
                 return true;
             }
         }
+		if (outT) *outT = std::numeric_limits<float>::max();
         return false;
     }
     
@@ -643,6 +645,8 @@ namespace avl
 		float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
 		float3 n;
 		float3 normal(0, 0, 0);
+
+		const float3 invDist = ray.inverse_direction();
 
 		// For all three slabs
 		for (int i = 0; i < 3; ++i)
@@ -655,16 +659,14 @@ namespace avl
 			else
 			{
 				// Compute intersection t value of ray with near and far plane of slab
-				const float invDist = 1.0f / ray.direction[i];
-				float t1 = (bounds.min()[i] - ray.origin[i]) * invDist;
-				float t2 = (bounds.max()[i] - ray.origin[i]) * invDist;
+				float t1 = (bounds.min()[i] - ray.origin[i]) * invDist[i]; // near
+				float t2 = (bounds.max()[i] - ray.origin[i]) * invDist[i]; // far
 
 				n.x = (i == 0) ? bounds.min()[i] : 0.0f;
 				n.y = (i == 1) ? bounds.min()[i] : 0.0f;
 				n.z = (i == 2) ? bounds.min()[i] : 0.0f;
 
-				// Swap t1 and t2 if need so that t1 is intersection with near plane and
-				// t2 with far plane
+				// Swap t1 and t2 if need so that t1 is intersection with near plane and t2 with far plane
 				if (t1 > t2)
 				{
 					std::swap(t1, t2);
@@ -680,13 +682,13 @@ namespace avl
 				tmax = min(tmax, t2);
 
 				// If the slabs intersection is empty, there is no hit
-				if (tmin > tmax) return false;
+				if (tmin > tmax || tmax <= PLANE_EPSILON) return false;
 			}
 		}
 
 		if (outTmin) *outTmin = tmin;
 		if (outTmax) *outTmax = tmax;
-		if (outNormal)*outNormal = (tmin) ? normalize(normal) : float3(0, 0, 0);
+		if (outNormal) *outNormal = (tmin) ? normalize(normal) : float3(0, 0, 0);
 
 		return true;
 	}
