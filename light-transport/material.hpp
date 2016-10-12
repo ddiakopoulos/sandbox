@@ -6,37 +6,65 @@
 #include "geometric.hpp"
 #include "util.hpp"
 
+inline float3 reflect(const float3 & I, const float3 & N)
+{
+	return I - (N * dot(N, I) * 2.f);
+}
+
+inline float3 refract(const float3 & I, const float3 & N, float eta)
+{
+	float k = 1.0f - eta * eta * (1.0f - dot(N, I) * dot(N, I));
+	if (k < 0.0f) return float3();
+	else return eta * I - (eta * dot(N, I) + std::sqrt(k)) * N;
+}
+
+inline float3 sample_hemisphere(const float3 & N, UniformRandomGenerator & gen)
+{
+	float r1 = gen.random_float_sphere(); // Spherical coordinates
+	float r2 = gen.random_float();
+	float r2s = std::sqrt(r2);
+
+	float3 w = N;
+	float3 u = normalize((cross((std::abs(w.x) > 0.1f ? float3(0, 1, 0) : float3(1, 1, 1)), w))); // u is perpendicular to w
+	float3 v = cross(w, u); // v is perpendicular to u and w
+
+	return normalize(u * std::cos(r1) * r2s + v * std::sin(r1) * r2s + w * std::sqrt(1.0f - r2));
+}
+
 struct Material
 {
-	float3 diffuse = { 0, 0, 0 };
-	float3 emissive = { 0, 0, 0 };
+	float3 Kd = { 0, 0, 0 }; // diffuse
+	float3 Ke = { 0, 0, 0 }; // emissive
 
-	// Math borrowed from Kevin Beason's `smallpt`
-	Ray get_reflected_ray(const Ray & r, const float3 & p, const float3 & n, UniformRandomGenerator & gen) const
+	// Reflected
+	void bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, float & brdf, float & btdf, UniformRandomGenerator & gen)
 	{
-		/*
-		// ideal specular reflection
-		float roughness = 0.925;
-		float3 refl = r.direction - n * 2.0f * dot(n, r.direction);
-		refl = normalize(float3(
-			refl.x + (gen.random_float() - 0.5f) * roughness,
-			refl.y + (gen.random_float() - 0.5f) * roughness,
-			refl.z + (gen.random_float() - 0.5f) * roughness));
-		return Ray(p, refl);
-		*/
-
-		// ideal diffuse reflection
-		float3 NdotL = clamp(dot(n, r.direction) < 0.0f ? n : n * -1.f, 0.f, 1.f); // orient the surface normal
-		float r1 = 2.f * ANVIL_PI * gen.random_float(); // random angle around a hemisphere
-		float r2 = gen.random_float();
-		float r2s = sqrt(r2); // distance from center
-
-		// u is perpendicular to w && v is perpendicular to u and w
-		float3 u = normalize(cross((abs(NdotL.x) > 0.1f ? float3(0, 1, 0) : float3(1, 1, 1)), NdotL));
-		float3 v = cross(NdotL, u);
-        float3 d = normalize(u * std::cos(r1) * r2s + v * std::sin(r1) * r2s + NdotL * std::sqrt(1.f - r2)); // random reflection ray
-		return Ray(p, d);
+		float c = dot(Wr, N);
+		brdf = ANVIL_INV_PI * c;
+		btdf = 0.0f;
 	}
+
+	// Emitted
+	void bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, float & brdf, float & btdf, UniformRandomGenerator & gen)
+	{
+		float c = std::max(dot(We, N), 0.0f);
+		brdf = ANVIL_INV_PI * c;
+		btdf = 0.0f;
+	}
+
+	// Evaluate p(x)
+	float pdf() const
+	{
+		return 1.f / ANVIL_TWO_PI;
+	}
+
+	// Evaluate indicent vector
+	void sample_Wi(const float3 & Wo, const float3 & N, float3 & Wr, float3 & Wt, UniformRandomGenerator & gen)
+	{
+		Wr = sample_hemisphere(N, gen);
+		Wt = float3(0, 0, 0); // no transmission
+	}
+
 };
 
 #endif
