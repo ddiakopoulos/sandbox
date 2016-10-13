@@ -95,4 +95,34 @@ struct IdealDiffuse : public Material
 	}
 };
 
+struct IdealSpecular : public Material
+{
+	virtual WiResult evaulate_Wi(const float3 & Wo, const float3 & N, UniformRandomGenerator & gen) const override final
+	{
+		float roughness = 0.925;
+		float3 Wi = reflect(-Wo, N);
+		Wi = normalize(float3(
+			Wi.x + (gen.random_float() - 0.5f) * roughness,
+			Wi.y + (gen.random_float() - 0.5f) * roughness,
+			Wi.z + (gen.random_float() - 0.5f) * roughness));
+		return { Wi, float3(0.f) };
+	}
+
+	virtual BSDFResult bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const override final
+	{
+		return { 1.f, 0.f };
+	}
+
+	virtual BSDFResult bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const override final
+	{
+		float brdf = (We == Wr) ? 1.f : 0.f;
+		return { brdf, 0.f };
+	}
+
+	virtual float pdf() const override final
+	{
+		return 1.f;
+	}
+};
+
 #endif

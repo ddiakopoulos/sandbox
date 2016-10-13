@@ -275,7 +275,7 @@ struct ExperimentalApp : public GLFWApp
 		c->radius = 0.5f;
 		c->center = float3(0, 1.75f, -1);
 
-		box->m = std::make_shared<IdealDiffuse>();
+		box->m = std::make_shared<IdealSpecular>();
 		box->m->Kd = float3(1, 0.95, 0.924);
 		box->_min = float3(-2.66, 0.1, -2.66);
 		box->_max = float3(+2.66, +0.0, +2.66);
@@ -295,7 +295,7 @@ struct ExperimentalApp : public GLFWApp
 		//scene.objects.push_back(box2);
 		scene.objects.push_back(a);
 		scene.objects.push_back(b);
-		//scene.objects.push_back(c);
+		scene.objects.push_back(c);
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
