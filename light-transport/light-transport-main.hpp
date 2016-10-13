@@ -108,44 +108,36 @@ struct Scene
 
 		Material m = *intersection.m;
 
-		float3 Kd = (m.Kd * ambient) * 0.99f; // avoid 1.0 dMax case
-		float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
+		const float3 Kd = (m.Kd * ambient) * 0.99f; // avoid 1.0 dMax case
+		const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
 
 		// Russian roulette termination
-		float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
+		const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
 		if (weight < p) return (1.0f / p) * m.Ke;
 
 		const float3 Wo = -ray.direction;
 		const float3 P = ray.direction * intersection.d + ray.origin;
 		const float3 N = intersection.normal;
+		const float pdf = m.pdf();
 
-		float pdf = m.pdf(); // proability density function
-
-		float3 Wr; // reflected vector
-		float3 Wt; // transmitted vector
-		m.sample_Wi(Wo, N, Wr, Wt, gen);
-	
-		float brdf;
-		float btdf;
-		m.bsdf_Wr(P, N, Wr, Wt, Wo, brdf, btdf, gen);
+		const WiResult Wi = m.evaulate_Wi(Wo, N, gen);
+		const BSDFResult bsdfWr = m.bsdf_Wr(P, N, Wi.Wr, Wi.Wt, Wo, gen);
 
 		// Reflected illuminance
 		float3 Lr;
-		if (length(Wr) > 0.0f)
+		if (length(Wi.Wr) > 0.0f)
 		{
-			Ray r = Ray(P, Wr);
-			Lr = trace_ray(r, gen, weight * KdMax, depth + 1);
+			Lr = trace_ray(Ray(P, Wi.Wr), gen, weight * KdMax, depth + 1);
 		}
 
 		// Transmitted illuminance
 		float3 Lt;
-		if (length(Wt) > 0.0f)
+		if (length(Wi.Wt) > 0.0f)
 		{
-			Ray r = Ray(P, Wt);
-			Lt = trace_ray(r, gen, weight, depth + 1);
+			Lt = trace_ray(Ray(P, Wi.Wt), gen, weight, depth + 1);
 		}
 
-		return clamp((1.0f / (1.0f - p)) * m.Ke + Kd * (weight * (brdf / pdf) * Lr + (btdf / pdf) * Lt), 0.f, 1.f);
+		return clamp((1.0f / (1.0f - p)) * m.Ke + Kd * (weight * (bsdfWr.brdf / pdf) * Lr + (bsdfWr.btdf / pdf) * Lt), 0.f, 1.f);
 	}
 };
 
