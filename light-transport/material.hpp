@@ -42,16 +42,21 @@ inline float3 sample_hemisphere(const float3 & N, UniformRandomGenerator & gen)
 // Wi = incident vector
 // ============================================================================
 
-struct BSDFResult
+struct IntersectionInfo
 {
-	float brdf;
-	float btdf;
+	float3 Wo;
+	float3 P;
+	float3 N;
 };
 
-struct WiResult
+struct SurfaceScatterEvent 
 {
+	const IntersectionInfo * info;
 	float3 Wr;
 	float3 Wt;
+	float brdf;
+	float btdf = 0.f;
+	SurfaceScatterEvent(const IntersectionInfo * info) : info(info) {}
 };
 
 struct Material
@@ -59,14 +64,7 @@ struct Material
 	float3 Kd = { 0, 0, 0 }; // diffuse
 	float3 Ke = { 0, 0, 0 }; // emissive
 
-	// Evaluate a normal and produce a reflected vector
-	virtual WiResult evaulate_Wi(const float3 & Wo, const float3 & N, UniformRandomGenerator & gen) const = 0;
-
-	// Reflected
-	virtual BSDFResult bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const = 0;
-
-	// Emitted
-	virtual BSDFResult bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const = 0;
+	virtual void sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const = 0;
 
 	// Evaluate the probability density function - p(x)
 	virtual float pdf() const = 0;
@@ -74,19 +72,11 @@ struct Material
 
 struct IdealDiffuse : public Material
 {
-	virtual WiResult evaulate_Wi(const float3 & Wo, const float3 & N, UniformRandomGenerator & gen) const override final
+	virtual void sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
-		return { sample_hemisphere(N, gen), float3(0.f) }; // sample the normal vector on a hemi, no transmission
-	}
-
-	virtual BSDFResult bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const override final
-	{
-		return { float(ANVIL_INV_PI) * dot(Wr, N), 0.f };
-	}
-
-	virtual BSDFResult bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const override final
-	{
-		return { float(ANVIL_INV_PI) * std::max(dot(We, N), 0.f), 0.f };
+		event.Wr = sample_hemisphere(event.info->N, gen); // sample the normal vector on a hemi
+		event.Wt = float3(); // no transmission
+		event.brdf = float(ANVIL_INV_PI) * dot(event.Wr, event.info->N);
 	}
 
 	virtual float pdf() const override final
@@ -97,26 +87,16 @@ struct IdealDiffuse : public Material
 
 struct IdealSpecular : public Material
 {
-	virtual WiResult evaulate_Wi(const float3 & Wo, const float3 & N, UniformRandomGenerator & gen) const override final
+	virtual void sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
-		float roughness = 0.925;
-		float3 Wi = reflect(-Wo, N);
-		Wi = normalize(float3(
-			Wi.x + (gen.random_float() - 0.5f) * roughness,
-			Wi.y + (gen.random_float() - 0.5f) * roughness,
-			Wi.z + (gen.random_float() - 0.5f) * roughness));
-		return { Wi, float3(0.f) };
-	}
-
-	virtual BSDFResult bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const override final
-	{
-		return { 1.f, 0.f };
-	}
-
-	virtual BSDFResult bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const override final
-	{
-		float brdf = (We == Wr) ? 1.f : 0.f;
-		return { brdf, 0.f };
+		const float roughness = 0.925;
+		event.Wr = reflect(-event.info->Wo, event.info->N);
+		event.Wr = normalize(float3(
+			event.Wr.x + (gen.random_float() - 0.5f) * roughness,
+			event.Wr.y + (gen.random_float() - 0.5f) * roughness,
+			event.Wr.z + (gen.random_float() - 0.5f) * roughness));
+		event.Wt = float3(); // no transmission
+		event.brdf = 1.f;
 	}
 
 	virtual float pdf() const override final

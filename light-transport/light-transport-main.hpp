@@ -115,29 +115,34 @@ struct Scene
 		const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
 		if (weight < p) return (1.0f / p) * m->Ke;
 
-		const float3 Wo = -ray.direction;
-		const float3 P = ray.direction * intersection.d + ray.origin;
-		const float3 N = intersection.normal;
-		const float pdf = m->pdf();
+		std::unique_ptr<IntersectionInfo> info(new IntersectionInfo());
+		info->Wo = -ray.direction;
+		info->P = ray.direction * intersection.d + ray.origin;
+		info->N = intersection.normal;
 
-		const WiResult Wi = m->evaulate_Wi(Wo, N, gen);
-		const BSDFResult bsdfWr = m->bsdf_Wr(P, N, Wi.Wr, Wi.Wt, Wo, gen);
+		// Create a new BSDF event with the relevant intersection data
+		SurfaceScatterEvent s(info.get());
+
+		// Sample from the BSDF
+		m->sample(gen, s);
+
+		const float pdf = m->pdf();
 
 		// Reflected illuminance
 		float3 Lr;
-		if (length(Wi.Wr) > 0.0f)
+		if (length(s.Wr) > 0.0f)
 		{
-			Lr = trace_ray(Ray(P, Wi.Wr), gen, weight * KdMax, depth + 1);
+			Lr = trace_ray(Ray(info->P, s.Wr), gen, weight * KdMax, depth + 1);
 		}
 
 		// Transmitted illuminance
 		float3 Lt;
-		if (length(Wi.Wt) > 0.0f)
+		if (length(s.Wt) > 0.0f)
 		{
-			Lt = trace_ray(Ray(P, Wi.Wt), gen, weight, depth + 1);
+			Lt = trace_ray(Ray(info->P, s.Wt), gen, weight, depth + 1);
 		}
 
-		return clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * (bsdfWr.brdf / pdf) * Lr + (bsdfWr.btdf / pdf) * Lt), 0.f, 1.f);
+		return clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * (s.brdf / pdf) * Lr + (s.btdf / pdf) * Lt), 0.f, 1.f);
 	}
 };
 
