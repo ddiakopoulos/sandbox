@@ -56,6 +56,7 @@ struct SurfaceScatterEvent
 	float3 Wt;
 	float brdf;
 	float btdf = 0.f;
+	float pdf;
 	SurfaceScatterEvent(const IntersectionInfo * info) : info(info) {}
 };
 
@@ -77,6 +78,7 @@ struct IdealDiffuse : public Material
 		event.Wr = sample_hemisphere(event.info->N, gen); // sample the normal vector on a hemi
 		event.Wt = float3(); // no transmission
 		event.brdf = float(ANVIL_INV_PI) * dot(event.Wr, event.info->N);
+		event.pdf = pdf();
 	}
 
 	virtual float pdf() const override final
@@ -97,6 +99,7 @@ struct IdealSpecular : public Material
 			event.Wr.z + (gen.random_float() - 0.5f) * roughness));
 		event.Wt = float3(); // no transmission
 		event.brdf = 1.f;
+		event.pdf = pdf();
 	}
 
 	virtual float pdf() const override final

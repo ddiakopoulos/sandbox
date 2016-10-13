@@ -126,8 +126,6 @@ struct Scene
 		// Sample from the BSDF
 		m->sample(gen, s);
 
-		const float pdf = m->pdf();
-
 		// Reflected illuminance
 		float3 Lr;
 		if (length(s.Wr) > 0.0f)
@@ -142,7 +140,7 @@ struct Scene
 			Lt = trace_ray(Ray(info->P, s.Wt), gen, weight, depth + 1);
 		}
 
-		return clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * (s.brdf / pdf) * Lr + (s.btdf / pdf) * Lt), 0.f, 1.f);
+		return clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf) * Lt), 0.f, 1.f);
 	}
 };
 
