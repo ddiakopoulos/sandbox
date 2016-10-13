@@ -60,16 +60,16 @@ struct Material
 	float3 Ke = { 0, 0, 0 }; // emissive
 
 	// Evaluate a normal and produce a reflected vector
-	virtual WiResult evaulate_Wi(const float3 & Wo, const float3 & N, UniformRandomGenerator & gen) const { return WiResult();  }
+	virtual WiResult evaulate_Wi(const float3 & Wo, const float3 & N, UniformRandomGenerator & gen) const = 0;
 
 	// Reflected
-	virtual BSDFResult bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const { return BSDFResult(); }
+	virtual BSDFResult bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const = 0;
 
 	// Emitted
-	virtual BSDFResult bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const { return BSDFResult(); }
+	virtual BSDFResult bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const = 0;
 
 	// Evaluate the probability density function - p(x)
-	virtual float pdf() const { return 0.f; }
+	virtual float pdf() const = 0;
 };
 
 struct IdealDiffuse : public Material
@@ -79,17 +79,17 @@ struct IdealDiffuse : public Material
 		return { sample_hemisphere(N, gen), float3(0.f) }; // sample the normal vector on a hemi, no transmission
 	}
 
-	BSDFResult bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const override final
+	virtual BSDFResult bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const override final
 	{
 		return { float(ANVIL_INV_PI) * dot(Wr, N), 0.f };
 	}
 
-	BSDFResult bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const override final
+	virtual BSDFResult bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, UniformRandomGenerator & gen) const override final
 	{
 		return { float(ANVIL_INV_PI) * std::max(dot(We, N), 0.f), 0.f };
 	}
 
-	float pdf() const
+	virtual float pdf() const override final
 	{
 		return 1.f / ANVIL_TWO_PI;
 	}
