@@ -70,11 +70,11 @@ namespace avl
 		std::uniform_real_distribution<float> two_pi { 0.f, ANVIL_TWO_PI };
     public:
 		UniformRandomGenerator() : rd(), gen(rd()) { }
-        float random_float() { return full(gen); }
-		float random_float(float max) { std::uniform_real_distribution<float> custom(0.f, max); return custom(gen); }
-		float random_float_sphere() { return two_pi(gen); }
-		float random_float_safe() { return safe(gen); }
-        int random_int(int max) { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }
+        float random_float() const { return full(gen); }
+		float random_float(float max) const { std::uniform_real_distribution<float> custom(0.f, max); return custom(gen); }
+		float random_float_sphere() const { return two_pi(gen); }
+		float random_float_safe() const { return safe(gen); }
+        int random_int(int max) const { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }
     };
     
     struct as_string

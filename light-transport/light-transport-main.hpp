@@ -10,6 +10,7 @@
 // http://fileadmin.cs.lth.se/cs/Education/EDAN30/lectures/S2-bvh.pdf
 // http://www.cs.utah.edu/~edwards/research/mcRendering.pdf
 // http://computergraphics.stackexchange.com/questions/2130/anti-aliasing-filtering-in-ray-tracing
+// http://web.cse.ohio-state.edu/~parent/classes/782/Lectures/05_Reflectance_Handout.pdf
 
 // ToDo
 // ----------------------------------------------------------------------------
@@ -201,7 +202,6 @@ struct Film
 		//radiance = clamp(radiance, 0.f, 1.f);
 
 		samples[coord.y * size.x + coord.x] = radiance * invSamples;
-		//std::cout << radiance * invSamples << std::endl;
 	}
 };
 
@@ -269,11 +269,11 @@ struct ExperimentalApp : public GLFWApp
 
 		a->radius = 0.5f;
 		a->m.Kd = float3(1, 0, 0);
-		a->center = float3(-1, 0.66f, 1);
+		a->center = float3(-1.25, 0.66f, 1);
 
 		b->radius = 0.5f;
 		b->m.Kd = float3(0, 1, 0);
-		b->center = float3(+1, 0.66f, 1);
+		b->center = float3(+1.25, 0.66f, 1);
 
 		c->radius = 0.5f;
 		c->m.Kd = float3(0, 0, 0);
@@ -297,9 +297,8 @@ struct ExperimentalApp : public GLFWApp
 		//scene.objects.push_back(box2);
 		scene.objects.push_back(a);
 		scene.objects.push_back(b);
-		scene.objects.push_back(c);
+		//scene.objects.push_back(c);
 
-		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
 		rescale_geometry(shaderball, 1.f);
 		for (auto & v : shaderball.vertices)
@@ -309,12 +308,11 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedMesh> shaderballTrimesh = std::make_shared<RaytracedMesh>(shaderball);
 		shaderballTrimesh->m.Kd = float3(1, 1, 1);
 		scene.objects.push_back(shaderballTrimesh);
-		*/
 
 		// Traverse + build BVH accelerator for the objects we've added to the scene
 		{
 			ScopedTimer("BVH Generation");
-			//scene.accelerate();
+			scene.accelerate();
 		}
 
 		// Generate a vector of all possible pixel locations to raytrace
@@ -368,7 +366,6 @@ struct ExperimentalApp : public GLFWApp
 	// Return a vector of 1024 randomly selected coordinates from the total that we need to render.
 	std::vector<int2> generate_bag_of_pixels()
 	{
-		/*
 		std::lock_guard<std::mutex> guard(coordinateLock);
 		std::vector<int2> group;
 		for (int w = 0; w < 1024; w++)
@@ -379,18 +376,6 @@ struct ExperimentalApp : public GLFWApp
 				auto randomCoord = coordinates[randomIdx];
 				coordinates.erase(coordinates.begin() + randomIdx);
 				group.push_back(randomCoord);
-			}
-		}
-		return group;
-		*/
-
-		std::lock_guard<std::mutex> guard(coordinateLock);
-		std::vector<int2> group;
-		for (int h = 0; h < HEIGHT; h++)
-		{
-			for (int w = 0; w < WIDTH; w++)
-			{
-				group.push_back(coordinates[h * WIDTH + w]);
 			}
 		}
 		return group;

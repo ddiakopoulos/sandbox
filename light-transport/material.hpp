@@ -18,7 +18,7 @@ inline float3 refract(const float3 & I, const float3 & N, float eta)
 	else return eta * I - (eta * dot(N, I) + std::sqrt(k)) * N;
 }
 
-inline float3 sample_hemisphere(const float3 & N, UniformRandomGenerator & gen)
+inline float3 sample_hemisphere(const float3 & N, const UniformRandomGenerator & gen)
 {
 	float r1 = gen.random_float_sphere(); // Spherical coordinates
 	float r2 = gen.random_float();
@@ -37,7 +37,7 @@ struct Material
 	float3 Ke = { 0, 0, 0 }; // emissive
 
 	// Reflected
-	void bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, float & brdf, float & btdf, UniformRandomGenerator & gen)
+	void bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, const UniformRandomGenerator & gen, float & brdf, float & btdf)
 	{
 		float c = dot(Wr, N);
 		brdf = ANVIL_INV_PI * c;
@@ -45,7 +45,7 @@ struct Material
 	}
 
 	// Emitted
-	void bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, float & brdf, float & btdf, UniformRandomGenerator & gen)
+	void bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, const UniformRandomGenerator & gen, float & brdf, float & btdf)
 	{
 		float c = std::max(dot(We, N), 0.0f);
 		brdf = ANVIL_INV_PI * c;
@@ -59,7 +59,7 @@ struct Material
 	}
 
 	// Evaluate indicent vector
-	void sample_Wi(const float3 & Wo, const float3 & N, float3 & Wr, float3 & Wt, UniformRandomGenerator & gen)
+	void sample_Wi(const float3 & Wo, const float3 & N, const UniformRandomGenerator & gen, float3 & Wr, float3 & Wt)
 	{
 		Wr = sample_hemisphere(N, gen);
 		Wt = float3(0, 0, 0); // no transmission
