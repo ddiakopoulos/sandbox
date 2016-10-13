@@ -20,7 +20,7 @@ inline float3 refract(const float3 & I, const float3 & N, float eta)
 
 inline float3 sample_hemisphere(const float3 & N, const UniformRandomGenerator & gen)
 {
-	float r1 = gen.random_float_sphere(); // Spherical coordinates
+	float r1 = gen.random_float_sphere();
 	float r2 = gen.random_float();
 	float r2s = std::sqrt(r2);
 
@@ -39,40 +39,60 @@ inline float3 sample_hemisphere(const float3 & N, const UniformRandomGenerator &
 // Wr = reflected vector
 // Wt = transmitted vector
 // We = emitted vector
+// Wi = incident vector
 // ============================================================================
+
+struct BSDFResult
+{
+	float brdf;
+	float btdf;
+};
+
+struct WiResult
+{
+	float3 Wr;
+	float3 Wt;
+};
 
 struct Material
 {
 	float3 Kd = { 0, 0, 0 }; // diffuse
 	float3 Ke = { 0, 0, 0 }; // emissive
 
+	// Evaluate a normal and produce a reflected vector
+	virtual WiResult evaulate_Wi(const float3 & Wo, const float3 & N, const UniformRandomGenerator & gen) const { return WiResult();  }
+
 	// Reflected
-	void bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, const UniformRandomGenerator & gen, float & brdf, float & btdf)
-	{
-		brdf = ANVIL_INV_PI * dot(Wr, N);
-		btdf = 0.0f;
-	}
+	virtual BSDFResult bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, const UniformRandomGenerator & gen) const { return BSDFResult(); }
 
 	// Emitted
-	void bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, const UniformRandomGenerator & gen, float & brdf, float & btdf)
-	{
-		brdf = ANVIL_INV_PI * std::max(dot(We, N), 0.0f);
-		btdf = 0.0f;
-	}
+	virtual BSDFResult bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, const UniformRandomGenerator & gen) const { return BSDFResult(); }
 
 	// Evaluate the probability density function - p(x)
+	virtual float pdf() const { return 0.f; }
+};
+
+struct IdealDiffuse : public Material
+{
+	virtual WiResult evaulate_Wi(const float3 & Wo, const float3 & N, const UniformRandomGenerator & gen) const override final
+	{
+		return { sample_hemisphere(N, gen), float3(0.f) }; // sample the normal vector on a hemi, no transmission
+	}
+
+	BSDFResult bsdf_Wr(const float3 & P, const float3 & N, const float3 & Wr, const float3 & Wt, const float3 & Wo, const UniformRandomGenerator & gen) const override final
+	{
+		return { ANVIL_INV_PI * dot(Wr, N), 0.f };
+	}
+
+	BSDFResult bsdf_We(const float3 & P, const float3 & N, const float3 & We, const float3 & Wr, const float3 & Wt, const float3 & Wo, const UniformRandomGenerator & gen) const override final
+	{
+		return { ANVIL_INV_PI * std::max(dot(We, N), 0.0f), 0.f };
+	}
+
 	float pdf() const
 	{
 		return 1.f / ANVIL_TWO_PI;
 	}
-
-	// Sample the indicent vector to produce a reflected vector
-	void sample_Wi(const float3 & Wo, const float3 & N, const UniformRandomGenerator & gen, float3 & Wr, float3 & Wt)
-	{
-		Wr = sample_hemisphere(N, gen); // sample the normal direction
-		Wt = float3(0, 0, 0); // no transmission
-	}
-
 };
 
 #endif
