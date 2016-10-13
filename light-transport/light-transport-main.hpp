@@ -115,13 +115,13 @@ struct Scene
 		const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
 		if (weight < p) return (1.0f / p) * m->Ke;
 
-		std::unique_ptr<IntersectionInfo> info(new IntersectionInfo());
+		IntersectionInfo * info = new IntersectionInfo();
 		info->Wo = -ray.direction;
 		info->P = ray.direction * intersection.d + ray.origin;
 		info->N = intersection.normal;
 
 		// Create a new BSDF event with the relevant intersection data
-		SurfaceScatterEvent s(info.get());
+		SurfaceScatterEvent s(info);
 
 		// Sample from the BSDF
 		m->sample(gen, s);
@@ -140,7 +140,11 @@ struct Scene
 			Lt = trace_ray(Ray(info->P, s.Wt), gen, weight, depth + 1);
 		}
 
-		return clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf) * Lt), 0.f, 1.f);
+		// Free the hit struct
+		delete info;
+
+		const float3 radiance = clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf) * Lt), 0.f, 1.f);
+		return radiance;
 	}
 };
 
