@@ -43,8 +43,9 @@ inline float3 sample_hemisphere(const float3 & N, UniformRandomGenerator & gen)
 	return normalize(u * std::cos(r1) * r2s + v * std::sin(r1) * r2s + w * std::sqrt(1.0f - r2));
 }
 
-inline float3 sample_sphere(const float2 p) 
+inline float3 sample_sphere(UniformRandomGenerator & gen)
 {
+	const float2 p(gen.random_float(), gen.random_float());
 	float z = 1.f - 2.f * p.x;
 	float r = std::sqrt(std::max(0.f, 1.f - z * z));
 	float phi = 2.f * ANVIL_PI * p.y;
@@ -119,7 +120,7 @@ struct IdealSpecular : public Material
 
 struct Light
 {
-	int numSamples = 1;
+	int numSamples = 8;
 	// Returns Le, or total light emitted from the source.
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const = 0;
 	// All lights must also be able to return their total emitted power
@@ -132,7 +133,7 @@ struct PointLight : public Light
 	float3 lightPos = { 0.f, 0.f, 0.f };
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
-		Wi = normalize(lightPos - P); 
+		Wi = normalize(lightPos - P) * sample_sphere(gen); // comment the sphere sample for hard shadows
 		pdf = 1.f; 
 		return intensity / distance2(lightPos, P);
 	}

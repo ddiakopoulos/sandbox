@@ -72,6 +72,16 @@ public:
 //   Scene   //
 ///////////////
 
+inline float mix(float a, float b, float t)
+{
+	return a * (1 - t) + b * t;
+}
+
+inline float3 mix(float3 a, float3 b, float t)
+{
+	return float3(mix(a.x, b.x, t), mix(a.y, b.y, t), mix(a.z, b.z, t));
+}
+
 struct Scene
 {
 	float3 environment;
@@ -119,7 +129,7 @@ struct Scene
 
 		Material * m = intersection.m;
 
-		const float3 Kd = (m->Kd * ambient) * 0.99f; // avoid 1.0 dMax case
+		const float3 Kd = m->Kd * 0.9999f; // avoid 1.0 dMax case
 		const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
 
 		// Russian roulette termination
@@ -167,7 +177,6 @@ struct Scene
 
 				// Create a new BSDF event with the relevant intersection data
 				SurfaceScatterEvent direct(lightInfo);
-
 				m->sample(gen, direct);
 
 				float3 Ld;
@@ -177,8 +186,6 @@ struct Scene
 				}
 				Le = (Ld / float3(light->numSamples)) * float3(direct.brdf);
 			}
-
-			//std::cout << Le << std::endl;
 		}
 
 		// Reflected illuminance
@@ -189,7 +196,7 @@ struct Scene
 		}
 
 		// Transmitted illuminance
-		float3 Lt;
+		float3 Lt = float3(1, 1, 1);
 		if (length(s.Wt) > 0.0f)
 		{
 			Lt = trace_ray(Ray(info->P, s.Wt), gen, weight, depth + 1);
@@ -198,7 +205,11 @@ struct Scene
 		// Free the hit struct
 		delete info;
 
-		const float3 radiance = clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * Le + (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf) * Lt), 0.f, 1.f);
+		float w = (1.0f / (1.0f - p)) * weight;
+		float3 emissivePlusDiffuse = w * (m->Ke + Kd + ambient);
+		float3 term = (Le + (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf)) * Lt;
+
+		const float3 radiance = clamp((emissivePlusDiffuse * term), 0.f, 1.f);
 		return radiance;
 	}
 };
@@ -315,46 +326,59 @@ struct ExperimentalApp : public GLFWApp
 
 		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
 
-		scene.ambient = float3(0.f);
-		scene.environment = float3(1.f);
+		scene.ambient = float3(.0f);
+		scene.environment = float3(0.f);
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(0, 1, 0);
-		pointLight->intensity = float3(0, 0, 1);
+		pointLight->lightPos = float3(0, 4, 0);
+		pointLight->intensity = float3(1, 1, 0.25);
 		scene.lights.push_back(pointLight);
 
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> b = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> c = std::make_shared<RaytracedSphere>();
+		std::shared_ptr<RaytracedSphere> d = std::make_shared<RaytracedSphere>();
+		std::shared_ptr<RaytracedSphere> e = std::make_shared<RaytracedSphere>();
+
 		std::shared_ptr<RaytracedBox> box = std::make_shared<RaytracedBox>();
 		std::shared_ptr<RaytracedBox> box2 = std::make_shared<RaytracedBox>();
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
 		a->m = std::make_shared<IdealDiffuse>();
-		a->m->Kd = float3(1, 0, 0);
+		a->m->Kd = float3(45.f/255.f, 122.f / 255.f, 199.f / 255.f);
 		a->radius = 0.5f;
-		a->center = float3(-1.25, 0.66f, 1);
+		a->center = float3(-0.66f, 0.50f, 0);
 
 		b->m = std::make_shared<IdealDiffuse>();
 		b->radius = 0.5f;
-		b->m->Kd = float3(0, 1, 0);
-		b->center = float3(+1.25, 0.66f, 1);
+		b->m->Kd = float3(70.f / 255.f, 57.f / 255.f, 192.f / 255.f);
+		b->center = float3(+0.66f, 0.50f, 0);
 
 		c->m = std::make_shared<IdealDiffuse>();
-		c->m->Kd = float3(0, 0, 0);
-		c->m->Ke = float3(1, 1, 0);
 		c->radius = 0.5f;
-		c->center = float3(0, 1.75f, -1);
+		c->m->Kd = float3(192.f / 255.f, 70.f / 255.f, 57.f / 255.f);
+		c->center = float3(+0.0f, 0.50f, +0.66f);
+
+		d->m = std::make_shared<IdealDiffuse>();
+		d->radius = 0.5f;
+		d->m->Kd = float3(181.f / 255.f, 51.f / 255.f, 193.f / 255.f);
+		d->center = float3(0.0f, 1.5f, 0);
+
+		e->m = std::make_shared<IdealDiffuse>();
+		e->m->Kd = float3(0, 0, 0);
+		e->m->Ke = float3(1, 1, 0);
+		e->radius = 0.5f;
+		e->center = float3(0, 1.75f, -1);
 
 		box->m = std::make_shared<IdealSpecular>();
-		box->m->Kd = float3(1, 0.95, 0.924);
+		box->m->Kd = float3(1, 1, 1);
 		box->_min = float3(-2.66, 0.1, -2.66);
 		box->_max = float3(+2.66, +0.0, +2.66);
 
 		box2->m = std::make_shared<IdealDiffuse>();
-		box2->m->Kd = float3(1, 0, 1);
-		box2->_min = float3(-2.6, -2.50, -2.5);
-		box2->_max = float3(-2.5, 0, +2.5);
+		box2->m->Kd = float3(8.f / 255.f, 141.f / 255.f, 236.f / 255.f);
+		box2->_min = float3(-2.66, 0.f, -2.66);
+		box2->_max = float3(-2.55, 2.66f, +2.66);
 
 		plane->m = std::make_shared<IdealDiffuse>();
 		plane->m->Kd = float3(1, 1, 0.5);
@@ -363,10 +387,15 @@ struct ExperimentalApp : public GLFWApp
 		//scene.objects.push_back(plane);
 
 		scene.objects.push_back(box);
-		//scene.objects.push_back(box2);
+		scene.objects.push_back(box2);
+
 		scene.objects.push_back(a);
 		scene.objects.push_back(b);
-		//scene.objects.push_back(c);
+		scene.objects.push_back(c);
+		scene.objects.push_back(d);
+
+		// E happens to be emissive
+		//scene.objects.push_back(e);
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
@@ -514,7 +543,7 @@ struct ExperimentalApp : public GLFWApp
 			reset_film();
 			film->set_field_of_view(fieldOfView);
 		}
-		if (ImGui::SliderInt("SPP", &samplesPerPixel, 1, 1024)) reset_film();
+		if (ImGui::SliderInt("SPP", &samplesPerPixel, 1, 8192)) reset_film();
 		ImGui::ColorEdit3("Ambient", &scene.ambient[0]);
 		for (auto & t : renderTimers)
 		{
