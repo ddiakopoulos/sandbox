@@ -158,7 +158,7 @@ struct Scene
 		// Free the hit struct
 		delete info;
 
-		const float3 radiance = clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * Le * (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf) * Lt), 0.f, 1.f);
+		const float3 radiance = clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * Le + (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf) * Lt), 0.f, 1.f);
 		return radiance;
 	}
 };
