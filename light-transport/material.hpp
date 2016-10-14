@@ -111,10 +111,46 @@ struct IdealSpecular : public Material
 struct Light
 {
 	int numSamples = 1;
-	// For some types of lights, light may arrive at p from many directions, not just from a single direction as with a point light source, for example.
-	virtual void sample(UniformRandomGenerator & gen, const float3 & P, const float3 & Wi, float * pdf) = 0;
+	// For some types of lights, light may arrive at P from many directions, not just from a single direction as with a point light source, for example.
+	virtual void sample(UniformRandomGenerator & gen, const float3 & P, const float3 & Wi, float * pdf) const = 0;
 	// All lights must also be able to return their total emitted power
-	virtual float3 power() = 0;
+	virtual float3 power() const = 0;
+};
+
+struct PointLight : public Light
+{
+	virtual void sample(UniformRandomGenerator & gen, const float3 & P, const float3 & Wi, float * pdf) const override final
+	{
+
+	}
+	virtual float3 power() const override final
+	{
+		return float3(1.f);
+	}
+};
+
+struct SpotLight : public Light
+{
+	virtual void sample(UniformRandomGenerator & gen, const float3 & P, const float3 & Wi, float * pdf) const override final
+	{
+
+	}
+	virtual float3 power() const override final
+	{
+		return float3(1.f);
+	}
+};
+
+struct AreaLight : public Light
+{
+	virtual void sample(UniformRandomGenerator & gen, const float3 & P, const float3 & Wi, float * pdf) const override final
+	{
+
+	}
+	virtual float3 power() const override final
+	{
+		return float3(1.f);
+	}
 };
 
 #endif
