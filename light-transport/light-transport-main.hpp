@@ -26,12 +26,14 @@
 // [X] Proper radiance based materials (bdrf)
 // [X] BVH Accelerator ([ ] Cleanup)
 // [ ] Lighting System
+// [ ] Fix weird sampling on spheres in current scene
 // [ ] Mirror + Glass Materials
 // [ ] Cook-Torrance Microfacet BSDF implementation
 // [ ] Sampling Scheme(s): tiled, lines, random, etc
 // [ ] Cornell scene loader, texture mapping & normals
 // [ ] Alternate camera models: pinhole, fisheye, spherical
 // [ ] Add other primatives (box, plane, disc)
+// [ ] Skybox Sampling
 // [ ] Realtime GL preview
 // [ ] Portals (hehe)
 // [ ] Bidirectional path tracing
@@ -205,11 +207,11 @@ struct Scene
 		// Free the hit struct
 		delete info;
 
-		float w = (1.0f / (1.0f - p)) * weight;
-		float3 emissivePlusDiffuse = w * (m->Ke + Kd + ambient);
-		float3 term = (Le + (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf)) * Lt;
+		float w = (1.0f / (1.0f - p));
+		float3 emissivePlusDiffuse = weight * (m->Ke + Kd);
+		float3 term = (Le + (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf));
 
-		const float3 radiance = clamp((emissivePlusDiffuse * term), 0.f, 1.f);
+		const float3 radiance = clamp(w * emissivePlusDiffuse * term, 0.f, 1.f);
 		return radiance;
 	}
 };
