@@ -6,6 +6,18 @@
 #include "geometric.hpp"
 #include "util.hpp"
 
+// BRDF Lexicon
+// ============================================================================
+// P  = point of ray intersection
+// N  = surface normal at P
+// Wo = vector pointing in the opposite direction of the incident ray
+// Wr = reflected vector
+// Wt = transmitted vector
+// We = emitted vector
+// Wi = incident vector
+// Le = emitted light
+// ============================================================================
+
 inline float3 reflect(const float3 & I, const float3 & N)
 {
 	return I - (N * dot(N, I) * 2.f);
@@ -30,17 +42,6 @@ inline float3 sample_hemisphere(const float3 & N, UniformRandomGenerator & gen)
 
 	return normalize(u * std::cos(r1) * r2s + v * std::sin(r1) * r2s + w * std::sqrt(1.0f - r2));
 }
-
-// BRDF Lexicon
-// ============================================================================
-// P  = point of ray intersection
-// N  = surface normal at P
-// Wo = vector pointing in the opposite direction of the incident ray
-// Wr = reflected vector
-// Wt = transmitted vector
-// We = emitted vector
-// Wi = incident vector
-// ============================================================================
 
 struct IntersectionInfo
 {
@@ -111,7 +112,7 @@ struct IdealSpecular : public Material
 struct Light
 {
 	int numSamples = 1;
-	// For some types of lights, light may arrive at P from many directions, not just from a single direction as with a point light source, for example.
+	// Returns Le, or total light emitted from the source.
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const = 0;
 	// All lights must also be able to return their total emitted power
 	virtual float3 power() const = 0;
@@ -134,6 +135,18 @@ struct PointLight : public Light
 };
 
 struct SpotLight : public Light
+{
+	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
+	{
+		float3(1.f);
+	}
+	virtual float3 power() const override final
+	{
+		return float3(1.f);
+	}
+};
+
+struct DirectionalLight : public Light
 {
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
