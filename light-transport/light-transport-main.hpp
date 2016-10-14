@@ -40,6 +40,10 @@
 
 UniformRandomGenerator gen;
 
+////////////////
+//   Timers   //
+////////////////
+
 class PerfTimer
 {
 	std::chrono::high_resolution_clock::time_point t0;
@@ -117,7 +121,8 @@ struct Scene
 
 		const float3 Kd = (m->Kd * ambient) * 0.99f; // avoid 1.0 dMax case
 		const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
-																   // Russian roulette termination
+
+		// Russian roulette termination
 		const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
 		if (weight < p) return (1.0f / p) * m->Ke;
 
@@ -138,7 +143,31 @@ struct Scene
 		{
 			float3 Wi;
 			float lPdf = 0.f;
-			Le = light->sample(gen, info->P, Wi, lPdf);
+			light->sample(gen, info->P, Wi, lPdf);
+
+			// Generate a shadow ray
+			Ray shadow(info->P, Wi);
+
+			// Check for occlusions
+			RayIntersection lightHit;
+			for (auto & obj : objects)
+			{
+				const RayIntersection h = obj->intersects(shadow);
+				if (h.d < lightHit.d) lightHit = h;
+			}
+
+			// No occlusion with another object in the scene
+			if (!lightHit())
+			{
+				float3 Ld;
+				for (int i = 0; i < light->numSamples; ++i)
+				{
+					Ld += light->sample(gen, info->P, Wi, lPdf);
+				}
+				Le = Ld / float3(light->numSamples);
+			}
+
+			//std::cout << Le << std::endl;
 		}
 
 		// Reflected illuminance
@@ -162,6 +191,10 @@ struct Scene
 		return radiance;
 	}
 };
+
+//////////////
+//   Film   //
+//////////////
 
 struct Film
 {
@@ -275,8 +308,8 @@ struct ExperimentalApp : public GLFWApp
 		scene.environment = float3(1.f);
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(0, 2, 0);
-		pointLight->intensity = float3(0, 0, 1);
+		pointLight->lightPos = float3(0, 1, 0);
+		pointLight->intensity = float3(0, 0, 10);
 		scene.lights.push_back(pointLight);
 
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
@@ -320,9 +353,9 @@ struct ExperimentalApp : public GLFWApp
 
 		scene.objects.push_back(box);
 		//scene.objects.push_back(box2);
-		scene.objects.push_back(a);
-		scene.objects.push_back(b);
-		scene.objects.push_back(c);
+		//scene.objects.push_back(a);
+		//scene.objects.push_back(b);
+		//scene.objects.push_back(c);
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
