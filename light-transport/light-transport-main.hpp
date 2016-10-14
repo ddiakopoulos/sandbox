@@ -56,7 +56,7 @@ class ScopedTimer
 	PerfTimer t;
 	std::string message;
 public:
-	ScopedTimer(std::string message) : message(message) { t.start();  }
+	ScopedTimer(std::string message) : message(message) { t.start(); }
 	~ScopedTimer()
 	{
 		t.stop();
@@ -117,8 +117,7 @@ struct Scene
 
 		const float3 Kd = (m->Kd * ambient) * 0.99f; // avoid 1.0 dMax case
 		const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
-
-		// Russian roulette termination
+																   // Russian roulette termination
 		const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
 		if (weight < p) return (1.0f / p) * m->Ke;
 
@@ -132,6 +131,15 @@ struct Scene
 
 		// Sample from the BSDF
 		m->sample(gen, s);
+
+		// Sample from direct light sources
+		float3 Le;
+		for (const auto light : lights)
+		{
+			float3 Wi;
+			float lPdf = 0.f;
+			Le = light->sample(gen, info->P, Wi, lPdf);
+		}
 
 		// Reflected illuminance
 		float3 Lr;
@@ -150,7 +158,7 @@ struct Scene
 		// Free the hit struct
 		delete info;
 
-		const float3 radiance = clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf) * Lt), 0.f, 1.f);
+		const float3 radiance = clamp((1.0f / (1.0f - p)) * m->Ke + Kd * (weight * Le * (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf) * Lt), 0.f, 1.f);
 		return radiance;
 	}
 };
@@ -321,7 +329,7 @@ struct ExperimentalApp : public GLFWApp
 		rescale_geometry(shaderball, 1.f);
 		for (auto & v : shaderball.vertices)
 		{
-			//v = transform_coord(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), v);
+		//v = transform_coord(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), v);
 		}
 		std::shared_ptr<RaytracedMesh> shaderballTrimesh = std::make_shared<RaytracedMesh>(shaderball);
 		shaderballTrimesh->m = std::make_shared<IdealDiffuse>();
