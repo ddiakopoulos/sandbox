@@ -10,9 +10,7 @@
 struct Light
 {
 	int numSamples = 2;
-	// Returns Le, or total light emitted from the source.
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const = 0;
-	// All lights must also be able to return their total emitted power
 	virtual float3 power() const = 0;
 };
 
@@ -22,7 +20,7 @@ struct PointLight : public Light
 	float3 lightPos = { 0.f, 0.f, 0.f };
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
-		Wi = normalize(lightPos - P) * uniform_sample_sphere(gen); // comment the sphere sample for hard shadows
+		Wi = normalize(lightPos - P) * uniform_sphere({ gen.random_float(), gen.random_float() }); // comment the sphere sample for hard shadows
 		pdf = 1.f; 
 		return intensity / distance2(lightPos, P);
 	}

@@ -16,6 +16,7 @@
 // http://www.cs.cornell.edu/courses/Cs4620/2013fa/lectures/22mcrt.pdf
 // http://cg.informatik.uni-freiburg.de/course_notes/graphics2_08_renderingEquation.pdf
 // http://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
+// http://mathinfo.univ-reims.fr/IMG/pdf/Using_the_modified_Phong_reflectance_model_for_Physically_based_rendering_-_Lafortune.pdf
 
 // ToDo
 // ----------------------------------------------------------------------------
@@ -77,16 +78,6 @@ public:
 ///////////////
 //   Scene   //
 ///////////////
-
-inline float mix(float a, float b, float t)
-{
-	return a * (1 - t) + b * t;
-}
-
-inline float3 mix(float3 a, float3 b, float t)
-{
-	return float3(mix(a.x, b.x, t), mix(a.y, b.y, t), mix(a.z, b.z, t));
-}
 
 struct Scene
 {

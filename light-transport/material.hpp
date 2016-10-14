@@ -43,25 +43,17 @@ struct Material
 	float3 Ke = { 0, 0, 0 }; // emissive
 
 	virtual void sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const = 0;
-
-	// Evaluate the probability density function - p(x)
-	virtual float pdf() const = 0;
 };
 
 struct IdealDiffuse : public Material
 {
 	virtual void sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
-		// sample_hemisphere(event.info->N, gen);//
-		event.Wr = sample_cosine_hemisphere({ gen.random_float(), gen.random_float() }); // sample the normal vector on a hemi
+		// sample_hemisphere(event.info->N, gen);
+		event.Wr = cosine_hemisphere({ gen.random_float(), gen.random_float() }); // sample the normal vector on a hemi
 		event.Wt = float3(); // no transmission
 		event.brdf = float(ANVIL_INV_PI) * dot(event.Wr, event.info->N);
-		event.pdf = pdf();
-	}
-
-	virtual float pdf() const override final
-	{
-		return 1.f / ANVIL_TWO_PI;
+		event.pdf = cosine_hemisphere_pdf(event.Wr);
 	}
 };
 
@@ -77,13 +69,9 @@ struct IdealSpecular : public Material
 			event.Wr.z + (gen.random_float() - 0.5f) * roughness));
 		event.Wt = float3(); // no transmission
 		event.brdf = 1.f;
-		event.pdf = pdf();
+		event.pdf = 1.f;
 	}
 
-	virtual float pdf() const override final
-	{
-		return 1.f;
-	}
 };
 
 #endif

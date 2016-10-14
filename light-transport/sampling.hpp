@@ -18,7 +18,7 @@ inline float3 refract(const float3 & I, const float3 & N, float eta)
 	else return eta * I - (eta * dot(N, I) + std::sqrt(k)) * N;
 }
 
-// Sample from a uniform sphere 
+// Uniformly sample a vector on the unit sphere 
 inline float3 uniform_sphere(const float2 & xi)
 {
 	float z = 2.f * xi.x - 1.f;
@@ -27,7 +27,7 @@ inline float3 uniform_sphere(const float2 & xi)
 	return float3(r * std::cos(phi), r * std::sin(phi), z);
 }
 
-// Sample from a uniform hemisphere
+// Sample from a uniform hemisphere around the pole (0,0,1)
 inline float3 uniform_hemisphere(const float2 & xi)
 {
 	float phi = xi.x * ANVIL_TWO_PI;
@@ -35,12 +35,24 @@ inline float3 uniform_hemisphere(const float2 & xi)
 	return float3(std::cos(phi) * r, std::sin(phi) * r, xi.y);
 }
 
-// Sample from a cosine-weighted hemisphere
+// Return the PDF of recieving a sample via the `uniform_hemisphere` sampling method
+inline float uniform_hemisphere_pdf(const float3 & P)
+{
+	return 1.f / ANVIL_TWO_PI;
+}
+
+// Sample from a cosine-weighted hemisphere around the pole (0,0,1)
 inline float3 cosine_hemisphere(const float2 & xi)
 {
 	float phi = xi.x * ANVIL_TWO_PI;
 	float r = std::sqrt(xi.y);
 	return float3(std::cos(phi) * r, std::sin(phi) * r, std::sqrt(std::max(1.0f - xi.y, 0.0f)));
+}
+
+// Return the PDF of recieving a sample via the `cosine_hemisphere` sampling method
+inline float cosine_hemisphere_pdf(const float3 & P)
+{
+	return P.z * ANVIL_INV_PI;
 }
 
 // Sample from a cosine-weighted hemisphere centered on normal N
