@@ -143,26 +143,37 @@ struct Scene
 		{
 			float3 Wi;
 			float lPdf = 0.f;
-			light->sample(gen, info->P, Wi, lPdf);
+			float3 value = light->sample(gen, info->P, Wi, lPdf);
 
 			// Generate a shadow ray
 			Ray shadow(info->P, Wi);
 
 			// Check for occlusions
-			RayIntersection lightHit;
+			RayIntersection occlusion;
 			for (auto & obj : objects)
 			{
 				const RayIntersection h = obj->intersects(shadow);
-				if (h.d < lightHit.d) lightHit = h;
+				if (h.d < occlusion.d) occlusion = h;
 			}
 
 			// No occlusion with another object in the scene
-			if (!lightHit())
+			if (!occlusion())
 			{
+				// Sample from the BSDF
+				IntersectionInfo * lightInfo = new IntersectionInfo();
+				lightInfo->Wo = Wi;
+				lightInfo->P = ray.direction * intersection.d + ray.origin;
+				lightInfo->N = intersection.normal;
+
+				// Create a new BSDF event with the relevant intersection data
+				SurfaceScatterEvent direct(lightInfo);
+
+				m->sample(gen, direct);
+
 				float3 Ld;
 				for (int i = 0; i < light->numSamples; ++i)
 				{
-					Ld += light->sample(gen, info->P, Wi, lPdf);
+					Ld += value * direct.brdf;
 				}
 				Le = Ld / float3(light->numSamples);
 			}
@@ -309,7 +320,7 @@ struct ExperimentalApp : public GLFWApp
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
 		pointLight->lightPos = float3(0, 1, 0);
-		pointLight->intensity = float3(0, 0, 10);
+		pointLight->intensity = float3(0, 0, 1);
 		scene.lights.push_back(pointLight);
 
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
@@ -353,8 +364,8 @@ struct ExperimentalApp : public GLFWApp
 
 		scene.objects.push_back(box);
 		//scene.objects.push_back(box2);
-		//scene.objects.push_back(a);
-		//scene.objects.push_back(b);
+		scene.objects.push_back(a);
+		scene.objects.push_back(b);
 		//scene.objects.push_back(c);
 
 		/*
