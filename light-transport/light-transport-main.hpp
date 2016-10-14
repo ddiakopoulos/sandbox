@@ -1,9 +1,11 @@
-#include "index.hpp"
-#include "light-transport/objects.hpp"
-#include "light-transport/bvh.hpp"
-#include "light-transport/material.hpp"
-#include <future>
 #include <atomic>
+
+#include "index.hpp"
+#include "light-transport/bvh.hpp"
+#include "light-transport/sampling.hpp"
+#include "light-transport/material.hpp"
+#include "light-transport/lights.hpp"
+#include "light-transport/objects.hpp"
 
 // Reference
 // http://graphics.pixar.com/library/HQRenderingCourse/paper.pdf
