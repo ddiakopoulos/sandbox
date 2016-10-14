@@ -11,6 +11,7 @@
 // http://www.cs.utah.edu/~edwards/research/mcRendering.pdf
 // http://computergraphics.stackexchange.com/questions/2130/anti-aliasing-filtering-in-ray-tracing
 // http://web.cse.ohio-state.edu/~parent/classes/782/Lectures/05_Reflectance_Handout.pdf
+// http://www.cs.cornell.edu/courses/Cs4620/2013fa/lectures/22mcrt.pdf
 
 // ToDo
 // ----------------------------------------------------------------------------
@@ -20,15 +21,16 @@
 // [X] ImGui Controls
 // [X] Add tri-meshes (Shaderball, lucy statue from *.obj)
 // [X] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
-// [ ] Timers for various functions (accel vs non-accel)
-// [ ] Proper radiance based materials (bdrf)
-// [ ] Sampling Scheme
-// [X] BVH Accelerator
-// [ ] Cornell Box Loader, texture mapping & normals
-// [ ] New camera models: pinhole, fisheye, spherical
-// [ ] New light types: point, area
-// [ ] Realtime GL preview
+// [X] Timers for various functions (accel vs non-accel)
+// [X] Proper radiance based materials (bdrf)
+// [X] BVH Accelerator (Cleanup)
+// [ ] Lighting System
+// [ ] Cook-Torrance Microfacet BSDF implementation
+// [ ] Sampling Scheme(s)
+// [ ] Cornell scene loader, texture mapping & normals
+// [ ] Alternate camera models: pinhole, fisheye, spherical
 // [ ] Add other primatives (box, plane, disc)
+// [ ] Realtime GL preview
 // [ ] Portals (hehe)
 // [ ] Bidirectional path tracing
 // [ ] Embree acceleration
