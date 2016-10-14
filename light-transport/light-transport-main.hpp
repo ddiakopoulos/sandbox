@@ -14,6 +14,8 @@
 // http://computergraphics.stackexchange.com/questions/2130/anti-aliasing-filtering-in-ray-tracing
 // http://web.cse.ohio-state.edu/~parent/classes/782/Lectures/05_Reflectance_Handout.pdf
 // http://www.cs.cornell.edu/courses/Cs4620/2013fa/lectures/22mcrt.pdf
+// http://cg.informatik.uni-freiburg.de/course_notes/graphics2_08_renderingEquation.pdf
+// http://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
 
 // ToDo
 // ----------------------------------------------------------------------------
