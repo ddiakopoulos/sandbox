@@ -130,8 +130,8 @@ struct Scene
 		const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
 
 		// Russian roulette termination
-		const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
-		if (weight < p) return (1.0f / p) * m->Ke;
+		//const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
+		//if (weight < p) return (1.0f / p) * m->Ke;
 
 		IntersectionInfo * info = new IntersectionInfo();
 		info->Wo = -ray.direction;
@@ -181,7 +181,7 @@ struct Scene
 				{
 					Ld += value;
 				}
-				Le = (Ld / float3(light->numSamples)) * float3(direct.brdf);
+				Le = (Ld / float3(light->numSamples)); // *float3(direct.brdf);
 
 				delete lightInfo;
 			}
@@ -194,33 +194,10 @@ struct Scene
 			Lr = trace_ray(Ray(info->P, s.Wr), gen, weight * KdMax, depth + 1);
 		}
 
-		/*
-		// Transmitted illuminance
-		float3 Lt = float3(1, 1, 1);
-		if (length(s.Wt) > 0.0f)
-		{
-			Lt = trace_ray(Ray(info->P, s.Wt), gen, weight, depth + 1);
-		}
-		*/
-
 		// Free the hit struct
 		delete info;
 
-		/*
-		float w = (1.0f / (1.0f - p));
-		float3 emissivePlusDiffuse = weight * (m->Ke + Kd);
-		float3 term = (Le + (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf));
-
-		const float3 radiance = clamp(w * emissivePlusDiffuse * term, 0.f, 1.f);
-		*/
-
-		float pdfWeight = s.pdf / (1.0f + s.pdf); // light + surface
-
-		float3 direct;
-		direct += Le * (s.brdf / s.pdf) * (1.f) * (1.f / (1.f + s.pdf));
-		direct += Lr * pdfWeight;
-
-		const float3 radiance = clamp((1.0f / (1.0f - p)) * Kd * direct, 0.f, 1.f);
+		const float3 radiance = float3(1, 1, 1);
 		return radiance;
 	}
 };
