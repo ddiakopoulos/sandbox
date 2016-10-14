@@ -112,28 +112,32 @@ struct Light
 {
 	int numSamples = 1;
 	// For some types of lights, light may arrive at P from many directions, not just from a single direction as with a point light source, for example.
-	virtual void sample(UniformRandomGenerator & gen, const float3 & P, const float3 & Wi, float * pdf) const = 0;
+	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const = 0;
 	// All lights must also be able to return their total emitted power
 	virtual float3 power() const = 0;
 };
 
 struct PointLight : public Light
 {
-	virtual void sample(UniformRandomGenerator & gen, const float3 & P, const float3 & Wi, float * pdf) const override final
+	float3 intensity = { 1.f, 1.f, 1.f };
+	float3 lightPos = { 0.f, 0.f, 0.f };
+	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
-
+		Wi = normalize(lightPos - P); 
+		pdf = 1.f; 
+		return intensity / distance2(lightPos, P);
 	}
 	virtual float3 power() const override final
 	{
-		return float3(1.f);
+		return float3(4.f  * intensity * float(ANVIL_PI));
 	}
 };
 
 struct SpotLight : public Light
 {
-	virtual void sample(UniformRandomGenerator & gen, const float3 & P, const float3 & Wi, float * pdf) const override final
+	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
-
+		float3(1.f);
 	}
 	virtual float3 power() const override final
 	{
@@ -143,9 +147,9 @@ struct SpotLight : public Light
 
 struct AreaLight : public Light
 {
-	virtual void sample(UniformRandomGenerator & gen, const float3 & P, const float3 & Wi, float * pdf) const override final
+	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
-
+		float3(1.f);
 	}
 	virtual float3 power() const override final
 	{
