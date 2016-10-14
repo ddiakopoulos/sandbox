@@ -30,6 +30,18 @@ inline float3 refract(const float3 & I, const float3 & N, float eta)
 	else return eta * I - (eta * dot(N, I) + std::sqrt(k)) * N;
 }
 
+static inline float3 sample_cosine_hemisphere(const float2 & xi)
+{
+	float phi = xi.x * ANVIL_TWO_PI;
+	float r = std::sqrt(xi.y);
+
+	return float3(
+		std::cos(phi)*r,
+		std::sin(phi)*r,
+		std::sqrt(std::max(1.0f - xi.y, 0.0f))
+	);
+}
+
 inline float3 sample_hemisphere(const float3 & N, UniformRandomGenerator & gen)
 {
 	float r1 = gen.random_float_sphere();
@@ -43,7 +55,7 @@ inline float3 sample_hemisphere(const float3 & N, UniformRandomGenerator & gen)
 	return normalize(u * std::cos(r1) * r2s + v * std::sin(r1) * r2s + w * std::sqrt(1.0f - r2));
 }
 
-inline float3 sample_sphere(UniformRandomGenerator & gen)
+inline float3 uniform_sample_sphere(UniformRandomGenerator & gen)
 {
 	const float2 p(gen.random_float(), gen.random_float());
 	float z = 1.f - 2.f * p.x;
@@ -85,7 +97,8 @@ struct IdealDiffuse : public Material
 {
 	virtual void sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
-		event.Wr = sample_hemisphere(event.info->N, gen); // sample the normal vector on a hemi
+		// sample_hemisphere(event.info->N, gen);//
+		event.Wr = sample_cosine_hemisphere({ gen.random_float(), gen.random_float() }); // sample the normal vector on a hemi
 		event.Wt = float3(); // no transmission
 		event.brdf = float(ANVIL_INV_PI) * dot(event.Wr, event.info->N);
 		event.pdf = pdf();
@@ -120,7 +133,7 @@ struct IdealSpecular : public Material
 
 struct Light
 {
-	int numSamples = 8;
+	int numSamples = 2;
 	// Returns Le, or total light emitted from the source.
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const = 0;
 	// All lights must also be able to return their total emitted power
@@ -133,7 +146,7 @@ struct PointLight : public Light
 	float3 lightPos = { 0.f, 0.f, 0.f };
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
-		Wi = normalize(lightPos - P) * sample_sphere(gen); // comment the sphere sample for hard shadows
+		Wi = normalize(lightPos - P) * uniform_sample_sphere(gen); // comment the sphere sample for hard shadows
 		pdf = 1.f; 
 		return intensity / distance2(lightPos, P);
 	}

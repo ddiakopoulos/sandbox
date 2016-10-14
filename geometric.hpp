@@ -685,7 +685,6 @@ namespace avl
 				if (tmin > tmax || tmax <= PLANE_EPSILON) return false;
 			}
 		}
-
 		if (outTmin) *outTmin = tmin;
 		if (outTmax) *outTmax = tmax;
 		if (outNormal) *outNormal = (tmin) ? normalize(normal) : float3(0, 0, 0);
@@ -712,6 +711,7 @@ namespace avl
             float denom = 2.0f * a;
             
             t = (-b - e) / denom;
+
             if (t > SPHERE_EPSILON)
             {
                 if (outT) *outT = t;
@@ -727,7 +727,6 @@ namespace avl
                 return true;
             }
         }
-        
         if (outT) *outT = 0;
 		if (outNormal) *outNormal = float3(0, 0, 0);
         return false;

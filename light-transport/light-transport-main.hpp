@@ -150,7 +150,7 @@ struct Scene
 		m->sample(gen, s);
 
 		// Sample from direct light sources
-		float3 Le;
+		float3 Le = float3(0.f);
 		for (const auto light : lights)
 		{
 			float3 Wi;
@@ -187,6 +187,8 @@ struct Scene
 					Ld += value;
 				}
 				Le = (Ld / float3(light->numSamples)) * float3(direct.brdf);
+
+				delete lightInfo;
 			}
 		}
 
@@ -197,21 +199,33 @@ struct Scene
 			Lr = trace_ray(Ray(info->P, s.Wr), gen, weight * KdMax, depth + 1);
 		}
 
+		/*
 		// Transmitted illuminance
 		float3 Lt = float3(1, 1, 1);
 		if (length(s.Wt) > 0.0f)
 		{
 			Lt = trace_ray(Ray(info->P, s.Wt), gen, weight, depth + 1);
 		}
+		*/
 
 		// Free the hit struct
 		delete info;
 
+		/*
 		float w = (1.0f / (1.0f - p));
 		float3 emissivePlusDiffuse = weight * (m->Ke + Kd);
 		float3 term = (Le + (s.brdf / s.pdf) * Lr + (s.btdf / s.pdf));
 
 		const float3 radiance = clamp(w * emissivePlusDiffuse * term, 0.f, 1.f);
+		*/
+
+		float pdfWeight = s.pdf / (1.0f + s.pdf); // light + surface
+
+		float3 direct;
+		direct += Le * (s.brdf / s.pdf) * (1.f) * (1.f / (1.f + s.pdf));
+		direct += Lr * pdfWeight;
+
+		const float3 radiance = clamp((1.0f / (1.0f - p)) * Kd * direct, 0.f, 1.f);
 		return radiance;
 	}
 };
@@ -296,10 +310,9 @@ struct ExperimentalApp : public GLFWApp
 
 	GlCamera camera;
 	FlyCameraController cameraController;
-	ShaderMonitor shaderMonitor;
 	std::vector<int2> coordinates;
 
-	int samplesPerPixel = 24;
+	int samplesPerPixel = 48;
 	float fieldOfView = 90;
 
 	std::mutex coordinateLock;
@@ -354,12 +367,12 @@ struct ExperimentalApp : public GLFWApp
 		b->m = std::make_shared<IdealDiffuse>();
 		b->radius = 0.5f;
 		b->m->Kd = float3(70.f / 255.f, 57.f / 255.f, 192.f / 255.f);
-		b->center = float3(+0.66f, 0.50f, 0);
+		b->center = float3(+1.66f, 0.50f, 0);
 
 		c->m = std::make_shared<IdealDiffuse>();
 		c->radius = 0.5f;
 		c->m->Kd = float3(192.f / 255.f, 70.f / 255.f, 57.f / 255.f);
-		c->center = float3(+0.0f, 0.50f, +0.66f);
+		c->center = float3(+0.0f, 0.50f, +3.25f);
 
 		d->m = std::make_shared<IdealDiffuse>();
 		d->radius = 0.5f;
@@ -385,7 +398,6 @@ struct ExperimentalApp : public GLFWApp
 		plane->m = std::make_shared<IdealDiffuse>();
 		plane->m->Kd = float3(1, 1, 0.5);
 		plane->equation = float4(0, 1, 0, -0.0999f);
-
 		//scene.objects.push_back(plane);
 
 		scene.objects.push_back(box);
@@ -469,6 +481,7 @@ struct ExperimentalApp : public GLFWApp
 	// Return a vector of 1024 randomly selected coordinates from the total that we need to render.
 	std::vector<int2> generate_bag_of_pixels()
 	{
+
 		std::lock_guard<std::mutex> guard(coordinateLock);
 		std::vector<int2> group;
 		for (int w = 0; w < 1024; w++)
@@ -481,6 +494,17 @@ struct ExperimentalApp : public GLFWApp
 				group.push_back(randomCoord);
 			}
 		}
+
+		/*
+		std::vector<int2> group;
+		for (int y = 0; y < HEIGHT; y++)
+		{
+			for (int x = 0; x < WIDTH; x++)
+			{
+				group.push_back(coordinates[y * WIDTH + x]);
+			}
+		}
+		*/
 		return group;
 	}
 
@@ -503,7 +527,6 @@ struct ExperimentalApp : public GLFWApp
 	void on_update(const UpdateEvent & e) override
 	{
 		cameraController.update(e.timestep_ms);
-		shaderMonitor.handle_recompile();
 	}
 
 	void reset_film()
