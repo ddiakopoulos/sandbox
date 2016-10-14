@@ -173,9 +173,9 @@ struct Scene
 				float3 Ld;
 				for (int i = 0; i < light->numSamples; ++i)
 				{
-					Ld += value * direct.brdf;
+					Ld += value;
 				}
-				Le = Ld / float3(light->numSamples);
+				Le = (Ld / float3(light->numSamples)) * float3(direct.brdf);
 			}
 
 			//std::cout << Le << std::endl;
@@ -315,7 +315,7 @@ struct ExperimentalApp : public GLFWApp
 
 		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
 
-		scene.ambient = float3(1.f);
+		scene.ambient = float3(0.f);
 		scene.environment = float3(1.f);
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
