@@ -20,19 +20,22 @@
 // [X] Occlusion support
 // [X] ImGui Controls
 // [X] Add tri-meshes (Shaderball, lucy statue from *.obj)
-// [X] Path tracing (Monte Carlo) + Sampler (random/jittered) structs
+// [X] Path tracing (Monte Carlo) + Jittered Sampling
+// [X] Ray Antialiasing (tent filtering)
 // [X] Timers for various functions (accel vs non-accel)
 // [X] Proper radiance based materials (bdrf)
-// [X] BVH Accelerator (Cleanup)
+// [X] BVH Accelerator ([ ] Cleanup)
 // [ ] Lighting System
+// [ ] Mirror + Glass Materials
 // [ ] Cook-Torrance Microfacet BSDF implementation
-// [ ] Sampling Scheme(s)
+// [ ] Sampling Scheme(s): tiled, lines, random, etc
 // [ ] Cornell scene loader, texture mapping & normals
 // [ ] Alternate camera models: pinhole, fisheye, spherical
 // [ ] Add other primatives (box, plane, disc)
 // [ ] Realtime GL preview
 // [ ] Portals (hehe)
 // [ ] Bidirectional path tracing
+// [ ] Other render targets: depth buffer, normal buffer
 // [ ] Embree acceleration
 
 UniformRandomGenerator gen;
@@ -71,6 +74,8 @@ struct Scene
 	float3 ambient;
 
 	std::vector<std::shared_ptr<Traceable>> objects;
+	std::vector<std::shared_ptr<Light>> lights;
+
 	std::unique_ptr<BVH> bvhAccelerator;
 
 	void accelerate()
@@ -260,6 +265,11 @@ struct ExperimentalApp : public GLFWApp
 
 		scene.ambient = float3(1.f);
 		scene.environment = float3(1.f);
+
+		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
+		pointLight->lightPos = float3(0, 2, 0);
+		pointLight->intensity = float3(0, 0, 1);
+		scene.lights.push_back(pointLight);
 
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> b = std::make_shared<RaytracedSphere>();
