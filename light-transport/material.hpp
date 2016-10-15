@@ -51,7 +51,7 @@ struct IdealDiffuse : public Material
 	{
 		event.Wi = cosine_hemisphere({ gen.random_float(), gen.random_float() }); // sample
 		event.pdf = cosine_hemisphere_pdf(event.Wi);
-		return Kd * eval(event.info->Wo, event.Wi); // evaulate the brdf
+		return Kd * eval(event.info->Wo, event.Wi); 
 	}
 
 	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
@@ -71,7 +71,7 @@ struct IdealSpecular : public Material
 			event.Wi.y + (gen.random_float() - 0.5f) * roughness,
 			event.Wi.z + (gen.random_float() - 0.5f) * roughness));
 		event.pdf = 1.0f;
-		return Kd * eval(event.info->Wo, event.Wi); // evaulate the brdf
+		return Kd * eval(event.info->Wo, event.Wi);
 	}
 
 	virtual float eval(const float3 & Wo, const float3 & Wi) const override final

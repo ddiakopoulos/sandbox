@@ -32,9 +32,10 @@
 // [X] Timers for various functions (accel vs non-accel)
 // [X] Proper radiance based materials (bdrf)
 // [X] BVH Accelerator ([ ] Cleanup)
-// [ ] Lighting System
-// [ ] Fix weird sampling on spheres in current scene
+// [ ] Fix Intersection / Occlusion Bug
+// [ ] Lambertian Material / Diffuse + Specular Terms
 // [ ] Mirror + Glass Materials
+// [ ] Area Lights!
 // [ ] Cook-Torrance Microfacet BSDF implementation
 // [ ] Sampling Scheme(s): tiled, lines, random, etc
 // [ ] Cornell scene loader, texture mapping & normals
@@ -94,6 +95,8 @@ struct Scene
 	// Returns the incoming radiance of `Ray` via unidirectional path tracing
 	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, float3 weight, const int depth)
 	{
+	
+
 		// Early exit with no radiance
 		if (depth >= maxRecursion || luminance(weight) <= 0.0f) return float3(0, 0, 0);
 
@@ -110,11 +113,24 @@ struct Scene
 		//const float3 Kd = m->Kd * 0.9999f; // avoid 1.0 dMax case
 		//const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
 
+		/*
 		// Russian roulette termination
 		const float p = gen.random_float_safe(); // In the range [0.001f, 0.999f)
 		float shouldContinue = min(luminance(weight), 1.f);
-		if (p > shouldContinue) return float3(0.f, 0.f, 0.f);
-		else weight /= shouldContinue;
+		std::cout << luminance(weight) << std::endl;
+		if (p > shouldContinue)
+		{
+			//std::cout << "depth " << depth << std::endl;
+			//std::cout << "Fucked " << std::endl;
+			return float3(0.f, 0.f, 0.f);
+		}
+		else
+		{
+			//std::cout << "nf depth " << depth << std::endl;
+			//std::cout << "not fucked!" << std::endl;
+			weight /= shouldContinue;
+		}
+		*/
 
 		auto tangentFrame = make_tangent_frame(intersection.normal);
 
@@ -128,7 +144,7 @@ struct Scene
 		// Create a new BSDF event with the relevant intersection data
 		SurfaceScatterEvent scatter(surfaceInfo);
 
-		float4x4 tangentToWorld(float4(surfaceInfo->T, 0.f), float4(surfaceInfo->BT, 0.f), float4(surfaceInfo->N, 0.f), float4(0, 0, 0, 1.f));
+		float4x4 tangentToWorld(float4(surfaceInfo->T, 1.f), float4(surfaceInfo->BT, 1.f), float4(surfaceInfo->N, 1.f), float4(0, 0, 0, 0.f));
 
 		// Sample from direct light sources
 		float3 directLighting;
@@ -168,7 +184,14 @@ struct Scene
 		// Sample the diffuse brdf of the intersected material
 		float3 brdfSample = m->sample(gen, scatter);
 		float3 sampleDirection = scatter.Wi;
-		sampleDirection = normalize(transform_coord(tangentToWorld, sampleDirection));
+		//sampleDirection = transform_coord(tangentToWorld, sampleDirection); // - wrong!
+
+		const float NdotL = clamp(abs(dot(sampleDirection, scatter.info->N)), 0.f, 1.f);
+
+		// Weight, aka throughput
+		weight *= (brdfSample * NdotL) / scatter.pdf;
+
+		//weight = clamp(weight, 0.f, 1.f);
 
 		// Reflected illuminance
 		if (length(sampleDirection) > 0.0f)
@@ -176,15 +199,12 @@ struct Scene
 			brdfSample += trace_ray(Ray(surfaceInfo->P, sampleDirection), gen, weight, depth + 1);
 		}
 
-		const float NdotL = clamp(abs(dot(sampleDirection, scatter.info->N)), 0.f, 1.f);
-
-		// Weight, aka throughput
-		weight *= (brdfSample * NdotL) / scatter.pdf;
-
 		// Free the hit struct
 		delete surfaceInfo;
 
-		return clamp(weight * directLighting, 0.f, 1.f);
+		if (depth >= 1) brdfSample = float3(1, 0, 0);
+
+		return clamp(brdfSample, 0.f, 1.f);
 	}
 };
 
@@ -309,7 +329,7 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(0, 4.0, 0);
+		pointLight->lightPos = float3(0, 3, 0);
 		pointLight->intensity = float3(1, 1, 1);
 		scene.lights.push_back(pointLight);
 
@@ -339,7 +359,7 @@ struct ExperimentalApp : public GLFWApp
 		e->center = float3(0, 1.75f, -1);
 
 		box->m = std::make_shared<IdealSpecular>();
-		box->m->Kd = float3(0.95, 1, 1);
+		box->m->Kd = float3(0.25, 0.55, 1);
 		box->_min = float3(-2.66, 0.1, -2.66);
 		box->_max = float3(+2.66, +0.0, +2.66);
 
@@ -392,7 +412,7 @@ struct ExperimentalApp : public GLFWApp
 			}
 		}
 
-		const int numWorkers = std::thread::hardware_concurrency();
+		const int numWorkers = 1; // std::thread::hardware_concurrency();
 		for (int i = 0; i < numWorkers; ++i)
 		{
 			renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));
