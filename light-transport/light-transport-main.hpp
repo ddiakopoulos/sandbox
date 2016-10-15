@@ -82,6 +82,15 @@ public:
 
 inline float luminance(float3 c) { return 0.2126f * c.x + 0.7152f * c.y + 0.0722f * c.z; }
 
+inline std::pair<float3, float3> make_tangent_frame(const float3 & N)
+{
+	float3 tangent, bitangent;
+	if (std::abs(N.x) > std::abs(N.y)) tangent = float3(0.0f, 1.0f, 0.0f);
+	else tangent = float3(1.0f, 0.0f, 0.0f);
+	bitangent = safe_normalize(cross(tangent, N));
+	tangent = cross(tangent, bitangent);
+	return{ tangent, bitangent };
+}
 struct Scene
 {
 	float3 environment;
@@ -144,10 +153,14 @@ struct Scene
 		if (p > shouldContinue) return float3(0.f, 0.f, 0.f);
 		else weight /= shouldContinue;
 
+		auto tangentFrame = make_tangent_frame(intersection.normal);
+
 		IntersectionInfo * surfaceInfo = new IntersectionInfo();
 		surfaceInfo->Wo = -ray.direction;
 		surfaceInfo->P = ray.direction * intersection.d + ray.origin;
-		surfaceInfo->N = intersection.normal;
+		surfaceInfo->N = normalize(intersection.normal);
+		surfaceInfo->T = normalize(tangentFrame.first);
+		surfaceInfo->BT = normalize(tangentFrame.second);
 
 		// Create a new BSDF event with the relevant intersection data
 		SurfaceScatterEvent scatter(surfaceInfo);
@@ -191,13 +204,17 @@ struct Scene
 		float3 brdfSample = m->sample(gen, scatter);
 		float3 sampleDirection = scatter.Wi;
 
+		float4x4 tangentToWorld(float4(scatter.info->T, 0.f), float4(scatter.info->BT, 0.f), float4(scatter.info->N, 0.f), float4(0.f));
+
+		sampleDirection = transform_coord(tangentToWorld, normalize(sampleDirection));
+
 		// Reflected illuminance
 		if (length(sampleDirection) > 0.0f)
 		{
 			brdfSample += trace_ray(Ray(surfaceInfo->P, sampleDirection), gen, weight, depth + 1);
 		}
 
-		const float NdotL = abs(dot(sampleDirection, scatter.info->N));
+		const float NdotL = clamp(abs(dot(sampleDirection, scatter.info->N)), 0.f, 1.f);
 
 		// Weight, aka throughput
 		weight *= (brdfSample * NdotL) / scatter.pdf;

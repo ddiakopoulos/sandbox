@@ -24,6 +24,8 @@ struct IntersectionInfo
 	float3 Wo;
 	float3 P;
 	float3 N;
+	float3 T;
+	float3 BT;
 };
 
 struct SurfaceScatterEvent 
