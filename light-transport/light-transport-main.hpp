@@ -129,7 +129,7 @@ struct Scene
 		// Assuming no intersection, early exit with the environment color
 		if (!intersection())
 		{
-			return weight * environment;
+			return environment;
 		}
 
 		Material * m = intersection.m;
@@ -138,8 +138,18 @@ struct Scene
 		//const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
 
 		// Russian roulette termination
-		//const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
-		//if (weight < p) return (1.0f / p) * m->Ke;
+		const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
+		float shouldContinue = min(luminance(weight), 1.f);
+		if (p > shouldContinue)
+		{
+			return float3(0.f);
+		}
+		else
+		{
+			weight /= shouldContinue;
+		}
+
+		//if (luminance(weight) < p) return float3(1.0f / p);
 
 		IntersectionInfo * info = new IntersectionInfo();
 		info->Wo = -ray.direction;
@@ -188,22 +198,22 @@ struct Scene
 		}
 
 		// Compute the diffuse brdf
-		float3 f = m->sample(gen, s);
-		weight *= f * (abs(dot(s.Wi, s.info->N)) / s.pdf);
-
-		//std::cout << weight << std::endl;
+		float3 Lr = m->sample(gen, s);
 
 		// Reflected illuminance
-		float3 Lr;
 		if (length(s.Wi) > 0.0f)
 		{
-			Lr = trace_ray(Ray(info->P, s.Wi), gen, weight, depth + 1);
+			Lr += trace_ray(Ray(info->P, s.Wi), gen, weight, depth + 1);
+			//std::cout << Lr << std::endl;
+			//std::cout << "weight: " << weight << std::endl;
+
 		}
+
+		weight *= Lr * (abs(dot(s.Wi, s.info->N)) / s.pdf);
 
 		// Free the hit struct
 		delete info;
-
-		return clamp(weight * Le + Lr, 0.f, 1.f);
+		return clamp(weight * Lr * Le, 0.f, 1.f);
 	}
 };
 
@@ -318,8 +328,8 @@ struct ExperimentalApp : public GLFWApp
 		scene.environment = float3(0.f);
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(0, 3, 0);
-		pointLight->intensity = float3(1, 1, 0.25);
+		pointLight->lightPos = float3(+5, 1, 0);
+		pointLight->intensity = float3(10, 10, 10);
 		scene.lights.push_back(pointLight);
 
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
