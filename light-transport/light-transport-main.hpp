@@ -194,9 +194,9 @@ struct Scene
 				float3 Ld;
 				for (int i = 0; i < light->numSamples; ++i)
 				{
-					Ld += lightSample;
+					Ld += lightSample * surfaceColor;
 				}
-				directLighting = surfaceColor * (Ld / float3(light->numSamples)) / lightPDF;
+				directLighting =  (Ld / float3(light->numSamples)) / lightPDF;
 
 				delete lightInfo;
 			}
@@ -471,7 +471,6 @@ struct ExperimentalApp : public GLFWApp
 	// Return a vector of 1024 randomly selected coordinates from the total that we need to render.
 	std::vector<int2> generate_bag_of_pixels()
 	{
-
 		std::lock_guard<std::mutex> guard(coordinateLock);
 		std::vector<int2> group;
 		for (int w = 0; w < 1024; w++)
