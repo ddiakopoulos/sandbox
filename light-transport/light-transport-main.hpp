@@ -165,6 +165,8 @@ struct Scene
 		// Create a new BSDF event with the relevant intersection data
 		SurfaceScatterEvent scatter(surfaceInfo);
 
+		float4x4 tangentToWorld(float4(surfaceInfo->T, 0.f), float4(surfaceInfo->BT, 0.f), float4(surfaceInfo->N, 0.f), float4(0, 0, 0, 1.f));
+
 		// Sample from direct light sources
 		float3 directLighting;
 		for (const auto light : lights)
@@ -187,6 +189,7 @@ struct Scene
 
 				SurfaceScatterEvent direct(lightInfo);
 				auto surfaceColor = m->sample(gen, direct);
+				lightWi = normalize(transform_coord(tangentToWorld, direct.Wi));
 
 				// Integrate over the number of direct lighting samples
 				float3 Ld;
@@ -203,10 +206,7 @@ struct Scene
 		// Sample the diffuse brdf of the intersected material
 		float3 brdfSample = m->sample(gen, scatter);
 		float3 sampleDirection = scatter.Wi;
-
-		float4x4 tangentToWorld(float4(scatter.info->T, 0.f), float4(scatter.info->BT, 0.f), float4(scatter.info->N, 0.f), float4(0.f));
-
-		sampleDirection = transform_coord(tangentToWorld, normalize(sampleDirection));
+		sampleDirection = normalize(transform_coord(tangentToWorld, sampleDirection));
 
 		// Reflected illuminance
 		if (length(sampleDirection) > 0.0f)
@@ -336,11 +336,6 @@ struct ExperimentalApp : public GLFWApp
 		scene.ambient = float3(.0f);
 		scene.environment = float3(0.f);
 
-		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(0, 0.33, 0);
-		pointLight->intensity = float3(1, 1, 1);
-		scene.lights.push_back(pointLight);
-
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> b = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> c = std::make_shared<RaytracedSphere>();
@@ -351,20 +346,25 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedBox> box2 = std::make_shared<RaytracedBox>();
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
+		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
+		pointLight->lightPos = float3(0, 4.0, 0);
+		pointLight->intensity = float3(1, 1, 1);
+		scene.lights.push_back(pointLight);
+
 		a->m = std::make_shared<IdealDiffuse>();
 		a->m->Kd = float3(45.f/255.f, 122.f / 255.f, 199.f / 255.f);
 		a->radius = 0.5f;
-		a->center = float3(-0.66f, 0.66f, 0);
+		a->center = float3(-0.66f, 0.50f, 0);
 
 		b->m = std::make_shared<IdealDiffuse>();
 		b->radius = 0.5f;
 		b->m->Kd = float3(70.f / 255.f, 57.f / 255.f, 192.f / 255.f);
-		b->center = float3(+0.66f, 0.25f, 0);
+		b->center = float3(+0.66f, 0.50f, 0);
 
 		c->m = std::make_shared<IdealDiffuse>();
 		c->radius = 0.5f;
 		c->m->Kd = float3(192.f / 255.f, 70.f / 255.f, 57.f / 255.f);
-		c->center = float3(+0.0f, 0.66f, +0.66f);
+		c->center = float3(+0.0f, 0.66f, -0.66f);
 
 		d->m = std::make_shared<IdealDiffuse>();
 		d->radius = 0.5f;
