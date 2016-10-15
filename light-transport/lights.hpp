@@ -6,6 +6,7 @@
 #include "geometric.hpp"
 #include "util.hpp"
 #include "light-transport/sampling.hpp"
+#include "light-transport/util.hpp"
 
 struct Light
 {

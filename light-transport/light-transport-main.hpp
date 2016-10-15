@@ -6,6 +6,7 @@
 #include "light-transport/material.hpp"
 #include "light-transport/lights.hpp"
 #include "light-transport/objects.hpp"
+#include "light-transport/util.hpp"
 
 // Reference
 // http://graphics.pixar.com/library/HQRenderingCourse/paper.pdf
@@ -49,49 +50,10 @@
 UniformRandomGenerator gen;
 static bool takeScreenshot = true;
 
-////////////////
-//   Timers   //
-////////////////
-
-class PerfTimer
-{
-	std::chrono::high_resolution_clock::time_point t0;
-	double timestamp = 0.f;
-public:
-	PerfTimer() {};
-	const double & get() { return timestamp; }
-	void start() { t0 = std::chrono::high_resolution_clock::now(); }
-	void stop() { timestamp = std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - t0).count() * 1000; }
-};
-
-class ScopedTimer
-{
-	PerfTimer t;
-	std::string message;
-public:
-	ScopedTimer(std::string message) : message(message) { t.start(); }
-	~ScopedTimer()
-	{
-		t.stop();
-		std::cout << message << " completed in " << t.get() << " ms" << std::endl;
-	}
-};
-
 ///////////////
 //   Scene   //
 ///////////////
 
-inline float luminance(float3 c) { return 0.2126f * c.x + 0.7152f * c.y + 0.0722f * c.z; }
-
-inline std::pair<float3, float3> make_tangent_frame(const float3 & N)
-{
-	float3 tangent, bitangent;
-	if (std::abs(N.x) > std::abs(N.y)) tangent = float3(0.0f, 1.0f, 0.0f);
-	else tangent = float3(1.0f, 0.0f, 0.0f);
-	bitangent = safe_normalize(cross(tangent, N));
-	tangent = cross(tangent, bitangent);
-	return{ tangent, bitangent };
-}
 struct Scene
 {
 	float3 environment;
@@ -591,7 +553,7 @@ struct ExperimentalApp : public GLFWApp
 		{
 			ImGui::Text("%#010x %.3f", t.first, t.second.get());
 		}
-		if (ImGui::Button("Save *.png"))  take_screenshot({ WIDTH, HEIGHT });
+		if (ImGui::Button("Save *.png")) take_screenshot({ WIDTH, HEIGHT });
 		if (igm) igm->end_frame();
 
 		glfwSwapBuffers(window);

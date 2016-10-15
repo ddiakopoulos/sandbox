@@ -285,6 +285,9 @@
     <ClInclude Include="..\light-transport\sampling.hpp">
       <Filter>light-transport</Filter>
     </ClInclude>
+    <ClInclude Include="..\light-transport\util.hpp">
+      <Filter>light-transport</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">

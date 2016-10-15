@@ -60,6 +60,7 @@
     <ClInclude Include="..\light-transport\material.hpp" />
     <ClInclude Include="..\light-transport\objects.hpp" />
     <ClInclude Include="..\light-transport\sampling.hpp" />
+    <ClInclude Include="..\light-transport\util.hpp" />
     <ClInclude Include="..\linalg_util.hpp" />
     <ClInclude Include="..\math_util.hpp" />
     <ClInclude Include="..\meshline.hpp" />
