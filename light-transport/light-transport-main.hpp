@@ -513,9 +513,35 @@ struct ExperimentalApp : public GLFWApp
 		}
 	}
 
+	bool take_screenshot(int2 size)
+	{
+		HumanTime t;
+		std::string timestamp = 
+			std::to_string(t.month + 1) + "." + 
+			std::to_string(t.monthDay) +  "." + 
+			std::to_string(t.year) +  "-" + 
+			std::to_string(t.hour) + "." + 
+			std::to_string(t.minute);
+
+		std::vector<uint8_t> screenShot(size.x * size.y * 3);
+		glReadPixels(0, 0, size.x, size.y, GL_RGB, GL_UNSIGNED_BYTE, screenShot.data());
+		auto flipped = screenShot;
+		for (int y = 0; y<size.y; ++y) memcpy(flipped.data() + y*size.x * 3, screenShot.data() + (size.y - y - 1)*size.x * 3, size.x * 3);
+		stbi_write_png(std::string("render_" + timestamp + ".png").c_str(), size.x, size.y, 3, flipped.data(), 3 * size.x);
+		return false;
+	}
+
 	void on_update(const UpdateEvent & e) override
 	{
 		cameraController.update(e.timestep_ms);
+
+		static bool boolSavedRender = false;
+		// Have we finished rendering? 
+		if (coordinates.size() == 0 && boolSavedRender == false)
+		{
+			boolSavedRender = true;
+			take_screenshot({ WIDTH, HEIGHT });
+		}
 	}
 
 	void reset_film()
