@@ -27,6 +27,11 @@ inline float3 uniform_sphere(const float2 & xi)
 	return float3(r * std::cos(phi), r * std::sin(phi), z);
 }
 
+inline float uniform_sphere_pdf()
+{
+	return 1.f / (4.f * ANVIL_PI);
+}
+
 // Sample from a uniform hemisphere around the pole (0,0,1)
 inline float3 uniform_hemisphere(const float2 & xi)
 {

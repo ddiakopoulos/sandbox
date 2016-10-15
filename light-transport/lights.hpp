@@ -20,7 +20,7 @@ struct PointLight : public Light
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
 		Wi = normalize(lightPos - P) * uniform_sphere({ gen.random_float(), gen.random_float() }); // comment the sphere sample for hard shadows
-		pdf = 1.f; 
+		pdf = uniform_sphere_pdf();
 		return intensity / distance2(lightPos, P);
 	}
 };

@@ -189,7 +189,6 @@ struct Scene
 
 				SurfaceScatterEvent direct(lightInfo);
 				auto surfaceColor = m->sample(gen, direct);
-				lightWi = normalize(transform_coord(tangentToWorld, direct.Wi));
 
 				// Integrate over the number of direct lighting samples
 				float3 Ld;
@@ -197,7 +196,7 @@ struct Scene
 				{
 					Ld += lightSample;
 				}
-				directLighting = Ld / float3(light->numSamples);
+				directLighting = surfaceColor * (Ld / float3(light->numSamples)) / lightPDF;
 
 				delete lightInfo;
 			}
