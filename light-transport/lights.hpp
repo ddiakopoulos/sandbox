@@ -9,9 +9,8 @@
 
 struct Light
 {
-	int numSamples = 2;
+	int numSamples = 16;
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const = 0;
-	virtual float3 power() const = 0;
 };
 
 struct PointLight : public Light
@@ -24,10 +23,6 @@ struct PointLight : public Light
 		pdf = 1.f; 
 		return intensity / distance2(lightPos, P);
 	}
-	virtual float3 power() const override final
-	{
-		return float3(4.f  * intensity * float(ANVIL_PI));
-	}
 };
 
 struct SpotLight : public Light
@@ -35,10 +30,6 @@ struct SpotLight : public Light
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
 		float3(1.f);
-	}
-	virtual float3 power() const override final
-	{
-		return float3(1.f);
 	}
 };
 
@@ -48,10 +39,6 @@ struct DirectionalLight : public Light
 	{
 		float3(1.f);
 	}
-	virtual float3 power() const override final
-	{
-		return float3(1.f);
-	}
 };
 
 struct AreaLight : public Light
@@ -59,10 +46,6 @@ struct AreaLight : public Light
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
 		float3(1.f);
-	}
-	virtual float3 power() const override final
-	{
-		return float3(1.f);
 	}
 };
 

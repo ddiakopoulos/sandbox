@@ -101,7 +101,7 @@ struct Scene
 
 	const int maxRecursion = 5;
 
-	RayIntersection geometry_test(const Ray & ray)
+	RayIntersection scene_intersects(const Ray & ray)
 	{
 		RayIntersection isct;
 		if (bvhAccelerator)
@@ -125,7 +125,7 @@ struct Scene
 		// Early exit with no radiance
 		if (depth >= maxRecursion || luminance(weight) <= 0.0f) return float3(0, 0, 0);
 
-		RayIntersection intersection = geometry_test(ray);
+		RayIntersection intersection = scene_intersects(ray);
 
 		// Assuming no intersection, early exit with the environment color
 		if (!intersection())
@@ -141,16 +141,8 @@ struct Scene
 		// Russian roulette termination
 		const float p = gen.random_float_safe(); // In the range [0.001f, 0.999f)
 		float shouldContinue = min(luminance(weight), 1.f);
-		if (p > shouldContinue)
-		{
-			return float3(0.f);
-		}
-		else
-		{
-			weight /= shouldContinue;
-		}
-
-		//if (luminance(weight) < p) return float3(1.0f / p);
+		if (p > shouldContinue) return float3(0.f, 0.f, 0.f);
+		else weight /= shouldContinue;
 
 		IntersectionInfo * info = new IntersectionInfo();
 		info->Wo = -ray.direction;
@@ -158,28 +150,25 @@ struct Scene
 		info->N = intersection.normal;
 
 		// Create a new BSDF event with the relevant intersection data
-		SurfaceScatterEvent s(info);
+		SurfaceScatterEvent scatter(info);
 
 		// Sample from direct light sources
-		float3 Le;
+		float3 directLighting;
 		for (const auto light : lights)
 		{
-			float3 Wi;
-			float lPdf = 0.f;
-			float3 lightColor = light->sample(gen, info->P, Wi, lPdf);
+			float3 lightWi;
+			float lightPDF;
+			float3 lightSample = light->sample(gen, info->P, lightWi, lightPDF);
 
-			// Generate a shadow ray
-			Ray shadow(info->P, Wi);
-
-			// Check for occlusions
-			RayIntersection occlusion = geometry_test(shadow);
+			// Make a shadow ray to check for occlusion between surface and a direct light
+			RayIntersection occlusion = scene_intersects({ info->P, lightWi });
 
 			// No occlusion with another object in the scene
 			if (!occlusion())
 			{
 				// Sample from the BSDF
 				IntersectionInfo * lightInfo = new IntersectionInfo();
-				lightInfo->Wo = Wi;
+				lightInfo->Wo = lightWi;
 				lightInfo->P = ray.direction * intersection.d + ray.origin;
 				lightInfo->N = intersection.normal;
 
@@ -190,33 +179,33 @@ struct Scene
 				float3 Ld;
 				for (int i = 0; i < light->numSamples; ++i)
 				{
-					Ld += lightColor;
+					Ld += lightSample;
 				}
-				Le = (Ld / float3(light->numSamples)) * surfaceColor;
+				directLighting = (Ld / float3(light->numSamples)) * surfaceColor;
 
 				delete lightInfo;
 			}
 		}
 
 		// Sample the diffuse brdf of the intersected material
-		float3 brdfSample = m->sample(gen, s);
-		float3 sampleDirection = s.Wi;
+		float3 brdfSample = m->sample(gen, scatter);
+		float3 sampleDirection = scatter.Wi;
 
 		// Reflected illuminance
-		if (length(s.Wi) > 0.0f)
+		if (length(sampleDirection) > 0.0f)
 		{
-			brdfSample += trace_ray(Ray(info->P, s.Wi), gen, weight, depth + 1);
+			brdfSample += trace_ray(Ray(info->P, sampleDirection), gen, weight, depth + 1);
 		}
 
-		const float NdotL = abs(dot(s.Wi, s.info->N));
+		const float NdotL = abs(dot(sampleDirection, scatter.info->N));
 
 		// Weight, aka throughput
-		weight = weight * brdfSample * NdotL / s.pdf;
+		weight = weight * brdfSample * NdotL / scatter.pdf;
 
 		// Free the hit struct
 		delete info;
 
-		return clamp(weight * brdfSample * Le, 0.f, 1.f);
+		return clamp(weight * brdfSample * directLighting, 0.f, 1.f);
 	}
 };
 
