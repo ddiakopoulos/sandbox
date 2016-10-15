@@ -47,6 +47,7 @@
 // [ ] Embree acceleration
 
 UniformRandomGenerator gen;
+static bool takeScreenshot = true;
 
 ////////////////
 //   Timers   //
@@ -516,12 +517,13 @@ struct ExperimentalApp : public GLFWApp
 	bool take_screenshot(int2 size)
 	{
 		HumanTime t;
-		std::string timestamp = 
-			std::to_string(t.month + 1) + "." + 
-			std::to_string(t.monthDay) +  "." + 
-			std::to_string(t.year) +  "-" + 
-			std::to_string(t.hour) + "." + 
-			std::to_string(t.minute);
+		std::string timestamp =
+			std::to_string(t.month + 1) + "." +
+			std::to_string(t.monthDay) + "." +
+			std::to_string(t.year) + "-" +
+			std::to_string(t.hour) + "." +
+			std::to_string(t.minute) + "." +
+			std::to_string(t.second);
 
 		std::vector<uint8_t> screenShot(size.x * size.y * 3);
 		glReadPixels(0, 0, size.x, size.y, GL_RGB, GL_UNSIGNED_BYTE, screenShot.data());
@@ -535,12 +537,11 @@ struct ExperimentalApp : public GLFWApp
 	{
 		cameraController.update(e.timestep_ms);
 
-		static bool boolSavedRender = false;
 		// Have we finished rendering? 
-		if (coordinates.size() == 0 && boolSavedRender == false)
+		if (coordinates.size() == 0 && takeScreenshot == true)
 		{
-			boolSavedRender = true;
-			take_screenshot({ WIDTH, HEIGHT });
+			takeScreenshot = take_screenshot({ WIDTH, HEIGHT });
+			std::cout << "Render Saved..." << std::endl;
 		}
 	}
 
@@ -556,6 +557,7 @@ struct ExperimentalApp : public GLFWApp
 			}
 		}
 		film->reset(camera.get_pose());
+		takeScreenshot = true;
 	}
 
 	void on_draw() override
@@ -589,6 +591,7 @@ struct ExperimentalApp : public GLFWApp
 		{
 			ImGui::Text("%#010x %.3f", t.first, t.second.get());
 		}
+		if (ImGui::Button("Save *.png"))  take_screenshot({ WIDTH, HEIGHT });
 		if (igm) igm->end_frame();
 
 		glfwSwapBuffers(window);
