@@ -17,6 +17,7 @@
 // http://cg.informatik.uni-freiburg.de/course_notes/graphics2_08_renderingEquation.pdf
 // http://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
 // http://mathinfo.univ-reims.fr/IMG/pdf/Using_the_modified_Phong_reflectance_model_for_Physically_based_rendering_-_Lafortune.pdf
+// http://www.rorydriscoll.com/2009/01/07/better-sampling/
 
 // ToDo
 // ----------------------------------------------------------------------------
@@ -138,7 +139,7 @@ struct Scene
 		//const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
 
 		// Russian roulette termination
-		const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
+		const float p = gen.random_float_safe(); // In the range [0.001f, 0.999f)
 		float shouldContinue = min(luminance(weight), 1.f);
 		if (p > shouldContinue)
 		{
@@ -197,23 +198,25 @@ struct Scene
 			}
 		}
 
-		// Compute the diffuse brdf
-		float3 Lr = m->sample(gen, s);
+		// Sample the diffuse brdf of the intersected material
+		float3 brdfSample = m->sample(gen, s);
+		float3 sampleDirection = s.Wi;
 
 		// Reflected illuminance
 		if (length(s.Wi) > 0.0f)
 		{
-			Lr += trace_ray(Ray(info->P, s.Wi), gen, weight, depth + 1);
-			//std::cout << Lr << std::endl;
-			//std::cout << "weight: " << weight << std::endl;
-
+			brdfSample += trace_ray(Ray(info->P, s.Wi), gen, weight, depth + 1);
 		}
 
-		weight *= Lr * (abs(dot(s.Wi, s.info->N)) / s.pdf);
+		const float NdotL = abs(dot(s.Wi, s.info->N));
+
+		// Weight, aka throughput
+		weight = weight * brdfSample * NdotL / s.pdf;
 
 		// Free the hit struct
 		delete info;
-		return clamp(weight * Lr * Le, 0.f, 1.f);
+
+		return clamp(weight * brdfSample * Le, 0.f, 1.f);
 	}
 };
 
@@ -328,8 +331,8 @@ struct ExperimentalApp : public GLFWApp
 		scene.environment = float3(0.f);
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(+5, 1, 0);
-		pointLight->intensity = float3(10, 10, 10);
+		pointLight->lightPos = float3(0, 0.33, 0);
+		pointLight->intensity = float3(1, 1, 1);
 		scene.lights.push_back(pointLight);
 
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
@@ -350,7 +353,7 @@ struct ExperimentalApp : public GLFWApp
 		b->m = std::make_shared<IdealDiffuse>();
 		b->radius = 0.5f;
 		b->m->Kd = float3(70.f / 255.f, 57.f / 255.f, 192.f / 255.f);
-		b->center = float3(+1.66f, 0.66f, 0);
+		b->center = float3(+0.66f, 0.25f, 0);
 
 		c->m = std::make_shared<IdealDiffuse>();
 		c->radius = 0.5f;
@@ -382,7 +385,7 @@ struct ExperimentalApp : public GLFWApp
 		plane->equation = float4(0, 1, 0, -0.0999f);
 		//scene.objects.push_back(plane);
 
-		//scene.objects.push_back(box2);
+		scene.objects.push_back(box2);
 		scene.objects.push_back(box);
 
 		scene.objects.push_back(a);
@@ -421,7 +424,7 @@ struct ExperimentalApp : public GLFWApp
 			}
 		}
 
-		const int numWorkers = 1; // std::thread::hardware_concurrency();
+		const int numWorkers = std::thread::hardware_concurrency();
 		for (int i = 0; i < numWorkers; ++i)
 		{
 			renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));
