@@ -144,13 +144,13 @@ struct Scene
 		if (p > shouldContinue) return float3(0.f, 0.f, 0.f);
 		else weight /= shouldContinue;
 
-		IntersectionInfo * info = new IntersectionInfo();
-		info->Wo = -ray.direction;
-		info->P = ray.direction * intersection.d + ray.origin;
-		info->N = intersection.normal;
+		IntersectionInfo * surfaceInfo = new IntersectionInfo();
+		surfaceInfo->Wo = -ray.direction;
+		surfaceInfo->P = ray.direction * intersection.d + ray.origin;
+		surfaceInfo->N = intersection.normal;
 
 		// Create a new BSDF event with the relevant intersection data
-		SurfaceScatterEvent scatter(info);
+		SurfaceScatterEvent scatter(surfaceInfo);
 
 		// Sample from direct light sources
 		float3 directLighting;
@@ -158,12 +158,12 @@ struct Scene
 		{
 			float3 lightWi;
 			float lightPDF;
-			float3 lightSample = light->sample(gen, info->P, lightWi, lightPDF);
+			float3 lightSample = light->sample(gen, surfaceInfo->P, lightWi, lightPDF);
 
 			// Make a shadow ray to check for occlusion between surface and a direct light
-			RayIntersection occlusion = scene_intersects({ info->P, lightWi });
+			RayIntersection occlusion = scene_intersects({ surfaceInfo->P, lightWi });
 
-			// No occlusion with another object in the scene
+			// If it's not occluded we can see the light source
 			if (!occlusion())
 			{
 				// Sample from the BSDF
@@ -172,16 +172,16 @@ struct Scene
 				lightInfo->P = ray.direction * intersection.d + ray.origin;
 				lightInfo->N = intersection.normal;
 
-				// Create a new BSDF event with the relevant intersection data
 				SurfaceScatterEvent direct(lightInfo);
 				auto surfaceColor = m->sample(gen, direct);
 
+				// Integrate over the number of direct lighting samples
 				float3 Ld;
 				for (int i = 0; i < light->numSamples; ++i)
 				{
 					Ld += lightSample;
 				}
-				directLighting = (Ld / float3(light->numSamples)) * surfaceColor;
+				directLighting = Ld / float3(light->numSamples);
 
 				delete lightInfo;
 			}
@@ -194,18 +194,18 @@ struct Scene
 		// Reflected illuminance
 		if (length(sampleDirection) > 0.0f)
 		{
-			brdfSample += trace_ray(Ray(info->P, sampleDirection), gen, weight, depth + 1);
+			brdfSample += trace_ray(Ray(surfaceInfo->P, sampleDirection), gen, weight, depth + 1);
 		}
 
 		const float NdotL = abs(dot(sampleDirection, scatter.info->N));
 
 		// Weight, aka throughput
-		weight = weight * brdfSample * NdotL / scatter.pdf;
+		weight *= (brdfSample * NdotL) / scatter.pdf;
 
 		// Free the hit struct
-		delete info;
+		delete surfaceInfo;
 
-		return clamp(weight * brdfSample * directLighting, 0.f, 1.f);
+		return clamp(weight * directLighting, 0.f, 1.f);
 	}
 };
 

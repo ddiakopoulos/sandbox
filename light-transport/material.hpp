@@ -73,7 +73,7 @@ struct IdealSpecular : public Material
 
 	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
 	{
-		return 1.0f;;
+		return 1.0f;
 	}
 };
 
