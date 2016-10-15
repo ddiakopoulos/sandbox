@@ -79,6 +79,8 @@ public:
 //   Scene   //
 ///////////////
 
+inline float luminance(float3 c) { return 0.2126f * c.x + 0.7152f * c.y + 0.0722f * c.z; }
+
 struct Scene
 {
 	float3 environment;
@@ -98,25 +100,31 @@ struct Scene
 
 	const int maxRecursion = 5;
 
-	// Returns the incoming radiance of `Ray` via unidirectional path tracing
-	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, const float weight, const int depth)
+	RayIntersection geometry_test(const Ray & ray)
 	{
-		// Early exit with no radiance
-		if (depth >= maxRecursion || weight <= 0.0f) return float3(0, 0, 0);
-
-		RayIntersection intersection;
+		RayIntersection isct;
 		if (bvhAccelerator)
 		{
-			intersection = bvhAccelerator->intersect(ray);
+			isct = bvhAccelerator->intersect(ray);
 		}
 		else
 		{
 			for (auto & obj : objects)
 			{
-				const RayIntersection newHit = obj->intersects(ray);
-				if (newHit.d < intersection.d) intersection = newHit;
+				const RayIntersection hit = obj->intersects(ray);
+				if (hit.d < isct.d) isct = hit;
 			}
 		}
+		return isct;
+	}
+
+	// Returns the incoming radiance of `Ray` via unidirectional path tracing
+	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, float3 weight, const int depth)
+	{
+		// Early exit with no radiance
+		if (depth >= maxRecursion || luminance(weight) <= 0.0f) return float3(0, 0, 0);
+
+		RayIntersection intersection = geometry_test(ray);
 
 		// Assuming no intersection, early exit with the environment color
 		if (!intersection())
@@ -126,8 +134,8 @@ struct Scene
 
 		Material * m = intersection.m;
 
-		const float3 Kd = m->Kd * 0.9999f; // avoid 1.0 dMax case
-		const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
+		//const float3 Kd = m->Kd * 0.9999f; // avoid 1.0 dMax case
+		//const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
 
 		// Russian roulette termination
 		//const float p = gen.random_float_safe(); // In the range (0.001f, 0.999f]
@@ -141,27 +149,19 @@ struct Scene
 		// Create a new BSDF event with the relevant intersection data
 		SurfaceScatterEvent s(info);
 
-		// Sample from the BSDF
-		m->sample(gen, s);
-
 		// Sample from direct light sources
-		float3 Le = float3(0.f);
+		float3 Le;
 		for (const auto light : lights)
 		{
 			float3 Wi;
 			float lPdf = 0.f;
-			float3 value = light->sample(gen, info->P, Wi, lPdf);
+			float3 lightColor = light->sample(gen, info->P, Wi, lPdf);
 
 			// Generate a shadow ray
 			Ray shadow(info->P, Wi);
 
 			// Check for occlusions
-			RayIntersection occlusion;
-			for (auto & obj : objects)
-			{
-				const RayIntersection h = obj->intersects(shadow);
-				if (h.d < occlusion.d) occlusion = h;
-			}
+			RayIntersection occlusion = geometry_test(shadow);
 
 			// No occlusion with another object in the scene
 			if (!occlusion())
@@ -174,31 +174,36 @@ struct Scene
 
 				// Create a new BSDF event with the relevant intersection data
 				SurfaceScatterEvent direct(lightInfo);
-				m->sample(gen, direct);
+				auto surfaceColor = m->sample(gen, direct);
 
 				float3 Ld;
 				for (int i = 0; i < light->numSamples; ++i)
 				{
-					Ld += value;
+					Ld += lightColor;
 				}
-				Le = (Ld / float3(light->numSamples)); // *float3(direct.brdf);
+				Le = (Ld / float3(light->numSamples)) * surfaceColor;
 
 				delete lightInfo;
 			}
 		}
 
+		// Compute the diffuse brdf
+		float3 f = m->sample(gen, s);
+		weight *= f * (abs(dot(s.Wi, s.info->N)) / s.pdf);
+
+		//std::cout << weight << std::endl;
+
 		// Reflected illuminance
 		float3 Lr;
-		if (length(s.Wr) > 0.0f)
+		if (length(s.Wi) > 0.0f)
 		{
-			Lr = trace_ray(Ray(info->P, s.Wr), gen, weight * KdMax, depth + 1);
+			Lr = trace_ray(Ray(info->P, s.Wi), gen, weight, depth + 1);
 		}
 
 		// Free the hit struct
 		delete info;
 
-		const float3 radiance = float3(1, 1, 1);
-		return radiance;
+		return clamp(weight * Le + Lr, 0.f, 1.f);
 	}
 };
 
@@ -251,12 +256,8 @@ struct Film
 		float3 radiance;
 		for (int s = 0; s < numSamples; ++s)
 		{
-			radiance = radiance + scene.trace_ray(make_ray_for_coordinate(coord, gen), gen, 1.0f, 0);
+			radiance = radiance + scene.trace_ray(make_ray_for_coordinate(coord, gen), gen, float3(1.f), 0);
 		}
-
-		// Gamma correction
-		//radiance = pow(radiance, 1.0f / 2.2f);
-		//radiance = clamp(radiance, 0.f, 1.f);
 
 		samples[coord.y * size.x + coord.x] = radiance * invSamples;
 	}
@@ -317,7 +318,7 @@ struct ExperimentalApp : public GLFWApp
 		scene.environment = float3(0.f);
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(0, 4, 0);
+		pointLight->lightPos = float3(0, 3, 0);
 		pointLight->intensity = float3(1, 1, 0.25);
 		scene.lights.push_back(pointLight);
 
@@ -334,17 +335,17 @@ struct ExperimentalApp : public GLFWApp
 		a->m = std::make_shared<IdealDiffuse>();
 		a->m->Kd = float3(45.f/255.f, 122.f / 255.f, 199.f / 255.f);
 		a->radius = 0.5f;
-		a->center = float3(-0.66f, 0.50f, 0);
+		a->center = float3(-0.66f, 0.66f, 0);
 
 		b->m = std::make_shared<IdealDiffuse>();
 		b->radius = 0.5f;
 		b->m->Kd = float3(70.f / 255.f, 57.f / 255.f, 192.f / 255.f);
-		b->center = float3(+1.66f, 0.50f, 0);
+		b->center = float3(+1.66f, 0.66f, 0);
 
 		c->m = std::make_shared<IdealDiffuse>();
 		c->radius = 0.5f;
 		c->m->Kd = float3(192.f / 255.f, 70.f / 255.f, 57.f / 255.f);
-		c->center = float3(+0.0f, 0.50f, +3.25f);
+		c->center = float3(+0.0f, 0.66f, +0.66f);
 
 		d->m = std::make_shared<IdealDiffuse>();
 		d->radius = 0.5f;
@@ -353,12 +354,11 @@ struct ExperimentalApp : public GLFWApp
 
 		e->m = std::make_shared<IdealDiffuse>();
 		e->m->Kd = float3(0, 0, 0);
-		e->m->Ke = float3(1, 1, 0);
 		e->radius = 0.5f;
 		e->center = float3(0, 1.75f, -1);
 
 		box->m = std::make_shared<IdealSpecular>();
-		box->m->Kd = float3(1, 1, 1);
+		box->m->Kd = float3(0.95, 1, 1);
 		box->_min = float3(-2.66, 0.1, -2.66);
 		box->_max = float3(+2.66, +0.0, +2.66);
 
@@ -372,8 +372,8 @@ struct ExperimentalApp : public GLFWApp
 		plane->equation = float4(0, 1, 0, -0.0999f);
 		//scene.objects.push_back(plane);
 
+		//scene.objects.push_back(box2);
 		scene.objects.push_back(box);
-		scene.objects.push_back(box2);
 
 		scene.objects.push_back(a);
 		scene.objects.push_back(b);
@@ -411,7 +411,7 @@ struct ExperimentalApp : public GLFWApp
 			}
 		}
 
-		const int numWorkers = std::thread::hardware_concurrency();
+		const int numWorkers = 1; // std::thread::hardware_concurrency();
 		for (int i = 0; i < numWorkers; ++i)
 		{
 			renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));

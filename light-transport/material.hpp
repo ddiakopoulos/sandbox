@@ -11,11 +11,11 @@
 // ============================================================================
 // P  = point of ray intersection
 // N  = surface normal at P
+// Wi = incident vector
 // Wo = vector pointing in the opposite direction of the incident ray
 // Wr = reflected vector
 // Wt = transmitted vector
 // We = emitted vector
-// Wi = incident vector
 // Le = emitted light
 // ============================================================================
 
@@ -29,49 +29,52 @@ struct IntersectionInfo
 struct SurfaceScatterEvent 
 {
 	const IntersectionInfo * info;
-	float3 Wr;
-	float3 Wt;
-	float brdf;
-	float btdf = 0.f;
+	float3 Wi;
 	float pdf;
 	SurfaceScatterEvent(const IntersectionInfo * info) : info(info) {}
 };
 
 struct Material
 {
-	float3 Kd = { 0, 0, 0 }; // diffuse
-	float3 Ke = { 0, 0, 0 }; // emissive
-
-	virtual void sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const = 0;
+	float3 Kd = { 0, 0, 0 }; // diffuse color
+	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const = 0;
+	virtual float eval(const float3 & Wo, const float3 & Wi) const = 0;
+	virtual float3 eval(const float3 & Wo, const float3 & Wi, SurfaceScatterEvent & event) const { return Kd * eval(Wo, Wi); }
 };
 
 struct IdealDiffuse : public Material
 {
-	virtual void sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
+	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
-		// sample_hemisphere(event.info->N, gen);
-		event.Wr = cosine_hemisphere({ gen.random_float(), gen.random_float() }); // sample the normal vector on a hemi
-		event.Wt = float3(); // no transmission
-		event.brdf = float(ANVIL_INV_PI) * dot(event.Wr, event.info->N);
-		event.pdf = cosine_hemisphere_pdf(event.Wr);
+		event.Wi = cosine_hemisphere({ gen.random_float(), gen.random_float() }); // sample
+		event.pdf = cosine_hemisphere_pdf(event.Wi);
+		return Kd * eval(event.info->Wo, event.Wi); // evaulate the brdf
+	}
+
+	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
+	{
+		return ANVIL_INV_PI;
 	}
 };
 
 struct IdealSpecular : public Material
 {
-	virtual void sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
+	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
 		const float roughness = 0.925;
-		event.Wr = reflect(-event.info->Wo, event.info->N);
-		event.Wr = normalize(float3(
-			event.Wr.x + (gen.random_float() - 0.5f) * roughness,
-			event.Wr.y + (gen.random_float() - 0.5f) * roughness,
-			event.Wr.z + (gen.random_float() - 0.5f) * roughness));
-		event.Wt = float3(); // no transmission
-		event.brdf = 1.f;
-		event.pdf = 1.f;
+		event.Wi = reflect(-event.info->Wo, event.info->N);
+		event.Wi = normalize(float3(
+			event.Wi.x + (gen.random_float() - 0.5f) * roughness,
+			event.Wi.y + (gen.random_float() - 0.5f) * roughness,
+			event.Wi.z + (gen.random_float() - 0.5f) * roughness));
+		event.pdf = 1.0f;
+		return Kd * eval(event.info->Wo, event.Wi); // evaulate the brdf
 	}
 
+	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
+	{
+		return 1.0f;;
+	}
 };
 
 #endif
