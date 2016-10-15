@@ -98,7 +98,10 @@ struct Scene
 	
 
 		// Early exit with no radiance
-		if (depth >= maxRecursion || luminance(weight) <= 0.0f) return float3(0, 0, 0);
+		if (depth >= maxRecursion || luminance(weight) <= 0.0f)
+		{
+			return float3(0, 0, 0);
+		}
 
 		RayIntersection intersection = scene_intersects(ray);
 
@@ -186,25 +189,28 @@ struct Scene
 		float3 sampleDirection = scatter.Wi;
 		//sampleDirection = transform_coord(tangentToWorld, sampleDirection); // - wrong!
 
+		//weight = clamp(weight, 0.f, 1.f);
+
 		const float NdotL = clamp(abs(dot(sampleDirection, scatter.info->N)), 0.f, 1.f);
+
 
 		// Weight, aka throughput
 		weight *= (brdfSample * NdotL) / scatter.pdf;
 
-		//weight = clamp(weight, 0.f, 1.f);
-
 		// Reflected illuminance
+		float3 refl;
 		if (length(sampleDirection) > 0.0f)
 		{
-			brdfSample += trace_ray(Ray(surfaceInfo->P, sampleDirection), gen, weight, depth + 1);
+			refl = trace_ray(Ray(surfaceInfo->P, sampleDirection), gen, weight, depth + 1);// / float3(ANVIL_INV_PI);
+			//std::cout << refl << std::endl;
 		}
 
 		// Free the hit struct
 		delete surfaceInfo;
 
-		if (depth >= 1) brdfSample = float3(1, 0, 0);
+		//if (depth >= 1) brdfSample = float3(1, 0, 0);
 
-		return clamp(brdfSample, 0.f, 1.f);
+		return clamp(weight * directLighting + refl, 0.f, 1.f);
 	}
 };
 
@@ -294,6 +300,11 @@ struct ExperimentalApp : public GLFWApp
 	std::atomic<bool> earlyExit = { false };
 	std::map<std::thread::id, PerfTimer> renderTimers;
 
+	std::atomic<bool> renderState;
+	std::condition_variable renderCv;
+	std::atomic<int> idleThreads;
+	const int numWorkers = std::thread::hardware_concurrency();
+
 	ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
 	{
 		ScopedTimer("Application Constructor");
@@ -329,7 +340,7 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(0, 3, 0);
+		pointLight->lightPos = float3(0, 1, 3);
 		pointLight->intensity = float3(1, 1, 1);
 		scene.lights.push_back(pointLight);
 
@@ -359,7 +370,7 @@ struct ExperimentalApp : public GLFWApp
 		e->center = float3(0, 1.75f, -1);
 
 		box->m = std::make_shared<IdealSpecular>();
-		box->m->Kd = float3(0.25, 0.55, 1);
+		box->m->Kd = float3(0.9, 0.9, 0.9);
 		box->_min = float3(-2.66, 0.1, -2.66);
 		box->_max = float3(+2.66, +0.0, +2.66);
 
@@ -412,10 +423,10 @@ struct ExperimentalApp : public GLFWApp
 			}
 		}
 
-		const int numWorkers = 1; // std::thread::hardware_concurrency();
 		for (int i = 0; i < numWorkers; ++i)
 		{
 			renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));
+			renderState.store(false);
 		}
 
 		// Create a GL texture to which we can render
@@ -438,6 +449,15 @@ struct ExperimentalApp : public GLFWApp
 				timer.stop();
 			}
 			pixelCoords = generate_bag_of_pixels();
+
+			if (pixelCoords.size() == 0)
+			{
+				std::mutex rLock;
+				std::unique_lock<std::mutex> l(rLock);
+				idleThreads++;
+				renderCv.wait(l, [this]() { return renderState.load(); });
+				renderState.store(false);
+			}
 		}
 	}
 
@@ -520,7 +540,7 @@ struct ExperimentalApp : public GLFWApp
 		cameraController.update(e.timestep_ms);
 
 		// Have we finished rendering? 
-		if (coordinates.size() == 0 && takeScreenshot == true)
+		if (idleThreads == numWorkers && takeScreenshot == true)
 		{
 			takeScreenshot = take_screenshot({ WIDTH, HEIGHT });
 			std::cout << "Render Saved..." << std::endl;
@@ -540,6 +560,9 @@ struct ExperimentalApp : public GLFWApp
 		}
 		film->reset(camera.get_pose());
 		takeScreenshot = true;
+		idleThreads = 0;
+		renderState.store(true);
+		renderCv.notify_all();
 	}
 
 	void on_draw() override
