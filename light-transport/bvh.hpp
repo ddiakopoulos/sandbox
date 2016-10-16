@@ -4,15 +4,9 @@
 #pragma once
 
 #include "light-transport/objects.hpp"
-
 #include "geometric.hpp"
-
 #include <vector>
 #include <memory>
-
-// ToDo
-// [ ] serialize / deserialize for large scenes
-// [ ] intersect_p
 
 class BVH
 {
@@ -104,25 +98,11 @@ public:
 		if (node->right) debug_traverse(node->right);
 	}
 
-	// Compute entire bounds of BVH in world space
-	Bounds3D world_bounds() const
-	{
-		return Bounds3D(); // todo
-	}
-
 	RayIntersection intersect(const Ray & ray)
 	{
 		RayIntersection result;
 		traverse(root, ray, result);
 		return result;
-	}
-
-	// the _p variant is designed to quick traversal and shouldn't need to return the full amount
-	// of data in a RayIntersection. It requires a lower lever optimized variant of ray-triangle, etc.
-	// Probably best to attack this once Embree integration is complete.
-	bool intersect_p(const Ray & ray)
-	{
-		return false; // fixme
 	}
 
 	void traverse(Node * node, const Ray & ray, RayIntersection & result)
@@ -136,19 +116,13 @@ public:
 				if (r()) result = r;
 			}
 		}
-		// Otherwise continue traversal
 		else
-		{
+		{	// Otherwise continue traversal
 			if (intersect_ray_box(ray, node->left->bounds)) traverse(node->left, ray, result);
 			if (intersect_ray_box(ray, node->right->bounds)) traverse(node->right, ray, result);
 		}
 	}
 
-	// See note about intersect_p
-	void traverse_p(Node * node, const Ray & ray, RayIntersection & result)
-	{
-
-	}
 };
 
 #endif
