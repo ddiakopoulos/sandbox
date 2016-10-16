@@ -300,9 +300,10 @@ struct ExperimentalApp : public GLFWApp
 	std::atomic<bool> earlyExit = { false };
 	std::map<std::thread::id, PerfTimer> renderTimers;
 
-	std::atomic<bool> renderState;
+	std::mutex rLock;
 	std::condition_variable renderCv;
-	std::atomic<int> idleThreads;
+	std::map<std::thread::id, std::atomic<bool>> threadTaskState;
+	std::atomic<int> numIdleThreads = 0;
 	const int numWorkers = std::thread::hardware_concurrency();
 
 	ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
@@ -426,7 +427,6 @@ struct ExperimentalApp : public GLFWApp
 		for (int i = 0; i < numWorkers; ++i)
 		{
 			renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));
-			renderState.store(false);
 		}
 
 		// Create a GL texture to which we can render
@@ -440,6 +440,8 @@ struct ExperimentalApp : public GLFWApp
 	void threaded_render(std::vector<int2> pixelCoords)
 	{
 		auto & timer = renderTimers[std::this_thread::get_id()];
+		threadTaskState[std::this_thread::get_id()].store(false);
+
 		while (earlyExit == false)
 		{
 			for (auto coord : pixelCoords)
@@ -452,11 +454,11 @@ struct ExperimentalApp : public GLFWApp
 
 			if (pixelCoords.size() == 0)
 			{
-				std::mutex rLock;
 				std::unique_lock<std::mutex> l(rLock);
-				idleThreads++;
-				renderCv.wait(l, [this]() { return renderState.load(); });
-				renderState.store(false);
+				numIdleThreads++;
+				renderCv.wait(l, [this]() { return threadTaskState[std::this_thread::get_id()].load(); });
+				threadTaskState[std::this_thread::get_id()].store(false);
+				numIdleThreads--;
 			}
 		}
 	}
@@ -465,6 +467,8 @@ struct ExperimentalApp : public GLFWApp
 	{
 		sceneTimer.stop();
 		earlyExit = true;
+		for (auto & ts : threadTaskState) ts.second.store(true);
+		renderCv.notify_all(); // notify them to wake up
 		std::for_each(renderWorkers.begin(), renderWorkers.end(), [](std::thread & t)
 		{
 			if (t.joinable()) t.join();
@@ -540,8 +544,9 @@ struct ExperimentalApp : public GLFWApp
 		cameraController.update(e.timestep_ms);
 
 		// Have we finished rendering? 
-		if (idleThreads == numWorkers && takeScreenshot == true)
+		if (numIdleThreads == numWorkers && takeScreenshot == true)
 		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(25));
 			takeScreenshot = take_screenshot({ WIDTH, HEIGHT });
 			std::cout << "Render Saved..." << std::endl;
 		}
@@ -560,9 +565,11 @@ struct ExperimentalApp : public GLFWApp
 		}
 		film->reset(camera.get_pose());
 		takeScreenshot = true;
-		idleThreads = 0;
-		renderState.store(true);
-		renderCv.notify_all();
+
+		rLock.lock();
+		for (auto & ts : threadTaskState) ts.second.store(true);
+		renderCv.notify_all(); // notify them to wake up
+		rLock.unlock();
 	}
 
 	void on_draw() override
