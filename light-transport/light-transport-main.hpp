@@ -242,6 +242,19 @@ struct Film
 
 		samples[coord.y * size.x + coord.x] = radiance * invSamples;
 	}
+
+	float3 debug_trace(Scene & scene, UniformRandomGenerator & gen, const int2 & coord, float numSamples)
+	{
+		const float invSamples = 1.f / numSamples;
+
+		float3 radiance;
+		for (int s = 0; s < numSamples; ++s)
+		{
+			radiance = radiance + scene.trace_ray(make_ray_for_coordinate(coord, gen), gen, float3(1.f), 0);
+		}
+		return radiance *= invSamples;
+	}
+
 };
 
 #define WIDTH int(640)
@@ -491,6 +504,12 @@ struct ExperimentalApp : public GLFWApp
 		if (event.type == InputEvent::KEY &&  event.action == GLFW_RELEASE)
 		{
 			if (camera.get_pose() != film->view) reset_film();
+		}
+
+		if (event.type == InputEvent::MOUSE && event.action == GLFW_RELEASE)
+		{
+			auto sample = film->debug_trace(scene, gen, int2(event.cursor.x, HEIGHT - event.cursor.y), samplesPerPixel);
+			std::cout << "Debug Trace: " << sample << std::endl;
 		}
 	}
 
