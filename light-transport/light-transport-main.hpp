@@ -125,11 +125,11 @@ struct Scene
 		surfaceInfo->N = normalize(intersection.normal);
 		surfaceInfo->T = normalize(tangent);
 		surfaceInfo->BT = normalize(bitangent);
+		surfaceInfo->Kd = m->Kd;
 
 		// Create a new BSDF event with the relevant intersection data
 		SurfaceScatterEvent scatter(surfaceInfo);
 
-		// Fixme
 		float4x4 tangentToWorld(float4(surfaceInfo->BT,0.f), float4(surfaceInfo->N, 0.f), float4(surfaceInfo->T, 0.f), float4(0, 0, 0, 1.f));
 
 		// Sample from direct light sources
@@ -161,7 +161,7 @@ struct Scene
 				{
 					Ld += lightSample * surfaceColor;
 				}
-				directLighting =  (Ld / float3(light->numSamples)) / lightPDF;
+				directLighting = (Ld / float3(light->numSamples)) / lightPDF;
 
 				delete lightInfo;
 			}
@@ -170,7 +170,7 @@ struct Scene
 		// Sample the diffuse brdf of the intersected material
 		float3 brdfSample = m->sample(gen, scatter);
 		float3 sampleDirection = scatter.Wi;
-		//sampleDirection = transform_coord(tangentToWorld, sampleDirection);
+		//sampleDirection = transform_coord(tangentToWorld, sampleDirection); // Fixme
 
 		const float NdotL = clamp(abs(dot(sampleDirection, scatter.info->N)), 0.f, 1.f);
 
@@ -333,7 +333,7 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(0, 3.5, 2);
+		pointLight->lightPos = float3(1.5, 1.5, 1.5);
 		pointLight->intensity = float3(1, 1, 1);
 		scene.lights.push_back(pointLight);
 
@@ -364,10 +364,10 @@ struct ExperimentalApp : public GLFWApp
 		d->m->Kd = float3(181.f / 255.f, 51.f / 255.f, 193.f / 255.f);
 		d->center = float3(+0.33f, 0.50f, 0.66f);
 
-		e->m = std::make_shared<IdealDiffuse>();
-		e->m->Kd = float3(0, 0, 0);
+		e->m = std::make_shared<Mirror>();
+		e->m->Kd = float3(1, 1, 1);
 		e->radius = 0.5f;
-		e->center = float3(0, 1.75f, -1);
+		e->center = float3(1.5f, 0.50f, 0.5);
 
 		box->m = std::make_shared<IdealSpecular>();
 		box->m->Kd = float3(0.9, 0.9, 0.9);
@@ -392,8 +392,7 @@ struct ExperimentalApp : public GLFWApp
 		scene.objects.push_back(c);
 		scene.objects.push_back(d);
 
-		// E happens to be emissive
-		//scene.objects.push_back(e);
+		scene.objects.push_back(e);
 
 		/*
 		auto torusKnot = load_geometry_from_ply("assets/models/geometry/TorusKnotUniform.ply");

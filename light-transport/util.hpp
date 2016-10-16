@@ -66,7 +66,7 @@ inline static void make_tangent_frame(const float3 & vector1, float3 & vector2, 
 // Add an epsilon to a ray origin to avoid self intersections
 inline static float3 add_epsilon(const float3 & point, const float3 & direction)
 {
-	return point + (direction * 0.0001f);
+	return point;// point + (direction * 0.0001f);
 }
 
 #endif

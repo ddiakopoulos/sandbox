@@ -27,6 +27,7 @@ struct IntersectionInfo
 	float3 N;
 	float3 T;
 	float3 BT;
+	float3 Kd;
 };
 
 struct SurfaceScatterEvent 
@@ -79,5 +80,29 @@ struct IdealSpecular : public Material
 		return 1.0f;
 	}
 };
+
+const float DiracAcceptanceThreshold = 1e-3f;
+
+static inline bool checkReflectionConstraint(const float3 &wi, const float3 &wo)
+{
+	return std::abs(wi.z*wo.z - wi.x*wo.x - wi.y*wo.y - 1.0f) < DiracAcceptanceThreshold;
+}
+
+struct Mirror : public Material
+{
+	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
+	{
+		event.Wi = float3(-event.info->Wo.x, -event.info->Wo.y, event.info->Wo.z);
+		event.pdf = 1.f;
+		return event.info->Kd / std::abs(event.Wi.z); // 
+	}
+
+	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
+	{
+		if (checkReflectionConstraint(Wi, Wo)) return 1.0f;
+		else return 0.0f;
+	}
+};
+
 
 #endif
