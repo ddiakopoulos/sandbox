@@ -359,7 +359,7 @@ struct ExperimentalApp : public GLFWApp
 
 		box->m = std::make_shared<IdealSpecular>();
 		box->m->Kd = float3(0.9, 0.9, 0.9);
-		box->_min = float3(-2.66, 0.1, -2.66);
+		box->_min = float3(-2.66, -0.1, -2.66);
 		box->_max = float3(+2.66, +0.0, +2.66);
 
 		box2->m = std::make_shared<IdealDiffuse>();

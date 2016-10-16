@@ -110,10 +110,17 @@ public:
 		// Test directly against object
 		if (node->is_leaf())
 		{
+			RayIntersection best;
 			for (auto & n : node->data)
 			{
 				RayIntersection r = n->intersects(ray);
-				if (r()) result = r;
+				if (r.d < result.d) best = r;
+
+				if (best())
+				{
+					result = best;
+					return;
+				}
 			}
 		}
 		else
