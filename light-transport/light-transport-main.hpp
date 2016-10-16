@@ -114,20 +114,22 @@ struct Scene
 		if (p > shouldContinue) return float3(0.f, 0.f, 0.f);
 		else weight /= shouldContinue;
 
-		const auto tangentFrame = make_tangent_frame(intersection.normal);
+		float3 tangent;
+		float3 bitangent;
+		make_tangent_frame(normalize(intersection.normal), tangent, bitangent);
 
 		IntersectionInfo * surfaceInfo = new IntersectionInfo();
 		surfaceInfo->Wo = -ray.direction;
 		surfaceInfo->P = ray.direction * intersection.d + ray.origin;
 		surfaceInfo->N = normalize(intersection.normal);
-		surfaceInfo->T = normalize(tangentFrame.first);
-		surfaceInfo->BT = normalize(tangentFrame.second);
+		surfaceInfo->T = normalize(tangent);
+		surfaceInfo->BT = normalize(bitangent);
 
 		// Create a new BSDF event with the relevant intersection data
 		SurfaceScatterEvent scatter(surfaceInfo);
 
 		// Fixme
-		float4x4 tangentToWorld(float4(surfaceInfo->T, 1.f), float4(surfaceInfo->BT, 1.f), float4(surfaceInfo->N, 1.f), float4(0, 0, 0, 0.f));
+		float4x4 tangentToWorld(float4(surfaceInfo->BT,0.f), float4(surfaceInfo->N, 0.f), float4(surfaceInfo->T, 0.f), float4(0, 0, 0, 1.f));
 
 		// Sample from direct light sources
 		float3 directLighting;
@@ -167,7 +169,7 @@ struct Scene
 		// Sample the diffuse brdf of the intersected material
 		float3 brdfSample = m->sample(gen, scatter);
 		float3 sampleDirection = scatter.Wi;
-		//sampleDirection = transform_coord(tangentToWorld, sampleDirection); // - wrong!
+		sampleDirection = transform_coord(tangentToWorld, sampleDirection); // - wrong!
 
 		const float NdotL = clamp(abs(dot(sampleDirection, scatter.info->N)), 0.f, 1.f);
 
@@ -377,13 +379,24 @@ struct ExperimentalApp : public GLFWApp
 		scene.objects.push_back(box2);
 		scene.objects.push_back(box);
 
-		scene.objects.push_back(a);
-		scene.objects.push_back(b);
-		scene.objects.push_back(c);
-		scene.objects.push_back(d);
+		//scene.objects.push_back(a);
+		//scene.objects.push_back(b);
+		//scene.objects.push_back(c);
+		//scene.objects.push_back(d);
 
 		// E happens to be emissive
 		//scene.objects.push_back(e);
+
+		auto torusKnot = load_geometry_from_ply("assets/models/geometry/TorusKnotUniform.ply");
+		rescale_geometry(torusKnot, 1.f);
+		for (auto & v : torusKnot.vertices)
+		{
+			v = transform_coord(make_translation_matrix({ 0, 1, 1 }), v);
+		}
+		std::shared_ptr<RaytracedMesh> torusKnotTrimesh = std::make_shared<RaytracedMesh>(torusKnot);
+		torusKnotTrimesh->m = std::make_shared<IdealDiffuse>();
+		torusKnotTrimesh->m->Kd = float3(1, 0.05, 0.025);
+		scene.objects.push_back(torusKnotTrimesh);
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
