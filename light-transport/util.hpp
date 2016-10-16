@@ -56,12 +56,18 @@ inline float luminance(float3 c)
 }
 
 // Make a tangent space coordinate system for isotropic BRDFs. vec1 (the normal) must be normalized beforehand.
-inline static void make_tangent_frame(const float3 & vector1, float3 & vector2, float3 & vector3)
+inline void make_tangent_frame(const float3 & vector1, float3 & vector2, float3 & vector3)
 {
 	if (std::fabs(vector1.x) > std::fabs(vector1.y)) vector2 = float3(vector1.z, 0, -vector1.x);
-	else  vector2 = float3(0, -vector1.z, vector1.y);
+	else vector2 = float3(0, -vector1.z, vector1.y);
 	normalize(vector2);
 	vector3 = normalize(cross(vector1, vector2));
+}
+
+// Add an epsilon to a ray origin to avoid self intersections
+inline float3 add_epsilon(const float3 & point, const float3 & direction)
+{
+	return point + (direction * 0.0001f);
 }
 
 #endif

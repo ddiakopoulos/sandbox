@@ -33,7 +33,7 @@
 // [X] Proper radiance based materials (bdrf)
 // [X] BVH Accelerator ([ ] Cleanup)
 // [ ] Fix Intersection / Occlusion Bug
-// [ ] Lambertian Material / Diffuse + Specular Terms
+// [ ] Lambertian Material / Diffuse + Specular + Transmission Terms
 // [ ] Mirror + Glass Materials
 // [ ] Area Lights!
 // [ ] Cook-Torrance Microfacet BSDF implementation
@@ -140,7 +140,7 @@ struct Scene
 			float3 lightSample = light->sample(gen, surfaceInfo->P, lightWi, lightPDF);
 
 			// Make a shadow ray to check for occlusion between surface and a direct light
-			RayIntersection occlusion = scene_intersects({ surfaceInfo->P, lightWi });
+			RayIntersection occlusion = scene_intersects({ add_epsilon(surfaceInfo->P, surfaceInfo->N), lightWi });
 
 			// If it's not occluded we can see the light source
 			if (!occlusion())
@@ -169,7 +169,7 @@ struct Scene
 		// Sample the diffuse brdf of the intersected material
 		float3 brdfSample = m->sample(gen, scatter);
 		float3 sampleDirection = scatter.Wi;
-		sampleDirection = transform_coord(tangentToWorld, sampleDirection); // - wrong!
+		sampleDirection = transform_coord(tangentToWorld, sampleDirection);
 
 		const float NdotL = clamp(abs(dot(sampleDirection, scatter.info->N)), 0.f, 1.f);
 
@@ -180,7 +180,7 @@ struct Scene
 		float3 refl;
 		if (length(sampleDirection) > 0.0f)
 		{
-			refl = trace_ray(Ray(surfaceInfo->P, sampleDirection), gen, weight, depth + 1);
+			refl = trace_ray(Ray(add_epsilon(surfaceInfo->P, surfaceInfo->N), sampleDirection), gen, weight, depth + 1);
 		}
 
 		// Free the hit struct
@@ -282,7 +282,7 @@ struct ExperimentalApp : public GLFWApp
 	std::vector<int2> coordinates;
 	Pose lookAt;
 
-	int samplesPerPixel = 48;
+	int samplesPerPixel = 32;
 	float fieldOfView = 90;
 
 	std::mutex coordinateLock;
@@ -332,7 +332,7 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(0, 1, 3);
+		pointLight->lightPos = float3(0, 3.5, 2);
 		pointLight->intensity = float3(1, 1, 1);
 		scene.lights.push_back(pointLight);
 
@@ -391,7 +391,7 @@ struct ExperimentalApp : public GLFWApp
 		rescale_geometry(torusKnot, 1.f);
 		for (auto & v : torusKnot.vertices)
 		{
-			v = transform_coord(make_translation_matrix({ 0, 1, 1 }), v);
+			v = transform_coord(make_translation_matrix({ 0, 1.125, 1 }), v);
 		}
 		std::shared_ptr<RaytracedMesh> torusKnotTrimesh = std::make_shared<RaytracedMesh>(torusKnot);
 		torusKnotTrimesh->m = std::make_shared<IdealDiffuse>();
