@@ -197,7 +197,7 @@ struct Film
 	std::vector<float3> samples;
 	float2 size;
 	Pose view = {};
-	float FoV = ANVIL_PI / 2;
+	float FoV = std::tan(to_radians(90) * 0.5f);
 
 	Film(const int2 & size, const Pose & view) : samples(size.x * size.y), size(size), view(view) { }
 
@@ -278,6 +278,7 @@ struct ExperimentalApp : public GLFWApp
 	GlCamera camera;
 	FlyCameraController cameraController;
 	std::vector<int2> coordinates;
+	Pose lookAt;
 
 	int samplesPerPixel = 48;
 	float fieldOfView = 90;
@@ -310,7 +311,8 @@ struct ExperimentalApp : public GLFWApp
 		cameraController.set_camera(&camera);
 		cameraController.enableSpring = false;
 		cameraController.movementSpeed = 0.01f;
-		camera.look_at({ 0, +1.25, 4.5 }, { 0, 0, 0 });
+		lookAt = look_at_pose({ 0, +1.25, 4.5 }, { 0, 0, 0 });
+		camera.pose = lookAt;
 
 		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
 
@@ -556,6 +558,7 @@ struct ExperimentalApp : public GLFWApp
 				coordinates.push_back(int2(x, y));
 			}
 		}
+		camera.pose = lookAt;
 		film->reset(camera.get_pose());
 		takeScreenshot = true;
 
