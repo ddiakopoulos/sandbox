@@ -95,13 +95,8 @@ struct Scene
 	// Returns the incoming radiance of `Ray` via unidirectional path tracing
 	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, float3 weight, const int depth)
 	{
-	
-
 		// Early exit with no radiance
-		if (depth >= maxRecursion || luminance(weight) <= 0.0f)
-		{
-			return float3(0, 0, 0);
-		}
+		if (depth >= maxRecursion || luminance(weight) <= 0.0f) return float3(0, 0, 0);
 
 		RayIntersection intersection = scene_intersects(ray);
 
@@ -113,29 +108,13 @@ struct Scene
 
 		Material * m = intersection.m;
 
-		//const float3 Kd = m->Kd * 0.9999f; // avoid 1.0 dMax case
-		//const float KdMax = Kd.x > Kd.y && Kd.x > Kd.z ? Kd.x : Kd.y > Kd.z ? Kd.y : Kd.z; // maximum reflectance
-
-		/*
 		// Russian roulette termination
 		const float p = gen.random_float_safe(); // In the range [0.001f, 0.999f)
 		float shouldContinue = min(luminance(weight), 1.f);
-		std::cout << luminance(weight) << std::endl;
-		if (p > shouldContinue)
-		{
-			//std::cout << "depth " << depth << std::endl;
-			//std::cout << "Fucked " << std::endl;
-			return float3(0.f, 0.f, 0.f);
-		}
-		else
-		{
-			//std::cout << "nf depth " << depth << std::endl;
-			//std::cout << "not fucked!" << std::endl;
-			weight /= shouldContinue;
-		}
-		*/
+		if (p > shouldContinue) return float3(0.f, 0.f, 0.f);
+		else weight /= shouldContinue;
 
-		auto tangentFrame = make_tangent_frame(intersection.normal);
+		const auto tangentFrame = make_tangent_frame(intersection.normal);
 
 		IntersectionInfo * surfaceInfo = new IntersectionInfo();
 		surfaceInfo->Wo = -ray.direction;
@@ -147,6 +126,7 @@ struct Scene
 		// Create a new BSDF event with the relevant intersection data
 		SurfaceScatterEvent scatter(surfaceInfo);
 
+		// Fixme
 		float4x4 tangentToWorld(float4(surfaceInfo->T, 1.f), float4(surfaceInfo->BT, 1.f), float4(surfaceInfo->N, 1.f), float4(0, 0, 0, 0.f));
 
 		// Sample from direct light sources
@@ -189,10 +169,7 @@ struct Scene
 		float3 sampleDirection = scatter.Wi;
 		//sampleDirection = transform_coord(tangentToWorld, sampleDirection); // - wrong!
 
-		//weight = clamp(weight, 0.f, 1.f);
-
 		const float NdotL = clamp(abs(dot(sampleDirection, scatter.info->N)), 0.f, 1.f);
-
 
 		// Weight, aka throughput
 		weight *= (brdfSample * NdotL) / scatter.pdf;
@@ -201,14 +178,11 @@ struct Scene
 		float3 refl;
 		if (length(sampleDirection) > 0.0f)
 		{
-			refl = trace_ray(Ray(surfaceInfo->P, sampleDirection), gen, weight, depth + 1);// / float3(ANVIL_INV_PI);
-			//std::cout << refl << std::endl;
+			refl = trace_ray(Ray(surfaceInfo->P, sampleDirection), gen, weight, depth + 1);
 		}
 
 		// Free the hit struct
 		delete surfaceInfo;
-
-		//if (depth >= 1) brdfSample = float3(1, 0, 0);
 
 		return clamp(weight * directLighting + refl, 0.f, 1.f);
 	}
@@ -358,12 +332,12 @@ struct ExperimentalApp : public GLFWApp
 		c->m = std::make_shared<IdealDiffuse>();
 		c->radius = 0.5f;
 		c->m->Kd = float3(192.f / 255.f, 70.f / 255.f, 57.f / 255.f);
-		c->center = float3(+0.0f, 0.66f, -0.66f);
+		c->center = float3(-0.33f, 0.50f, +0.66f);
 
 		d->m = std::make_shared<IdealDiffuse>();
 		d->radius = 0.5f;
 		d->m->Kd = float3(181.f / 255.f, 51.f / 255.f, 193.f / 255.f);
-		d->center = float3(0.0f, 1.5f, 0);
+		d->center = float3(+0.33f, 0.50f, 0.66f);
 
 		e->m = std::make_shared<IdealDiffuse>();
 		e->m->Kd = float3(0, 0, 0);
