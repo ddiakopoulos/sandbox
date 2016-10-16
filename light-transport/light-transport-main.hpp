@@ -19,6 +19,7 @@
 // http://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
 // http://mathinfo.univ-reims.fr/IMG/pdf/Using_the_modified_Phong_reflectance_model_for_Physically_based_rendering_-_Lafortune.pdf
 // http://www.rorydriscoll.com/2009/01/07/better-sampling/
+// http://www.cs.cornell.edu/courses/cs465/2004fa/lectures/22advray/22advray.pdf
 
 // ToDo
 // ----------------------------------------------------------------------------
@@ -169,7 +170,7 @@ struct Scene
 		// Sample the diffuse brdf of the intersected material
 		float3 brdfSample = m->sample(gen, scatter);
 		float3 sampleDirection = scatter.Wi;
-		sampleDirection = transform_coord(tangentToWorld, sampleDirection);
+		//sampleDirection = transform_coord(tangentToWorld, sampleDirection);
 
 		const float NdotL = clamp(abs(dot(sampleDirection, scatter.info->N)), 0.f, 1.f);
 
@@ -336,6 +337,13 @@ struct ExperimentalApp : public GLFWApp
 		pointLight->intensity = float3(1, 1, 1);
 		scene.lights.push_back(pointLight);
 
+		/*
+		std::shared_ptr<PointLight> pointLight2 = std::make_shared<PointLight>();
+		pointLight2->lightPos = float3(0, 4, 0);
+		pointLight2->intensity = float3(1, 1, 0.5);
+		scene.lights.push_back(pointLight2);
+		*/
+
 		a->m = std::make_shared<IdealDiffuse>();
 		a->m->Kd = float3(45.f/255.f, 122.f / 255.f, 199.f / 255.f);
 		a->radius = 0.5f;
@@ -379,14 +387,15 @@ struct ExperimentalApp : public GLFWApp
 		scene.objects.push_back(box2);
 		scene.objects.push_back(box);
 
-		//scene.objects.push_back(a);
-		//scene.objects.push_back(b);
-		//scene.objects.push_back(c);
-		//scene.objects.push_back(d);
+		scene.objects.push_back(a);
+		scene.objects.push_back(b);
+		scene.objects.push_back(c);
+		scene.objects.push_back(d);
 
 		// E happens to be emissive
 		//scene.objects.push_back(e);
 
+		/*
 		auto torusKnot = load_geometry_from_ply("assets/models/geometry/TorusKnotUniform.ply");
 		rescale_geometry(torusKnot, 1.f);
 		for (auto & v : torusKnot.vertices)
@@ -397,13 +406,15 @@ struct ExperimentalApp : public GLFWApp
 		torusKnotTrimesh->m = std::make_shared<IdealDiffuse>();
 		torusKnotTrimesh->m->Kd = float3(1, 0.05, 0.025);
 		scene.objects.push_back(torusKnotTrimesh);
+		*/
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
 		rescale_geometry(shaderball, 1.f);
 		for (auto & v : shaderball.vertices)
 		{
-		//v = transform_coord(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), v);
+			v = transform_coord(make_translation_matrix({ 0, 1.125, 1 }), v);
+			v *= 0.75f;
 		}
 		std::shared_ptr<RaytracedMesh> shaderballTrimesh = std::make_shared<RaytracedMesh>(shaderball);
 		shaderballTrimesh->m = std::make_shared<IdealDiffuse>();
