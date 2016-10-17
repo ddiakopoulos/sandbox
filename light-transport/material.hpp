@@ -121,9 +121,9 @@ struct Glass : public Material
 
 		// Angle of refraction
 		float CosThetaI = abs(event.info->Wo.z);
-		float CosThetaT = refract(event.info->Wo, event.info->N, eta).z;
+		float CosThetaT;// = refract(event.info->Wo, event.info->N, eta).z;
 
-		float reflectance = dielectric_reflectance(eta, CosThetaI);
+		float reflectance = dielectric_reflectance(eta, CosThetaI, CosThetaT);
 
 		float reflectionProbability = gen.random_float();
 		if (reflectionProbability < reflectance)
@@ -131,7 +131,7 @@ struct Glass : public Material
 			// Reflect
 			event.Wi = float3(-event.info->Wo.x, -event.info->Wo.y, event.info->Wo.z);
 			event.pdf = reflectionProbability;
-			return float3(luminance(event.info->Kd) * reflectance / std::abs(event.Wi.z));
+			return event.info->Kd * reflectance / std::abs(event.Wi.z);
 		}
 		else
 		{
