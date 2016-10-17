@@ -65,7 +65,7 @@ namespace avl
         int i = 0;
         int j = 0;
 
-        unsigned char char_array_4[4], char_array_3[3];
+        uint8_t char_array_4[4], char_array_3[3];
 
         std::string output ;
 
@@ -76,7 +76,7 @@ namespace avl
             if (i == 4) 
             {
                 for (i = 0; i <4; i++)
-                    char_array_4[i] = b64_characters.find(char_array_4[i]);
+                    char_array_4[i] = (uint8_t) b64_characters.find(char_array_4[i]);
 
                 char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
                 char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
@@ -94,7 +94,7 @@ namespace avl
                 char_array_4[j] = 0;
 
             for (j = 0; j <4; j++)
-                char_array_4[j] = b64_characters.find(char_array_4[j]);
+                char_array_4[j] = (uint8_t) b64_characters.find(char_array_4[j]);
 
             char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
             char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);

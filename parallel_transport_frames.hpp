@@ -110,7 +110,7 @@ inline std::vector<float4x4> make_parallel_transport_frame_bezier(const std::arr
         mTs.push_back(normalize(T));
     }
 
-    int n = mPs.size();
+    auto n = mPs.size();
     frames.resize(n);
 
     // Require at least 3 points to start

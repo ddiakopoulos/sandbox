@@ -206,8 +206,9 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4305;4244;4800</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -222,8 +223,9 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4305;4244;4800</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -240,8 +242,9 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4305;4244;4800</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -260,8 +263,9 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\procedural_sky;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4305;4244;4800</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

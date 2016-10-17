@@ -74,7 +74,7 @@ public:
 		// Split the node based on its longest axis
 		node->axis = nodeBounds.maximum_extent();
 
-		const uint32_t median = objects.size() >> 1;
+		const size_t median = objects.size() >> 1;
 		std::nth_element(objects.begin(), objects.begin() + median, objects.end(), ObjectComparator(node->axis));
 		node->position = objects[median]->world_bounds().center()[node->axis];
 

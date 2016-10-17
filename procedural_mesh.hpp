@@ -57,9 +57,9 @@ namespace avl
         
 		uint32_t U = 32, V = 32;
         
-        for (int ui = 0; ui < U; ++ui)
+        for (uint32_t ui = 0; ui < U; ++ui)
         {
-            for (int vi = 0; vi < V; ++vi)
+            for (uint32_t vi = 0; vi < V; ++vi)
             {
                 float u = float(ui) / (U - 1) * float(ANVIL_PI);
                 float v = float(vi) / (V - 1) * 2 * float(ANVIL_PI);
@@ -340,9 +340,9 @@ namespace avl
         }
         
         // Top + Bottom
-        for (int i = 0; i < rs; i++)
+        for (uint32_t i = 0; i < rs; i++)
         {
-            int x = i + rs;
+			uint32_t x = i + rs;
             uint4 q = uint4(i, (i) % rs + (2 * rs), (i + 1) % rs + (2 * rs), (i + 1) % rs); // -Z end
             uint4 q2 = uint4(x, (x) % (2 * rs) + (2 * rs), (i + 1) % rs + (3 * rs), ((i + 1) % rs) + rs); // +Z end
             ringGeom.faces.push_back({q.w,q.z,q.x});
@@ -386,7 +386,7 @@ namespace avl
         return frustumMesh;
     }
     
-    inline Geometry make_torus(int radial_segments = 24)
+    inline Geometry make_torus(uint32_t radial_segments = 24)
     {
         Geometry torus;
         
