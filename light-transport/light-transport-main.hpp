@@ -3,7 +3,7 @@
 #include "index.hpp"
 #include "light-transport/bvh.hpp"
 #include "light-transport/sampling.hpp"
-#include "light-transport/material.hpp"
+#include "light-transport/bsdf.hpp"
 #include "light-transport/lights.hpp"
 #include "light-transport/objects.hpp"
 #include "light-transport/util.hpp"
@@ -260,8 +260,8 @@ struct Film
 
 };
 
-#define WIDTH int(640)
-#define HEIGHT int(480)
+#define WIDTH int(1280)
+#define HEIGHT int(800)
 
 //////////////////////////
 //   Main Application   //

@@ -276,9 +276,6 @@
     <ClInclude Include="..\light-transport\objects.hpp">
       <Filter>light-transport</Filter>
     </ClInclude>
-    <ClInclude Include="..\light-transport\material.hpp">
-      <Filter>light-transport</Filter>
-    </ClInclude>
     <ClInclude Include="..\light-transport\lights.hpp">
       <Filter>light-transport</Filter>
     </ClInclude>
@@ -286,6 +283,9 @@
       <Filter>light-transport</Filter>
     </ClInclude>
     <ClInclude Include="..\light-transport\util.hpp">
+      <Filter>light-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="..\light-transport\bsdf.hpp">
       <Filter>light-transport</Filter>
     </ClInclude>
   </ItemGroup>

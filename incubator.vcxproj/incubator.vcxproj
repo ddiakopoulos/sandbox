@@ -57,7 +57,7 @@
     <ClInclude Include="..\light-transport\bvh.hpp" />
     <ClInclude Include="..\light-transport\light-transport-main.hpp" />
     <ClInclude Include="..\light-transport\lights.hpp" />
-    <ClInclude Include="..\light-transport\material.hpp" />
+    <ClInclude Include="..\light-transport\bsdf.hpp" />
     <ClInclude Include="..\light-transport\objects.hpp" />
     <ClInclude Include="..\light-transport\sampling.hpp" />
     <ClInclude Include="..\light-transport\util.hpp" />

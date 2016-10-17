@@ -5,7 +5,7 @@
 
 #include "geometric.hpp"
 #include "geometry.hpp"
-#include "light-transport/material.hpp"
+#include "light-transport/bsdf.hpp"
 #include "light-transport/util.hpp"
 
 using namespace avl;
