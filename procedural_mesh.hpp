@@ -55,14 +55,14 @@ namespace avl
     {
         Geometry sphereGeom;
         
-        int U = 32, V = 32;
+		uint32_t U = 32, V = 32;
         
         for (int ui = 0; ui < U; ++ui)
         {
             for (int vi = 0; vi < V; ++vi)
             {
-                float u = float(ui) / (U - 1) * ANVIL_PI;
-                float v = float(vi) / (V - 1) * 2 * ANVIL_PI;
+                float u = float(ui) / (U - 1) * float(ANVIL_PI);
+                float v = float(vi) / (V - 1) * 2 * float(ANVIL_PI);
                 float3 normal = spherical(u, v);
                 sphereGeom.vertices.push_back({normal * radius});
                 sphereGeom.normals.push_back(normal);
@@ -108,9 +108,9 @@ namespace avl
                 
                 float3 vertex;
                 
-                vertex.x = radius * sin(u * ANVIL_TAU);
+                vertex.x = radius * sin(u * float(ANVIL_TAU));
                 vertex.y = -v * height + heightHalf;
-                vertex.z = radius * cos(u * ANVIL_TAU);
+                vertex.z = radius * cos(u * float(ANVIL_TAU));
                 
                 cylinderGeom.vertices.push_back(vertex);
                 newRow.push_back((int) cylinderGeom.vertices.size() - 1);
@@ -406,8 +406,8 @@ namespace avl
                         float(i*(radial_segments + 1) + j),
                         float((i-1)*(radial_segments+ 1) +j)
                     };
-                    torus.faces.emplace_back(q.x, q.y, q.z);
-                    torus.faces.emplace_back(q.x, q.z, q.w);
+                    torus.faces.emplace_back(float3(q.x, q.y, q.z));
+                    torus.faces.emplace_back(float3(q.x, q.z, q.w));
                 }
             }
         }
@@ -434,9 +434,9 @@ namespace avl
         for (int j = 0; j < doubleSegments; ++j)
         {
             float ty = halfLength + radius;
-            capsule.vertices.emplace_back(0, ty, 0);
-            capsule.normals.emplace_back(0, 1, 0);
-            capsule.texCoords.emplace_back((j+1) / float(segments), 0);
+            capsule.vertices.emplace_back(0.f, ty, 0.f);
+            capsule.normals.emplace_back(0.f, 1.f, 0.f);
+            capsule.texCoords.emplace_back((j+1) / float(segments), 0.f);
         }
         
         for (int i = 1; i < segments; ++i)
@@ -451,7 +451,7 @@ namespace avl
                 ty -= halfLength;
             
             capsule.vertices.emplace_back(0, ty, -r);
-            capsule.normals.push_back(safe_normalize(float3(0, y, -1)));
+            capsule.normals.push_back(safe_normalize(float3(0.f, y, -1.f)));
             capsule.texCoords.emplace_back(0, i / float(segments));
             
             for (int j = 1; j < doubleSegments; ++j)
@@ -471,16 +471,16 @@ namespace avl
             }
             
             capsule.vertices.emplace_back(0, ty, -r);
-            capsule.normals.push_back(safe_normalize(float3(0, y, -1)));
+            capsule.normals.push_back(safe_normalize(float3(0.f, y, -1.f)));
             capsule.texCoords.emplace_back(2, i / float(segments));
         }
         
         for (int j = 0; j < doubleSegments; ++j)
         {
             float ty = -halfLength - radius;
-            capsule.vertices.emplace_back(0, ty, 0);
-            capsule.normals.push_back(safe_normalize(float3(0, -1, 0)));
-            capsule.texCoords.emplace_back((j+1) / float(segments), 1);
+            capsule.vertices.emplace_back(0.f, ty, 0.f);
+            capsule.normals.push_back(safe_normalize(float3(0.f, -1.f, 0.f)));
+            capsule.texCoords.emplace_back((j+1) / float(segments), 1.f);
         }
         
         int v = 0;

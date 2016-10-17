@@ -357,17 +357,17 @@ namespace avl
             
             geo.vertices.reserve(vertexCount);
             std::vector<float3> flatVerts;
-            for (int i = 0; i < vertexCount * 3; i+=3)
+            for (auto i = 0; i < vertexCount * 3; i+=3)
                 flatVerts.push_back(float3(verts[i], verts[i+1], verts[i+2]));
             
             geo.faces.reserve(numTriangles);
             std::vector<uint3> flatFaces;
-            for (int i = 0; i < numTriangles * 3; i+=3)
+            for (auto i = 0; i < numTriangles * 3; i+=3)
                 flatFaces.push_back(uint3(faces[i], faces[i+1], faces[i+2]));
             
             geo.texCoords.reserve(uvCount);
             std::vector<float2> flatTexCoords;
-            for (int i = 0; i < uvCount * 6; i+=2)
+            for (auto i = 0; i < uvCount * 6; i+=2)
                flatTexCoords.push_back(float2(texCoords[i], texCoords[i + 1]));
             
             std::vector<std::tuple<float3, float2>> uniqueVerts;

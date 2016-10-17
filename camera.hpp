@@ -29,7 +29,7 @@ namespace avl
         
         float4 make_frustum_coords(float aspectRatio) const
         {
-            const float top = nearClip * std::tan((fov * (ANVIL_PI * 2.f) / 360.0f) / 2.0f);
+            const float top = nearClip * std::tan((fov * (float(ANVIL_PI) * 2.f) / 360.0f) / 2.0f);
             const float right = top * aspectRatio;
             const float bottom = -top;
             const float left = -right;
@@ -227,10 +227,9 @@ namespace avl
             
 			if (enableSpring)
 			{
-				float springyX = damped_spring(target.x, current.x, velocity.x, delta, 0.99);
-				float springyY = damped_spring(target.y, current.y, velocity.y, delta, 0.99);
-				float springyZ = damped_spring(target.z, current.z, velocity.z, delta, 0.99);
-
+				float springyX = damped_spring(target.x, current.x, velocity.x, delta, 0.99f);
+				float springyY = damped_spring(target.y, current.y, velocity.y, delta, 0.99f);
+				float springyZ = damped_spring(target.z, current.z, velocity.z, delta, 0.99f);
 				float3 dampedLocation = { springyX, springyY, springyZ };
 				cam->set_position(dampedLocation);
 			}
@@ -250,7 +249,7 @@ namespace avl
     
     inline Ray make_ray(const GlCamera & camera, const float aspectRatio, float uPos, float vPos, float imagePlaneApectRatio)
     {
-        const float top = camera.nearClip * std::tan((camera.fov * (ANVIL_PI / 2) / 360) / 2);
+		const float top = camera.nearClip * std::tan((camera.fov * (float(ANVIL_PI) / 2.f) / 360.f) / 2.f);
         const float right = top * aspectRatio; // Is this correct?
         const float left = -right;
         float s = (uPos - 0.5f) * imagePlaneApectRatio;

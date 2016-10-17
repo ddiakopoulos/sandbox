@@ -66,8 +66,8 @@ namespace avl
         std::random_device rd;
         std::mt19937_64 gen;
 		std::uniform_real_distribution<float> full { 0.f, 1.f };
-		std::uniform_real_distribution<float> safe { 0.001, 0.999f };
-		std::uniform_real_distribution<float> two_pi { 0.f, ANVIL_TWO_PI };
+		std::uniform_real_distribution<float> safe { 0.001f, 0.999f };
+		std::uniform_real_distribution<float> two_pi { 0.f, float(ANVIL_TWO_PI) };
     public:
 		UniformRandomGenerator() : rd(), gen(rd()) { }
         float random_float() { return full(gen); }

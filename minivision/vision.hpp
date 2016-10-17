@@ -60,7 +60,7 @@ struct kernel
 };
 
 template<typename T>
-void apply_kernel(const std::vector<T> & source, std::vector<T> & dest, kernel k, const int2 size)
+void apply_kernel(const std::vector<T> & source, std::vector<T> & dest, const kernel & k, const int2 size)
 {
     const int halfkw = (k.kernelSize.x) / 2;
     const int halfkh = (k.kernelSize.y) / 2;
@@ -369,8 +369,8 @@ inline void morphology_gradient(const std::vector<uint16_t> & inputImage, std::v
 
 inline void box_filter_normalmap(const std::vector<float3> & input, std::vector<float3> & output, const int2 size, const int radius = 1)
 {
-    kernel k(box_element_3x3_square);
-    apply_kernel<float3>(input, output, k, size);
+    kernel boxKernel(box_element_3x3_square);
+    apply_kernel<float3>(input, output, boxKernel, size);
 }
 
 inline float3 compute_normal(const float3 u, const float3 v)
