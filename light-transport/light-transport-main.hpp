@@ -168,7 +168,7 @@ struct Scene
 		}
 
 		// Sample the diffuse brdf of the intersected material
-		float3 brdfSample = m->sample(gen, scatter);
+		float3 brdfSample = m->sample(gen, scatter) * float3(1, 1, 1);
 		float3 sampleDirection = scatter.Wi;
 		//sampleDirection = transform_coord(tangentToWorld, sampleDirection); // Fixme
 
@@ -184,9 +184,19 @@ struct Scene
 			refl = trace_ray(Ray(add_epsilon(surfaceInfo->P, surfaceInfo->N), sampleDirection), gen, weight, depth + 1);
 		}
 
+		/*
+		float3 Lt;
+		if (length(scatter.Wt) > 0.0f)
+		{
+			Lt = trace_ray(Ray(surfaceInfo->P, scatter.Wt), gen, weight, depth + 1);
+		}
+		*/
+
 		// Free the hit struct
 		delete surfaceInfo;
 
+		//auto transmitted = (Lt * (scatter.btdf / scatter.pdf + 1.f));
+		
 		return clamp(weight * directLighting + refl, 0.f, 1.f);
 	}
 };
@@ -326,14 +336,17 @@ struct ExperimentalApp : public GLFWApp
 		std::shared_ptr<RaytracedSphere> b = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> c = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> d = std::make_shared<RaytracedSphere>();
-		std::shared_ptr<RaytracedSphere> e = std::make_shared<RaytracedSphere>();
+		std::shared_ptr<RaytracedSphere> glassSphere = std::make_shared<RaytracedSphere>();
 
-		std::shared_ptr<RaytracedBox> box = std::make_shared<RaytracedBox>();
-		std::shared_ptr<RaytracedBox> box2 = std::make_shared<RaytracedBox>();
+		std::shared_ptr<RaytracedBox> floor = std::make_shared<RaytracedBox>();
+		std::shared_ptr<RaytracedBox> leftWall = std::make_shared<RaytracedBox>();
+		std::shared_ptr<RaytracedBox> rightWall = std::make_shared<RaytracedBox>();
+		std::shared_ptr<RaytracedBox> backWall = std::make_shared<RaytracedBox>();
+
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
 		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(1.5, 1.5, 1.5);
+		pointLight->lightPos = float3(0, 2, 0);
 		pointLight->intensity = float3(1, 1, 1);
 		scene.lights.push_back(pointLight);
 
@@ -364,48 +377,60 @@ struct ExperimentalApp : public GLFWApp
 		d->m->Kd = float3(181.f / 255.f, 51.f / 255.f, 193.f / 255.f);
 		d->center = float3(+0.33f, 0.50f, 0.66f);
 
-		e->m = std::make_shared<Mirror>();
-		e->m->Kd = float3(1, 1, 1);
-		e->radius = 0.5f;
-		e->center = float3(1.5f, 0.50f, 0.5);
+		glassSphere->m = std::make_shared<Glass>();
+		glassSphere->m->Kd = float3(1, 1, 1);
+		glassSphere->radius = 0.50f;
+		glassSphere->center = float3(0.f, 0.5f, 2.25);
 
-		box->m = std::make_shared<IdealSpecular>();
-		box->m->Kd = float3(0.9, 0.9, 0.9);
-		box->_min = float3(-2.66, -0.1, -2.66);
-		box->_max = float3(+2.66, +0.0, +2.66);
+		floor->m = std::make_shared<IdealSpecular>();
+		floor->m->Kd = float3(0.9, 0.9, 0.9);
+		floor->_min = float3(-2.66, -0.1, -2.66);
+		floor->_max = float3(+2.66, +0.0, +2.66);
 
-		box2->m = std::make_shared<IdealDiffuse>();
-		box2->m->Kd = float3(8.f / 255.f, 141.f / 255.f, 236.f / 255.f);
-		box2->_min = float3(-2.66, 0.f, -2.66);
-		box2->_max = float3(-2.55, 2.66f, +2.66);
+		leftWall->m = std::make_shared<IdealDiffuse>();
+		leftWall->m->Kd = float3(255.f / 255.f, 20.f / 255.f, 25.f / 255.f);
+		leftWall->_min = float3(-2.66, 0.f, -2.66);
+		leftWall->_max = float3(-2.55, 2.66f, +2.66);
+
+		rightWall->m = std::make_shared<IdealDiffuse>();
+		rightWall->m->Kd = float3(25.f / 255.f, 255.f / 255.f, 20.f / 255.f);
+		rightWall->_min = float3(+2.66, 0.f, -2.66);
+		rightWall->_max = float3(+2.55, 2.66f, +2.66);
+
+		backWall->m = std::make_shared<IdealDiffuse>();
+		backWall->m->Kd = float3(0.9, 0.9, 0.9);
+		backWall->_min = float3(-2.66, 0.0f, -2.66);
+		backWall->_max = float3(+2.66, +2.66f, -2.55);
 
 		plane->m = std::make_shared<IdealDiffuse>();
 		plane->m->Kd = float3(1, 1, 0.5);
 		plane->equation = float4(0, 1, 0, -0.0999f);
 		//scene.objects.push_back(plane);
 
-		scene.objects.push_back(box2);
-		scene.objects.push_back(box);
+		scene.objects.push_back(floor);
+		scene.objects.push_back(leftWall);
+		scene.objects.push_back(rightWall);
+		scene.objects.push_back(backWall);
 
 		scene.objects.push_back(a);
 		scene.objects.push_back(b);
 		scene.objects.push_back(c);
 		scene.objects.push_back(d);
 
-		scene.objects.push_back(e);
+		//scene.objects.push_back(mirrorSphere);
 
-		/*
 		auto torusKnot = load_geometry_from_ply("assets/models/geometry/TorusKnotUniform.ply");
 		rescale_geometry(torusKnot, 1.f);
 		for (auto & v : torusKnot.vertices)
 		{
-			v = transform_coord(make_translation_matrix({ 0, 1.125, 1 }), v);
+			v = transform_coord(make_translation_matrix({ 0, 1.125, 2.75 }), v);
+			v *= 0.75f;
 		}
 		std::shared_ptr<RaytracedMesh> torusKnotTrimesh = std::make_shared<RaytracedMesh>(torusKnot);
-		torusKnotTrimesh->m = std::make_shared<IdealDiffuse>();
-		torusKnotTrimesh->m->Kd = float3(1, 0.05, 0.025);
+		torusKnotTrimesh->m = std::make_shared<Glass>();
+		torusKnotTrimesh->m->Kd = float3(1, 1, 1);
 		scene.objects.push_back(torusKnotTrimesh);
-		*/
+
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");

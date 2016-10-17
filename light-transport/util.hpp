@@ -56,7 +56,7 @@ inline float luminance(float3 c)
 }
 
 // Make a tangent space coordinate system for isotropic BRDFs. vec1 (the normal) must be normalized beforehand.
-inline static void make_tangent_frame(const float3 & vector1, float3 & vector2, float3 & vector3)
+inline void make_tangent_frame(const float3 & vector1, float3 & vector2, float3 & vector3)
 {
 	if (std::fabs(vector1.x) > std::fabs(vector1.y)) vector2 = normalize(float3(vector1.z, 0, -vector1.x));
 	else vector2 = normalize(float3(0, -vector1.z, vector1.y));
@@ -64,9 +64,36 @@ inline static void make_tangent_frame(const float3 & vector1, float3 & vector2, 
 }
 
 // Add an epsilon to a ray origin to avoid self intersections
-inline static float3 add_epsilon(const float3 & point, const float3 & direction)
+inline float3 add_epsilon(const float3 & point, const float3 & direction)
 {
 	return point;// point + (direction * 0.0001f);
+}
+
+inline float dielectric_reflectance(float eta, float cosThetaI, float & cosThetaT)
+{
+	if (cosThetaI < 0.0f) 
+	{
+		eta = 1.0f / eta;
+		cosThetaI = -cosThetaI;
+	}
+	float sinThetaTSq = eta * eta * (1.0f - cosThetaI*cosThetaI);
+	if (sinThetaTSq > 1.0f) 
+	{
+		cosThetaT = 0.0f;
+		return 1.0f;
+	}
+	cosThetaT = std::sqrt(max(1.0f - sinThetaTSq, 0.0f));
+
+	float Rs = (eta*cosThetaI - cosThetaT) / (eta * cosThetaI + cosThetaT);
+	float Rp = (eta*cosThetaT - cosThetaI) / (eta * cosThetaT + cosThetaI);
+
+	return (Rs*Rs + Rp*Rp)*0.5f;
+}
+
+inline float dielectric_reflectance(float eta, float cosThetaI)
+{
+	float cosThetaT;
+	return dielectric_reflectance(eta, cosThetaI, cosThetaT);
 }
 
 #endif

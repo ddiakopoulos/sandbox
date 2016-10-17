@@ -34,7 +34,9 @@ struct SurfaceScatterEvent
 {
 	const IntersectionInfo * info;
 	float3 Wi;
+	float3 Wt;
 	float pdf;
+	float btdf;
 	SurfaceScatterEvent(const IntersectionInfo * info) : info(info) {}
 };
 
@@ -83,7 +85,7 @@ struct IdealSpecular : public Material
 
 const float DiracAcceptanceThreshold = 1e-3f;
 
-static inline bool checkReflectionConstraint(const float3 &wi, const float3 &wo)
+inline bool reflection_constraint(const float3 & wi, const float3 & wo)
 {
 	return std::abs(wi.z*wo.z - wi.x*wo.x - wi.y*wo.y - 1.0f) < DiracAcceptanceThreshold;
 }
@@ -94,15 +96,59 @@ struct Mirror : public Material
 	{
 		event.Wi = float3(-event.info->Wo.x, -event.info->Wo.y, event.info->Wo.z);
 		event.pdf = 1.f;
-		return event.info->Kd / std::abs(event.Wi.z); // 
+		return event.info->Kd / std::abs(event.Wi.z); 
 	}
 
 	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
 	{
-		if (checkReflectionConstraint(Wi, Wo)) return 1.0f;
+		if (reflection_constraint(Wi, Wo)) return 1.0f;
 		else return 0.0f;
 	}
 };
 
+const float glassAirIndexOfRefraction = 1.523f;
+
+struct Glass : public Material
+{
+	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
+	{
+		// Entering the medium or leaving it? 
+		float3 orientedNormal = dot(event.info->N, event.info->Wo) > 0.0f ? event.info->N : -1.f * event.info->N;
+		bool entering = dot(event.info->N, orientedNormal) > 0.0f;
+
+		// Calculate eta depending on situation
+		const float eta = entering ? (1.0f / glassAirIndexOfRefraction) : glassAirIndexOfRefraction;
+
+		// Angle of refraction
+		float CosThetaI = abs(event.info->Wo.z);
+		float CosThetaT = refract(event.info->Wo, event.info->N, eta).z;
+
+		float reflectance = dielectric_reflectance(eta, CosThetaI);
+
+		float reflectionProbability = gen.random_float();
+		if (reflectionProbability < reflectance)
+		{			
+			// Reflect
+			event.Wi = float3(-event.info->Wo.x, -event.info->Wo.y, event.info->Wo.z);
+			event.pdf = reflectionProbability;
+			return float3(luminance(event.info->Kd) * reflectance / std::abs(event.Wi.z));
+		}
+		else
+		{
+			// Refract
+			event.Wi = float3(eta * -event.info->Wo.x, eta * -event.info->Wo.y, -std::copysign(CosThetaT, event.info->Wo.z));
+			event.pdf = 1.f - reflectionProbability;
+			return event.info->Kd * ((1.f - reflectance) / std::abs(event.Wi.z));
+		}
+		return float3(0, 0, 0);
+	}
+
+	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
+	{
+		if (reflection_constraint(Wi, Wo)) return 1.0f;
+		else return 0.0f;
+	}
+
+};
 
 #endif

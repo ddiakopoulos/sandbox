@@ -10,7 +10,7 @@
 
 struct Light
 {
-	int numSamples = 16;
+	int numSamples = 1;
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const = 0;
 };
 
