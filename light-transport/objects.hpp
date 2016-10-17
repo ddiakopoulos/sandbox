@@ -15,15 +15,15 @@ struct RayIntersection
 	float d = std::numeric_limits<float>::infinity();
 	float maxt = 128.f;
 	float3 normal;
-	Material * m = nullptr;
+	BSDF * m = nullptr;
 	RayIntersection() {}
-	RayIntersection(float d, float3 normal, Material * m) : d(d), normal(normal), m(m) {}
+	RayIntersection(float d, float3 normal, BSDF * m) : d(d), normal(normal), m(m) {}
 	bool operator() (void) { return (d < std::numeric_limits<float>::infinity() && d < maxt); }
 };
 
 struct Traceable
 {
-	std::shared_ptr<Material> m;
+	std::shared_ptr<BSDF> m;
 	virtual RayIntersection intersects(const Ray & ray) { return RayIntersection(); };
 	virtual Bounds3D world_bounds() const { return Bounds3D(); }; // FIXME: this will return local bounds for the time being
 };

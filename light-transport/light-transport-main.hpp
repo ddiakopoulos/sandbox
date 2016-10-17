@@ -107,7 +107,7 @@ struct Scene
 			return environment;
 		}
 
-		Material * m = intersection.m;
+		BSDF * bsdf = intersection.m;
 
 		// Russian roulette termination
 		const float p = gen.random_float_safe(); // In the range [0.001f, 0.999f)
@@ -125,7 +125,7 @@ struct Scene
 		surfaceInfo->N = normalize(intersection.normal);
 		surfaceInfo->T = normalize(tangent);
 		surfaceInfo->BT = normalize(bitangent);
-		surfaceInfo->Kd = m->Kd;
+		surfaceInfo->Kd = bsdf->Kd;
 
 		// Create a new BSDF event with the relevant intersection data
 		SurfaceScatterEvent scatter(surfaceInfo);
@@ -153,7 +153,7 @@ struct Scene
 				lightInfo->N = intersection.normal;
 
 				SurfaceScatterEvent direct(lightInfo);
-				auto surfaceColor = m->sample(gen, direct);
+				auto surfaceColor = bsdf->sample(gen, direct);
 
 				// Integrate over the number of direct lighting samples
 				float3 Ld;
@@ -168,7 +168,7 @@ struct Scene
 		}
 
 		// Sample the diffuse brdf of the intersected material
-		float3 brdfSample = m->sample(gen, scatter) * float3(1, 1, 1);
+		float3 brdfSample = bsdf->sample(gen, scatter) * float3(1, 1, 1);
 		float3 sampleDirection = scatter.Wi;
 		//sampleDirection = transform_coord(tangentToWorld, sampleDirection); // Fixme
 

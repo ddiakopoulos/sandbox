@@ -96,4 +96,11 @@ inline float dielectric_reflectance(float eta, float cosThetaI)
 	return dielectric_reflectance(eta, cosThetaI, cosThetaT);
 }
 
+const float DiracAcceptanceThreshold = 1e-3f;
+
+inline bool reflection_constraint(const float3 & wi, const float3 & wo)
+{
+	return std::abs(wi.z*wo.z - wi.x*wo.x - wi.y*wo.y - 1.0f) < DiracAcceptanceThreshold;
+}
+
 #endif

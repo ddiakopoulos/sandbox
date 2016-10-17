@@ -1,5 +1,5 @@
-#ifndef material_hpp
-#define material_hpp
+#ifndef bsdf_hpp
+#define bsdf_hpp
 
 #pragma once
 
@@ -36,13 +36,11 @@ struct SurfaceScatterEvent
 {
 	const IntersectionInfo * info;
 	float3 Wi;
-	float3 Wt;
 	float pdf;
-	float btdf;
 	SurfaceScatterEvent(const IntersectionInfo * info) : info(info) {}
 };
 
-struct Material
+struct BSDF
 {
 	float3 Kd = { 0, 0, 0 }; // diffuse color
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const = 0;
@@ -50,7 +48,7 @@ struct Material
 	virtual float3 eval(const float3 & Wo, const float3 & Wi, SurfaceScatterEvent & event) const { return Kd * eval(Wo, Wi); }
 };
 
-struct IdealDiffuse : public Material
+struct IdealDiffuse : public BSDF
 {
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
@@ -65,7 +63,7 @@ struct IdealDiffuse : public Material
 	}
 };
 
-struct IdealSpecular : public Material
+struct IdealSpecular : public BSDF
 {
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
@@ -85,14 +83,7 @@ struct IdealSpecular : public Material
 	}
 };
 
-const float DiracAcceptanceThreshold = 1e-3f;
-
-inline bool reflection_constraint(const float3 & wi, const float3 & wo)
-{
-	return std::abs(wi.z*wo.z - wi.x*wo.x - wi.y*wo.y - 1.0f) < DiracAcceptanceThreshold;
-}
-
-struct Mirror : public Material
+struct Mirror : public BSDF
 {
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
@@ -108,7 +99,7 @@ struct Mirror : public Material
 	}
 };
 
-struct DialectricBSDF : public Material
+struct DialectricBSDF : public BSDF
 {
 	float IoR = glassAirIndexOfRefraction;
 
