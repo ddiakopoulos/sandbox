@@ -184,18 +184,8 @@ struct Scene
 			refl = trace_ray(Ray(add_epsilon(surfaceInfo->P, surfaceInfo->N), sampleDirection), gen, weight, depth + 1);
 		}
 
-		/*
-		float3 Lt;
-		if (length(scatter.Wt) > 0.0f)
-		{
-			Lt = trace_ray(Ray(surfaceInfo->P, scatter.Wt), gen, weight, depth + 1);
-		}
-		*/
-
 		// Free the hit struct
 		delete surfaceInfo;
-
-		//auto transmitted = (Lt * (scatter.btdf / scatter.pdf + 1.f));
 		
 		return clamp(weight * directLighting + refl, 0.f, 1.f);
 	}
@@ -377,7 +367,7 @@ struct ExperimentalApp : public GLFWApp
 		d->m->Kd = float3(181.f / 255.f, 51.f / 255.f, 193.f / 255.f);
 		d->center = float3(+0.33f, 0.50f, 0.66f);
 
-		glassSphere->m = std::make_shared<Glass>();
+		glassSphere->m = std::make_shared<DialectricBSDF>();
 		glassSphere->m->Kd = float3(1, 1, 1);
 		glassSphere->radius = 0.50f;
 		glassSphere->center = float3(0.f, 0.5f, 2.25);
@@ -427,7 +417,7 @@ struct ExperimentalApp : public GLFWApp
 			v *= 0.75f;
 		}
 		std::shared_ptr<RaytracedMesh> torusKnotTrimesh = std::make_shared<RaytracedMesh>(torusKnot);
-		torusKnotTrimesh->m = std::make_shared<Glass>();
+		torusKnotTrimesh->m = std::make_shared<DialectricBSDF>();
 		torusKnotTrimesh->m->Kd = float3(1, 1, 1);
 		scene.objects.push_back(torusKnotTrimesh);
 

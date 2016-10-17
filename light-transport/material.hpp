@@ -20,6 +20,8 @@
 // Le = emitted light
 // ============================================================================
 
+const float glassAirIndexOfRefraction = 1.523f;
+
 struct IntersectionInfo
 {
 	float3 Wo;
@@ -106,10 +108,10 @@ struct Mirror : public Material
 	}
 };
 
-const float glassAirIndexOfRefraction = 1.523f;
-
-struct Glass : public Material
+struct DialectricBSDF : public Material
 {
+	float IoR = glassAirIndexOfRefraction;
+
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
 		// Entering the medium or leaving it? 
@@ -117,15 +119,14 @@ struct Glass : public Material
 		bool entering = dot(event.info->N, orientedNormal) > 0.0f;
 
 		// Calculate eta depending on situation
-		const float eta = entering ? (1.0f / glassAirIndexOfRefraction) : glassAirIndexOfRefraction;
+		const float eta = entering ? (1.0f / IoR) : IoR;
 
 		// Angle of refraction
-		float CosThetaI = abs(event.info->Wo.z);
-		float CosThetaT;// = refract(event.info->Wo, event.info->N, eta).z;
+		float CosThetaT;
+		const float CosThetaI = abs(event.info->Wo.z);
+		const float reflectance = dielectric_reflectance(eta, CosThetaI, CosThetaT);
 
-		float reflectance = dielectric_reflectance(eta, CosThetaI, CosThetaT);
-
-		float reflectionProbability = gen.random_float();
+		const float reflectionProbability = gen.random_float();
 		if (reflectionProbability < reflectance)
 		{			
 			// Reflect
