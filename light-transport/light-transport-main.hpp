@@ -33,9 +33,9 @@
 // [X] Timers for various functions (accel vs non-accel)
 // [X] Proper radiance based materials (bdrf)
 // [X] BVH Accelerator ([ ] Cleanup)
-// [ ] Fix Intersection / Occlusion Bug
-// [ ] Lambertian Material / Diffuse + Specular + Transmission Terms
-// [ ] Mirror + Glass Materials
+// [X] Fix Intersection / Occlusion Bug
+// [X] Lambertian Material / Diffuse + Specular + Transmission Terms
+// [X] Mirror + Glass Materials
 // [ ] Area Lights!
 // [ ] Cook-Torrance Microfacet BSDF implementation
 // [ ] Sampling Scheme(s): tiled, lines, random, etc
@@ -172,7 +172,7 @@ struct Scene
 		float3 sampleDirection = scatter.Wi;
 		//sampleDirection = transform_coord(tangentToWorld, sampleDirection); // Fixme
 
-		const float NdotL = clamp(abs(dot(sampleDirection, scatter.info->N)), 0.f, 1.f);
+		const float NdotL = avl::clamp(float(std::abs(dot(sampleDirection, scatter.info->N))), 0.f, 1.f);
 
 		// Weight, aka throughput
 		weight *= (brdfSample * NdotL) / scatter.pdf;
@@ -260,8 +260,8 @@ struct Film
 
 };
 
-#define WIDTH int(1280)
-#define HEIGHT int(800)
+#define WIDTH int(640)
+#define HEIGHT int(480)
 
 //////////////////////////
 //   Main Application   //
@@ -294,7 +294,7 @@ struct ExperimentalApp : public GLFWApp
 	std::mutex rLock;
 	std::condition_variable renderCv;
 	std::map<std::thread::id, std::atomic<bool>> threadTaskState;
-	std::atomic<int> numIdleThreads = 0;
+	std::atomic<int> numIdleThreads;
 	const int numWorkers = std::thread::hardware_concurrency();
 
 	ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
@@ -369,7 +369,7 @@ struct ExperimentalApp : public GLFWApp
 
 		glassSphere->m = std::make_shared<DialectricBSDF>();
 		glassSphere->m->Kd = float3(1, 1, 1);
-		glassSphere->radius = 0.50f;
+		glassSphere->radius = 0.33f;
 		glassSphere->center = float3(0.f, 0.5f, 2.25);
 
 		floor->m = std::make_shared<IdealSpecular>();
@@ -379,8 +379,8 @@ struct ExperimentalApp : public GLFWApp
 
 		leftWall->m = std::make_shared<IdealDiffuse>();
 		leftWall->m->Kd = float3(255.f / 255.f, 20.f / 255.f, 25.f / 255.f);
-		leftWall->_min = float3(-2.66, 0.f, -2.66);
-		leftWall->_max = float3(-2.55, 2.66f, +2.66);
+		leftWall->_min = float3(-2.55, 0.f, -2.66);
+		leftWall->_max = float3(-2.66, 2.66f, +2.66);
 
 		rightWall->m = std::make_shared<IdealDiffuse>();
 		rightWall->m->Kd = float3(25.f / 255.f, 255.f / 255.f, 20.f / 255.f);
@@ -407,8 +407,9 @@ struct ExperimentalApp : public GLFWApp
 		scene.objects.push_back(c);
 		scene.objects.push_back(d);
 
-		//scene.objects.push_back(mirrorSphere);
+		scene.objects.push_back(glassSphere);
 
+		/*
 		auto torusKnot = load_geometry_from_ply("assets/models/geometry/TorusKnotUniform.ply");
 		rescale_geometry(torusKnot, 1.f);
 		for (auto & v : torusKnot.vertices)
@@ -420,7 +421,7 @@ struct ExperimentalApp : public GLFWApp
 		torusKnotTrimesh->m = std::make_shared<DialectricBSDF>();
 		torusKnotTrimesh->m->Kd = float3(1, 1, 1);
 		scene.objects.push_back(torusKnotTrimesh);
-
+		*/
 
 		/*
 		auto shaderball = load_geometry_from_ply("assets/models/shaderball/shaderball_simplified.ply");
@@ -450,6 +451,8 @@ struct ExperimentalApp : public GLFWApp
 				coordinates.push_back(int2(x, y));
 			}
 		}
+
+		numIdleThreads.store(0);
 
 		for (int i = 0; i < numWorkers; ++i)
 		{

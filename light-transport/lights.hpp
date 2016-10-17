@@ -30,7 +30,7 @@ struct SpotLight : public Light
 {
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
-		float3(1.f);
+		return float3(1.f);
 	}
 };
 
@@ -38,7 +38,7 @@ struct DirectionalLight : public Light
 {
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
-		float3(1.f);
+		return float3(1.f);
 	}
 };
 
@@ -46,7 +46,7 @@ struct AreaLight : public Light
 {
 	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
-		float3(1.f);
+		return float3(1.f);
 	}
 };
 
