@@ -106,31 +106,36 @@ struct DialectricBSDF : public BSDF
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
 		// Entering the medium or leaving it? 
-		float3 orientedNormal = dot(event.info->N, event.info->Wo) > 0.0f ? event.info->N : -1.f * event.info->N;
-		bool entering = dot(event.info->N, orientedNormal) > 0.0f;
+		//float3 orientedNormal = dot(event.info->N, event.info->Wo) > 0.0f ? event.info->N : -1.f * event.info->N;
+		//bool entering = dot(event.info->N, event.info->P) > 0.0f;
 
 		// Calculate eta depending on situation
-		const float eta = entering ? (1.0f / IoR) : IoR;
+		const float eta = event.info->Wo.z < 0.0f ? (IoR) : 1.f / IoR;
+
+		//std::cout << eta << std::endl;
 
 		// Angle of refraction
-		float CosThetaT;
+		float CosThetaT = 0.0f;
 		const float CosThetaI = abs(event.info->Wo.z);
 		const float reflectance = dielectric_reflectance(eta, CosThetaI, CosThetaT);
+
+		//std::cout << reflectance << std::endl;
 
 		const float reflectionProbability = gen.random_float();
 		if (reflectionProbability < reflectance)
 		{			
 			// Reflect
 			event.Wi = float3(-event.info->Wo.x, -event.info->Wo.y, event.info->Wo.z);
-			event.pdf = reflectionProbability;
+			event.pdf = reflectance;;
 			return event.info->Kd * reflectance / std::abs(event.Wi.z);
 		}
 		else
 		{
+			if (reflectance == 1.f) return float3(0, 0, 0);
 			// Refract
-			event.Wi = float3(eta * -event.info->Wo.x, eta * -event.info->Wo.y, -std::copysign(CosThetaT, event.info->Wo.z));
-			event.pdf = 1.f - reflectionProbability;
-			return event.info->Kd * ((1.f - reflectance) / std::abs(event.Wi.z));
+			//event.Wi = float3(eta * -event.info->Wo.x, eta * -event.info->Wo.y, -std::copysign(CosThetaT, event.info->Wo.z));
+			//event.pdf = 1.f - reflectance;
+			//return event.info->Kd * ((1.f - reflectance) / std::abs(event.Wi.z));
 		}
 		return float3(0, 0, 0);
 	}

@@ -599,7 +599,7 @@ struct ExperimentalApp : public GLFWApp
 				coordinates.push_back(int2(x, y));
 			}
 		}
-		camera.pose = lookAt;
+		//camera.pose = lookAt;
 		film->reset(camera.get_pose());
 		takeScreenshot = true;
 

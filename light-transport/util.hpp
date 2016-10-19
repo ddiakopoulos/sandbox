@@ -76,7 +76,7 @@ inline float dielectric_reflectance(float eta, float cosThetaI, float & cosTheta
 		eta = 1.0f / eta;
 		cosThetaI = -cosThetaI;
 	}
-	float sinThetaTSq = eta * eta * (1.0f - cosThetaI*cosThetaI);
+	float sinThetaTSq = eta * eta * (1.0f - cosThetaI * cosThetaI);
 	if (sinThetaTSq > 1.0f) 
 	{
 		cosThetaT = 0.0f;
@@ -84,8 +84,8 @@ inline float dielectric_reflectance(float eta, float cosThetaI, float & cosTheta
 	}
 	cosThetaT = std::sqrt(max(1.0f - sinThetaTSq, 0.0f));
 
-	float Rs = (eta*cosThetaI - cosThetaT) / (eta * cosThetaI + cosThetaT);
-	float Rp = (eta*cosThetaT - cosThetaI) / (eta * cosThetaT + cosThetaI);
+	float Rs = (eta * cosThetaI - cosThetaT) / (eta * cosThetaI + cosThetaT);
+	float Rp = (eta * cosThetaT - cosThetaI) / (eta * cosThetaT + cosThetaI);
 
 	return (Rs*Rs + Rp*Rp)*0.5f;
 }
