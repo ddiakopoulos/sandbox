@@ -6,6 +6,10 @@
 #include "linalg_util.hpp"
 #include <ostream>
 
+
+extern bool g_debug;
+
+
 namespace avl
 {
     
@@ -472,7 +476,7 @@ namespace avl
     //   Sphere   //
     ////////////////
 
-    static const double SPHERE_EPSILON = 4.37114e-05;
+    static const double SPHERE_EPSILON = 0.0001;
     
     struct Sphere
     {
@@ -691,7 +695,7 @@ namespace avl
 
 		return true;
 	}
-    
+
     inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * outT = nullptr, float3 * outNormal = nullptr)
     {
         float t;
@@ -703,7 +707,8 @@ namespace avl
         
 		if (disc < 0.0f)
 		{
-			return false;
+			if (g_debug) std::cout << "Disc less than 0..." << std::endl;
+			return false; 
 		}
         else
         {
@@ -712,6 +717,7 @@ namespace avl
             
             t = (-b - e) * denom;
 
+			if (g_debug) std::cout << "T Check Enter: " << t << std::endl;
             if (t > SPHERE_EPSILON)
             {
                 if (outT) *outT = t;
@@ -720,6 +726,7 @@ namespace avl
             }
             
             t = (-b + e) * denom;
+			if (g_debug) std::cout << "T Check Leave: " << t << std::endl;
             if (t > SPHERE_EPSILON)
             {
                 if (outT) *outT = t;

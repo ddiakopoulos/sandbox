@@ -43,10 +43,13 @@ struct RaytracedPlane : public Plane, public Traceable
 	}
 };
 
+extern bool g_debug;
+
 struct RaytracedSphere : public Sphere, public Traceable
 {
 	virtual RayIntersection intersects(const Ray & ray) override final
 	{
+		if (g_debug) std::cout << "Sphere Check Ray: " << ray << std::endl;
 		float outT;
 		float3 outNormal;
 		if (intersect_ray_sphere(ray, *this, &outT, &outNormal)) return RayIntersection(outT, outNormal, m.get());

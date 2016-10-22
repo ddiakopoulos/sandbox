@@ -106,6 +106,10 @@ struct Scene
 
 		RayIntersection intersection = scene_intersects(ray);
 
+		if (g_debug)
+		{
+			std::cout << "Isct d " << intersection.d << std::endl;
+		}
 		// Assuming no intersection, early exit with the environment color
 		if (!intersection())
 		{
@@ -194,7 +198,7 @@ struct Scene
 		float3 refl;
 		if (length(sampleDirection) > 0.0f)
 		{
-			float3 originWithEpsilon = surfaceInfo->P + (float(0.001f) * sampleDirection);
+			float3 originWithEpsilon = surfaceInfo->P + (float(0.0001f) * sampleDirection);
 			if (g_debug) std::cout << "Refl trace... origin with epsilon: " << originWithEpsilon << std::endl;
 			refl = trace_ray(Ray(originWithEpsilon, sampleDirection), gen, weight, depth + 1);
 		}

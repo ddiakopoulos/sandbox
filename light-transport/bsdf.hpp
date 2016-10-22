@@ -130,19 +130,19 @@ struct DialectricBSDF : public BSDF
 
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
-		float3 local = -event.info->Wo;// normalize(float3(dot(event.info->T, event.info->Wo), dot(event.info->BT, event.info->Wo), dot(event.info->N, event.info->Wo)));
+		float3 local =event.info->Wo;// normalize(float3(dot(event.info->T, event.info->Wo), dot(event.info->BT, event.info->Wo), dot(event.info->N, event.info->Wo)));
 
 		// Entering the medium or leaving it? 
-		float3 orientedNormal = normalize(dot(event.info->N, local) > 0.0f ? event.info->N : -1.f * event.info->N);
-		bool entering = dot(orientedNormal, event.info->P) > 0.0f;
+		//float3 orientedNormal = normalize(dot(event.info->N, local) > 0.0f ? event.info->N : -1.f * event.info->N);
+		//bool entering = dot(orientedNormal, event.info->P) > 0.0f;
 
 		// Calculate eta depending on situation
-		bool e = local.z < 0.f;
-		float eta = e ? (IoR) : (1.f / IoR);
+		bool e = local.z > 0.f;
+		float eta = e ?  (1.f / IoR) : (IoR) ;
 
 		// Angle of refraction
 		float CosThetaT = 0.0f;
-		const float CosThetaI = std::abs(local.z);
+		const float CosThetaI = -dot(event.info->Wo, event.info->N);// std::abs(local.z);
 		const float reflectance = dielectric_reflectance(eta, CosThetaI, CosThetaT);
 
 		if (g_debug)
@@ -176,11 +176,14 @@ struct DialectricBSDF : public BSDF
 				weight = float3(0.f);
 			}
 			// Refract 
-			if (g_debug) std::cout << "Refract...\n";
 			event.Wi = float3(-local.x * eta, -local.y * eta, -std::copysign(CosThetaT, local.z));
+			if (g_debug) std::cout << "Refract...\n";
+			if (g_debug) std::cout << "---> Outgoing: " << event.Wi << std::endl;
+
 			event.pdf = 1.f - reflectance;
 			float3 transmittance = event.info->Kd;
 			weight = (1.f - reflectance) * transmittance;
+
 		}
 
 		if (g_debug) std::cout << "---------------------------------------------\n";
