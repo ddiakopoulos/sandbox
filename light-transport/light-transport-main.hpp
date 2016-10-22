@@ -20,6 +20,7 @@
 // http://mathinfo.univ-reims.fr/IMG/pdf/Using_the_modified_Phong_reflectance_model_for_Physically_based_rendering_-_Lafortune.pdf
 // http://www.rorydriscoll.com/2009/01/07/better-sampling/
 // http://www.cs.cornell.edu/courses/cs465/2004fa/lectures/22advray/22advray.pdf
+// http://vision.ime.usp.br/~acmt/hakyll/assets/files/wynn.pdf
 
 // ToDo
 // ----------------------------------------------------------------------------
@@ -48,6 +49,8 @@
 // [ ] Bidirectional path tracing
 // [ ] Other render targets: depth buffer, normal buffer
 // [ ] Embree acceleration
+
+static bool g_debug = false;
 
 UniformRandomGenerator gen;
 static bool takeScreenshot = true;
@@ -96,6 +99,8 @@ struct Scene
 	// Returns the incoming radiance of `Ray` via unidirectional path tracing
 	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, float3 weight, const int depth)
 	{
+		if (g_debug) std::cout << "Lum Weight: " << luminance(weight) << std::endl;
+
 		// Early exit with no radiance
 		if (depth >= maxRecursion || luminance(weight) <= 0.0f) return float3(0, 0, 0);
 
@@ -110,10 +115,10 @@ struct Scene
 		BSDF * bsdf = intersection.m;
 
 		// Russian roulette termination
-		const float p = gen.random_float_safe(); // In the range [0.001f, 0.999f)
-		float shouldContinue = min(luminance(weight), 1.f);
-		if (p > shouldContinue) return float3(0.f, 0.f, 0.f);
-		else weight /= shouldContinue;
+		//const float p = gen.random_float_safe(); // In the range [0.001f, 0.999f)
+		//float shouldContinue = min(luminance(weight), 1.f);
+		//if (p > shouldContinue) return float3(0.f, 0.f, 0.f);
+		//else weight /= shouldContinue;
 
 		float3 tangent;
 		float3 bitangent;
@@ -127,21 +132,23 @@ struct Scene
 		surfaceInfo->BT = normalize(bitangent);
 		surfaceInfo->Kd = bsdf->Kd;
 
+		if (g_debug) std::cout << "New Scatter: " << depth << " - " << surfaceInfo->Wo << std::endl;
+
 		// Create a new BSDF event with the relevant intersection data
 		SurfaceScatterEvent scatter(surfaceInfo);
 
-		float4x4 tangentToWorld(float4(surfaceInfo->BT,0.f), float4(surfaceInfo->N, 0.f), float4(surfaceInfo->T, 0.f), float4(0, 0, 0, 1.f));
-
 		// Sample from direct light sources
 		float3 directLighting;
+
 		for (const auto light : lights)
 		{
 			float3 lightWi;
 			float lightPDF;
 			float3 lightSample = light->sample(gen, surfaceInfo->P, lightWi, lightPDF);
 
+			float3 originWithEpsilon = surfaceInfo->P + (float(0.001f) * surfaceInfo->N);
 			// Make a shadow ray to check for occlusion between surface and a direct light
-			RayIntersection occlusion = scene_intersects({ add_epsilon(surfaceInfo->P, surfaceInfo->N), lightWi });
+			RayIntersection occlusion = scene_intersects({ originWithEpsilon, lightWi });
 
 			// If it's not occluded we can see the light source
 			if (!occlusion())
@@ -152,8 +159,11 @@ struct Scene
 				lightInfo->P = ray.direction * intersection.d + ray.origin;
 				lightInfo->N = intersection.normal;
 
+				if (g_debug) std::cout << "Sampling from light src...\n";
 				SurfaceScatterEvent direct(lightInfo);
 				auto surfaceColor = bsdf->sample(gen, direct);
+
+				if (direct.pdf <= 0.f) break;
 
 				// Integrate over the number of direct lighting samples
 				float3 Ld;
@@ -168,9 +178,12 @@ struct Scene
 		}
 
 		// Sample the diffuse brdf of the intersected material
-		float3 brdfSample = bsdf->sample(gen, scatter) * float3(1, 1, 1);
-		float3 sampleDirection = scatter.Wi;
-		//sampleDirection = transform_coord(tangentToWorld, sampleDirection); // Fixme
+		float3 brdfSample = bsdf->sample(gen, scatter);
+
+		// To global
+		float3 sampleDirection = scatter.Wi; // normalize(tangent*scatter.Wi.x + bitangent*scatter.Wi.y + scatter.info->N*scatter.Wi.z);
+
+		//if (scatter.pdf <= 0.f || brdfSample == float3(0, 0, 0)) return float3(0, 0, 0);
 
 		const float NdotL = avl::clamp(float(std::abs(dot(sampleDirection, scatter.info->N))), 0.f, 1.f);
 
@@ -181,7 +194,9 @@ struct Scene
 		float3 refl;
 		if (length(sampleDirection) > 0.0f)
 		{
-			refl = trace_ray(Ray(add_epsilon(surfaceInfo->P, surfaceInfo->N), sampleDirection), gen, weight, depth + 1);
+			float3 originWithEpsilon = surfaceInfo->P + (float(0.001f) * sampleDirection);
+			if (g_debug) std::cout << "Refl trace... origin with epsilon: " << originWithEpsilon << std::endl;
+			refl = trace_ray(Ray(originWithEpsilon, sampleDirection), gen, weight, depth + 1);
 		}
 
 		// Free the hit struct
@@ -348,29 +363,33 @@ struct ExperimentalApp : public GLFWApp
 		*/
 
 		a->m = std::make_shared<IdealDiffuse>();
-		a->m->Kd = float3(45.f/255.f, 122.f / 255.f, 199.f / 255.f);
 		a->radius = 0.5f;
+		//a->m->Kd = float3(45.f/255.f, 122.f / 255.f, 199.f / 255.f);
+		a->m->Kd = float3(1, 1, 1);
 		a->center = float3(-0.66f, 0.50f, 0);
 
 		b->m = std::make_shared<IdealDiffuse>();
 		b->radius = 0.5f;
-		b->m->Kd = float3(70.f / 255.f, 57.f / 255.f, 192.f / 255.f);
+		//b->m->Kd = float3(70.f / 255.f, 57.f / 255.f, 192.f / 255.f);
+		b->m->Kd = float3(1, 1, 1);
 		b->center = float3(+0.66f, 0.50f, 0);
 
 		c->m = std::make_shared<IdealDiffuse>();
 		c->radius = 0.5f;
-		c->m->Kd = float3(192.f / 255.f, 70.f / 255.f, 57.f / 255.f);
+		//c->m->Kd = float3(192.f / 255.f, 70.f / 255.f, 57.f / 255.f);
+		c->m->Kd = float3(1, 1, 1);
 		c->center = float3(-0.33f, 0.50f, +0.66f);
 
 		d->m = std::make_shared<IdealDiffuse>();
 		d->radius = 0.5f;
-		d->m->Kd = float3(181.f / 255.f, 51.f / 255.f, 193.f / 255.f);
+		//d->m->Kd = float3(181.f / 255.f, 51.f / 255.f, 193.f / 255.f);
+		d->m->Kd = float3(1, 1, 1);
 		d->center = float3(+0.33f, 0.50f, 0.66f);
 
 		glassSphere->m = std::make_shared<DialectricBSDF>();
-		glassSphere->m->Kd = float3(1, 1, 1);
-		glassSphere->radius = 0.33f;
-		glassSphere->center = float3(0.f, 0.5f, 2.25);
+		glassSphere->radius = 0.50f;
+		glassSphere->m->Kd = float3(1.f);
+		glassSphere->center = float3(1.5f, 0.5f, 1.25);
 
 		floor->m = std::make_shared<IdealSpecular>();
 		floor->m->Kd = float3(0.9, 0.9, 0.9);
@@ -551,8 +570,10 @@ struct ExperimentalApp : public GLFWApp
 
 		if (event.type == InputEvent::MOUSE && event.action == GLFW_RELEASE)
 		{
-			auto sample = film->debug_trace(scene, gen, int2(event.cursor.x, HEIGHT - event.cursor.y), samplesPerPixel);
+			g_debug = true;
+			auto sample = film->debug_trace(scene, gen, int2(event.cursor.x, HEIGHT - event.cursor.y), 1); // note 4 instead of samplesPerPixel
 			std::cout << "Debug Trace: " << sample << std::endl;
+			g_debug = false;
 		}
 	}
 

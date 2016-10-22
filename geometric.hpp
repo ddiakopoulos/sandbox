@@ -708,9 +708,9 @@ namespace avl
         else
         {
             float e = std::sqrt(disc);
-            float denom = 2.0f * a;
+            float denom = 1.f / (2.0f * a);
             
-            t = (-b - e) / denom;
+            t = (-b - e) * denom;
 
             if (t > SPHERE_EPSILON)
             {
@@ -719,7 +719,7 @@ namespace avl
                 return true;
             }
             
-            t = (-b + e) / denom;
+            t = (-b + e) * denom;
             if (t > SPHERE_EPSILON)
             {
                 if (outT) *outT = t;

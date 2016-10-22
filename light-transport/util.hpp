@@ -56,11 +56,15 @@ inline float luminance(float3 c)
 }
 
 // Make a tangent space coordinate system for isotropic BRDFs. vec1 (the normal) must be normalized beforehand.
-inline void make_tangent_frame(const float3 & vector1, float3 & vector2, float3 & vector3)
+inline void make_tangent_frame(const float3 & normal, float3 & tangent, float3 & bitangent)
 {
-	if (std::fabs(vector1.x) > std::fabs(vector1.y)) vector2 = normalize(float3(vector1.z, 0, -vector1.x));
-	else vector2 = normalize(float3(0, -vector1.z, vector1.y));
-	vector3 = normalize(cross(vector1, vector2));	
+	if (std::fabs(normal.x) > std::fabs(normal.y)) tangent = normalize(float3(normal.z, 0, -normal.x));
+	else tangent = normalize(float3(0, -normal.z, normal.y));
+	bitangent = normalize(cross(normal, tangent));
+	//if (std::abs(normal.x) > std::abs(normal.y)) tangent = float3(0.0f, 1.0f, 0.0f);
+	//else tangent = float3(1.0f, 0.0f, 0.0f);
+	//bitangent = normalize(cross(normal, tangent));
+	//tangent = cross(bitangent, normal);
 }
 
 // Add an epsilon to a ray origin to avoid self intersections
@@ -71,11 +75,13 @@ inline float3 add_epsilon(const float3 & point, const float3 & direction)
 
 inline float dielectric_reflectance(float eta, float cosThetaI, float & cosThetaT)
 {
+	/*
 	if (cosThetaI < 0.0f) 
 	{
 		eta = 1.0f / eta;
 		cosThetaI = -cosThetaI;
 	}
+	*/
 	float sinThetaTSq = eta * eta * (1.0f - cosThetaI * cosThetaI);
 	if (sinThetaTSq > 1.0f) 
 	{
@@ -102,5 +108,12 @@ inline bool reflection_constraint(const float3 & wi, const float3 & wo)
 {
 	return std::abs(wi.z*wo.z - wi.x*wo.x - wi.y*wo.y - 1.0f) < DiracAcceptanceThreshold;
 }
+
+static inline bool refraction_constraint(const float3 &wi, const float3 &wo, float eta, float cosThetaT)
+{
+	float dotP = -wi.x*wo.x*eta - wi.y*wo.y*eta - std::copysign(cosThetaT, wi.z)*wo.z;
+	return std::abs(dotP - 1.0f) < DiracAcceptanceThreshold;
+}
+
 
 #endif

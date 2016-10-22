@@ -21,6 +21,7 @@
 // ============================================================================
 
 const float glassAirIndexOfRefraction = 1.523f;
+extern bool g_debug;
 
 struct IntersectionInfo
 {
@@ -99,45 +100,92 @@ struct Mirror : public BSDF
 	}
 };
 
+float3 fuck(const float3 & incident, const float3 & normal, float * eta)
+{
+	float3 n = normal;
+
+	float cos = dot(normal, incident);
+
+	// check if the incident direction is inside the medium
+	if (cos < 0.0f) {
+		cos = -cos;
+		n = -n;
+		*eta = 1.0f / *eta;
+	}
+
+	// check for total internal reflection
+	float sin2t = (*eta * *eta) * (1.0f - cos * cos);
+
+	if (sin2t > 1.0f) {
+		return float3(0.0f, 0.0f, 0.0f);
+	}
+
+	return -(*eta) * incident + (*eta * cos - std::sqrt(1.0f - sin2t)) * n;
+}
+
+
 struct DialectricBSDF : public BSDF
 {
 	float IoR = glassAirIndexOfRefraction;
 
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
+		float3 local = -event.info->Wo;// normalize(float3(dot(event.info->T, event.info->Wo), dot(event.info->BT, event.info->Wo), dot(event.info->N, event.info->Wo)));
+
 		// Entering the medium or leaving it? 
-		//float3 orientedNormal = dot(event.info->N, event.info->Wo) > 0.0f ? event.info->N : -1.f * event.info->N;
-		//bool entering = dot(event.info->N, event.info->P) > 0.0f;
+		float3 orientedNormal = normalize(dot(event.info->N, local) > 0.0f ? event.info->N : -1.f * event.info->N);
+		bool entering = dot(orientedNormal, event.info->P) > 0.0f;
 
 		// Calculate eta depending on situation
-		const float eta = event.info->Wo.z < 0.0f ? (IoR) : 1.f / IoR;
-
-		//std::cout << eta << std::endl;
+		bool e = local.z < 0.f;
+		float eta = e ? (IoR) : (1.f / IoR);
 
 		// Angle of refraction
 		float CosThetaT = 0.0f;
-		const float CosThetaI = abs(event.info->Wo.z);
+		const float CosThetaI = std::abs(local.z);
 		const float reflectance = dielectric_reflectance(eta, CosThetaI, CosThetaT);
 
-		//std::cout << reflectance << std::endl;
+		if (g_debug)
+		{
+			std::cout << "Entering: " << e << std::endl;
+			std::cout << "Eta:    : " << eta << std::endl;
+			std::cout << "Wo:     : " << event.info->Wo << std::endl;
+			std::cout << "Theta T : " << CosThetaT << std::endl;
+			std::cout << "Theta I : " << CosThetaI << std::endl;
+			std::cout << "Refl    : " << reflectance << std::endl;
+		}
 
-		const float reflectionProbability = gen.random_float();
-		if (reflectionProbability < reflectance)
+		float3 weight;
+
+		if (gen.random_float() < reflectance)
 		{			
 			// Reflect
-			event.Wi = float3(-event.info->Wo.x, -event.info->Wo.y, event.info->Wo.z);
-			event.pdf = reflectance;;
-			return event.info->Kd * reflectance / std::abs(event.Wi.z);
+			event.Wi = float3(-local.x, -local.y, local.z);
+			event.pdf = reflectance;
+			weight = event.info->Kd * reflectance;
+			if (g_debug) std::cout << "Reflect...\n";
 		}
 		else
 		{
-			if (reflectance == 1.f) return float3(0, 0, 0);
-			// Refract
-			//event.Wi = float3(eta * -event.info->Wo.x, eta * -event.info->Wo.y, -std::copysign(CosThetaT, event.info->Wo.z));
-			//event.pdf = 1.f - reflectance;
-			//return event.info->Kd * ((1.f - reflectance) / std::abs(event.Wi.z));
+			// Total internal reflection
+			if (reflectance == 1.f)
+			{
+				if (g_debug) std::cout << "TIR...\n";
+				event.Wi = float3(0, 0, 0);
+				event.pdf = 0.f;
+				weight = float3(0.f);
+			}
+			// Refract 
+			if (g_debug) std::cout << "Refract...\n";
+			event.Wi = float3(-local.x * eta, -local.y * eta, -std::copysign(CosThetaT, local.z));
+			event.pdf = 1.f - reflectance;
+			float3 transmittance = event.info->Kd;
+			weight = (1.f - reflectance) * transmittance;
 		}
-		return float3(0, 0, 0);
+
+		if (g_debug) std::cout << "---------------------------------------------\n";
+		return weight;
+		
 	}
 
 	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
