@@ -38,9 +38,6 @@ struct Quad
 		normal /= area;
 
 		invUvSq = 1.0f / float2(length2(edge0), length2(edge1));
-
-		std::cout << transform << std::endl;
-
 	}
 };
 

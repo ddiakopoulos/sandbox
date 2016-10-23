@@ -64,7 +64,6 @@ struct Emissive : public BSDF
 	}
 };
 
-
 struct IdealDiffuse : public BSDF
 {
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final

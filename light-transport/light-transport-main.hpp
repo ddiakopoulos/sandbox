@@ -136,16 +136,27 @@ struct Scene
 		// Sample from direct light sources
 		float3 directLighting;
 
+		bool emissive = false;
+		if (dynamic_cast<Emissive*>(bsdf))
+		{
+			emissive = true;
+		}
+
 		for (const auto light : lights)
 		{
 			float3 lightWi;
 			float lightPDF;
 			float3 lightSample = light->sample_direct(gen, surfaceInfo->P, lightWi, lightPDF);
 
+			if (emissive)
+			{
+				directLighting += lightSample / lightPDF;
+			}
+
 			// Make a shadow ray to check for occlusion between surface and a direct light
 			RayIntersection occlusion = scene_intersects({ surfaceInfo->P, lightWi });
 
-			// If it's not occluded we can see the light source
+			// If it's not occluded  we can see the light source
 			if (!occlusion())
 			{
 				// Sample from the BSDF
@@ -166,6 +177,7 @@ struct Scene
 					Ld += lightSample * surfaceColor;
 				}
 
+				//std::cout << "Computed: " << directLighting << std::endl;
 				directLighting += (Ld / float3(light->numSamples)) / lightPDF;
 
 				delete lightInfo;
@@ -195,7 +207,7 @@ struct Scene
 
 		// Free the hit struct
 		delete surfaceInfo;
-		
+
 		return clamp(weight * directLighting + refl, 0.f, 1.f);
 	}
 };
@@ -346,10 +358,19 @@ struct ExperimentalApp : public GLFWApp
 
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
-		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		pointLight->lightPos = float3(0, 2, 0);
-		pointLight->intensity = float3(1, 1, 1);
-		scene.lights.push_back(pointLight);
+		//std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
+		//pointLight->lightPos = float3(0, 2, 0);
+		//pointLight->intensity = float3(1, 1, 1);
+		//scene.lights.push_back(pointLight);
+
+		q->q.reset(new Quad(float3(-0.5, 0, 0), float3(0, 1, 0), float3(1, 0, 0)));
+		q->m = std::make_shared<Emissive>();
+		q->m->Kd = float3(1, 1, 0);
+
+		std::shared_ptr<AreaLight> areaLight = std::make_shared<AreaLight>();
+		areaLight->intensity = float3(1, 1, 1);
+		areaLight->quad = q->q.get();
+		scene.lights.push_back(areaLight);
 
 		/*
 		std::shared_ptr<RaytracedBox> areaLightGeometry = std::make_shared<RaytracedBox>();
@@ -360,11 +381,6 @@ struct ExperimentalApp : public GLFWApp
 		areaLightGeometry->_min = float3(-2.55, 0.f, -2.66);
 		areaLightGeometry->_max = float3(-2.66, 2.66f, +2.66);
 		scene.objects.push_back(areaLightGeometry);
-
-		std::shared_ptr<AreaLight> areaLight = std::make_shared<AreaLight>();
-		areaLight->intensity = float3(1, 1, 1);
-		areaLight->box = areaLightGeometry;
-		scene.lights.push_back(areaLight);
 		*/
 
 		/*
@@ -373,10 +389,6 @@ struct ExperimentalApp : public GLFWApp
 		pointLight2->intensity = float3(1, 1, 0.5);
 		scene.lights.push_back(pointLight2);
 		*/
-
-		q->q.reset(new Quad(float3(0, 0, 0), float3(0, 1, 0), float3(1, 0, 0)));
-		q->m = std::make_shared<IdealDiffuse>();
-		q->m->Kd = float3(1, 1, 0);
 
 		a->m = std::make_shared<IdealDiffuse>();
 		a->radius = 0.5f;
