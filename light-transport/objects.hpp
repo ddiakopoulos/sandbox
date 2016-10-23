@@ -10,6 +10,70 @@
 
 using namespace avl;
 
+struct Quad
+{
+	float3 base;
+	float3 edge0, edge1;
+	float2 invUvSq;
+	float3 normal;
+	float area;
+	float invArea;
+	float4x4 transform;
+
+	Quad(float3 b, float3 e0, float3 e1) : base(b), edge0(e0), edge1(e1)
+	{
+		float4x4 t(float4(edge0, 0), float4(cross(edge1, edge0), 0), float4(edge1, 0), float4(0, 0, 0, 1));
+		transform = mul(make_translation_matrix(base + edge0 * 0.5f + edge1 * 0.5f), t);
+
+		// Prepare for render... 
+		base = transform_coord(transform, float3(0, 0, 0));
+		edge0 = transform_vector(transform, float3(1, 0, 0));
+		edge1 = transform_vector(transform, float3(0, 0, 1));
+		base -= edge0 * 0.5f;
+		base -= edge1 * 0.5f;
+
+		normal = cross(edge1, edge0);
+		area = length(normal);
+		invArea = 1.0f / area;
+		normal /= area;
+
+		invUvSq = 1.0f / float2(length2(edge0), length2(edge1));
+
+		std::cout << transform << std::endl;
+
+	}
+};
+
+bool intersect_ray_quad(const Ray & ray, const Quad & q, float & outT, float3 & P)
+{
+	float nDotW = dot(q.normal, ray.direction);
+
+	if (std::abs(nDotW) < 1e-6f)
+		return false;
+
+	float t = dot(q.normal, q.base - ray.origin) / nDotW;
+
+	float3 p = ray.origin + t * ray.direction;
+	float3 v = p - q.base;
+
+	float l0 = dot(v, q.edge0) * q.invUvSq.x;
+	float l1 = dot(v, q.edge1) * q.invUvSq.y;
+
+	if (l0 < 0.0f || l0 > 1.0f || l1 < 0.0f || l1 > 1.0f)
+	{
+		return false;
+	}
+
+	outT = t;
+	P = p;
+
+	// u = l0;
+	// v = 1.0f - l1;
+	return true;
+}
+
+// ---------------
+
 struct RayIntersection
 {
 	float d = std::numeric_limits<float>::infinity();
@@ -43,13 +107,26 @@ struct RaytracedPlane : public Plane, public Traceable
 	}
 };
 
-extern bool g_debug;
+struct RaytracedQuad : public Traceable
+{
+	std::unique_ptr<Quad> q;
+	virtual RayIntersection intersects(const Ray & ray)  override final
+	{
+		float outT;
+		float3 outIntersection;
+		if (intersect_ray_quad(ray, *q.get(), outT, outIntersection)) return RayIntersection(outT, q.get()->normal, m.get());
+		else return RayIntersection();
+	}
+	virtual Bounds3D world_bounds() const override final
+	{
+		return Bounds3D();
+	}
+};
 
 struct RaytracedSphere : public Sphere, public Traceable
 {
 	virtual RayIntersection intersects(const Ray & ray) override final
 	{
-		if (g_debug) std::cout << "Sphere Check Ray: " << ray << std::endl;
 		float outT;
 		float3 outNormal;
 		if (intersect_ray_sphere(ray, *this, &outT, &outNormal)) return RayIntersection(outT, outNormal, m.get());

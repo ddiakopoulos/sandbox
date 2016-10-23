@@ -49,6 +49,22 @@ struct BSDF
 	virtual float3 eval(const float3 & Wo, const float3 & Wi, SurfaceScatterEvent & event) const { return Kd * eval(Wo, Wi); }
 };
 
+struct Emissive : public BSDF
+{
+	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
+	{
+		event.Wi = cosine_hemisphere({ gen.random_float(), gen.random_float() }); // sample
+		event.pdf = cosine_hemisphere_pdf(event.Wi);
+		return float3(1, 1, 1);// Kd * eval(event.info->Wo, event.Wi);
+	}
+
+	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
+	{
+		return 1.0f;
+	}
+};
+
+
 struct IdealDiffuse : public BSDF
 {
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final

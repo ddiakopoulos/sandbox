@@ -140,7 +140,7 @@ struct Scene
 		{
 			float3 lightWi;
 			float lightPDF;
-			float3 lightSample = light->sample(gen, surfaceInfo->P, lightWi, lightPDF);
+			float3 lightSample = light->sample_direct(gen, surfaceInfo->P, lightWi, lightPDF);
 
 			// Make a shadow ray to check for occlusion between surface and a direct light
 			RayIntersection occlusion = scene_intersects({ surfaceInfo->P, lightWi });
@@ -157,7 +157,7 @@ struct Scene
 				SurfaceScatterEvent direct(lightInfo);
 				auto surfaceColor = bsdf->sample(gen, direct);
 
-				if (direct.pdf <= 0.f) break;
+				if (direct.pdf <= 0.f || lightPDF <= 0.f) break;
 
 				// Integrate over the number of direct lighting samples
 				float3 Ld;
@@ -165,7 +165,8 @@ struct Scene
 				{
 					Ld += lightSample * surfaceColor;
 				}
-				directLighting = (Ld / float3(light->numSamples)) / lightPDF;
+
+				directLighting += (Ld / float3(light->numSamples)) / lightPDF;
 
 				delete lightInfo;
 			}
@@ -303,7 +304,7 @@ struct ExperimentalApp : public GLFWApp
 	std::condition_variable renderCv;
 	std::map<std::thread::id, std::atomic<bool>> threadTaskState;
 	std::atomic<int> numIdleThreads;
-	const int numWorkers = std::thread::hardware_concurrency();
+	const int numWorkers = 1; // std::thread::hardware_concurrency();
 
 	ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
 	{
@@ -330,6 +331,8 @@ struct ExperimentalApp : public GLFWApp
 		scene.ambient = float3(.0f);
 		scene.environment = float3(0.f);
 
+		std::shared_ptr<RaytracedQuad> q = std::make_shared<RaytracedQuad>();
+
 		std::shared_ptr<RaytracedSphere> a = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> b = std::make_shared<RaytracedSphere>();
 		std::shared_ptr<RaytracedSphere> c = std::make_shared<RaytracedSphere>();
@@ -349,11 +352,36 @@ struct ExperimentalApp : public GLFWApp
 		scene.lights.push_back(pointLight);
 
 		/*
+		std::shared_ptr<RaytracedBox> areaLightGeometry = std::make_shared<RaytracedBox>();
+		areaLightGeometry->m = std::make_shared<Emissive>();
+		areaLightGeometry->m->Kd = float3(1.0f, 1.0f, 1.0f);
+		//areaLightGeometry->_min = float3(-1.0, 3.5f, -1.0);
+		//areaLightGeometry->_max = float3(+1.0, +4.0f, +1.0);
+		areaLightGeometry->_min = float3(-2.55, 0.f, -2.66);
+		areaLightGeometry->_max = float3(-2.66, 2.66f, +2.66);
+		scene.objects.push_back(areaLightGeometry);
+
+		std::shared_ptr<AreaLight> areaLight = std::make_shared<AreaLight>();
+		areaLight->intensity = float3(1, 1, 1);
+		areaLight->box = areaLightGeometry;
+		scene.lights.push_back(areaLight);
+		*/
+
+		/*
 		std::shared_ptr<PointLight> pointLight2 = std::make_shared<PointLight>();
 		pointLight2->lightPos = float3(0, 4, 0);
 		pointLight2->intensity = float3(1, 1, 0.5);
 		scene.lights.push_back(pointLight2);
 		*/
+
+		q->q.reset(new Quad(float3(0, 0, 0), float3(0, 1, 0), float3(1, 0, 0)));
+		q->m = std::make_shared<IdealDiffuse>();
+		q->m->Kd = float3(1, 1, 0);
+
+		a->m = std::make_shared<IdealDiffuse>();
+		a->radius = 0.5f;
+		a->m->Kd = float3(1, 1, 1);
+		a->center = float3(-0.66f, 0.50f, 0);
 
 		a->m = std::make_shared<IdealDiffuse>();
 		a->radius = 0.5f;
@@ -410,16 +438,18 @@ struct ExperimentalApp : public GLFWApp
 		//scene.objects.push_back(plane);
 
 		scene.objects.push_back(floor);
-		scene.objects.push_back(leftWall);
+		//scene.objects.push_back(leftWall);
 		scene.objects.push_back(rightWall);
 		scene.objects.push_back(backWall);
 
-		scene.objects.push_back(a);
-		scene.objects.push_back(b);
-		scene.objects.push_back(c);
-		scene.objects.push_back(d);
+		//scene.objects.push_back(a);
+		//scene.objects.push_back(b);
+		//scene.objects.push_back(c);
+		//scene.objects.push_back(d);
 
-		scene.objects.push_back(glassSphere);
+		//scene.objects.push_back(glassSphere);
+
+		scene.objects.push_back(q);
 
 		/*
 		auto torusKnot = load_geometry_from_ply("assets/models/geometry/TorusKnotUniform.ply");
@@ -452,7 +482,7 @@ struct ExperimentalApp : public GLFWApp
 		// Traverse + build BVH accelerator for the objects we've added to the scene
 		{
 			ScopedTimer("BVH Generation");
-			scene.accelerate();
+			//scene.accelerate();
 		}
 
 		// Generate a vector of all possible pixel locations to raytrace

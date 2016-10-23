@@ -10,15 +10,15 @@
 
 struct Light
 {
-	int numSamples = 1;
-	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const = 0;
+	int numSamples = 4;
+	virtual float3 sample_direct(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const = 0;
 };
 
 struct PointLight : public Light
 {
 	float3 intensity = { 1.f, 1.f, 1.f };
 	float3 lightPos = { 0.f, 0.f, 0.f };
-	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
+	virtual float3 sample_direct(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
 		Wi = normalize(lightPos - P) * uniform_sphere({ gen.random_float(), gen.random_float() }); // comment the sphere sample for hard shadows
 		pdf = uniform_sphere_pdf();
@@ -26,27 +26,14 @@ struct PointLight : public Light
 	}
 };
 
-struct SpotLight : public Light
-{
-	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
-	{
-		return float3(1.f);
-	}
-};
-
-struct DirectionalLight : public Light
-{
-	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
-	{
-		return float3(1.f);
-	}
-};
-
 struct AreaLight : public Light
 {
-	virtual float3 sample(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
+	std::shared_ptr<RaytracedBox> box;
+	float3 intensity = { 1.f, 1.f, 1.f };
+	virtual float3 sample_direct(UniformRandomGenerator & gen, const float3 & P, float3 & Wi, float & pdf) const override final
 	{
-		return float3(1.f);
+
+		return float3(0.f);
 	}
 };
 
