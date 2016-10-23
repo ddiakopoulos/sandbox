@@ -150,9 +150,10 @@ struct Scene
 			float lightPDF;
 			float3 lightSample = light->sample(gen, surfaceInfo->P, lightWi, lightPDF);
 
-			float3 originWithEpsilon = surfaceInfo->P + (float(0.001f) * surfaceInfo->N);
+			//float3 originWithEpsilon = surfaceInfo->P + (float(0.001f) * surfaceInfo->N);
+
 			// Make a shadow ray to check for occlusion between surface and a direct light
-			RayIntersection occlusion = scene_intersects({ originWithEpsilon, lightWi });
+			RayIntersection occlusion = scene_intersects({ surfaceInfo->P, lightWi });
 
 			// If it's not occluded we can see the light source
 			if (!occlusion())

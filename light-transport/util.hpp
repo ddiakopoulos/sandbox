@@ -73,7 +73,7 @@ inline float3 add_epsilon(const float3 & point, const float3 & direction)
 	return point;// point + (direction * 0.0001f);
 }
 
-inline float dielectric_reflectance(float eta, float cosThetaI, float & cosThetaT)
+inline float dielectric_reflectance(const float eta, const float cosThetaI, float & cosThetaT)
 {
 	/*
 	if (cosThetaI < 0.0f) 
@@ -94,12 +94,6 @@ inline float dielectric_reflectance(float eta, float cosThetaI, float & cosTheta
 	float Rp = (eta * cosThetaT - cosThetaI) / (eta * cosThetaT + cosThetaI);
 
 	return (Rs*Rs + Rp*Rp)*0.5f;
-}
-
-inline float dielectric_reflectance(float eta, float cosThetaI)
-{
-	float cosThetaT;
-	return dielectric_reflectance(eta, cosThetaI, cosThetaT);
 }
 
 const float DiracAcceptanceThreshold = 1e-3f;

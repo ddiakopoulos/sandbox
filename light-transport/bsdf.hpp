@@ -33,7 +33,7 @@ struct IntersectionInfo
 	float3 Kd;
 };
 
-struct SurfaceScatterEvent 
+struct SurfaceScatterEvent
 {
 	const IntersectionInfo * info;
 	float3 Wi;
@@ -55,7 +55,7 @@ struct IdealDiffuse : public BSDF
 	{
 		event.Wi = cosine_hemisphere({ gen.random_float(), gen.random_float() }); // sample
 		event.pdf = cosine_hemisphere_pdf(event.Wi);
-		return Kd * eval(event.info->Wo, event.Wi); 
+		return Kd * eval(event.info->Wo, event.Wi);
 	}
 
 	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
@@ -90,7 +90,7 @@ struct Mirror : public BSDF
 	{
 		event.Wi = float3(-event.info->Wo.x, -event.info->Wo.y, event.info->Wo.z);
 		event.pdf = 1.f;
-		return event.info->Kd / std::abs(event.Wi.z); 
+		return event.info->Kd / std::abs(event.Wi.z);
 	}
 
 	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
@@ -100,54 +100,28 @@ struct Mirror : public BSDF
 	}
 };
 
-float3 fuck(const float3 & incident, const float3 & normal, float * eta)
-{
-	float3 n = normal;
-
-	float cos = dot(normal, incident);
-
-	// check if the incident direction is inside the medium
-	if (cos < 0.0f) {
-		cos = -cos;
-		n = -n;
-		*eta = 1.0f / *eta;
-	}
-
-	// check for total internal reflection
-	float sin2t = (*eta * *eta) * (1.0f - cos * cos);
-
-	if (sin2t > 1.0f) {
-		return float3(0.0f, 0.0f, 0.0f);
-	}
-
-	return -(*eta) * incident + (*eta * cos - std::sqrt(1.0f - sin2t)) * n;
-}
-
-
 struct DialectricBSDF : public BSDF
 {
 	float IoR = glassAirIndexOfRefraction;
 
 	virtual float3 sample(UniformRandomGenerator & gen, SurfaceScatterEvent & event) const override final
 	{
-		float3 local =event.info->Wo;// normalize(float3(dot(event.info->T, event.info->Wo), dot(event.info->BT, event.info->Wo), dot(event.info->N, event.info->Wo)));
-
 		// Entering the medium or leaving it? 
-		//float3 orientedNormal = normalize(dot(event.info->N, local) > 0.0f ? event.info->N : -1.f * event.info->N);
-		//bool entering = dot(orientedNormal, event.info->P) > 0.0f;
+		bool entering = dot(event.info->N, event.info->Wo) > 0.0f;
+		float3 normal = entering ? -event.info->N : event.info->N;
 
 		// Calculate eta depending on situation
-		bool e = local.z > 0.f;
-		float eta = e ?  (1.f / IoR) : (IoR) ;
+		float eta = entering ? IoR : (1.f / IoR);
 
 		// Angle of refraction
 		float CosThetaT = 0.0f;
-		const float CosThetaI = -dot(event.info->Wo, event.info->N);// std::abs(local.z);
+
+		const float CosThetaI = dot(event.info->Wo, -normal);
 		const float reflectance = dielectric_reflectance(eta, CosThetaI, CosThetaT);
 
 		if (g_debug)
 		{
-			std::cout << "Entering: " << e << std::endl;
+			std::cout << "Entering: " << entering << std::endl;
 			std::cout << "Eta:    : " << eta << std::endl;
 			std::cout << "Wo:     : " << event.info->Wo << std::endl;
 			std::cout << "Theta T : " << CosThetaT << std::endl;
@@ -158,9 +132,9 @@ struct DialectricBSDF : public BSDF
 		float3 weight;
 
 		if (gen.random_float() < reflectance)
-		{			
+		{
 			// Reflect
-			event.Wi = float3(-local.x, -local.y, local.z);
+			event.Wi = float3(-event.info->Wo.x, -event.info->Wo.y, event.info->Wo.z);
 			event.pdf = reflectance;
 			weight = event.info->Kd * reflectance;
 			if (g_debug) std::cout << "Reflect...\n";
@@ -171,12 +145,10 @@ struct DialectricBSDF : public BSDF
 			if (reflectance == 1.f)
 			{
 				if (g_debug) std::cout << "TIR...\n";
-				event.Wi = float3(0, 0, 0);
-				event.pdf = 0.f;
-				weight = float3(0.f);
 			}
 			// Refract 
-			event.Wi = float3(-local.x * eta, -local.y * eta, -std::copysign(CosThetaT, local.z));
+			event.Wi = normalize(float3(-event.info->Wo.x * eta, -event.info->Wo.y * eta, -std::copysign(CosThetaT, event.info->Wo.z)));
+			//event.Wi = normalize(refract(event.info->Wo, orientedNormal, eta));
 			if (g_debug) std::cout << "Refract...\n";
 			if (g_debug) std::cout << "---> Outgoing: " << event.Wi << std::endl;
 
@@ -188,7 +160,7 @@ struct DialectricBSDF : public BSDF
 
 		if (g_debug) std::cout << "---------------------------------------------\n";
 		return weight;
-		
+
 	}
 
 	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
