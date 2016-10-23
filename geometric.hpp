@@ -6,10 +6,6 @@
 #include "linalg_util.hpp"
 #include <ostream>
 
-
-extern bool g_debug;
-
-
 namespace avl
 {
     
@@ -707,7 +703,6 @@ namespace avl
         
 		if (disc < 0.0f)
 		{
-			if (g_debug) std::cout << "Disc less than 0..." << std::endl;
 			return false; 
 		}
         else
@@ -716,8 +711,6 @@ namespace avl
             float denom = 1.f / (2.0f * a);
             
             t = (-b - e) * denom;
-
-			if (g_debug) std::cout << "T Check Enter: " << t << std::endl;
             if (t > SPHERE_EPSILON)
             {
                 if (outT) *outT = t;
@@ -726,7 +719,6 @@ namespace avl
             }
             
             t = (-b + e) * denom;
-			if (g_debug) std::cout << "T Check Leave: " << t << std::endl;
             if (t > SPHERE_EPSILON)
             {
                 if (outT) *outT = t;

@@ -99,17 +99,11 @@ struct Scene
 	// Returns the incoming radiance of `Ray` via unidirectional path tracing
 	float3 trace_ray(const Ray & ray, UniformRandomGenerator & gen, float3 weight, const int depth)
 	{
-		if (g_debug) std::cout << "Lum Weight: " << luminance(weight) << std::endl;
-
 		// Early exit with no radiance
 		if (depth >= maxRecursion || luminance(weight) <= 0.0f) return float3(0, 0, 0);
 
 		RayIntersection intersection = scene_intersects(ray);
 
-		if (g_debug)
-		{
-			std::cout << "Isct d " << intersection.d << std::endl;
-		}
 		// Assuming no intersection, early exit with the environment color
 		if (!intersection())
 		{
@@ -119,10 +113,10 @@ struct Scene
 		BSDF * bsdf = intersection.m;
 
 		// Russian roulette termination
-		//const float p = gen.random_float_safe(); // In the range [0.001f, 0.999f)
-		//float shouldContinue = min(luminance(weight), 1.f);
-		//if (p > shouldContinue) return float3(0.f, 0.f, 0.f);
-		//else weight /= shouldContinue;
+		const float p = gen.random_float_safe(); // In the range [0.001f, 0.999f)
+		float shouldContinue = min(luminance(weight), 1.f);
+		if (p > shouldContinue) return float3(0.f, 0.f, 0.f);
+		else weight /= shouldContinue;
 
 		float3 tangent;
 		float3 bitangent;
@@ -136,8 +130,6 @@ struct Scene
 		surfaceInfo->BT = normalize(bitangent);
 		surfaceInfo->Kd = bsdf->Kd;
 
-		if (g_debug) std::cout << "New Scatter: " << depth << " - " << surfaceInfo->Wo << std::endl;
-
 		// Create a new BSDF event with the relevant intersection data
 		SurfaceScatterEvent scatter(surfaceInfo);
 
@@ -149,8 +141,6 @@ struct Scene
 			float3 lightWi;
 			float lightPDF;
 			float3 lightSample = light->sample(gen, surfaceInfo->P, lightWi, lightPDF);
-
-			//float3 originWithEpsilon = surfaceInfo->P + (float(0.001f) * surfaceInfo->N);
 
 			// Make a shadow ray to check for occlusion between surface and a direct light
 			RayIntersection occlusion = scene_intersects({ surfaceInfo->P, lightWi });
@@ -164,7 +154,6 @@ struct Scene
 				lightInfo->P = ray.direction * intersection.d + ray.origin;
 				lightInfo->N = intersection.normal;
 
-				if (g_debug) std::cout << "Sampling from light src...\n";
 				SurfaceScatterEvent direct(lightInfo);
 				auto surfaceColor = bsdf->sample(gen, direct);
 
@@ -186,9 +175,9 @@ struct Scene
 		float3 brdfSample = bsdf->sample(gen, scatter);
 
 		// To global
-		float3 sampleDirection = scatter.Wi; // normalize(tangent*scatter.Wi.x + bitangent*scatter.Wi.y + scatter.info->N*scatter.Wi.z);
+		float3 sampleDirection = scatter.Wi;
 
-		//if (scatter.pdf <= 0.f || brdfSample == float3(0, 0, 0)) return float3(0, 0, 0);
+		if (scatter.pdf <= 0.f || brdfSample == float3(0, 0, 0)) return float3(0, 0, 0);
 
 		const float NdotL = avl::clamp(float(std::abs(dot(sampleDirection, scatter.info->N))), 0.f, 1.f);
 
@@ -200,7 +189,6 @@ struct Scene
 		if (length(sampleDirection) > 0.0f)
 		{
 			float3 originWithEpsilon = surfaceInfo->P + (float(0.0001f) * sampleDirection);
-			if (g_debug) std::cout << "Refl trace... origin with epsilon: " << originWithEpsilon << std::endl;
 			refl = trace_ray(Ray(originWithEpsilon, sampleDirection), gen, weight, depth + 1);
 		}
 

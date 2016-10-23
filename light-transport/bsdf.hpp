@@ -115,19 +115,8 @@ struct DialectricBSDF : public BSDF
 
 		// Angle of refraction
 		float CosThetaT = 0.0f;
-
 		const float CosThetaI = dot(event.info->Wo, -normal);
 		const float reflectance = dielectric_reflectance(eta, CosThetaI, CosThetaT);
-
-		if (g_debug)
-		{
-			std::cout << "Entering: " << entering << std::endl;
-			std::cout << "Eta:    : " << eta << std::endl;
-			std::cout << "Wo:     : " << event.info->Wo << std::endl;
-			std::cout << "Theta T : " << CosThetaT << std::endl;
-			std::cout << "Theta I : " << CosThetaI << std::endl;
-			std::cout << "Refl    : " << reflectance << std::endl;
-		}
 
 		float3 weight;
 
@@ -137,30 +126,20 @@ struct DialectricBSDF : public BSDF
 			event.Wi = float3(-event.info->Wo.x, -event.info->Wo.y, event.info->Wo.z);
 			event.pdf = reflectance;
 			weight = event.info->Kd * reflectance;
-			if (g_debug) std::cout << "Reflect...\n";
 		}
 		else
 		{
 			// Total internal reflection
-			if (reflectance == 1.f)
-			{
-				if (g_debug) std::cout << "TIR...\n";
-			}
+			if (reflectance == 1.f) return float3(0, 0, 0);
+
 			// Refract 
 			event.Wi = normalize(float3(-event.info->Wo.x * eta, -event.info->Wo.y * eta, -std::copysign(CosThetaT, event.info->Wo.z)));
-			//event.Wi = normalize(refract(event.info->Wo, orientedNormal, eta));
-			if (g_debug) std::cout << "Refract...\n";
-			if (g_debug) std::cout << "---> Outgoing: " << event.Wi << std::endl;
-
 			event.pdf = 1.f - reflectance;
 			float3 transmittance = event.info->Kd;
 			weight = (1.f - reflectance) * transmittance;
-
 		}
 
-		if (g_debug) std::cout << "---------------------------------------------\n";
 		return weight;
-
 	}
 
 	virtual float eval(const float3 & Wo, const float3 & Wi) const override final
