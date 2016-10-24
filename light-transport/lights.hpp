@@ -36,7 +36,7 @@ struct AreaLight : public Light
 		if (dot(quad->normal, P - quad->base) <= 0.0f)
 			return float3(0, 0, 0);
 
-		const float2 xi = { gen.random_float(), gen.random_float() };
+		float2 xi = { gen.random_float(), gen.random_float() };
 		const float3 q = quad->base + xi.x*quad->edge0 + xi.y*quad->edge1;
 		float3 pt = q - P;
 
@@ -49,10 +49,7 @@ struct AreaLight : public Light
 		Wi = pt;
 		pdf = rSq / (cosTheta * quad->area);
 
-		//std::cout << "sd: " << Wi << std::endl;
-
-		float3 weight = intensity * float(ANVIL_PI) * quad->area;
-		return weight;
+		return intensity * (1.f / (distance)); // linear
 
 	}
 };

@@ -111,7 +111,10 @@ struct RaytracedQuad : public Traceable
 	{
 		float outT;
 		float3 outIntersection;
-		if (intersect_ray_quad(ray, *q.get(), outT, outIntersection)) return RayIntersection(outT, q.get()->normal, m.get());
+		if (intersect_ray_quad(ray, *q.get(), outT, outIntersection))
+		{
+			return RayIntersection(outT, q.get()->normal, m.get());
+		}
 		else return RayIntersection();
 	}
 	virtual Bounds3D world_bounds() const override final

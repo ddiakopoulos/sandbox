@@ -55,7 +55,7 @@ struct Emissive : public BSDF
 	{
 		event.Wi = cosine_hemisphere({ gen.random_float(), gen.random_float() }); // sample
 		event.pdf = cosine_hemisphere_pdf(event.Wi);
-		return float3(1, 1, 1);// Kd * eval(event.info->Wo, event.Wi);
+		return Kd; //fixme - Ke
 	}
 
 	virtual float eval(const float3 & Wo, const float3 & Wi) const override final

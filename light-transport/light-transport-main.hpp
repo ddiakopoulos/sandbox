@@ -140,6 +140,7 @@ struct Scene
 		if (dynamic_cast<Emissive*>(bsdf))
 		{
 			emissive = true;
+			directLighting += bsdf->Kd;
 		}
 
 		for (const auto light : lights)
@@ -147,11 +148,6 @@ struct Scene
 			float3 lightWi;
 			float lightPDF;
 			float3 lightSample = light->sample_direct(gen, surfaceInfo->P, lightWi, lightPDF);
-
-			if (emissive)
-			{
-				directLighting += lightSample / lightPDF;
-			}
 
 			// Make a shadow ray to check for occlusion between surface and a direct light
 			RayIntersection occlusion = scene_intersects({ surfaceInfo->P, lightWi });
@@ -177,7 +173,6 @@ struct Scene
 					Ld += lightSample * surfaceColor;
 				}
 
-				//std::cout << "Computed: " << directLighting << std::endl;
 				directLighting += (Ld / float3(light->numSamples)) / lightPDF;
 
 				delete lightInfo;
@@ -316,7 +311,7 @@ struct ExperimentalApp : public GLFWApp
 	std::condition_variable renderCv;
 	std::map<std::thread::id, std::atomic<bool>> threadTaskState;
 	std::atomic<int> numIdleThreads;
-	const int numWorkers = 1; // std::thread::hardware_concurrency();
+	const int numWorkers = std::thread::hardware_concurrency();
 
 	ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
 	{
@@ -358,14 +353,14 @@ struct ExperimentalApp : public GLFWApp
 
 		std::shared_ptr<RaytracedPlane> plane = std::make_shared<RaytracedPlane>();
 
-		//std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
-		//pointLight->lightPos = float3(0, 2, 0);
-		//pointLight->intensity = float3(1, 1, 1);
-		//scene.lights.push_back(pointLight);
+		std::shared_ptr<PointLight> pointLight = std::make_shared<PointLight>();
+		pointLight->lightPos = float3(0, 2, 0);
+		pointLight->intensity = float3(1, 1, 1);
+		scene.lights.push_back(pointLight);
 
 		q->q.reset(new Quad(float3(-0.5, 0, 0), float3(0, 1, 0), float3(1, 0, 0)));
 		q->m = std::make_shared<Emissive>();
-		q->m->Kd = float3(1, 1, 0);
+		q->m->Kd = float3(1, 0, 0);
 
 		std::shared_ptr<AreaLight> areaLight = std::make_shared<AreaLight>();
 		areaLight->intensity = float3(1, 1, 1);
@@ -450,14 +445,14 @@ struct ExperimentalApp : public GLFWApp
 		//scene.objects.push_back(plane);
 
 		scene.objects.push_back(floor);
-		//scene.objects.push_back(leftWall);
+		scene.objects.push_back(leftWall);
 		scene.objects.push_back(rightWall);
 		scene.objects.push_back(backWall);
 
 		//scene.objects.push_back(a);
 		//scene.objects.push_back(b);
 		//scene.objects.push_back(c);
-		//scene.objects.push_back(d);
+		scene.objects.push_back(d);
 
 		//scene.objects.push_back(glassSphere);
 
