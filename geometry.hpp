@@ -5,6 +5,7 @@
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include "string_utils.hpp"
+#include "GL_API.hpp"
 
 #include "tinyply.h"
 #include "tiny_obj_loader.h"

@@ -4,7 +4,10 @@
 #define vr_hmd_hpp
 
 #include "openvr/include/openvr.h"
-#include "index.hpp"
+#include "linalg_util.hpp"
+#include "geometric.hpp"
+#include "geometry.hpp"
+
 using namespace avl;
 
 inline Pose make_pose(const vr::HmdMatrix34_t & m)
@@ -38,6 +41,7 @@ class OpenVR_HMD
 	Pose hmdPose;
 	Pose worldPose;
 
+	GlFramebuffer eyeFramebuffers[2];
 	GlTexture eyeTextures[2];
 	GlRenderbuffer multisampleRenderbuffers[2];
 	GlFramebuffer multisampleFramebuffer;

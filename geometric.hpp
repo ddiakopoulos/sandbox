@@ -679,7 +679,7 @@ namespace avl
 					tmin = t1;
 					normal = n;
 				}
-				tmax = min(tmax, t2);
+				tmax = std::min(tmax, t2);
 
 				// If the slabs intersection is empty, there is no hit
 				if (tmin > tmax || tmax <= PLANE_EPSILON) return false;

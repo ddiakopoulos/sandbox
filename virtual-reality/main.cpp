@@ -1,5 +1,6 @@
 #include "index.hpp"
 #include "btBulletCollisionCommon.h"
+#include "vr_hmd.hpp"
 
 using namespace avl;
 
@@ -33,7 +34,7 @@ float3 from_bt(const btVector3 & v)
 
 float4 from_bt(const btQuaternion & q)
 {
-	return float4(q.x, q.y, q.z, q.w);
+	return float4(q.x(), q.y(), q.z(), q.w());
 }
 
 float3x3 from_bt(const btMatrix3x3 & i_m)

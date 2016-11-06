@@ -523,6 +523,9 @@
     <ClCompile Include="third_party\bullet3\src\LinearMath\btVector3.cpp">
       <Filter>third_party\bullet3</Filter>
     </ClCompile>
+    <ClCompile Include="vr_hmd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="third_party\bullet3\src\btBulletCollisionCommon.h">
@@ -1454,6 +1457,9 @@
     </ClInclude>
     <ClInclude Include="third_party\bullet3\src\LinearMath\btVector3.h">
       <Filter>third_party\bullet3</Filter>
+    </ClInclude>
+    <ClInclude Include="vr_hmd.hpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
