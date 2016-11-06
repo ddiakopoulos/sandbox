@@ -34,11 +34,11 @@ class OpenVR_HMD
 	vr::IVRSystem * hmd = nullptr;
 	vr::IVRRenderModels * renderModels = nullptr;
 
-	uint2 render_dims;
-	Pose hmd_pose;
-	Pose world_pose;
+	uint2 renderTargetSize;
+	Pose hmdPose;
+	Pose worldPose;
 
-	GlTexture eye_textures[2];
+	GlTexture eyeTextures[2];
 	GlRenderbuffer multisampleRenderbuffers[2];
 	GlFramebuffer multisampleFramebuffer;
 
@@ -51,13 +51,13 @@ public:
 	OpenVR_HMD();
 	~OpenVR_HMD();
 
-	Pose get_left_controller_pose() const { return world_pose * controllers[0].p; }
-	Pose get_right_controller_pose() const { return world_pose * controllers[1].p; }
+	Pose get_left_controller_pose() const { return worldPose * controllers[0].p; }
+	Pose get_right_controller_pose() const { return worldPose * controllers[1].p; }
 
-	Pose get_hmd_pose() { return world_pose * hmd_pose; }
-	void set_hmd_pose(Pose p) { hmd_pose = p; }
+	Pose get_hmd_pose() { return worldPose * hmdPose; }
+	void set_hmd_pose(Pose p) { hmdPose = p; }
 
-	GLuint get_eye_texture(vr::Hmd_Eye eye) { return eye_textures[eye].get_gl_handle(); }
+	GLuint get_eye_texture(vr::Hmd_Eye eye) { return eyeTextures[eye].get_gl_handle(); }
 
 	float4x4 get_proj_matrix(vr::Hmd_Eye eye, float near_clip, float far_clip) { return transpose(reinterpret_cast<const float4x4 &>(hmd->GetProjectionMatrix(eye, near_clip, far_clip, vr::API_OpenGL))); }
 
