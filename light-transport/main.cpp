@@ -1,5 +1,3 @@
-#include <atomic>
-
 #include "index.hpp"
 #include "light-transport/bvh.hpp"
 #include "light-transport/sampling.hpp"
@@ -7,6 +5,9 @@
 #include "light-transport/lights.hpp"
 #include "light-transport/objects.hpp"
 #include "light-transport/util.hpp"
+#include <atomic>
+
+using namespace avl;
 
 // Reference
 // http://graphics.pixar.com/library/HQRenderingCourse/paper.pdf
@@ -283,7 +284,7 @@ struct Film
 //   Main Application   //
 //////////////////////////
 
-struct ExperimentalApp : public GLFWApp
+struct LightTransportApp : public GLFWApp
 {
 	std::unique_ptr<gui::ImGuiManager> igm;
 
@@ -313,7 +314,7 @@ struct ExperimentalApp : public GLFWApp
 	std::atomic<int> numIdleThreads;
 	const int numWorkers = std::thread::hardware_concurrency();
 
-	ExperimentalApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
+	LightTransportApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
 	{
 		ScopedTimer("Application Constructor");
 
@@ -454,7 +455,7 @@ struct ExperimentalApp : public GLFWApp
 		//scene.objects.push_back(c);
 		scene.objects.push_back(d);
 
-		//scene.objects.push_back(glassSphere);
+		scene.objects.push_back(glassSphere);
 
 		scene.objects.push_back(q);
 
@@ -505,7 +506,7 @@ struct ExperimentalApp : public GLFWApp
 
 		for (int i = 0; i < numWorkers; ++i)
 		{
-			renderWorkers.push_back(std::thread(&ExperimentalApp::threaded_render, this, generate_bag_of_pixels()));
+			renderWorkers.push_back(std::thread(&LightTransportApp::threaded_render, this, generate_bag_of_pixels()));
 		}
 
 		// Create a GL texture to which we can render
@@ -542,7 +543,7 @@ struct ExperimentalApp : public GLFWApp
 		}
 	}
 
-	~ExperimentalApp()
+	~LightTransportApp()
 	{
 		sceneTimer.stop();
 		earlyExit = true;
@@ -698,3 +699,10 @@ struct ExperimentalApp : public GLFWApp
 	}
 
 };
+
+IMPLEMENT_MAIN(int argc, char * argv[])
+{
+	LightTransportApp app;
+	app.main_loop();
+	return 0;
+}

@@ -4,6 +4,8 @@
 #ifndef parabolic_pointer_hpp
 #define parabolic_pointer_hpp
 
+using namespace avl;
+
 #include "util.hpp"
 #include "linalg_util.hpp"
 #include "solvers.hpp"

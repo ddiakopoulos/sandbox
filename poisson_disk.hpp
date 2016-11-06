@@ -8,6 +8,7 @@
 #include "geometric.hpp"
 #include "util.hpp"
 #include <functional>
+#include <vector>
 
 namespace poisson
 {
@@ -242,22 +243,21 @@ namespace poisson
             return outputList;
         }
     };
-    
-}
 
-// Returns a set of poisson disk samples inside a rectangular area, with a minimum separation and with
-// a packing determined by how high k is. The higher k is the higher the algorithm will be slow.
-// If no initialSet of points is provided the area center will be used as the initial point.
-inline std::vector<float2> make_poisson_disk_distribution(const Bounds2D & bounds, const std::vector<float2> & initialSet, int k, float separation = 1.0)
-{
-    poisson::PoissonDiskGenerator2D gen;
-    return gen.build(bounds, initialSet, k, separation);
-}
+	// Returns a set of poisson disk samples inside a rectangular area, with a minimum separation and with
+	// a packing determined by how high k is. The higher k is the higher the algorithm will be slow.
+	// If no initialSet of points is provided the area center will be used as the initial point.
+	inline std::vector<float2> make_poisson_disk_distribution(const Bounds2D & bounds, const std::vector<float2> & initialSet, int k, float separation = 1.0)
+	{
+		poisson::PoissonDiskGenerator2D gen;
+		return gen.build(bounds, initialSet, k, separation);
+	}
 
-inline std::vector<float3> make_poisson_disk_distribution(const Bounds3D & bounds, const std::vector<float3> & initialSet, int k, float separation = 1.0)
-{
-    poisson::PoissonDiskGenerator3D gen;
-    return gen.build(bounds, initialSet, k, separation);
+	inline std::vector<float3> make_poisson_disk_distribution(const Bounds3D & bounds, const std::vector<float3> & initialSet, int k, float separation = 1.0)
+	{
+		poisson::PoissonDiskGenerator3D gen;
+		return gen.build(bounds, initialSet, k, separation);
+	} 
 }
 
 #endif

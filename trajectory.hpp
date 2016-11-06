@@ -14,6 +14,8 @@
 #include "linalg_util.hpp"
 #include "solvers.hpp"
 
+using namespace avl;
+
 // Calculate the maximum range that a ballistic projectile can be fired on given speed and gravity.
 //
 // speed (float): projectile velocity

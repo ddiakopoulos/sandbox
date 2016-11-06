@@ -1,3 +1,4 @@
+/*
 #include <iostream>
 #include <sstream>
 
@@ -23,10 +24,6 @@ using namespace avl;
 //#include "examples/render_experiments.hpp"
 //#include "examples/glass_material_app.hpp"
 //#include "geometric_algo_dev.hpp"
-#include "light-transport/light-transport-main.hpp"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb/stb_image_write.h"
 
 IMPLEMENT_MAIN(int argc, char * argv[])
 {
@@ -34,3 +31,7 @@ IMPLEMENT_MAIN(int argc, char * argv[])
     app.main_loop();
     return 0;
 }
+*/
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb/stb_image_write.h"

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "incubator", "incubator.vcxproj", "{992E85A7-B590-477B-A1B2-8A04AAAD0E10}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "incubator", "incubator.vcxp
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw3", "..\third_party\glfw-3.1.2\glfw3.vcxproj", "{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "light-transport", "..\light-transport\light-transport.vcxproj", "{61FE6721-3098-4E43-A736-8D0E52277FC3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,6 +36,14 @@ Global
 		{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}.Release|Win32.Build.0 = Release|Win32
 		{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}.Release|x64.ActiveCfg = Release|x64
 		{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}.Release|x64.Build.0 = Release|x64
+		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Debug|Win32.Build.0 = Debug|Win32
+		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Debug|x64.ActiveCfg = Debug|x64
+		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Debug|x64.Build.0 = Debug|x64
+		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Release|Win32.ActiveCfg = Release|Win32
+		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Release|Win32.Build.0 = Release|Win32
+		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Release|x64.ActiveCfg = Release|x64
+		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
