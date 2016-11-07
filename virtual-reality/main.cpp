@@ -3,11 +3,18 @@
 
 using namespace avl;
 
+std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath, const std::string geomPath = "")
+{
+	std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath), read_file_text(geomPath));
+	mon.add_shader(shader, vertexPath, fragPath);
+	return shader;
+}
+
 struct VirtualRealityApp : public GLFWApp
 {
-
 	std::unique_ptr<OpenVR_HMD> hmd;
 	GlCamera firstPersonCamera;
+	ShaderMonitor shaderMonitor;
 
 	VirtualRealityApp() : GLFWApp(1280, 720, "VR") 
 	{
@@ -35,6 +42,12 @@ struct VirtualRealityApp : public GLFWApp
 
 	void on_update(const UpdateEvent & e) override
 	{
+		shaderMonitor.handle_recompile();
+		if (hmd) hmd->update();
+	}
+
+	void render_func(Pose eye, float4x4 projMat)
+	{
 
 	}
 
@@ -52,6 +65,8 @@ struct VirtualRealityApp : public GLFWApp
 		const float4x4 projMatrix = firstPersonCamera.get_projection_matrix((float)width / (float)height);
 		const float4x4 viewMatrix = firstPersonCamera.get_view_matrix();
 		const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
+
+		if (hmd) hmd->render(0.05f, 24.0f, [this](Pose eye, float4x4 projMat) { render_func(eye, projMat); });
 
 		gl_check_error(__FILE__, __LINE__);
 		glfwSwapBuffers(window);
