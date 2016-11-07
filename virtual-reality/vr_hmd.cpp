@@ -52,8 +52,9 @@ OpenVR_HMD::OpenVR_HMD()
 	glTextureParameteriEXT(ctlTexHandle, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTextureParameteriEXT(ctlTexHandle, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	renderModels->FreeTexture(texture);
 	for (uint32_t i = 0; i<model->unVertexCount; ++i) controllerRenderData->verts.push_back(reinterpret_cast<const float3 &>(model->rVertexData[i].vPosition));
+	
+	renderModels->FreeTexture(texture);
 	renderModels->FreeRenderModel(model);
 
 	// Setup Framebuffers
@@ -88,10 +89,9 @@ OpenVR_HMD::OpenVR_HMD()
 	// Setup the compositor
 	if (!vr::VRCompositor())
 	{
-		throw std::runtime_error("Compositor initialization failed. See log file for details.");
+		throw std::runtime_error("could not initialize VRCompositor");
 	}
 }
-
 
 OpenVR_HMD::~OpenVR_HMD()
 {
