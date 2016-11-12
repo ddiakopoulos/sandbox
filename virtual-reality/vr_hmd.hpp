@@ -27,9 +27,30 @@ struct ControllerRenderData
 
 struct Controller
 {
-	std::shared_ptr<ControllerRenderData> renderData;
+	struct ButtonState
+	{
+		bool down = false;
+		bool lastDown = false;
+		bool pressed = false;
+		bool released = false;
+		void update(bool state)
+		{
+			lastDown = down;
+			down = state;
+			pressed = (!lastDown) && state;
+			released = lastDown && (!state);
+		}
+	};
+
+	ButtonState touchpad;
+	ButtonState trigger;
+	float2 touchpad = float2(0.0f, 0.0f);
+
 	Pose p;
-	bool trigger = false;
+
+	Ray forward_ray() const { return Ray(p.position, p.transform_vector(float3(0.0f, 0.0f, -1.0f))); }
+
+	std::shared_ptr<ControllerRenderData> renderData;
 };
 
 class OpenVR_HMD

@@ -165,13 +165,13 @@ void OpenVR_HMD::render(float near, float far, std::function<void(::Pose eyePose
 
 	for (auto eye : { vr::Eye_Left, vr::Eye_Right })
 	{
-		// Render into multisample
+		// Render into single 4x multisampled fbo
 		glEnable(GL_MULTISAMPLE);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer.get_handle());
 		renderFunc(get_eye_pose(eye), get_proj_matrix(eye, near, far));
 		glDisable(GL_MULTISAMPLE);
 
-		// Resolve multisample
+		// Resolve multisample into per-eye textures
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFramebuffer.get_handle());
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, eyeTextures[eye].get_gl_handle());
 		glBlitFramebuffer(0, 0, renderTargetSize.x, renderTargetSize.y, 0, 0, renderTargetSize.x, renderTargetSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);

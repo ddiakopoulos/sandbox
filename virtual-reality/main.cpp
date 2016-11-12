@@ -48,7 +48,8 @@ struct VirtualRealityApp : public GLFWApp
 
 	void render_func(Pose eye, float4x4 projMat)
 	{
-
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClearColor(1.0f, 0.1f, 1.0f, 1.0f);
 	}
 
 	void on_draw() override
@@ -58,9 +59,6 @@ struct VirtualRealityApp : public GLFWApp
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor(1.0f, 0.1f, 0.0f, 1.0f);
 
 		const float4x4 projMatrix = firstPersonCamera.get_projection_matrix((float)width / (float)height);
 		const float4x4 viewMatrix = firstPersonCamera.get_view_matrix();
