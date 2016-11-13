@@ -33,6 +33,7 @@ struct Controller
 		bool lastDown = false;
 		bool pressed = false;
 		bool released = false;
+
 		void update(bool state)
 		{
 			lastDown = down;
@@ -42,7 +43,7 @@ struct Controller
 		}
 	};
 
-	ButtonState touchpad;
+	ButtonState pad;
 	ButtonState trigger;
 	float2 touchpad = float2(0.0f, 0.0f);
 
@@ -69,15 +70,18 @@ class OpenVR_HMD
 
 	std::shared_ptr<ControllerRenderData> controllerRenderData;
 
-public:
-
 	Controller controllers[2];
+
+public:
 
 	OpenVR_HMD();
 	~OpenVR_HMD();
 
-	Pose get_left_controller_pose() const { return worldPose * controllers[0].p; }
-	Pose get_right_controller_pose() const { return worldPose * controllers[1].p; }
+	const Controller & get_controller(const vr::ETrackedControllerRole controller) const
+	{
+		if (controller == vr::TrackedControllerRole_LeftHand) return controllers[0];
+		if (controller == vr::TrackedControllerRole_RightHand) return controllers[1];
+	}
 
 	Pose get_hmd_pose() { return worldPose * hmdPose; }
 	void set_hmd_pose(Pose p) { hmdPose = p; }
