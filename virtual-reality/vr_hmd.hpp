@@ -83,6 +83,11 @@ public:
 		if (controller == vr::TrackedControllerRole_RightHand) return controllers[1];
 	}
 
+	std::shared_ptr<ControllerRenderData> get_controller_render_data()
+	{
+		return controllerRenderData;
+	}
+
 	Pose get_hmd_pose() { return worldPose * hmdPose; }
 	void set_hmd_pose(Pose p) { hmdPose = p; }
 

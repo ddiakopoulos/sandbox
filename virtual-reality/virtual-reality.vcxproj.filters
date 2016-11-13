@@ -1461,5 +1461,8 @@
     <ClInclude Include="vr_hmd.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="bullet_utils.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

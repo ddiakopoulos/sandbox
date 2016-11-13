@@ -327,6 +327,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bullet_utils.hpp" />
     <ClInclude Include="third_party\bullet3\src\btBulletCollisionCommon.h" />
     <ClInclude Include="third_party\bullet3\src\btBulletDynamicsCommon.h" />
     <ClInclude Include="third_party\bullet3\src\Bullet3Collision\BroadPhaseCollision\b3BroadphaseCallback.h" />

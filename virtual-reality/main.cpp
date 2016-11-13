@@ -15,6 +15,7 @@ struct VirtualRealityApp : public GLFWApp
 	std::unique_ptr<OpenVR_HMD> hmd;
 	GlCamera firstPersonCamera;
 	ShaderMonitor shaderMonitor;
+	std::shared_ptr<GlShader> texturedShader;
 
 	VirtualRealityApp() : GLFWApp(1280, 720, "VR") 
 	{
@@ -26,6 +27,8 @@ struct VirtualRealityApp : public GLFWApp
 		{
 			std::cout << "OpenVR Exception: " << e.what() << std::endl;
 		}
+
+		texturedShader = make_watched_shader(shaderMonitor, "../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
 	}
 
 	~VirtualRealityApp() {}
@@ -50,6 +53,48 @@ struct VirtualRealityApp : public GLFWApp
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(1.0f, 0.1f, 1.0f, 1.0f);
+
+		auto renderModel = hmd->get_controller_render_data();
+
+		texturedShader->bind();
+
+		texturedShader->uniform("u_viewProj", mul(eye.inverse().matrix(), projMat));
+		texturedShader->uniform("u_eye", eye.position);
+
+		texturedShader->uniform("u_ambientLight", float3(1.0f, 1.0f, 1.0f));
+
+		texturedShader->uniform("u_rimLight.enable", 0);
+
+		texturedShader->uniform("u_material.diffuseIntensity", float3(1.0f, 1.0f, 1.0f));
+		texturedShader->uniform("u_material.ambientIntensity", float3(1.0f, 1.0f, 1.0f));
+		texturedShader->uniform("u_material.specularIntensity", float3(1.0f, 1.0f, 1.0f));
+		texturedShader->uniform("u_material.specularPower", 128.0f);
+
+		texturedShader->uniform("u_pointLights[0].position", float3(6, 10, -6));
+		texturedShader->uniform("u_pointLights[0].diffuseColor", float3(1.f, 0.0f, 0.0f));
+		texturedShader->uniform("u_pointLights[0].specularColor", float3(1.f, 1.0f, 1.0f));
+
+		texturedShader->uniform("u_pointLights[1].position", float3(-6, 10, 6));
+		texturedShader->uniform("u_pointLights[1].diffuseColor", float3(0.0f, 0.0f, 1.f));
+		texturedShader->uniform("u_pointLights[1].specularColor", float3(1.0f, 1.0f, 1.f));
+
+		texturedShader->uniform("u_enableDiffuseTex", 1);
+		texturedShader->uniform("u_enableNormalTex", 0);
+		texturedShader->uniform("u_enableSpecularTex", 0);
+		texturedShader->uniform("u_enableEmissiveTex", 0);
+		texturedShader->uniform("u_enableGlossTex", 0);
+
+		texturedShader->texture("u_diffuseTex", 0, renderModel->tex.get_gl_handle(), GL_TEXTURE_2D);
+
+
+		for (auto pose : { hmd->get_controller(vr::TrackedControllerRole_LeftHand).p, hmd->get_controller(vr::TrackedControllerRole_RightHand).p })
+		{
+			texturedShader->uniform("u_modelMatrix", pose.matrix());
+			texturedShader->uniform("u_modelMatrixIT", inverse(transpose(pose.matrix())));
+			renderModel->mesh.draw_elements();
+		}
+
+		texturedShader->unbind();
 	}
 
 	void on_draw() override
