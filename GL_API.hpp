@@ -19,14 +19,13 @@
 template<typename factory_t> 
 class GlObject : public Noncopyable
 {
-	GLuint handle = 0;
+	mutable GLuint handle = 0;
 	std::string name;
 public:
 	GlObject() {}
 	GlObject(GLuint h) : handle(g) {}
 	~GlObject() { if (handle) factory_t::destroy(handle); }
 	GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); return *this; }
-	GLuint void id() const { return handle; }
 	operator GLuint () { if (!handle) factory_t::create(handle); return handle; }
 	GlObject & operator = (GLuint & other) { handle = other; return *this; }
 	void set_name(const std::string & n) { name = n; }
@@ -105,6 +104,50 @@ namespace avl
         }
     }
     
+
+	//////////////////
+	//   GlBuffer   //
+	//////////////////
+
+	struct GlBuffer : public GlBufferObject, public Noncopyable
+	{
+		GLsizeiptr size;
+		GlBuffer() {}
+		GlBuffer(GlBuffer && r) : GlBuffer() { *this = std::move(r); }
+		GlBuffer & operator = (GlBuffer && r) { std::swap(size, r.size); return *this; }
+		void set_buffer_data(const GLenum target, const GLsizeiptr size, const GLvoid * data, const GLenum usage) { glNamedBufferDataEXT(target, size, data, usage); this->size = size; }
+		void set_buffer_data(const GLenum target, const std::vector<GLubyte> & bytes, const GLenum usage) { set_buffer_data(target, bytes.size(), bytes.data(), usage); }
+	};
+
+	////////////////////////
+	//   GlRenderbuffer   //
+	////////////////////////
+
+	struct GlRenderbuffer : public GlRenderbufferObject, public Noncopyable
+	{
+		int2 size;
+		GlRenderbuffer() {};
+		GlRenderbuffer(int2 size) : size(size) {}
+		GlRenderbuffer(GlRenderbuffer && r) : GlRenderbuffer() { *this = std::move(r); }
+		GlRenderbuffer & operator = (GlRenderbuffer && r) { std::swap(size, r.size); return *this; }
+	};
+
+
+	///////////////////////
+	//   GlFramebuffer   //
+	///////////////////////
+
+	struct GlFramebuffer : public GlFramebufferObject, public Noncopyable
+	{
+		float3 size;
+		GlFramebuffer() {}
+		GlFramebuffer(float2 s) : size(s.x, s.y, 0) {}
+		GlFramebuffer(float3 s) : size(s) {}
+		GlFramebuffer(GlFramebuffer && r) : GlFramebuffer() { *this = std::move(r); }
+		GlFramebuffer & operator = (GlFramebuffer && r) { std::swap(size, r.size); return *this; }
+		void check_complete() { if (glCheckNamedFramebufferStatusEXT(*this, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("fbo incomplete"); }
+	};
+
     ///////////////////
     //   GlTexture   //
     ///////////////////
@@ -198,15 +241,13 @@ namespace avl
     public:
         
         GlShader() : program() {}
-        
         GlShader(const std::string & vertexShader, const std::string & fragmentShader, const std::string & geometryShader = "")
         {
             program = glCreateProgram();
+
             compile_shader(program, GL_VERTEX_SHADER, vertexShader.c_str());
             compile_shader(program, GL_FRAGMENT_SHADER, fragmentShader.c_str());
-            
-            if (geometryShader.length() != 0)
-                ::compile_shader(program, GL_GEOMETRY_SHADER, geometryShader.c_str());
+            if (geometryShader.length() != 0) ::compile_shader(program, GL_GEOMETRY_SHADER, geometryShader.c_str());
             
             glLinkProgram(program);
             
@@ -223,7 +264,6 @@ namespace avl
                 std::cerr << "GL Link Error: " << buffer.data() << std::endl;
                 throw std::runtime_error("GLSL Link Failure");
             }
-            
         }
         
         ~GlShader() { if(program) glDeleteProgram(program); }
@@ -258,149 +298,13 @@ namespace avl
             glBindTexture(textureTarget, texId);
         }
         
-        void texture(const char * name, int unit, const GlTexture & tex) const { texture(name, unit, tex.get_gl_handle(), GL_TEXTURE_2D); }
-        void texture(const char * name, int unit, GLenum target, const GlTexture3D & tex) const { texture(name, unit, tex.get_gl_handle(), target); }
+        void texture(const char * name, int unit, GlTexture2D tex) const { texture(name, unit, tex, GL_TEXTURE_2D); }
+        void texture(const char * name, int unit, GLenum target, GlTexture3D tex) const { texture(name, unit, tex, target); }
         
         void bind() { if (program > 0) enabled = true; glUseProgram(program); }
         void unbind() { enabled = false; glUseProgram(0); }
     };
-    
-    //////////////////
-    //   GlBuffer   //
-    //////////////////
-    
-    class GlBuffer : public Noncopyable
-    {
-        GLuint buffer;
-        GLsizeiptr bufferLen;
-        
-    public:
 
-        GlBuffer() : buffer() {}
-        GlBuffer(GlBuffer && r) : GlBuffer() { *this = std::move(r); }
-        
-        ~GlBuffer() { if (buffer) glDeleteBuffers(1, &buffer); }
-        
-        GLuint gl_handle() const { return buffer; }
-        GLsizeiptr size() const { return bufferLen; }
-        
-        void bind(GLenum target) const { glBindBuffer(target, buffer); }
-        void unbind(GLenum target) const { glBindBuffer(target, 0); }
-        
-        GlBuffer & operator = (GlBuffer && r) { std::swap(buffer, r.buffer); std::swap(bufferLen, r.bufferLen); return *this; }
-        
-        void set_buffer_data(GLenum target, GLsizeiptr length, const GLvoid * data, GLenum usage)
-        {
-            if (!buffer) glGenBuffers(1, &buffer);
-            glBindBuffer(target, buffer);
-            glBufferData(target, length, data, usage);
-            glBindBuffer(target, 0);
-            this->bufferLen = length;
-        }
-        
-        void set_buffer_data(GLenum target, const std::vector<GLubyte> & bytes, GLenum usage)
-        {
-            set_buffer_data(target, bytes.size(), bytes.data(), usage);
-        }
-    };
-    
-    ////////////////////////
-    //   GlRenderbuffer   //
-    ////////////////////////
-    
-    class GlRenderbuffer : public Noncopyable
-    {
-        GLuint renderbuffer;
-        int2 size;
-        
-    public:
-        
-        GlRenderbuffer() : renderbuffer() {}
-        
-        GlRenderbuffer(GLenum internalformat, GLsizei width, GLsizei height)
-        {
-            glGenRenderbuffers(1, &renderbuffer);
-            glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-            glRenderbufferStorage(GL_RENDERBUFFER, internalformat, width, height);
-            glBindRenderbuffer(GL_RENDERBUFFER, 0);
-            size = {width, height};
-        }
-        
-        GlRenderbuffer(GlRenderbuffer && r) : GlRenderbuffer() { *this = std::move(r); }
-        ~GlRenderbuffer() { if(renderbuffer) glDeleteRenderbuffers(1, &renderbuffer); }
-        
-        GlRenderbuffer & operator = (GlRenderbuffer && r) { std::swap(renderbuffer, r.renderbuffer); std::swap(size, r.size); return *this; }
-        
-        GLuint get_handle() const { return renderbuffer; }
-        int2 get_size() const { return size; }
-    };
-    
-    
-    ///////////////////////
-    //   GlFramebuffer   //
-    ///////////////////////
-    
-    class GlFramebuffer : public Noncopyable
-    {
-        GLuint handle;
-        float3 size;
-        
-    public:
-        
-        GlFramebuffer() : handle() {}
-        GlFramebuffer(GlFramebuffer && r) : GlFramebuffer() { *this = std::move(r); }
-        ~GlFramebuffer() { if(handle) glDeleteFramebuffers(1, &handle); }
-        GlFramebuffer & operator = (GlFramebuffer && r) { std::swap(handle, r.handle); std::swap(size, r.size); return *this; }
-        
-        GLuint get_handle() const { return handle; }
-        
-        bool check_complete() const
-        {
-            glBindFramebuffer(GL_FRAMEBUFFER, handle);
-            auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            return status == GL_FRAMEBUFFER_COMPLETE;
-        }
-        
-        void attach(GLenum attachment, const GlTexture & tex)
-        {
-            if(!handle) glGenFramebuffers(1, &handle);
-            glBindFramebuffer(GL_FRAMEBUFFER, handle);
-            glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.get_gl_handle(), 0);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            size = float3(tex.get_size().x, tex.get_size().y, 0.f);
-        }
-        
-        void attach(GLenum attachment, const GlRenderbuffer & rb)
-        {
-            if(!handle) glGenFramebuffers(1, &handle);
-            glBindFramebuffer(GL_FRAMEBUFFER, handle);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, rb.get_handle());
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            size = float3(rb.get_size().x, rb.get_size().y, 0.f);
-        }
-        
-        void attach(GLenum attachment, const GlTexture3D & tex)
-        {
-            if(!handle) glGenFramebuffers(1, &handle);
-            glBindFramebuffer(GL_FRAMEBUFFER, handle);
-            glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.get_gl_handle(), 0);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            size = float3(tex.get_size().x, tex.get_size().y, tex.get_size().z);
-        }
-        
-        void bind_to_draw()
-        {
-            glBindFramebuffer(GL_FRAMEBUFFER, handle);
-            glViewport(0, 0, size.x, size.y);
-        }
-        
-        void unbind()
-        {
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        }
-    };
-    
     ////////////////
     //   GlMesh   //
     ////////////////
@@ -420,6 +324,7 @@ namespace avl
     public:
         
         GlMesh() { memset(attributes,0 ,sizeof(attributes)); glGenVertexArrays(1, &vertexArrayHandle); }
+
         GlMesh(GlMesh && r) : GlMesh() { *this = std::move(r); }
         ~GlMesh() {};
         

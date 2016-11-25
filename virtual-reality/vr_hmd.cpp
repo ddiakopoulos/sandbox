@@ -70,33 +70,26 @@ OpenVR_HMD::OpenVR_HMD()
 	hmd->GetRecommendedRenderTargetSize(&renderTargetSize.x, &renderTargetSize.y);
 
 	// Generate multisample render buffers for color and depth
-	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0].get_handle(), 4, GL_RGBA8, renderTargetSize.x, renderTargetSize.y);
-	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1].get_handle(), 4, GL_DEPTH_COMPONENT, renderTargetSize.x, renderTargetSize.y);
-
-	multisampleFramebuffer.attach(GL_COLOR_ATTACHMENT0, multisampleRenderbuffers[0]);
-	multisampleFramebuffer.attach(GL_DEPTH_ATTACHMENT, multisampleRenderbuffers[1]);
+	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderTargetSize.x, renderTargetSize.y);
+	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, renderTargetSize.x, renderTargetSize.y);
 
 	// Generate a framebuffer for multisample rendering
-	glNamedFramebufferRenderbufferEXT(multisampleFramebuffer.get_handle(), GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffers[0].get_handle());
-	glNamedFramebufferRenderbufferEXT(multisampleFramebuffer.get_handle(), GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, multisampleRenderbuffers[1].get_handle());
-	if (glCheckNamedFramebufferStatusEXT(multisampleFramebuffer.get_handle(), GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("Framebuffer incomplete!");
+	glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffers[0]);
+	glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, multisampleRenderbuffers[1]);
+	if (glCheckNamedFramebufferStatusEXT(multisampleFramebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("Framebuffer incomplete!");
 
 	// Generate textures and framebuffers for the left and right eye images
 	for (int i : {0, 1})
 	{
-		const auto texHandle = eyeTextures[i].get_gl_handle();
+		glTextureImage2DEXT(eyeTextures[i], GL_TEXTURE_2D, 0, GL_RGBA8, renderTargetSize.x, renderTargetSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		glTextureParameteriEXT(eyeTextures[i], GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTextureParameteriEXT(eyeTextures[i], GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTextureParameteriEXT(eyeTextures[i], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTextureParameteriEXT(eyeTextures[i], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTextureParameteriEXT(eyeTextures[i], GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 
-		glTextureImage2DEXT(texHandle, GL_TEXTURE_2D, 0, GL_RGBA8, renderTargetSize.x, renderTargetSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-		glTextureParameteriEXT(texHandle, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTextureParameteriEXT(texHandle, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTextureParameteriEXT(texHandle, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteriEXT(texHandle, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTextureParameteriEXT(texHandle, GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-
-		//eyeFramebuffers[i].attach(GL_COLOR_ATTACHMENT0, eyeTextures[i]); // gen fbo handle
-
-		glNamedFramebufferTexture2DEXT(eyeFramebuffers[i].get_handle(), GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texHandle, 0);
-		if (glCheckNamedFramebufferStatusEXT(eyeFramebuffers[i].get_handle(), GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("Framebuffer incomplete!");
+		glNamedFramebufferTexture2DEXT(eyeFramebuffers[i], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eyeTextures[i], 0);
+		eyeFramebuffers[i].check_complete();
 	}
 
 	// Setup the compositor
