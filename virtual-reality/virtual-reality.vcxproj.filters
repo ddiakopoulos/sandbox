@@ -1458,10 +1458,10 @@
     <ClInclude Include="third_party\bullet3\src\LinearMath\btVector3.h">
       <Filter>third_party\bullet3</Filter>
     </ClInclude>
-    <ClInclude Include="vr_hmd.hpp">
+    <ClInclude Include="bullet_utils.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="bullet_utils.hpp">
+    <ClInclude Include="vr_hmd.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

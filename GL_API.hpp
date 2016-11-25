@@ -23,6 +23,7 @@ class GlObject : public Noncopyable
 	std::string name;
 public:
 	GlObject() {}
+	GlObject(GLuint h) : handle(g) {}
 	~GlObject() { if (handle) factory_t::destroy(handle); }
 	GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); return *this; }
 	GLuint void id() const { return handle; }
@@ -108,103 +109,52 @@ namespace avl
     //   GlTexture   //
     ///////////////////
     
-    class GlTexture : public Noncopyable
+    struct GlTexture2D : public GlTextureObject, public Noncopyable
     {
         int2 size;
-        GLuint internalFormat;
-        GLuint handle;
-        
-    public:
-        
-        GlTexture() : handle() {}
-        GlTexture(int w, int h, GLuint id) : size(w, h), handle(id) {}
-        GlTexture(GlTexture && r) : GlTexture() { *this = std::move(r); }
-        ~GlTexture() { if (handle) glDeleteTextures(1, &handle); }
-        GlTexture & operator = (GlTexture && r) { std::swap(handle, r.handle); std::swap(size, r.size); return *this; }
-        
-        GLuint get_gl_handle() const { return handle; }
-        
-        int2 get_size() const { return size; }
-        
-        void image2D(GLenum target, GLint level, GLenum internal_fmt, const int2 & size, GLenum format, GLenum type, const GLvoid * pixels)
-        {
-            if (!handle) glGenTextures(1, &handle);
-            
-            glBindTexture(target, handle);
-            glTexImage2D(target, level, internal_fmt, size.x, size.y, 0, format, type, pixels);
-            glBindTexture(target, 0);
-            
-            this->size = size;
-            this->internalFormat = internal_fmt;
-        }
-        
-        void load_data(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels, bool createMipmap = false)
-        {
-            if (!handle) glGenTextures(1, &handle);
-            glBindTexture(GL_TEXTURE_2D, handle);
-            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, pixels);
-            
-            if (createMipmap) glGenerateMipmap(GL_TEXTURE_2D);
-            
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, createMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glBindTexture(GL_TEXTURE_2D, 0);
-            
-            size = {width, height};
-        }
-        
-        void load_data(GLsizei width, GLsizei height, GLenum internalFormat, GLenum externalFormat, GLenum type, const GLvoid * pixels)
-        {
-            if (!handle) glGenTextures(1, &handle);
-            glBindTexture(GL_TEXTURE_2D, handle);
-            glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, externalFormat, type, pixels);
-            
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            
-            glBindTexture(GL_TEXTURE_2D, 0);
-            
-            size = {width, height};
-        }
-        
-        void parameter(GLenum name, GLint param)
-        {
-            if (!handle) glGenTextures(1, &handle);
-            glBindTexture(GL_TEXTURE_2D, handle);
-            glTexParameteri(GL_TEXTURE_2D, name, param);
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
-        
+
+		GlTexture2D() {}
+		GlTexture2D(int2 sz) : size(sz) {}
+		GlTexture2D(GlTexture2D && r) : GlTexture2D() { *this = std::move(r); }
+		GlTexture2D & operator = (GlTexture2D && r) { std::swap(size, r.size); return *this; }
+
+		void setup(GLsizei width, GLsizei height, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels, bool createMipmap = false)
+		{
+			glTextureImage2DEXT(*this, GL_TEXTURE_2D, 0, internal_fmt, width, height, 0, format, type, pixels);
+			if (createMipmap) glGenerateTextureMipmapEXT(*this, GL_TEXTURE_2D);
+			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, createMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		}
     };
     
-    inline GlTexture load_image(const std::string & path)
+    inline GlTexture2D load_image(const std::string & path)
     {
         auto binaryFile = read_file_binary(path);
         
         int width, height, nBytes;
         auto data = stbi_load_from_memory(binaryFile.data(), (int) binaryFile.size(), &width, &height, &nBytes, 0);
         
-        GlTexture tex;
+		GlTexture2D tex;
         switch(nBytes)
         {
-            case 3: tex.load_data(width, height, GL_RGB, GL_UNSIGNED_BYTE, data, true); break;
-            case 4: tex.load_data(width, height, GL_RGBA, GL_UNSIGNED_BYTE, data, true); break;
+            case 3: tex.setup(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, data, true); break;
+            case 4: tex.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, data, true); break;
         }
         
         stbi_image_free(data);
         return tex;
     }
 
-    inline std::vector<uint8_t> load_image_data(const std::string & path, int & numBytes)
+    inline std::vector<uint8_t> load_image_data(const std::string & path)
     {
         auto binaryFile = read_file_binary(path);
         
         int width, height, nBytes;
         auto data = stbi_load_from_memory(binaryFile.data(), (int) binaryFile.size(), &width, &height, &nBytes, 0);
         std::vector<uint8_t> d(width * height * nBytes);
-        numBytes = nBytes;
         memcpy(d.data(), data, nBytes * width * height);
         stbi_image_free(data);
         return d;
@@ -214,50 +164,26 @@ namespace avl
     //   GlTexture3D   //
     /////////////////////
     
-    // As either a 3D texture or 2D array
-    class GlTexture3D : public Noncopyable
-    {
-        int3 size;
-        GLuint internalFormat;
-        GLuint handle;
-        
-    public:
-        
-        GlTexture3D() : handle() {}
-        GlTexture3D(int w, int h, int d, GLuint id) : size(w, h, d), handle(id) {}
-        GlTexture3D(GlTexture3D && r) : GlTexture3D() { *this = std::move(r); }
-        ~GlTexture3D() { if (handle) glDeleteTextures(1, &handle); }
-        GlTexture3D & operator = (GlTexture3D && r) { std::swap(handle, r.handle); std::swap(size, r.size); return *this; }
-        
-        GLuint get_gl_handle() const { return handle; }
-        
-        int3 get_size() const { return size; }
-        
-        void load_data(GLsizei width, GLsizei height, GLsizei depth, GLenum target, GLenum internalFormat, GLenum externalFormat, GLenum type, const GLvoid * pixels)
-        {
-            if (!handle) glGenTextures(1, &handle);
-            glBindTexture(target, handle);
-            glTexImage3D(target, 0, internalFormat, width, height, depth, 0, externalFormat, type, pixels);
-            
-            glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            
-            glBindTexture(target, 0);
-            
-            size = {width, height, depth};
-        }
-        
-        void parameter(GLenum target, GLenum name, GLint param)
-        {
-            if (!handle) glGenTextures(1, &handle);
-            glBindTexture(target, handle);
-            glTexParameteri(target, name, param);
-            glBindTexture(target, 0);
-        }
-        
-    };
+	// As either a 3D texture or 2D array
+	struct GlTexture3D : public GlTextureObject, public Noncopyable
+	{
+		int3 size;
+
+		GlTexture3D() {}
+		GlTexture3D(int3 sz) : size(sz) {}
+		GlTexture3D(GlTexture2D && r) : GlTexture3D() { *this = std::move(r); }
+		GlTexture3D & operator = (GlTexture3D && r) { std::swap(size, r.size); return *this; }
+
+		void setup(GLenum target, GLsizei width, GLsizei height, GLsizei depth, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels)
+		{
+			glTextureImage3DEXT(*this, target, 0, internal_fmt, width, height, depth, 0, format, type, pixels);
+			glTextureParameteriEXT(*this, target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTextureParameteriEXT(*this, target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		}
+	};
     
     //////////////////
     //   GlShader   //
