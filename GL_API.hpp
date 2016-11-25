@@ -56,6 +56,21 @@ struct GlFramebufferFactory
 
 };
 
+struct GlQueryFactory
+{
+
+};
+
+struct GlSamplerFactory
+{
+
+};
+
+struct GlTransformFeedbacksFactory
+{
+
+};
+
 typedef GlObject<GlBufferFactory> GlBufferX;
 
 namespace
