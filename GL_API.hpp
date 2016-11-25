@@ -19,7 +19,7 @@
 template<typename factory_t> 
 class GlObject : public Noncopyable
 {
-	GLuint handle = -1;
+	GLuint handle = 0;
 	std::string name;
 public:
 	GlObject() {}
@@ -35,6 +35,27 @@ struct GlBufferFactory
 	static void create(GLuint & x) { glGenBuffers(1, &x); };
 	static void destroy(GLuint x)  { glDeleteBuffers(1, &x); };
 };
+
+struct GlTextureFactory
+{
+
+};
+
+struct GlVertexArrayFactory
+{
+
+};
+
+struct GlRenderbufferFactory
+{
+
+};
+
+struct GlFramebufferFactory
+{
+
+};
+
 typedef GlObject<GlBufferFactory> GlBufferX;
 
 namespace
