@@ -20,10 +20,14 @@ template<typename factory_t>
 class GlObject : public Noncopyable
 {
 	GLuint handle = -1;
+	std::string name;
 public:
 	GlObject() {}
 	~GlObject() { if (handle) factory_t::destroy(handle); }
 	operator GLuint () { if (!handle) factory_t::create(handle); return handle; }
+	GlObject & operator = (GLuint & other) { handle = other; return *this; }
+	void set_name(const std::string & n) { name = n; }
+	std::string name() const { return name; }
 };
 
 struct GlBufferFactory
@@ -32,9 +36,6 @@ struct GlBufferFactory
 	static void destroy(GLuint x)  { glDeleteBuffers(1, &x); };
 };
 typedef GlObject<GlBufferFactory> GlBufferX;
-
-
-
 
 namespace
 {
