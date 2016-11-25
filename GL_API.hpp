@@ -41,7 +41,14 @@ struct GlQueryFactory { static void create(GLuint & x) { glGenQueries(1, &x); };
 struct GlSamplerFactory { static void create(GLuint & x) { glGenSamplers(1, &x); }; static void destroy(GLuint x) { glDeleteSamplers(1, &x); }; };
 struct GlTransformFeedbacksFactory { static void create(GLuint & x) { glGenTransformFeedbacks(1, &x); }; static void destroy(GLuint x) { glDeleteTransformFeedbacks(1, &x); }; };
 
-typedef GlObject<GlBufferFactory> GlBufferX;
+typedef GlObject<GlBufferFactory> GlBufferObject;
+typedef GlObject<GlTextureFactory> GlTextureObject;
+typedef GlObject<GlVertexArrayFactory> GlVertexArrayObject;
+typedef GlObject<GlRenderbufferFactory> GlRenderbufferObject;
+typedef GlObject<GlFramebufferFactory> GlFramebufferObject;
+typedef GlObject<GlQueryFactory> GlQueryObject;
+typedef GlObject<GlSamplerFactory> GlSamplerObject;
+typedef GlObject<GlTransformFeedbacksFactory> GlTransformFeedbacksObject;
 
 namespace
 {
