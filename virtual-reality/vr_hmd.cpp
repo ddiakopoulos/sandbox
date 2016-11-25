@@ -22,6 +22,14 @@ OpenVR_HMD::OpenVR_HMD()
 	controllerRenderData = std::make_shared<ControllerRenderData>();
 	controllers[0].renderData = controllerRenderData;
 	controllers[1].renderData = controllerRenderData;
+	
+	// Create GL resources
+
+	//eyeTextures[0].load_data(renderTargetSize.x, renderTargetSize.y, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	//eyeTextures[1].load_data(renderTargetSize.x, renderTargetSize.y, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	//multisampleRenderbuffers[0] = GlRenderbuffer(GL_RGBA8, renderTargetSize.x, renderTargetSize.y);
+	//multisampleRenderbuffers[0] = GlRenderbuffer(GL_DEPTH_COMPONENT, renderTargetSize.x, renderTargetSize.y);
+	//GlFramebuffer multisampleFramebuffer;
 
 	renderModels = (vr::IVRRenderModels *)vr::VR_GetGenericInterface(vr::IVRRenderModels_Version, &eError);
 	if (!renderModels)
@@ -47,6 +55,7 @@ OpenVR_HMD::OpenVR_HMD()
 	controllerRenderData->mesh.set_index_data(GL_TRIANGLES, GL_UNSIGNED_SHORT, model->unTriangleCount * 3, model->rIndexData, GL_STATIC_DRAW);
 
 	const auto ctlTexHandle = controllerRenderData->tex.get_gl_handle();
+	controllerRenderData->tex.load_data(texture->unWidth, texture->unHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr); // gen
 	glTextureImage2DEXT(ctlTexHandle, GL_TEXTURE_2D, 0, GL_RGBA, texture->unWidth, texture->unHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->rubTextureMapData);
 	glGenerateTextureMipmapEXT(ctlTexHandle, GL_TEXTURE_2D);
 	glTextureParameteriEXT(ctlTexHandle, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -64,6 +73,9 @@ OpenVR_HMD::OpenVR_HMD()
 	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0].get_handle(), 4, GL_RGBA8, renderTargetSize.x, renderTargetSize.y);
 	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1].get_handle(), 4, GL_DEPTH_COMPONENT, renderTargetSize.x, renderTargetSize.y);
 
+	multisampleFramebuffer.attach(GL_COLOR_ATTACHMENT0, multisampleRenderbuffers[0]);
+	multisampleFramebuffer.attach(GL_DEPTH_ATTACHMENT, multisampleRenderbuffers[1]);
+
 	// Generate a framebuffer for multisample rendering
 	glNamedFramebufferRenderbufferEXT(multisampleFramebuffer.get_handle(), GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffers[0].get_handle());
 	glNamedFramebufferRenderbufferEXT(multisampleFramebuffer.get_handle(), GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, multisampleRenderbuffers[1].get_handle());
@@ -73,7 +85,6 @@ OpenVR_HMD::OpenVR_HMD()
 	for (int i : {0, 1})
 	{
 		const auto texHandle = eyeTextures[i].get_gl_handle();
-		const auto fboHandle = eyeFramebuffers[i].get_handle();
 
 		glTextureImage2DEXT(texHandle, GL_TEXTURE_2D, 0, GL_RGBA8, renderTargetSize.x, renderTargetSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		glTextureParameteriEXT(texHandle, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -81,6 +92,8 @@ OpenVR_HMD::OpenVR_HMD()
 		glTextureParameteriEXT(texHandle, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteriEXT(texHandle, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTextureParameteriEXT(texHandle, GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+
+		//eyeFramebuffers[i].attach(GL_COLOR_ATTACHMENT0, eyeTextures[i]); // gen fbo handle
 
 		glNamedFramebufferTexture2DEXT(eyeFramebuffers[i].get_handle(), GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texHandle, 0);
 		if (glCheckNamedFramebufferStatusEXT(eyeFramebuffers[i].get_handle(), GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("Framebuffer incomplete!");
