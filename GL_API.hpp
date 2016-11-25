@@ -16,6 +16,26 @@
 
 #include "third_party/stb/stb_image.h"
 
+template<typename factory_t> 
+class GlObject : public Noncopyable
+{
+	GLuint handle = -1;
+public:
+	GlObject() {}
+	~GlObject() { if (handle) factory_t::destroy(handle); }
+	operator GLuint () { if (!handle) factory_t::create(handle); return handle; }
+};
+
+struct GlBufferFactory
+{
+	static void create(GLuint & x) { glGenBuffers(1, &x); };
+	static void destroy(GLuint x)  { glDeleteBuffers(1, &x); };
+};
+typedef GlObject<GlBufferFactory> GlBufferX;
+
+
+
+
 namespace
 {
     inline void compile_shader(GLuint program, GLenum type, const char * source)
