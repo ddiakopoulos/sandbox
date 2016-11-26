@@ -115,8 +115,8 @@ struct ExperimentalApp : public GLFWApp
         cameraController.set_camera(&camera);
         camera.look_at({0, 2.5, -2.5}, {0, 2.0, 0});
 
-        simpleShader = make_watched_shader(shaderMonitor, "assets/shaders/simple_vert.glsl", "assets/shaders/simple_frag.glsl");
-		normalDebugShader = make_watched_shader(shaderMonitor, "assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
+        simpleShader = make_watched_shader(shaderMonitor, "../assets/shaders/simple_vert.glsl", "assets/shaders/simple_frag.glsl");
+		normalDebugShader = make_watched_shader(shaderMonitor, "../assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
 
 		Renderable debugAxis = Renderable(make_axis(), false, GL_LINES);
         debugAxis.pose = Pose(float4(0, 0, 0, 1), float3(0, 1, 0));

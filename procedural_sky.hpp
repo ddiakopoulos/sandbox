@@ -242,7 +242,7 @@ public:
     
     HosekProceduralSky()
     {
-        sky.reset(new GlShader(read_file_text("assets/shaders/sky_vert.glsl"), read_file_text("assets/shaders/sky_hosek_frag.glsl")));
+        sky.reset(new GlShader(read_file_text("../assets/shaders/sky_vert.glsl"), read_file_text("../assets/shaders/sky_hosek_frag.glsl")));
         recompute(4, 0.1f, 1.15f);
     }
     
@@ -278,7 +278,7 @@ public:
     
     PreethamProceduralSky()
     {
-        sky.reset(new GlShader(read_file_text("assets/shaders/sky_vert.glsl"), read_file_text("assets/shaders/sky_preetham_frag.glsl")));
+        sky.reset(new GlShader(read_file_text("../assets/shaders/sky_vert.glsl"), read_file_text("../assets/shaders/sky_preetham_frag.glsl")));
         recompute(4, 0.1f, 1.15f);
     }
     
