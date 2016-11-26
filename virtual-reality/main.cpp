@@ -29,6 +29,8 @@ struct VirtualRealityApp : public GLFWApp
 		}
 
 		texturedShader = make_watched_shader(shaderMonitor, "../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
+
+		gl_check_error(__FILE__, __LINE__);
 	}
 
 	~VirtualRealityApp() {}
@@ -56,7 +58,11 @@ struct VirtualRealityApp : public GLFWApp
 
 		auto renderModel = hmd->get_controller_render_data();
 
+		gl_check_error(__FILE__, __LINE__);
+
 		texturedShader->bind();
+
+		gl_check_error(__FILE__, __LINE__);
 
 		texturedShader->uniform("u_viewProj", mul(eye.inverse().matrix(), projMat));
 		texturedShader->uniform("u_eye", eye.position);
@@ -85,6 +91,9 @@ struct VirtualRealityApp : public GLFWApp
 		texturedShader->uniform("u_enableGlossTex", 0);
 
 		texturedShader->texture("u_diffuseTex", 0, renderModel->tex, GL_TEXTURE_2D);
+
+		gl_check_error(__FILE__, __LINE__);
+
 
 		for (auto pose : { hmd->get_controller(vr::TrackedControllerRole_LeftHand).p, hmd->get_controller(vr::TrackedControllerRole_RightHand).p })
 		{

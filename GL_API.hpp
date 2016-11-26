@@ -118,8 +118,8 @@ namespace avl
 		GlBuffer() {}
 		GlBuffer(GlBuffer && r) : GlBuffer() { *this = std::move(r); }
 		GlBuffer & operator = (GlBuffer && r) { std::swap(size, r.size); return *this; }
-		void set_buffer_data(const GLenum target, const GLsizeiptr size, const GLvoid * data, const GLenum usage) { glNamedBufferDataEXT(target, size, data, usage); this->size = size; }
-		void set_buffer_data(const GLenum target, const std::vector<GLubyte> & bytes, const GLenum usage) { set_buffer_data(target, bytes.size(), bytes.data(), usage); }
+		void set_buffer_data(const GLsizeiptr size, const GLvoid * data, const GLenum usage) { glNamedBufferDataEXT(*this, size, data, usage); this->size = size; }
+		void set_buffer_data(const std::vector<GLubyte> & bytes, const GLenum usage) { set_buffer_data(bytes.size(), bytes.data(), usage); }
 	};
 
 	////////////////////////
@@ -323,7 +323,14 @@ namespace avl
         GlMesh() {}
         GlMesh(GlMesh && r) { *this = std::move(r); }
 		GlMesh(const GlMesh & r) = delete;
-		GlMesh & operator = (GlMesh && r);
+		GlMesh & operator = (GlMesh && r)
+		{
+			char buffer[sizeof(GlMesh)];
+			memcpy(buffer, this, sizeof(buffer));
+			memcpy(this, &r, sizeof(buffer));
+			memcpy(&r, buffer, sizeof(buffer));
+			return *this;
+		}
 		GlMesh & operator = (const GlMesh & r) = delete;
 		~GlMesh() {};
 
@@ -332,6 +339,7 @@ namespace avl
             mode = newMode;
             indexBuffer = {};
             indexType = 0;
+			indexCount = 0;
         }
         
         void draw_elements(int instances = 0) const
@@ -344,7 +352,6 @@ namespace avl
 					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 					if (instances) glDrawElementsInstanced(mode, indexCount, indexType, 0, instances);
 					else glDrawElements(mode, indexCount, indexType, nullptr);
-					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 				}
 				else
 				{
@@ -355,8 +362,8 @@ namespace avl
 			}
         }
         
-        void set_vertex_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { vertexBuffer.set_buffer_data(GL_ARRAY_BUFFER, size, data, usage); }
-        void set_instance_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { instanceBuffer.set_buffer_data(GL_ARRAY_BUFFER, size, data, usage);  }
+        void set_vertex_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { vertexBuffer.set_buffer_data(size, data, usage); }
+        void set_instance_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { instanceBuffer.set_buffer_data(size, data, usage);  }
         
         void set_index_data(GLenum mode, GLenum type, GLsizei count, const GLvoid * data, GLenum usage)
         {
@@ -369,7 +376,7 @@ namespace avl
                 default: throw std::logic_error("unknown element type"); break;
             }
 			
-			indexBuffer.set_buffer_data(indexBuffer, elementSize * count, data, usage);
+			indexBuffer.set_buffer_data(elementSize * count, data, usage);
 
 			glBindVertexArray(vao);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -378,19 +385,19 @@ namespace avl
 			indexType = type;
 			indexCount = count;
         }
-        
+
         void set_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
         {
-			glVertexArrayVertexAttribOffsetEXT(vao, vertexBuffer, index, size, type, normalized, stride, (GLintptr)pointer);
 			glEnableVertexArrayAttribEXT(vao, index);
+			glVertexArrayVertexAttribOffsetEXT(vao, vertexBuffer, index, size, type, normalized, stride, (GLintptr)pointer);
 			vertexStride = stride;
         }
         
         void set_instance_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
         {
-			glVertexArrayVertexAttribOffsetEXT(vao, instanceBuffer, index, size, type, normalized, stride, (GLintptr)pointer);
 			glEnableVertexArrayAttribEXT(vao, index);
-
+			glVertexArrayVertexAttribOffsetEXT(vao, instanceBuffer, index, size, type, normalized, stride, (GLintptr)pointer);
+			
 			// No DSA for this? 
 			glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
 			glVertexAttribPointer(index, size, type, normalized, stride, pointer); // AttribPointer is relative to currently point ARRAY_BUFFER
@@ -410,7 +417,7 @@ namespace avl
         
         template<class V>void set_attribute(GLuint index, float V::*field) { set_attribute(index, 1, GL_FLOAT, GL_FALSE, sizeof(V), &(((V*)0)->*field)); }
         template<class V, int N> void set_attribute(GLuint index, linalg::vec<float,N> V::*field) { set_attribute(index, N, GL_FLOAT, GL_FALSE, sizeof(V), &(((V*)0)->*field)); }
-        
+
         template<class T> void set_elements(GLsizei count, const linalg::vec<T,2> * elements, GLenum usage) { set_indices(GL_LINES, count * 2, &elements->x, GL_STATIC_DRAW); }
         template<class T> void set_elements(GLsizei count, const linalg::vec<T,3> * elements, GLenum usage) { set_indices(GL_TRIANGLES, count * 3, &elements->x, GL_STATIC_DRAW); }
         template<class T> void set_elements(GLsizei count, const linalg::vec<T,4> * elements, GLenum usage) { set_indices(GL_QUADS, count * 4, &elements->x, GL_STATIC_DRAW); }

@@ -22,14 +22,6 @@ OpenVR_HMD::OpenVR_HMD()
 	controllerRenderData = std::make_shared<ControllerRenderData>();
 	controllers[0].renderData = controllerRenderData;
 	controllers[1].renderData = controllerRenderData;
-	
-	// Create GL resources
-
-	//eyeTextures[0].load_data(renderTargetSize.x, renderTargetSize.y, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-	//eyeTextures[1].load_data(renderTargetSize.x, renderTargetSize.y, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-	//multisampleRenderbuffers[0] = GlRenderbuffer(GL_RGBA8, renderTargetSize.x, renderTargetSize.y);
-	//multisampleRenderbuffers[0] = GlRenderbuffer(GL_DEPTH_COMPONENT, renderTargetSize.x, renderTargetSize.y);
-	//GlFramebuffer multisampleFramebuffer;
 
 	renderModels = (vr::IVRRenderModels *)vr::VR_GetGenericInterface(vr::IVRRenderModels_Version, &eError);
 	if (!renderModels)
@@ -176,7 +168,9 @@ void OpenVR_HMD::render(float near, float far, std::function<void(::Pose eyePose
 		// Render into single 4x multisampled fbo
 		glEnable(GL_MULTISAMPLE);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
+
 		renderFunc(get_eye_pose(eye), get_proj_matrix(eye, near, far));
+
 		glDisable(GL_MULTISAMPLE);
 
 		// Resolve multisample into per-eye textures
