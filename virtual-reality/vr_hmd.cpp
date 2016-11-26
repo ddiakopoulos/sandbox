@@ -161,10 +161,10 @@ void OpenVR_HMD::update()
 
 void OpenVR_HMD::render(float near, float far, std::function<void(::Pose eyePose, float4x4 projMatrix)> renderFunc)
 {
-	glViewport(0, 0, renderTargetSize.x, renderTargetSize.y);
-
 	for (auto eye : { vr::Eye_Left, vr::Eye_Right })
 	{
+		glViewport(0, 0, renderTargetSize.x, renderTargetSize.y);
+
 		// Render into single 4x multisampled fbo
 		glEnable(GL_MULTISAMPLE);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);

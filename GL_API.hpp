@@ -56,7 +56,6 @@ namespace
 		case GL_DEBUG_SOURCE_API: return "API";
 		default: return "UNKNOWN";
 		}
-		return "UNKNOWN";
 	}
 
 	std::string gl_enum_to_str(GLenum type)

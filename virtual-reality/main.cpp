@@ -16,6 +16,8 @@ struct VirtualRealityApp : public GLFWApp
 	GlCamera firstPersonCamera;
 	ShaderMonitor shaderMonitor;
 	std::shared_ptr<GlShader> texturedShader;
+	std::shared_ptr<GlShader> normalShader;
+	std::vector<Renderable> debugModels;
 
 	VirtualRealityApp() : GLFWApp(1280, 720, "VR") 
 	{
@@ -29,6 +31,11 @@ struct VirtualRealityApp : public GLFWApp
 		}
 
 		texturedShader = make_watched_shader(shaderMonitor, "../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
+		normalShader = make_watched_shader(shaderMonitor, "../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
+
+		Renderable cube = Renderable(make_cube());
+		cube.pose = Pose(make_rotation_quat_axis_angle({ 1, 0, 1 }, ANVIL_PI / 4), float3(-5, 0, 0));
+		debugModels.push_back(std::move(cube));
 
 		gl_check_error(__FILE__, __LINE__);
 	}
@@ -54,7 +61,7 @@ struct VirtualRealityApp : public GLFWApp
 	void render_func(Pose eye, float4x4 projMat)
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor(1.0f, 0.1f, 1.0f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 		auto renderModel = hmd->get_controller_render_data();
 
@@ -96,6 +103,17 @@ struct VirtualRealityApp : public GLFWApp
 		}
 
 		texturedShader->unbind();
+
+		normalShader->bind();
+		normalShader->uniform("u_viewProj", mul(eye.inverse().matrix(), projMat));
+		for (const auto & model : debugModels)
+		{
+			normalShader->uniform("u_modelMatrix", model.get_model());
+			normalShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+			model.draw();
+		}
+		normalShader->unbind();
+
 	}
 
 	void on_draw() override
@@ -106,13 +124,14 @@ struct VirtualRealityApp : public GLFWApp
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 
-		const float4x4 projMatrix = firstPersonCamera.get_projection_matrix((float)width / (float)height);
-		const float4x4 viewMatrix = firstPersonCamera.get_view_matrix();
-		const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
+		//const float4x4 projMatrix = firstPersonCamera.get_projection_matrix((float)width / (float)height);
+		//const float4x4 viewMatrix = firstPersonCamera.get_view_matrix();
+		//const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
 
 		if (hmd) hmd->render(0.05f, 24.0f, [this](Pose eye, float4x4 projMat) { render_func(eye, projMat); });
 
-		gl_check_error(__FILE__, __LINE__);
+		//gl_check_error(__FILE__, __LINE__);
+
 		glfwSwapBuffers(window);
 	}
 
