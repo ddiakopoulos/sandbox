@@ -16,41 +16,6 @@
 
 #include "third_party/stb/stb_image.h"
 
-template<typename factory_t> 
-class GlObject : public Noncopyable
-{
-	mutable GLuint handle = 0;
-	std::string n;
-public:
-	GlObject() {}
-	GlObject(GLuint h) : handle(g) {}
-	~GlObject() { if (handle) factory_t::destroy(handle); }
-	GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); return *this; }
-	operator GLuint () const { if (!handle) factory_t::create(handle); return handle; }
-	GlObject & operator = (GLuint & other) { handle = other; return *this; }
-	void set_name(const std::string & newName) { n = newName; }
-	std::string name() const { return n; }
-	Glunt id() const { return handle; };
-};
-
-struct GlBufferFactory { static void create(GLuint & x) { glGenBuffers(1, &x); }; static void destroy(GLuint x) { glDeleteBuffers(1, &x); }; };
-struct GlTextureFactory { static void create(GLuint & x) { glGenTextures(1, &x); }; static void destroy(GLuint x) { glDeleteTextures(1, &x); }; };
-struct GlVertexArrayFactory { static void create(GLuint & x) { glGenVertexArrays(1, &x); }; static void destroy(GLuint x) { glDeleteVertexArrays(1, &x); }; };
-struct GlRenderbufferFactory { static void create(GLuint & x) { glGenRenderbuffers(1, &x); }; static void destroy(GLuint x) { glDeleteRenderbuffers(1, &x); }; };
-struct GlFramebufferFactory { static void create(GLuint & x) { glGenFramebuffers(1, &x); }; static void destroy(GLuint x) { glDeleteFramebuffers(1, &x); }; };
-struct GlQueryFactory { static void create(GLuint & x) { glGenQueries(1, &x); }; static void destroy(GLuint x) { glDeleteQueries(1, &x); }; };
-struct GlSamplerFactory { static void create(GLuint & x) { glGenSamplers(1, &x); }; static void destroy(GLuint x) { glDeleteSamplers(1, &x); }; };
-struct GlTransformFeedbacksFactory { static void create(GLuint & x) { glGenTransformFeedbacks(1, &x); }; static void destroy(GLuint x) { glDeleteTransformFeedbacks(1, &x); }; };
-
-typedef GlObject<GlBufferFactory> GlBufferObject;
-typedef GlObject<GlTextureFactory> GlTextureObject;
-typedef GlObject<GlVertexArrayFactory> GlVertexArrayObject;
-typedef GlObject<GlRenderbufferFactory> GlRenderbufferObject;
-typedef GlObject<GlFramebufferFactory> GlFramebufferObject;
-typedef GlObject<GlQueryFactory> GlQueryObject;
-typedef GlObject<GlSamplerFactory> GlSamplerObject;
-typedef GlObject<GlTransformFeedbacksFactory> GlTransformFeedbacksObject;
-
 namespace
 {
     inline void compile_shader(GLuint program, GLenum type, const char * source)
@@ -82,6 +47,43 @@ namespace
 
 namespace avl
 {
+
+	template<typename factory_t>
+	class GlObject : public Noncopyable
+	{
+		mutable GLuint handle = 0;
+		std::string n;
+	public:
+		GlObject() {}
+		GlObject(GLuint h) : handle(g) {}
+		~GlObject() { if (handle) factory_t::destroy(handle); }
+		GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); return *this; }
+		GlObject(GlObject && r) { *this = std::move(r); }
+		operator GLuint () const { if (!handle) factory_t::create(handle); return handle; }
+		GlObject & operator = (GLuint & other) { handle = other; return *this; }
+		void set_name(const std::string & newName) { n = newName; }
+		std::string name() const { return n; }
+		GLuint id() const { return handle; };
+	};
+
+	struct GlBufferFactory { static void create(GLuint & x) { glGenBuffers(1, &x); }; static void destroy(GLuint x) { glDeleteBuffers(1, &x); }; };
+	struct GlTextureFactory { static void create(GLuint & x) { glGenTextures(1, &x); }; static void destroy(GLuint x) { glDeleteTextures(1, &x); }; };
+	struct GlVertexArrayFactory { static void create(GLuint & x) { glGenVertexArrays(1, &x); }; static void destroy(GLuint x) { glDeleteVertexArrays(1, &x); }; };
+	struct GlRenderbufferFactory { static void create(GLuint & x) { glGenRenderbuffers(1, &x); }; static void destroy(GLuint x) { glDeleteRenderbuffers(1, &x); }; };
+	struct GlFramebufferFactory { static void create(GLuint & x) { glGenFramebuffers(1, &x); }; static void destroy(GLuint x) { glDeleteFramebuffers(1, &x); }; };
+	struct GlQueryFactory { static void create(GLuint & x) { glGenQueries(1, &x); }; static void destroy(GLuint x) { glDeleteQueries(1, &x); }; };
+	struct GlSamplerFactory { static void create(GLuint & x) { glGenSamplers(1, &x); }; static void destroy(GLuint x) { glDeleteSamplers(1, &x); }; };
+	struct GlTransformFeedbacksFactory { static void create(GLuint & x) { glGenTransformFeedbacks(1, &x); }; static void destroy(GLuint x) { glDeleteTransformFeedbacks(1, &x); }; };
+
+	typedef GlObject<GlBufferFactory> GlBufferObject;
+	typedef GlObject<GlTextureFactory> GlTextureObject;
+	typedef GlObject<GlVertexArrayFactory> GlVertexArrayObject;
+	typedef GlObject<GlRenderbufferFactory> GlRenderbufferObject;
+	typedef GlObject<GlFramebufferFactory> GlFramebufferObject;
+	typedef GlObject<GlQueryFactory> GlQueryObject;
+	typedef GlObject<GlSamplerFactory> GlSamplerObject;
+	typedef GlObject<GlTransformFeedbacksFactory> GlTransformFeedbacksObject;
+
     ///////////////
     //   Utils   //
     ///////////////
@@ -110,7 +112,7 @@ namespace avl
 	//   GlBuffer   //
 	//////////////////
 
-	struct GlBuffer : public GlBufferObject, public Noncopyable
+	struct GlBuffer : public GlBufferObject
 	{
 		GLsizeiptr size;
 		GlBuffer() {}
@@ -124,7 +126,7 @@ namespace avl
 	//   GlRenderbuffer   //
 	////////////////////////
 
-	struct GlRenderbuffer : public GlRenderbufferObject, public Noncopyable
+	struct GlRenderbuffer : public GlRenderbufferObject
 	{
 		int2 size;
 		GlRenderbuffer() {};
@@ -137,7 +139,7 @@ namespace avl
 	//   GlFramebuffer   //
 	///////////////////////
 
-	struct GlFramebuffer : public GlFramebufferObject, public Noncopyable
+	struct GlFramebuffer : public GlFramebufferObject
 	{
 		float3 size;
 		GlFramebuffer() {}
@@ -152,7 +154,7 @@ namespace avl
     //   GlTexture   //
     ///////////////////
     
-    struct GlTexture2D : public GlTextureObject, public Noncopyable
+    struct GlTexture2D : public GlTextureObject
     {
         int2 size;
 
@@ -208,7 +210,7 @@ namespace avl
     /////////////////////
     
 	// As either a 3D texture or 2D array
-	struct GlTexture3D : public GlTextureObject, public Noncopyable
+	struct GlTexture3D : public GlTextureObject
 	{
 		int3 size;
 
@@ -307,7 +309,7 @@ namespace avl
     //   GlMesh   //
     ////////////////
     
-    class GlMesh : public Noncopyable
+    class GlMesh
     {
 		GlVertexArrayObject vao;
         GlBuffer vertexBuffer, instanceBuffer, indexBuffer;
@@ -320,8 +322,11 @@ namespace avl
         
         GlMesh() {}
         GlMesh(GlMesh && r) { *this = std::move(r); }
-        ~GlMesh() {};
-        
+		GlMesh(const GlMesh & r) = delete;
+		GlMesh & operator = (GlMesh && r);
+		GlMesh & operator = (const GlMesh & r) = delete;
+		~GlMesh() {};
+
         void set_non_indexed(GLenum newMode)
         {
             mode = newMode;

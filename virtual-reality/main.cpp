@@ -84,8 +84,7 @@ struct VirtualRealityApp : public GLFWApp
 		texturedShader->uniform("u_enableEmissiveTex", 0);
 		texturedShader->uniform("u_enableGlossTex", 0);
 
-		texturedShader->texture("u_diffuseTex", 0, renderModel->tex.get_gl_handle(), GL_TEXTURE_2D);
-
+		texturedShader->texture("u_diffuseTex", 0, renderModel->tex, GL_TEXTURE_2D);
 
 		for (auto pose : { hmd->get_controller(vr::TrackedControllerRole_LeftHand).p, hmd->get_controller(vr::TrackedControllerRole_RightHand).p })
 		{

@@ -26,7 +26,7 @@ namespace avl
     struct TexturedMesh
     {
         std::vector<TexturedMeshChunk> chunks;
-        std::vector<GlTexture> textures;
+        std::vector<GlTexture2D> textures;
     };
     
     struct Geometry
@@ -521,7 +521,7 @@ namespace avl
         {
             if (m.diffuse_texname.size() <= 0) continue;
             std::string texName = parentDir + m.diffuse_texname;
-            GlTexture tex = load_image(texName);
+            GlTexture2D tex = load_image(texName);
             mesh.textures.push_back(std::move(tex));
         }
         

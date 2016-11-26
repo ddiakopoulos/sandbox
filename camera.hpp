@@ -10,7 +10,6 @@
 
 namespace avl
 {
-    
     struct GlCamera
     {
         Pose pose;
@@ -266,7 +265,7 @@ namespace avl
     class CubemapCamera
     {
         GlFramebuffer framebuffer;
-        GlTexture colorBuffer;
+        GlTexture2D colorBuffer;
         GLuint cubeMapHandle;
         float2 resolution;
         std::vector<std::pair<GLenum, Pose>> faces;
@@ -293,9 +292,10 @@ namespace avl
         {
             this->resolution = resolution;
 
-            colorBuffer.load_data(resolution.x, resolution.y, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-            framebuffer.attach(GL_COLOR_ATTACHMENT0, colorBuffer);
-            if (!framebuffer.check_complete()) throw std::runtime_error("incomplete framebuffer");
+            colorBuffer.setup(resolution.x, resolution.y, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+			glNamedFramebufferTexture2DEXT(framebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0); // attach
+			framebuffer.check_complete();
         
             gl_check_error(__FILE__, __LINE__);
 
@@ -333,7 +333,8 @@ namespace avl
 
          void update(float3 eyePosition)
          {
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.get_handle());
+			 // Todo: DSA
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
             glViewport(0, 0, resolution.x , resolution.y);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

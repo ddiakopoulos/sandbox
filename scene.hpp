@@ -12,7 +12,7 @@ namespace avl
 	
 struct FogShaderParams
 {
-    GlTexture gradientTex;
+    GlTexture2D gradientTex;
 
 	float startDistance = 0.0f;
 	float endDistance = 64.0f;
@@ -26,7 +26,7 @@ struct FogShaderParams
 
     void set_uniforms(GlShader & prog)
     {
-        if (!gradientTex.get_gl_handle()) generate_gradient_tex();
+        if (!gradientTex) generate_gradient_tex();
 
         float scale = 1.0f / (endDistance - startDistance);
 		float add = -startDistance / (endDistance - startDistance);
@@ -36,13 +36,13 @@ struct FogShaderParams
         prog.uniform("u_gradientFogLimitColor", float3(1, 1, 1));
         prog.uniform("u_heightFogParams", float3(heightFogThickness, heightFogFalloff, heightFogBaseHeight));
         prog.uniform("u_heightFogColor", color); // use color above
-        prog.texture("s_gradientFogTexture", 0, gradientTex.get_gl_handle(), GL_TEXTURE_2D); 
+        prog.texture("s_gradientFogTexture", 0, gradientTex, GL_TEXTURE_2D); 
         prog.unbind();
     }
 
     void generate_gradient_tex()
     {
-        glBindTexture(GL_TEXTURE_2D, gradientTex.get_gl_handle());
+        glBindTexture(GL_TEXTURE_2D, gradientTex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -63,7 +63,7 @@ struct FogShaderParams
             s += ds;
         }
 
-       gradientTex.load_data(textureWidth, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, gradient.data());
+       gradientTex.setup(textureWidth, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, gradient.data());
     }
 
 };

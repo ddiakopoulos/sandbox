@@ -54,11 +54,10 @@ OpenVR_HMD::OpenVR_HMD()
 	controllerRenderData->mesh.set_attribute(3, 2, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, rfTextureCoord));
 	controllerRenderData->mesh.set_index_data(GL_TRIANGLES, GL_UNSIGNED_SHORT, model->unTriangleCount * 3, model->rIndexData, GL_STATIC_DRAW);
 
-	const auto ctlTexHandle = controllerRenderData->tex.id;
-	glTextureImage2DEXT(ctlTexHandle, GL_TEXTURE_2D, 0, GL_RGBA, texture->unWidth, texture->unHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->rubTextureMapData);
-	glGenerateTextureMipmapEXT(ctlTexHandle, GL_TEXTURE_2D);
-	glTextureParameteriEXT(ctlTexHandle, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTextureParameteriEXT(ctlTexHandle, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTextureImage2DEXT(controllerRenderData->tex, GL_TEXTURE_2D, 0, GL_RGBA, texture->unWidth, texture->unHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->rubTextureMapData);
+	glGenerateTextureMipmapEXT(controllerRenderData->tex, GL_TEXTURE_2D);
+	glTextureParameteriEXT(controllerRenderData->tex, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureParameteriEXT(controllerRenderData->tex, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	for (uint32_t i = 0; i<model->unVertexCount; ++i) controllerRenderData->verts.push_back(reinterpret_cast<const float3 &>(model->rVertexData[i].vPosition));
 	
@@ -176,20 +175,20 @@ void OpenVR_HMD::render(float near, float far, std::function<void(::Pose eyePose
 	{
 		// Render into single 4x multisampled fbo
 		glEnable(GL_MULTISAMPLE);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer.get_handle());
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
 		renderFunc(get_eye_pose(eye), get_proj_matrix(eye, near, far));
 		glDisable(GL_MULTISAMPLE);
 
 		// Resolve multisample into per-eye textures
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFramebuffer.get_handle());
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, eyeTextures[eye].get_gl_handle());
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFramebuffer);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, eyeTextures[eye]);
 		glBlitFramebuffer(0, 0, renderTargetSize.x, renderTargetSize.y, 0, 0, renderTargetSize.x, renderTargetSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 
 	// Submit
 	for (auto eye : { vr::Eye_Left, vr::Eye_Right })
 	{
-		const vr::Texture_t texture = { (void*)(intptr_t)(GLuint) eyeTextures[eye].get_gl_handle(), vr::API_OpenGL, vr::ColorSpace_Gamma };
+		const vr::Texture_t texture = { (void*)(intptr_t)(GLuint) eyeTextures[eye], vr::API_OpenGL, vr::ColorSpace_Gamma };
 		vr::VRCompositor()->Submit(eye, &texture);
 	}
 }
