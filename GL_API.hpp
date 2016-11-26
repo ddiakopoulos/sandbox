@@ -43,6 +43,58 @@ namespace
         glAttachShader(program, shader);
         glDeleteShader(shader);
     }
+
+	std::string gl_src_to_str(GLenum source)
+	{
+		switch (source)
+		{
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM: return "WINDOW_SYSTEM";
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "SHADER_COMPILER";
+		case GL_DEBUG_SOURCE_THIRD_PARTY: return "THIRD_PARTY";
+		case GL_DEBUG_SOURCE_APPLICATION: return "APPLICATION";
+		case GL_DEBUG_SOURCE_OTHER: return "OTHER";
+		case GL_DEBUG_SOURCE_API: return "API";
+		default: return "UNKNOWN";
+		}
+		return "UNKNOWN";
+	}
+
+	std::string gl_enum_to_str(GLenum type)
+	{
+		switch (type)
+		{
+		case GL_DEBUG_TYPE_ERROR: return "ERROR";
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "DEPRECATION";
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: return "UNDEFINED_BEHAVIOR";
+		case GL_DEBUG_TYPE_PORTABILITY: return "PORTABILITY";
+		case GL_DEBUG_TYPE_PERFORMANCE: return "PERFORMANCE";
+		case GL_DEBUG_TYPE_OTHER: return "OTHER";
+		default: return "UNKNOWN";
+		}
+	}
+
+	std::string gl_severity_to_str(GLenum severity)
+	{
+		switch (severity)
+		{
+		case GL_DEBUG_SEVERITY_LOW: return "LOW";
+		case GL_DEBUG_SEVERITY_MEDIUM: return "MEDIUM";
+		case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
+		default: return "UNKNOWN";
+		}
+	}
+
+	static bool gEnableGLDebugOutputErrorBreakpoints = false;
+
+	static void APIENTRY gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, GLvoid * userParam)
+	{
+		if (type != GL_DEBUG_TYPE_ERROR) return;
+		auto SourceStr = gl_src_to_str (source);
+		auto TypeStr = gl_enum_to_str(type);
+		auto pSeverityStr = gl_severity_to_str(severity);
+		printf("GL: [%s][%s][%s][%d]: %s\n", SourceStr.c_str(), TypeStr.c_str(), pSeverityStr, id, message);
+		if ((type == GL_DEBUG_TYPE_ERROR) && (gEnableGLDebugOutputErrorBreakpoints)) __debugbreak();
+	}
 }
 
 namespace avl
