@@ -223,6 +223,7 @@ namespace avl
 			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			size = { width, height };
 		}
     };
     
@@ -238,8 +239,9 @@ namespace avl
         {
             case 3: tex.setup(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, data, true); break;
             case 4: tex.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, data, true); break;
+			default: throw std::runtime_error("supported number of channels");
         }
-        
+		tex.set_name(path);
         stbi_image_free(data);
         return tex;
     }
@@ -280,81 +282,86 @@ namespace avl
 			glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 		}
 	};
-    
-    //////////////////
-    //   GlShader   //
-    //////////////////
-    
-    class GlShader : public Noncopyable
-    {
-        GLuint program;
-        bool enabled = false;
-        void check() const { if (!enabled) throw std::runtime_error("shader not enabled"); };
 
-    public:
-        
-        GlShader() : program() {}
-        GlShader(const std::string & vertexShader, const std::string & fragmentShader, const std::string & geometryShader = "")
-        {
-            program = glCreateProgram();
+	//////////////////
+	//   GlShader   //
+	//////////////////
 
-            compile_shader(program, GL_VERTEX_SHADER, vertexShader.c_str());
-            compile_shader(program, GL_FRAGMENT_SHADER, fragmentShader.c_str());
-            if (geometryShader.length() != 0) ::compile_shader(program, GL_GEOMETRY_SHADER, geometryShader.c_str());
-            
-            glLinkProgram(program);
-            
-            GLint status;
-            GLint length;
-            
-            glGetProgramiv(program, GL_LINK_STATUS, &status);
-            
-            if (status == GL_FALSE)
-            {
-                glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-                std::vector<GLchar> buffer(length);
-                glGetProgramInfoLog(program, (GLsizei) buffer.size(), nullptr, buffer.data());
-                std::cerr << "GL Link Error: " << buffer.data() << std::endl;
-                throw std::runtime_error("GLSL Link Failure");
-            }
-        }
-        
-        ~GlShader() { if(program) glDeleteProgram(program); }
-        
-        GlShader(GlShader && r) { *this = std::move(r); }
-        
-        GLuint get_gl_handle() const { return program; }
-        GLint get_uniform_location(const std::string & name) const { return glGetUniformLocation(program, name.c_str()); }
-        
-        GlShader & operator = (GlShader && r) { std::swap(program, r.program); return *this; }
-        
-        void uniform(const std::string & name, int scalar) const { check(); glUniform1i(get_uniform_location(name), scalar); }
-        void uniform(const std::string & name, float scalar) const { check(); glUniform1f(get_uniform_location(name), scalar); }
-        void uniform(const std::string & name, const float2 & vec) const { check(); glUniform2fv(get_uniform_location(name), 1, &vec.x); }
-        void uniform(const std::string & name, const float3 & vec) const { check(); glUniform3fv(get_uniform_location(name), 1, &vec.x); }
-        void uniform(const std::string & name, const float4 & vec) const { check(); glUniform4fv(get_uniform_location(name), 1, &vec.x); }
-        void uniform(const std::string & name, const float3x3 & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
-        void uniform(const std::string & name, const float4x4 & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
-        
-        void uniform(const std::string & name, const int elements, const std::vector<int> & scalar) const { check(); glUniform1iv(get_uniform_location(name), elements, scalar.data()); }
-        void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { check(); glUniform1fv(get_uniform_location(name), elements, scalar.data()); }
-        void uniform(const std::string & name, const int elements, const std::vector<float2> & vec) const { check(); glUniform2fv(get_uniform_location(name), elements, &vec[0].x); }
-        void uniform(const std::string & name, const int elements, const std::vector<float3> & vec) const { check(); glUniform3fv(get_uniform_location(name), elements, &vec[0].x); }
-        void uniform(const std::string & name, const int elements, const std::vector<float3x3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
-        void uniform(const std::string & name, const int elements, const std::vector<float4x4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
-        
-        void texture(const std::string & name, int unit, const GLuint texId, GLenum textureTarget) const
-        {
+	class GlShader : public Noncopyable
+	{
+		GLuint program;
+		bool enabled = false;
+		void check() const { if (!enabled) throw std::runtime_error("shader not enabled"); };
+
+	public:
+
+		GlShader() : program() {}
+
+		GlShader(const std::string & vertexShader, const std::string & fragmentShader, const std::string & geometryShader = "")
+		{
+			program = glCreateProgram();
+			compile_shader(program, GL_VERTEX_SHADER, vertexShader.c_str());
+			compile_shader(program, GL_FRAGMENT_SHADER, fragmentShader.c_str());
+
+			if (geometryShader.length() != 0)
+				::compile_shader(program, GL_GEOMETRY_SHADER, geometryShader.c_str());
+
+			glLinkProgram(program);
+
+			GLint status;
+			GLint length;
+
+			glGetProgramiv(program, GL_LINK_STATUS, &status);
+
+			if (status == GL_FALSE)
+			{
+				glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+				std::vector<GLchar> buffer(length);
+				glGetProgramInfoLog(program, (GLsizei)buffer.size(), nullptr, buffer.data());
+				std::cerr << "GL Link Error: " << buffer.data() << std::endl;
+				throw std::runtime_error("GLSL Link Failure");
+			}
+
+		}
+
+		~GlShader() { if (program) glDeleteProgram(program); }
+
+		GlShader(GlShader && r) : GlShader() { *this = std::move(r); }
+
+		GLuint get_gl_handle() const { return program; }
+		GLint get_uniform_location(const std::string & name) const { return glGetUniformLocation(program, name.c_str()); }
+
+		GlShader & operator = (GlShader && r) { std::swap(program, r.program); return *this; }
+
+		void uniform(const std::string & name, int scalar) const { check(); glUniform1i(get_uniform_location(name), scalar); }
+		void uniform(const std::string & name, float scalar) const { check(); glUniform1f(get_uniform_location(name), scalar); }
+		void uniform(const std::string & name, const float2 & vec) const { check(); glUniform2fv(get_uniform_location(name), 1, &vec.x); }
+		void uniform(const std::string & name, const float3 & vec) const { check(); glUniform3fv(get_uniform_location(name), 1, &vec.x); }
+		void uniform(const std::string & name, const float4 & vec) const { check(); glUniform4fv(get_uniform_location(name), 1, &vec.x); }
+		void uniform(const std::string & name, const float3x3 & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
+		void uniform(const std::string & name, const float4x4 & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
+
+		void uniform(const std::string & name, const int elements, const std::vector<int> & scalar) const { check(); glUniform1iv(get_uniform_location(name), elements, scalar.data()); }
+		void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { check(); glUniform1fv(get_uniform_location(name), elements, scalar.data()); }
+		void uniform(const std::string & name, const int elements, const std::vector<float2> & vec) const { check(); glUniform2fv(get_uniform_location(name), elements, &vec[0].x); }
+		void uniform(const std::string & name, const int elements, const std::vector<float3> & vec) const { check(); glUniform3fv(get_uniform_location(name), elements, &vec[0].x); }
+		void uniform(const std::string & name, const int elements, const std::vector<float3x3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
+		void uniform(const std::string & name, const int elements, const std::vector<float4x4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
+
+		void texture(const std::string & name, int unit, GLuint texId, GLenum textureTarget) const
+		{
 			check();
-			glBindMultiTextureEXT(GL_TEXTURE0 + unit, textureTarget, texId);
-			glProgramUniform1i(program, get_uniform_location(name), unit);
-        }
-        void texture(const char * name, int unit, const GlTexture2D tex) const { texture(name, unit, tex, GL_TEXTURE_2D); }
-        void texture(const char * name, int unit, GLenum target, const GlTexture3D tex) const { texture(name, unit, tex, target); }
-        
-        void bind() { if (program > 0) enabled = true; glUseProgram(program); }
-        void unbind() { enabled = false; glUseProgram(0); }
-    };
+			glUniform1i(get_uniform_location(name), unit);
+			glActiveTexture(GL_TEXTURE0 + unit);
+			glBindTexture(textureTarget, texId);
+		}
+
+		void texture(const char * name, int unit, const GlTexture2D & tex) const { texture(name, unit, tex, GL_TEXTURE_2D); }
+		void texture(const char * name, int unit, GLenum target, const GlTexture3D & tex) const { texture(name, unit, tex, target); }
+
+		void bind() { if (program > 0) enabled = true; glUseProgram(program); }
+		void unbind() { enabled = false; glUseProgram(0); }
+	};
 
     ////////////////
     //   GlMesh   //
