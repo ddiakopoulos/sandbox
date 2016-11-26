@@ -44,11 +44,11 @@ class ShaderMonitor
     
 public:
     
-    ShaderMonitor()
+    ShaderMonitor(const std::string & basePath)
     {
         fileWatcher.reset(new efsw::FileWatcher());
         
-        efsw::WatchID id = fileWatcher->addWatch("assets/", &listener, true);
+        efsw::WatchID id = fileWatcher->addWatch(basePath, &listener, true);
         
         listener.callback = [&](const std::string filename)
         {
