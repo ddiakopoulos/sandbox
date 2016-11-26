@@ -15,12 +15,11 @@ struct ExperimentalApp : public GLFWApp
     
     GlMesh fullscreen_vignette_quad;
     
-    GlTexture modelDiffuseTexture;
-    GlTexture modelNormalTexture;
-    GlTexture modelSpecularTexture;
-    GlTexture modelGlossTexture;
-    
-    GlTexture matcapTex;
+    GlTexture2D modelDiffuseTexture;
+	GlTexture2D modelNormalTexture;
+	GlTexture2D modelSpecularTexture;
+	GlTexture2D modelGlossTexture;
+	GlTexture2D matcapTex;
     
     std::shared_ptr<GlShader> texturedModelShader;
     std::shared_ptr<GlShader> vignetteShader;
@@ -45,7 +44,7 @@ struct ExperimentalApp : public GLFWApp
         igm.reset(new gui::ImGuiManager(window));
         gui::make_dark_theme();
         
-        auto cube = load_geometry_from_ply("assets/models/geometry/CubeUniform.ply");
+        auto cube = load_geometry_from_ply("../assets/models/geometry/CubeUniform.ply");
         for (auto & v : cube.vertices) v *= 0.20f;
         cube.compute_bounds();
         cube.compute_tangents();
@@ -62,17 +61,18 @@ struct ExperimentalApp : public GLFWApp
         std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
         std::cout << "Object Center: " << std::fixed << object.bounds.center() << std::endl;
         
-        texturedModelShader = make_watched_shader(shaderMonitor, "assets/shaders/textured_model_vert.glsl", "assets/shaders/textured_model_frag.glsl");
-        vignetteShader = make_watched_shader(shaderMonitor, "assets/shaders/vignette_vert.glsl", "assets/shaders/vignette_frag.glsl");
-        matcapShader = make_watched_shader(shaderMonitor, "assets/shaders/matcap_vert.glsl", "assets/shaders/matcap_frag.glsl");
-        normalDebugShader = make_watched_shader(shaderMonitor, "assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
+        texturedModelShader = make_watched_shader(shaderMonitor, "../assets/shaders/textured_model_vert.glsl", "assets/shaders/textured_model_frag.glsl");
+        vignetteShader = make_watched_shader(shaderMonitor, "../assets/shaders/vignette_vert.glsl", "assets/shaders/vignette_frag.glsl");
+        matcapShader = make_watched_shader(shaderMonitor, "../assets/shaders/matcap_vert.glsl", "assets/shaders/matcap_frag.glsl");
+        normalDebugShader = make_watched_shader(shaderMonitor, "../assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
 
-        modelDiffuseTexture = load_image("assets/textures/modular_panel/diffuse.png");
-        modelNormalTexture = load_image("assets/textures/modular_panel/normal.png");
-        modelSpecularTexture = load_image("assets/textures/modular_panel/specular.png");
-        modelGlossTexture = load_image("assets/textures/modular_panel/gloss.png");
+        modelDiffuseTexture = load_image("../assets/textures/matcap/metal_heated.png");
+        modelNormalTexture = load_image("../assets/textures/normal/mesh.png");
+
+        //modelSpecularTexture = load_image("assets/textures/modular_panel/specular.png");
+        //modelGlossTexture = load_image("assets/textures/modular_panel/gloss.png");
         
-        matcapTex = load_image("assets/textures/matcap/metal_heated.png");
+        matcapTex = load_image("../assets/textures/matcap/metal_heated.png");
         
         fullscreen_vignette_quad = make_fullscreen_quad();
         
@@ -160,14 +160,14 @@ struct ExperimentalApp : public GLFWApp
 
             texturedModelShader->uniform("u_enableDiffuseTex", 1);
             texturedModelShader->uniform("u_enableNormalTex", 1);
-            texturedModelShader->uniform("u_enableSpecularTex", 1);
+            texturedModelShader->uniform("u_enableSpecularTex", 0);
             texturedModelShader->uniform("u_enableEmissiveTex", 0);
-            texturedModelShader->uniform("u_enableGlossTex", 1);
+            texturedModelShader->uniform("u_enableGlossTex", 0);
             
-            texturedModelShader->texture("u_diffuseTex", 0, modelDiffuseTexture.get_gl_handle(), GL_TEXTURE_2D);
-            texturedModelShader->texture("u_normalTex", 1, modelNormalTexture.get_gl_handle(), GL_TEXTURE_2D);
-            texturedModelShader->texture("u_specularTex", 2, modelSpecularTexture.get_gl_handle(), GL_TEXTURE_2D);
-            texturedModelShader->texture("u_glossTex", 3, modelGlossTexture.get_gl_handle(), GL_TEXTURE_2D);
+            texturedModelShader->texture("u_diffuseTex", 0, modelDiffuseTexture, GL_TEXTURE_2D);
+            texturedModelShader->texture("u_normalTex", 1, modelNormalTexture, GL_TEXTURE_2D);
+            texturedModelShader->texture("u_specularTex", 2, modelSpecularTexture, GL_TEXTURE_2D);
+            texturedModelShader->texture("u_glossTex", 3, modelGlossTexture, GL_TEXTURE_2D);
             
             /*
             if (useRimlight)
@@ -192,7 +192,7 @@ struct ExperimentalApp : public GLFWApp
             matcapShader->uniform("u_modelMatrix", model);
             matcapShader->uniform("u_modelViewMatrix", mul(view, model));
             matcapShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(model))));
-            matcapShader->texture("u_matcapTexture", 0, matcapTex.get_gl_handle(), GL_TEXTURE_2D);
+            matcapShader->texture("u_matcapTexture", 0, matcapTex, GL_TEXTURE_2D);
             
             object.draw();
             
