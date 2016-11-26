@@ -20,16 +20,17 @@ template<typename factory_t>
 class GlObject : public Noncopyable
 {
 	mutable GLuint handle = 0;
-	std::string name;
+	std::string n;
 public:
 	GlObject() {}
 	GlObject(GLuint h) : handle(g) {}
 	~GlObject() { if (handle) factory_t::destroy(handle); }
 	GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); return *this; }
-	operator GLuint () { if (!handle) factory_t::create(handle); return handle; }
+	operator GLuint () const { if (!handle) factory_t::create(handle); return handle; }
 	GlObject & operator = (GLuint & other) { handle = other; return *this; }
-	void set_name(const std::string & n) { name = n; }
-	std::string name() const { return name; }
+	void set_name(const std::string & newName) { n = newName; }
+	std::string name() const { return n; }
+	Glunt id() const { return handle; };
 };
 
 struct GlBufferFactory { static void create(GLuint & x) { glGenBuffers(1, &x); }; static void destroy(GLuint x) { glDeleteBuffers(1, &x); }; };
@@ -131,7 +132,6 @@ namespace avl
 		GlRenderbuffer(GlRenderbuffer && r) : GlRenderbuffer() { *this = std::move(r); }
 		GlRenderbuffer & operator = (GlRenderbuffer && r) { std::swap(size, r.size); return *this; }
 	};
-
 
 	///////////////////////
 	//   GlFramebuffer   //
@@ -237,7 +237,7 @@ namespace avl
         GLuint program;
         bool enabled = false;
         void check() const { if (!enabled) throw std::runtime_error("shader not enabled"); };
-        
+
     public:
         
         GlShader() : program() {}
@@ -268,7 +268,7 @@ namespace avl
         
         ~GlShader() { if(program) glDeleteProgram(program); }
         
-        GlShader(GlShader && r) : GlShader() { *this = std::move(r); }
+        GlShader(GlShader && r) { *this = std::move(r); }
         
         GLuint get_gl_handle() const { return program; }
         GLint get_uniform_location(const std::string & name) const { return glGetUniformLocation(program, name.c_str()); }
@@ -290,16 +290,14 @@ namespace avl
         void uniform(const std::string & name, const int elements, const std::vector<float3x3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
         void uniform(const std::string & name, const int elements, const std::vector<float4x4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
         
-        void texture(const std::string & name, int unit, GLuint texId, GLenum textureTarget) const
+        void texture(const std::string & name, int unit, const GLuint texId, GLenum textureTarget) const
         {
-            check();
-            glUniform1i(get_uniform_location(name), unit);
-            glActiveTexture(GL_TEXTURE0 + unit);
-            glBindTexture(textureTarget, texId);
+			check();
+			glBindMultiTextureEXT(GL_TEXTURE0 + unit, textureTarget, texId);
+			glProgramUniform1i(program, get_uniform_location(name), unit);
         }
-        
-        void texture(const char * name, int unit, GlTexture2D tex) const { texture(name, unit, tex, GL_TEXTURE_2D); }
-        void texture(const char * name, int unit, GLenum target, GlTexture3D tex) const { texture(name, unit, tex, target); }
+        void texture(const char * name, int unit, const GlTexture2D tex) const { texture(name, unit, tex, GL_TEXTURE_2D); }
+        void texture(const char * name, int unit, GLenum target, const GlTexture3D tex) const { texture(name, unit, tex, target); }
         
         void bind() { if (program > 0) enabled = true; glUseProgram(program); }
         void unbind() { enabled = false; glUseProgram(0); }
@@ -311,31 +309,18 @@ namespace avl
     
     class GlMesh : public Noncopyable
     {
-        enum { MAX_ATTRIBUTES = 8 };
-        struct Attribute { bool is_instance; GLint size; GLenum type; GLboolean normalized; GLsizei stride; const GLvoid * pointer; } attributes[MAX_ATTRIBUTES];
-        
+		GlVertexArrayObject vao;
         GlBuffer vertexBuffer, instanceBuffer, indexBuffer;
         
-        GLuint vertexArrayHandle;
         GLenum mode = GL_TRIANGLES;
         GLenum indexType = 0;
-        GLsizei vertexStride = 0, instanceStride = 0;
+		GLsizei vertexStride = 0, instanceStride = 0, indexCount = 0;
         
     public:
         
-        GlMesh() { memset(attributes,0 ,sizeof(attributes)); glGenVertexArrays(1, &vertexArrayHandle); }
-
-        GlMesh(GlMesh && r) : GlMesh() { *this = std::move(r); }
+        GlMesh() {}
+        GlMesh(GlMesh && r) { *this = std::move(r); }
         ~GlMesh() {};
-        
-        GlMesh & operator = (GlMesh && r)
-        {
-            char buffer[sizeof(GlMesh)];
-            memcpy(buffer, this, sizeof(buffer));
-            memcpy(this, &r, sizeof(buffer));
-            memcpy(&r, buffer, sizeof(buffer));
-            return *this;
-        }
         
         void set_non_indexed(GLenum newMode)
         {
@@ -346,63 +331,27 @@ namespace avl
         
         void draw_elements(int instances = 0) const
         {
-            GLsizei vertexCount = vertexStride ? ((int) vertexBuffer.size() / vertexStride) : 0;
-            
-            GLsizei indexCount = [&]() -> GLsizei
-            {
-                if (indexType == GL_UNSIGNED_BYTE) return ((int)indexBuffer.size() / sizeof(GLubyte));
-                if (indexType == GL_UNSIGNED_SHORT) return ((int)indexBuffer.size() / sizeof(GLushort));
-                if (indexType == GL_UNSIGNED_INT) return ((int)indexBuffer.size() / sizeof(GLuint));
-                else return 0;
-            }();
-            
-            if (vertexCount)
-            {
-                // BEGIN stuff that only needs to be done once
-                glBindVertexArray(vertexArrayHandle);
-                for (GLuint index = 0; index < MAX_ATTRIBUTES; ++index)
-                {
-                    if (attributes[index].size)
-                    {
-                        (attributes[index].is_instance ? instanceBuffer : vertexBuffer).bind(GL_ARRAY_BUFFER);
-                        glVertexAttribPointer(index, attributes[index].size, attributes[index].type, attributes[index].normalized, attributes[index].stride, attributes[index].pointer); // AttribPointer is relative to currently point ARRAY_BUFFER
-                        glVertexAttribDivisor(index, attributes[index].is_instance ? 1 : 0);
-                        glEnableVertexAttribArray(index);
-                        
-                    }
-                }
-                
-                if (indexCount)
-                {
-                    indexBuffer.bind(GL_ELEMENT_ARRAY_BUFFER);
-                    if (instances) glDrawElementsInstanced(mode, indexCount, indexType, 0, instances);
-                    else glDrawElements(mode, indexCount, indexType, nullptr);
-                    indexBuffer.unbind(GL_ELEMENT_ARRAY_BUFFER);
-                }
-                else
-                {
-                    if (instances) glDrawArraysInstanced(mode, 0, vertexCount, instances);
-                    else glDrawArrays(mode, 0, vertexCount);
-                }
-                
-                for (GLuint index = 0; index < MAX_ATTRIBUTES; ++index)
-                {
-                    glDisableVertexAttribArray(index);
-                }
-                
-                glBindVertexArray(0);
-            }
+			if (vertexBuffer.size)
+			{
+				glBindVertexArray(vao);
+				if (indexCount)
+				{
+					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+					if (instances) glDrawElementsInstanced(mode, indexCount, indexType, 0, instances);
+					else glDrawElements(mode, indexCount, indexType, nullptr);
+					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+				}
+				else
+				{
+					if (instances) glDrawArraysInstanced(mode, 0, static_cast<GLsizei>(vertexBuffer.size / vertexStride), instances);
+					else glDrawArrays(mode, 0, static_cast<GLsizei>(vertexBuffer.size / vertexStride));
+				}
+				glBindVertexArray(0);
+			}
         }
         
-        void set_vertex_data(GLsizeiptr size, const GLvoid * data, GLenum usage)
-        {
-            vertexBuffer.set_buffer_data(GL_ARRAY_BUFFER, size, data, usage);
-        }
-        
-        void set_instance_data(GLsizeiptr size, const GLvoid * data, GLenum usage)
-        {
-            instanceBuffer.set_buffer_data(GL_ARRAY_BUFFER, size, data, usage);
-        }
+        void set_vertex_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { vertexBuffer.set_buffer_data(GL_ARRAY_BUFFER, size, data, usage); }
+        void set_instance_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { instanceBuffer.set_buffer_data(GL_ARRAY_BUFFER, size, data, usage);  }
         
         void set_index_data(GLenum mode, GLenum type, GLsizei count, const GLvoid * data, GLenum usage)
         {
@@ -414,21 +363,36 @@ namespace avl
                 case GL_UNSIGNED_INT: elementSize = sizeof(uint32_t); break;
                 default: throw std::logic_error("unknown element type"); break;
             }
-            indexBuffer.set_buffer_data(GL_ELEMENT_ARRAY_BUFFER, elementSize * count, data, usage);
-            this->mode = mode;
-            indexType = type;
+			
+			indexBuffer.set_buffer_data(indexBuffer, elementSize * count, data, usage);
+
+			glBindVertexArray(vao);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+			glBindVertexArray(0);
+			this->mode = mode;
+			indexType = type;
+			indexCount = count;
         }
         
         void set_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
         {
-            attributes[index] = {false, size, type, normalized, stride, pointer};
-            vertexStride = stride;
+			glVertexArrayVertexAttribOffsetEXT(vao, vertexBuffer, index, size, type, normalized, stride, (GLintptr)pointer);
+			glEnableVertexArrayAttribEXT(vao, index);
+			vertexStride = stride;
         }
         
         void set_instance_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
         {
-            attributes[index] = {true, size, type, normalized, stride, pointer };
-            instanceStride = stride;
+			glVertexArrayVertexAttribOffsetEXT(vao, instanceBuffer, index, size, type, normalized, stride, (GLintptr)pointer);
+			glEnableVertexArrayAttribEXT(vao, index);
+
+			// No DSA for this? 
+			glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
+			glVertexAttribPointer(index, size, type, normalized, stride, pointer); // AttribPointer is relative to currently point ARRAY_BUFFER
+			glVertexAttribDivisor(index, 1);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			instanceStride = stride;
         }
         
         void set_indices(GLenum mode, GLsizei count, const uint8_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_BYTE, count, indices, usage); }

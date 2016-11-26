@@ -54,8 +54,7 @@ OpenVR_HMD::OpenVR_HMD()
 	controllerRenderData->mesh.set_attribute(3, 2, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, rfTextureCoord));
 	controllerRenderData->mesh.set_index_data(GL_TRIANGLES, GL_UNSIGNED_SHORT, model->unTriangleCount * 3, model->rIndexData, GL_STATIC_DRAW);
 
-	const auto ctlTexHandle = controllerRenderData->tex.get_gl_handle();
-	controllerRenderData->tex.load_data(texture->unWidth, texture->unHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr); // gen
+	const auto ctlTexHandle = controllerRenderData->tex.id;
 	glTextureImage2DEXT(ctlTexHandle, GL_TEXTURE_2D, 0, GL_RGBA, texture->unWidth, texture->unHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->rubTextureMapData);
 	glGenerateTextureMipmapEXT(ctlTexHandle, GL_TEXTURE_2D);
 	glTextureParameteriEXT(ctlTexHandle, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

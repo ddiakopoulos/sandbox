@@ -22,7 +22,7 @@ struct ControllerRenderData
 {
 	GlMesh mesh;
 	std::vector<float3> verts;
-	GlTexture tex;
+	GlTexture2D tex;
 };
 
 struct Controller
@@ -64,7 +64,7 @@ class OpenVR_HMD
 	Pose worldPose;
 
 	GlFramebuffer eyeFramebuffers[2];
-	GlTexture eyeTextures[2];
+	GlTexture2D eyeTextures[2];
 	GlRenderbuffer multisampleRenderbuffers[2];
 	GlFramebuffer multisampleFramebuffer;
 
@@ -91,7 +91,7 @@ public:
 	Pose get_hmd_pose() { return worldPose * hmdPose; }
 	void set_hmd_pose(Pose p) { hmdPose = p; }
 
-	GLuint get_eye_texture(vr::Hmd_Eye eye) { return eyeTextures[eye].get_gl_handle(); }
+	GLuint get_eye_texture(vr::Hmd_Eye eye) const { return eyeTextures[eye]; }
 
 	float4x4 get_proj_matrix(vr::Hmd_Eye eye, float near_clip, float far_clip) { return transpose(reinterpret_cast<const float4x4 &>(hmd->GetProjectionMatrix(eye, near_clip, far_clip, vr::API_OpenGL))); }
 
