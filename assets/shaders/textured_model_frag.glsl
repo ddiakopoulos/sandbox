@@ -1,4 +1,4 @@
-#version 330 core
+#version 450 core
 
 const int NUM_LIGHTS = 2;
 
@@ -44,10 +44,10 @@ uniform sampler2D u_specularTex;
 uniform sampler2D u_emissiveTex;
 
 uniform int u_enableDiffuseTex = 1;
-uniform int u_enableNormalTex = 1;
-uniform int u_enableSpecularTex = 1;
-uniform int u_enableGlossTex = 1;
-uniform int u_enableEmissiveTex = 1;
+uniform int u_enableNormalTex = 0;
+uniform int u_enableSpecularTex = 0;
+uniform int u_enableGlossTex = 0;
+uniform int u_enableEmissiveTex = 0;
 
 //uniform int u_enableGlossTex = 0;
 //uniform int u_enableAmbientOcclusionTex = 0;
@@ -77,7 +77,7 @@ void main()
     vec4 specularLight = vec4(0.0);
     vec4 emissiveLight = vec4(0.0);
 
-    vec4 diffuseSample = vec4(0.0);
+    vec4 diffuseSample = vec4(0.5);
     if (u_enableDiffuseTex == 1)
     {
         diffuseSample = texture(u_diffuseTex, v_texcoord);

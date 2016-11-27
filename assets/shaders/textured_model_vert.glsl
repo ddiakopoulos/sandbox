@@ -1,4 +1,4 @@
-#version 330 core
+#version 450 core
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -23,7 +23,7 @@ void main()
     gl_Position = u_viewProj * worldPos;
     v_position = worldPos.xyz;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal,0)).xyz);
-    v_texcoord = inTexCoord.st * vec2(1.0, -1.0);
+    v_texcoord = inTexCoord.st; // * vec2(1.0, -1.0);
     v_tangent = inTangent;
     v_bitangent = inBitangent;
 }
