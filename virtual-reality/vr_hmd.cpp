@@ -33,6 +33,9 @@ OpenVR_HMD::OpenVR_HMD()
 	// Setup Framebuffers
 	hmd->GetRecommendedRenderTargetSize(&renderTargetSize.x, &renderTargetSize.y);
 
+	// Gen intermediate tex
+	std::cout << controllerRenderData->tex << std::endl;
+
 	// Generate multisample render buffers for color and depth
 	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderTargetSize.x, renderTargetSize.y);
 	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, renderTargetSize.x, renderTargetSize.y);
