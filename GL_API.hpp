@@ -356,6 +356,17 @@ namespace avl
 		void unbind() { enabled = false; glUseProgram(0); }
 	};
 
+	inline size_t index_size(GLenum type)
+	{
+		switch (type)
+		{
+		case GL_UNSIGNED_BYTE: return sizeof(uint8_t); 
+		case GL_UNSIGNED_SHORT: return sizeof(uint16_t);
+		case GL_UNSIGNED_INT: return sizeof(uint32_t); 
+		default: throw std::logic_error("unknown element type"); break;
+		}
+	}
+
 	////////////////
 	//   GlMesh   //
 	////////////////
@@ -365,7 +376,7 @@ namespace avl
 		GlVertexArrayObject vao;
 		GlBuffer vertexBuffer, instanceBuffer, indexBuffer;
 
-		GLenum mode = GL_TRIANGLES;
+		GLenum drawMode = GL_TRIANGLES;
 		GLenum indexType = 0;
 		GLsizei vertexStride = 0, instanceStride = 0, indexCount = 0;
 
@@ -387,7 +398,7 @@ namespace avl
 
 		void set_non_indexed(GLenum newMode)
 		{
-			mode = newMode;
+			drawMode = newMode;
 			indexBuffer = {};
 			indexType = 0;
 			indexCount = 0;
@@ -401,13 +412,13 @@ namespace avl
 				if (indexCount)
 				{
 					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-					if (instances) glDrawElementsInstanced(mode, indexCount, indexType, 0, instances);
-					else glDrawElements(mode, indexCount, indexType, nullptr);
+					if (instances) glDrawElementsInstanced(drawMode, indexCount, indexType, 0, instances);
+					else glDrawElements(drawMode, indexCount, indexType, nullptr);
 				}
 				else
 				{
-					if (instances) glDrawArraysInstanced(mode, 0, static_cast<GLsizei>(vertexBuffer.size / vertexStride), instances);
-					else glDrawArrays(mode, 0, static_cast<GLsizei>(vertexBuffer.size / vertexStride));
+					if (instances) glDrawArraysInstanced(drawMode, 0, static_cast<GLsizei>(vertexBuffer.size / vertexStride), instances);
+					else glDrawArrays(drawMode, 0, static_cast<GLsizei>(vertexBuffer.size / vertexStride));
 				}
 				glBindVertexArray(0);
 			}
@@ -418,21 +429,9 @@ namespace avl
 
 		void set_index_data(GLenum mode, GLenum type, GLsizei count, const GLvoid * data, GLenum usage)
 		{
-			size_t elementSize;
-			switch (type)
-			{
-			case GL_UNSIGNED_BYTE: elementSize = sizeof(uint8_t); break;
-			case GL_UNSIGNED_SHORT: elementSize = sizeof(uint16_t); break;
-			case GL_UNSIGNED_INT: elementSize = sizeof(uint32_t); break;
-			default: throw std::logic_error("unknown element type"); break;
-			}
-
+			size_t elementSize = index_size(type);
 			indexBuffer.set_buffer_data(elementSize * count, data, usage);
-
-			glBindVertexArray(vao);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-			glBindVertexArray(0);
-			this->mode = mode;
+			drawMode = mode;
 			indexType = type;
 			indexCount = count;
 		}
