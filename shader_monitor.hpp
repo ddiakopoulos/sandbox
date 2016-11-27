@@ -22,6 +22,7 @@ class ShaderMonitor
         std::string vertexPath;
         std::string fragmentPath;
         bool shouldRecompile = false;
+		std::string errorStr;
         ShaderAsset(GlShader & program, const std::string & v, const std::string & f) : program(program), vertexPath(v), fragmentPath(f) {};
     };
     
@@ -80,12 +81,18 @@ public:
             {
                 try
                 {
+					shader->shouldRecompile = false;
                     shader->program = GlShader(read_file_text(shader->vertexPath), read_file_text(shader->fragmentPath));
-                    shader->shouldRecompile = false;
+					if (shader->errorStr.length() > 0)
+					{
+						shader->errorStr = "";
+						std::cout << "Shader recompiled successfully" << std::endl;
+					}
                 }
                 catch (const std::exception & e)
                 {
-                    std::cout << e.what() << std::endl;
+					shader->errorStr = e.what();
+					std::cout << shader->errorStr << std::endl;
                 }
             }
         }
