@@ -185,4 +185,6 @@ void OpenVR_HMD::render(float near, float far, std::function<void(::Pose eyePose
 		const vr::Texture_t texture = { (void*)(intptr_t)(GLuint) eyeTextures[eye], vr::API_OpenGL, vr::ColorSpace_Gamma };
 		vr::VRCompositor()->Submit(eye, &texture);
 	}
+
+	glFlush();
 }

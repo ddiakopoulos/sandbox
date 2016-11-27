@@ -7,6 +7,16 @@
 #include "file_io.hpp"
 #include "third_party/stb/stb_image.h"
 
+// Todo: supported extensions
+// Todo: glMultiDrawElementsIndirect
+// Todo: occlusionQuery
+// Todo: timerQuery
+// Todo: computeShaders (glDispatchCompute)
+// Todo: blit/multisample?
+// Todo: mapped buffers
+// Todo: transform feedback
+// Todo: pixel buffers / sync
+
 namespace
 {
 	inline void compile_shader(GLuint program, GLenum type, const char * source)
