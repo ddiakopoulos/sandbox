@@ -3,11 +3,28 @@
 
 using namespace avl;
 
-std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath, const std::string geomPath = "")
+#if defined(ANVIL_PLATFORM_WINDOWS)
+	#define ALIGNED(n) __declspec(align(n))
+#else
+	#define ALIGNED(n) alignas(n)
+#endif
+
+namespace uniforms
 {
-	std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath), read_file_text(geomPath));
-	mon.add_shader(shader, vertexPath, fragPath);
-	return shader;
+	struct per_scene
+	{
+		static const int      binding = 0;
+		float				  time;
+		ALIGNED(16) float3	  ambientLight;
+	};
+
+	struct per_view
+	{
+		static const int      binding = 1;
+		ALIGNED(16) float4x4  view;
+		ALIGNED(16) float4x4  viewProj;
+		ALIGNED(16) float3    eyePos;
+	};
 }
 
 struct VirtualRealityApp : public GLFWApp
@@ -20,6 +37,9 @@ struct VirtualRealityApp : public GLFWApp
 	std::shared_ptr<GlShader> texturedShader;
 	std::shared_ptr<GlShader> normalShader;
 	std::vector<Renderable> debugModels;
+
+	GlBuffer perScene;
+	GlBuffer perView;
 
 	VirtualRealityApp() : GLFWApp(1280, 800, "VR") 
 	{
@@ -62,6 +82,12 @@ struct VirtualRealityApp : public GLFWApp
 
 	void render_func(Pose eye, float4x4 projMat)
 	{
+		uniforms::per_view v = {};
+		v.view = eye.inverse().matrix();
+		v.viewProj = mul(eye.inverse().matrix(), projMat);
+		v.eyePos = eye.position;
+		perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -131,6 +157,14 @@ struct VirtualRealityApp : public GLFWApp
 		const float4x4 projMatrix = firstPersonCamera.get_projection_matrix((float)width / (float)height);
 		const float4x4 viewMatrix = firstPersonCamera.get_view_matrix();
 		const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
+
+		uniforms::per_scene b = {};
+		b.time = 0.0f;
+		b.ambientLight = float3(1.0f);
+		perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
+
+		glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
+		glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, perView);
 
 		if (hmd) hmd->render(0.05f, 24.0f, [this](Pose eye, float4x4 projMat) { render_func(eye, projMat); });
 
