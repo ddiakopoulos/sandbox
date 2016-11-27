@@ -1,12 +1,5 @@
 #include "index.hpp"
 
-std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath, const std::string geomPath = "")
-{
-    std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath), read_file_text(geomPath));
-    mon.add_shader(shader, vertexPath, fragPath);
-    return shader;
-}
-
 struct ExperimentalApp : public GLFWApp
 {
     std::unique_ptr<gui::ImGuiManager> igm;
@@ -55,10 +48,10 @@ struct ExperimentalApp : public GLFWApp
         rescale_geometry(object.geom);
         object.rebuild_mesh();
 
-        texturedModelShader = make_watched_shader(shaderMonitor, "../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
-        vignetteShader = make_watched_shader(shaderMonitor, "../assets/shaders/vignette_vert.glsl", "../assets/shaders/vignette_frag.glsl");
-        matcapShader = make_watched_shader(shaderMonitor, "../assets/shaders/matcap_vert.glsl", "../assets/shaders/matcap_frag.glsl");
-        normalDebugShader = make_watched_shader(shaderMonitor, "../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
+        texturedModelShader = shaderMonitor.watch("../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
+        vignetteShader = shaderMonitor.watch("../assets/shaders/vignette_vert.glsl", "../assets/shaders/vignette_frag.glsl");
+        matcapShader = shaderMonitor.watch("../assets/shaders/matcap_vert.glsl", "../assets/shaders/matcap_frag.glsl");
+        normalDebugShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 
         modelDiffuseTexture = load_image("../assets/textures/uv_checker_map/uvcheckermap_01.png");
         modelNormalTexture = load_image("../assets/textures/normal/mesh.png");

@@ -52,8 +52,8 @@ struct VirtualRealityApp : public GLFWApp
 			std::cout << "OpenVR Exception: " << e.what() << std::endl;
 		}
 
-		texturedShader = make_watched_shader(shaderMonitor, "../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
-		normalShader = make_watched_shader(shaderMonitor, "../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
+		texturedShader = shaderMonitor.watch("../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
+		normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 
 		Renderable cube = Renderable(make_cube());
 		cube.pose = Pose(make_rotation_quat_axis_angle({ 1, 0, 1 }, ANVIL_PI / 4), float3(-5, 0, 0));

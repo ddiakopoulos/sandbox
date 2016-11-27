@@ -60,12 +60,15 @@ public:
                 }
             }
         };
+
         fileWatcher->watch();
     }
-    
-    void add_shader(std::shared_ptr<GlShader> & program, const std::string & vertexShader, const std::string & fragmentShader)
+
+	std::shared_ptr<GlShader> watch(const std::string & vertexShader, const std::string & fragmentShader, const std::string geomPath = "")
     {
-        shaders.emplace_back(new ShaderAsset(*program.get(), vertexShader, fragmentShader));
+		std::shared_ptr<GlShader> watchedShader = std::make_shared<GlShader>(read_file_text(vertexShader), read_file_text(fragmentShader), read_file_text(geomPath));
+        shaders.emplace_back(new ShaderAsset(*watchedShader.get(), vertexShader, fragmentShader));
+		return watchedShader;
     }
     
     // Call this regularly on the gl thread
