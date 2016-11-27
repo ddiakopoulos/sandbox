@@ -449,15 +449,16 @@ namespace avl
 			// No DSA for this? 
 			glBindVertexArray(vao);
 			glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
-			glVertexAttribPointer(index, size, type, normalized, stride, offset); // AttribPointer is relative to currently point ARRAY_BUFFER
-			glVertexAttribDivisor(index, 1);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glEnableVertexAttribArray(index);
+			//glVertexAttribPointer(index, size, type, normalized, stride, offset); // AttribPointer is relative to currently point ARRAY_BUFFER
+			//glVertexAttribDivisor(index, 1);
+			//glBindBuffer(GL_ARRAY_BUFFER, 0);
+			//glEnableVertexAttribArray(index);
 
-			//glEnableVertexArrayAttribEXT(vao, index);
-			//glVertexArrayVertexAttribOffsetEXT(vao, instanceBuffer, index, size, type, normalized, stride, (GLintptr)offset);
+			glEnableVertexArrayAttribEXT(vao, index);
+			glVertexArrayVertexAttribOffsetEXT(vao, instanceBuffer, index, size, type, normalized, stride, (GLintptr)offset);
+			glVertexArrayVertexAttribDivisorEXT(vao, index, 1);
 
-			instanceStride = vertexStride = stride;
+			instanceStride = stride;
 		}
 
 		void set_indices(GLenum mode, GLsizei count, const uint8_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_BYTE, count, indices, usage); }

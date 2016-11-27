@@ -14,6 +14,7 @@
 
 #if defined(ANVIL_PLATFORM_WINDOWS)
 #define GLEW_STATIC
+#define GL_GLEXT_PROTOTYPES
 #include "glew.h"
 #endif
 
