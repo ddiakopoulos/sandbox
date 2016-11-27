@@ -23,6 +23,7 @@ struct ControllerRenderData
 	GlMesh mesh;
 	std::vector<float3> verts;
 	GlTexture2D tex;
+	bool loaded = false;
 };
 
 struct Controller

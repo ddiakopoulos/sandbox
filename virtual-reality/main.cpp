@@ -62,7 +62,7 @@ struct VirtualRealityApp : public GLFWApp
 		cube.pose = Pose(make_rotation_quat_axis_angle({ 1, 0, 1 }, ANVIL_PI / 4), float3(0, 2, 0));
 		debugModels.push_back(std::move(cube));
 
-		grid = RenderableGrid(1, 64, 64);
+		grid = RenderableGrid(0.5f, 128, 128);
 
 		gl_check_error(__FILE__, __LINE__);
 	}
@@ -96,7 +96,7 @@ struct VirtualRealityApp : public GLFWApp
 		//perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+		glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
 
 		auto renderModel = hmd->get_controller_render_data();
 
@@ -143,7 +143,6 @@ struct VirtualRealityApp : public GLFWApp
 		normalShader->uniform("u_viewProj", mul(projMat, eye.inverse().matrix()));
 		for (const auto & model : debugModels)
 		{
-			std::cout << model.get_model() << std::endl;
 			normalShader->uniform("u_modelMatrix", model.get_model());
 			normalShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
 			model.draw();
@@ -161,6 +160,10 @@ struct VirtualRealityApp : public GLFWApp
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_DEPTH_TEST);
+
+		// FPS Camera Only
 		const float4x4 projMatrix = firstPersonCamera.get_projection_matrix((float)width / (float)height);
 		const float4x4 viewMatrix = firstPersonCamera.get_view_matrix();
 		const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
@@ -179,11 +182,10 @@ struct VirtualRealityApp : public GLFWApp
 			hmd->update();
 		}
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		gl_check_error(__FILE__, __LINE__);
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		glfwSwapBuffers(window);
+		gl_check_error(__FILE__, __LINE__);
 	}
 
 };
