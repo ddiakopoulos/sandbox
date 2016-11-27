@@ -41,11 +41,14 @@ struct VirtualRealityApp : public GLFWApp
 	GlBuffer perScene;
 	GlBuffer perView;
 
+	RenderableGrid grid;
+
 	VirtualRealityApp() : GLFWApp(1280, 800, "VR") 
 	{
 		try
 		{
 			hmd.reset(new OpenVR_HMD());
+			glfwSwapInterval(0);
 		}
 		catch (const std::exception & e)
 		{
@@ -56,13 +59,18 @@ struct VirtualRealityApp : public GLFWApp
 		normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 
 		Renderable cube = Renderable(make_cube());
-		cube.pose = Pose(make_rotation_quat_axis_angle({ 1, 0, 1 }, ANVIL_PI / 4), float3(-5, 0, 0));
+		cube.pose = Pose(make_rotation_quat_axis_angle({ 1, 0, 1 }, ANVIL_PI / 4), float3(0, 2, 0));
 		debugModels.push_back(std::move(cube));
+
+		grid = RenderableGrid(1, 64, 64);
 
 		gl_check_error(__FILE__, __LINE__);
 	}
 
-	~VirtualRealityApp() {}
+	~VirtualRealityApp() 
+	{
+		hmd.reset();
+	}
 
 	void on_window_resize(int2 size) override
 	{
@@ -77,30 +85,29 @@ struct VirtualRealityApp : public GLFWApp
 	void on_update(const UpdateEvent & e) override
 	{
 		shaderMonitor.handle_recompile();
-		if (hmd) hmd->update();
 	}
 
 	void render_func(Pose eye, float4x4 projMat)
 	{
-		uniforms::per_view v = {};
-		v.view = eye.inverse().matrix();
-		v.viewProj = mul(eye.inverse().matrix(), projMat);
-		v.eyePos = eye.position;
-		perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
+		//uniforms::per_view v = {};
+		//v.view = eye.inverse().matrix();
+		//v.viewProj = mul(projMat, eye.inverse().matrix());
+		//v.eyePos = eye.position;
+		//perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 
 		auto renderModel = hmd->get_controller_render_data();
 
 		texturedShader->bind();
 
-		texturedShader->uniform("u_viewProj", mul(eye.inverse().matrix(), projMat));
+		texturedShader->uniform("u_viewProj", mul(projMat, eye.inverse().matrix()));
 		texturedShader->uniform("u_eye", eye.position);
 
 		texturedShader->uniform("u_ambientLight", float3(1.0f, 1.0f, 1.0f));
 
-		texturedShader->uniform("u_rimLight.enable", 0);
+		texturedShader->uniform("u_rimLight.enable", 1);
 
 		texturedShader->uniform("u_material.diffuseIntensity", float3(1.0f, 1.0f, 1.0f));
 		texturedShader->uniform("u_material.ambientIntensity", float3(1.0f, 1.0f, 1.0f));
@@ -132,18 +139,18 @@ struct VirtualRealityApp : public GLFWApp
 
 		texturedShader->unbind();
 
-		/*
 		normalShader->bind();
-		normalShader->uniform("u_viewProj", mul(eye.inverse().matrix(), projMat));
+		normalShader->uniform("u_viewProj", mul(projMat, eye.inverse().matrix()));
 		for (const auto & model : debugModels)
 		{
+			std::cout << model.get_model() << std::endl;
 			normalShader->uniform("u_modelMatrix", model.get_model());
 			normalShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
 			model.draw();
 		}
 		normalShader->unbind();
-		*/
 
+		grid.render(projMat, eye.inverse().matrix());
 	}
 
 	void on_draw() override
@@ -166,7 +173,13 @@ struct VirtualRealityApp : public GLFWApp
 		glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
 		glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, perView);
 
-		if (hmd) hmd->render(0.05f, 24.0f, [this](Pose eye, float4x4 projMat) { render_func(eye, projMat); });
+		if (hmd)
+		{
+			hmd->render(0.05f, 24.0f, [this](Pose eye, float4x4 projMat) { render_func(eye, projMat); });
+			hmd->update();
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		gl_check_error(__FILE__, __LINE__);
 
