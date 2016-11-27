@@ -15,8 +15,7 @@ namespace
 		glShaderSource(shader, 1, &source, nullptr);
 		glCompileShader(shader);
 
-		GLint status;
-		GLint length;
+		GLint status, length;
 
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
@@ -133,6 +132,7 @@ namespace avl
 
 	inline void gl_check_error(const char * file, int32_t line)
 	{
+		#ifdef _DEBUG
 		GLint error = glGetError();
 		if (error)
 		{
@@ -148,6 +148,7 @@ namespace avl
 			printf("GL error : %s, line %d : %s\n", file, line, errorStr);
 			error = 0;
 		}
+		#endif
 	}
 
 
@@ -445,16 +446,18 @@ namespace avl
 
 		void set_instance_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * offset)
 		{
-			glEnableVertexArrayAttribEXT(vao, index);
-			glVertexArrayVertexAttribOffsetEXT(vao, instanceBuffer, index, size, type, normalized, stride, (GLintptr)offset);
-
 			// No DSA for this? 
+			glBindVertexArray(vao);
 			glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
 			glVertexAttribPointer(index, size, type, normalized, stride, offset); // AttribPointer is relative to currently point ARRAY_BUFFER
 			glVertexAttribDivisor(index, 1);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glEnableVertexAttribArray(index);
 
-			instanceStride = stride;
+			//glEnableVertexArrayAttribEXT(vao, index);
+			//glVertexArrayVertexAttribOffsetEXT(vao, instanceBuffer, index, size, type, normalized, stride, (GLintptr)offset);
+
+			instanceStride = vertexStride = stride;
 		}
 
 		void set_indices(GLenum mode, GLsizei count, const uint8_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_BYTE, count, indices, usage); }

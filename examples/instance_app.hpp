@@ -15,7 +15,7 @@ struct ExperimentalApp : public GLFWApp
     GlCamera camera;
     
     FlyCameraController cameraController;
-    ShaderMonitor shaderMonitor;
+	ShaderMonitor shaderMonitor = { "../assets/" };
     
     std::shared_ptr<GlShader> sceneShader;
     
@@ -39,14 +39,14 @@ struct ExperimentalApp : public GLFWApp
         camera.farClip = 55.f;
         camera.look_at({0, 0, +15}, {0, 0, 0});
         
-        sceneShader = make_watched_shader(shaderMonitor, "assets/shaders/instance_vert.glsl", "assets/shaders/instance_frag.glsl");
+        sceneShader = make_watched_shader(shaderMonitor, "../assets/shaders/instance_vert.glsl", "../assets/shaders/instance_frag.glsl");
 
         std::vector<float3> initialSet = {};
         auto b = Bounds3D(float3(-10, -10, -10), float3(10, 10, 10));
-        auto pd_dist = make_poisson_disk_distribution(b, initialSet, 2, 1.0f);
+        auto pd_dist = poisson::make_poisson_disk_distribution(b, initialSet, 2, 1.0f);
         
         // Single sphere
-        sceneObjects.push_back(Renderable(make_sphere(0.5)));
+        sceneObjects.push_back(Renderable(make_sphere(0.25)));
 
         for (auto pt : pd_dist)
         {
@@ -115,10 +115,7 @@ struct ExperimentalApp : public GLFWApp
                 auto model = object.get_model();
                 sceneShader->uniform("u_modelMatrix", model);
                 sceneShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-
                 object.mesh.draw_elements(numInstances); // instanced draw
-                
-                gl_check_error(__FILE__, __LINE__);
             }
             
             sceneShader->unbind();

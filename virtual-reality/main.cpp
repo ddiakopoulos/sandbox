@@ -13,13 +13,15 @@ std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::st
 struct VirtualRealityApp : public GLFWApp
 {
 	std::unique_ptr<OpenVR_HMD> hmd;
+
 	GlCamera firstPersonCamera;
-	ShaderMonitor shaderMonitor;
+	ShaderMonitor shaderMonitor = { "../assets/" };
+
 	std::shared_ptr<GlShader> texturedShader;
 	std::shared_ptr<GlShader> normalShader;
 	std::vector<Renderable> debugModels;
 
-	VirtualRealityApp() : GLFWApp(1280, 720, "VR") 
+	VirtualRealityApp() : GLFWApp(1280, 800, "VR") 
 	{
 		try
 		{
@@ -104,6 +106,7 @@ struct VirtualRealityApp : public GLFWApp
 
 		texturedShader->unbind();
 
+		/*
 		normalShader->bind();
 		normalShader->uniform("u_viewProj", mul(eye.inverse().matrix(), projMat));
 		for (const auto & model : debugModels)
@@ -113,6 +116,7 @@ struct VirtualRealityApp : public GLFWApp
 			model.draw();
 		}
 		normalShader->unbind();
+		*/
 
 	}
 
@@ -124,13 +128,13 @@ struct VirtualRealityApp : public GLFWApp
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 
-		//const float4x4 projMatrix = firstPersonCamera.get_projection_matrix((float)width / (float)height);
-		//const float4x4 viewMatrix = firstPersonCamera.get_view_matrix();
-		//const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
+		const float4x4 projMatrix = firstPersonCamera.get_projection_matrix((float)width / (float)height);
+		const float4x4 viewMatrix = firstPersonCamera.get_view_matrix();
+		const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
 
 		if (hmd) hmd->render(0.05f, 24.0f, [this](Pose eye, float4x4 projMat) { render_func(eye, projMat); });
 
-		//gl_check_error(__FILE__, __LINE__);
+		gl_check_error(__FILE__, __LINE__);
 
 		glfwSwapBuffers(window);
 	}
