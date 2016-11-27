@@ -446,18 +446,9 @@ namespace avl
 
 		void set_instance_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * offset)
 		{
-			// No DSA for this? 
-			glBindVertexArray(vao);
-			glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
-			//glVertexAttribPointer(index, size, type, normalized, stride, offset); // AttribPointer is relative to currently point ARRAY_BUFFER
-			//glVertexAttribDivisor(index, 1);
-			//glBindBuffer(GL_ARRAY_BUFFER, 0);
-			//glEnableVertexAttribArray(index);
-
 			glEnableVertexArrayAttribEXT(vao, index);
 			glVertexArrayVertexAttribOffsetEXT(vao, instanceBuffer, index, size, type, normalized, stride, (GLintptr)offset);
 			glVertexArrayVertexAttribDivisorEXT(vao, index, 1);
-
 			instanceStride = stride;
 		}
 
