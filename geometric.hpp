@@ -145,6 +145,7 @@ namespace avl
         return make_rotation_quat_axis_angle({0,0,1}, angle);
     }
     
+	// http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
     inline float4 make_rotation_quat_between_vectors(const float3 & from, const float3 & to)
     {
         auto a = safe_normalize(from), b = safe_normalize(to);

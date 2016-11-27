@@ -56,7 +56,7 @@ namespace avl
 				b = constrain_to_axis(b, constraintAxis);
 			}
 
-			if (distance(a, b) <= 0.0002) return;
+			if (distance(a, b) <= 0.0003) return;
 			
 			auto rotation = normalize(make_rotation_quat_between_vectors(a, b));
 			auto deltaRotation = normalize(qmul(rotation, qconj(initialQuat)));

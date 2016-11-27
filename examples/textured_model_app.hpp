@@ -26,7 +26,7 @@ struct ExperimentalApp : public GLFWApp
     std::shared_ptr<GlShader> matcapShader;
     std::shared_ptr<GlShader> normalDebugShader;
 
-    ShaderMonitor shaderMonitor;
+	ShaderMonitor shaderMonitor = { "../assets/" };
     
     GlCamera camera;
     ArcballCamera * myArcball;
@@ -49,31 +49,24 @@ struct ExperimentalApp : public GLFWApp
         cube.compute_bounds();
         cube.compute_tangents();
         
-        object = Renderable(make_curved_plane());
+        object = Renderable(make_cube());
         object.pose.position = {0, 0, 0};
-        
-        std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
-        std::cout << "Object Center: " << std::fixed << object.bounds.center() << std::endl;
         
         rescale_geometry(object.geom);
         object.rebuild_mesh();
-        
-        std::cout << "Object Volume: " << std::fixed << object.bounds.volume() << std::endl;
-        std::cout << "Object Center: " << std::fixed << object.bounds.center() << std::endl;
-        
-        texturedModelShader = make_watched_shader(shaderMonitor, "../assets/shaders/textured_model_vert.glsl", "assets/shaders/textured_model_frag.glsl");
-        vignetteShader = make_watched_shader(shaderMonitor, "../assets/shaders/vignette_vert.glsl", "assets/shaders/vignette_frag.glsl");
-        matcapShader = make_watched_shader(shaderMonitor, "../assets/shaders/matcap_vert.glsl", "assets/shaders/matcap_frag.glsl");
-        normalDebugShader = make_watched_shader(shaderMonitor, "../assets/shaders/normal_debug_vert.glsl", "assets/shaders/normal_debug_frag.glsl");
 
-        modelDiffuseTexture = load_image("../assets/textures/matcap/metal_heated.png");
+        texturedModelShader = make_watched_shader(shaderMonitor, "../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
+        vignetteShader = make_watched_shader(shaderMonitor, "../assets/shaders/vignette_vert.glsl", "../assets/shaders/vignette_frag.glsl");
+        matcapShader = make_watched_shader(shaderMonitor, "../assets/shaders/matcap_vert.glsl", "../assets/shaders/matcap_frag.glsl");
+        normalDebugShader = make_watched_shader(shaderMonitor, "../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
+
+        modelDiffuseTexture = load_image("../assets/textures/uv_checker_map/uvcheckermap_01.png");
         modelNormalTexture = load_image("../assets/textures/normal/mesh.png");
 
         //modelSpecularTexture = load_image("assets/textures/modular_panel/specular.png");
         //modelGlossTexture = load_image("assets/textures/modular_panel/gloss.png");
-        
-        matcapTex = load_image("../assets/textures/matcap/metal_heated.png");
-        
+        //matcapTex = load_image("../assets/textures/matcap/metal_heated.png");
+
         fullscreen_vignette_quad = make_fullscreen_quad();
         
         myArcball = new ArcballCamera(float2(width, height));
@@ -99,7 +92,7 @@ struct ExperimentalApp : public GLFWApp
         else if (event.type == InputEvent::CURSOR && event.drag)
         {
             myArcball->mouse_drag(event.cursor);
-            object.pose.orientation = safe_normalize(qmul(myArcball->currentQuat, object.pose.orientation));
+			object.pose.orientation = normalize(qmul(myArcball->currentQuat, object.pose.orientation));
         }
     }
     
@@ -119,7 +112,7 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         
         const auto proj = camera.get_projection_matrix((float) width / (float) height);
         const float4x4 view = camera.get_view_matrix();
@@ -166,15 +159,8 @@ struct ExperimentalApp : public GLFWApp
             
             texturedModelShader->texture("u_diffuseTex", 0, modelDiffuseTexture, GL_TEXTURE_2D);
             texturedModelShader->texture("u_normalTex", 1, modelNormalTexture, GL_TEXTURE_2D);
-            texturedModelShader->texture("u_specularTex", 2, modelSpecularTexture, GL_TEXTURE_2D);
-            texturedModelShader->texture("u_glossTex", 3, modelGlossTexture, GL_TEXTURE_2D);
-            
-            /*
-            if (useRimlight)
-            {
-                texturedModelShader->uniform("u_applyRimlight", useRimlight);
-            }
-            */
+            //texturedModelShader->texture("u_specularTex", 2, modelSpecularTexture, GL_TEXTURE_2D);
+            //texturedModelShader->texture("u_glossTex", 3, modelGlossTexture, GL_TEXTURE_2D);
             
             auto model = object.get_model();
             texturedModelShader->uniform("u_modelMatrix", model);
@@ -185,6 +171,19 @@ struct ExperimentalApp : public GLFWApp
         }
         else
         {
+
+			normalDebugShader->bind();
+
+			auto model = object.get_model();
+			normalDebugShader->uniform("u_viewProj", viewProj);
+			normalDebugShader->uniform("u_modelMatrix", model);
+			normalDebugShader->uniform("u_modelMatrixIT", inv(transpose(model)));
+
+			object.draw();
+
+			matcapShader->unbind();
+
+			/*
             matcapShader->bind();
             
             auto model = object.get_model();
@@ -197,6 +196,8 @@ struct ExperimentalApp : public GLFWApp
             object.draw();
             
             matcapShader->unbind();
+			*/
+
         }
         
         if (igm) igm->begin_frame();

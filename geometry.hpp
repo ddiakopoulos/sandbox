@@ -300,7 +300,7 @@ namespace avl
                 buffer.push_back(geometry.bitangents[i].z);
             }
         }
-        
+
         // Hereby known as the The Blake C. Lucas mesh attribute order:
         m.set_vertex_data(buffer.size() * sizeof(float), buffer.data(), GL_STATIC_DRAW);
         m.set_attribute(0, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + vertexOffset);
@@ -310,8 +310,10 @@ namespace avl
         if (tanOffset) m.set_attribute(4, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + tanOffset);
         if (bitanOffset) m.set_attribute(5, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), ((float*) 0) + bitanOffset);
         
-        if (geometry.faces.size() > 0)
-            m.set_elements(geometry.faces, GL_STATIC_DRAW);
+		if (geometry.faces.size() > 0)
+		{
+			m.set_elements(geometry.faces, GL_STATIC_DRAW);
+		}
         
         return m;
     }
