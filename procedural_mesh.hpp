@@ -514,7 +514,7 @@ namespace avl
         return make_mesh_from_geometry(make_capsule(segments, radius, length));
     }
     
-    inline Geometry make_plane(float width, float height, uint32_t nw, uint32_t nh)
+    inline Geometry make_plane(float width, float height, uint32_t nw, uint32_t nh, bool withBackface = false)
     {
         Geometry plane;
         uint32_t indexOffset = 0;
@@ -543,14 +543,15 @@ namespace avl
                 plane.texCoords.emplace_back(u, v);
                 plane.texCoords.emplace_back(u + ou, v);
                 plane.texCoords.emplace_back(u + ou, v + ov);
-                
-                // Front faces
+
                 plane.faces.push_back({indexOffset + 0, indexOffset + 1, indexOffset + 2});
                 plane.faces.push_back({indexOffset + 0, indexOffset + 2, indexOffset + 3});
-                
-                // Back faces
-                //plane.faces.push_back({indexOffset + 2, indexOffset + 1, indexOffset + 0});
-                //plane.faces.push_back({indexOffset + 3, indexOffset + 2, indexOffset + 0});
+
+				if (withBackface)
+				{
+					plane.faces.push_back({ indexOffset + 2, indexOffset + 1, indexOffset + 0 });
+					plane.faces.push_back({ indexOffset + 3, indexOffset + 2, indexOffset + 0 });
+				}
                 
                 indexOffset += 4;
             }
@@ -745,7 +746,7 @@ namespace avl
         return make_mesh_from_geometry(make_tetrahedron());
     }
     
-    inline GlMesh make_fullscreen_quad()
+    inline GlMesh make_fullscreen_quad(bool backfacing = false)
     {
         Geometry g;
         g.vertices = { {-1.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f} };
