@@ -27,10 +27,32 @@ class BulletEngineVR
 
 	std::vector<std::pair<OnTickCallback, int>> bulletTicks;
 
+	static void tick_callback(btDynamicsWorld * world, btScalar time)
+	{
+		BulletEngineVR * engineContext = static_cast<BulletEngineVR *>(world->getWorldUserInfo());
+
+		for (int i = 0; i < engineContext->bulletTicks.size(); ++i)
+		{
+			if (engineContext->bulletTicks[i].second < 0)
+			{
+				engineContext->bulletTicks[i].first(static_cast<float>(time), engineContext);
+			}
+		}
+	}
+
 public:
+
 	BulletEngineVR()
 	{
 
+		broadphase = new btDbvtBroadphase();
+		collisionConfiguration = new btDefaultCollisionConfiguration();
+		dispatcher = new btCollisionDispatcher(collisionConfiguration);
+		solver = new btSequentialImpulseConstraintSolver();
+
+		dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+		dynamicsWorld->setGravity(btVector3(0, 0, -9.87));
+		dynamicsWorld->setInternalTickCallback(tick_callback, static_cast<void *>(this), true);
 	}
 
 	~BulletEngineVR()
