@@ -15,6 +15,24 @@
 
 using namespace avl;
 
+struct BulletContactPointVR
+{
+	float3 location;
+	float3 normal;
+	float depth = { 1.f };
+	btCollisionObject * object;
+};
+
+class BulletObjectVR
+{
+	btRigidBody * body = nullptr;
+	btDiscreteDynamicsWorld * world = nullptr;
+	btMotionState * state = nullptr;
+
+public:
+
+};
+
 class BulletEngineVR
 {
 	using OnTickCallback = std::function<void(float, BulletEngineVR *)>;
