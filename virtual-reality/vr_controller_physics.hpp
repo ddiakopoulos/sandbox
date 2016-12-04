@@ -25,18 +25,15 @@ class BulletEngineVR
 	std::unique_ptr<btSequentialImpulseConstraintSolver> solver = { nullptr };
 	std::unique_ptr<btDiscreteDynamicsWorld> dynamicsWorld = { nullptr };
 
-	std::vector<std::pair<OnTickCallback, int>> bulletTicks;
+	std::vector<OnTickCallback> bulletTicks;
 
 	static void tick_callback(btDynamicsWorld * world, btScalar time)
 	{
 		BulletEngineVR * engineContext = static_cast<BulletEngineVR *>(world->getWorldUserInfo());
 
-		for (int i = 0; i < engineContext->bulletTicks.size(); ++i)
+		for (auto & t : engineContext->bulletTicks)
 		{
-			if (engineContext->bulletTicks[i].second < 0)
-			{
-				engineContext->bulletTicks[i].first(static_cast<float>(time), engineContext);
-			}
+			t(static_cast<float>(time), engineContext);
 		}
 	}
 
@@ -48,8 +45,8 @@ public:
 		collisionConfiguration.reset(new btDefaultCollisionConfiguration());
 		dispatcher.reset(new btCollisionDispatcher(collisionConfiguration.get()));
 		solver.reset(new btSequentialImpulseConstraintSolver());
-		dynamicsWorld.reset(new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration));
-		dynamicsWorld->setGravity(btVector3(0, 0, -9.87));
+		dynamicsWorld.reset(new btDiscreteDynamicsWorld(dispatcher.get(), broadphase.get(), solver.get(), collisionConfiguration.get()));
+		dynamicsWorld->setGravity(btVector3(0.f, -9.87f, 0.0f));
 		dynamicsWorld->setInternalTickCallback(tick_callback, static_cast<void *>(this), true);
 	}
 
@@ -57,7 +54,12 @@ public:
 	{
 
 	}
-};
 
+	void add_task(const OnTickCallback & f)
+	{
+		bulletTicks.push_back({ f });
+	}
+
+};
 
 #endif
