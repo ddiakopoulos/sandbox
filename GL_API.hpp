@@ -88,11 +88,44 @@ namespace
 	static void APIENTRY gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, GLvoid * userParam)
 	{
 		if (type != GL_DEBUG_TYPE_ERROR) return;
-		auto SourceStr = gl_src_to_str(source);
-		auto TypeStr = gl_enum_to_str(type);
-		auto pSeverityStr = gl_severity_to_str(severity);
-		printf("GL: [%s][%s][%s][%d]: %s\n", SourceStr.c_str(), TypeStr.c_str(), pSeverityStr, id, message);
+		auto sourceStr = gl_src_to_str(source);
+		auto typeStr = gl_enum_to_str(type);
+		auto severityStr = gl_severity_to_str(severity);
+		std::cout << "gl_debug_callback: " << sourceStr << ", " << severityStr << ", " << typeStr << " , " << id << ", " << message << std::endl;
 		if ((type == GL_DEBUG_TYPE_ERROR) && (gEnableGLDebugOutputErrorBreakpoints)) __debugbreak();
+	}
+
+
+	inline void gl_check_error(const char * file, int32_t line)
+	{
+#ifdef _DEBUG
+		GLint error = glGetError();
+		if (error)
+		{
+			const char * errorStr = 0;
+			switch (error)
+			{
+			case GL_INVALID_ENUM: errorStr = "GL_INVALID_ENUM"; break;
+			case GL_INVALID_VALUE: errorStr = "GL_INVALID_VALUE"; break;
+			case GL_INVALID_OPERATION: errorStr = "GL_INVALID_OPERATION"; break;
+			case GL_OUT_OF_MEMORY: errorStr = "GL_OUT_OF_MEMORY"; break;
+			default: errorStr = "unknown error"; break;
+			}
+			printf("GL error : %s, line %d : %s\n", file, line, errorStr);
+			error = 0;
+		}
+#endif
+	}
+
+	inline size_t gl_size_bytes(GLenum type)
+	{
+		switch (type)
+		{
+		case GL_UNSIGNED_BYTE: return sizeof(uint8_t);
+		case GL_UNSIGNED_SHORT: return sizeof(uint16_t);
+		case GL_UNSIGNED_INT: return sizeof(uint32_t);
+		default: throw std::logic_error("unknown element type"); break;
+		}
 	}
 }
 
@@ -135,32 +168,6 @@ namespace avl
 	typedef GlObject<GlQueryFactory> GlQueryObject;
 	typedef GlObject<GlSamplerFactory> GlSamplerObject;
 	typedef GlObject<GlTransformFeedbacksFactory> GlTransformFeedbacksObject;
-
-	///////////////
-	//   Utils   //
-	///////////////
-
-	inline void gl_check_error(const char * file, int32_t line)
-	{
-		#ifdef _DEBUG
-		GLint error = glGetError();
-		if (error)
-		{
-			const char * errorStr = 0;
-			switch (error)
-			{
-			case GL_INVALID_ENUM: errorStr = "GL_INVALID_ENUM"; break;
-			case GL_INVALID_VALUE: errorStr = "GL_INVALID_VALUE"; break;
-			case GL_INVALID_OPERATION: errorStr = "GL_INVALID_OPERATION"; break;
-			case GL_OUT_OF_MEMORY: errorStr = "GL_OUT_OF_MEMORY"; break;
-			default: errorStr = "unknown error"; break;
-			}
-			printf("GL error : %s, line %d : %s\n", file, line, errorStr);
-			error = 0;
-		}
-		#endif
-	}
-
 
 	//////////////////
 	//   GlBuffer   //
@@ -238,18 +245,6 @@ namespace avl
 		tex.set_name(path);
 		stbi_image_free(data);
 		return tex;
-	}
-
-	inline std::vector<uint8_t> load_image_data(const std::string & path)
-	{
-		auto binaryFile = read_file_binary(path);
-
-		int width, height, nBytes;
-		auto data = stbi_load_from_memory(binaryFile.data(), (int)binaryFile.size(), &width, &height, &nBytes, 0);
-		std::vector<uint8_t> d(width * height * nBytes);
-		memcpy(d.data(), data, nBytes * width * height);
-		stbi_image_free(data);
-		return d;
 	}
 
 	/////////////////////
@@ -366,17 +361,6 @@ namespace avl
 		void unbind() { enabled = false; glUseProgram(0); }
 	};
 
-	inline size_t index_size(GLenum type)
-	{
-		switch (type)
-		{
-		case GL_UNSIGNED_BYTE: return sizeof(uint8_t); 
-		case GL_UNSIGNED_SHORT: return sizeof(uint16_t);
-		case GL_UNSIGNED_INT: return sizeof(uint32_t); 
-		default: throw std::logic_error("unknown element type"); break;
-		}
-	}
-
 	////////////////
 	//   GlMesh   //
 	////////////////
@@ -439,8 +423,8 @@ namespace avl
 
 		void set_index_data(GLenum mode, GLenum type, GLsizei count, const GLvoid * data, GLenum usage)
 		{
-			size_t elementSize = index_size(type);
-			indexBuffer.set_buffer_data(elementSize * count, data, usage);
+			size_t size = gl_size_bytes(type);
+			indexBuffer.set_buffer_data(size * count, data, usage);
 			drawMode = mode;
 			indexType = type;
 			indexCount = count;
