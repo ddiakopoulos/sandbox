@@ -333,7 +333,7 @@ namespace avl
     {
         return {transform.x.xyz(), transform.y.xyz(), transform.z.xyz()};
     }
-    
+
     inline float3 transform_coord(const float4x4 & transform, const float3 & coord)
     {
         auto r = mul(transform, float4(coord,1)); return (r.xyz() / r.w);
@@ -352,7 +352,8 @@ namespace avl
     ///////////
     // Poses //
     ///////////
-    
+
+	// Rigid transformation value-type
     struct Pose
     {
         float4      orientation;                                    // Orientation of an object, expressed as a rotation quaternion from the base orientation
@@ -363,11 +364,11 @@ namespace avl
         explicit    Pose(const float4 & orientation)                : Pose(orientation, {0,0,0}) {}
         explicit    Pose(const float3 & position)                   : Pose({0,0,0,1}, position) {}
         
+		Pose        inverse() const									{ auto invOri = qinv(orientation); return{ invOri, qrot(invOri, -position) }; }
         float4x4    matrix() const                                  { return make_rigid_transformation_matrix(orientation, position); }
         float3      xdir() const                                    { return qxdir(orientation); } // Equivalent to transform_vector({1,0,0})
         float3      ydir() const                                    { return qydir(orientation); } // Equivalent to transform_vector({0,1,0})
         float3      zdir() const                                    { return qzdir(orientation); } // Equivalent to transform_vector({0,0,1})
-        Pose        inverse() const                                 { auto invOri = qinv(orientation); return {invOri, qrot(invOri, -position)}; }
         
         float3      transform_vector(const float3 & vec) const      { return qrot(orientation, vec); }
         float3      transform_coord(const float3 & coord) const     { return position + transform_vector(coord); }
@@ -396,7 +397,16 @@ namespace avl
     {
         return pose.inverse().matrix();
     }
-    
+
+	inline Pose make_pose_from_to(const Pose & from, const Pose & to)
+	{
+		Pose ret;
+		const auto inv = qinv(from.orientation);
+		ret.orientation = qmul(inv, to.orientation);
+		ret.position = qrot(inv, to.position - from.position);
+		return ret;
+	}
+
     inline Pose look_at_pose(float3 eyePoint, float3 target, float3 worldUp = {0,1,0})
     {
         Pose p;

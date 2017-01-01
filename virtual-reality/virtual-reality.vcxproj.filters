@@ -526,6 +526,9 @@
     <ClCompile Include="vr_hmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vr_controller_physics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="third_party\bullet3\src\btBulletCollisionCommon.h">
@@ -1462,6 +1465,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="vr_hmd.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vr_controller_physics.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bullet_engine.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -15,24 +15,6 @@
 
 using namespace avl;
 
-struct BulletContactPointVR
-{
-	float3 location;
-	float3 normal;
-	float depth = { 1.f };
-	btCollisionObject * object;
-};
-
-class BulletObjectVR
-{
-	btRigidBody * body = nullptr;
-	btDiscreteDynamicsWorld * world = nullptr;
-	btMotionState * state = nullptr;
-
-public:
-
-};
-
 class BulletEngineVR
 {
 	using OnTickCallback = std::function<void(float, BulletEngineVR *)>;
@@ -79,5 +61,43 @@ public:
 	}
 
 };
+
+struct BulletContactPointVR
+{
+	float3 location;
+	float3 normal;
+	float depth = { 1.f };
+	btCollisionObject * object;
+};
+
+class BulletObjectVR
+{
+	btDiscreteDynamicsWorld * world = { nullptr };
+
+public:
+
+	btMotionState * state = { nullptr };
+	std::unique_ptr<btRigidBody> body = { nullptr };
+
+	BulletObjectVR(btMotionState * state, btCollisionShape * collisionShape, btDiscreteDynamicsWorld * world, float mass = 0.0f) : state(state), world(world)
+	{
+		btVector3 inertia(0, 0, 0);
+		if (mass > 0.0f) collisionShape->calculateLocalInertia(mass, inertia);
+		btRigidBody::btRigidBodyConstructionInfo constructionInfo(mass, state, collisionShape, inertia);
+		body.reset(new btRigidBody(constructionInfo));
+	}
+
+	BulletObjectVR(float4x4 xform, btCollisionShape * collisionShape, btDiscreteDynamicsWorld * world, float mass = 0.0f) : world(world)
+	{
+
+	}
+
+	~BulletObjectVR()
+	{
+		world->removeCollisionObject(body.get());
+	}
+
+};
+
 
 #endif
