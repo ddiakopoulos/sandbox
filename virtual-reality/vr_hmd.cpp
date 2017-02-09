@@ -87,7 +87,7 @@ void OpenVR_HMD::update()
 			std::cout << "Device " << event.trackedDeviceIndex << " attached." << std::endl;
 
 			if (hmd->GetTrackedDeviceClass(event.trackedDeviceIndex) == vr::TrackedDeviceClass_Controller && controllerRenderData->loaded == false)
-			{
+			{ 
 				vr::EVRInitError eError = vr::VRInitError_None;
 
 				vr::RenderModel_t * model = nullptr;

@@ -35,6 +35,7 @@
     <ClInclude Include="..\examples\glass_material_app.hpp" />
     <ClInclude Include="..\examples\hdr_skydome.hpp" />
     <ClInclude Include="..\examples\instance_app.hpp" />
+    <ClInclude Include="..\examples\lens_dev.hpp" />
     <ClInclude Include="..\examples\manipulation_app.hpp" />
     <ClInclude Include="..\examples\meshline_app.hpp" />
     <ClInclude Include="..\examples\reaction_app.hpp" />
@@ -44,7 +45,6 @@
     <ClInclude Include="..\examples\ssao_app.hpp" />
     <ClInclude Include="..\examples\terrain_app.hpp" />
     <ClInclude Include="..\examples\textured_model_app.hpp" />
-    <ClInclude Include="..\examples\vision_app.hpp" />
     <ClInclude Include="..\file_io.hpp" />
     <ClInclude Include="..\geometric.hpp" />
     <ClInclude Include="..\geometry.hpp" />
@@ -57,7 +57,6 @@
     <ClInclude Include="..\linalg_util.hpp" />
     <ClInclude Include="..\math_util.hpp" />
     <ClInclude Include="..\meshline.hpp" />
-    <ClInclude Include="..\minivision\vision.hpp" />
     <ClInclude Include="..\movement_tracker.hpp" />
     <ClInclude Include="..\nvg.hpp" />
     <ClInclude Include="..\one_euro.hpp" />
@@ -113,7 +112,7 @@
     <ClCompile Include="..\third_party\tiny_obj_loader.cc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\glfw_app.mm">
+    <ClCompile Include="..\glfw_app.cpp">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DeploymentContent>
@@ -261,6 +260,7 @@
       <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4305;4244;4800</DisableSpecificWarnings>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -271,11 +271,6 @@
       <AdditionalDependencies>glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\third_party\glfw-3.1.2\glfw3.vcxproj">
-      <Project>{be423e72-28c2-4fb7-9fe1-42aa2f393bbc}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

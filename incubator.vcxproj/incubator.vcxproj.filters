@@ -19,9 +19,6 @@
     <Filter Include="source\app">
       <UniqueIdentifier>{11a7ec82-191b-4beb-ba51-981dacc2f378}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\minivision">
-      <UniqueIdentifier>{acc63d00-0662-45cd-b463-f30156bab688}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\rendering">
       <UniqueIdentifier>{96253310-1f6d-4a4b-8ed0-6bdeb76e65c6}</UniqueIdentifier>
     </Filter>
@@ -135,9 +132,6 @@
     <ClInclude Include="..\util.hpp">
       <Filter>source\app</Filter>
     </ClInclude>
-    <ClInclude Include="..\minivision\vision.hpp">
-      <Filter>source\minivision</Filter>
-    </ClInclude>
     <ClInclude Include="..\index.hpp">
       <Filter>source</Filter>
     </ClInclude>
@@ -207,9 +201,6 @@
     <ClInclude Include="..\examples\textured_model_app.hpp">
       <Filter>examples</Filter>
     </ClInclude>
-    <ClInclude Include="..\examples\vision_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
     <ClInclude Include="..\linalg_util.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
@@ -264,6 +255,9 @@
     <ClInclude Include="..\examples\geometric_algo_dev.hpp">
       <Filter>examples</Filter>
     </ClInclude>
+    <ClInclude Include="..\examples\lens_dev.hpp">
+      <Filter>examples</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
@@ -287,9 +281,6 @@
     <ClCompile Include="..\gizmo.cpp">
       <Filter>source\tools</Filter>
     </ClCompile>
-    <ClCompile Include="..\glfw_app.mm">
-      <Filter>source\app</Filter>
-    </ClCompile>
     <ClCompile Include="..\third_party\efsw.cpp">
       <Filter>third_party</Filter>
     </ClCompile>
@@ -306,5 +297,8 @@
       <Filter>third_party\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\impl.cpp" />
+    <ClCompile Include="..\glfw_app.cpp">
+      <Filter>source\app</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
