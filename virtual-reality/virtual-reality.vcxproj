@@ -331,7 +331,6 @@
     <ClCompile Include="third_party\bullet3\src\LinearMath\btSerializer.cpp" />
     <ClCompile Include="third_party\bullet3\src\LinearMath\btThreads.cpp" />
     <ClCompile Include="third_party\bullet3\src\LinearMath\btVector3.cpp" />
-    <ClCompile Include="vr_controller_physics.cpp" />
     <ClCompile Include="vr_hmd.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -655,7 +654,7 @@
     <ClInclude Include="third_party\bullet3\src\LinearMath\btTransform.h" />
     <ClInclude Include="third_party\bullet3\src\LinearMath\btTransformUtil.h" />
     <ClInclude Include="third_party\bullet3\src\LinearMath\btVector3.h" />
-    <ClInclude Include="vr_controller_physics.hpp" />
+    <ClInclude Include="bullet_object.hpp" />
     <ClInclude Include="vr_hmd.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

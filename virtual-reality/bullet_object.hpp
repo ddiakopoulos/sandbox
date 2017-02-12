@@ -3,7 +3,14 @@
 #ifndef vr_controller_physics_hpp
 #define vr_controller_physics_hpp
 
-#include "bullet_engine.hpp"
+#include "btBulletCollisionCommon.h"
+#include "btBulletDynamicsCommon.h"
+#include "linalg_util.hpp"
+#include "geometric.hpp"
+#include "geometry.hpp"
+#include "bullet_utils.hpp"
+#include <functional>
+#include <vector>
 
 using namespace avl;
 
@@ -66,7 +73,12 @@ public:
 	{
 
 	}
-	
+
+	btDiscreteDynamicsWorld * get_world() const
+	{
+		return world;
+	}
+
 	std::vector<BulletContactPointVR> CollideWorld() const
 	{
 		struct CollideCallbackWorld : public CollideCallback

@@ -13,6 +13,8 @@
 #include <functional>
 #include <vector>
 
+#include "bullet_object.hpp"
+
 using namespace avl;
 
 class BulletEngineVR
@@ -50,9 +52,17 @@ public:
 		dynamicsWorld->setInternalTickCallback(tick_callback, static_cast<void *>(this), true);
 	}
 
-	~BulletEngineVR()
-	{
+	~BulletEngineVR() { }
 
+	void add_object(BulletObjectVR * object)
+	{
+		dynamicsWorld->addRigidBody(object->body.get());
+		object->body->setDamping(0.3, 0.5);
+	}
+
+	void remove_object(BulletObjectVR * object)
+	{
+		object->get_world()->removeRigidBody(object->body.get());
 	}
 
 	void add_task(const OnTickCallback & f)
