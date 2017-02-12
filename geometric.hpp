@@ -237,18 +237,49 @@ namespace avl
         return float4(float(x), float(y), float(z), float(w));
     }
     
-    inline float3 make_euler_from_quat(float4 q)
-    {
-        float3 e;
-        const double q0 = q.w;
-        const double q1 = q.x;
-        const double q2 = q.y;
-        const double q3 = q.z;
-        e.x = float(atan2(2*(q0*q1+q2*q3), 1.0 - 2.0 * (q1*q1+q2*q2)));
-        e.y = float(asin(2*(q0*q2-q3*q1)));
-        e.z = float(atan2(2*(q0*q3+q1*q2), 1.0 - 2.0 *(q2*q2+q3*q3)));
-        return e;
-    }
+	// Quaternion <=> Euler ref: http://www.swarthmore.edu/NatSci/mzucker1/e27/diebel2006attitude.pdf
+
+	// Z-Y-X is probably the most common standard, representing yaw, pitch, roll (YPR)
+	inline float3 make_euler_from_quat_zyx(float4 q)
+	{
+		float3 e;
+		const double q0 = q.w;
+		const double q1 = q.x;
+		const double q2 = q.y;
+		const double q3 = q.z;
+		e.x = float(atan2(-2.f*q1*q2 + 2 * q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
+		e.y = float(asin(2.f*q1*q3 + 2.f*q0*q2));
+		e.z = float(atan2(-2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
+		return e;
+	}
+
+	// Somewhat less common roll, pitch, yaw (RPY)
+	inline float3 make_euler_from_quat_xyz(float4 q)
+	{
+		float3 e;
+		const double q0 = q.w;
+		const double q1 = q.x;
+		const double q2 = q.y;
+		const double q3 = q.z;
+		e.x = float(atan2(2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
+		e.y = float(-asin(2.f*q1*q3 - 2.f*q0*q2));
+		e.z = float(atan2(2.f*q1*q2 + 2.f*q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
+		return e;
+	}
+
+	// Almost never used: roll, yaw, pitch (RYP)
+	inline float3 make_euler_from_quat_xzy(float4 q)
+	{
+		float3 e;
+		const double q0 = q.w;
+		const double q1 = q.x;
+		const double q2 = q.y;
+		const double q3 = q.z;
+		e.x = float(atan2(-2.f*q2*q3 + 2.f*q0*q1, q2*q2 - q3*q3 + q0*q0 - q1*q1));
+		e.y = float(asin(2.f*q1*q2 + 2.f*q0*q3));
+		e.z = float(atan2(-2.f*q1*q3 + 2.f*q0*q2, q1*q1 + q0*q0 - q3*q3 - q2*q2));
+		return e;
+	}
 
     // Decompose rotation of q around the axis vt where q = swing * twist
     // Twist is a rotation about vt, and swing is a rotation about a vector perpindicular to vt
