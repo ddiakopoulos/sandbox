@@ -92,6 +92,8 @@ struct ExperimentalApp : public GLFWApp
 		std::cout << a.inverse() * b << std::endl;
 
 		std::cout << "Closeness: " << compute_quat_closeness(r, b.orientation) << std::endl;
+
+		std::cout << make_translation_matrix({ 3, 4, 5 }).w << std::endl;;
     }
     
     void on_window_resize(int2 size) override

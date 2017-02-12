@@ -8,7 +8,7 @@
 #include "glfw_app.hpp"
 
 // Implement singleton
-template<> gui::ImGuiApp * Singleton<gui::ImGuiApp>::single = nullptr;
+template<> gui::ImGuiApp * avl::Singleton<gui::ImGuiApp>::single = nullptr;
 
 using namespace avl;
 

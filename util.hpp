@@ -100,7 +100,7 @@ namespace avl
         Noncopyable (const Noncopyable& r) = delete;
         Noncopyable & operator = (const Noncopyable& r) = delete;
     };
-    
+     
 	template <typename T>
 	class Singleton : public Noncopyable
 	{

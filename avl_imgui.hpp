@@ -33,7 +33,7 @@ struct GLFWwindow;
 namespace gui
 {
 
-    struct ImGuiApp : public Singleton<ImGuiApp>
+    struct ImGuiApp : public avl::Singleton<ImGuiApp>
     {
         GLFWwindow * window;
         double       Time = 0.0f;
@@ -44,7 +44,7 @@ namespace gui
         int          AttribLocationTex = 0, AttribLocationProjMtx = 0;
         int          AttribLocationPosition = 0, AttribLocationUV = 0, AttribLocationColor = 0;
         unsigned int VboHandle = 0, VaoHandle = 0, ElementsHandle = 0;
-        friend class Singleton<ImGuiApp>;
+        friend class avl::Singleton<ImGuiApp>;
     };
 
     class ImGuiManager
