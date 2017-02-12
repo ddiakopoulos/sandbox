@@ -307,6 +307,11 @@ namespace avl
 
 		return{ k0 * a.x + k1 * b2.x, k0 * a.y + k1 * b2.y, k0 * a.z + k1 * b2.z, k0 * a.w + k1 * b2.w };
 	}
+
+	inline float compute_quat_closeness(const float4 & a, const float4 & b)
+	{
+		return std::acos((2.f * pow(dot(a, b), 2.f))  - 1.f);
+	}
     
     //////////////////////////////////////////////
     // Construct affine transformation matrices //
