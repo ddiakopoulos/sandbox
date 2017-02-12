@@ -223,6 +223,8 @@ namespace avl
     //////////////////////////
     
 	// Quaternion <=> Euler ref: http://www.swarthmore.edu/NatSci/mzucker1/e27/diebel2006attitude.pdf
+	// ZYX is probably the most common standard: yaw, pitch, roll (YPR)
+	// XYZ Somewhat less common: roll, pitch, yaw (RPY)
 
 	inline float4 make_quat_from_euler_zyx(float y, float p, float r)
 	{
@@ -234,7 +236,6 @@ namespace avl
 		return q;
 	}
 
-
     inline float4 make_quat_from_euler_xyz(float r, float p, float y)
     {
 		float4 q;
@@ -245,7 +246,6 @@ namespace avl
 		return q;
     }
 
-	// ZYX is probably the most common standard: yaw, pitch, roll (YPR)
 	inline float3 make_euler_from_quat_zyx(float4 q)
 	{
 		float3 ypr;
@@ -256,7 +256,6 @@ namespace avl
 		return ypr;
 	}
 
-	// XYZ Somewhat less common: roll, pitch, yaw (RPY)
 	inline float3 make_euler_from_quat_xyz(float4 q)
 	{
 		float3 rpy;
@@ -446,6 +445,15 @@ namespace avl
         Pose        operator * (const Pose & pose) const            { return {qmul(orientation,pose.orientation), transform_coord(pose.position)}; }
     };
     
+	inline Pose make_pose_from_to(const Pose & from, const Pose & to)
+	{
+		Pose ret;
+		const auto inv = qinv(from.orientation);
+		ret.orientation = qmul(inv, to.orientation);
+		ret.position = qrot(inv, to.position - from.position);
+		return ret;
+	}
+
 	inline bool operator == (const Pose & a, const Pose & b)
 	{
 		return (a.position == b.position) && (a.orientation == b.orientation);
@@ -454,6 +462,11 @@ namespace avl
 	inline bool operator != (const Pose & a, const Pose & b)
 	{
 		return (a.position != b.position) || (a.orientation != b.orientation);
+	}
+
+	inline Pose operator - (const Pose & a, const Pose & b)
+	{
+		return make_pose_from_to(a, b);
 	}
 
 	inline std::ostream & operator << (std::ostream & o, const Pose & r)
@@ -465,15 +478,6 @@ namespace avl
     {
         return pose.inverse().matrix();
     }
-
-	inline Pose make_pose_from_to(const Pose & from, const Pose & to)
-	{
-		Pose ret;
-		const auto inv = qinv(from.orientation);
-		ret.orientation = qmul(inv, to.orientation);
-		ret.position = qrot(inv, to.position - from.position);
-		return ret;
-	}
 
     inline Pose look_at_pose(float3 eyePoint, float3 target, float3 worldUp = {0,1,0})
     {

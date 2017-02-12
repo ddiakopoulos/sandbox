@@ -85,6 +85,12 @@ struct ExperimentalApp : public GLFWApp
 		std::cout << qexp(p) << std::endl;
 		std::cout << qpow(r, 2.f) << std::endl;
 
+		Pose a = Pose(r, { 0, 5, 0 });
+		Pose b = Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, .505f), { 0, 2, 0 });
+
+		std::cout << a - b << std::endl;
+		std::cout << make_pose_from_to(a, b) << std::endl;
+		std::cout << a.inverse() * b << std::endl;
     }
     
     void on_window_resize(int2 size) override
