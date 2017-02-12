@@ -38,18 +38,6 @@ public:
 //   Math   //
 //////////////
 
-inline float3 reflect(const float3 & I, const float3 & N)
-{
-	return I - (N * dot(N, I) * 2.f);
-}
-
-inline float3 refract(const float3 & I, const float3 & N, float eta)
-{
-	float k = 1.0f - eta * eta * (1.0f - dot(N, I) * dot(N, I));
-	if (k < 0.0f) return float3();
-	else return eta * I - (eta * dot(N, I) + std::sqrt(k)) * N;
-}
-
 inline float luminance(float3 c) 
 { 
 	return 0.2126f * c.x + 0.7152f * c.y + 0.0722f * c.z; 
