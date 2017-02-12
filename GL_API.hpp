@@ -5,20 +5,10 @@
 
 #include "glfw_app.hpp"
 
-// Todo: supported extensions
-// Todo: glMultiDrawElementsIndirect
-// Todo: occlusionQuery
-// Todo: timerQuery
-// Todo: computeShaders (glDispatchCompute)
-// Todo: blit/multisample?
-// Todo: mapped buffers
-// Todo: transform feedback
-// Todo: pixel buffers / sync
-
-// using namespace avl;
-
 namespace
 {
+	static bool gEnableGLDebugOutputErrorBreakpoints = false;
+
 	inline void compile_shader(GLuint program, GLenum type, const char * source)
 	{
 		GLuint shader = glCreateShader(type);
@@ -83,8 +73,6 @@ namespace
 		}
 	}
 
-	static bool gEnableGLDebugOutputErrorBreakpoints = false;
-
 	static void APIENTRY gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, GLvoid * userParam)
 	{
 		if (type != GL_DEBUG_TYPE_ERROR) return;
@@ -95,10 +83,9 @@ namespace
 		if ((type == GL_DEBUG_TYPE_ERROR) && (gEnableGLDebugOutputErrorBreakpoints)) __debugbreak();
 	}
 
-
 	inline void gl_check_error(const char * file, int32_t line)
 	{
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(DEBUG)
 		GLint error = glGetError();
 		if (error)
 		{
@@ -447,3 +434,13 @@ public:
 };
 
 #endif // end gl_api_hpp
+
+// Todo: supported extensions
+// Todo: glMultiDrawElementsIndirect
+// Todo: occlusionQuery
+// Todo: timerQuery
+// Todo: computeShaders (glDispatchCompute)
+// Todo: blit/multisample?
+// Todo: mapped buffers
+// Todo: transform feedback
+// Todo: pixel buffers / sync
