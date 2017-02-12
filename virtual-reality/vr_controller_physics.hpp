@@ -72,6 +72,44 @@ struct BulletContactPointVR
 	btCollisionObject * object;
 };
 
+struct CollideCallback : public btCollisionWorld::ContactResultCallback
+{
+	btRigidBody & body;
+	std::vector<BulletContactPointVR> contacts;
+
+	CollideCallback(btRigidBody & target) : btCollisionWorld::ContactResultCallback(), body(target) { }
+
+	// Called for each contact point
+	virtual btScalar addSingleResult(btManifoldPoint & cp, const btCollisionObjectWrapper * colObj0, int, int, const btCollisionObjectWrapper * colObj1, int, int)
+	{
+		btVector3 point, n;
+		BulletContactPointVR p;
+
+		if (colObj0->m_collisionObject == &body)
+		{
+			point = cp.m_localPointA;
+			n = cp.m_normalWorldOnB;
+			p.object = const_cast<btCollisionObject*>(colObj1->m_collisionObject);
+		}
+		else
+		{
+			point = cp.m_localPointB;
+			n = -cp.m_normalWorldOnB;
+			p.object = const_cast<btCollisionObject*>(colObj0->m_collisionObject);
+		}
+
+		p.location = { point.x(), point.y(), point.z() };
+		p.normal = { n.x(), n.y(), n.z() };
+		p.depth = fabs(cp.getDistance());
+		p.velocity = { body.getLinearVelocity().x, body.getLinearVelocity().y, body.getLinearVelocity().z };
+		p.velocityNorm = dot(p.normal, p.velocity);
+
+		contacts.push_back(p);
+
+		return 0;
+	}
+};
+
 class BulletObjectVR
 {
 	btDiscreteDynamicsWorld * world = { nullptr };
@@ -96,51 +134,17 @@ public:
 	
 	std::vector<BulletContactPointVR> CollideWorld() const
 	{
-		struct CollideCallback : public btCollisionWorld::ContactResultCallback
+		struct CollideCallbackWorld : public CollideCallback
 		{
-			btRigidBody & body;
-			std::vector<BulletContactPointVR> contacts;
-
-			CollideCallback(btRigidBody & target) : btCollisionWorld::ContactResultCallback(), body(target) { }
-
+			CollideCallbackWorld(btRigidBody & target) : CollideCallback(target) { }
 			virtual bool needsCollision(btBroadphaseProxy * proxy) const
 			{
 				if (!btCollisionWorld::ContactResultCallback::needsCollision(proxy)) return false; // superclass pre-filters
 				return body.checkCollideWithOverride(static_cast<btCollisionObject*>(proxy->m_clientObject)); // avoid contraint contacts
 			}
-
-			// Called for each contact point
-			virtual btScalar addSingleResult(btManifoldPoint & cp, const btCollisionObjectWrapper * colObj0, int, int, const btCollisionObjectWrapper * colObj1, int, int)
-			{
-				btVector3 point, n;
-				BulletContactPointVR p;
-
-				if (colObj0->m_collisionObject == &body)
-				{
-					point = cp.m_localPointA;
-					n = cp.m_normalWorldOnB;
-					p.object = const_cast<btCollisionObject*>(colObj1->m_collisionObject);
-				}
-				else
-				{
-					point = cp.m_localPointB;
-					n = -cp.m_normalWorldOnB;
-					p.object = const_cast<btCollisionObject*>(colObj0->m_collisionObject);
-				}
-
-				p.location = { point.x(), point.y(), point.z() };
-				p.normal = { n.x(), n.y(), n.z() };
-				p.depth = fabs(cp.getDistance());
-				p.velocity = { body.getLinearVelocity().x, body.getLinearVelocity().y, body.getLinearVelocity().z };
-				p.velocityNorm = dot(p.normal, p.velocity);
-
-				contacts.push_back(p);
-
-				return 0;
-			}
 		};
 
-		CollideCallback callback(*body.get());
+		CollideCallbackWorld callback(*body.get());
 		world->contactTest(body.get(), callback);
 
 		return callback.contacts;
@@ -148,46 +152,8 @@ public:
 
 	std::vector<BulletContactPointVR> CollideWith(btCollisionObject * other) const
 	{
-		struct CollideCallback : public btCollisionWorld::ContactResultCallback
-		{
-			btRigidBody & body;
-			std::vector<BulletContactPointVR> contacts;
-
-			CollideCallback(btRigidBody & target) : btCollisionWorld::ContactResultCallback(), body(target) { }
-
-			virtual btScalar addSingleResult(btManifoldPoint & cp, const btCollisionObjectWrapper * colObj0, int, int, const btCollisionObjectWrapper * colObj1, int, int)
-			{
-				btVector3 point, n;
-				BulletContactPointVR p;
-
-				if (colObj0->m_collisionObject == &body)
-				{
-					point = cp.m_localPointA;
-					n = cp.m_normalWorldOnB;
-					p.object = const_cast<btCollisionObject*>(colObj1->m_collisionObject);
-				}
-				else
-				{
-					point = cp.m_localPointB;
-					n = -cp.m_normalWorldOnB;
-					p.object = const_cast<btCollisionObject*>(colObj0->m_collisionObject);
-				}
-
-				p.location = { point.x(), point.y(), point.z() };
-				p.normal = { n.x(), n.y(), n.z() };
-				p.depth = fabs(cp.getDistance());
-				p.velocity = { body.getLinearVelocity().x, body.getLinearVelocity().y, body.getLinearVelocity().z };
-				p.velocityNorm = dot(p.normal, p.velocity);
-
-				contacts.push_back(p);
-
-				return 0;
-			}
-		};
-
 		CollideCallback callback(*body.get());
 		world->contactPairTest(body.get(), other, callback);
-
 		return callback.contacts;
 	}
 
