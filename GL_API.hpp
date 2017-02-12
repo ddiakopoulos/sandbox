@@ -1,11 +1,9 @@
 #pragma once
 
-#ifndef AVL_GL_API_H
-#define AVL_GL_API_H
+#ifndef gl_api_hpp
+#define gl_api_hpp
 
 #include "glfw_app.hpp"
-//#include "file_io.hpp"
-//#include "third_party/stb/stb_image.h"
 
 // Todo: supported extensions
 // Todo: glMultiDrawElementsIndirect
@@ -129,323 +127,319 @@ namespace
 	}
 }
 
-namespace avl
+template<typename factory_t>
+class GlObject
 {
+	mutable GLuint handle = 0;
+	std::string n;
+public:
+	GlObject() {}
+	GlObject(GLuint h) : handle(g) {}
+	~GlObject() { if (handle) factory_t::destroy(handle); }
+	GlObject(const GlObject & r) = delete;
+	GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); std::swap(n, r.n);  return *this; }
+	GlObject(GlObject && r) { *this = std::move(r); }
+	operator GLuint () const { if (!handle)  factory_t::create(handle); return handle; }
+	GlObject & operator = (GLuint & other) { handle = other; return *this; }
+	void set_name(const std::string & newName) { n = newName; }
+	std::string name() const { return n; }
+	GLuint id() const { return handle; };
+};
 
-	template<typename factory_t>
-	class GlObject
+struct GlBufferFactory { static void create(GLuint & x) { glGenBuffers(1, &x); }; static void destroy(GLuint x) { glDeleteBuffers(1, &x); }; };
+struct GlTextureFactory { static void create(GLuint & x) { glGenTextures(1, &x); }; static void destroy(GLuint x) { glDeleteTextures(1, &x); }; };
+struct GlVertexArrayFactory { static void create(GLuint & x) { glGenVertexArrays(1, &x); }; static void destroy(GLuint x) { glDeleteVertexArrays(1, &x); }; };
+struct GlRenderbufferFactory { static void create(GLuint & x) { glGenRenderbuffers(1, &x); }; static void destroy(GLuint x) { glDeleteRenderbuffers(1, &x); }; };
+struct GlFramebufferFactory { static void create(GLuint & x) { glGenFramebuffers(1, &x); }; static void destroy(GLuint x) { glDeleteFramebuffers(1, &x); }; };
+struct GlQueryFactory { static void create(GLuint & x) { glGenQueries(1, &x); }; static void destroy(GLuint x) { glDeleteQueries(1, &x); }; };
+struct GlSamplerFactory { static void create(GLuint & x) { glGenSamplers(1, &x); }; static void destroy(GLuint x) { glDeleteSamplers(1, &x); }; };
+struct GlTransformFeedbacksFactory { static void create(GLuint & x) { glGenTransformFeedbacks(1, &x); }; static void destroy(GLuint x) { glDeleteTransformFeedbacks(1, &x); }; };
+
+typedef GlObject<GlBufferFactory> GlBufferObject;
+typedef GlObject<GlTextureFactory> GlTextureObject;
+typedef GlObject<GlVertexArrayFactory> GlVertexArrayObject;
+typedef GlObject<GlRenderbufferFactory> GlRenderbufferObject;
+typedef GlObject<GlFramebufferFactory> GlFramebufferObject;
+typedef GlObject<GlQueryFactory> GlQueryObject;
+typedef GlObject<GlSamplerFactory> GlSamplerObject;
+typedef GlObject<GlTransformFeedbacksFactory> GlTransformFeedbacksObject;
+
+//////////////////
+//   GlBuffer   //
+//////////////////
+
+struct GlBuffer : public GlBufferObject
+{
+	GLsizeiptr size;
+	GlBuffer() {}
+	void set_buffer_data(const GLsizeiptr size, const GLvoid * data, const GLenum usage) { glNamedBufferDataEXT(*this, size, data, usage); this->size = size; }
+	void set_buffer_data(const std::vector<GLubyte> & bytes, const GLenum usage) { set_buffer_data(bytes.size(), bytes.data(), usage); }
+};
+
+////////////////////////
+//   GlRenderbuffer   //
+////////////////////////
+
+struct GlRenderbuffer : public GlRenderbufferObject
+{
+	int2 size;
+	GlRenderbuffer() {};
+	GlRenderbuffer(int2 size) : size(size) {}
+};
+
+///////////////////////
+//   GlFramebuffer   //
+///////////////////////
+
+struct GlFramebuffer : public GlFramebufferObject
+{
+	float3 size;
+	GlFramebuffer() {}
+	GlFramebuffer(float2 s) : size(s.x, s.y, 0) {}
+	GlFramebuffer(float3 s) : size(s) {}
+	void check_complete() { if (glCheckNamedFramebufferStatusEXT(*this, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("fbo incomplete"); }
+};
+
+///////////////////
+//   GlTexture   //
+///////////////////
+
+struct GlTexture2D : public GlTextureObject
+{
+	int2 size;
+
+	GlTexture2D() {}
+	GlTexture2D(int2 sz) : size(sz) {}
+
+	void setup(GLsizei width, GLsizei height, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels, bool createMipmap = false)
 	{
-		mutable GLuint handle = 0;
-		std::string n;
-	public:
-		GlObject() {}
-		GlObject(GLuint h) : handle(g) {}
-		~GlObject() { if (handle) factory_t::destroy(handle); }
-		GlObject(const GlObject & r) = delete;
-		GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); std::swap(n, r.n);  return *this; }
-		GlObject(GlObject && r) { *this = std::move(r); }
-		operator GLuint () const { if (!handle)  factory_t::create(handle); return handle; }
-		GlObject & operator = (GLuint & other) { handle = other; return *this; }
-		void set_name(const std::string & newName) { n = newName; }
-		std::string name() const { return n; }
-		GLuint id() const { return handle; };
-	};
+		glTextureImage2DEXT(*this, GL_TEXTURE_2D, 0, internal_fmt, width, height, 0, format, type, pixels);
+		if (createMipmap) glGenerateTextureMipmapEXT(*this, GL_TEXTURE_2D);
+		glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, createMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+		glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		size = { width, height };
+	}
+};
 
-	struct GlBufferFactory { static void create(GLuint & x) { glGenBuffers(1, &x); }; static void destroy(GLuint x) { glDeleteBuffers(1, &x); }; };
-	struct GlTextureFactory { static void create(GLuint & x) { glGenTextures(1, &x); }; static void destroy(GLuint x) { glDeleteTextures(1, &x); }; };
-	struct GlVertexArrayFactory { static void create(GLuint & x) { glGenVertexArrays(1, &x); }; static void destroy(GLuint x) { glDeleteVertexArrays(1, &x); }; };
-	struct GlRenderbufferFactory { static void create(GLuint & x) { glGenRenderbuffers(1, &x); }; static void destroy(GLuint x) { glDeleteRenderbuffers(1, &x); }; };
-	struct GlFramebufferFactory { static void create(GLuint & x) { glGenFramebuffers(1, &x); }; static void destroy(GLuint x) { glDeleteFramebuffers(1, &x); }; };
-	struct GlQueryFactory { static void create(GLuint & x) { glGenQueries(1, &x); }; static void destroy(GLuint x) { glDeleteQueries(1, &x); }; };
-	struct GlSamplerFactory { static void create(GLuint & x) { glGenSamplers(1, &x); }; static void destroy(GLuint x) { glDeleteSamplers(1, &x); }; };
-	struct GlTransformFeedbacksFactory { static void create(GLuint & x) { glGenTransformFeedbacks(1, &x); }; static void destroy(GLuint x) { glDeleteTransformFeedbacks(1, &x); }; };
+/////////////////////
+//   GlTexture3D   //
+/////////////////////
 
-	typedef GlObject<GlBufferFactory> GlBufferObject;
-	typedef GlObject<GlTextureFactory> GlTextureObject;
-	typedef GlObject<GlVertexArrayFactory> GlVertexArrayObject;
-	typedef GlObject<GlRenderbufferFactory> GlRenderbufferObject;
-	typedef GlObject<GlFramebufferFactory> GlFramebufferObject;
-	typedef GlObject<GlQueryFactory> GlQueryObject;
-	typedef GlObject<GlSamplerFactory> GlSamplerObject;
-	typedef GlObject<GlTransformFeedbacksFactory> GlTransformFeedbacksObject;
+// As either a 3D texture or 2D array
+struct GlTexture3D : public GlTextureObject
+{
+	int3 size;
 
-	//////////////////
-	//   GlBuffer   //
-	//////////////////
+	GlTexture3D() {}
+	GlTexture3D(int3 sz) : size(sz) {}
 
-	struct GlBuffer : public GlBufferObject
+	void setup(GLenum target, GLsizei width, GLsizei height, GLsizei depth, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels)
 	{
-		GLsizeiptr size;
-		GlBuffer() {}
-		void set_buffer_data(const GLsizeiptr size, const GLvoid * data, const GLenum usage) { glNamedBufferDataEXT(*this, size, data, usage); this->size = size; }
-		void set_buffer_data(const std::vector<GLubyte> & bytes, const GLenum usage) { set_buffer_data(bytes.size(), bytes.data(), usage); }
-	};
+		glTextureImage3DEXT(*this, target, 0, internal_fmt, width, height, depth, 0, format, type, pixels);
+		glTextureParameteriEXT(*this, target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTextureParameteriEXT(*this, target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	}
+};
 
-	////////////////////////
-	//   GlRenderbuffer   //
-	////////////////////////
+//////////////////
+//   GlShader   //
+//////////////////
 
-	struct GlRenderbuffer : public GlRenderbufferObject
+class GlShader
+{
+	GLuint program;
+	bool enabled = false;
+	void check() const { if (!enabled) throw std::runtime_error("shader not enabled"); };
+protected:
+	GlShader(const GlShader & r) = delete;
+	GlShader & operator = (const GlShader & r) = delete;
+public:
+	GlShader() : program() {}
+
+	GlShader(const std::string & vertexShader, const std::string & fragmentShader, const std::string & geometryShader = "")
 	{
-		int2 size;
-		GlRenderbuffer() {};
-		GlRenderbuffer(int2 size) : size(size) {}
-	};
+		program = glCreateProgram();
+		compile_shader(program, GL_VERTEX_SHADER, vertexShader.c_str());
+		compile_shader(program, GL_FRAGMENT_SHADER, fragmentShader.c_str());
 
-	///////////////////////
-	//   GlFramebuffer   //
-	///////////////////////
+		if (geometryShader.length() != 0)
+			::compile_shader(program, GL_GEOMETRY_SHADER, geometryShader.c_str());
 
-	struct GlFramebuffer : public GlFramebufferObject
-	{
-		float3 size;
-		GlFramebuffer() {}
-		GlFramebuffer(float2 s) : size(s.x, s.y, 0) {}
-		GlFramebuffer(float3 s) : size(s) {}
-		void check_complete() { if (glCheckNamedFramebufferStatusEXT(*this, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("fbo incomplete"); }
-	};
+		glLinkProgram(program);
 
-	///////////////////
-	//   GlTexture   //
-	///////////////////
+		GLint status;
+		GLint length;
 
-	struct GlTexture2D : public GlTextureObject
-	{
-		int2 size;
+		glGetProgramiv(program, GL_LINK_STATUS, &status);
 
-		GlTexture2D() {}
-		GlTexture2D(int2 sz) : size(sz) {}
-
-		void setup(GLsizei width, GLsizei height, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels, bool createMipmap = false)
+		if (status == GL_FALSE)
 		{
-			glTextureImage2DEXT(*this, GL_TEXTURE_2D, 0, internal_fmt, width, height, 0, format, type, pixels);
-			if (createMipmap) glGenerateTextureMipmapEXT(*this, GL_TEXTURE_2D);
-			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, createMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
-			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			size = { width, height };
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+			std::vector<GLchar> buffer(length);
+			glGetProgramInfoLog(program, (GLsizei)buffer.size(), nullptr, buffer.data());
+			std::cerr << "GL Link Error: " << buffer.data() << std::endl;
+			throw std::runtime_error("GLSL Link Failure");
 		}
-	};
+	}
 
-	/////////////////////
-	//   GlTexture3D   //
-	/////////////////////
+	~GlShader() { if (program) glDeleteProgram(program); }
 
-	// As either a 3D texture or 2D array
-	struct GlTexture3D : public GlTextureObject
+	GlShader(GlShader && r) : GlShader() { *this = std::move(r); }
+
+	GLuint handle() const { return program; }
+	GLint get_uniform_location(const std::string & name) const { return glGetUniformLocation(program, name.c_str()); }
+
+	GlShader & operator = (GlShader && r) { std::swap(program, r.program); return *this; }
+
+	void reflect_debug_print()
 	{
-		int3 size;
-
-		GlTexture3D() {}
-		GlTexture3D(int3 sz) : size(sz) {}
-
-		void setup(GLenum target, GLsizei width, GLsizei height, GLsizei depth, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels)
+		GLint count;
+		glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
+		for (GLuint i = 0; i < static_cast<GLuint>(count); ++i)
 		{
-			glTextureImage3DEXT(*this, target, 0, internal_fmt, width, height, depth, 0, format, type, pixels);
-			glTextureParameteriEXT(*this, target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTextureParameteriEXT(*this, target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			char buffer[1024]; GLenum type; GLsizei length; GLint size, block_index;
+			glGetActiveUniform(program, i, sizeof(buffer), &length, &size, &type, buffer);
+			glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_BLOCK_INDEX, &block_index);
+			if (block_index != -1) continue;
+			GLint loc = glGetUniformLocation(program, buffer);
 		}
-	};
+	}
 
-	//////////////////
-	//   GlShader   //
-	//////////////////
+	void uniform(const std::string & name, int scalar) const { check(); glUniform1i(get_uniform_location(name), scalar); }
+	void uniform(const std::string & name, float scalar) const { check(); glUniform1f(get_uniform_location(name), scalar); }
+	void uniform(const std::string & name, const float2 & vec) const { check(); glUniform2fv(get_uniform_location(name), 1, &vec.x); }
+	void uniform(const std::string & name, const float3 & vec) const { check(); glUniform3fv(get_uniform_location(name), 1, &vec.x); }
+	void uniform(const std::string & name, const float4 & vec) const { check(); glUniform4fv(get_uniform_location(name), 1, &vec.x); }
+	void uniform(const std::string & name, const float3x3 & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
+	void uniform(const std::string & name, const float4x4 & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
 
-	class GlShader : public Noncopyable
+	void uniform(const std::string & name, const int elements, const std::vector<int> & scalar) const { check(); glUniform1iv(get_uniform_location(name), elements, scalar.data()); }
+	void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { check(); glUniform1fv(get_uniform_location(name), elements, scalar.data()); }
+	void uniform(const std::string & name, const int elements, const std::vector<float2> & vec) const { check(); glUniform2fv(get_uniform_location(name), elements, &vec[0].x); }
+	void uniform(const std::string & name, const int elements, const std::vector<float3> & vec) const { check(); glUniform3fv(get_uniform_location(name), elements, &vec[0].x); }
+	void uniform(const std::string & name, const int elements, const std::vector<float3x3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
+	void uniform(const std::string & name, const int elements, const std::vector<float4x4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
+
+	void texture(GLint loc, GLenum target, int unit, GLuint tex) const
 	{
-		GLuint program;
-		bool enabled = false;
-		void check() const { if (!enabled) throw std::runtime_error("shader not enabled"); };
+		check();
+		glBindMultiTextureEXT(GL_TEXTURE0 + unit, target, tex);
+		glProgramUniform1i(program, loc, unit);
+	}
 
-	public:
+	void texture(const char * name, int unit, GLuint tex, GLenum target) const { texture(get_uniform_location(name), target, unit, tex); }
 
-		GlShader() : program() {}
+	void bind() { if (program > 0) enabled = true; glUseProgram(program); }
+	void unbind() { enabled = false; glUseProgram(0); }
+};
 
-		GlShader(const std::string & vertexShader, const std::string & fragmentShader, const std::string & geometryShader = "")
+////////////////
+//   GlMesh   //
+////////////////
+
+class GlMesh
+{
+	GlVertexArrayObject vao;
+	GlBuffer vertexBuffer, instanceBuffer, indexBuffer;
+
+	GLenum drawMode = GL_TRIANGLES;
+	GLenum indexType = 0;
+	GLsizei vertexStride = 0, instanceStride = 0, indexCount = 0;
+
+public:
+
+	GlMesh() {}
+	GlMesh(GlMesh && r) { *this = std::move(r); }
+	GlMesh(const GlMesh & r) = delete;
+	GlMesh & operator = (GlMesh && r)
+	{
+		char buffer[sizeof(GlMesh)];
+		memcpy(buffer, this, sizeof(buffer));
+		memcpy(this, &r, sizeof(buffer));
+		memcpy(&r, buffer, sizeof(buffer));
+		return *this;
+	}
+	GlMesh & operator = (const GlMesh & r) = delete;
+	~GlMesh() {};
+
+	void set_non_indexed(GLenum newMode)
+	{
+		drawMode = newMode;
+		indexBuffer = {};
+		indexType = 0;
+		indexCount = 0;
+	}
+
+	void draw_elements(int instances = 0) const
+	{
+		if (vertexBuffer.size)
 		{
-			program = glCreateProgram();
-			compile_shader(program, GL_VERTEX_SHADER, vertexShader.c_str());
-			compile_shader(program, GL_FRAGMENT_SHADER, fragmentShader.c_str());
-
-			if (geometryShader.length() != 0)
-				::compile_shader(program, GL_GEOMETRY_SHADER, geometryShader.c_str());
-
-			glLinkProgram(program);
-
-			GLint status;
-			GLint length;
-
-			glGetProgramiv(program, GL_LINK_STATUS, &status);
-
-			if (status == GL_FALSE)
+			glBindVertexArray(vao);
+			if (indexCount)
 			{
-				glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-				std::vector<GLchar> buffer(length);
-				glGetProgramInfoLog(program, (GLsizei)buffer.size(), nullptr, buffer.data());
-				std::cerr << "GL Link Error: " << buffer.data() << std::endl;
-				throw std::runtime_error("GLSL Link Failure");
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+				if (instances) glDrawElementsInstanced(drawMode, indexCount, indexType, 0, instances);
+				else glDrawElements(drawMode, indexCount, indexType, nullptr);
 			}
-		}
-
-		~GlShader() { if (program) glDeleteProgram(program); }
-
-		GlShader(GlShader && r) : GlShader() { *this = std::move(r); }
-
-		GLuint handle() const { return program; }
-		GLint get_uniform_location(const std::string & name) const { return glGetUniformLocation(program, name.c_str()); }
-
-		GlShader & operator = (GlShader && r) { std::swap(program, r.program); return *this; }
-
-		void reflect_debug_print()
-		{
-			GLint count;
-			glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
-			for (GLuint i = 0; i < static_cast<GLuint>(count); ++i)
+			else
 			{
-				char buffer[1024]; GLenum type; GLsizei length; GLint size, block_index;
-				glGetActiveUniform(program, i, sizeof(buffer), &length, &size, &type, buffer);
-				glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_BLOCK_INDEX, &block_index);
-				if (block_index != -1) continue;
-				GLint loc = glGetUniformLocation(program, buffer);
+				if (instances) glDrawArraysInstanced(drawMode, 0, static_cast<GLsizei>(vertexBuffer.size / vertexStride), instances);
+				else glDrawArrays(drawMode, 0, static_cast<GLsizei>(vertexBuffer.size / vertexStride));
 			}
+			glBindVertexArray(0);
 		}
+	}
 
-		void uniform(const std::string & name, int scalar) const { check(); glUniform1i(get_uniform_location(name), scalar); }
-		void uniform(const std::string & name, float scalar) const { check(); glUniform1f(get_uniform_location(name), scalar); }
-		void uniform(const std::string & name, const float2 & vec) const { check(); glUniform2fv(get_uniform_location(name), 1, &vec.x); }
-		void uniform(const std::string & name, const float3 & vec) const { check(); glUniform3fv(get_uniform_location(name), 1, &vec.x); }
-		void uniform(const std::string & name, const float4 & vec) const { check(); glUniform4fv(get_uniform_location(name), 1, &vec.x); }
-		void uniform(const std::string & name, const float3x3 & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
-		void uniform(const std::string & name, const float4x4 & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
+	void set_vertex_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { vertexBuffer.set_buffer_data(size, data, usage); }
+	void set_instance_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { instanceBuffer.set_buffer_data(size, data, usage); }
 
-		void uniform(const std::string & name, const int elements, const std::vector<int> & scalar) const { check(); glUniform1iv(get_uniform_location(name), elements, scalar.data()); }
-		void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { check(); glUniform1fv(get_uniform_location(name), elements, scalar.data()); }
-		void uniform(const std::string & name, const int elements, const std::vector<float2> & vec) const { check(); glUniform2fv(get_uniform_location(name), elements, &vec[0].x); }
-		void uniform(const std::string & name, const int elements, const std::vector<float3> & vec) const { check(); glUniform3fv(get_uniform_location(name), elements, &vec[0].x); }
-		void uniform(const std::string & name, const int elements, const std::vector<float3x3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
-		void uniform(const std::string & name, const int elements, const std::vector<float4x4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
-
-		void texture(GLint loc, GLenum target, int unit, GLuint tex) const
-		{
-			check();
-			glBindMultiTextureEXT(GL_TEXTURE0 + unit, target, tex);
-			glProgramUniform1i(program, loc, unit);
-		}
-
-		void texture(const char * name, int unit, GLuint tex, GLenum target) const { texture(get_uniform_location(name), target, unit, tex); }
-
-		void bind() { if (program > 0) enabled = true; glUseProgram(program); }
-		void unbind() { enabled = false; glUseProgram(0); }
-	};
-
-	////////////////
-	//   GlMesh   //
-	////////////////
-
-	class GlMesh
+	void set_index_data(GLenum mode, GLenum type, GLsizei count, const GLvoid * data, GLenum usage)
 	{
-		GlVertexArrayObject vao;
-		GlBuffer vertexBuffer, instanceBuffer, indexBuffer;
+		size_t size = gl_size_bytes(type);
+		indexBuffer.set_buffer_data(size * count, data, usage);
+		drawMode = mode;
+		indexType = type;
+		indexCount = count;
+	}
 
-		GLenum drawMode = GL_TRIANGLES;
-		GLenum indexType = 0;
-		GLsizei vertexStride = 0, instanceStride = 0, indexCount = 0;
+	void set_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * offset)
+	{
+		glEnableVertexArrayAttribEXT(vao, index);
+		glVertexArrayVertexAttribOffsetEXT(vao, vertexBuffer, index, size, type, normalized, stride, (GLintptr)offset);
+		vertexStride = stride;
+	}
 
-	public:
+	void set_instance_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * offset)
+	{
+		glEnableVertexArrayAttribEXT(vao, index);
+		glVertexArrayVertexAttribOffsetEXT(vao, instanceBuffer, index, size, type, normalized, stride, (GLintptr)offset);
+		glVertexArrayVertexAttribDivisorEXT(vao, index, 1);
+		instanceStride = stride;
+	}
 
-		GlMesh() {}
-		GlMesh(GlMesh && r) { *this = std::move(r); }
-		GlMesh(const GlMesh & r) = delete;
-		GlMesh & operator = (GlMesh && r)
-		{
-			char buffer[sizeof(GlMesh)];
-			memcpy(buffer, this, sizeof(buffer));
-			memcpy(this, &r, sizeof(buffer));
-			memcpy(&r, buffer, sizeof(buffer));
-			return *this;
-		}
-		GlMesh & operator = (const GlMesh & r) = delete;
-		~GlMesh() {};
+	void set_indices(GLenum mode, GLsizei count, const uint8_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_BYTE, count, indices, usage); }
+	void set_indices(GLenum mode, GLsizei count, const uint16_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_SHORT, count, indices, usage); }
+	void set_indices(GLenum mode, GLsizei count, const uint32_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_INT, count, indices, usage); }
 
-		void set_non_indexed(GLenum newMode)
-		{
-			drawMode = newMode;
-			indexBuffer = {};
-			indexType = 0;
-			indexCount = 0;
-		}
+	template<class T> void set_vertices(size_t count, const T * vertices, GLenum usage) { set_vertex_data(count * sizeof(T), vertices, usage); }
+	template<class T> void set_vertices(const std::vector<T> & vertices, GLenum usage) { set_vertices(vertices.size(), vertices.data(), usage); }
+	template<class T, int N> void set_vertices(const T(&vertices)[N], GLenum usage) { set_vertices(N, vertices, usage); }
 
-		void draw_elements(int instances = 0) const
-		{
-			if (vertexBuffer.size)
-			{
-				glBindVertexArray(vao);
-				if (indexCount)
-				{
-					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-					if (instances) glDrawElementsInstanced(drawMode, indexCount, indexType, 0, instances);
-					else glDrawElements(drawMode, indexCount, indexType, nullptr);
-				}
-				else
-				{
-					if (instances) glDrawArraysInstanced(drawMode, 0, static_cast<GLsizei>(vertexBuffer.size / vertexStride), instances);
-					else glDrawArrays(drawMode, 0, static_cast<GLsizei>(vertexBuffer.size / vertexStride));
-				}
-				glBindVertexArray(0);
-			}
-		}
+	template<class V>void set_attribute(GLuint index, float V::*field) { set_attribute(index, 1, GL_FLOAT, GL_FALSE, sizeof(V), &(((V*)0)->*field)); }
+	template<class V, int N> void set_attribute(GLuint index, linalg::vec<float, N> V::*field) { set_attribute(index, N, GL_FLOAT, GL_FALSE, sizeof(V), &(((V*)0)->*field)); }
 
-		void set_vertex_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { vertexBuffer.set_buffer_data(size, data, usage); }
-		void set_instance_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { instanceBuffer.set_buffer_data(size, data, usage); }
+	template<class T> void set_elements(GLsizei count, const linalg::vec<T, 2> * elements, GLenum usage) { set_indices(GL_LINES, count * 2, &elements->x, GL_STATIC_DRAW); }
+	template<class T> void set_elements(GLsizei count, const linalg::vec<T, 3> * elements, GLenum usage) { set_indices(GL_TRIANGLES, count * 3, &elements->x, GL_STATIC_DRAW); }
+	template<class T> void set_elements(GLsizei count, const linalg::vec<T, 4> * elements, GLenum usage) { set_indices(GL_QUADS, count * 4, &elements->x, GL_STATIC_DRAW); }
 
-		void set_index_data(GLenum mode, GLenum type, GLsizei count, const GLvoid * data, GLenum usage)
-		{
-			size_t size = gl_size_bytes(type);
-			indexBuffer.set_buffer_data(size * count, data, usage);
-			drawMode = mode;
-			indexType = type;
-			indexCount = count;
-		}
+	template<class T> void set_elements(const std::vector<T> & elements, GLenum usage) { set_elements((GLsizei)elements.size(), elements.data(), usage); }
 
-		void set_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * offset)
-		{
-			glEnableVertexArrayAttribEXT(vao, index);
-			glVertexArrayVertexAttribOffsetEXT(vao, vertexBuffer, index, size, type, normalized, stride, (GLintptr)offset);
-			vertexStride = stride;
-		}
+	template<class T, int N> void set_elements(const T(&elements)[N], GLenum usage) { set_elements(N, elements, usage); }
+};
 
-		void set_instance_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * offset)
-		{
-			glEnableVertexArrayAttribEXT(vao, index);
-			glVertexArrayVertexAttribOffsetEXT(vao, instanceBuffer, index, size, type, normalized, stride, (GLintptr)offset);
-			glVertexArrayVertexAttribDivisorEXT(vao, index, 1);
-			instanceStride = stride;
-		}
-
-		void set_indices(GLenum mode, GLsizei count, const uint8_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_BYTE, count, indices, usage); }
-		void set_indices(GLenum mode, GLsizei count, const uint16_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_SHORT, count, indices, usage); }
-		void set_indices(GLenum mode, GLsizei count, const uint32_t * indices, GLenum usage) { set_index_data(mode, GL_UNSIGNED_INT, count, indices, usage); }
-
-		template<class T> void set_vertices(size_t count, const T * vertices, GLenum usage) { set_vertex_data(count * sizeof(T), vertices, usage); }
-		template<class T> void set_vertices(const std::vector<T> & vertices, GLenum usage) { set_vertices(vertices.size(), vertices.data(), usage); }
-		template<class T, int N> void set_vertices(const T(&vertices)[N], GLenum usage) { set_vertices(N, vertices, usage); }
-
-		template<class V>void set_attribute(GLuint index, float V::*field) { set_attribute(index, 1, GL_FLOAT, GL_FALSE, sizeof(V), &(((V*)0)->*field)); }
-		template<class V, int N> void set_attribute(GLuint index, linalg::vec<float, N> V::*field) { set_attribute(index, N, GL_FLOAT, GL_FALSE, sizeof(V), &(((V*)0)->*field)); }
-
-		template<class T> void set_elements(GLsizei count, const linalg::vec<T, 2> * elements, GLenum usage) { set_indices(GL_LINES, count * 2, &elements->x, GL_STATIC_DRAW); }
-		template<class T> void set_elements(GLsizei count, const linalg::vec<T, 3> * elements, GLenum usage) { set_indices(GL_TRIANGLES, count * 3, &elements->x, GL_STATIC_DRAW); }
-		template<class T> void set_elements(GLsizei count, const linalg::vec<T, 4> * elements, GLenum usage) { set_indices(GL_QUADS, count * 4, &elements->x, GL_STATIC_DRAW); }
-
-		template<class T> void set_elements(const std::vector<T> & elements, GLenum usage) { set_elements((GLsizei)elements.size(), elements.data(), usage); }
-
-		template<class T, int N> void set_elements(const T(&elements)[N], GLenum usage) { set_elements(N, elements, usage); }
-	};
-
-}
-
-#endif // end AVL_GL_API_H
+#endif // end gl_api_hpp
