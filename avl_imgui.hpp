@@ -23,20 +23,6 @@ operator avl::float4() const { return avl::float4(x,y,z,w); }
 
 #include "imgui/imgui.h"
 
-template <typename T>
-class Singleton : avl::Noncopyable
-{
-private:
-    Singleton(const Singleton<T> &);
-    Singleton & operator = (const Singleton<T> &);
-protected:
-    static T * single;
-    Singleton() = default;
-    ~Singleton() = default;
-public:
-    static T & get_instance() { if (!single) single = new T(); return *single; };
-};
-
 class GlTexture2D;
 namespace avl
 {

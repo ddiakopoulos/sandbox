@@ -101,6 +101,20 @@ namespace avl
         Noncopyable & operator = (const Noncopyable& r) = delete;
     };
     
+	template <typename T>
+	class Singleton : public Noncopyable
+	{
+	private:
+		Singleton(const Singleton<T> &);
+		Singleton & operator = (const Singleton<T> &);
+	protected:
+		static T * single;
+		Singleton() = default;
+		~Singleton() = default;
+	public:
+		static T & get_instance() { if (!single) single = new T(); return *single; };
+	};
+
     inline std::string codepoint_to_utf8(uint32_t codepoint)
     {
         int n = 0;
