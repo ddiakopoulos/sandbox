@@ -445,15 +445,6 @@ namespace avl
         Pose        operator * (const Pose & pose) const            { return {qmul(orientation,pose.orientation), transform_coord(pose.position)}; }
     };
     
-	inline Pose make_pose_from_to(const Pose & from, const Pose & to)
-	{
-		Pose ret;
-		const auto inv = qinv(from.orientation);
-		ret.orientation = qmul(inv, to.orientation);
-		ret.position = qrot(inv, to.position - from.position);
-		return ret;
-	}
-
 	inline bool operator == (const Pose & a, const Pose & b)
 	{
 		return (a.position == b.position) && (a.orientation == b.orientation);
@@ -464,15 +455,20 @@ namespace avl
 		return (a.position != b.position) || (a.orientation != b.orientation);
 	}
 
-	inline Pose operator - (const Pose & a, const Pose & b)
-	{
-		return make_pose_from_to(a, b);
-	}
-
 	inline std::ostream & operator << (std::ostream & o, const Pose & r)
     {
         return o << "{" << r.position << ", " << r.orientation << "}";
     }
+
+	// The long form of (a.inverse() * b) 
+	inline Pose make_pose_from_to(const Pose & a, const Pose & b)
+	{
+		Pose ret;
+		const auto inv = qinv(a.orientation);
+		ret.orientation = qmul(inv, b.orientation);
+		ret.position = qrot(inv, b.position - a.position);
+		return ret;
+	}
 
     inline float4x4 make_view_matrix_from_pose(const Pose & pose)
     {
