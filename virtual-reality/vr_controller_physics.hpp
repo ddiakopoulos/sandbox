@@ -64,9 +64,9 @@ public:
 
 struct BulletContactPointVR
 {
+	float depth{ 1.f };
 	float3 location;
 	float3 normal;
-	float depth = { 1.f };
 	btCollisionObject * object;
 };
 
@@ -91,6 +91,22 @@ public:
 	{
 
 	}
+	
+	std::vector<BulletObjectVR> CollideWorld() const 
+	{
+
+	}
+
+	std::vector<BulletObjectVR> CollideWith(btCollisionObject * object) const
+	{
+
+	}
+
+	std::vector<BulletObjectVR> OngoingCollision() const
+	{
+
+	}
+
 
 	~BulletObjectVR()
 	{
