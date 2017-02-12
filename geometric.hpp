@@ -222,63 +222,49 @@ namespace avl
     // Quaternion Utilities //
     //////////////////////////
     
-    inline float4 make_quat_from_euler(float roll, float pitch, float yaw)
-    {
-        double sy = sin(yaw * 0.5);
-        double cy = cos(yaw * 0.5);
-        double sp = sin(pitch * 0.5);
-        double cp = cos(pitch * 0.5);
-        double sr = sin(roll * 0.5);
-        double cr = cos(roll * 0.5);
-        double w = cr*cp*cy + sr*sp*sy;
-        double x = sr*cp*cy - cr*sp*sy;
-        double y = cr*sp*cy + sr*cp*sy;
-        double z = cr*cp*sy - sr*sp*cy;
-        return float4(float(x), float(y), float(z), float(w));
-    }
-    
 	// Quaternion <=> Euler ref: http://www.swarthmore.edu/NatSci/mzucker1/e27/diebel2006attitude.pdf
 
-	// Z-Y-X is probably the most common standard, representing yaw, pitch, roll (YPR)
+	inline float4 make_quat_from_euler_zyx(float y, float p, float r)
+	{
+		float4 q;
+		q.x = cos(y/2.f)*cos(p/2.f)*cos(r/2.f) - sin(y/2.f)*sin(p/2.f)*sin(r/2.f);
+		q.y = cos(y/2.f)*cos(p/2.f)*sin(r/2.f) + sin(y/2.f)*cos(r/2.f)*sin(p/2.f);
+		q.z = cos(y/2.f)*cos(r/2.f)*sin(p/2.f) - sin(y/2.f)*cos(p/2.f)*sin(r/2.f);
+		q.w = cos(y/2.f)*sin(p/2.f)*sin(r/2.f) + cos(p/2.f)*cos(r/2.f)*sin(y/2.f);
+		return q;
+	}
+
+
+    inline float4 make_quat_from_euler_xyz(float r, float p, float y)
+    {
+		float4 q;
+		q.x = cos(r/2.f)*cos(p/2.f)*cos(y/2.f) + sin(r/2.f)*sin(p/2.f)*sin(y/2.f);
+		q.y = sin(r/2.f)*cos(p/2.f)*cos(y/2.f) - cos(r/2.f)*sin(y/2.f)*sin(p/2.f);
+		q.z = cos(r/2.f)*cos(y/2.f)*sin(p/2.f) + sin(r/2.f)*cos(p/2.f)*sin(y/2.f);
+		q.w = cos(r/2.f)*cos(p/2.f)*sin(y/2.f) - sin(p/2.f)*cos(y/2.f)*sin(r/2.f);
+		return q;
+    }
+
+	// ZYX is probably the most common standard: yaw, pitch, roll (YPR)
 	inline float3 make_euler_from_quat_zyx(float4 q)
 	{
-		float3 e;
-		const double q0 = q.w;
-		const double q1 = q.x;
-		const double q2 = q.y;
-		const double q3 = q.z;
-		e.x = float(atan2(-2.f*q1*q2 + 2 * q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
-		e.y = float(asin(2.f*q1*q3 + 2.f*q0*q2));
-		e.z = float(atan2(-2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
-		return e;
+		float3 ypr;
+		const double q0 = q.w, q1 = q.x, q2 = q.y, q3 = q.z;
+		ypr.x = float(atan2(-2.f*q1*q2 + 2 * q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
+		ypr.y = float(asin(2.f*q1*q3 + 2.f*q0*q2));
+		ypr.z = float(atan2(-2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
+		return ypr;
 	}
 
-	// Somewhat less common roll, pitch, yaw (RPY)
+	// XYZ Somewhat less common: roll, pitch, yaw (RPY)
 	inline float3 make_euler_from_quat_xyz(float4 q)
 	{
-		float3 e;
-		const double q0 = q.w;
-		const double q1 = q.x;
-		const double q2 = q.y;
-		const double q3 = q.z;
-		e.x = float(atan2(2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
-		e.y = float(-asin(2.f*q1*q3 - 2.f*q0*q2));
-		e.z = float(atan2(2.f*q1*q2 + 2.f*q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
-		return e;
-	}
-
-	// Almost never used: roll, yaw, pitch (RYP)
-	inline float3 make_euler_from_quat_xzy(float4 q)
-	{
-		float3 e;
-		const double q0 = q.w;
-		const double q1 = q.x;
-		const double q2 = q.y;
-		const double q3 = q.z;
-		e.x = float(atan2(-2.f*q2*q3 + 2.f*q0*q1, q2*q2 - q3*q3 + q0*q0 - q1*q1));
-		e.y = float(asin(2.f*q1*q2 + 2.f*q0*q3));
-		e.z = float(atan2(-2.f*q1*q3 + 2.f*q0*q2, q1*q1 + q0*q0 - q3*q3 - q2*q2));
-		return e;
+		float3 rpy;
+		const double q0 = q.w, q1 = q.x, q2 = q.y, q3 = q.z;
+		rpy.x = float(atan2(2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
+		rpy.y = float(-asin(2.f*q1*q3 - 2.f*q0*q2));
+		rpy.z = float(atan2(2.f*q1*q2 + 2.f*q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
+		return rpy;
 	}
 
     // Decompose rotation of q around the axis vt where q = swing * twist
