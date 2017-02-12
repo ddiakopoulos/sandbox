@@ -15,6 +15,8 @@
 // Todo: transform feedback
 // Todo: pixel buffers / sync
 
+using namespace avl;
+
 namespace
 {
 	inline void compile_shader(GLuint program, GLenum type, const char * source)
@@ -259,6 +261,7 @@ protected:
 	GlShader(const GlShader & r) = delete;
 	GlShader & operator = (const GlShader & r) = delete;
 public:
+
 	GlShader() : program() {}
 
 	GlShader(const std::string & vertexShader, const std::string & fragmentShader, const std::string & geometryShader = "")
