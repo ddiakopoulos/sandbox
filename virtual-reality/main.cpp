@@ -13,14 +13,29 @@ using namespace avl;
 
 struct MotionControllerVR
 {
+	BulletEngineVR & engine;
 	const Controller & ctrl;
-	const Controller::ControllerRenderData & renderData;
+	std::shared_ptr<Controller::ControllerRenderData> renderData;
 
-	BulletEngineVR * engine;
+	btCollisionShape * controllerShape{ nullptr };
+	BulletObjectVR * physicsObject{ nullptr };
 
-
-	MotionControllerVR(BulletEngineVR * engine, const Controller & ctrl, const Controller::ControllerRenderData & renderData) 
+	MotionControllerVR(BulletEngineVR & engine, const Controller & ctrl, std::shared_ptr<Controller::ControllerRenderData> renderData)
 		: engine(engine), ctrl(ctrl), renderData(renderData)
+	{
+
+		engine.add_task([=](float time, BulletEngineVR * engine)
+		{
+			this->update(time, engine);
+		});
+
+		controllerShape = new btBoxShape(btVector3(0.096, 0.096, 0.0123)); // fixme
+
+		physicsObject = new BulletObjectVR(new btDefaultMotionState(), controllerShape, engine.get_world(), 0.5f);
+		engine.add_object(physicsObject);
+	}
+
+	void update(const float dt, BulletEngineVR * engine)
 	{
 
 	}
@@ -60,6 +75,9 @@ struct VirtualRealityApp : public GLFWApp
 
 	RenderableGrid grid;
 
+	BulletEngineVR physicsEngine;
+	std::unique_ptr<MotionControllerVR> leftController;
+
 	VirtualRealityApp() : GLFWApp(1280, 800, "VR") 
 	{
 		try
@@ -80,6 +98,8 @@ struct VirtualRealityApp : public GLFWApp
 		debugModels.push_back(std::move(cube));
 
 		grid = RenderableGrid(0.5f, 128, 128);
+
+		leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller[0], hmd->get_controller_render_data()));
 
 		gl_check_error(__FILE__, __LINE__);
 	}

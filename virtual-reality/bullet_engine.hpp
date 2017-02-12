@@ -54,6 +54,11 @@ public:
 
 	~BulletEngineVR() { }
 
+	btDiscreteDynamicsWorld * get_world()
+	{
+		return dynamicsWorld.get();
+	}
+
 	void add_object(BulletObjectVR * object)
 	{
 		dynamicsWorld->addRigidBody(object->body.get());
