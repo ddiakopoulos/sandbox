@@ -18,16 +18,16 @@ inline Pose make_pose(const vr::HmdMatrix34_t & m)
 	};
 }
 
-struct ControllerRenderData
-{
-	GlMesh mesh;
-	std::vector<float3> verts;
-	GlTexture2D tex;
-	bool loaded = false;
-};
-
 struct Controller
 {
+	struct ControllerRenderData
+	{
+		GlMesh mesh;
+		std::vector<float3> verts;
+		GlTexture2D tex;
+		bool loaded = false;
+	};
+
 	struct ButtonState
 	{
 		bool down = false;
@@ -69,8 +69,7 @@ class OpenVR_HMD
 	GlRenderbuffer multisampleRenderbuffers[2];
 	GlFramebuffer multisampleFramebuffer;
 
-	std::shared_ptr<ControllerRenderData> controllerRenderData;
-
+	std::shared_ptr<Controller::ControllerRenderData> controllerRenderData;
 	Controller controllers[2];
 
 public:
@@ -84,7 +83,7 @@ public:
 		if (controller == vr::TrackedControllerRole_RightHand) return controllers[1];
 	}
 
-	std::shared_ptr<ControllerRenderData> get_controller_render_data()
+	std::shared_ptr<Controller::ControllerRenderData> get_controller_render_data()
 	{
 		return controllerRenderData;
 	}

@@ -1,5 +1,7 @@
 #include "index.hpp"
 #include "vr_hmd.hpp"
+#include "bullet_engine.hpp"
+#include "bullet_object.hpp"
 
 using namespace avl;
 
@@ -8,6 +10,21 @@ using namespace avl;
 #else
 	#define ALIGNED(n) alignas(n)
 #endif
+
+struct MotionControllerVR
+{
+	const Controller & ctrl;
+	const Controller::ControllerRenderData & renderData;
+
+	BulletEngineVR * engine;
+
+
+	MotionControllerVR(BulletEngineVR * engine, const Controller & ctrl, const Controller::ControllerRenderData & renderData) 
+		: engine(engine), ctrl(ctrl), renderData(renderData)
+	{
+
+	}
+};
 
 namespace uniforms
 {
