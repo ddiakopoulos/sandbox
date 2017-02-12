@@ -15,7 +15,7 @@
 // Todo: transform feedback
 // Todo: pixel buffers / sync
 
-using namespace avl;
+// using namespace avl;
 
 namespace
 {
@@ -184,9 +184,9 @@ struct GlBuffer : public GlBufferObject
 
 struct GlRenderbuffer : public GlRenderbufferObject
 {
-	int2 size;
-	GlRenderbuffer() {};
-	GlRenderbuffer(int2 size) : size(size) {}
+	float width{ 0 }, height{ 0 };
+	GlRenderbuffer() {}
+	GlRenderbuffer(float width, float height) : width(width), height(height) {}
 };
 
 ///////////////////////
@@ -195,10 +195,10 @@ struct GlRenderbuffer : public GlRenderbufferObject
 
 struct GlFramebuffer : public GlFramebufferObject
 {
-	float3 size;
+	float width{ 0 }, height{ 0 }, depth{ 0 };
 	GlFramebuffer() {}
-	GlFramebuffer(float2 s) : size(s.x, s.y, 0) {}
-	GlFramebuffer(float3 s) : size(s) {}
+	GlFramebuffer(float width, float height) : width(width), height(height) {}
+	GlFramebuffer(float width, float height, float depth) : width(width), height(height), depth(depth) {}
 	void check_complete() { if (glCheckNamedFramebufferStatusEXT(*this, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("fbo incomplete"); }
 };
 
@@ -208,10 +208,9 @@ struct GlFramebuffer : public GlFramebufferObject
 
 struct GlTexture2D : public GlTextureObject
 {
-	int2 size;
-
+	float width{ 0 }, height{ 0 };
 	GlTexture2D() {}
-	GlTexture2D(int2 sz) : size(sz) {}
+	GlTexture2D(float width, float height) : width(width), height(height) {}
 
 	void setup(GLsizei width, GLsizei height, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels, bool createMipmap = false)
 	{
@@ -221,7 +220,8 @@ struct GlTexture2D : public GlTextureObject
 		glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, createMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 		glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		size = { width, height };
+		this->width = width;
+		this->height = height;
 	}
 };
 
@@ -232,10 +232,8 @@ struct GlTexture2D : public GlTextureObject
 // As either a 3D texture or 2D array
 struct GlTexture3D : public GlTextureObject
 {
-	int3 size;
-
-	GlTexture3D() {}
-	GlTexture3D(int3 sz) : size(sz) {}
+	float width{ 0 }, height{ 0 }, depth{ 0 };
+	GlTexture3D(float width, float height, float depth) : width(width), height(height), depth(depth) {}
 
 	void setup(GLenum target, GLsizei width, GLsizei height, GLsizei depth, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels)
 	{
@@ -245,6 +243,9 @@ struct GlTexture3D : public GlTextureObject
 		glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		this->width = width;
+		this->height = height;
+		this->depth = depth;
 	}
 };
 
@@ -315,18 +316,18 @@ public:
 
 	void uniform(const std::string & name, int scalar) const { check(); glUniform1i(get_uniform_location(name), scalar); }
 	void uniform(const std::string & name, float scalar) const { check(); glUniform1f(get_uniform_location(name), scalar); }
-	void uniform(const std::string & name, const float2 & vec) const { check(); glUniform2fv(get_uniform_location(name), 1, &vec.x); }
-	void uniform(const std::string & name, const float3 & vec) const { check(); glUniform3fv(get_uniform_location(name), 1, &vec.x); }
-	void uniform(const std::string & name, const float4 & vec) const { check(); glUniform4fv(get_uniform_location(name), 1, &vec.x); }
-	void uniform(const std::string & name, const float3x3 & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
-	void uniform(const std::string & name, const float4x4 & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
+	void uniform(const std::string & name, const linalg::aliases::float2 & vec) const { check(); glUniform2fv(get_uniform_location(name), 1, &vec.x); }
+	void uniform(const std::string & name, const linalg::aliases::float3 & vec) const { check(); glUniform3fv(get_uniform_location(name), 1, &vec.x); }
+	void uniform(const std::string & name, const linalg::aliases::float4 & vec) const { check(); glUniform4fv(get_uniform_location(name), 1, &vec.x); }
+	void uniform(const std::string & name, const linalg::aliases::float3x3 & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
+	void uniform(const std::string & name, const linalg::aliases::float4x4 & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
 
 	void uniform(const std::string & name, const int elements, const std::vector<int> & scalar) const { check(); glUniform1iv(get_uniform_location(name), elements, scalar.data()); }
 	void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { check(); glUniform1fv(get_uniform_location(name), elements, scalar.data()); }
-	void uniform(const std::string & name, const int elements, const std::vector<float2> & vec) const { check(); glUniform2fv(get_uniform_location(name), elements, &vec[0].x); }
-	void uniform(const std::string & name, const int elements, const std::vector<float3> & vec) const { check(); glUniform3fv(get_uniform_location(name), elements, &vec[0].x); }
-	void uniform(const std::string & name, const int elements, const std::vector<float3x3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
-	void uniform(const std::string & name, const int elements, const std::vector<float4x4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
+	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float2> & vec) const { check(); glUniform2fv(get_uniform_location(name), elements, &vec[0].x); }
+	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float3> & vec) const { check(); glUniform3fv(get_uniform_location(name), elements, &vec[0].x); }
+	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float3x3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
+	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float4x4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
 
 	void texture(GLint loc, GLenum target, int unit, GLuint tex) const
 	{
