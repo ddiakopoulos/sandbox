@@ -11,8 +11,16 @@ using namespace avl;
 	#define ALIGNED(n) alignas(n)
 #endif
 
-struct MotionControllerVR
+class MotionControllerVR
 {
+	void update_physics(const float dt, BulletEngineVR * engine)
+	{
+		physicsObject->body->clearForces();
+		physicsObject->body->setWorldTransform();
+	}
+
+public:
+
 	BulletEngineVR & engine;
 	const Controller & ctrl;
 	std::shared_ptr<Controller::ControllerRenderData> renderData;
@@ -26,19 +34,21 @@ struct MotionControllerVR
 
 		engine.add_task([=](float time, BulletEngineVR * engine)
 		{
-			this->update(time, engine);
+			this->update_physics(time, engine);
 		});
 
-		controllerShape = new btBoxShape(btVector3(0.096, 0.096, 0.0123)); // fixme
+		controllerShape = new btBoxShape(btVector3(0.096, 0.096, 0.0123)); // fixme to use renderData
 
 		physicsObject = new BulletObjectVR(new btDefaultMotionState(), controllerShape, engine.get_world(), 0.5f);
+
+		physicsObject->body->setFriction(2.f);
+		physicsObject->body->setRestitution(0.75);
+		physicsObject->body->setGravity(btVector3(0, 0, 0));
+		physicsObject->body->setActivationState(DISABLE_DEACTIVATION);
+
 		engine.add_object(physicsObject);
 	}
 
-	void update(const float dt, BulletEngineVR * engine)
-	{
-
-	}
 };
 
 namespace uniforms
@@ -77,6 +87,7 @@ struct VirtualRealityApp : public GLFWApp
 
 	BulletEngineVR physicsEngine;
 	std::unique_ptr<MotionControllerVR> leftController;
+	std::vector<BulletObjectVR * > scenePhysicsObjects;
 
 	VirtualRealityApp() : GLFWApp(1280, 800, "VR") 
 	{
@@ -101,6 +112,11 @@ struct VirtualRealityApp : public GLFWApp
 
 		leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller[0], hmd->get_controller_render_data()));
 
+		btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
+		BulletObjectVR * groundObject = new BulletObjectVR(new btDefaultMotionState(), ground, physicsEngine.get_world());
+		physicsEngine.add_object(groundObject);
+		scenePhysicsObjects.push_back(groundObject);
+
 		gl_check_error(__FILE__, __LINE__);
 	}
 
@@ -122,6 +138,7 @@ struct VirtualRealityApp : public GLFWApp
 	void on_update(const UpdateEvent & e) override
 	{
 		shaderMonitor.handle_recompile();
+		physicsEngine.update();
 	}
 
 	void render_func(Pose eye, float4x4 projMat)

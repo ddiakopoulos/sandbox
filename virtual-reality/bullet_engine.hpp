@@ -75,6 +75,12 @@ public:
 		bulletTicks.push_back({ f });
 	}
 
+	void update(const float dt = 0.0f /*fixme*/)
+	{
+		// fps
+		dynamicsWorld->stepSimulation(1.f / 90.f);
+	}
+
 };
 
 #endif // end bullet_engine_vr_hpp
