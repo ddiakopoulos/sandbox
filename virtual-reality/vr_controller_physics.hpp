@@ -67,6 +67,8 @@ struct BulletContactPointVR
 	float depth{ 1.f };
 	float3 location;
 	float3 normal;
+	float3 velocity;
+	float velocityNorm;
 	btCollisionObject * object;
 };
 
@@ -129,6 +131,8 @@ public:
 				p.location = { point.x(), point.y(), point.z() };
 				p.normal = { n.x(), n.y(), n.z() };
 				p.depth = fabs(cp.getDistance());
+				p.velocity = { body.getLinearVelocity().x, body.getLinearVelocity().y, body.getLinearVelocity().z };
+				p.velocityNorm = dot(p.normal, p.velocity);
 
 				contacts.push_back(p);
 
