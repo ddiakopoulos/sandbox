@@ -9,6 +9,16 @@
 
 using namespace avl;
 
+struct BulletContactPointVR
+{
+	float depth{ 1.f };
+	float3 location;
+	float3 normal;
+	float3 velocity;
+	float velocityNorm;
+	btCollisionObject * object;
+};
+
 inline btVector3 to_bt(const float3 & v)
 {
 	return btVector3(static_cast<btScalar>(v.x), static_cast<btScalar>(v.y), static_cast<btScalar>(v.z));
