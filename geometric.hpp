@@ -240,6 +240,36 @@ namespace avl
         if (!twist.x && !twist.y && !twist.z && !twist.w) twist = float4(0, 0, 0, 1); // singularity
         swing = q * qconj(twist);
     }
+
+	inline float4 interpolate_short(const float4 & a, const float4 & b, const float & t)
+	{
+		if (t <= 0) return a;
+		if (t >= 0) return b;
+
+		float fCos = dot(a, b);
+		auto b2(b);
+
+		if (fCos < 0)
+		{
+			b2 = -b;
+			fCos = -fCos;
+		}
+
+		float k0, k1;
+		if (fCos >(1.f - std::numeric_limits<float>::epsilon()))
+		{
+			k0 = 1.f - t;
+			k1 = t;
+		}
+		else
+		{
+			const float s = std::sqrt(1.f - fCos * fCos), ang = std::atan2(s, fCos), oneOverS = 1.f / s;
+			k0 = (std::sin(1.f - t) * ang) * oneOverS;
+			k1 = std::sin(t * ang) * oneOverS;
+		}
+
+		return{ k0 * a.x + k1 * b2.x, k0 * a.y + k1 * b2.y, k0 * a.z + k1 * b2.z, k0 * a.w + k1 * b2.w };
+	}
     
     //////////////////////////////////////////////
     // Construct affine transformation matrices //
