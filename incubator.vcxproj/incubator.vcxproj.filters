@@ -258,6 +258,9 @@
     <ClInclude Include="..\examples\lens_dev.hpp">
       <Filter>examples</Filter>
     </ClInclude>
+    <ClInclude Include="..\image.hpp">
+      <Filter>source\rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
@@ -283,9 +286,6 @@
     </ClCompile>
     <ClCompile Include="..\third_party\efsw.cpp">
       <Filter>third_party</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GL_API.cpp">
-      <Filter>source\rendering</Filter>
     </ClCompile>
     <ClCompile Include="..\avl_imgui.cpp">
       <Filter>source\app</Filter>

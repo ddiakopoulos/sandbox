@@ -62,7 +62,7 @@ struct ExperimentalApp : public GLFWApp
 
 		float diagonal_aspect = std::sqrt(pow(horizontalAspect, 2) + pow(verticalAspect, 2));
 		float hfov_original = 2.f * atan(tan(target_dfov / 2.f) * (horizontalAspect / diagonal_aspect));
-		float vfov = 2.f * atan(tan(target_dfov / 2.f) * (verticalAspect / diagonal_aspect));
+	 	float vfov = 2.f * atan(tan(target_dfov / 2.f) * (verticalAspect / diagonal_aspect));
 		float hfov_overlap = hfov_original * (2.f - overlap_percent);
 		float aspect_overlap = tan(hfov_overlap / 2.f) / tan(vfov / 2);
 		float diagonal_aspect_overlap = sqrt(pow(tan(hfov_overlap / 2.f), 2) + pow(verticalAspect, 2));
@@ -75,7 +75,15 @@ struct ExperimentalApp : public GLFWApp
 		std::cout << "hfov_overlap: " << to_degrees(hfov_overlap) << std::endl;
 		std::cout << "aspect_overlap: " << aspect_overlap << std::endl;
 		std::cout << "diagonalAspectOverlap: " << diagonal_aspect_overlap << std::endl;
-		std::cout << "dfov_overlap: " << to_degrees(dfov_overlap) << std::endl;
+		std::cout << "dfov_overlap: " << to_degrees(dfov_overlap) << std::endl;  
+
+		std::cout << qlog(float4(0, 0, 0, 1)) << std::endl;
+		std::cout << qexp(float4(0, 0, 0, 1)) << std::endl;
+		auto r = make_rotation_quat_axis_angle({ 0, 1, 0 }, .707f);
+		std::cout << r << std::endl;
+		auto p = qlog(r);
+		std::cout << qexp(p) << std::endl;
+		std::cout << qpow(r, 2.f) << std::endl;
 
     }
     

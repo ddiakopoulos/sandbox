@@ -6,6 +6,7 @@
 #include "geometric.hpp"
 #include "string_utils.hpp"
 #include "GL_API.hpp"
+#include "image.hpp"
 
 #include "tinyply.h"
 #include "tiny_obj_loader.h"

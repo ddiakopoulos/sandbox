@@ -26,6 +26,9 @@ using namespace avl;
 //#include "examples/geometric_algo_dev.hpp"
 #include "examples/lens_dev.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "third_party/stb/stb_image.h"
+
 IMPLEMENT_MAIN(int argc, char * argv[])
 {
 	ExperimentalApp app;

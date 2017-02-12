@@ -53,6 +53,7 @@
     <ClInclude Include="..\GL_API.hpp" />
     <ClInclude Include="..\gpu_timer.hpp" />
     <ClInclude Include="..\human_time.hpp" />
+    <ClInclude Include="..\image.hpp" />
     <ClInclude Include="..\index.hpp" />
     <ClInclude Include="..\linalg_util.hpp" />
     <ClInclude Include="..\math_util.hpp" />
@@ -99,7 +100,6 @@
   <ItemGroup>
     <ClCompile Include="..\avl_imgui.cpp" />
     <ClCompile Include="..\gizmo.cpp" />
-    <ClCompile Include="..\GL_API.cpp" />
     <ClCompile Include="..\impl.cpp" />
     <ClCompile Include="..\nvg.cpp" />
     <ClCompile Include="..\third_party\efsw.cpp" />

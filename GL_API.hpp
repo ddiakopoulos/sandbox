@@ -4,8 +4,8 @@
 #define AVL_GL_API_H
 
 #include "glfw_app.hpp"
-#include "file_io.hpp"
-#include "third_party/stb/stb_image.h"
+//#include "file_io.hpp"
+//#include "third_party/stb/stb_image.h"
 
 // Todo: supported extensions
 // Todo: glMultiDrawElementsIndirect
@@ -227,25 +227,6 @@ namespace avl
 			size = { width, height };
 		}
 	};
-
-	inline GlTexture2D load_image(const std::string & path)
-	{
-		auto binaryFile = read_file_binary(path);
-
-		int width, height, nBytes;
-		auto data = stbi_load_from_memory(binaryFile.data(), (int)binaryFile.size(), &width, &height, &nBytes, 0);
-
-		GlTexture2D tex;
-		switch (nBytes)
-		{
-		case 3: tex.setup(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, data, true); break;
-		case 4: tex.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, data, true); break;
-		default: throw std::runtime_error("supported number of channels");
-		}
-		tex.set_name(path);
-		stbi_image_free(data);
-		return tex;
-	}
 
 	/////////////////////
 	//   GlTexture3D   //

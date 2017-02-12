@@ -73,7 +73,7 @@ void main()
 
 namespace avl
 {
-    
+
     struct GLTextureView : public Noncopyable
     {
         GlShader program;
