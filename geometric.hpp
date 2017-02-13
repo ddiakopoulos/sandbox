@@ -43,6 +43,11 @@ namespace avl
         }
     };
     
+	inline std::ostream & operator << (std::ostream & o, const Bounds2D & b)
+	{
+		return o << "{" << b.min() << " to " << b.max() << "}";
+	}
+
     struct Bounds3D
     {
         float3 _min = {0, 0, 0};

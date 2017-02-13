@@ -25,15 +25,19 @@ struct StaticMeshComponent
 
 	StaticMeshComponent() {}
 
+	const float4x4 GetModelMatrix() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
+
+	void SetPose(const Pose & p) { pose = p; }
+
 	void SetRenderMode(GLenum renderMode)
 	{
 		if (renderMode != GL_TRIANGLE_STRIP) mesh.set_non_indexed(renderMode);
 	}
 
-	const float4x4 GetModelMatrix() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
-
-	void SetStaticMesh(const Geometry & g)
+	void SetStaticMesh(const Geometry & g, const float scale = 1.f)
 	{
+		geom = g;
+		if (scale != 1.f ) rescale_geometry(geom, scale);
 		bounds = geom.compute_bounds();
 		mesh = make_mesh_from_geometry(geom);
 	}
@@ -48,10 +52,7 @@ struct StaticMeshComponent
 		mesh.draw_elements();
 	}
 
-	void Update(const float dt)
-	{
-
-	}
+	void Update(const float dt) { }
 
 	RaycastResult Raycast(const Ray & worldRay) const
 	{
@@ -139,7 +140,7 @@ struct VirtualRealityApp : public GLFWApp
 
 	std::shared_ptr<GlShader> texturedShader;
 	std::shared_ptr<GlShader> normalShader;
-	std::vector<Renderable> debugModels;
+	std::vector<StaticMeshComponent> sceneModels;
 
 	GlBuffer perScene;
 	GlBuffer perView;
@@ -166,10 +167,9 @@ struct VirtualRealityApp : public GLFWApp
 
 			leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller(vr::TrackedControllerRole_LeftHand), hmd->get_controller_render_data()));
 
-			// Leaky
 			btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
-			BulletObjectVR * groundObject = new BulletObjectVR(new btDefaultMotionState(), ground, physicsEngine.get_world());
-			physicsEngine.add_object(groundObject);
+			auto groundObject = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), ground, physicsEngine.get_world());
+			physicsEngine.add_object(groundObject.get());
 			scenePhysicsObjects.push_back(groundObject);
 
 			// Hook up debug renderer
@@ -185,13 +185,21 @@ struct VirtualRealityApp : public GLFWApp
 		texturedShader = shaderMonitor.watch("../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
 		normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 
-		Renderable cube = Renderable(make_cube());
-		rescale_geometry(cube.geom, 0.25);
-		cube.rebuild_mesh();
-		cube.pose = Pose(float4(0, 0, 0, 1), float3(0, 1, 0));
-		debugModels.push_back(std::move(cube));
+		{
+			StaticMeshComponent cube;
+			cube.SetStaticMesh(make_cube(), 0.25f);
+			cube.SetPose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
 
-		grid = RenderableGrid(0.5f, 128, 128);
+			btCollisionShape * cubeCollisionShape = new btBoxShape(to_bt(cube.bounds.size() * 0.5f));
+			auto cubePhysicsObj = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), cubeCollisionShape, physicsEngine.get_world());
+			cube.SetPhysicsComponent(cubePhysicsObj.get());
+
+			physicsEngine.add_object(cubePhysicsObj.get());
+			sceneModels.push_back(std::move(cube));
+			scenePhysicsObjects.push_back(cubePhysicsObj);
+		}
+
+		grid = RenderableGrid(0.25f, 24, 24);
 
 		gl_check_error(__FILE__, __LINE__);
 	}
@@ -221,6 +229,20 @@ struct VirtualRealityApp : public GLFWApp
 
 			btTransform trans;
 			leftController->physicsObject->body->getMotionState()->getWorldTransform(trans);
+
+			// Workaround until a nicer system is in place
+			for (auto & obj : scenePhysicsObjects)
+			{
+				for (auto & model : sceneModels)
+				{
+					if (model.physicsComponent == obj.get())
+					{
+						btTransform trans;
+						obj->body->getMotionState()->getWorldTransform(trans);
+
+					}
+				}
+			}
 		}
 	}
 
@@ -278,15 +300,16 @@ struct VirtualRealityApp : public GLFWApp
 
 		normalShader->bind();
 		normalShader->uniform("u_viewProj", mul(projMat, eye.inverse().matrix()));
-		for (const auto & model : debugModels)
+		for (const auto & m : sceneModels)
 		{
-			normalShader->uniform("u_modelMatrix", model.get_model());
-			normalShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-			model.draw();
+			auto model = m.GetModelMatrix();
+			normalShader->uniform("u_modelMatrix", model);
+			normalShader->uniform("u_modelMatrixIT", inv(transpose(model)));
+			m.Draw();
 		}
 		normalShader->unbind();
 
-		grid.render(projMat, eye.inverse().matrix());
+		grid.render(projMat, eye.inverse().matrix(), float3(0, -.01f, 0));
 
 		physicsEngine.get_world()->debugDrawWorld();
 		physicsDebugRenderer->draw(projMat, eye.inverse().matrix());

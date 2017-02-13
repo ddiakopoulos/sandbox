@@ -71,7 +71,7 @@ public:
 
 	BulletObjectVR(float4x4 xform, btCollisionShape * collisionShape, btDiscreteDynamicsWorld * world, float mass = 0.0f) : world(world)
 	{
-
+		// Fixme for xform
 	}
 
 	btDiscreteDynamicsWorld * get_world() const
