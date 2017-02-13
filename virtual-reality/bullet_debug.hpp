@@ -33,7 +33,6 @@ constexpr const char debugFragmentShader[] = R"(#version 330
     }
 )";
 
-
 class PhysicsDebugRenderer : public btIDebugDraw
 {
 	struct Vertex { float3 position; float3 color; };
@@ -50,8 +49,6 @@ public:
 	{
 		debugShader = GlShader(debugVertexShader, debugFragmentShader);
 	}
-
-	~PhysicsDebugRenderer() {}
 
 	void draw()
 	{

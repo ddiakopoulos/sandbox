@@ -20,6 +20,8 @@ class MotionControllerVR
 	{
 		physicsObject->body->clearForces();
 		physicsObject->body->setWorldTransform(to_bt(latestPose.matrix()));
+		std::cout << dt << std::endl;
+		std::cout << "Pose: " << latestPose.position << std::endl;
 	}
 
 public:
@@ -113,6 +115,7 @@ struct VirtualRealityApp : public GLFWApp
 
 			leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller(vr::TrackedControllerRole_LeftHand), hmd->get_controller_render_data()));
 
+			// Leaky
 			btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
 			BulletObjectVR * groundObject = new BulletObjectVR(new btDefaultMotionState(), ground, physicsEngine.get_world());
 			physicsEngine.add_object(groundObject);

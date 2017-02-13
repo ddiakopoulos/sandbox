@@ -38,7 +38,8 @@ inline btMatrix3x3 to_bt(const float3x3 & m)
 inline btTransform to_bt(const float4x4 & xform)
 {
 	auto r = get_rotation_submatrix(xform);
-	auto t = xform.z.xyz();
+	auto t = xform.w.xyz();
+	std::cout << "To Bt: " << t << std::endl;
 	return btTransform(to_bt(r), to_bt(t));
 }
 
