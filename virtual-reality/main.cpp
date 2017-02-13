@@ -20,7 +20,6 @@ class MotionControllerVR
 	{
 		physicsObject->body->clearForces();
 		physicsObject->body->setWorldTransform(to_bt(latestPose.matrix()));
-		std::cout << "Pose: " << latestPose.position << std::endl;
 	}
 
 public:
@@ -169,8 +168,6 @@ struct VirtualRealityApp : public GLFWApp
 
 			btTransform trans;
 			leftController->physicsObject->body->getMotionState()->getWorldTransform(trans);
-			std::cout << "XForm: " << trans.getOrigin().getX() << ", " << trans.getOrigin().getY() << ", " << trans.getOrigin().getZ() << std::endl;
-
 		}
 	}
 
@@ -236,10 +233,10 @@ struct VirtualRealityApp : public GLFWApp
 		}
 		normalShader->unbind();
 
-		//grid.render(projMat, eye.inverse().matrix());
+		grid.render(projMat, eye.inverse().matrix());
 
 		physicsEngine.get_world()->debugDrawWorld();
-		physicsDebugRenderer->draw();
+		physicsDebugRenderer->draw(projMat, eye.inverse().matrix());
 	}
 
 	void on_draw() override

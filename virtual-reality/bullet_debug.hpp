@@ -50,15 +50,18 @@ public:
 		debugShader = GlShader(debugVertexShader, debugFragmentShader);
 	}
 
-	void draw()
+	void draw(const float4x4 proj, const float4x4 view)
 	{
 		debugMesh.set_vertices(vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
 		debugMesh.set_attribute(0, &Vertex::position);
 		debugMesh.set_attribute(1, &Vertex::color);
 		debugMesh.set_non_indexed(GL_LINES);
 
+		auto model = Identity4x4;
+		auto modelViewProjectionMatrix = mul(mul(proj, view), model);
+
 		debugShader.bind();
-		debugShader.uniform("u_mvp", Identity4x4);
+		debugShader.uniform("u_mvp", modelViewProjectionMatrix);
 		debugMesh.draw_elements();
 		debugShader.unbind();
 
