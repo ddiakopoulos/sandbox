@@ -2,6 +2,7 @@
 #include "vr_hmd.hpp"
 #include "bullet_engine.hpp"
 #include "bullet_object.hpp"
+#include "bullet_debug.hpp"
 
 using namespace avl;
 
@@ -95,6 +96,7 @@ struct VirtualRealityApp : public GLFWApp
 	BulletEngineVR physicsEngine;
 	std::unique_ptr<MotionControllerVR> leftController;
 	std::vector<BulletObjectVR * > scenePhysicsObjects;
+	std::unique_ptr<PhysicsDebugRenderer> physicsDebugRenderer;
 
 	VirtualRealityApp() : GLFWApp(1280, 800, "VR") 
 	{
@@ -102,12 +104,22 @@ struct VirtualRealityApp : public GLFWApp
 		{
 			hmd.reset(new OpenVR_HMD());
 
+			physicsDebugRenderer.reset(new PhysicsDebugRenderer()); // Sets up a few gl objects
+			physicsDebugRenderer->setDebugMode(
+				btIDebugDraw::DBG_DrawWireframe |
+				btIDebugDraw::DBG_DrawContactPoints |
+				btIDebugDraw::DBG_DrawConstraints |
+				btIDebugDraw::DBG_DrawConstraintLimits);
+
 			leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller(vr::TrackedControllerRole_LeftHand), hmd->get_controller_render_data()));
 
 			btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
 			BulletObjectVR * groundObject = new BulletObjectVR(new btDefaultMotionState(), ground, physicsEngine.get_world());
 			physicsEngine.add_object(groundObject);
 			scenePhysicsObjects.push_back(groundObject);
+
+			// Hook up debug renderer
+			physicsEngine.get_world()->setDebugDrawer(physicsDebugRenderer.get());
 
 			glfwSwapInterval(0);
 		}
@@ -120,7 +132,9 @@ struct VirtualRealityApp : public GLFWApp
 		normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 
 		Renderable cube = Renderable(make_cube());
-		cube.pose = Pose(make_rotation_quat_axis_angle({ 1, 0, 1 }, ANVIL_PI / 4), float3(0, 2, 0));
+		rescale_geometry(cube.geom, 0.25);
+		cube.rebuild_mesh();
+		cube.pose = Pose(float4(0, 0, 0, 1), float3(0, 1, 0));
 		debugModels.push_back(std::move(cube));
 
 		grid = RenderableGrid(0.5f, 128, 128);
@@ -246,6 +260,8 @@ struct VirtualRealityApp : public GLFWApp
 		{
 			hmd->render(0.05f, 24.0f, [this](Pose eye, float4x4 projMat) { render_func(eye, projMat); });
 			hmd->update();
+
+			physicsEngine.get_world()->debugDrawWorld();
 		}
 
 		//glBindFramebuffer(GL_FRAMEBUFFER, 0);

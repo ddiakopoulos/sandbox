@@ -1470,5 +1470,8 @@
     <ClInclude Include="bullet_object.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="bullet_debug.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

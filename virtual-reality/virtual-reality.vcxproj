@@ -342,6 +342,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bullet_debug.hpp" />
     <ClInclude Include="bullet_engine.hpp" />
     <ClInclude Include="bullet_utils.hpp" />
     <ClInclude Include="third_party\bullet3\src\btBulletCollisionCommon.h" />
