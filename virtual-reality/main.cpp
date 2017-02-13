@@ -239,7 +239,7 @@ struct VirtualRealityApp : public GLFWApp
 					{
 						btTransform trans;
 						obj->body->getMotionState()->getWorldTransform(trans);
-
+						model.SetPose(make_pose(trans));
 					}
 				}
 			}

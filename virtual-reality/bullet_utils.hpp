@@ -66,4 +66,9 @@ inline float4x4 from_bt(const btTransform & xform)
 	return mul(tM, rM);
 }
 
+inline Pose make_pose(const btTransform & xform)
+{
+	return { from_bt(xform.getRotation()), from_bt(xform.getOrigin()) };
+}
+
 #endif // end bullet_utils_hpp
