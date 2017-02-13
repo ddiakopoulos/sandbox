@@ -30,6 +30,37 @@ OpenVR_HMD::OpenVR_HMD()
 		throw std::runtime_error("Unable to get render model interface: " + std::string(vr::VR_GetVRInitErrorAsEnglishDescription(eError)));
 	}
 
+	{
+		vr::RenderModel_t * model = nullptr;
+		vr::RenderModel_TextureMap_t * texture = nullptr;
+
+		while (true)
+		{
+			// see VREvent_TrackedDeviceActivated below for the proper way of doing this
+			renderModels->LoadRenderModel_Async("vr_controller_vive_1_5", &model);
+			if (model) renderModels->LoadTexture_Async(model->diffuseTextureId, &texture);
+			if (model && texture) break;
+		}
+
+		controllerRenderData->mesh.set_vertex_data(sizeof(vr::RenderModel_Vertex_t)*model->unVertexCount, model->rVertexData, GL_STATIC_DRAW);
+		controllerRenderData->mesh.set_attribute(0, 3, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, vPosition));
+		controllerRenderData->mesh.set_attribute(1, 3, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, vNormal));
+		controllerRenderData->mesh.set_attribute(3, 2, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, rfTextureCoord));
+		controllerRenderData->mesh.set_index_data(GL_TRIANGLES, GL_UNSIGNED_SHORT, model->unTriangleCount * 3, model->rIndexData, GL_STATIC_DRAW);
+
+		glTextureImage2DEXT(controllerRenderData->tex, GL_TEXTURE_2D, 0, GL_RGBA, texture->unWidth, texture->unHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->rubTextureMapData);
+		glGenerateTextureMipmapEXT(controllerRenderData->tex, GL_TEXTURE_2D);
+		glTextureParameteriEXT(controllerRenderData->tex, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTextureParameteriEXT(controllerRenderData->tex, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		for (uint32_t i = 0; i<model->unVertexCount; ++i) controllerRenderData->verts.push_back(reinterpret_cast<const float3 &>(model->rVertexData[i].vPosition));
+
+		renderModels->FreeTexture(texture);
+		renderModels->FreeRenderModel(model);
+
+		controllerRenderData->loaded = true;
+	}
+
 	// Setup Framebuffers
 	hmd->GetRecommendedRenderTargetSize(&renderTargetSize.x, &renderTargetSize.y);
 
@@ -89,35 +120,8 @@ void OpenVR_HMD::update()
 			if (hmd->GetTrackedDeviceClass(event.trackedDeviceIndex) == vr::TrackedDeviceClass_Controller && controllerRenderData->loaded == false)
 			{ 
 				vr::EVRInitError eError = vr::VRInitError_None;
-
-				vr::RenderModel_t * model = nullptr;
-				vr::RenderModel_TextureMap_t * texture = nullptr;
-
-				while (true)
-				{
-					std::string sRenderModelName = get_tracked_device_string(hmd, event.trackedDeviceIndex, vr::Prop_RenderModelName_String);
-					renderModels->LoadRenderModel_Async(sRenderModelName.c_str(), &model);
-					if (model) renderModels->LoadTexture_Async(model->diffuseTextureId, &texture);
-					if (model && texture) break;
-				}
-
-				controllerRenderData->mesh.set_vertex_data(sizeof(vr::RenderModel_Vertex_t)*model->unVertexCount, model->rVertexData, GL_STATIC_DRAW);
-				controllerRenderData->mesh.set_attribute(0, 3, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, vPosition));
-				controllerRenderData->mesh.set_attribute(1, 3, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, vNormal));
-				controllerRenderData->mesh.set_attribute(3, 2, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, rfTextureCoord));
-				controllerRenderData->mesh.set_index_data(GL_TRIANGLES, GL_UNSIGNED_SHORT, model->unTriangleCount * 3, model->rIndexData, GL_STATIC_DRAW);
-
-				glTextureImage2DEXT(controllerRenderData->tex, GL_TEXTURE_2D, 0, GL_RGBA, texture->unWidth, texture->unHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->rubTextureMapData);
-				glGenerateTextureMipmapEXT(controllerRenderData->tex, GL_TEXTURE_2D);
-				glTextureParameteriEXT(controllerRenderData->tex, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTextureParameteriEXT(controllerRenderData->tex, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-				for (uint32_t i = 0; i<model->unVertexCount; ++i) controllerRenderData->verts.push_back(reinterpret_cast<const float3 &>(model->rVertexData[i].vPosition));
-
-				renderModels->FreeTexture(texture);
-				renderModels->FreeRenderModel(model);
-
-				controllerRenderData->loaded = true;
+				std::string sRenderModelName = get_tracked_device_string(hmd, event.trackedDeviceIndex, vr::Prop_RenderModelName_String);
+				std::cout << "Render Model Is: " << sRenderModelName << std::endl;
 			}
 
 			break;

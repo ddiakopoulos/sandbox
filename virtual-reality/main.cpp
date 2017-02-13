@@ -101,6 +101,14 @@ struct VirtualRealityApp : public GLFWApp
 		try
 		{
 			hmd.reset(new OpenVR_HMD());
+
+			leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller(vr::TrackedControllerRole_LeftHand), hmd->get_controller_render_data()));
+
+			btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
+			BulletObjectVR * groundObject = new BulletObjectVR(new btDefaultMotionState(), ground, physicsEngine.get_world());
+			physicsEngine.add_object(groundObject);
+			scenePhysicsObjects.push_back(groundObject);
+
 			glfwSwapInterval(0);
 		}
 		catch (const std::exception & e)
@@ -116,13 +124,6 @@ struct VirtualRealityApp : public GLFWApp
 		debugModels.push_back(std::move(cube));
 
 		grid = RenderableGrid(0.5f, 128, 128);
-
-		leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller(vr::TrackedControllerRole_LeftHand), hmd->get_controller_render_data()));
-
-		btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
-		BulletObjectVR * groundObject = new BulletObjectVR(new btDefaultMotionState(), ground, physicsEngine.get_world());
-		physicsEngine.add_object(groundObject);
-		scenePhysicsObjects.push_back(groundObject);
 
 		gl_check_error(__FILE__, __LINE__);
 	}
@@ -145,10 +146,11 @@ struct VirtualRealityApp : public GLFWApp
 	void on_update(const UpdateEvent & e) override
 	{
 		shaderMonitor.handle_recompile();
-		physicsEngine.update();
-
-		leftController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
-		//rightController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_RightHand).p);
+		if (hmd)
+		{
+			leftController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
+			physicsEngine.update();
+		}
 	}
 
 	void render_func(Pose eye, float4x4 projMat)
