@@ -21,11 +21,10 @@ namespace impl
     template<typename T, int N>
     class LowPassFilter
     {
-	protected:
+    protected:
         bool firstTime;
         vec<T, N> value;
         static const int dimension = N;
-
     public:
         LowPassFilter() : firstTime(true) { }
 
@@ -36,21 +35,18 @@ namespace impl
             if (firstTime)
             {
                 firstTime = false;
-				value = x;
+                value = x;
             }
 
-			vec<T, N> hatx;
+            vec<T, N> hatx;
             for (int i = 0; i < dimension; ++i)
                 hatx[i] = alpha * x[i] + (1 - alpha) * value[i];
 
-			value = hatx;
+            value = hatx;
             return value;
         }
 
-		vec<T, N> hatxprev()
-        {
-            return value;
-        }
+        vec<T, N> hatxprev() { return value; }
     };
 
     template<typename T, int N>
@@ -65,9 +61,10 @@ namespace impl
         {
             for (int i = 0; i < LowPassFilter<T, N>::dimension; ++i) dx[i] = (current[i] - prev[i]) / dt;
         }
+
         static float compute_derivative_mag(vec<T, N> const dx)
         {
-            float sqnorm = 0;
+            float sqnorm = 0.f;
             for (int i = 0; i < LowPassFilter<T, N>::dimension; ++i) sqnorm += dx[i] * dx[i];
             return sqrtf(sqnorm);
         }
@@ -81,12 +78,8 @@ namespace impl
 
         static void compute_derivative(vec<T, 4> dx, vec<T, 4> prev, const vec<T, 4> current, float dt)
         {
-            float rate = 1.0f / dt;
-
-            vec<T, 4> inverse_prev = qinv(prev);
-
-            // computes quaternion product destQuat = qLeft * qRight.
-            dx = qmul(current, inverse_prev);
+            const float rate = 1.0f / dt;
+            dx = qmul(current, qinv(prev));
 
             // nlerp instead of slerp
             dx.x *= rate;
@@ -99,25 +92,25 @@ namespace impl
 
         static float compute_derivative_mag(vec<T, N> const dx)
         {
-			return 2.0f * acosf(static_cast<float>(dx.w)); // Should be safe since the quaternion we're given has been normalized.
+            return 2.0f * acosf(static_cast<float>(dx.w)); // Should be safe since the quaternion we're given has been normalized.
         }
     };
 
     template<typename Filterable>
     class OneEuroFilter
     {
-	protected:
-		bool firstTime = true;
-		float minCutoff;
-		float derivCutoff;
-		float betaCoeff;
+    protected:
+        bool firstTime {true};
+        float minCutoff;
+        float derivCutoff;
+        float betaCoeff;
 
-		Filterable xFilter;
-		Filterable dxFilter;
+        Filterable xFilter;
+        Filterable dxFilter;
 
         static float alpha(float dt, float cutoff)
         {
-            float myTau = 1.f / 2.f * ((ANVIL_TAU * 0.5f) * cutoff);
+            const float myTau = 1.f / 2.f * ((ANVIL_TAU * 0.5f) * cutoff);
             return 1.f / (1.f + myTau / dt);
         }
 
