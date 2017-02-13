@@ -53,7 +53,7 @@ public:
 
 	~PhysicsDebugRenderer() {}
 
-	virtual void draw()
+	void draw()
 	{
 		debugMesh.set_vertices(vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
 		debugMesh.set_attribute(0, &Vertex::position);
@@ -68,27 +68,27 @@ public:
 		vertices.clear();
 	}
 
-	virtual void drawContactPoint(const btVector3 & pointOnB, const btVector3 & normalOnB, btScalar distance, int lifeTime, const btVector3 & color)
+	void drawContactPoint(const btVector3 & pointOnB, const btVector3 & normalOnB, btScalar distance, int lifeTime, const btVector3 & color)
 	{
 		// ... 
 	}
 
-	virtual void drawLine(const btVector3 & from, const btVector3 & to, const btVector3 & color)
+	void drawLine(const btVector3 & from, const btVector3 & to, const btVector3 & color)
 	{
 		vertices.push_back({ from_bt(from), from_bt(color) });
 		vertices.push_back({ from_bt(to), from_bt(color) });
 	}
 
-	virtual void reportErrorWarning(const char * warningString) { std::cout << "Bullet Warning: " << warningString << std::endl; }
+	void reportErrorWarning(const char * warningString) { std::cout << "Bullet Warning: " << warningString << std::endl; }
 
-	virtual void draw3dText(const btVector3 & location, const char* textString)
+	void draw3dText(const btVector3 & location, const char* textString)
 	{
 		// ...
 	}
 
-	void setDebugMode(int debugMode) override { debugMode = debugMode; }
+	void setDebugMode(int debugMode) override { this->debugMode = debugMode; }
 
-	int	 getDebugMode() const { return debugMode; }
+	int	getDebugMode() const { return debugMode; }
 
 	void toggleDebugFlag(const int flag)
 	{

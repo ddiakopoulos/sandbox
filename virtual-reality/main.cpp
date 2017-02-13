@@ -230,6 +230,9 @@ struct VirtualRealityApp : public GLFWApp
 		normalShader->unbind();
 
 		grid.render(projMat, eye.inverse().matrix());
+
+		physicsEngine.get_world()->debugDrawWorld();
+		physicsDebugRenderer->draw();
 	}
 
 	void on_draw() override
@@ -260,8 +263,6 @@ struct VirtualRealityApp : public GLFWApp
 		{
 			hmd->render(0.05f, 24.0f, [this](Pose eye, float4x4 projMat) { render_func(eye, projMat); });
 			hmd->update();
-
-			physicsEngine.get_world()->debugDrawWorld();
 		}
 
 		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
