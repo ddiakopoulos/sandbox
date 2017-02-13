@@ -20,7 +20,6 @@ class MotionControllerVR
 	{
 		physicsObject->body->clearForces();
 		physicsObject->body->setWorldTransform(to_bt(latestPose.matrix()));
-		std::cout << dt << std::endl;
 		std::cout << "Pose: " << latestPose.position << std::endl;
 	}
 
@@ -167,6 +166,11 @@ struct VirtualRealityApp : public GLFWApp
 		{
 			leftController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
 			physicsEngine.update();
+
+			btTransform trans;
+			leftController->physicsObject->body->getMotionState()->getWorldTransform(trans);
+			std::cout << "XForm: " << trans.getOrigin().getX() << ", " << trans.getOrigin().getY() << ", " << trans.getOrigin().getZ() << std::endl;
+
 		}
 	}
 
@@ -232,7 +236,7 @@ struct VirtualRealityApp : public GLFWApp
 		}
 		normalShader->unbind();
 
-		grid.render(projMat, eye.inverse().matrix());
+		//grid.render(projMat, eye.inverse().matrix());
 
 		physicsEngine.get_world()->debugDrawWorld();
 		physicsDebugRenderer->draw();
