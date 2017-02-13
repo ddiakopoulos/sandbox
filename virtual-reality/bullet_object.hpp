@@ -48,7 +48,7 @@ struct CollideCallback : public btCollisionWorld::ContactResultCallback
 
 		contacts.push_back(p);
 
-		return 0;
+		return 0; 
 	}
 };
 

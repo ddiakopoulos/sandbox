@@ -19,7 +19,7 @@ OpenVR_HMD::OpenVR_HMD()
 	std::cout << "VR Driver:  " << get_tracked_device_string(hmd, vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_TrackingSystemName_String) << std::endl;
 	std::cout << "VR Display: " << get_tracked_device_string(hmd, vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_SerialNumber_String) << std::endl;
 
-	controllerRenderData = std::make_shared<ControllerRenderData>();
+	controllerRenderData = std::make_shared<Controller::ControllerRenderData>();
 	controllers[0].renderData = controllerRenderData;
 	controllers[1].renderData = controllerRenderData;
 

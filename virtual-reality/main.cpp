@@ -13,10 +13,12 @@ using namespace avl;
 
 class MotionControllerVR
 {
+	Pose latestPose;
+
 	void update_physics(const float dt, BulletEngineVR * engine)
 	{
 		physicsObject->body->clearForces();
-		physicsObject->body->setWorldTransform();
+		physicsObject->body->setWorldTransform(to_bt(latestPose.matrix()));
 	}
 
 public:
@@ -47,6 +49,11 @@ public:
 		physicsObject->body->setActivationState(DISABLE_DEACTIVATION);
 
 		engine.add_object(physicsObject);
+	}
+
+	void update_controller_pose(const Pose & p)
+	{
+		latestPose = p;
 	}
 
 };
@@ -110,7 +117,7 @@ struct VirtualRealityApp : public GLFWApp
 
 		grid = RenderableGrid(0.5f, 128, 128);
 
-		leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller[0], hmd->get_controller_render_data()));
+		leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller(vr::TrackedControllerRole_LeftHand), hmd->get_controller_render_data()));
 
 		btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
 		BulletObjectVR * groundObject = new BulletObjectVR(new btDefaultMotionState(), ground, physicsEngine.get_world());
@@ -139,6 +146,9 @@ struct VirtualRealityApp : public GLFWApp
 	{
 		shaderMonitor.handle_recompile();
 		physicsEngine.update();
+
+		leftController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
+		//rightController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_RightHand).p);
 	}
 
 	void render_func(Pose eye, float4x4 projMat)
