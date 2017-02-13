@@ -12,6 +12,59 @@ using namespace avl;
 	#define ALIGNED(n) alignas(n)
 #endif
 
+struct StaticMeshComponent
+{
+	Pose pose;
+	float3 scale{ 1, 1, 1 };
+
+	GlMesh mesh;
+	Geometry geom;
+	Bounds3D bounds;
+
+	BulletObjectVR * physicsComponent { nullptr };
+
+	StaticMeshComponent() {}
+
+	void SetRenderMode(GLenum renderMode)
+	{
+		if (renderMode != GL_TRIANGLE_STRIP) mesh.set_non_indexed(renderMode);
+	}
+
+	const float4x4 GetModelMatrix() const { return mul(pose.matrix(), make_scaling_matrix(scale)); }
+
+	void SetStaticMesh(const Geometry & g)
+	{
+		bounds = geom.compute_bounds();
+		mesh = make_mesh_from_geometry(geom);
+	}
+
+	void SetPhysicsComponent(BulletObjectVR * obj)
+	{
+		physicsComponent = obj;
+	}
+
+	void Draw() const
+	{
+		mesh.draw_elements();
+	}
+
+	void Update(const float dt)
+	{
+
+	}
+
+	RaycastResult Raycast(const Ray & worldRay) const
+	{
+		auto localRay = pose.inverse() * worldRay;
+		localRay.origin /= scale;
+		localRay.direction /= scale;
+		float outT = 0.0f;
+		float3 outNormal = { 0, 0, 0 };
+		bool hit = intersect_ray_mesh(localRay, geom, &outT, &outNormal);
+		return{ hit, outT, outNormal };
+	}
+};
+
 class MotionControllerVR
 {
 	Pose latestPose;
@@ -95,8 +148,8 @@ struct VirtualRealityApp : public GLFWApp
 
 	BulletEngineVR physicsEngine;
 	std::unique_ptr<MotionControllerVR> leftController;
-	std::vector<BulletObjectVR * > scenePhysicsObjects;
 	std::unique_ptr<PhysicsDebugRenderer> physicsDebugRenderer;
+	std::vector<std::shared_ptr<BulletObjectVR>> scenePhysicsObjects;
 
 	VirtualRealityApp() : GLFWApp(1280, 800, "VR") 
 	{
