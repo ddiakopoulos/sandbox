@@ -11,6 +11,13 @@
 
 using namespace avl;
 
+
+#if defined(ANVIL_PLATFORM_WINDOWS)
+#define ALIGNED(n) __declspec(align(n))
+#else
+#define ALIGNED(n) alignas(n)
+#endif
+
 struct DirectionalLight
 {
 	float3 color;
@@ -74,8 +81,8 @@ class Renderer
 	std::vector<LightSet *> lightSets;
 
 	GlCamera * debugCamera;
-
 	float2 renderSize;
+	GlGpuTimer renderTimer;
 
 	void run_skybox_pass();
 	void run_forward_pass();
@@ -90,27 +97,24 @@ class Renderer
 
 	void run_post_pass();
 
-	GlGpuTimer renderTimer;
-
-	bool renderWireframe = { false };
-	bool renderShadows = { false };
-	bool renderPost = { false };
-	bool renderBloom = { false };
-	bool renderReflection = { false };
-	bool renderSSAO = { false };
-	bool renderSMAA = { false };
-	bool renderBlackout = { false };
+	bool renderWireframe { false };
+	bool renderShadows { false };
+	bool renderPost { false };
+	bool renderBloom { false };
+	bool renderReflection { false };
+	bool renderSSAO { false };
+	bool renderSMAA { false };
+	bool renderBlackout { false };
 
 public:
 
 	Renderer(float2 renderSize);
 	~Renderer();
 
-	void set_debug_camera(GlCamera * debugCam);
+	void set_debug_camera(GlCamera * cam);
 	GlCamera * get_debug_camera();
 
 	void render_frame();
-
 };
 
 #endif // end vr_renderer_hpp

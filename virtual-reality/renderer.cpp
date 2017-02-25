@@ -9,9 +9,9 @@ Renderer::~Renderer()
 {
 
 }
-void Renderer::set_debug_camera(GlCamera * debugCam)
+void Renderer::set_debug_camera(GlCamera * cam)
 {
-
+	debugCamera = cam;
 }
 
 GlCamera * Renderer::get_debug_camera()

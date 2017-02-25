@@ -82,7 +82,8 @@ struct RaycastResult
     float3 normal = {0, 0, 0};
     RaycastResult(bool h, float t, float3 n) : hit(h), distance(t), normal(n) {}
 };
-    
+   
+/*
 struct Object
 {
     Pose pose;
@@ -133,6 +134,8 @@ struct Renderable : public Object
         return {hit, outT, outNormal};
     }
 };
+
+*/
 
 } // end namespace avl
 
