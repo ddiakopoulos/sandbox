@@ -30,6 +30,11 @@ struct viewport
 	GLuint texture;
 };
 
+struct Scene
+{
+	std::vector<std::shared_ptr<Renderable>> objects;
+};
+
 class MotionControllerVR
 {
 	Pose latestPose;
@@ -86,6 +91,7 @@ struct VirtualRealityApp : public GLFWApp
 	ShaderMonitor shaderMonitor = { "../assets/" };
 	
 	std::vector<viewport> viewports;
+	Scene scene;
 
 	//std::shared_ptr<GlShader> texturedShader;
 	//std::shared_ptr<GlShader> normalShader;
@@ -290,8 +296,9 @@ struct VirtualRealityApp : public GLFWApp
 			glColor4f(1, 1, 1, 1);
 
 			const float4x4 projMatrix = debugCam.get_projection_matrix(float(width) / float(height));
-			const float4x4 viewMatrix = debugCam.get_view_matrix();
-			const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
+			//const float4x4 viewMatrix = debugCam.get_view_matrix();
+			//const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
+
 			EyeData centerEye = { debugCam.get_pose(), projMatrix };
 			renderer->set_eye_data(centerEye, centerEye);
 
