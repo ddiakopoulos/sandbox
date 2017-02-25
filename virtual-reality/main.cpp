@@ -11,6 +11,19 @@ float4x4 compute_model_matrix(const StaticMesh & m)
 	return mul(m.get_pose().matrix(), make_scaling_matrix(m.get_scale()));
 }
 
+float4x4 make_directional_light_view_proj(const uniforms::directional_light & light, const float3 & eyePoint)
+{
+	const Pose p = look_at_pose(eyePoint, eyePoint + -light.direction);
+	const float halfSize = light.size * 0.5f;
+	return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), make_view_matrix_from_pose(p));
+}
+
+float4x4 make_spot_light_view_proj(const uniforms::spot_light & light)
+{
+	const Pose p = look_at_pose(light.position, light.position + light.direction);
+	return mul(make_perspective_matrix(to_radians(light.cutoff * 2.0f), 1.0f, 0.1f, 1000.f), make_view_matrix_from_pose(p));
+}
+
 class MotionControllerVR
 {
 	Pose latestPose;
@@ -24,13 +37,13 @@ class MotionControllerVR
 public:
 
 	BulletEngineVR & engine;
-	const Controller & ctrl;
-	std::shared_ptr<Controller::ControllerRenderData> renderData;
+	const OpenVR_Controller & ctrl;
+	std::shared_ptr<OpenVR_Controller::ControllerRenderData> renderData;
 
 	btCollisionShape * controllerShape{ nullptr };
 	BulletObjectVR * physicsObject{ nullptr };
 
-	MotionControllerVR(BulletEngineVR & engine, const Controller & ctrl, std::shared_ptr<Controller::ControllerRenderData> renderData)
+	MotionControllerVR(BulletEngineVR & engine, const OpenVR_Controller & ctrl, std::shared_ptr<OpenVR_Controller::ControllerRenderData> renderData)
 		: engine(engine), ctrl(ctrl), renderData(renderData)
 	{
 
@@ -68,9 +81,6 @@ struct VirtualRealityApp : public GLFWApp
 	std::shared_ptr<GlShader> texturedShader;
 	std::shared_ptr<GlShader> normalShader;
 	std::vector<StaticMesh> sceneModels;
-
-	GlBuffer perScene;
-	GlBuffer perView;
 
 	RenderableGrid grid;
 
@@ -250,30 +260,13 @@ struct VirtualRealityApp : public GLFWApp
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 
-		glEnable(GL_CULL_FACE);
-		glEnable(GL_DEPTH_TEST);
-
-		// FPS Camera Only
-		const float4x4 projMatrix = firstPersonCamera.get_projection_matrix((float)width / (float)height);
-		const float4x4 viewMatrix = firstPersonCamera.get_view_matrix();
-		const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
-
-		uniforms::per_scene b = {};
-		b.time = 0.0f;
-		//b.ambientLight = float3(1.0f);
-		perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
-
-		glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
-		glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, perView);
-
 		if (hmd)
 		{
 			hmd->render(0.05f, 24.0f, [this](Pose eye, float4x4 projMat) { render_func(eye, projMat); });
 			hmd->update();
 		}
 
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glfwSwapBuffers(window);
 		gl_check_error(__FILE__, __LINE__);
 	}

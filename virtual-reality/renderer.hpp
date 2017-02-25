@@ -6,6 +6,7 @@
 #include "linalg_util.hpp"
 #include "geometric.hpp"
 #include "geometry.hpp"
+#include "renderable.hpp"
 #include "camera.hpp"
 #include "gpu_timer.hpp"
 
@@ -56,25 +57,18 @@ namespace uniforms
 		ALIGNED(16) float3	  attenuation; // constant, linear, quadratic
 		ALIGNED(16) float	  cutoff;
 	};
-
 }
 
-float4x4 make_directional_light_view_proj(const uniforms::directional_light & light, const float3 & eyePoint)
+enum class CameraView : int
 {
-	const Pose p = look_at_pose(eyePoint, eyePoint + -light.direction);
-	const float halfSize = light.size * 0.5f;
-	return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), make_view_matrix_from_pose(p));
-}
-
-float4x4 make_spot_light_view_proj(const uniforms::spot_light & light)
-{
-	const Pose p = look_at_pose(light.position, light.position + light.direction);
-	return mul(make_perspective_matrix(to_radians(light.cutoff * 2.0f), 1.0f, 0.1f, 1000.f), make_view_matrix_from_pose(p));
-}
+	LeftEye = 0, 
+	RightEye = 1,
+	CenterEye = 2
+};
 
 struct RenderSet
 {
-
+	std::vector<Renderable * > objects;
 };
 
 struct LightSet
@@ -92,6 +86,9 @@ class Renderer
 	GlCamera * debugCamera;
 	float2 renderSize;
 	GlGpuTimer renderTimer;
+
+	GlBuffer perScene;
+	GlBuffer perView;
 
 	void run_skybox_pass();
 	void run_forward_pass();

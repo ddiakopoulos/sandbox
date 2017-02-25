@@ -4,6 +4,7 @@
 #define vr_static_mesh_hpp
 
 #include "renderable.hpp"
+#include "material.hpp"
 #include "bullet_engine.hpp"
 #include "bullet_object.hpp"
 
@@ -15,6 +16,8 @@ class StaticMesh : public Renderable
 	GlMesh mesh;
 	Geometry geom;
 	Bounds3D bounds;
+
+	std::shared_ptr<Material> material;
 
 	BulletObjectVR * physicsComponent{ nullptr };
 

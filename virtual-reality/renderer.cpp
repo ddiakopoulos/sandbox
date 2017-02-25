@@ -81,13 +81,30 @@ void Renderer::run_post_pass()
 
 void Renderer::render_frame()
 {
-	run_skybox_pass();
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
 
-	run_forward_pass();
+	const float4x4 projMatrix = debugCamera->get_projection_matrix(float(renderSize.x) / float(renderSize.y));
+	const float4x4 viewMatrix = debugCamera->get_view_matrix();
+	const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
 
-	if (renderWireframe) run_forward_wireframe_pass();
+	uniforms::per_scene b = {};
+	b.time = 0.0f;
+	perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
 
-	if (renderShadows) run_shadow_pass();
+	glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
+	glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, perView);
 
-	run_post_pass();
+	for (auto eye : { CameraView::LeftEye, CameraView::RightEye })
+	{
+		run_skybox_pass();
+
+		run_forward_pass();
+
+		if (renderWireframe) run_forward_wireframe_pass();
+
+		if (renderShadows) run_shadow_pass();
+
+		run_post_pass();
+	}
 }
