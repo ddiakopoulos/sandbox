@@ -82,15 +82,24 @@ class Renderer
 	void run_forward_wireframe_pass();
 	void run_shadow_pass();
 
-	void run_post_pass();
-
 	void run_bloom_pass();
 	void run_reflection_pass();
 	void run_ssao_pass();
 	void run_smaa_pass();
 	void run_blackout_pass();
 
+	void run_post_pass();
+
 	GlGpuTimer renderTimer;
+
+	bool renderWireframe = { false };
+	bool renderShadows = { false };
+	bool renderPost = { false };
+	bool renderBloom = { false };
+	bool renderReflection = { false };
+	bool renderSSAO = { false };
+	bool renderSMAA = { false };
+	bool renderBlackout = { false };
 
 public:
 
