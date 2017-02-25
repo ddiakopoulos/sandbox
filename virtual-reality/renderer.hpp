@@ -11,57 +11,66 @@
 
 using namespace avl;
 
-
 #if defined(ANVIL_PLATFORM_WINDOWS)
-#define ALIGNED(n) __declspec(align(n))
+	#define ALIGNED(n) __declspec(align(n))
 #else
-#define ALIGNED(n) alignas(n)
+	#define ALIGNED(n) alignas(n)
 #endif
 
-struct DirectionalLight
+namespace uniforms
 {
-	float3 color;
-	float3 direction;
-	float size;
-
-	DirectionalLight(const float3 dir, const float3 color, float size) : direction(dir), color(color), size(size) {}
-
-	float4x4 get_view_proj_matrix(float3 eyePoint)
+	struct per_scene
 	{
-		auto p = look_at_pose(eyePoint, eyePoint + -direction);
-		const float halfSize = size * 0.5f;
-		return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), make_view_matrix_from_pose(p));
-	}
-};
+		static const int      binding = 0;
+		float				  time;
+		// todo resolution
+	};
 
-struct SpotLight
-{
-	float3 color;
-	float3 direction;
-
-	float3 position;
-	float cutoff;
-	float3 attenuation; // constant, linear, quadratic
-
-	SpotLight(const float3 pos, const float3 dir, const float3 color, float cut, float3 att) : position(pos), direction(dir), color(color), cutoff(cut), attenuation(att) {}
-
-	float4x4 get_view_proj_matrix()
+	struct per_view
 	{
-		auto p = look_at_pose(position, position + direction);
-		return mul(make_perspective_matrix(to_radians(cutoff * 2.0f), 1.0f, 0.1f, 1000.f), make_view_matrix_from_pose(p));
-	}
+		static const int      binding = 1;
+		ALIGNED(16) float4x4  view;
+		ALIGNED(16) float4x4  viewProj;
+		ALIGNED(16) float3    eyePos;
+	};
 
-	float get_cutoff() { return cosf(to_radians(cutoff)); }
-};
+	struct directional_light
+	{
+		ALIGNED(16) float3	  color;
+		ALIGNED(16) float3	  direction;
+		ALIGNED(16) float	  size;
+	};
 
-struct PointLight
+	struct point_light
+	{
+		ALIGNED(16) float3	  color;
+		ALIGNED(16) float3	  position;
+		ALIGNED(16) float3	  attenuation; // constant, linear, quadratic
+	};
+
+	struct spot_light
+	{
+		ALIGNED(16) float3	  color;
+		ALIGNED(16) float3	  direction;
+		ALIGNED(16) float3	  position;
+		ALIGNED(16) float3	  attenuation; // constant, linear, quadratic
+		ALIGNED(16) float	  cutoff;
+	};
+
+}
+
+float4x4 make_directional_light_view_proj(const uniforms::directional_light & light, const float3 & eyePoint)
 {
-	float3 color;
-	float3 position;
-	float3 attenuation; // constant, linear, quadratic
+	const Pose p = look_at_pose(eyePoint, eyePoint + -light.direction);
+	const float halfSize = light.size * 0.5f;
+	return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), make_view_matrix_from_pose(p));
+}
 
-	PointLight(const float3 pos, const float3 color, float3 att) : position(pos), color(color), attenuation(att) {}
-};
+float4x4 make_spot_light_view_proj(const uniforms::spot_light & light)
+{
+	const Pose p = look_at_pose(light.position, light.position + light.direction);
+	return mul(make_perspective_matrix(to_radians(light.cutoff * 2.0f), 1.0f, 0.1f, 1000.f), make_view_matrix_from_pose(p));
+}
 
 struct RenderSet
 {
@@ -70,9 +79,9 @@ struct RenderSet
 
 struct LightSet
 {
-	DirectionalLight * directionalLight;
-	std::vector<PointLight *> pointLights;
-	std::vector<SpotLight *> spotLights;
+	uniforms::directional_light * directionalLight;
+	std::vector<uniforms::point_light *> pointLights;
+	std::vector<uniforms::spot_light *> spotLights;
 };
 
 class Renderer

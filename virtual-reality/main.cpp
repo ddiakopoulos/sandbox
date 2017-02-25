@@ -121,24 +121,6 @@ public:
 
 };
 
-namespace uniforms
-{
-	struct per_scene
-	{
-		static const int      binding = 0;
-		float				  time;
-		ALIGNED(16) float3	  ambientLight;
-	};
-
-	struct per_view
-	{
-		static const int      binding = 1;
-		ALIGNED(16) float4x4  view;
-		ALIGNED(16) float4x4  viewProj;
-		ALIGNED(16) float3    eyePos;
-	};
-}
-
 struct VirtualRealityApp : public GLFWApp
 {
 	std::unique_ptr<OpenVR_HMD> hmd;
@@ -148,7 +130,7 @@ struct VirtualRealityApp : public GLFWApp
 
 	std::shared_ptr<GlShader> texturedShader;
 	std::shared_ptr<GlShader> normalShader;
-	std::vector<StaticMeshComponent> sceneModels;
+	std::vector<StaticMesh> sceneModels;
 
 	GlBuffer perScene;
 	GlBuffer perView;
