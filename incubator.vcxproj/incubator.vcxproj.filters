@@ -7,9 +7,6 @@
     <Filter Include="source">
       <UniqueIdentifier>{18186070-66de-4e86-bdec-e8ce244b6aff}</UniqueIdentifier>
     </Filter>
-    <Filter Include="examples">
-      <UniqueIdentifier>{77386985-2a71-4ff4-9bef-37935b1c545d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\math">
       <UniqueIdentifier>{c7417ef8-96e1-441c-86ea-dd75ccbeaae8}</UniqueIdentifier>
     </Filter>
@@ -159,48 +156,6 @@
     <ClInclude Include="..\third_party\imgui\imgui_internal.h">
       <Filter>third_party\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\examples\camera_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\decal_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\empty_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\euclidean_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\hdr_skydome.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\instance_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\manipulation_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\meshline_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\reaction_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\shadow_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\simplex_noise_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\ssao_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\terrain_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\textured_model_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
     <ClInclude Include="..\linalg_util.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
@@ -231,12 +186,6 @@
     <ClInclude Include="..\oriented_bounding_box.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\examples\render_experiments.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\glass_material_app.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
     <ClInclude Include="..\camera.hpp">
       <Filter>source\rendering</Filter>
     </ClInclude>
@@ -251,12 +200,6 @@
     </ClInclude>
     <ClInclude Include="..\parallel_transport_frames.hpp">
       <Filter>source\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\geometric_algo_dev.hpp">
-      <Filter>examples</Filter>
-    </ClInclude>
-    <ClInclude Include="..\examples\lens_dev.hpp">
-      <Filter>examples</Filter>
     </ClInclude>
     <ClInclude Include="..\image.hpp">
       <Filter>source\rendering</Filter>

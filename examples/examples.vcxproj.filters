@@ -5,10 +5,69 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="applications">
+      <UniqueIdentifier>{1b3e2d02-4904-43e0-a26d-978c0a675f76}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="camera_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="decal_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="empty_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="euclidean_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="geometric_algo_dev.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="glass_material_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="hdr_skydome.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="instance_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="lens_dev.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="manipulation_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="meshline_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="reaction_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="shadow_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="simplex_noise_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="render_experiments.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="ssao_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="terrain_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="textured_model_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
