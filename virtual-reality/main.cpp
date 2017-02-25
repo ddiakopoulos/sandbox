@@ -1,73 +1,10 @@
 #include "index.hpp"
 #include "vr_hmd.hpp"
-#include "bullet_engine.hpp"
-#include "bullet_object.hpp"
+#include "renderer.hpp"
+#include "static_mesh.hpp"
 #include "bullet_debug.hpp"
 
 using namespace avl;
-
-struct Renderable
-{
-	virtual void update(const float & dt) {}
-	virtual void draw() const {};
-	virtual Bounds3D get_bounds() const = 0;
-	virtual float3 get_scale() const = 0;
-	virtual Pose get_pose() const = 0;
-	virtual void set_pose(const Pose & p) = 0;
-	virtual RaycastResult raycast(const Ray & worldRay) const = 0;
-};
-
-class StaticMesh : public Renderable
-{
-	Pose pose;
-	float3 scale{ 1, 1, 1 };
-
-	GlMesh mesh;
-	Geometry geom;
-	Bounds3D bounds;
-
-	BulletObjectVR * physicsComponent { nullptr };
-
-public:
-
-	StaticMesh() {}
-
-	virtual Pose get_pose() const override { return pose; }
-	virtual void set_pose(const Pose & p) override  {  pose = p; }
-	virtual Bounds3D get_bounds() const override { return bounds; }
-	virtual float3 get_scale() const override { return scale; }
-	virtual void draw() const override { mesh.draw_elements(); }
-	virtual void update(const float & dt) override { }
-
-	virtual RaycastResult raycast(const Ray & worldRay) const override
-	{
-		auto localRay = pose.inverse() * worldRay;
-		localRay.origin /= scale;
-		localRay.direction /= scale;
-		float outT = 0.0f;
-		float3 outNormal = { 0, 0, 0 };
-		bool hit = intersect_ray_mesh(localRay, geom, &outT, &outNormal);
-		return{ hit, outT, outNormal };
-	}
-
-	void set_static_mesh(const Geometry & g, const float scale = 1.f)
-	{
-		geom = g;
-		if (scale != 1.f) rescale_geometry(geom, scale);
-		bounds = geom.compute_bounds();
-		mesh = make_mesh_from_geometry(geom);
-	}
-
-	void set_mesh_render_mode(GLenum renderMode)
-	{
-		if (renderMode != GL_TRIANGLE_STRIP) mesh.set_non_indexed(renderMode);
-	}
-
-	void set_physics_component(BulletObjectVR * obj)
-	{
-		physicsComponent = obj;
-	}
-};
 
 float4x4 compute_model_matrix(const StaticMesh & m)
 {
@@ -176,13 +113,13 @@ struct VirtualRealityApp : public GLFWApp
 		normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 
 		{
-			StaticMeshComponent cube;
-			cube.SetStaticMesh(make_cube(), 0.25f);
-			cube.SetPose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
+			StaticMesh cube;
+			cube.set_static_mesh(make_cube(), 0.25f);
+			cube.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
 
-			btCollisionShape * cubeCollisionShape = new btBoxShape(to_bt(cube.bounds.size() * 0.5f));
+			btCollisionShape * cubeCollisionShape = new btBoxShape(to_bt(cube.get_bounds().size() * 0.5f));
 			auto cubePhysicsObj = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), cubeCollisionShape, physicsEngine.get_world());
-			cube.SetPhysicsComponent(cubePhysicsObj.get());
+			cube.set_physics_component(cubePhysicsObj.get());
 
 			physicsEngine.add_object(cubePhysicsObj.get());
 			sceneModels.push_back(std::move(cube));
@@ -225,11 +162,11 @@ struct VirtualRealityApp : public GLFWApp
 			{
 				for (auto & model : sceneModels)
 				{
-					if (model.physicsComponent == obj.get())
+					if (model.get_physics_component() == obj.get())
 					{
 						btTransform trans;
 						obj->body->getMotionState()->getWorldTransform(trans);
-						model.SetPose(make_pose(trans));
+						model.set_pose(make_pose(trans));
 					}
 				}
 			}
@@ -292,10 +229,10 @@ struct VirtualRealityApp : public GLFWApp
 		normalShader->uniform("u_viewProj", mul(projMat, eye.inverse().matrix()));
 		for (const auto & m : sceneModels)
 		{
-			auto model = m.GetModelMatrix();
+			auto model = compute_model_matrix(m);
 			normalShader->uniform("u_modelMatrix", model);
 			normalShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-			m.Draw();
+			m.draw();
 		}
 		normalShader->unbind();
 
@@ -323,7 +260,7 @@ struct VirtualRealityApp : public GLFWApp
 
 		uniforms::per_scene b = {};
 		b.time = 0.0f;
-		b.ambientLight = float3(1.0f);
+		//b.ambientLight = float3(1.0f);
 		perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
 
 		glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
