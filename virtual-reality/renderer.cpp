@@ -15,7 +15,7 @@ Renderer::Renderer(float2 renderSize) : renderSize(renderSize)
 	if (glCheckNamedFramebufferStatusEXT(multisampleFramebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("Framebuffer incomplete!");
 
 	// Generate textures and framebuffers for the left and right eye images
-	for (auto eye : { (int) CameraView::LeftEye, (int) CameraView::RightEye })
+	for (auto eye : { (int) Eye::LeftEye, (int) Eye::RightEye })
 	{
 		glTextureImage2DEXT(eyeTextures[eye], GL_TEXTURE_2D, 0, GL_RGBA8, renderSize.x, renderSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		glTextureParameteriEXT(eyeTextures[eye], GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -31,15 +31,6 @@ Renderer::Renderer(float2 renderSize) : renderSize(renderSize)
 Renderer::~Renderer()
 {
 
-}
-void Renderer::set_debug_camera(GlCamera * cam)
-{
-	debugCamera = cam;
-}
-
-GlCamera * Renderer::get_debug_camera()
-{
-	return debugCamera;
 }
 
 void Renderer::set_eye_data(const EyeData left, const EyeData right)
@@ -113,10 +104,6 @@ void Renderer::render_frame()
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 
-	//const float4x4 projMatrix = debugCamera->get_projection_matrix(float(renderSize.x) / float(renderSize.y));
-	//const float4x4 viewMatrix = debugCamera->get_view_matrix();
-	//const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
-
 	uniforms::per_scene b = {};
 	b.time = 0.0f;
 	perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
@@ -124,7 +111,7 @@ void Renderer::render_frame()
 	glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
 	glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, perView);
 
-	for (auto eye : { (int)CameraView::LeftEye, (int)CameraView::RightEye })
+	for (auto eye : { (int)Eye::LeftEye, (int)Eye::RightEye })
 	{
 		uniforms::per_view v = {};
 		v.view = eyes[eye].pose.inverse().matrix();
@@ -138,7 +125,6 @@ void Renderer::render_frame()
 		glEnable(GL_MULTISAMPLE);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
 
-		// renderFunc(get_eye_pose(eye), get_proj_matrix(eye, near, far));
 		run_skybox_pass();
 
 		run_forward_pass();

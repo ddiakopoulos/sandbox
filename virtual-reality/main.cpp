@@ -24,6 +24,12 @@ float4x4 make_spot_light_view_proj(const uniforms::spot_light & light)
 	return mul(make_perspective_matrix(to_radians(light.cutoff * 2.0f), 1.0f, 0.1f, 1000.f), make_view_matrix_from_pose(p));
 }
 
+struct viewport
+{
+	int2 bmin, bmax;
+	GLuint texture;
+};
+
 class MotionControllerVR
 {
 	Pose latestPose;
@@ -73,14 +79,17 @@ public:
 
 struct VirtualRealityApp : public GLFWApp
 {
+	std::unique_ptr<Renderer> renderer;
 	std::unique_ptr<OpenVR_HMD> hmd;
 
-	GlCamera firstPersonCamera;
+	GlCamera debugCam;
 	ShaderMonitor shaderMonitor = { "../assets/" };
+	
+	std::vector<viewport> viewports;
 
-	std::shared_ptr<GlShader> texturedShader;
-	std::shared_ptr<GlShader> normalShader;
-	std::vector<StaticMesh> sceneModels;
+	//std::shared_ptr<GlShader> texturedShader;
+	//std::shared_ptr<GlShader> normalShader;
+	//std::vector<StaticMesh> sceneModels;
 
 	RenderableGrid grid;
 
@@ -118,6 +127,9 @@ struct VirtualRealityApp : public GLFWApp
 		{
 			std::cout << "OpenVR Exception: " << e.what() << std::endl;
 		}
+
+		const uint2 targetSize = hmd->get_recommended_render_target_size();
+		renderer.reset(new Renderer({ targetSize.x, targetSize.y }));
 
 		texturedShader = shaderMonitor.watch("../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
 		normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
@@ -185,11 +197,6 @@ struct VirtualRealityApp : public GLFWApp
 
 	void render_func(Pose eye, float4x4 projMat)
 	{
-		//uniforms::per_view v = {};
-		//v.view = eye.inverse().matrix();
-		//v.viewProj = mul(projMat, eye.inverse().matrix());
-		//v.eyePos = eye.position;
-		//perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
@@ -262,8 +269,53 @@ struct VirtualRealityApp : public GLFWApp
 
 		if (hmd)
 		{
-			hmd->render(0.05f, 24.0f, [this](Pose eye, float4x4 projMat) { render_func(eye, projMat); });
+			EyeData left = { hmd->get_eye_pose(vr::Hmd_Eye::Eye_Left), hmd->get_proj_matrix(vr::Hmd_Eye::Eye_Left, 0.01, 25.f) };
+			EyeData right = { hmd->get_eye_pose(vr::Hmd_Eye::Eye_Right), hmd->get_proj_matrix(vr::Hmd_Eye::Eye_Right, 0.01, 25.f) };
+			renderer->set_eye_data(left, right);
+
+			renderer->render_frame();
+
+			hmd->submit(renderer->get_eye_texture(Eye::LeftEye), renderer->get_eye_texture(Eye::LeftEye));
 			hmd->update();
+		}
+		else
+		{
+			Bounds2D rect { { 0,0 },{ width,height } };
+
+			viewports.clear();
+
+			glUseProgram(0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glColor4f(1, 1, 1, 1);
+
+			const float4x4 projMatrix = debugCam.get_projection_matrix(float(width) / float(height));
+			const float4x4 viewMatrix = debugCam.get_view_matrix();
+			const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
+			EyeData centerEye = { debugCam.get_pose(), projMatrix };
+			renderer->set_eye_data(centerEye, centerEye);
+
+			renderer->render_frame();
+
+			int mid = (rect.min.x + rect.max.x) / 2;
+			viewports.push_back(viewport{ rect.min, { mid - 2, rect.max.y }, renderer->get_eye_texture(Eye::LeftEye).id()});
+			viewports.push_back(viewport{ { mid + 2, rect.min.y }, rect.max, renderer->get_eye_texture(Eye::RightEye).id()});
+
+			for (auto & v : viewports)
+			{
+				glViewport(v.bmin.x, height - v.bmax.y, v.bmax.x - v.bmin.x, v.bmax.y - v.bmin.y);
+				glActiveTexture(GL_TEXTURE0);
+				glEnable(GL_TEXTURE_2D);
+				glBindTexture(GL_TEXTURE_2D, v.texture);
+				glBegin(GL_QUADS);
+				glTexCoord2f(0, 0); glVertex2f(-1, -1);
+				glTexCoord2f(1, 0); glVertex2f(+1, -1);
+				glTexCoord2f(1, 1); glVertex2f(+1, +1);
+				glTexCoord2f(0, 1); glVertex2f(-1, +1);
+				glEnd();
+				glDisable(GL_TEXTURE_2D);
+			}
+
 		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);

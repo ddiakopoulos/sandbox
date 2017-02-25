@@ -20,11 +20,11 @@ using namespace avl;
 
 namespace uniforms
 {
+	// Add resolution
 	struct per_scene
 	{
 		static const int      binding = 0;
 		float				  time;
-		// todo resolution
 	};
 
 	struct per_view
@@ -59,11 +59,10 @@ namespace uniforms
 	};
 }
 
-enum class CameraView : int
+enum class Eye : int
 {
 	LeftEye = 0, 
-	RightEye = 1,
-	CenterEye = 2
+	RightEye = 1
 };
 
 struct EyeData
@@ -89,7 +88,6 @@ class Renderer
 	std::vector<RenderSet *> renderSets;
 	std::vector<LightSet *> lightSets;
 
-	GlCamera * debugCamera;
 	float2 renderSize;
 	GlGpuTimer renderTimer;
 
@@ -130,12 +128,11 @@ public:
 	Renderer(float2 renderSize);
 	~Renderer();
 
-	void set_debug_camera(GlCamera * cam);
-	GlCamera * get_debug_camera();
-
 	void render_frame();
 
 	void set_eye_data(const EyeData left, const EyeData right);
+
+	GlTexture2D & get_eye_texture(Eye e) { return eyeTextures[(int)e]; }
 };
 
 #endif // end vr_renderer_hpp
