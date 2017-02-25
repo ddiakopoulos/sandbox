@@ -1,12 +1,12 @@
 #pragma once
 
-#ifndef timer_gpu_h
-#define timer_gpu_h
+#ifndef timer_gl_gpu_h
+#define timer_gl_gpu_h
 
 #include "GL_API.hpp"
 #include "util.hpp"
 
-class GPUTimer
+class GlGpuTimer
 {
     uint32_t id = 0;
     int submitted = 0; 
@@ -14,17 +14,17 @@ class GPUTimer
     std::string message;
 public:
 
-    GPUTimer()
+	GlGpuTimer()
     {
         glGenQueries(1, &id);
     }
     
-    GPUTimer(std::string msg) : message(msg)
+	GlGpuTimer(std::string msg) : message(msg)
     {
         glGenQueries(1, &id);
     }
     
-    ~GPUTimer()
+    ~GlGpuTimer()
     {
         glDeleteQueries(1, &id);
     }
