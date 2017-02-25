@@ -18,7 +18,7 @@ inline Pose make_pose(const vr::HmdMatrix34_t & m)
 	};
 }
 
-struct Controller
+struct OpenVR_Controller
 {
 	struct ControllerRenderData
 	{
@@ -69,21 +69,21 @@ class OpenVR_HMD
 	GlRenderbuffer multisampleRenderbuffers[2];
 	GlFramebuffer multisampleFramebuffer;
 
-	std::shared_ptr<Controller::ControllerRenderData> controllerRenderData;
-	Controller controllers[2];
+	std::shared_ptr<OpenVR_Controller::ControllerRenderData> controllerRenderData;
+	OpenVR_Controller controllers[2];
 
 public:
 
 	OpenVR_HMD();
 	~OpenVR_HMD();
 
-	const Controller & get_controller(const vr::ETrackedControllerRole controller) const
+	const OpenVR_Controller & get_controller(const vr::ETrackedControllerRole controller) const
 	{
 		if (controller == vr::TrackedControllerRole_LeftHand) return controllers[0];
 		if (controller == vr::TrackedControllerRole_RightHand) return controllers[1];
 	}
 
-	std::shared_ptr<Controller::ControllerRenderData> get_controller_render_data()
+	std::shared_ptr<OpenVR_Controller::ControllerRenderData> get_controller_render_data()
 	{
 		return controllerRenderData;
 	}
