@@ -11,6 +11,15 @@
     <Filter Include="third_party\bullet3">
       <UniqueIdentifier>{47534d51-bdef-47d3-9e8f-8a16e275eafe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\physics">
+      <UniqueIdentifier>{4b2a9f4b-d195-42c5-9343-6e095c06a49c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\openvr">
+      <UniqueIdentifier>{a71a55a4-0626-4ee6-94af-952388c58243}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\renderer">
+      <UniqueIdentifier>{2eb8c900-5029-4464-8140-05b8ab2ba429}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -524,7 +533,7 @@
       <Filter>third_party\bullet3</Filter>
     </ClCompile>
     <ClCompile Include="vr_hmd.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\openvr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1459,19 +1468,22 @@
       <Filter>third_party\bullet3</Filter>
     </ClInclude>
     <ClInclude Include="bullet_utils.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vr_hmd.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bullet_engine.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bullet_object.hpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\physics</Filter>
     </ClInclude>
     <ClInclude Include="bullet_debug.hpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\physics</Filter>
+    </ClInclude>
+    <ClInclude Include="bullet_engine.hpp">
+      <Filter>Source Files\physics</Filter>
+    </ClInclude>
+    <ClInclude Include="bullet_object.hpp">
+      <Filter>Source Files\physics</Filter>
+    </ClInclude>
+    <ClInclude Include="vr_hmd.hpp">
+      <Filter>Source Files\openvr</Filter>
+    </ClInclude>
+    <ClInclude Include="renderer.hpp">
+      <Filter>Source Files\renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
