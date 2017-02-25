@@ -64,11 +64,6 @@ class OpenVR_HMD
 	Pose hmdPose;
 	Pose worldPose;
 
-	GlFramebuffer eyeFramebuffers[2];
-	GlTexture2D eyeTextures[2];
-	GlRenderbuffer multisampleRenderbuffers[2];
-	GlFramebuffer multisampleFramebuffer;
-
 	std::shared_ptr<OpenVR_Controller::ControllerRenderData> controllerRenderData;
 	OpenVR_Controller controllers[2];
 
@@ -83,15 +78,13 @@ public:
 		if (controller == vr::TrackedControllerRole_RightHand) return controllers[1];
 	}
 
-	std::shared_ptr<OpenVR_Controller::ControllerRenderData> get_controller_render_data()
-	{
-		return controllerRenderData;
-	}
+	std::shared_ptr<OpenVR_Controller::ControllerRenderData> get_controller_render_data() { return controllerRenderData; }
 
-	Pose get_hmd_pose() { return worldPose * hmdPose; }
+	Pose get_hmd_pose() const { return worldPose * hmdPose; }
+
 	void set_hmd_pose(Pose p) { hmdPose = p; }
 
-	GLuint get_eye_texture(vr::Hmd_Eye eye) const { return eyeTextures[eye]; }
+	uint2 get_recommended_render_target_size() { return renderTargetSize; }
 
 	float4x4 get_proj_matrix(vr::Hmd_Eye eye, float near_clip, float far_clip) { return transpose(reinterpret_cast<const float4x4 &>(hmd->GetProjectionMatrix(eye, near_clip, far_clip, vr::API_OpenGL))); }
 
@@ -99,7 +92,7 @@ public:
 
 	void update();
 
-	void render(float near, float far, std::function<void(Pose eye, float4x4 projMat)> renderFunc);
+	void submit(const GlTexture2D & leftEye, const GlTexture2D & rightEye);
 };
 
 #endif

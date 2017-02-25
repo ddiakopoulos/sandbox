@@ -66,6 +66,12 @@ enum class CameraView : int
 	CenterEye = 2
 };
 
+struct EyeData
+{
+	Pose pose;
+	float4x4 projectionMatrix;
+};
+
 struct RenderSet
 {
 	std::vector<Renderable * > objects;
@@ -89,6 +95,13 @@ class Renderer
 
 	GlBuffer perScene;
 	GlBuffer perView;
+
+	EyeData eyes[2];
+
+	GlFramebuffer eyeFramebuffers[2];
+	GlTexture2D eyeTextures[2];
+	GlRenderbuffer multisampleRenderbuffers[2];
+	GlFramebuffer multisampleFramebuffer;
 
 	void run_skybox_pass();
 	void run_forward_pass();
@@ -121,6 +134,8 @@ public:
 	GlCamera * get_debug_camera();
 
 	void render_frame();
+
+	void set_eye_data(const EyeData left, const EyeData right);
 };
 
 #endif // end vr_renderer_hpp

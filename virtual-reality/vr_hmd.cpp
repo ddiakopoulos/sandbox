@@ -64,31 +64,6 @@ OpenVR_HMD::OpenVR_HMD()
 	// Setup Framebuffers
 	hmd->GetRecommendedRenderTargetSize(&renderTargetSize.x, &renderTargetSize.y);
 
-	// Gen intermediate tex
-	std::cout << controllerRenderData->tex << std::endl;
-
-	// Generate multisample render buffers for color and depth
-	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderTargetSize.x, renderTargetSize.y);
-	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, renderTargetSize.x, renderTargetSize.y);
-
-	// Generate a framebuffer for multisample rendering
-	glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffers[0]);
-	glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, multisampleRenderbuffers[1]);
-	if (glCheckNamedFramebufferStatusEXT(multisampleFramebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("Framebuffer incomplete!");
-
-	// Generate textures and framebuffers for the left and right eye images
-	for (int i : {0, 1})
-	{
-		glTextureImage2DEXT(eyeTextures[i], GL_TEXTURE_2D, 0, GL_RGBA8, renderTargetSize.x, renderTargetSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-		glTextureParameteriEXT(eyeTextures[i], GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTextureParameteriEXT(eyeTextures[i], GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTextureParameteriEXT(eyeTextures[i], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteriEXT(eyeTextures[i], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTextureParameteriEXT(eyeTextures[i], GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-
-		glNamedFramebufferTexture2DEXT(eyeFramebuffers[i], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eyeTextures[i], 0);
-		eyeFramebuffers[i].check_complete();
-	}
 
 	// Setup the compositor
 	if (!vr::VRCompositor())
@@ -180,32 +155,13 @@ void OpenVR_HMD::update()
 	}
 }
 
-void OpenVR_HMD::render(float near, float far, std::function<void(::Pose eyePose, float4x4 projMatrix)> renderFunc)
+void OpenVR_HMD::submit(const GlTexture2D & leftEye, const GlTexture2D & rightEye)
 {
-	for (auto eye : { vr::Eye_Left, vr::Eye_Right })
-	{
-		glViewport(0, 0, renderTargetSize.x, renderTargetSize.y);
+	const vr::Texture_t leftTex = { (void*)(intptr_t)(GLuint)leftEye, vr::API_OpenGL, vr::ColorSpace_Gamma };
+	vr::VRCompositor()->Submit(vr::Eye_Left, &leftTex);
 
-		// Render into single 4x multisampled fbo
-		glEnable(GL_MULTISAMPLE);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
-
-		renderFunc(get_eye_pose(eye), get_proj_matrix(eye, near, far));
-
-		glDisable(GL_MULTISAMPLE);
-
-		// Resolve multisample into per-eye textures
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFramebuffer);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, eyeTextures[eye]);
-		glBlitFramebuffer(0, 0, renderTargetSize.x, renderTargetSize.y, 0, 0, renderTargetSize.x, renderTargetSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	}
-
-	// Submit
-	for (auto eye : { vr::Eye_Left, vr::Eye_Right })
-	{
-		const vr::Texture_t texture = { (void*)(intptr_t)(GLuint) eyeTextures[eye], vr::API_OpenGL, vr::ColorSpace_Gamma };
-		vr::VRCompositor()->Submit(eye, &texture);
-	}
+	const vr::Texture_t rightTex = { (void*)(intptr_t)(GLuint)rightEye, vr::API_OpenGL, vr::ColorSpace_Gamma };
+	vr::VRCompositor()->Submit(vr::Eye_Right, &rightTex);
 
 	glFlush();
 }
