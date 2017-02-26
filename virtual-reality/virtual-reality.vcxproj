@@ -162,7 +162,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="renderer.cpp" />
+    <ClCompile Include="vr_renderer.cpp" />
     <ClCompile Include="third_party\bullet3\src\Bullet3Collision\BroadPhaseCollision\b3DynamicBvh.cpp" />
     <ClCompile Include="third_party\bullet3\src\Bullet3Collision\BroadPhaseCollision\b3DynamicBvhBroadphase.cpp" />
     <ClCompile Include="third_party\bullet3\src\Bullet3Collision\BroadPhaseCollision\b3OverlappingPairCache.cpp" />
@@ -347,7 +347,7 @@
     <ClInclude Include="bullet_engine.hpp" />
     <ClInclude Include="bullet_utils.hpp" />
     <ClInclude Include="material.hpp" />
-    <ClInclude Include="renderer.hpp" />
+    <ClInclude Include="vr_renderer.hpp" />
     <ClInclude Include="static_mesh.hpp" />
     <ClInclude Include="third_party\bullet3\src\btBulletCollisionCommon.h" />
     <ClInclude Include="third_party\bullet3\src\btBulletDynamicsCommon.h" />

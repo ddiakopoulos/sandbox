@@ -160,11 +160,11 @@ void OpenVR_HMD::update()
 
 void OpenVR_HMD::submit(const GLuint leftEye, const GLuint rightEye)
 {
-	const vr::Texture_t leftTex = { (void*)(intptr_t)(GLuint)leftEye, vr::API_OpenGL, vr::ColorSpace_Gamma };
+	const vr::Texture_t leftTex = { (void*)(intptr_t) leftEye, vr::API_OpenGL, vr::ColorSpace_Gamma };
 	vr::VRCompositor()->Submit(vr::Eye_Left, &leftTex);
 
-	const vr::Texture_t rightTex = { (void*)(intptr_t)(GLuint)rightEye, vr::API_OpenGL, vr::ColorSpace_Gamma };
+	const vr::Texture_t rightTex = { (void*)(intptr_t) rightEye, vr::API_OpenGL, vr::ColorSpace_Gamma };
 	vr::VRCompositor()->Submit(vr::Eye_Right, &rightTex);
 
-	glFlush();
+	//5glFlush();
 }

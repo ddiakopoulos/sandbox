@@ -1,25 +1,28 @@
 #include "vr_renderer.hpp"
 #include "material.hpp"
 
-VR_Renderer::VR_Renderer(float2 renderSize) : renderSize(renderSize)
+VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizePerEye)
 {
-	// Still can't figure out what's going on here
-	GlTexture2D IntermediateTexHack;
-	std::cout << "HackTexId: " << IntermediateTexHack << std::endl;
-
 	// Generate multisample render buffers for color and depth
-	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderSize.x, renderSize.y);
-	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, renderSize.x, renderSize.y);
+	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderSizePerEye.x, renderSizePerEye.y);
+	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, renderSizePerEye.x, renderSizePerEye.y);
 
 	// Generate a framebuffer for multisample rendering
 	glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffers[0]);
 	glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, multisampleRenderbuffers[1]);
 	if (glCheckNamedFramebufferStatusEXT(multisampleFramebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("Framebuffer incomplete!");
 
+	// Still can't figure out what's going on here
+	GlTexture2D IntermediateTexHack;
+	//std::cout << "HackTexId: " << IntermediateTexHack << std::endl;
+
+	std::cout << "Left Texture: "  <<  eyeTextures[0] << std::endl;
+	std::cout << "Right Texture: " <<  eyeTextures[1] << std::endl;
+
 	// Generate textures and framebuffers for the left and right eye images
 	for (int eye : { (int) Eye::LeftEye, (int) Eye::RightEye })
 	{
-		glTextureImage2DEXT(eyeTextures[eye], GL_TEXTURE_2D, 0, GL_RGBA8, renderSize.x, renderSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		glTextureImage2DEXT(eyeTextures[eye], GL_TEXTURE_2D, 0, GL_RGBA8, renderSizePerEye.x, renderSizePerEye.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		glTextureParameteriEXT(eyeTextures[eye], GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTextureParameteriEXT(eyeTextures[eye], GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTextureParameteriEXT(eyeTextures[eye], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -124,9 +127,6 @@ void VR_Renderer::run_post_pass()
 
 void VR_Renderer::render_frame()
 {
-	glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	// Renderer default state
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
@@ -139,6 +139,9 @@ void VR_Renderer::render_frame()
 	glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
 	glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, perView);
 
+	GLfloat defaultColor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
+	GLfloat defaultDepth = 1.f;
+
 	for (int eye : { (int)Eye::LeftEye, (int) Eye::RightEye })
 	{
 		// Per view uniform buffer
@@ -148,16 +151,18 @@ void VR_Renderer::render_frame()
 		v.eyePos = eyes[eye].pose.position;
 		perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
 
-		glViewport(0, 0, renderSize.x, renderSize.y);
+		glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
 
 		// Render into 4x multisampled fbo
 		glEnable(GL_MULTISAMPLE);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
 
-		glClear(GL_DEPTH_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClearNamedFramebufferfv(multisampleFramebuffer, GL_COLOR, 0, &defaultColor[0]);
+		glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
 		// Execute the forward passes
 		run_skybox_pass();
+
 		run_forward_pass(v);
 
 		if (renderWireframe) run_forward_wireframe_pass();
@@ -166,9 +171,7 @@ void VR_Renderer::render_frame()
 		glDisable(GL_MULTISAMPLE);
 
 		// Resolve multisample into per-eye textures
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFramebuffer);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, eyeTextures[eye]);
-		glBlitFramebuffer(0, 0, renderSize.x, renderSize.y, 0, 0, renderSize.x, renderSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		glBlitNamedFramebuffer(multisampleFramebuffer, eyeTextures[eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 		// Execute the post passes after having resolved the multisample framebuffers
 		run_post_pass();

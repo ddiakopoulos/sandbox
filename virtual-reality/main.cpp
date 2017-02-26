@@ -256,8 +256,8 @@ struct VirtualRealityApp : public GLFWApp
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 
-		physicsEngine.get_world()->debugDrawWorld();
-		renderer->add_debug_renderable(physicsDebugRenderer.get());
+		//physicsEngine.get_world()->debugDrawWorld();
+		//renderer->add_debug_renderable(physicsDebugRenderer.get());
 
 		if (hmd)
 		{
@@ -268,6 +268,7 @@ struct VirtualRealityApp : public GLFWApp
 			renderer->render_frame();
 			hmd->submit(renderer->get_eye_texture(Eye::LeftEye), renderer->get_eye_texture(Eye::RightEye));
 			hmd->update();
+			gl_check_error(__FILE__, __LINE__);
 		}
 		else
 		{

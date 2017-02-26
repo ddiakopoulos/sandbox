@@ -85,7 +85,7 @@ class VR_Renderer
 
 	LightSet * lightSet;
 
-	float2 renderSize;
+	float2 renderSizePerEye;
 	GlGpuTimer renderTimer;
 
 	GlBuffer perScene;
@@ -122,17 +122,22 @@ class VR_Renderer
 
 public:
 
-	VR_Renderer(float2 renderSize);
+	VR_Renderer(float2 renderSizePerEye);
 	~VR_Renderer();
-
+	
 	void render_frame();
 
 	void set_eye_data(const EyeData left, const EyeData right);
 
 	GLuint get_eye_texture(Eye e) { return eyeTextures[(int) e]; }
 
+	// A `Renderable` is a generic interface for this engine, appropriate for use with
+	// the material system and all customizations (frustum culling, etc)
 	void add_renderable(Renderable * object) { renderSet.push_back(object); }
 
+	// A `DebugRenderable` is for rapid prototyping, exposing a single `draw(viewProj)` interface.
+	// The list of these is drawn before `Renderable` objects, where they use their own shading
+	// programs and emit their own draw calls.
 	void add_debug_renderable(DebugRenderable * object) { debugSet.push_back(object); }
 
 };

@@ -535,7 +535,7 @@
     <ClCompile Include="vr_hmd.cpp">
       <Filter>Source Files\openvr</Filter>
     </ClCompile>
-    <ClCompile Include="renderer.cpp">
+    <ClCompile Include="vr_renderer.cpp">
       <Filter>Source Files\renderer</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1485,13 +1485,13 @@
     <ClInclude Include="vr_hmd.hpp">
       <Filter>Source Files\openvr</Filter>
     </ClInclude>
-    <ClInclude Include="renderer.hpp">
-      <Filter>Source Files\renderer</Filter>
-    </ClInclude>
     <ClInclude Include="static_mesh.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="material.hpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="vr_renderer.hpp">
       <Filter>Source Files\renderer</Filter>
     </ClInclude>
   </ItemGroup>
