@@ -81,8 +81,7 @@ struct Scene
 	std::vector<StaticMesh> models;
 	std::vector<StaticMesh> controllers;
 
-	std::shared_ptr<Material> debugMaterial;
-	std::shared_ptr<Material> texturedMaterial;
+	std::map<std::string, std::shared_ptr<Material>> namedMaterialList;
 
 	std::vector<Renderable *> gather()
 	{
@@ -148,7 +147,7 @@ struct VirtualRealityApp : public GLFWApp
 		}
 
 		auto normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
-		scene.debugMaterial = std::make_shared<DebugMaterial>(normalShader);
+		scene.namedMaterialList["material-debug"] = std::make_shared<DebugMaterial>(normalShader);
 
 		if (hmd)
 		{
@@ -157,7 +156,7 @@ struct VirtualRealityApp : public GLFWApp
 			auto texturedShader = shaderMonitor.watch("../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
 			auto texturedMaterial = std::make_shared<TexturedMaterial>(texturedShader);
 			texturedMaterial->set_diffuse_texture(controllerRenderModel->tex);
-			scene.texturedMaterial = texturedMaterial;
+			scene.namedMaterialList["material-textured"] = std::make_shared<DebugMaterial>(normalShader);
 
 			// Create renderable controllers
 			for (int i = 0; i < 2; ++i)
@@ -165,7 +164,7 @@ struct VirtualRealityApp : public GLFWApp
 				StaticMesh controller;
 				controller.set_static_mesh(controllerRenderModel->mesh, 1.0f);
 				controller.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
-				controller.set_material(scene.texturedMaterial.get());
+				controller.set_material(scene.namedMaterialList["material-textured"].get());
 				scene.controllers.push_back(std::move(controller));
 			}
 
@@ -175,7 +174,7 @@ struct VirtualRealityApp : public GLFWApp
 			StaticMesh cube;
 			cube.set_static_mesh(make_cube(), 0.25f);
 			cube.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
-			cube.set_material(scene.debugMaterial.get());
+			cube.set_material(scene.namedMaterialList["material-debug"].get());
 
 			btCollisionShape * cubeCollisionShape = new btBoxShape(to_bt(cube.get_bounds().size() * 0.5f));
 			auto cubePhysicsObj = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), cubeCollisionShape, physicsEngine.get_world());
