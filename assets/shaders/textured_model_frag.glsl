@@ -36,7 +36,6 @@ uniform RimLight u_rimLight;
 uniform MaterialProperties u_material;
 
 uniform vec3 u_ambientLight;
-uniform vec3 u_eye;
 
 uniform sampler2D u_diffuseTex;
 uniform sampler2D u_normalTex;
@@ -48,6 +47,19 @@ uniform int u_enableNormalTex = 0;
 uniform int u_enableSpecularTex = 0;
 uniform int u_enableGlossTex = 0;
 uniform int u_enableEmissiveTex = 0;
+
+layout(binding = 0, std140) uniform PerScene
+{
+    float u_time;
+};
+
+layout(binding = 1, std140) uniform PerView
+{
+    mat4 u_viewMatrix;
+    mat4 u_viewProjMatrix;
+    vec3 u_eyePos; // world space
+};
+
 
 //uniform int u_enableGlossTex = 0;
 //uniform int u_enableAmbientOcclusionTex = 0;
@@ -70,7 +82,7 @@ vec3 sample_normal_texture(sampler2D normalTexture, vec2 texCoord, vec3 tangent,
 
 void main()
 {
-    vec3 eyeDir = normalize(u_eye - v_position);
+    vec3 eyeDir = normalize(u_eyePos - v_position);
 
     vec4 ambientLight = vec4(u_material.ambientIntensity * u_ambientLight, 1.0);
     vec4 diffuseLight = vec4(0.0);

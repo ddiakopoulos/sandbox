@@ -162,7 +162,7 @@ struct VirtualRealityApp : public GLFWApp
 			auto texturedShader = shaderMonitor.watch("../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
 			auto texturedMaterial = std::make_shared<TexturedMaterial>(texturedShader);
 			texturedMaterial->set_diffuse_texture(controllerRenderModel->tex);
-			scene.namedMaterialList["material-textured"] = std::make_shared<DebugMaterial>(normalShader);
+			scene.namedMaterialList["material-textured"] = texturedMaterial;
 
 			// Create renderable controllers
 			for (int i = 0; i < 2; ++i)
@@ -264,57 +264,48 @@ struct VirtualRealityApp : public GLFWApp
 			EyeData left = { hmd->get_eye_pose(vr::Hmd_Eye::Eye_Left), hmd->get_proj_matrix(vr::Hmd_Eye::Eye_Left, 0.01, 25.f) };
 			EyeData right = { hmd->get_eye_pose(vr::Hmd_Eye::Eye_Right), hmd->get_proj_matrix(vr::Hmd_Eye::Eye_Right, 0.01, 25.f) };
 			renderer->set_eye_data(left, right);
-
 			renderer->render_frame();
 			hmd->submit(renderer->get_eye_texture(Eye::LeftEye), renderer->get_eye_texture(Eye::RightEye));
 			hmd->update();
-			gl_check_error(__FILE__, __LINE__);
 		}
 		else
 		{
-			Bounds2D rect{ { 0.f, 0.f },{ (float)width,(float)height } };
-
-			viewports.clear();
-
 			const float4x4 projMatrix = debugCam.get_projection_matrix(float(width) / float(height));
-			const float4x4 viewMatrix = debugCam.get_view_matrix();
-			const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
-
 			const EyeData centerEye = { debugCam.get_pose(), projMatrix };
 			renderer->set_eye_data(centerEye, centerEye);
-
 			renderer->render_frame();
+		}
 
-			const float mid = (rect.min().x + rect.max().x) / 2.f;
+		Bounds2D rect{ { 0.f, 0.f },{ (float)width,(float)height } };
 
-			viewport leftviewport = { rect.min(), { mid - 2.f, rect.max().y }, renderer->get_eye_texture(Eye::LeftEye) };
-			viewport rightViewport ={ { mid + 2.f, rect.min().y }, rect.max(), renderer->get_eye_texture(Eye::RightEye) };
-	
-			viewports.push_back(leftviewport);
-			viewports.push_back(rightViewport);
+		const float mid = (rect.min().x + rect.max().x) / 2.f;
+		viewport leftviewport = { rect.min(),{ mid - 2.f, rect.max().y }, renderer->get_eye_texture(Eye::LeftEye) };
+		viewport rightViewport = { { mid + 2.f, rect.min().y }, rect.max(), renderer->get_eye_texture(Eye::RightEye) };
 
-			if (viewports.size())
-			{
-				glUseProgram(0);
-				glBindFramebuffer(GL_FRAMEBUFFER, 0);
-				glClear(GL_COLOR_BUFFER_BIT);
-			}
+		viewports.clear();
+		viewports.push_back(leftviewport);
+		viewports.push_back(rightViewport);
 
-			for (auto & v : viewports)
-			{
-				glViewport(v.bmin.x, height - v.bmax.y, v.bmax.x - v.bmin.x, v.bmax.y - v.bmin.y);
-				glActiveTexture(GL_TEXTURE0);
-				glEnable(GL_TEXTURE_2D);
-				glBindTexture(GL_TEXTURE_2D, v.texture);
-				glBegin(GL_QUADS);
-				glTexCoord2f(0, 0); glVertex2f(-1, -1);
-				glTexCoord2f(1, 0); glVertex2f(+1, -1);
-				glTexCoord2f(1, 1); glVertex2f(+1, +1);
-				glTexCoord2f(0, 1); glVertex2f(-1, +1);
-				glEnd();
-				glDisable(GL_TEXTURE_2D);
-			}
+		if (viewports.size())
+		{
+			glUseProgram(0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
 
+		for (auto & v : viewports)
+		{
+			glViewport(v.bmin.x, height - v.bmax.y, v.bmax.x - v.bmin.x, v.bmax.y - v.bmin.y);
+			glActiveTexture(GL_TEXTURE0);
+			glEnable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, v.texture);
+			glBegin(GL_QUADS);
+			glTexCoord2f(0, 0); glVertex2f(-1, -1);
+			glTexCoord2f(1, 0); glVertex2f(+1, -1);
+			glTexCoord2f(1, 1); glVertex2f(+1, +1);
+			glTexCoord2f(0, 1); glVertex2f(-1, +1);
+			glEnd();
+			glDisable(GL_TEXTURE_2D);
 		}
 
 		physicsDebugRenderer->clear();
