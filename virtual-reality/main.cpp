@@ -1,6 +1,6 @@
 #include "index.hpp"
 #include "vr_hmd.hpp"
-#include "renderer.hpp"
+#include "vr_renderer.hpp"
 #include "static_mesh.hpp"
 #include "bullet_debug.hpp"
 
@@ -96,7 +96,7 @@ struct Scene
 
 struct VirtualRealityApp : public GLFWApp
 {
-	std::unique_ptr<Renderer> renderer;
+	std::unique_ptr<VR_Renderer> renderer;
 	std::unique_ptr<OpenVR_HMD> hmd;
 
 	GlCamera debugCam;
@@ -142,14 +142,14 @@ struct VirtualRealityApp : public GLFWApp
 			leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller(vr::TrackedControllerRole_LeftHand), hmd->get_controller_render_data()));
 
 			const uint2 targetSize = hmd->get_recommended_render_target_size();
-			renderer.reset(new Renderer({ (float)targetSize.x, (float)targetSize.y }));
+			renderer.reset(new VR_Renderer({ (float)targetSize.x, (float)targetSize.y }));
 
 			glfwSwapInterval(0);
 		}
 		catch (const std::exception & e)
 		{
 			std::cout << "OpenVR Exception: " << e.what() << std::endl;
-			renderer.reset(new Renderer({ (float)windowWidth * 0.5f, (float)windowHeight })); // per eye resolution
+			renderer.reset(new VR_Renderer({ (float)windowWidth * 0.5f, (float)windowHeight })); // per eye resolution
 		}
 
 		auto normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");

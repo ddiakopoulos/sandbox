@@ -78,7 +78,7 @@ struct LightSet
 	std::vector<uniforms::spot_light *> spotLights;
 };
 
-class Renderer
+class VR_Renderer
 {
 	std::vector<Renderable *> renderSet;
 	std::vector<DebugRenderable *> debugSet;
@@ -122,8 +122,8 @@ class Renderer
 
 public:
 
-	Renderer(float2 renderSize);
-	~Renderer();
+	VR_Renderer(float2 renderSize);
+	~VR_Renderer();
 
 	void render_frame();
 

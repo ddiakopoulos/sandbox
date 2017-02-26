@@ -1,7 +1,7 @@
-#include "renderer.hpp"
+#include "vr_renderer.hpp"
 #include "material.hpp"
 
-Renderer::Renderer(float2 renderSize) : renderSize(renderSize)
+VR_Renderer::VR_Renderer(float2 renderSize) : renderSize(renderSize)
 {
 	// Still can't figure out what's going on here
 	GlTexture2D IntermediateTexHack;
@@ -30,23 +30,23 @@ Renderer::Renderer(float2 renderSize) : renderSize(renderSize)
 	}
 }
 
-Renderer::~Renderer()
+VR_Renderer::~VR_Renderer()
 {
 
 }
 
-void Renderer::set_eye_data(const EyeData left, const EyeData right)
+void VR_Renderer::set_eye_data(const EyeData left, const EyeData right)
 {
 	eyes[0] = left;
 	eyes[1] = right;
 }
 
-void Renderer::run_skybox_pass()
+void VR_Renderer::run_skybox_pass()
 {
 
 }
 
-void Renderer::run_forward_pass(const uniforms::per_view & uniforms)
+void VR_Renderer::run_forward_pass(const uniforms::per_view & uniforms)
 {
 	for (auto obj : debugSet)
 	{
@@ -72,42 +72,42 @@ void Renderer::run_forward_pass(const uniforms::per_view & uniforms)
 	}
 }
 
-void Renderer::run_forward_wireframe_pass()
+void VR_Renderer::run_forward_wireframe_pass()
 {
 
 }
 
-void Renderer::run_shadow_pass()
+void VR_Renderer::run_shadow_pass()
 {
 
 }
 
-void Renderer::run_bloom_pass()
+void VR_Renderer::run_bloom_pass()
 {
 
 }
 
-void Renderer::run_reflection_pass()
+void VR_Renderer::run_reflection_pass()
 {
 
 }
 
-void Renderer::run_ssao_pass()
+void VR_Renderer::run_ssao_pass()
 {
 
 }
 
-void Renderer::run_smaa_pass()
+void VR_Renderer::run_smaa_pass()
 {
 
 }
 
-void Renderer::run_blackout_pass()
+void VR_Renderer::run_blackout_pass()
 {
 
 }
 
-void Renderer::run_post_pass()
+void VR_Renderer::run_post_pass()
 {
 	if (!renderPost) return;
 
@@ -122,7 +122,7 @@ void Renderer::run_post_pass()
 	if (renderBlackout) run_blackout_pass();
 }
 
-void Renderer::render_frame()
+void VR_Renderer::render_frame()
 {
 	glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
