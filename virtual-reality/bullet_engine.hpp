@@ -21,11 +21,11 @@ class BulletEngineVR
 {
 	using OnTickCallback = std::function<void(float, BulletEngineVR *)>;
 
-	std::unique_ptr<btBroadphaseInterface> broadphase = { nullptr };
-	std::unique_ptr<btDefaultCollisionConfiguration> collisionConfiguration = { nullptr };
-	std::unique_ptr<btCollisionDispatcher> dispatcher = { nullptr };
-	std::unique_ptr<btSequentialImpulseConstraintSolver> solver = { nullptr };
-	std::unique_ptr<btDiscreteDynamicsWorld> dynamicsWorld = { nullptr };
+	std::shared_ptr<btBroadphaseInterface> broadphase = { nullptr };
+	std::shared_ptr<btDefaultCollisionConfiguration> collisionConfiguration = { nullptr };
+	std::shared_ptr<btCollisionDispatcher> dispatcher = { nullptr };
+	std::shared_ptr<btSequentialImpulseConstraintSolver> solver = { nullptr };
+	std::shared_ptr<btDiscreteDynamicsWorld> dynamicsWorld = { nullptr };
 
 	std::vector<OnTickCallback> bulletTicks;
 
@@ -54,9 +54,9 @@ public:
 
 	~BulletEngineVR() { }
 
-	btDiscreteDynamicsWorld * get_world()
+	std::shared_ptr<btDiscreteDynamicsWorld> get_world()
 	{
-		return dynamicsWorld.get();
+		return dynamicsWorld;
 	}
 
 	void add_object(BulletObjectVR * object)

@@ -54,14 +54,14 @@ struct CollideCallback : public btCollisionWorld::ContactResultCallback
 
 class BulletObjectVR
 {
-	btDiscreteDynamicsWorld * world = { nullptr };
+	std::shared_ptr<btDiscreteDynamicsWorld> world = { nullptr };
 
 public:
 
 	btMotionState * state = { nullptr };
 	std::unique_ptr<btRigidBody> body = { nullptr };
 
-	BulletObjectVR(btMotionState * state, btCollisionShape * collisionShape, btDiscreteDynamicsWorld * world, float mass = 0.0f) : state(state), world(world)
+	BulletObjectVR(btMotionState * state, btCollisionShape * collisionShape, std::shared_ptr<btDiscreteDynamicsWorld> world, float mass = 0.0f) : state(state), world(world)
 	{
 		btVector3 inertia(0, 0, 0);
 		if (mass > 0.0f) collisionShape->calculateLocalInertia(mass, inertia);
@@ -69,14 +69,14 @@ public:
 		body.reset(new btRigidBody(constructionInfo));
 	}
 
-	BulletObjectVR(float4x4 xform, btCollisionShape * collisionShape, btDiscreteDynamicsWorld * world, float mass = 0.0f) : world(world)
+	BulletObjectVR(float4x4 xform, btCollisionShape * collisionShape, std::shared_ptr<btDiscreteDynamicsWorld> world, float mass = 0.0f) : world(world)
 	{
 		// Fixme for xform
 	}
 
 	btDiscreteDynamicsWorld * get_world() const
 	{
-		return world;
+		return world.get();
 	}
 
 	std::vector<BulletContactPointVR> CollideWorld() const

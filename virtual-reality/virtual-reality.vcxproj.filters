@@ -22,9 +22,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="third_party\bullet3\src\Bullet3Collision\BroadPhaseCollision\b3DynamicBvh.cpp">
       <Filter>third_party\bullet3</Filter>
     </ClCompile>
@@ -537,6 +534,9 @@
     </ClCompile>
     <ClCompile Include="vr_renderer.cpp">
       <Filter>Source Files\renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="vr_app.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1493,6 +1493,9 @@
     </ClInclude>
     <ClInclude Include="vr_renderer.hpp">
       <Filter>Source Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="vr_app.hpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
