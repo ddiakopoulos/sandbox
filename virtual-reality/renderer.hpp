@@ -129,7 +129,7 @@ public:
 
 	void set_eye_data(const EyeData left, const EyeData right);
 
-	GlTexture2D & get_eye_texture(Eye e) { return eyeTextures[(int)e]; }
+	GLuint get_eye_texture(Eye e) { return eyeTextures[(int) e]; }
 
 	void add_renderable(Renderable * object) { renderSet.push_back(object); }
 

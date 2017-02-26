@@ -158,7 +158,7 @@ void OpenVR_HMD::update()
 	}
 }
 
-void OpenVR_HMD::submit(const GlTexture2D & leftEye, const GlTexture2D & rightEye)
+void OpenVR_HMD::submit(const GLuint leftEye, const GLuint rightEye)
 {
 	const vr::Texture_t leftTex = { (void*)(intptr_t)(GLuint)leftEye, vr::API_OpenGL, vr::ColorSpace_Gamma };
 	vr::VRCompositor()->Submit(vr::Eye_Left, &leftTex);

@@ -3,8 +3,9 @@
 
 Renderer::Renderer(float2 renderSize) : renderSize(renderSize)
 {
-	// Gen intermediate tex
-	//std::cout << controllerRenderData->tex << std::endl;
+	// Still can't figure out what's going on here
+	GlTexture2D IntermediateTexHack;
+	std::cout << "HackTexId: " << IntermediateTexHack << std::endl;
 
 	// Generate multisample render buffers for color and depth
 	glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderSize.x, renderSize.y);
@@ -16,7 +17,7 @@ Renderer::Renderer(float2 renderSize) : renderSize(renderSize)
 	if (glCheckNamedFramebufferStatusEXT(multisampleFramebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("Framebuffer incomplete!");
 
 	// Generate textures and framebuffers for the left and right eye images
-	for (auto eye : { (int) Eye::LeftEye, (int) Eye::RightEye })
+	for (int eye : { (int) Eye::LeftEye, (int) Eye::RightEye })
 	{
 		glTextureImage2DEXT(eyeTextures[eye], GL_TEXTURE_2D, 0, GL_RGBA8, renderSize.x, renderSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		glTextureParameteriEXT(eyeTextures[eye], GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -47,15 +48,15 @@ void Renderer::run_skybox_pass()
 
 void Renderer::run_forward_pass(const uniforms::per_view & uniforms)
 {
-	for (auto & obj : debugSet)
+	for (auto obj : debugSet)
 	{
 		obj->draw(uniforms.viewProj);
 	}
 
-	for (auto & obj : renderSet)
+	for (auto obj : renderSet)
 	{
-		const auto modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
-		auto mat = obj->get_material();
+		const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
+		Material * mat = obj->get_material();
 
 		if (mat)
 		{
@@ -123,8 +124,8 @@ void Renderer::run_post_pass()
 
 void Renderer::render_frame()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Renderer default state
 	glEnable(GL_CULL_FACE);
@@ -138,7 +139,7 @@ void Renderer::render_frame()
 	glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
 	glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, perView);
 
-	for (auto eye : { (int)Eye::LeftEye, (int)Eye::RightEye })
+	for (int eye : { (int)Eye::LeftEye, (int) Eye::RightEye })
 	{
 		// Per view uniform buffer
 		uniforms::per_view v = {};
@@ -146,15 +147,19 @@ void Renderer::render_frame()
 		v.viewProj = mul(eyes[eye].projectionMatrix, eyes[eye].pose.inverse().matrix());
 		v.eyePos = eyes[eye].pose.position;
 		perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
+
 		glViewport(0, 0, renderSize.x, renderSize.y);
 
 		// Render into 4x multisampled fbo
 		glEnable(GL_MULTISAMPLE);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
 
+		glClear(GL_DEPTH_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		// Execute the forward passes
 		run_skybox_pass();
 		run_forward_pass(v);
+
 		if (renderWireframe) run_forward_wireframe_pass();
 		if (renderShadows) run_shadow_pass();
 
@@ -170,4 +175,5 @@ void Renderer::render_frame()
 	}
 
 	renderSet.clear();
+	debugSet.clear();
 }

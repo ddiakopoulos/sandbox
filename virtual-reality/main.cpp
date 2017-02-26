@@ -25,6 +25,8 @@ struct viewport
 	GLuint texture;
 };
 
+// MotionControllerVR wraps BulletObjectVR and is responsible for creating a controlled physically-activating 
+// object, and keeping the physics engine aware of the latest user-controlled pose.
 class MotionControllerVR
 {
 	Pose latestPose;
@@ -98,6 +100,8 @@ struct VirtualRealityApp : public GLFWApp
 	std::unique_ptr<OpenVR_HMD> hmd;
 
 	GlCamera debugCam;
+	FlyCameraController cameraController;
+
 	ShaderMonitor shaderMonitor = { "../assets/" };
 	
 	std::vector<viewport> viewports;
@@ -112,28 +116,30 @@ struct VirtualRealityApp : public GLFWApp
 		int windowWidth, windowHeight;
 		glfwGetWindowSize(window, &windowWidth, &windowHeight);
 
+		cameraController.set_camera(&debugCam);
+
 		scene.grid.set_origin(float3(0, -.01f, 0));
+
+		physicsDebugRenderer.reset(new PhysicsDebugRenderer()); // Sets up a few gl objects
+		physicsDebugRenderer->setDebugMode(
+			btIDebugDraw::DBG_DrawWireframe |
+			btIDebugDraw::DBG_DrawContactPoints |
+			btIDebugDraw::DBG_DrawConstraints |
+			btIDebugDraw::DBG_DrawConstraintLimits);
+
+		btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
+		auto groundObject = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), ground, physicsEngine.get_world());
+		physicsEngine.add_object(groundObject.get());
+		scene.physicsObjects.push_back(groundObject);
+
+		// Hook up debug renderer
+		physicsEngine.get_world()->setDebugDrawer(physicsDebugRenderer.get());
 
 		try
 		{
 			hmd.reset(new OpenVR_HMD());
 
-			physicsDebugRenderer.reset(new PhysicsDebugRenderer()); // Sets up a few gl objects
-			physicsDebugRenderer->setDebugMode(
-				btIDebugDraw::DBG_DrawWireframe |
-				btIDebugDraw::DBG_DrawContactPoints |
-				btIDebugDraw::DBG_DrawConstraints |
-				btIDebugDraw::DBG_DrawConstraintLimits);
-
 			leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller(vr::TrackedControllerRole_LeftHand), hmd->get_controller_render_data()));
-
-			btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
-			auto groundObject = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), ground, physicsEngine.get_world());
-			physicsEngine.add_object(groundObject.get());
-			scene.physicsObjects.push_back(groundObject);
-
-			// Hook up debug renderer
-			physicsEngine.get_world()->setDebugDrawer(physicsDebugRenderer.get());
 
 			const uint2 targetSize = hmd->get_recommended_render_target_size();
 			renderer.reset(new Renderer({ (float)targetSize.x, (float)targetSize.y }));
@@ -143,7 +149,7 @@ struct VirtualRealityApp : public GLFWApp
 		catch (const std::exception & e)
 		{
 			std::cout << "OpenVR Exception: " << e.what() << std::endl;
-			renderer.reset(new Renderer({ (float)windowWidth, (float)windowHeight }));
+			renderer.reset(new Renderer({ (float)windowWidth * 0.5f, (float)windowHeight })); // per eye resolution
 		}
 
 		auto normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
@@ -185,8 +191,6 @@ struct VirtualRealityApp : public GLFWApp
 			scene.models.push_back(std::move(cube));
 		}
 
-		//grid = RenderableGrid
-
 		gl_check_error(__FILE__, __LINE__);
 	}
 
@@ -202,11 +206,13 @@ struct VirtualRealityApp : public GLFWApp
 
 	void on_input(const InputEvent & event) override
 	{
-
+		cameraController.handle_input(event);
 	}
 
 	void on_update(const UpdateEvent & e) override
 	{
+		cameraController.update(e.timestep_ms);
+
 		shaderMonitor.handle_recompile();
 
 		if (hmd)
@@ -250,10 +256,8 @@ struct VirtualRealityApp : public GLFWApp
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 
-		//grid.render(projMat, eye.inverse().matrix(), );
-
 		physicsEngine.get_world()->debugDrawWorld();
-		//physicsDebugRenderer->draw(projMat, eye.inverse().matrix());
+		renderer->add_debug_renderable(physicsDebugRenderer.get());
 
 		if (hmd)
 		{
@@ -262,35 +266,38 @@ struct VirtualRealityApp : public GLFWApp
 			renderer->set_eye_data(left, right);
 
 			renderer->render_frame();
-			hmd->submit(renderer->get_eye_texture(Eye::LeftEye), renderer->get_eye_texture(Eye::LeftEye));
+			hmd->submit(renderer->get_eye_texture(Eye::LeftEye), renderer->get_eye_texture(Eye::RightEye));
 			hmd->update();
 		}
 		else
 		{
-			Bounds2D rect{ { 0.f ,0.f },{ (float)width,(float)height } };
+			Bounds2D rect{ { 0.f, 0.f },{ (float)width,(float)height } };
 
 			viewports.clear();
-
-			glUseProgram(0);
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			glClear(GL_COLOR_BUFFER_BIT);
-			glColor4f(1, 1, 1, 1);
 
 			const float4x4 projMatrix = debugCam.get_projection_matrix(float(width) / float(height));
 			const float4x4 viewMatrix = debugCam.get_view_matrix();
 			const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
 
-			EyeData centerEye = { debugCam.get_pose(), projMatrix };
+			const EyeData centerEye = { debugCam.get_pose(), projMatrix };
 			renderer->set_eye_data(centerEye, centerEye);
 
 			renderer->render_frame();
 
-			int mid = (rect.min().x + rect.max().x) / 2.f;
-			viewport leftviewport = { rect.min(), { mid - 2.f, rect.max().y }, renderer->get_eye_texture(Eye::LeftEye).id() };
-			viewport rightViewport ={ { mid + 2.f, rect.min().y }, rect.max(), renderer->get_eye_texture(Eye::RightEye).id() };
+			const float mid = (rect.min().x + rect.max().x) / 2.f;
+
+			viewport leftviewport = { rect.min(), { mid - 2.f, rect.max().y }, renderer->get_eye_texture(Eye::LeftEye) };
+			viewport rightViewport ={ { mid + 2.f, rect.min().y }, rect.max(), renderer->get_eye_texture(Eye::RightEye) };
 	
 			viewports.push_back(leftviewport);
 			viewports.push_back(rightViewport);
+
+			if (viewports.size())
+			{
+				glUseProgram(0);
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
 
 			for (auto & v : viewports)
 			{
@@ -309,7 +316,6 @@ struct VirtualRealityApp : public GLFWApp
 
 		}
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glfwSwapBuffers(window);
 		gl_check_error(__FILE__, __LINE__);
 	}

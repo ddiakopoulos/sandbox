@@ -91,7 +91,7 @@ public:
 
 	void update();
 
-	void submit(const GlTexture2D & leftEye, const GlTexture2D & rightEye);
+	void submit(const GLuint leftEye, const GLuint rightEye);
 };
 
 #endif
