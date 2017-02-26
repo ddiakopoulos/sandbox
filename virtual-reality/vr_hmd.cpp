@@ -42,18 +42,23 @@ OpenVR_HMD::OpenVR_HMD()
 			if (model && texture) break;
 		}
 
-		controllerRenderData->mesh.set_vertex_data(sizeof(vr::RenderModel_Vertex_t)*model->unVertexCount, model->rVertexData, GL_STATIC_DRAW);
-		controllerRenderData->mesh.set_attribute(0, 3, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, vPosition));
-		controllerRenderData->mesh.set_attribute(1, 3, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, vNormal));
-		controllerRenderData->mesh.set_attribute(3, 2, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (const GLvoid *)offsetof(vr::RenderModel_Vertex_t, rfTextureCoord));
-		controllerRenderData->mesh.set_index_data(GL_TRIANGLES, GL_UNSIGNED_SHORT, model->unTriangleCount * 3, model->rIndexData, GL_STATIC_DRAW);
+		for (int v = 0; v < model->unVertexCount; v++ )
+		{
+			const vr::RenderModel_Vertex_t vertex = model->rVertexData[v];
+			controllerRenderData->mesh.vertices.push_back({ vertex.vPosition.v[0], vertex.vPosition.v[1], vertex.vPosition.v[2] });
+			controllerRenderData->mesh.normals.push_back({ vertex.vNormal.v[0], vertex.vNormal.v[1], vertex.vNormal.v[2] });
+			controllerRenderData->mesh.texCoords.push_back({ vertex.rfTextureCoord[0], vertex.rfTextureCoord[1] });
+		}
+
+		for (int f = 0; f < model->unTriangleCount * 3; f +=3)
+		{
+			controllerRenderData->mesh.faces.push_back({ model->rIndexData[f], model->rIndexData[f + 1] , model->rIndexData[f + 2] });
+		}
 
 		glTextureImage2DEXT(controllerRenderData->tex, GL_TEXTURE_2D, 0, GL_RGBA, texture->unWidth, texture->unHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->rubTextureMapData);
 		glGenerateTextureMipmapEXT(controllerRenderData->tex, GL_TEXTURE_2D);
 		glTextureParameteriEXT(controllerRenderData->tex, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTextureParameteriEXT(controllerRenderData->tex, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-		for (uint32_t i = 0; i<model->unVertexCount; ++i) controllerRenderData->verts.push_back(reinterpret_cast<const float3 &>(model->rVertexData[i].vPosition));
 
 		renderModels->FreeTexture(texture);
 		renderModels->FreeRenderModel(model);
@@ -61,9 +66,7 @@ OpenVR_HMD::OpenVR_HMD()
 		controllerRenderData->loaded = true;
 	}
 
-	// Setup Framebuffers
 	hmd->GetRecommendedRenderTargetSize(&renderTargetSize.x, &renderTargetSize.y);
-
 
 	// Setup the compositor
 	if (!vr::VRCompositor())

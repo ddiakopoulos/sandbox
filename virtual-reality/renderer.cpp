@@ -46,7 +46,14 @@ void Renderer::run_skybox_pass()
 
 void Renderer::run_forward_pass()
 {
-
+	for (auto & obj : renderSet)
+	{
+		const auto modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
+		auto mat = obj->get_material();
+		mat->update_uniforms();
+		mat->use(modelMatrix);
+		obj->draw();
+	}
 }
 
 void Renderer::run_forward_wireframe_pass()
@@ -101,9 +108,14 @@ void Renderer::run_post_pass()
 
 void Renderer::render_frame()
 {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
+
+	// Renderer default state
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 
+	// Per frame uniform buffer
 	uniforms::per_scene b = {};
 	b.time = 0.0f;
 	perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
@@ -113,24 +125,22 @@ void Renderer::render_frame()
 
 	for (auto eye : { (int)Eye::LeftEye, (int)Eye::RightEye })
 	{
+		// Per view uniform buffer
 		uniforms::per_view v = {};
 		v.view = eyes[eye].pose.inverse().matrix();
 		v.viewProj = mul(eyes[eye].projectionMatrix, eyes[eye].pose.inverse().matrix());
 		v.eyePos = eyes[eye].pose.position;
 		perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
-
 		glViewport(0, 0, renderSize.x, renderSize.y);
 
-		// Render into single 4x multisampled fbo
+		// Render into 4x multisampled fbo
 		glEnable(GL_MULTISAMPLE);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
 
+		// Execute the forward passes
 		run_skybox_pass();
-
 		run_forward_pass();
-
 		if (renderWireframe) run_forward_wireframe_pass();
-
 		if (renderShadows) run_shadow_pass();
 
 		glDisable(GL_MULTISAMPLE);
@@ -140,6 +150,9 @@ void Renderer::render_frame()
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, eyeTextures[eye]);
 		glBlitFramebuffer(0, 0, renderSize.x, renderSize.y, 0, 0, renderSize.x, renderSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
+		// Execute the post passes after having resolved the multisample framebuffers
 		run_post_pass();
 	}
+
+	renderSet.clear();
 }

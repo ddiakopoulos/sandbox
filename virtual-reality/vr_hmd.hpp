@@ -22,8 +22,7 @@ struct OpenVR_Controller
 {
 	struct ControllerRenderData
 	{
-		GlMesh mesh;
-		std::vector<float3> verts;
+		Geometry mesh;
 		GlTexture2D tex;
 		bool loaded = false;
 	};

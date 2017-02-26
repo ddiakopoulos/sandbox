@@ -7,6 +7,7 @@
 #include "geometric.hpp"
 #include "camera.hpp"
 #include "scene.hpp"
+#include "material.hpp"
 
 using namespace avl;
 
@@ -19,6 +20,8 @@ struct Renderable
 	virtual Pose get_pose() const = 0;
 	virtual void set_pose(const Pose & p) = 0;
 	virtual RaycastResult raycast(const Ray & worldRay) const = 0;
+	virtual Material * get_material() const = 0;
+	virtual void set_material(Material * const m) = 0;
 };
 
 #endif // end vr_renderable_hpp

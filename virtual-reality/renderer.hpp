@@ -71,11 +71,6 @@ struct EyeData
 	float4x4 projectionMatrix;
 };
 
-struct RenderSet
-{
-	std::vector<Renderable * > objects;
-};
-
 struct LightSet
 {
 	uniforms::directional_light * directionalLight;
@@ -85,8 +80,8 @@ struct LightSet
 
 class Renderer
 {
-	std::vector<RenderSet *> renderSets;
-	std::vector<LightSet *> lightSets;
+	std::vector<Renderable *> renderSet;
+	LightSet * lightSet;
 
 	float2 renderSize;
 	GlGpuTimer renderTimer;
@@ -133,6 +128,9 @@ public:
 	void set_eye_data(const EyeData left, const EyeData right);
 
 	GlTexture2D & get_eye_texture(Eye e) { return eyeTextures[(int)e]; }
+
+	void add_renderable(Renderable * object) { renderSet.push_back(object); }
+
 };
 
 #endif // end vr_renderer_hpp

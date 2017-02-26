@@ -6,11 +6,6 @@
 
 using namespace avl;
 
-float4x4 compute_model_matrix(const StaticMesh & m)
-{
-	return mul(m.get_pose().matrix(), make_scaling_matrix(m.get_scale()));
-}
-
 float4x4 make_directional_light_view_proj(const uniforms::directional_light & light, const float3 & eyePoint)
 {
 	const Pose p = look_at_pose(eyePoint, eyePoint + -light.direction);
@@ -28,11 +23,6 @@ struct viewport
 {
 	int2 bmin, bmax;
 	GLuint texture;
-};
-
-struct Scene
-{
-	std::vector<std::shared_ptr<Renderable>> objects;
 };
 
 class MotionControllerVR
@@ -82,6 +72,25 @@ public:
 
 };
 
+struct Scene
+{
+	std::vector<std::shared_ptr<BulletObjectVR>> physicsObjects;
+
+	std::vector<StaticMesh> models;
+	std::vector<StaticMesh> controllers;
+
+	std::shared_ptr<Material> debugMaterial;
+	std::shared_ptr<Material> texturedMaterial;
+
+	std::vector<Renderable *> gather_scene()
+	{
+		std::vector<Renderable *> objectList;
+		for (auto & model : models) objectList.push_back(&model);
+		for (auto & ctrlr : controllers) objectList.push_back(&ctrlr);
+		return objectList;
+	}
+};
+
 struct VirtualRealityApp : public GLFWApp
 {
 	std::unique_ptr<Renderer> renderer;
@@ -93,16 +102,9 @@ struct VirtualRealityApp : public GLFWApp
 	std::vector<viewport> viewports;
 	Scene scene;
 
-	//std::shared_ptr<GlShader> texturedShader;
-	//std::shared_ptr<GlShader> normalShader;
-	//std::vector<StaticMesh> sceneModels;
-
-	RenderableGrid grid;
-
 	BulletEngineVR physicsEngine;
 	std::unique_ptr<MotionControllerVR> leftController;
 	std::unique_ptr<PhysicsDebugRenderer> physicsDebugRenderer;
-	std::vector<std::shared_ptr<BulletObjectVR>> scenePhysicsObjects;
 
 	VirtualRealityApp() : GLFWApp(1280, 800, "VR") 
 	{
@@ -122,7 +124,7 @@ struct VirtualRealityApp : public GLFWApp
 			btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
 			auto groundObject = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), ground, physicsEngine.get_world());
 			physicsEngine.add_object(groundObject.get());
-			scenePhysicsObjects.push_back(groundObject);
+			scene.physicsObjects.push_back(groundObject);
 
 			// Hook up debug renderer
 			physicsEngine.get_world()->setDebugDrawer(physicsDebugRenderer.get());
@@ -137,8 +139,28 @@ struct VirtualRealityApp : public GLFWApp
 		const uint2 targetSize = hmd->get_recommended_render_target_size();
 		renderer.reset(new Renderer({ targetSize.x, targetSize.y }));
 
-		texturedShader = shaderMonitor.watch("../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
-		normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
+		auto normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
+		scene.debugMaterial = std::make_shared<DebugMaterial>(normalShader);
+
+		if (hmd)
+		{
+			// This section sucks I think:
+			auto controllerRenderModel = hmd->get_controller_render_data();
+			auto texturedShader = shaderMonitor.watch("../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
+			auto texturedMaterial = std::make_shared<TexturedMaterial>(texturedShader);
+			texturedMaterial->set_diffuse_texture(controllerRenderModel->tex);
+			scene.texturedMaterial = texturedMaterial;
+
+			// Create renderable controllers
+			for (int i = 0; i < 2; ++i)
+			{
+				StaticMesh controller;
+				controller.set_static_mesh(controllerRenderModel->mesh, 1.0f);
+				controller.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
+				scene.controllers.push_back(std::move(controller));
+			}
+
+		}
 
 		{
 			StaticMesh cube;
@@ -150,11 +172,11 @@ struct VirtualRealityApp : public GLFWApp
 			cube.set_physics_component(cubePhysicsObj.get());
 
 			physicsEngine.add_object(cubePhysicsObj.get());
-			sceneModels.push_back(std::move(cube));
-			scenePhysicsObjects.push_back(cubePhysicsObj);
+			scene.physicsObjects.push_back(cubePhysicsObj);
+			scene.models.push_back(std::move(cube));
 		}
 
-		grid = RenderableGrid(0.25f, 24, 24);
+		//grid = RenderableGrid(0.25f, 24, 24);
 
 		gl_check_error(__FILE__, __LINE__);
 	}
@@ -177,6 +199,7 @@ struct VirtualRealityApp : public GLFWApp
 	void on_update(const UpdateEvent & e) override
 	{
 		shaderMonitor.handle_recompile();
+
 		if (hmd)
 		{
 			leftController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
@@ -186,9 +209,9 @@ struct VirtualRealityApp : public GLFWApp
 			leftController->physicsObject->body->getMotionState()->getWorldTransform(trans);
 
 			// Workaround until a nicer system is in place
-			for (auto & obj : scenePhysicsObjects)
+			for (auto & obj : scene.physicsObjects)
 			{
-				for (auto & model : sceneModels)
+				for (auto & model : scene.models)
 				{
 					if (model.get_physics_component() == obj.get())
 					{
@@ -198,71 +221,15 @@ struct VirtualRealityApp : public GLFWApp
 					}
 				}
 			}
-		}
-	}
 
-	void render_func(Pose eye, float4x4 projMat)
-	{
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
-
-		auto renderModel = hmd->get_controller_render_data();
-
-		texturedShader->bind();
-
-		texturedShader->uniform("u_viewProj", mul(projMat, eye.inverse().matrix()));
-		texturedShader->uniform("u_eye", eye.position);
-
-		texturedShader->uniform("u_ambientLight", float3(1.0f, 1.0f, 1.0f));
-
-		texturedShader->uniform("u_rimLight.enable", 1);
-
-		texturedShader->uniform("u_material.diffuseIntensity", float3(1.0f, 1.0f, 1.0f));
-		texturedShader->uniform("u_material.ambientIntensity", float3(1.0f, 1.0f, 1.0f));
-		texturedShader->uniform("u_material.specularIntensity", float3(1.0f, 1.0f, 1.0f));
-		texturedShader->uniform("u_material.specularPower", 128.0f);
-
-		texturedShader->uniform("u_pointLights[0].position", float3(6, 10, -6));
-		texturedShader->uniform("u_pointLights[0].diffuseColor", float3(1.f, 0.0f, 0.0f));
-		texturedShader->uniform("u_pointLights[0].specularColor", float3(1.f, 1.0f, 1.0f));
-
-		texturedShader->uniform("u_pointLights[1].position", float3(-6, 10, 6));
-		texturedShader->uniform("u_pointLights[1].diffuseColor", float3(0.0f, 0.0f, 1.f));
-		texturedShader->uniform("u_pointLights[1].specularColor", float3(1.0f, 1.0f, 1.f));
-
-		texturedShader->uniform("u_enableDiffuseTex", 1);
-		texturedShader->uniform("u_enableNormalTex", 0);
-		texturedShader->uniform("u_enableSpecularTex", 0);
-		texturedShader->uniform("u_enableEmissiveTex", 0);
-		texturedShader->uniform("u_enableGlossTex", 0);
-
-		texturedShader->texture("u_diffuseTex", 0, renderModel->tex, GL_TEXTURE_2D);
-
-		for (auto pose : { hmd->get_controller(vr::TrackedControllerRole_LeftHand).p, hmd->get_controller(vr::TrackedControllerRole_RightHand).p })
-		{
-			texturedShader->uniform("u_modelMatrix", pose.matrix());
-			texturedShader->uniform("u_modelMatrixIT", inverse(transpose(pose.matrix())));
-			renderModel->mesh.draw_elements();
+			// Update the the pose of the controller mesh we render
+			scene.controllers[0].set_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
+			scene.controllers[1].set_pose(hmd->get_controller(vr::TrackedControllerRole_RightHand).p);
 		}
 
-		texturedShader->unbind();
-
-		normalShader->bind();
-		normalShader->uniform("u_viewProj", mul(projMat, eye.inverse().matrix()));
-		for (const auto & m : sceneModels)
-		{
-			auto model = compute_model_matrix(m);
-			normalShader->uniform("u_modelMatrix", model);
-			normalShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-			m.draw();
-		}
-		normalShader->unbind();
-
-		grid.render(projMat, eye.inverse().matrix(), float3(0, -.01f, 0));
-
-		physicsEngine.get_world()->debugDrawWorld();
-		physicsDebugRenderer->draw(projMat, eye.inverse().matrix());
+		// Iterate scene and make objects visible to the renderer
+		auto renderableObjectsInScene = scene.gather_scene();
+		for (auto & obj : renderableObjectsInScene) { renderer->add_renderable(obj); }
 	}
 
 	void on_draw() override
@@ -273,6 +240,11 @@ struct VirtualRealityApp : public GLFWApp
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 
+		//grid.render(projMat, eye.inverse().matrix(), float3(0, -.01f, 0));
+		// Fixme: where do I put this now?
+		//physicsEngine.get_world()->debugDrawWorld();
+		//physicsDebugRenderer->draw(projMat, eye.inverse().matrix());
+
 		if (hmd)
 		{
 			EyeData left = { hmd->get_eye_pose(vr::Hmd_Eye::Eye_Left), hmd->get_proj_matrix(vr::Hmd_Eye::Eye_Left, 0.01, 25.f) };
@@ -280,7 +252,6 @@ struct VirtualRealityApp : public GLFWApp
 			renderer->set_eye_data(left, right);
 
 			renderer->render_frame();
-
 			hmd->submit(renderer->get_eye_texture(Eye::LeftEye), renderer->get_eye_texture(Eye::LeftEye));
 			hmd->update();
 		}
@@ -296,8 +267,8 @@ struct VirtualRealityApp : public GLFWApp
 			glColor4f(1, 1, 1, 1);
 
 			const float4x4 projMatrix = debugCam.get_projection_matrix(float(width) / float(height));
-			//const float4x4 viewMatrix = debugCam.get_view_matrix();
-			//const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
+			const float4x4 viewMatrix = debugCam.get_view_matrix();
+			const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
 
 			EyeData centerEye = { debugCam.get_pose(), projMatrix };
 			renderer->set_eye_data(centerEye, centerEye);

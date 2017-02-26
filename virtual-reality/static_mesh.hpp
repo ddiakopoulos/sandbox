@@ -17,7 +17,7 @@ class StaticMesh : public Renderable
 	Geometry geom;
 	Bounds3D bounds;
 
-	std::shared_ptr<Material> material;
+	Material * material;
 
 	BulletObjectVR * physicsComponent{ nullptr };
 
@@ -31,6 +31,8 @@ public:
 	virtual float3 get_scale() const override { return scale; }
 	virtual void draw() const override { mesh.draw_elements(); }
 	virtual void update(const float & dt) override { }
+	virtual Material * get_material() const override { return material; }
+	virtual void set_material(Material * const m) override { material = m; }
 
 	virtual RaycastResult raycast(const Ray & worldRay) const override
 	{
