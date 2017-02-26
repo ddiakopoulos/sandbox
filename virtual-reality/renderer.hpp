@@ -6,7 +6,7 @@
 #include "linalg_util.hpp"
 #include "geometric.hpp"
 #include "geometry.hpp"
-#include "renderable.hpp"
+#include "scene.hpp"
 #include "camera.hpp"
 #include "gpu_timer.hpp"
 
@@ -81,6 +81,8 @@ struct LightSet
 class Renderer
 {
 	std::vector<Renderable *> renderSet;
+	std::vector<DebugRenderable *> debugSet;
+
 	LightSet * lightSet;
 
 	float2 renderSize;
@@ -97,7 +99,7 @@ class Renderer
 	GlFramebuffer multisampleFramebuffer;
 
 	void run_skybox_pass();
-	void run_forward_pass();
+	void run_forward_pass(const uniforms::per_view & uniforms);
 	void run_forward_wireframe_pass();
 	void run_shadow_pass();
 
@@ -130,6 +132,8 @@ public:
 	GlTexture2D & get_eye_texture(Eye e) { return eyeTextures[(int)e]; }
 
 	void add_renderable(Renderable * object) { renderSet.push_back(object); }
+
+	void add_debug_renderable(DebugRenderable * object) { debugSet.push_back(object); }
 
 };
 

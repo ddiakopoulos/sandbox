@@ -1,4 +1,5 @@
 #include "renderer.hpp"
+#include "material.hpp"
 
 Renderer::Renderer(float2 renderSize) : renderSize(renderSize)
 {
@@ -44,8 +45,13 @@ void Renderer::run_skybox_pass()
 
 }
 
-void Renderer::run_forward_pass()
+void Renderer::run_forward_pass(const uniforms::per_view & uniforms)
 {
+	for (auto & obj : debugSet)
+	{
+		obj->draw(uniforms.viewProj);
+	}
+
 	for (auto & obj : renderSet)
 	{
 		const auto modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
@@ -59,6 +65,7 @@ void Renderer::run_forward_pass()
 		}
 		else
 		{
+			// Do I want to use exceptions in the renderer?
 			throw std::runtime_error("cannot draw object without bound material");
 		}
 	}
@@ -147,7 +154,7 @@ void Renderer::render_frame()
 
 		// Execute the forward passes
 		run_skybox_pass();
-		run_forward_pass();
+		run_forward_pass(v);
 		if (renderWireframe) run_forward_wireframe_pass();
 		if (renderShadows) run_shadow_pass();
 

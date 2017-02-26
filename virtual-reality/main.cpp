@@ -74,6 +74,8 @@ public:
 
 struct Scene
 {
+	RenderableGrid grid {0.25f, 24, 24 };
+
 	std::vector<std::shared_ptr<BulletObjectVR>> physicsObjects;
 
 	std::vector<StaticMesh> models;
@@ -110,6 +112,8 @@ struct VirtualRealityApp : public GLFWApp
 	{
 		int windowWidth, windowHeight;
 		glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
+		scene.grid.set_origin(float3(0, -.01f, 0));
 
 		try
 		{
@@ -182,7 +186,7 @@ struct VirtualRealityApp : public GLFWApp
 			scene.models.push_back(std::move(cube));
 		}
 
-		//grid = RenderableGrid(0.25f, 24, 24);
+		//grid = RenderableGrid
 
 		gl_check_error(__FILE__, __LINE__);
 	}
@@ -236,6 +240,7 @@ struct VirtualRealityApp : public GLFWApp
 		// Iterate scene and make objects visible to the renderer
 		auto renderableObjectsInScene = scene.gather();
 		for (auto & obj : renderableObjectsInScene) { renderer->add_renderable(obj); }
+		renderer->add_debug_renderable(&scene.grid);
 	}
 
 	void on_draw() override
@@ -246,9 +251,9 @@ struct VirtualRealityApp : public GLFWApp
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 
-		//grid.render(projMat, eye.inverse().matrix(), float3(0, -.01f, 0));
-		// Fixme: where do I put this now?
-		//physicsEngine.get_world()->debugDrawWorld();
+		//grid.render(projMat, eye.inverse().matrix(), );
+
+		physicsEngine.get_world()->debugDrawWorld();
 		//physicsDebugRenderer->draw(projMat, eye.inverse().matrix());
 
 		if (hmd)

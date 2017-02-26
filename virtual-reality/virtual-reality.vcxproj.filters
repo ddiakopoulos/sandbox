@@ -1488,9 +1488,6 @@
     <ClInclude Include="renderer.hpp">
       <Filter>Source Files\renderer</Filter>
     </ClInclude>
-    <ClInclude Include="renderable.hpp">
-      <Filter>Source Files\renderer</Filter>
-    </ClInclude>
     <ClInclude Include="static_mesh.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>

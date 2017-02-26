@@ -3,7 +3,6 @@
 #ifndef vr_static_mesh_hpp
 #define vr_static_mesh_hpp
 
-#include "renderable.hpp"
 #include "material.hpp"
 #include "bullet_engine.hpp"
 #include "bullet_object.hpp"

@@ -347,7 +347,6 @@
     <ClInclude Include="bullet_engine.hpp" />
     <ClInclude Include="bullet_utils.hpp" />
     <ClInclude Include="material.hpp" />
-    <ClInclude Include="renderable.hpp" />
     <ClInclude Include="renderer.hpp" />
     <ClInclude Include="static_mesh.hpp" />
     <ClInclude Include="third_party\bullet3\src\btBulletCollisionCommon.h" />

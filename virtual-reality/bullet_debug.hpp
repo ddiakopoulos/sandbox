@@ -9,6 +9,7 @@
 #include "btBulletCollisionCommon.h"
 #include <vector>
 #include "GL_API.hpp"
+#include "scene.hpp"
 
 using namespace avl;
 
@@ -33,7 +34,7 @@ constexpr const char debugFragmentShader[] = R"(#version 330
     }
 )";
 
-class PhysicsDebugRenderer : public btIDebugDraw
+class PhysicsDebugRenderer : public btIDebugDraw, public DebugRenderable
 {
 	struct Vertex { float3 position; float3 color; };
 	std::vector<Vertex> vertices;
@@ -50,7 +51,7 @@ public:
 		debugShader = GlShader(debugVertexShader, debugFragmentShader);
 	}
 
-	void draw(const float4x4 proj, const float4x4 view)
+	virtual void draw(const float4x4 & viewProj) override
 	{
 		debugMesh.set_vertices(vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
 		debugMesh.set_attribute(0, &Vertex::position);
@@ -58,7 +59,7 @@ public:
 		debugMesh.set_non_indexed(GL_LINES);
 
 		auto model = Identity4x4;
-		auto modelViewProjectionMatrix = mul(mul(proj, view), model);
+		auto modelViewProjectionMatrix = mul(viewProj, model);
 
 		debugShader.bind();
 		debugShader.uniform("u_mvp", modelViewProjectionMatrix);
