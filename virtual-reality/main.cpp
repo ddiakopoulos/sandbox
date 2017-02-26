@@ -256,8 +256,8 @@ struct VirtualRealityApp : public GLFWApp
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 
-		//physicsEngine.get_world()->debugDrawWorld();
-		//renderer->add_debug_renderable(physicsDebugRenderer.get());
+		physicsEngine.get_world()->debugDrawWorld();
+		renderer->add_debug_renderable(physicsDebugRenderer.get());
 
 		if (hmd)
 		{
@@ -316,6 +316,8 @@ struct VirtualRealityApp : public GLFWApp
 			}
 
 		}
+
+		physicsDebugRenderer->clear();
 
 		glfwSwapBuffers(window);
 		gl_check_error(__FILE__, __LINE__);

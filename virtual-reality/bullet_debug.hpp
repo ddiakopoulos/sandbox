@@ -65,6 +65,10 @@ public:
 		debugShader.uniform("u_mvp", modelViewProjectionMatrix);
 		debugMesh.draw_elements();
 		debugShader.unbind();
+	}
+
+	void clear()
+	{
 
 		vertices.clear();
 	}
