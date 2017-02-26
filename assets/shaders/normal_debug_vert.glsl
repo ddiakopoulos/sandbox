@@ -1,4 +1,4 @@
-#version 330
+#version 420
 
 layout(binding = 0, std140) uniform PerScene
 {
@@ -23,6 +23,6 @@ out vec3 v_normal;
 void main()
 {
     vec4 worldPos = u_modelMatrix * vec4(inPosition, 1);
-    gl_Position = PerView.u_viewProjMatrix * worldPos;
+    gl_Position = u_viewProjMatrix * worldPos;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal,0)).xyz);
 }

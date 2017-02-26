@@ -535,6 +535,9 @@
     <ClCompile Include="vr_hmd.cpp">
       <Filter>Source Files\openvr</Filter>
     </ClCompile>
+    <ClCompile Include="renderer.cpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="third_party\bullet3\src\btBulletCollisionCommon.h">
@@ -1483,6 +1486,15 @@
       <Filter>Source Files\openvr</Filter>
     </ClInclude>
     <ClInclude Include="renderer.hpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="renderable.hpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="static_mesh.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="material.hpp">
       <Filter>Source Files\renderer</Filter>
     </ClInclude>
   </ItemGroup>

@@ -50,9 +50,17 @@ void Renderer::run_forward_pass()
 	{
 		const auto modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
 		auto mat = obj->get_material();
-		mat->update_uniforms();
-		mat->use(modelMatrix);
-		obj->draw();
+
+		if (mat)
+		{
+			mat->update_uniforms();
+			mat->use(modelMatrix);
+			obj->draw();
+		}
+		else
+		{
+			throw std::runtime_error("cannot draw object without bound material");
+		}
 	}
 }
 

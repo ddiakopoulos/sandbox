@@ -6,7 +6,7 @@
 #define gizmo_h
 
 #include "scene.hpp"
-
+/*
 namespace avl
 {
     
@@ -69,5 +69,6 @@ namespace avl
     };
     
 }
+*/
 
 #endif

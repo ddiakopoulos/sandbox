@@ -21,7 +21,7 @@ float4x4 make_spot_light_view_proj(const uniforms::spot_light & light)
 
 struct viewport
 {
-	int2 bmin, bmax;
+	float2 bmin, bmax;
 	GLuint texture;
 };
 
@@ -82,7 +82,7 @@ struct Scene
 	std::shared_ptr<Material> debugMaterial;
 	std::shared_ptr<Material> texturedMaterial;
 
-	std::vector<Renderable *> gather_scene()
+	std::vector<Renderable *> gather()
 	{
 		std::vector<Renderable *> objectList;
 		for (auto & model : models) objectList.push_back(&model);
@@ -108,6 +108,9 @@ struct VirtualRealityApp : public GLFWApp
 
 	VirtualRealityApp() : GLFWApp(1280, 800, "VR") 
 	{
+		int windowWidth, windowHeight;
+		glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
 		try
 		{
 			hmd.reset(new OpenVR_HMD());
@@ -129,15 +132,16 @@ struct VirtualRealityApp : public GLFWApp
 			// Hook up debug renderer
 			physicsEngine.get_world()->setDebugDrawer(physicsDebugRenderer.get());
 
+			const uint2 targetSize = hmd->get_recommended_render_target_size();
+			renderer.reset(new Renderer({ (float)targetSize.x, (float)targetSize.y }));
+
 			glfwSwapInterval(0);
 		}
 		catch (const std::exception & e)
 		{
 			std::cout << "OpenVR Exception: " << e.what() << std::endl;
+			renderer.reset(new Renderer({ (float)windowWidth, (float)windowHeight }));
 		}
-
-		const uint2 targetSize = hmd->get_recommended_render_target_size();
-		renderer.reset(new Renderer({ targetSize.x, targetSize.y }));
 
 		auto normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 		scene.debugMaterial = std::make_shared<DebugMaterial>(normalShader);
@@ -157,6 +161,7 @@ struct VirtualRealityApp : public GLFWApp
 				StaticMesh controller;
 				controller.set_static_mesh(controllerRenderModel->mesh, 1.0f);
 				controller.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
+				controller.set_material(scene.texturedMaterial.get());
 				scene.controllers.push_back(std::move(controller));
 			}
 
@@ -166,6 +171,7 @@ struct VirtualRealityApp : public GLFWApp
 			StaticMesh cube;
 			cube.set_static_mesh(make_cube(), 0.25f);
 			cube.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
+			cube.set_material(scene.debugMaterial.get());
 
 			btCollisionShape * cubeCollisionShape = new btBoxShape(to_bt(cube.get_bounds().size() * 0.5f));
 			auto cubePhysicsObj = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), cubeCollisionShape, physicsEngine.get_world());
@@ -228,7 +234,7 @@ struct VirtualRealityApp : public GLFWApp
 		}
 
 		// Iterate scene and make objects visible to the renderer
-		auto renderableObjectsInScene = scene.gather_scene();
+		auto renderableObjectsInScene = scene.gather();
 		for (auto & obj : renderableObjectsInScene) { renderer->add_renderable(obj); }
 	}
 
@@ -257,7 +263,7 @@ struct VirtualRealityApp : public GLFWApp
 		}
 		else
 		{
-			Bounds2D rect { { 0,0 },{ width,height } };
+			Bounds2D rect{ { 0.f ,0.f },{ (float)width,(float)height } };
 
 			viewports.clear();
 
@@ -275,9 +281,12 @@ struct VirtualRealityApp : public GLFWApp
 
 			renderer->render_frame();
 
-			int mid = (rect.min.x + rect.max.x) / 2;
-			viewports.push_back(viewport{ rect.min, { mid - 2, rect.max.y }, renderer->get_eye_texture(Eye::LeftEye).id()});
-			viewports.push_back(viewport{ { mid + 2, rect.min.y }, rect.max, renderer->get_eye_texture(Eye::RightEye).id()});
+			int mid = (rect.min().x + rect.max().x) / 2.f;
+			viewport leftviewport = { rect.min(), { mid - 2.f, rect.max().y }, renderer->get_eye_texture(Eye::LeftEye).id() };
+			viewport rightViewport ={ { mid + 2.f, rect.min().y }, rect.max(), renderer->get_eye_texture(Eye::RightEye).id() };
+	
+			viewports.push_back(leftviewport);
+			viewports.push_back(rightViewport);
 
 			for (auto & v : viewports)
 			{

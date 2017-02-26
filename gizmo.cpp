@@ -7,6 +7,7 @@ using namespace avl;
 // Translation Gizmo //
 ///////////////////////
 
+/*
 struct TranslationGizmo : public IGizmo
 {
     Renderable & object;
@@ -269,3 +270,4 @@ void GizmoEditor::make_gizmo_meshes()
     sGeometry.compute_normals();
     scalingMesh = Renderable(sGeometry);
 }
+*/
