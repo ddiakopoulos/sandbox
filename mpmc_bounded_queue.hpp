@@ -1,5 +1,6 @@
 // This is free and unencumbered software released into the public domain.
 // Original Source: http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
+// Modified to support single-producer as well
 
 #ifndef mpmc_bounded_queue_hpp
 #define mpmc_bounded_queue_hpp
@@ -43,8 +44,26 @@ public:
     {
         delete[] buffer;
     }
+	
+	bool sp_produce(T const & input)
+	{
+		node_t * node = &buffer[headSequence & mask];
+		size_t nodeSequence = node->node.load(std::memory_order_acquire);
+		intptr_t diff = (intptr_t)nodeSequence - (intptr_t)headSequence;
 
-    bool produce(const T & input)
+		if (dif == 0) 
+		{
+			++head;
+			node->data = input;
+			node->next.store(headSequence, std::memory_order_release);
+			return true;
+		}
+
+		assert(dif < 0);
+		return false;
+	}
+
+    bool mp_produce(const T & input)
     {
         size_t headSequence = head.load(std::memory_order_relaxed);
 
