@@ -1,7 +1,7 @@
 // This is free and unencumbered software released into the public domain.
 
-#ifndef mpsc_queue_hpp
-#define mpsc_queue_hpp
+#ifndef mpsc_bounded_queue_hpp
+#define mpsc_bounded_queue_hpp
 
 #include <assert.h>
 #include <atomic>
@@ -10,6 +10,7 @@
 template<typename T>
 class MPSCQueue
 {
+
     struct buffer_node_t { T data; std::atomic<buffer_node_t*> next; };
     typedef typename std::aligned_storage<sizeof(buffer_node_t), std::alignment_of<buffer_node_t>::value>::type buffer_node_aligned_t;
     std::atomic<buffer_node_t*> head;
@@ -18,6 +19,7 @@ class MPSCQueue
     void operator= (const MPSCQueue &) {}
     
 public:
+
     MPSCQueue() : head(reinterpret_cast<buffer_node_t*>(new buffer_node_aligned_t)), tail(head.load(std::memory_order_relaxed))
     {
         buffer_node_t * front = head.load(std::memory_order_relaxed);
@@ -37,6 +39,7 @@ public:
         buffer_node_t* node = reinterpret_cast<buffer_node_t*>(new buffer_node_aligned_t);
         node->data = input;
         node->next.store(nullptr, std::memory_order_relaxed);
+
         buffer_node_t* prevhead = head.exchange(node, std::memory_order_acq_rel);
         prevhead->next.store(node, std::memory_order_release);
         return true;
@@ -44,12 +47,12 @@ public:
 
     bool consume(T & output)
     {
-        buffer_node_t * t = tail.load(std::memory_order_relaxed);
-        buffer_node_t * n = t->next.load(std::memory_order_acquire);
-        if (n == nullptr) return false;
-        output = n->data;
-        tail.store(n, std::memory_order_release);
-        delete t;
+        buffer_node_t * tail = tail.load(std::memory_order_relaxed);
+        buffer_node_t * next = tail->next.load(std::memory_order_acquire);
+        if (next == nullptr) return false;
+        output = next->data;
+        tail.store(next, std::memory_order_release);
+        delete tail;
         return true;
     }
 
@@ -59,6 +62,7 @@ public:
         buffer_node_t * next = tail->next.load(std::memory_order_acquire);
         return next != nullptr;
     }
+
 };
 
-#endif // mpsc_queue_hpp
+#endif // mpsc_bounded_queue_hpp
