@@ -6,7 +6,6 @@
 #include "linalg_util.hpp"
 #include "math_util.hpp"
 #include "circular_buffer.hpp"
-#include "concurrent_queue.hpp"
 #include "try_locker.hpp"
 #include "running_statistics.hpp"
 #include "time_keeper.hpp"

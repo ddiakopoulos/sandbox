@@ -25,7 +25,7 @@
     <ClInclude Include="..\bit_mask.hpp" />
     <ClInclude Include="..\camera.hpp" />
     <ClInclude Include="..\circular_buffer.hpp" />
-    <ClInclude Include="..\concurrent_queue.hpp" />
+    <ClInclude Include="..\mpmc_blocking_queue.hpp" />
     <ClInclude Include="..\dsp_filters.hpp" />
     <ClInclude Include="..\file_io.hpp" />
     <ClInclude Include="..\geometric.hpp" />
@@ -41,6 +41,8 @@
     <ClInclude Include="..\math_util.hpp" />
     <ClInclude Include="..\meshline.hpp" />
     <ClInclude Include="..\movement_tracker.hpp" />
+    <ClInclude Include="..\mpmc_bounded_queue.hpp" />
+    <ClInclude Include="..\mpsc_queue.hpp" />
     <ClInclude Include="..\nvg.hpp" />
     <ClInclude Include="..\one_euro.hpp" />
     <ClInclude Include="..\oriented_bounding_box.hpp" />
@@ -59,6 +61,8 @@
     <ClInclude Include="..\sketch.hpp" />
     <ClInclude Include="..\solvers.hpp" />
     <ClInclude Include="..\splines.hpp" />
+    <ClInclude Include="..\spsc_bounded_queue.hpp" />
+    <ClInclude Include="..\spsc_queue.hpp" />
     <ClInclude Include="..\string_utils.hpp" />
     <ClInclude Include="..\texture_view.hpp" />
     <ClInclude Include="..\third_party\fontstash.h" />

@@ -71,7 +71,13 @@ public:
 
 	BulletObjectVR(float4x4 xform, btCollisionShape * collisionShape, std::shared_ptr<btDiscreteDynamicsWorld> world, float mass = 0.0f) : world(world)
 	{
-		// Fixme for xform
+		btTransform worldXform = to_bt(xform);
+		state = new btDefaultMotionState(worldXform);
+
+		btVector3 inertia(0, 0, 0);
+		if (mass > 0.0f) collisionShape->calculateLocalInertia(mass, inertia);
+		btRigidBody::btRigidBodyConstructionInfo constructionInfo(mass, state, collisionShape, inertia);
+		body.reset(new btRigidBody(constructionInfo));
 	}
 
 	btDiscreteDynamicsWorld * get_world() const
@@ -138,6 +144,7 @@ public:
 
 	~BulletObjectVR()
 	{
+		if (state) delete state;
 		world->removeCollisionObject(body.get());
 	}
 

@@ -25,6 +25,9 @@
     <Filter Include="source\virtual-reality">
       <UniqueIdentifier>{a8333473-545f-4b2a-ae82-220df8cabecc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\queues">
+      <UniqueIdentifier>{dd4ad3de-9911-4ad3-868e-03f188576ff1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\third_party\fontstash.h">
@@ -84,16 +87,10 @@
     <ClInclude Include="..\nvg.hpp">
       <Filter>source\app</Filter>
     </ClInclude>
-    <ClInclude Include="..\gpu_timer.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\arcball.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
     <ClInclude Include="..\circular_buffer.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\concurrent_queue.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
     <ClInclude Include="..\file_io.hpp">
@@ -203,6 +200,24 @@
     </ClInclude>
     <ClInclude Include="..\image.hpp">
       <Filter>source\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gpu_timer.hpp">
+      <Filter>source\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mpmc_bounded_queue.hpp">
+      <Filter>source\queues</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spsc_bounded_queue.hpp">
+      <Filter>source\queues</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spsc_queue.hpp">
+      <Filter>source\queues</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mpsc_queue.hpp">
+      <Filter>source\queues</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mpmc_blocking_queue.hpp">
+      <Filter>source\queues</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

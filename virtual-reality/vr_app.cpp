@@ -1,5 +1,8 @@
 #include "vr_app.hpp"
 
+// Material manager -> setup, get
+// Serialization
+
 VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
 {
 	int windowWidth, windowHeight;

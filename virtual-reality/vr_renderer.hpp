@@ -143,3 +143,4 @@ public:
 };
 
 #endif // end vr_renderer_hpp
+  
