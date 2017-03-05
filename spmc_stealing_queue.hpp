@@ -1,5 +1,6 @@
 // Inspired by a queue in the Boost/Fiber library
 // License: BOOST, Copyright (C) Oliver Kowalke, 2013
+// See Also: https://gist.github.com/Amanieu/7347121
 
 #ifndef spmc_stealing_queue_hpp
 #define spmc_stealing_queue_hpp
@@ -129,7 +130,38 @@ public:
         bottom_.store(bottom + 1, std::memory_order_relaxed);
     }
 
-    bool consume(T & output)
+	bool pop(T & output)
+	{
+		std::size_t bottom{ bottom_.load(std::memory_order_acquire) - 1 };
+		array_t * a{ backing_array.load(std::memory_order_relaxed) };
+		bottom_.store(bottom, std::memory_order_relaxed);
+		std::atomic_thread_fence(std::memory_order_seq_cst);
+		std::size_t top{ top_.load(std::memory_order_relaxed) };
+
+		if (top <= bottom)
+		{
+			output = a->pop(top);
+
+			if (top == bottom)
+			{
+				if (!top_.compare_exchange_strong(top, top + 1, std::memory_order_seq_cst, std::memory_order_relaxed))
+				{
+					bottom_.store(bottom + 1, std::memory_order_relaxed);
+					return false;
+				}
+				else bottom_.store(bottom + 1, std::memory_order_relaxed);
+			}
+			return true;
+		}
+		else 
+		{
+			bottom_.store(bottom + 1, std::memory_order_relaxed);
+			return false;
+		}
+		return false;
+	}
+
+    bool steal(T & output)
     {
         std::size_t top{ top_.load(std::memory_order_acquire) };
         std::atomic_thread_fence(std::memory_order_seq_cst);
