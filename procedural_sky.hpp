@@ -91,7 +91,7 @@ inline HosekSkyRadianceData HosekSkyRadianceData::compute(float3 sun_direction, 
     float3 A, B, C, D, E, F, G, H, I;
     float3 Z;
     
-	const float sunTheta = std::acos(clamp(sun_direction.y, 0.f, 1.f));
+    const float sunTheta = std::acos(clamp(sun_direction.y, 0.f, 1.f));
 
     for (int i = 0; i < 3; ++i)
     {
@@ -124,7 +124,7 @@ inline PreethamSkyRadianceData PreethamSkyRadianceData::compute(float3 sun_direc
 {
     assert(turbidity >= 1);
     
-	const float sunTheta = std::acos(clamp(sun_direction.y, 0.f, 1.f));
+    const float sunTheta = std::acos(clamp(sun_direction.y, 0.f, 1.f));
 
     // A.2 Skylight Distribution Coefficients and Zenith Values: compute Perez distribution coefficients
     float3 A = float3(-0.0193, -0.0167,  0.1787) * turbidity + float3(-0.2592, -0.2608, -1.4630);
@@ -197,16 +197,16 @@ public:
         sunPosition = {to_radians(theta), to_radians(phi)};
     }
     
-	// Get in degrees
+    // Get in degrees
     float2 get_sun_position() const 
-	{ 
-		return float2(to_degrees(sunPosition.x), to_degrees(sunPosition.y)); 
-	}
+    { 
+        return float2(to_degrees(sunPosition.x), to_degrees(sunPosition.y)); 
+    }
 
     float3 get_sun_direction() const
     {
-		// phi, theta
-		return qrot(rotation_quat(float3(0,1,0), sunPosition.y), qrot(rotation_quat(float3(-1,0,0), sunPosition.x), float3(0,0,1)));
+        // phi, theta
+        return qrot(rotation_quat(float3(0,1,0), sunPosition.y), qrot(rotation_quat(float3(-1,0,0), sunPosition.x), float3(0,0,1)));
     }
 
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) = 0;

@@ -43,10 +43,10 @@ namespace avl
         }
     };
     
-	inline std::ostream & operator << (std::ostream & o, const Bounds2D & b)
-	{
-		return o << "{" << b.min() << " to " << b.max() << "}";
-	}
+    inline std::ostream & operator << (std::ostream & o, const Bounds2D & b)
+    {
+        return o << "{" << b.min() << " to " << b.max() << "}";
+    }
 
     struct Bounds3D
     {
@@ -84,27 +84,27 @@ namespace avl
             return false;
         }
 
-		uint32_t maximum_extent() const
-		{
-			auto d = _max - _min;
-			if (d.x > d.y && d.x > d.z) return 0;
-			else if (d.y > d.z) return 1;
-			else return 2;
-		}
+        uint32_t maximum_extent() const
+        {
+            auto d = _max - _min;
+            if (d.x > d.y && d.x > d.z) return 0;
+            else if (d.y > d.z) return 1;
+            else return 2;
+        }
 
-		Bounds3D add(const Bounds3D & other) const
-		{
-			Bounds3D result;
-			result._min = linalg::min(_min, other._min);
-			result._max = linalg::max(_max, other._max);
-			return result;
-		}
+        Bounds3D add(const Bounds3D & other) const
+        {
+            Bounds3D result;
+            result._min = linalg::min(_min, other._min);
+            result._max = linalg::max(_max, other._max);
+            return result;
+        }
     };
 
-	inline std::ostream & operator << (std::ostream & o, const Bounds3D & b)
-	{
-		return o << "{" << b.min() << " to " << b.max() << "}";
-	}
+    inline std::ostream & operator << (std::ostream & o, const Bounds3D & b)
+    {
+        return o << "{" << b.min() << " to " << b.max() << "}";
+    }
 
     /////////////////////////////////
     // Universal Coordinate System //
@@ -126,26 +126,26 @@ namespace avl
         float fixed_height() const { return y1.b - y0.b; }
     };
     
-	/////////////////////////////
-	// General 3D Math Helpers //
-	/////////////////////////////
+    /////////////////////////////
+    // General 3D Math Helpers //
+    /////////////////////////////
 
-	inline float3 reflect(const float3 & I, const float3 & N)
-	{
-		return I - (N * dot(N, I) * 2.f);
-	}
+    inline float3 reflect(const float3 & I, const float3 & N)
+    {
+        return I - (N * dot(N, I) * 2.f);
+    }
 
-	inline float3 refract(const float3 & I, const float3 & N, float eta)
-	{
-		float k = 1.0f - eta * eta * (1.0f - dot(N, I) * dot(N, I));
-		if (k < 0.0f) return float3();
-		else return eta * I - (eta * dot(N, I) + std::sqrt(k)) * N;
-	}
+    inline float3 refract(const float3 & I, const float3 & N, float eta)
+    {
+        float k = 1.0f - eta * eta * (1.0f - dot(N, I) * dot(N, I));
+        if (k < 0.0f) return float3();
+        else return eta * I - (eta * dot(N, I) + std::sqrt(k)) * N;
+    }
 
-	inline float3 faceforward(const float3 & N, const float3 & I, const float3 & Nref)
-	{
-		return dot(Nref, I) < 0.f ? N : -N;
-	}
+    inline float3 faceforward(const float3 & N, const float3 & I, const float3 & Nref)
+    {
+        return dot(Nref, I) < 0.f ? N : -N;
+    }
 
     ////////////////////////////////////
     // Construct rotation quaternions //
@@ -171,7 +171,7 @@ namespace avl
         return make_rotation_quat_axis_angle({0,0,1}, angle);
     }
     
-	// http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
+    // http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
     inline float4 make_rotation_quat_between_vectors(const float3 & from, const float3 & to)
     {
         auto a = safe_normalize(from), b = safe_normalize(to);
@@ -227,49 +227,49 @@ namespace avl
     // Quaternion Utilities //
     //////////////////////////
     
-	// Quaternion <=> Euler ref: http://www.swarthmore.edu/NatSci/mzucker1/e27/diebel2006attitude.pdf
-	// ZYX is probably the most common standard: yaw, pitch, roll (YPR)
-	// XYZ Somewhat less common: roll, pitch, yaw (RPY)
+    // Quaternion <=> Euler ref: http://www.swarthmore.edu/NatSci/mzucker1/e27/diebel2006attitude.pdf
+    // ZYX is probably the most common standard: yaw, pitch, roll (YPR)
+    // XYZ Somewhat less common: roll, pitch, yaw (RPY)
 
-	inline float4 make_quat_from_euler_zyx(float y, float p, float r)
-	{
-		float4 q;
-		q.x = cos(y/2.f)*cos(p/2.f)*cos(r/2.f) - sin(y/2.f)*sin(p/2.f)*sin(r/2.f);
-		q.y = cos(y/2.f)*cos(p/2.f)*sin(r/2.f) + sin(y/2.f)*cos(r/2.f)*sin(p/2.f);
-		q.z = cos(y/2.f)*cos(r/2.f)*sin(p/2.f) - sin(y/2.f)*cos(p/2.f)*sin(r/2.f);
-		q.w = cos(y/2.f)*sin(p/2.f)*sin(r/2.f) + cos(p/2.f)*cos(r/2.f)*sin(y/2.f);
-		return q;
-	}
+    inline float4 make_quat_from_euler_zyx(float y, float p, float r)
+    {
+        float4 q;
+        q.x = cos(y/2.f)*cos(p/2.f)*cos(r/2.f) - sin(y/2.f)*sin(p/2.f)*sin(r/2.f);
+        q.y = cos(y/2.f)*cos(p/2.f)*sin(r/2.f) + sin(y/2.f)*cos(r/2.f)*sin(p/2.f);
+        q.z = cos(y/2.f)*cos(r/2.f)*sin(p/2.f) - sin(y/2.f)*cos(p/2.f)*sin(r/2.f);
+        q.w = cos(y/2.f)*sin(p/2.f)*sin(r/2.f) + cos(p/2.f)*cos(r/2.f)*sin(y/2.f);
+        return q;
+    }
 
     inline float4 make_quat_from_euler_xyz(float r, float p, float y)
     {
-		float4 q;
-		q.x = cos(r/2.f)*cos(p/2.f)*cos(y/2.f) + sin(r/2.f)*sin(p/2.f)*sin(y/2.f);
-		q.y = sin(r/2.f)*cos(p/2.f)*cos(y/2.f) - cos(r/2.f)*sin(y/2.f)*sin(p/2.f);
-		q.z = cos(r/2.f)*cos(y/2.f)*sin(p/2.f) + sin(r/2.f)*cos(p/2.f)*sin(y/2.f);
-		q.w = cos(r/2.f)*cos(p/2.f)*sin(y/2.f) - sin(p/2.f)*cos(y/2.f)*sin(r/2.f);
-		return q;
+        float4 q;
+        q.x = cos(r/2.f)*cos(p/2.f)*cos(y/2.f) + sin(r/2.f)*sin(p/2.f)*sin(y/2.f);
+        q.y = sin(r/2.f)*cos(p/2.f)*cos(y/2.f) - cos(r/2.f)*sin(y/2.f)*sin(p/2.f);
+        q.z = cos(r/2.f)*cos(y/2.f)*sin(p/2.f) + sin(r/2.f)*cos(p/2.f)*sin(y/2.f);
+        q.w = cos(r/2.f)*cos(p/2.f)*sin(y/2.f) - sin(p/2.f)*cos(y/2.f)*sin(r/2.f);
+        return q;
     }
 
-	inline float3 make_euler_from_quat_zyx(float4 q)
-	{
-		float3 ypr;
-		const double q0 = q.w, q1 = q.x, q2 = q.y, q3 = q.z;
-		ypr.x = float(atan2(-2.f*q1*q2 + 2 * q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
-		ypr.y = float(asin(2.f*q1*q3 + 2.f*q0*q2));
-		ypr.z = float(atan2(-2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
-		return ypr;
-	}
+    inline float3 make_euler_from_quat_zyx(float4 q)
+    {
+        float3 ypr;
+        const double q0 = q.w, q1 = q.x, q2 = q.y, q3 = q.z;
+        ypr.x = float(atan2(-2.f*q1*q2 + 2 * q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
+        ypr.y = float(asin(2.f*q1*q3 + 2.f*q0*q2));
+        ypr.z = float(atan2(-2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
+        return ypr;
+    }
 
-	inline float3 make_euler_from_quat_xyz(float4 q)
-	{
-		float3 rpy;
-		const double q0 = q.w, q1 = q.x, q2 = q.y, q3 = q.z;
-		rpy.x = float(atan2(2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
-		rpy.y = float(-asin(2.f*q1*q3 - 2.f*q0*q2));
-		rpy.z = float(atan2(2.f*q1*q2 + 2.f*q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
-		return rpy;
-	}
+    inline float3 make_euler_from_quat_xyz(float4 q)
+    {
+        float3 rpy;
+        const double q0 = q.w, q1 = q.x, q2 = q.y, q3 = q.z;
+        rpy.x = float(atan2(2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
+        rpy.y = float(-asin(2.f*q1*q3 - 2.f*q0*q2));
+        rpy.z = float(atan2(2.f*q1*q2 + 2.f*q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
+        return rpy;
+    }
 
     // Decompose rotation of q around the axis vt where q = swing * twist
     // Twist is a rotation about vt, and swing is a rotation about a vector perpindicular to vt
@@ -283,40 +283,40 @@ namespace avl
         swing = q * qconj(twist);
     }
 
-	inline float4 interpolate_short(const float4 & a, const float4 & b, const float & t)
-	{
-		if (t <= 0) return a;
-		if (t >= 0) return b;
+    inline float4 interpolate_short(const float4 & a, const float4 & b, const float & t)
+    {
+        if (t <= 0) return a;
+        if (t >= 0) return b;
 
-		float fCos = dot(a, b);
-		auto b2(b);
+        float fCos = dot(a, b);
+        auto b2(b);
 
-		if (fCos < 0)
-		{
-			b2 = -b;
-			fCos = -fCos;
-		}
+        if (fCos < 0)
+        {
+            b2 = -b;
+            fCos = -fCos;
+        }
 
-		float k0, k1;
-		if (fCos >(1.f - std::numeric_limits<float>::epsilon()))
-		{
-			k0 = 1.f - t;
-			k1 = t;
-		}
-		else
-		{
-			const float s = std::sqrt(1.f - fCos * fCos), ang = std::atan2(s, fCos), oneOverS = 1.f / s;
-			k0 = (std::sin(1.f - t) * ang) * oneOverS;
-			k1 = std::sin(t * ang) * oneOverS;
-		}
+        float k0, k1;
+        if (fCos >(1.f - std::numeric_limits<float>::epsilon()))
+        {
+            k0 = 1.f - t;
+            k1 = t;
+        }
+        else
+        {
+            const float s = std::sqrt(1.f - fCos * fCos), ang = std::atan2(s, fCos), oneOverS = 1.f / s;
+            k0 = (std::sin(1.f - t) * ang) * oneOverS;
+            k1 = std::sin(t * ang) * oneOverS;
+        }
 
-		return{ k0 * a.x + k1 * b2.x, k0 * a.y + k1 * b2.y, k0 * a.z + k1 * b2.z, k0 * a.w + k1 * b2.w };
-	}
+        return{ k0 * a.x + k1 * b2.x, k0 * a.y + k1 * b2.y, k0 * a.z + k1 * b2.z, k0 * a.w + k1 * b2.w };
+    }
 
-	inline float compute_quat_closeness(const float4 & a, const float4 & b)
-	{
-		return std::acos((2.f * pow(dot(a, b), 2.f))  - 1.f);
-	}
+    inline float compute_quat_closeness(const float4 & a, const float4 & b)
+    {
+        return std::acos((2.f * pow(dot(a, b), 2.f))  - 1.f);
+    }
     
     //////////////////////////////////////////////
     // Construct affine transformation matrices //
@@ -430,7 +430,7 @@ namespace avl
     // Poses //
     ///////////
 
-	// Rigid transformation value-type
+    // Rigid transformation value-type
     struct Pose
     {
         float4      orientation;                                    // Orientation of an object, expressed as a rotation quaternion from the base orientation
@@ -441,7 +441,7 @@ namespace avl
         explicit    Pose(const float4 & orientation)                : Pose(orientation, {0,0,0}) {}
         explicit    Pose(const float3 & position)                   : Pose({0,0,0,1}, position) {}
         
-		Pose        inverse() const									{ auto invOri = qinv(orientation); return{ invOri, qrot(invOri, -position) }; }
+        Pose        inverse() const                                 { auto invOri = qinv(orientation); return{ invOri, qrot(invOri, -position) }; }
         float4x4    matrix() const                                  { return make_rigid_transformation_matrix(orientation, position); }
         float3      xdir() const                                    { return qxdir(orientation); } // Equivalent to transform_vector({1,0,0})
         float3      ydir() const                                    { return qydir(orientation); } // Equivalent to transform_vector({0,1,0})
@@ -455,30 +455,30 @@ namespace avl
         Pose        operator * (const Pose & pose) const            { return {qmul(orientation,pose.orientation), transform_coord(pose.position)}; }
     };
     
-	inline bool operator == (const Pose & a, const Pose & b)
-	{
-		return (a.position == b.position) && (a.orientation == b.orientation);
-	}
+    inline bool operator == (const Pose & a, const Pose & b)
+    {
+        return (a.position == b.position) && (a.orientation == b.orientation);
+    }
 
-	inline bool operator != (const Pose & a, const Pose & b)
-	{
-		return (a.position != b.position) || (a.orientation != b.orientation);
-	}
+    inline bool operator != (const Pose & a, const Pose & b)
+    {
+        return (a.position != b.position) || (a.orientation != b.orientation);
+    }
 
-	inline std::ostream & operator << (std::ostream & o, const Pose & r)
+    inline std::ostream & operator << (std::ostream & o, const Pose & r)
     {
         return o << "{" << r.position << ", " << r.orientation << "}";
     }
 
-	// The long form of (a.inverse() * b) 
-	inline Pose make_pose_from_to(const Pose & a, const Pose & b)
-	{
-		Pose ret;
-		const auto inv = qinv(a.orientation);
-		ret.orientation = qmul(inv, b.orientation);
-		ret.position = qrot(inv, b.position - a.position);
-		return ret;
-	}
+    // The long form of (a.inverse() * b) 
+    inline Pose make_pose_from_to(const Pose & a, const Pose & b)
+    {
+        Pose ret;
+        const auto inv = qinv(a.orientation);
+        ret.orientation = qmul(inv, b.orientation);
+        ret.position = qrot(inv, b.position - a.position);
+        return ret;
+    }
 
     inline float4x4 make_view_matrix_from_pose(const Pose & pose)
     {
@@ -496,13 +496,13 @@ namespace avl
         return p;
     }
 
-	inline Pose make_pose_from_transform_matrix(float4x4 transform)
-	{
-		Pose p;
-		p.position = transform[3].xyz();
-		p.orientation = make_rotation_quat_from_rotation_matrix(get_rotation_submatrix(transform));
-		return p;
-	}
+    inline Pose make_pose_from_transform_matrix(float4x4 transform)
+    {
+        Pose p;
+        p.position = transform[3].xyz();
+        p.orientation = make_rotation_quat_from_rotation_matrix(get_rotation_submatrix(transform));
+        return p;
+    }
     
     /////////////
     //   Ray   //
@@ -723,63 +723,63 @@ namespace avl
                 return true;
             }
         }
-		if (outT) *outT = std::numeric_limits<float>::max();
+        if (outT) *outT = std::numeric_limits<float>::max();
         return false;
     }
     
-	// Real-Time Collision Detection pg. 180
-	inline bool intersect_ray_box(const Ray & ray, const Bounds3D bounds, float * outTmin = nullptr, float * outTmax = nullptr, float3 * outNormal = nullptr)
-	{
-		float tmin = 0.f; // set to -FLT_MAX to get first hit on line
-		float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
-		float3 n;
-		float3 normal(0, 0, 0);
+    // Real-Time Collision Detection pg. 180
+    inline bool intersect_ray_box(const Ray & ray, const Bounds3D bounds, float * outTmin = nullptr, float * outTmax = nullptr, float3 * outNormal = nullptr)
+    {
+        float tmin = 0.f; // set to -FLT_MAX to get first hit on line
+        float tmax = std::numeric_limits<float>::max(); // set to max distance ray can travel (for segment)
+        float3 n;
+        float3 normal(0, 0, 0);
 
-		const float3 invDist = ray.inverse_direction();
+        const float3 invDist = ray.inverse_direction();
 
-		// For all three slabs
-		for (int i = 0; i < 3; ++i)
-		{
-			if (std::abs(ray.direction[i]) < PLANE_EPSILON)
-			{
-				// Ray is parallel to slab. No hit if r.origin not within slab
-				if ((ray.origin[i] < bounds.min()[i]) || (ray.origin[i] > bounds.max()[i])) return false;
-			}
-			else
-			{
-				// Compute intersection t value of ray with near and far plane of slab
-				float t1 = (bounds.min()[i] - ray.origin[i]) * invDist[i]; // near
-				float t2 = (bounds.max()[i] - ray.origin[i]) * invDist[i]; // far
+        // For all three slabs
+        for (int i = 0; i < 3; ++i)
+        {
+            if (std::abs(ray.direction[i]) < PLANE_EPSILON)
+            {
+                // Ray is parallel to slab. No hit if r.origin not within slab
+                if ((ray.origin[i] < bounds.min()[i]) || (ray.origin[i] > bounds.max()[i])) return false;
+            }
+            else
+            {
+                // Compute intersection t value of ray with near and far plane of slab
+                float t1 = (bounds.min()[i] - ray.origin[i]) * invDist[i]; // near
+                float t2 = (bounds.max()[i] - ray.origin[i]) * invDist[i]; // far
 
-				n.x = (i == 0) ? bounds.min()[i] : 0.0f;
-				n.y = (i == 1) ? bounds.min()[i] : 0.0f;
-				n.z = (i == 2) ? bounds.min()[i] : 0.0f;
+                n.x = (i == 0) ? bounds.min()[i] : 0.0f;
+                n.y = (i == 1) ? bounds.min()[i] : 0.0f;
+                n.z = (i == 2) ? bounds.min()[i] : 0.0f;
 
-				// Swap t1 and t2 if need so that t1 is intersection with near plane and t2 with far plane
-				if (t1 > t2)
-				{
-					std::swap(t1, t2);
-					n = -n;
-				}
+                // Swap t1 and t2 if need so that t1 is intersection with near plane and t2 with far plane
+                if (t1 > t2)
+                {
+                    std::swap(t1, t2);
+                    n = -n;
+                }
 
-				// Compute the intersection of the of slab intersection interval with previous slabs
-				if (t1 > tmin)
-				{
-					tmin = t1;
-					normal = n;
-				}
-				tmax = std::min(tmax, t2);
+                // Compute the intersection of the of slab intersection interval with previous slabs
+                if (t1 > tmin)
+                {
+                    tmin = t1;
+                    normal = n;
+                }
+                tmax = std::min(tmax, t2);
 
-				// If the slabs intersection is empty, there is no hit
-				if (tmin > tmax || tmax <= PLANE_EPSILON) return false;
-			}
-		}
-		if (outTmin) *outTmin = tmin;
-		if (outTmax) *outTmax = tmax;
-		if (outNormal) *outNormal = (tmin) ? normalize(normal) : float3(0, 0, 0);
+                // If the slabs intersection is empty, there is no hit
+                if (tmin > tmax || tmax <= PLANE_EPSILON) return false;
+            }
+        }
+        if (outTmin) *outTmin = tmin;
+        if (outTmax) *outTmax = tmax;
+        if (outNormal) *outNormal = (tmin) ? normalize(normal) : float3(0, 0, 0);
 
-		return true;
-	}
+        return true;
+    }
 
     inline bool intersect_ray_sphere(const Ray & ray, const Sphere & sphere, float * outT = nullptr, float3 * outNormal = nullptr)
     {
@@ -790,10 +790,10 @@ namespace avl
         const float c = dot(diff, diff) - sphere.radius * sphere.radius;
         const float disc = b * b - 4.0f * a * c;
         
-		if (disc < 0.0f)
-		{
-			return false; 
-		}
+        if (disc < 0.0f)
+        {
+            return false; 
+        }
         else
         {
             float e = std::sqrt(disc);
@@ -803,7 +803,7 @@ namespace avl
             if (t > SPHERE_EPSILON)
             {
                 if (outT) *outT = t;
-				if (outNormal) *outNormal = t ? ((ray.direction * t - diff) / sphere.radius) : normalize(ray.direction * t - diff);
+                if (outNormal) *outNormal = t ? ((ray.direction * t - diff) / sphere.radius) : normalize(ray.direction * t - diff);
                 return true;
             }
             
@@ -811,12 +811,12 @@ namespace avl
             if (t > SPHERE_EPSILON)
             {
                 if (outT) *outT = t;
-				if (outNormal) *outNormal = t ? ((ray.direction * t - diff) / sphere.radius) : normalize(ray.direction * t - diff);
+                if (outNormal) *outNormal = t ? ((ray.direction * t - diff) / sphere.radius) : normalize(ray.direction * t - diff);
                 return true;
             }
         }
         if (outT) *outT = 0;
-		if (outNormal) *outNormal = float3(0, 0, 0);
+        if (outNormal) *outNormal = float3(0, 0, 0);
         return false;
     }
     

@@ -76,8 +76,8 @@ public:
         origin = newOrigin; 
     }
 
-	virtual void draw(const float4x4 & viewProj) override
-	{
+    virtual void draw(const float4x4 & viewProj) override
+    {
         auto model = make_translation_matrix(origin);
         auto modelViewProjectionMatrix = mul(viewProj, model);
         gridShader.bind();

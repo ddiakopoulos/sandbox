@@ -1,4 +1,5 @@
 // Original Source: MIT License Copyright (c) 2016 Adrian Biagioli
+
 #pragma once
 
 #ifndef parabolic_pointer_hpp
@@ -202,7 +203,6 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
     return g;
 }
 
-
 struct ParabolicPointerParams
 {
     float3 position = {0, 5, 0};
@@ -230,8 +230,8 @@ inline Geometry make_parabolic_pointer(const Geometry & navMesh, const Parabolic
     if (gotCurve)
     {
         pointerGeometry = make_parabolic_geometry(points, v, 0.1);
-		pointerGeometry.compute_bounds();
-		pointerGeometry.compute_normals();
+        pointerGeometry.compute_bounds();
+        pointerGeometry.compute_normals();
     }
 
     //std::cout << "Parabola Points: " << std::endl;
