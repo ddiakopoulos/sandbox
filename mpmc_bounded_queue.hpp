@@ -1,6 +1,6 @@
 // This is free and unencumbered software released into the public domain.
 // Original Source: http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
-// Modified to support single-producer as well
+// Modified to support single-producer as well (spmc)
 
 #ifndef mpmc_bounded_queue_hpp
 #define mpmc_bounded_queue_hpp
@@ -10,14 +10,12 @@
 #include <stdint.h>
 #include <vector>
 
-#define CACHE_LINE_SIZE 64
-
 template<typename T>
 class MPMCBoundedQueue
 {
     struct node_t { T data; std::atomic<size_t> next; };
     typedef typename std::aligned_storage<sizeof(node_t), std::alignment_of<node_t>::value>::type aligned_node_t;
-    typedef char cache_line_pad_t[CACHE_LINE_SIZE];
+    typedef char cache_line_pad_t[64];
 
     cache_line_pad_t pad0;
     const size_t size;
@@ -29,8 +27,8 @@ class MPMCBoundedQueue
 	std::atomic<size_t> tail{ 0 };
     cache_line_pad_t pad3;
 
-    MPMCBoundedQueue(const MPMCBoundedQueue &) {}
-    void operator= (const MPMCBoundedQueue &) {}
+    MPMCBoundedQueue(const MPMCBoundedQueue &) { }
+    void operator= (const MPMCBoundedQueue &) { }
 
 public:
 
@@ -67,7 +65,7 @@ public:
     {
         size_t headSequence = head.load(std::memory_order_relaxed);
 
-        while(true)
+        while (true)
         {
             node_t * node = &buffer[headSequence & mask];
             size_t nodeSequence = node->next.load(std::memory_order_acquire);
@@ -99,7 +97,7 @@ public:
     {
         size_t tailSequence = tail.load(std::memory_order_relaxed);
 
-        while(true)
+        while (true)
         {
             node_t * node = &buffer[tailSequence & mask];
             size_t nodeSequence = node->next.load(std::memory_order_acquire);

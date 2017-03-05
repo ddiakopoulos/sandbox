@@ -12,12 +12,15 @@ class MPSCQueue
 {
     struct buffer_node_t { T data; std::atomic<buffer_node_t*> next; };
     typedef typename std::aligned_storage<sizeof(buffer_node_t), std::alignment_of<buffer_node_t>::value>::type buffer_node_aligned_t;
+
     std::atomic<buffer_node_t*> head;
     std::atomic<buffer_node_t*> tail;
-    MPSCQueue(const MPSCQueue &) {}
-    void operator= (const MPSCQueue &) {}
+
+    MPSCQueue(const MPSCQueue &) { }
+    void operator= (const MPSCQueue &) { }
     
 public:
+
     MPSCQueue() : head(reinterpret_cast<buffer_node_t*>(new buffer_node_aligned_t)), tail(head.load(std::memory_order_relaxed))
     {
         buffer_node_t * front = head.load(std::memory_order_relaxed);

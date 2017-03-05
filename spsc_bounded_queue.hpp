@@ -12,6 +12,7 @@ class SPSCBoundedQueue
 {
     typedef typename std::aligned_storage<sizeof(T), std::alignment_of<T>::value>::type aligned_t;
     typedef char cache_line_pad_t[64];
+
     cache_line_pad_t pad0;
     const size_t size;
     const size_t mask;

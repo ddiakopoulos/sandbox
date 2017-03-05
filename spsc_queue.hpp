@@ -19,8 +19,8 @@ class SPSCQueue
     node_t * tail;
     node_t * back;
 
-    SPSCQueue(const SPSCQueue &) {}
-    void operator= (const SPSCQueue &) {}
+    SPSCQueue(const SPSCQueue &) { }
+    void operator= (const SPSCQueue &) { }
 
 public:
 
