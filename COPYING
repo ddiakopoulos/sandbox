@@ -26,6 +26,12 @@ Authored by Austin Appleby, 2008
 https://github.com/emilk/emilib (Public Domain)
 Authored by Emil Ernerfeldt, 2015
 
+https://github.com/mstump/queues/tree/master/include (Public Domain)
+Authored by Matt Stump, 2014 and inspired by Dmitry Vyukov (http://www.1024cores.net/home/lock-free-algorithms)
+
+https://github.com/forrestthewoods/lib_fts
+Authored by Forrest Smith, 2016+
+
 http://www.glfw.org/ (zlib/libpng)
 Copyright (C) Camilla Berglund, 2006-2011
 
@@ -103,3 +109,7 @@ Copyright (C) Simon Geilfus, 2016
 
 "An Analytic Model for Full Spectral Sky-Dome Radiance"
 Copyright (C) Lukas Hosek and Alexander Wilkie, 2012-2013
+
+https://github.com/nickgillian/grt (MIT)
+Copyright (C) Nicholas Gillian 2012
+
