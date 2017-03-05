@@ -1,6 +1,12 @@
-Original code licensed is released into the public domain. See LICENSE
-for details. Other pieces of software used in this repository are listed
-as follows: 
+Original code licensed is released into the public domain (See LICENSE for more details). 
+
+This project strictly avoids the inclusion of code under the the following licenses: GPL, LGPL, MPL, AGPL, CC-*-NC, and various restrictive academic variants.
+
+Other third party source-code components used in this repository are documented as follows:
+
+///////////////////////
+//   Public Domain   //
+///////////////////////
 
 https://github.com/nothings/stb (Public Domain)
 Authored by Sean T. Barrett, 1998+
@@ -31,6 +37,10 @@ Authored by Matt Stump, 2014 and inspired by Dmitry Vyukov (http://www.1024cores
 
 https://github.com/forrestthewoods/lib_fts
 Authored by Forrest Smith, 2016+
+
+////////////////////////////////////////
+//   Permissively Licensed Libraries  //
+////////////////////////////////////////
 
 http://www.glfw.org/ (zlib/libpng)
 Copyright (C) Camilla Berglund, 2006-2011
@@ -66,7 +76,7 @@ https://hal.inria.fr/hal-00670496/ (Boost)
 Copyright (C) Reviatech, 2012
 
 https://github.com/wieden-kennedy/Cinder-Sampling (Apache 2.0)
-Copyright (C) Wieden Kennedy, 2014
+Copyright (C) Wieden + Kennedy, 2014
 
 https://github.com/mattdesl/glsl-fxaa/blob/master/fxaa.glsl (BSD 3-Clause)
 Copyright (C) Armin Ronacher, 2011
@@ -89,12 +99,6 @@ Copyright (C) Branimir Karadzic, 2010-2016
 https://github.com/PointCloudLibrary/pcl (BSD 3 Clause)
 Copyright (C) The Point Cloud Library Authors, 2009+
 
-https://github.com/leonidk/ps1080test (MPL)
-Copyright (C) Leo Keselman, 2015
-
-https://github.com/IntelRealSense/librealsense (Apache 2.0)
-Copyright (C) Intel Corporation, 2015
-
 https://github.com/ocornut/imgui (MIT)
 Copyright (C) Omar Cornut and ImGui contributors, 2014-2015 
 
@@ -107,9 +111,15 @@ Copyright (C) Simon Geilfus, 2015
 https://github.com/simongeilfus/SimplexNoise (BSD 2-Clause)
 Copyright (C) Simon Geilfus, 2016
 
+https://github.com/nickgillian/grt (MIT)
+Copyright (C) Nicholas Gillian, 2012
+
+https://github.com/mohaps/lrucache11 (BSD 2-Clause)
+Copyright (C) Saurav Mohapatra, 2012
+
+/////////////////////////
+//   Research Papers   //
+/////////////////////////
+
 "An Analytic Model for Full Spectral Sky-Dome Radiance"
 Copyright (C) Lukas Hosek and Alexander Wilkie, 2012-2013
-
-https://github.com/nickgillian/grt (MIT)
-Copyright (C) Nicholas Gillian 2012
-
