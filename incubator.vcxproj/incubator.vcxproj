@@ -30,7 +30,6 @@
     <ClInclude Include="..\file_io.hpp" />
     <ClInclude Include="..\geometric.hpp" />
     <ClInclude Include="..\geometry.hpp" />
-    <ClInclude Include="..\gizmo.hpp" />
     <ClInclude Include="..\glfw_app.hpp" />
     <ClInclude Include="..\GL_API.hpp" />
     <ClInclude Include="..\gpu_timer.hpp" />
@@ -85,7 +84,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\avl_imgui.cpp" />
-    <ClCompile Include="..\gizmo.cpp" />
     <ClCompile Include="..\impl.cpp" />
     <ClCompile Include="..\nvg.cpp" />
     <ClCompile Include="..\third_party\efsw.cpp" />

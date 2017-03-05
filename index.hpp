@@ -29,7 +29,6 @@
 #include "gpu_timer.hpp"
 #include "procedural_mesh.hpp"
 #include "scene.hpp"
-#include "gizmo.hpp"
 #include "shader_monitor.hpp"
 #include "splines.hpp"
 #include "meshline.hpp"

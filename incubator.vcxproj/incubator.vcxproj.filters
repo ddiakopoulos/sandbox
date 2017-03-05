@@ -96,9 +96,6 @@
     <ClInclude Include="..\file_io.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\gizmo.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\human_time.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
@@ -238,9 +235,6 @@
     </ClCompile>
     <ClCompile Include="..\nvg.cpp">
       <Filter>source\app</Filter>
-    </ClCompile>
-    <ClCompile Include="..\gizmo.cpp">
-      <Filter>source\tools</Filter>
     </ClCompile>
     <ClCompile Include="..\third_party\efsw.cpp">
       <Filter>third_party</Filter>
