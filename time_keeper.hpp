@@ -12,6 +12,14 @@ namespace avl
 
     class TimeKeeper 
     {
+
+        bool isRunning;
+        timepoint startTime;
+        timepoint pauseTime;
+
+        inline timepoint current_time_point() const  { return std::chrono::high_resolution_clock::now(); }
+        inline timeduration running_time() const { return (isRunning) ? current_time_point() - startTime : pauseTime - startTime; }
+        
     public:
 
         explicit TimeKeeper(bool run = false) : isRunning(run) 
@@ -60,17 +68,7 @@ namespace avl
         inline std::chrono::microseconds microseconds() const { return running_time<std::chrono::microseconds>(); }
         inline std::chrono::milliseconds milliseconds() const { return running_time<std::chrono::milliseconds>(); }
         inline std::chrono::seconds seconds() const { return running_time<std::chrono::seconds>(); }
-
         inline bool is_running() { return isRunning; }
-
-    private:
-
-        bool isRunning;
-        timepoint startTime;
-        timepoint pauseTime;
-
-        inline timepoint current_time_point() const  { return std::chrono::high_resolution_clock::now(); }
-        inline timeduration running_time() const { return (isRunning) ? current_time_point() - startTime : pauseTime - startTime; }
     };
 
 }

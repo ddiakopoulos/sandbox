@@ -14,7 +14,7 @@
 template <typename T>
 class CircularBuffer
 {
-    
+
     std::vector<T> buffer;
 
     size_t bufferSize { 0 };
@@ -25,6 +25,17 @@ class CircularBuffer
 
     bool init { false };
 
+    void init_from(const CircularBuffer & rhs)
+    {
+        init = rhs.init;
+        bufferSize = rhs.bufferSize;
+        numValues = rhs.numValues;
+        buffer.resize(rhs.bufferSize);
+        for(size_t i=0; i < rhs.bufferSize; i++) buffer[i] = rhs.buffer[i];
+        readIndex = rhs.readIndex;
+        writeIndex = rhs.writeIndex;
+    }
+
 public:
         
     CircularBuffer() { }
@@ -33,39 +44,15 @@ public:
         
     CircularBuffer(const CircularBuffer & rhs)
     {
-        bufferSize = 0;
-        numValues = 0;
-        init = false;
-        if(rhs.init)
-        {
-            init = rhs.init;
-            bufferSize = rhs.bufferSize;
-            numValues = rhs.numValues;
-            buffer.resize(rhs.bufferSize);
-                
-            for(size_t i=0; i<rhs.bufferSize; i++)
-                buffer[i] = rhs.buffer[i];
-                
-            readIndex = rhs.readIndex;
-            writeIndex = rhs.writeIndex;
-        }
+        if (rhs.init) init_from(rhs);
     }
         
-    CircularBuffer & operator= (const CircularBuffer &rhs)
+    CircularBuffer & operator= (const CircularBuffer & rhs)
     {
         if (this != &rhs)
         {
             clear();
-            if (rhs.init)
-            {
-                init = rhs.init;
-                bufferSize = rhs.bufferSize;
-                numValues = rhs.numValues;
-                buffer.resize(rhs.bufferSize);
-                for(size_t i=0; i<rhs.bufferSize; i++) buffer[i] = rhs.buffer[i];
-                readIndex = rhs.readIndex;
-                writeIndex = rhs.writeIndex;
-            }
+            if (rhs.init) init_from(rhs);
         }
         return *this;
     }
