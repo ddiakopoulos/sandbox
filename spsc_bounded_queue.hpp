@@ -10,6 +10,7 @@
 template<typename T>
 class SPSCBoundedQueue
 {
+    
     typedef typename std::aligned_storage<sizeof(T), std::alignment_of<T>::value>::type aligned_t;
     typedef char cache_line_pad_t[64];
 
@@ -18,9 +19,9 @@ class SPSCBoundedQueue
     const size_t mask;
     T * const buffer;
     cache_line_pad_t pad1;
-	std::atomic<size_t> head{ 0 };
+    std::atomic<size_t> head{ 0 };
     cache_line_pad_t pad2;
-	std::atomic<size_t> tail{ 0 };
+    std::atomic<size_t> tail{ 0 };
 
     SPSCBoundedQueue(const SPSCBoundedQueue &) {}
     void operator= (const SPSCBoundedQueue &) {}
@@ -62,6 +63,7 @@ public:
         }
         return false;
     }
+    
 };
 
 #endif // spsc_bounded_queue_hpp

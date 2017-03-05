@@ -13,6 +13,7 @@
 template<typename T>
 class MPMCBoundedQueue
 {
+    
     struct node_t { T data; std::atomic<size_t> next; };
     typedef typename std::aligned_storage<sizeof(node_t), std::alignment_of<node_t>::value>::type aligned_node_t;
     typedef char cache_line_pad_t[64];
@@ -22,9 +23,9 @@ class MPMCBoundedQueue
     const size_t mask;
     node_t * const buffer;
     cache_line_pad_t pad1;
-	std::atomic<size_t> head{ 0 };
+    std::atomic<size_t> head{ 0 };
     cache_line_pad_t pad2;
-	std::atomic<size_t> tail{ 0 };
+    std::atomic<size_t> tail{ 0 };
     cache_line_pad_t pad3;
 
     MPMCBoundedQueue(const MPMCBoundedQueue &) { }
@@ -42,24 +43,24 @@ public:
     {
         delete[] buffer;
     }
-	
-	bool sp_produce(T const & input)
-	{
-		node_t * node = &buffer[headSequence & mask];
-		size_t nodeSequence = node->node.load(std::memory_order_acquire);
-		intptr_t diff = (intptr_t)nodeSequence - (intptr_t)headSequence;
+    
+    bool sp_produce(T const & input)
+    {
+        node_t * node = &buffer[headSequence & mask];
+        size_t nodeSequence = node->node.load(std::memory_order_acquire);
+        intptr_t diff = (intptr_t)nodeSequence - (intptr_t)headSequence;
 
-		if (dif == 0) 
-		{
-			++head;
-			node->data = input;
-			node->next.store(headSequence, std::memory_order_release);
-			return true;
-		}
+        if (dif == 0) 
+        {
+            ++head;
+            node->data = input;
+            node->next.store(headSequence, std::memory_order_release);
+            return true;
+        }
 
-		assert(dif < 0);
-		return false;
-	}
+        assert(dif < 0);
+        return false;
+    }
 
     bool mp_produce(const T & input)
     {
@@ -125,4 +126,4 @@ public:
 
 };
 
-#endif
+#endif // end mpmc_bounded_queue_hpp

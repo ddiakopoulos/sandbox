@@ -14,6 +14,7 @@
 template <typename T>
 class CircularBuffer
 {
+    
     std::vector<T> buffer;
 
     size_t bufferSize { 0 };

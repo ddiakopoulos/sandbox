@@ -11,6 +11,7 @@
 template<typename T>
 class SPSCQueue
 {
+
     struct node_t { node_t * next; T data; };
     typedef typename std::aligned_storage<sizeof(node_t), std::alignment_of<node_t>::value>::type node_aligned_t;
 
@@ -59,6 +60,7 @@ public:
         delete back;
         return true;
     }
+    
 };
 
 #endif // spsc_queue_hpp
