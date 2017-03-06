@@ -15,7 +15,7 @@ VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizeP
 	// Still can't figure out what's going on here
 	//GlTexture2D IntermediateTexHack;
 	//std::cout << "HackTexId: " << IntermediateTexHack << std::endl;
-
+	  
 	std::cout << "Left Texture: "  <<  eyeTextures[0] << std::endl;
 	std::cout << "Right Texture: " <<  eyeTextures[1] << std::endl;
 

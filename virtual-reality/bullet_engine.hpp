@@ -59,12 +59,14 @@ public:
 		return dynamicsWorld;
 	}
 
+	// Add a new rigid body based on BulletObjectVR wrapper
 	void add_object(BulletObjectVR * object)
 	{
-		dynamicsWorld->addRigidBody(object->body.get());
 		object->body->setDamping(0.3, 0.5);
+		dynamicsWorld->addRigidBody(object->body.get());
 	}
 
+	// Remove an existing rigid body based on BulletObjectVR wrapper
 	void remove_object(BulletObjectVR * object)
 	{
 		object->get_world()->removeRigidBody(object->body.get());
@@ -75,10 +77,9 @@ public:
 		bulletTicks.push_back({ f });
 	}
 
-	void update(const float dt = 0.0f /*fixme*/)
+	void update(const float dt = 0.0f)
 	{
-		// fps
-		dynamicsWorld->stepSimulation(1.f / 90.f);
+		const int result = dynamicsWorld->stepSimulation(dt);
 	}
 
 };

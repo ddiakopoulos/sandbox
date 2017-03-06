@@ -58,20 +58,23 @@ void VirtualRealityApp::setup_scene()
 	auto normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 	scene.namedMaterialList["material-debug"] = std::make_shared<DebugMaterial>(normalShader);
 
+	// Slightly offset from debug-rendered physics floor
 	scene.grid.set_origin(float3(0, -.01f, 0));
 
-	btCollisionShape * ground = new btStaticPlaneShape({ 0, 1, 0 }, 0);
-	auto groundObject = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), ground, physicsEngine->get_world());
+	// Bullet considers an object with 0 is infinite/static/immovable
+	btCollisionShape * ground = new btStaticPlaneShape({ 0.f, +1.f, 0.f }, 0.f);
+	auto groundObject = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), ground, physicsEngine->get_world(), 0.0f);
 	physicsEngine->add_object(groundObject.get());
 	scene.physicsObjects.push_back(groundObject);
 
 	StaticMesh cube;
 	cube.set_static_mesh(make_cube(), 0.25f);
-	cube.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
+	cube.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 2.0f, 0)));
 	cube.set_material(scene.namedMaterialList["material-debug"].get());
 
 	btCollisionShape * cubeCollisionShape = new btBoxShape(to_bt(cube.get_bounds().size() * 0.5f));
-	auto cubePhysicsObj = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), cubeCollisionShape, physicsEngine->get_world());
+	auto cubePhysicsObj = std::make_shared<BulletObjectVR>(cube.get_pose().matrix(), cubeCollisionShape, physicsEngine->get_world()); // transformed
+	// auto cubePhysicsObj = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), cubeCollisionShape, physicsEngine->get_world()); // default motion state
 	cube.set_physics_component(cubePhysicsObj.get());
 
 	physicsEngine->add_object(cubePhysicsObj.get());
@@ -124,7 +127,7 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 		scene.leftController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
 		scene.rightController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_RightHand).p);
 
-		physicsEngine->update();
+		physicsEngine->update(e.timestep_ms);
 
 		btTransform leftTranslation;
 		scene.leftController->physicsObject->body->getMotionState()->getWorldTransform(leftTranslation);
@@ -139,9 +142,9 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 			{
 				if (model.get_physics_component() == obj.get())
 				{
-					btTransform trans;
-					obj->body->getMotionState()->getWorldTransform(trans);
-					model.set_pose(make_pose(trans));
+					//btTransform trans;
+					//obj->body->getMotionState()->getWorldTransform(trans);
+					//model.set_pose(make_pose(trans));
 				}
 			}
 		}

@@ -50,6 +50,7 @@ public:
 		: engine(engine), ctrl(ctrl), renderData(renderData)
 	{
 
+		// Physics tick
 		engine->add_task([=](float time, BulletEngineVR * engine)
 		{
 			this->update_physics(time, engine);
