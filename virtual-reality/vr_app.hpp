@@ -58,19 +58,31 @@ public:
 
 		controllerShape = new btBoxShape(btVector3(0.096, 0.096, 0.0123)); // fixme to use renderData
 
-		physicsObject = new BulletObjectVR(new btDefaultMotionState(), controllerShape, engine->get_world(), 0.5f);
+		physicsObject = new BulletObjectVR(new btDefaultMotionState(), controllerShape, engine->get_world(), 0.5f); // Controllers require non-zero mass
 
 		physicsObject->body->setFriction(2.f);
-		physicsObject->body->setRestitution(0.75);
+		physicsObject->body->setRestitution(0.1f);
 		physicsObject->body->setGravity(btVector3(0, 0, 0));
 		physicsObject->body->setActivationState(DISABLE_DEACTIVATION);
 
 		engine->add_object(physicsObject);
 	}
 
-	void update_controller_pose(const Pose & p)
+	~MotionControllerVR()
 	{
-		latestPose = p;
+		engine->remove_object(physicsObject);
+		delete physicsObject;
+	}
+
+	void update(const Pose & latestControllerPose)
+	{
+		latestPose = latestControllerPose;
+
+		auto collisionList = physicsObject->CollideWorld();
+		for (auto & c : collisionList)
+		{
+			// Contact points
+		}
 	}
 
 };

@@ -61,9 +61,11 @@ void VirtualRealityApp::setup_scene()
 	// Slightly offset from debug-rendered physics floor
 	scene.grid.set_origin(float3(0, -.01f, 0));
 
-	// Bullet considers an object with 0 is infinite/static/immovable
+	// Bullet considers an object with 0 mass infinite/static/immovable
 	btCollisionShape * ground = new btStaticPlaneShape({ 0.f, +1.f, 0.f }, 0.f);
 	auto groundObject = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), ground, physicsEngine->get_world(), 0.0f);
+	groundObject->body->setFriction(1.f);
+	groundObject->body->setRestitution(0.9f); // very hard floor that absorbs energy
 	physicsEngine->add_object(groundObject.get());
 	scene.physicsObjects.push_back(groundObject);
 
@@ -73,7 +75,8 @@ void VirtualRealityApp::setup_scene()
 	cube.set_material(scene.namedMaterialList["material-debug"].get());
 
 	btCollisionShape * cubeCollisionShape = new btBoxShape(to_bt(cube.get_bounds().size() * 0.5f));
-	auto cubePhysicsObj = std::make_shared<BulletObjectVR>(cube.get_pose().matrix(), cubeCollisionShape, physicsEngine->get_world()); // transformed
+	auto cubePhysicsObj = std::make_shared<BulletObjectVR>(cube.get_pose().matrix(), cubeCollisionShape, physicsEngine->get_world(), 0.88f); // transformed
+	cubePhysicsObj->body->setRestitution(0.4f);
 	// auto cubePhysicsObj = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), cubeCollisionShape, physicsEngine->get_world()); // default motion state
 	cube.set_physics_component(cubePhysicsObj.get());
 
@@ -124,8 +127,8 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
 	if (hmd)
 	{
-		scene.leftController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
-		scene.rightController->update_controller_pose(hmd->get_controller(vr::TrackedControllerRole_RightHand).p);
+		scene.leftController->update(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
+		scene.rightController->update(hmd->get_controller(vr::TrackedControllerRole_RightHand).p);
 
 		physicsEngine->update(e.timestep_ms);
 
@@ -142,9 +145,9 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 			{
 				if (model.get_physics_component() == obj.get())
 				{
-					//btTransform trans;
-					//obj->body->getMotionState()->getWorldTransform(trans);
-					//model.set_pose(make_pose(trans));
+					btTransform trans;
+					obj->body->getMotionState()->getWorldTransform(trans);
+					model.set_pose(make_pose(trans));
 				}
 			}
 		}
