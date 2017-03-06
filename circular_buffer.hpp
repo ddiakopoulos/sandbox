@@ -11,6 +11,8 @@
 #include <type_traits>
 #include "linalg_util.hpp"
 
+using namespace avl;
+
 template <typename T>
 class CircularBuffer
 {
@@ -211,15 +213,15 @@ double compute_confidence(const CircularBuffer<T> & b)
     return clamp(c, 0.0, 1.0) * (double) b.get_current_size() / (double) b.get_maximum_size();
 }
 
-/*
 // https://manialabs.wordpress.com/2012/08/06/covariance-matrices-with-a-practical-example/
 // http://www.cse.psu.edu/~rtc12/CSE586Spring2010/lectures/pcaLectureShort_6pp.pdf
 // https://en.wikipedia.org/wiki/Sample_mean_and_covariance#Sample_covariance
 // tl;dr: use on pointclouds (as first step to PCA) or IMU data
-inline float3x3 compute_covariance_matrix(const CircularBuffer<float3> & b)
+inline linalg::aliases::float3x3 compute_covariance_matrix(const CircularBuffer<linalg::aliases::float3> & b)
 {
-    float3 mean = compute_mean<float3>(b);
-    float3x3 total;
+	linalg::aliases::float3 mean = compute_mean<linalg::aliases::float3>(b);
+	linalg::aliases::float3x3 total;
+
     for (int i = 0; i < b.get_current_size(); i++) 
     {
         total[0][0] += (b[i].x - mean.x) * (b[i].x - mean.x);
@@ -245,15 +247,14 @@ inline float3x3 compute_covariance_matrix(const CircularBuffer<float3> & b)
 // https://statistics.laerd.com/statistical-guides/pearson-correlation-coefficient-statistical-guide.php
 // From Wiki: Pearson's correlation coefficient is the covariance of the two variables divided by the product of their standard deviations
 // tl;dr: normalized covariance (strength of linear relationship)... good for detecting noise
-inline float3 compute_pearson_coefficient(const CircularBuffer<float3> & b)
+inline linalg::aliases::float3 compute_pearson_coefficient(const CircularBuffer<linalg::aliases::float3> & b)
 {
     auto cov = compute_covariance_matrix(b);
-    float3 pearson;
+	linalg::aliases::float3 pearson;
     pearson.x = cov[0][1] / (sqrt(cov[0][0]) * sqrt(cov[1][1]));
     pearson.y = cov[1][2] / (sqrt(cov[1][1]) * sqrt(cov[2][2]));
     pearson.z = cov[2][0] / (sqrt(cov[2][2]) * sqrt(cov[0][0]));
     return pearson;
 }
-*/
 
 #endif // circular_buffer_h
