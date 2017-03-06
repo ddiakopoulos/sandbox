@@ -146,15 +146,16 @@ public:
 			{
 				if (!top_.compare_exchange_strong(top, top + 1, std::memory_order_seq_cst, std::memory_order_relaxed))
 				{
-					bottom_.store(bottom + 1, std::memory_order_relaxed);
 					return false;
 				}
-				else bottom_.store(bottom + 1, std::memory_order_relaxed);
+				bottom_.store(bottom + 1, std::memory_order_relaxed);
+				return true;
 			}
 			return true;
 		}
 		else
-		{
+		{	
+			// Queue is empty
 			bottom_.store(bottom + 1, std::memory_order_relaxed);
 			return false;
 		}

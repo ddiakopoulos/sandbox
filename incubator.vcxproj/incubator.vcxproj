@@ -25,6 +25,7 @@
     <ClInclude Include="..\bit_mask.hpp" />
     <ClInclude Include="..\camera.hpp" />
     <ClInclude Include="..\circular_buffer.hpp" />
+    <ClInclude Include="..\lru_cache.hpp" />
     <ClInclude Include="..\mpmc_blocking_queue.hpp" />
     <ClInclude Include="..\dsp_filters.hpp" />
     <ClInclude Include="..\file_io.hpp" />
@@ -60,6 +61,7 @@
     <ClInclude Include="..\sketch.hpp" />
     <ClInclude Include="..\solvers.hpp" />
     <ClInclude Include="..\splines.hpp" />
+    <ClInclude Include="..\spmc_stealing_queue.hpp" />
     <ClInclude Include="..\spsc_bounded_queue.hpp" />
     <ClInclude Include="..\spsc_queue.hpp" />
     <ClInclude Include="..\string_utils.hpp" />

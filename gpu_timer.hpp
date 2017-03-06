@@ -8,122 +8,120 @@
 
 class GlGpuTimer
 {
-	struct query_timer
-	{
-		GLuint start;
-		GLuint end;
-		bool in_use;
-	};
+    struct query_timer
+    {
+        GLuint start;
+        GLuint end;
+        bool in_use;
+    };
 
-	GLsync sync;
-	GLuint activeIdx;
-	std::vector<query_timer> queries;
+    GLsync sync;
+    GLuint activeIdx;
+    std::vector<query_timer> queries;
 
 public:
 
-	GlGpuTimer() { }
+    GlGpuTimer() { }
 
-	~GlGpuTimer()
-	{
-		for (size_t i = 0; i<queries.size(); ++i) glDeleteQueries(2, &queries[i].start);
-	}
+    ~GlGpuTimer()
+    {
+        for (size_t i = 0; i<queries.size(); ++i) glDeleteQueries(2, &queries[i].start);
+    }
 
-	void init()
-	{
-		const int default_size = 5;
-		queries.reserve(default_size);
+    void init()
+    {
+        const int default_size = 5;
+        queries.reserve(default_size);
 
-		const int default_2 = default_size * 2;
-		GLuint q[default_2];
-		glGenQueries(default_2, q);
-		for (size_t i = 0; i < default_size; ++i)
-		{
-			query_timer qt;
-			qt.start = q[i * 2 + 0];
-			qt.end = q[i * 2 + 1];
-			qt.in_use = false;
-			queries.push_back(qt);
-		}
-	}
+        const int default_2 = default_size * 2;
+        GLuint q[default_2];
+        glGenQueries(default_2, q);
+        for (size_t i = 0; i < default_size; ++i)
+        {
+            query_timer qt;
+            qt.start = q[i * 2 + 0];
+            qt.end = q[i * 2 + 1];
+            qt.in_use = false;
+            queries.push_back(qt);
+        }
+    }
 
-	void start()
-	{
-		activeIdx = queries.size();
-		for (size_t i = 0; i < queries.size(); ++i)
-		{
-			if (queries[i].in_use == false)
-			{
-				activeIdx = i;
-				queries[i].in_use = true;
-				break;
-			}
-		}
+    void start()
+    {
+        activeIdx = queries.size();
+        for (size_t i = 0; i < queries.size(); ++i)
+        {
+            if (queries[i].in_use == false)
+            {
+                activeIdx = i;
+                queries[i].in_use = true;
+                break;
+            }
+        }
 
-		// if no available queries were found, make some.
-		if (activeIdx == queries.size())
-		{
-			GLuint q[2];
-			glGenQueries(2, q);
-			query_timer qt;
-			qt.start = q[0];
-			qt.end = q[1];
-			qt.in_use = true;
-			queries.push_back(qt);
-		}
+        if (activeIdx == queries.size())
+        {
+            GLuint q[2];
+            glGenQueries(2, q);
+            query_timer qt;
+            qt.start = q[0];
+            qt.end = q[1];
+            qt.in_use = true;
+            queries.push_back(qt);
+        }
 
-		glQueryCounter(queries[activeIdx].start, GL_TIMESTAMP);
-	}
+        glQueryCounter(queries[activeIdx].start, GL_TIMESTAMP);
+    }
 
-	void stop()
-	{
-		glQueryCounter(queries[activeIdx].end, GL_TIMESTAMP);
-		sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-		// now wait for all the gpu commands to clear out
-		glFlush();  // must call this manually when using waitsync
-		glWaitSync(sync, 0, GL_TIMEOUT_IGNORED);
-		glDeleteSync(sync);
-	}
+    void stop()
+    {
+        glQueryCounter(queries[activeIdx].end, GL_TIMESTAMP);
+        sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        // now wait for all the gpu commands to clear out
+        glFlush();  // must call this manually when using waitsync
+        glWaitSync(sync, 0, GL_TIMEOUT_IGNORED);
+        glDeleteSync(sync);
+    }
 
-	double elapsed_ms()
-	{
-		GLint start_available;
-		GLint end_available;
+    double elapsed_ms()
+    {
+        GLint start_available;
+        GLint end_available;
 
-		GLuint64 timer_start;
-		GLuint64 timer_end;
-		GLuint64 timer_elapsed;
+        GLuint64 timer_start;
+        GLuint64 timer_end;
+        GLuint64 timer_elapsed;
 
-		// return a negative value when no query objects are available
-		double time = 0.0;
+        // return a negative value when no query objects are available
+        double time = 0.0;
 
-		for (size_t i = 0; i < queries.size(); ++i)
-		{
-			if (queries[i].in_use == true)
-			{
-				while (end_available) glGetQueryObjectiv(queries[i].end, GL_QUERY_RESULT_AVAILABLE, &end_available);
+        for (size_t i = 0; i < queries.size(); ++i)
+        {
+            if (queries[i].in_use == true)
+            {
+                while (end_available) glGetQueryObjectiv(queries[i].end, GL_QUERY_RESULT_AVAILABLE, &end_available);
 
-				glGetQueryObjectui64v(queries[i].start, GL_QUERY_RESULT, &timer_start);
-				glGetQueryObjectui64v(queries[i].end, GL_QUERY_RESULT, &timer_end);
+                glGetQueryObjectui64v(queries[i].start, GL_QUERY_RESULT, &timer_start);
+                glGetQueryObjectui64v(queries[i].end, GL_QUERY_RESULT, &timer_end);
 
-				timer_elapsed = timer_end - timer_start;
-				time = timer_elapsed * 1e-6f; // convert into milliseconds
-				queries[i].in_use = false;
+                timer_elapsed = timer_end - timer_start;
+                time = timer_elapsed * 1e-6f; // convert into milliseconds
+                queries[i].in_use = false;
 
-				break;
-			}
-		}
+                break;
+            }
+        }
 
-		return time;
-	}
+        return time;
+    }
 
-	int active_queries()
-	{
-		int result = 0;
-		for (size_t i = 0; i < queries.size(); ++i)
-			if (queries[i].in_use == true) result++;
-		return result;
-	}
+    int active_queries()
+    {
+        int result = 0;
+        for (size_t i = 0; i < queries.size(); ++i) if (queries[i].in_use == true) result++;
+        return result;
+    }
 
 };
 
-#endif
+#endif // end timer_gl_gpu_h

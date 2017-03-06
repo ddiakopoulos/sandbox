@@ -221,9 +221,7 @@ void VirtualRealityApp::on_draw()
 
 	glfwSwapBuffers(window);
 	gl_check_error(__FILE__, __LINE__);
-
 }
-
 
 int main(int argc, char * argv[])
 {

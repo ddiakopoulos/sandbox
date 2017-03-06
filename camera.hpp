@@ -102,7 +102,7 @@ namespace avl
         
         float frustumTop = coords[0];
         float frustumRight = coords[1];
-        float frustumBottom	= coords[2];
+        float frustumBottom = coords[2];
         float frustumLeft = coords[3];
         
         float3 topLeft = eye + (cam.nearClip * viewDirection) + (frustumTop * upDir) + (frustumLeft * leftDir);
@@ -126,7 +126,7 @@ namespace avl
         
         float frustumTop = coords[0];
         float frustumRight = coords[1];
-        float frustumBottom	= coords[2];
+        float frustumBottom = coords[2];
         float frustumLeft = coords[3];
         
         float3 topLeft = eye + (cam.farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumLeft * leftDir);
@@ -149,7 +149,7 @@ namespace avl
         
     public:
         
-		bool enableSpring = true;
+        bool enableSpring = true;
         float movementSpeed = 21.00f;
         float3 lastLook;
         
@@ -224,18 +224,18 @@ namespace avl
             auto current = cam->get_pose().position;
             auto target = cam->get_pose().transform_coord(move);
             
-			if (enableSpring)
-			{
-				float springyX = damped_spring(target.x, current.x, velocity.x, delta, 0.99f);
-				float springyY = damped_spring(target.y, current.y, velocity.y, delta, 0.99f);
-				float springyZ = damped_spring(target.z, current.z, velocity.z, delta, 0.99f);
-				float3 dampedLocation = { springyX, springyY, springyZ };
-				cam->set_position(dampedLocation);
-			}
-			else
-			{
-				cam->set_position(target);
-			}
+            if (enableSpring)
+            {
+                float springyX = damped_spring(target.x, current.x, velocity.x, delta, 0.99f);
+                float springyY = damped_spring(target.y, current.y, velocity.y, delta, 0.99f);
+                float springyZ = damped_spring(target.z, current.z, velocity.z, delta, 0.99f);
+                float3 dampedLocation = { springyX, springyY, springyZ };
+                cam->set_position(dampedLocation);
+            }
+            else
+            {
+                cam->set_position(target);
+            }
             
             float3 lookVec;
             lookVec.x = cam->get_eye_point().x - 1.f * cosf(camPitch) * sinf(camYaw);
@@ -248,7 +248,7 @@ namespace avl
     
     inline Ray make_ray(const GlCamera & camera, const float aspectRatio, float uPos, float vPos, float imagePlaneApectRatio)
     {
-		const float top = camera.nearClip * std::tan((camera.fov * (float(ANVIL_PI) / 2.f) / 360.f) / 2.f);
+        const float top = camera.nearClip * std::tan((camera.fov * (float(ANVIL_PI) / 2.f) / 360.f) / 2.f);
         const float right = top * aspectRatio; // Is this correct?
         const float left = -right;
         float s = (uPos - 0.5f) * imagePlaneApectRatio;
@@ -294,8 +294,8 @@ namespace avl
 
             colorBuffer.setup(resolution.x, resolution.y, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-			glNamedFramebufferTexture2DEXT(framebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0); // attach
-			framebuffer.check_complete();
+            glNamedFramebufferTexture2DEXT(framebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0); // attach
+            framebuffer.check_complete();
         
             gl_check_error(__FILE__, __LINE__);
 
@@ -333,7 +333,7 @@ namespace avl
 
          void update(float3 eyePosition)
          {
-			 // Todo: DSA
+             // Todo: DSA
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
             glViewport(0, 0, resolution.x , resolution.y);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

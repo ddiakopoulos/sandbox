@@ -3,10 +3,6 @@
 #include "vr_renderer.hpp"
 #include "static_mesh.hpp"
 #include "bullet_debug.hpp"
-#include "mpmc_bounded_queue.hpp"
-#include "spsc_queue.hpp"
-#include "mpsc_queue.hpp"
-#include "spsc_bounded_queue.hpp"
 
 using namespace avl;
 
@@ -103,8 +99,6 @@ struct Scene
 
 struct VirtualRealityApp : public GLFWApp
 {
-	SPSCBoundedQueue<float3> numQueue;
-
 	std::unique_ptr<VR_Renderer> renderer;
 	std::unique_ptr<OpenVR_HMD> hmd;
 

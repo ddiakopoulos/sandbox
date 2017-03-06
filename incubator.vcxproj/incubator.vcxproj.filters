@@ -90,9 +90,6 @@
     <ClInclude Include="..\arcball.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\circular_buffer.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\file_io.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
@@ -214,6 +211,15 @@
       <Filter>source\queues</Filter>
     </ClInclude>
     <ClInclude Include="..\mpmc_blocking_queue.hpp">
+      <Filter>source\queues</Filter>
+    </ClInclude>
+    <ClInclude Include="..\circular_buffer.hpp">
+      <Filter>source\queues</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lru_cache.hpp">
+      <Filter>source\queues</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spmc_stealing_queue.hpp">
       <Filter>source\queues</Filter>
     </ClInclude>
   </ItemGroup>
