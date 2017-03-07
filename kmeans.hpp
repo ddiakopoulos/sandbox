@@ -19,7 +19,8 @@ uint32_t kmeans_cluster3d(const float3 * input,                   // an array of
 
     std::vector<uint32_t> counts(clumpCount);
 
-    float error=0;
+    float error = 0.f;
+
     if (inputSize <= clumpCount) // if the number of input points is less than our clumping size, just return the input points.
     {
         clumpCount = inputSize;
@@ -46,8 +47,9 @@ uint32_t kmeans_cluster3d(const float3 * input,                   // an array of
         }
 
         // Here is the main convergence loop
-        float old_error = std::numeric_limits<float>::max();   // old and initial error estimates are max float3
-        error = std::numeric_limits<float>::max();
+        float old_error = std::numeric_limits<float>::max();   // old and initial error estimates
+        error = old_error;
+
         do
         {
             old_error = error;  // preserve the old error
@@ -56,18 +58,18 @@ uint32_t kmeans_cluster3d(const float3 * input,                   // an array of
             for (uint32_t i=0; i<clumpCount; i++)
             {
                 counts[i] = 0;
-                centroids[i] = 0.0f;
+                centroids[i] = float3(0, 0, 0);
             }
             error = 0;
 
             // For each input data point, figure out which cluster it is closest too and add it to that cluster.
             for (uint32_t i=0; i<inputSize; i++)
             {
-                float3 minDistance = std::numeric_limits<float>::max();
+                float minDistance  = std::numeric_limits<float>::max();
                 // find the nearest clump to this point.
                 for (uint32_t j=0; j<clumpCount; j++)
                 {
-                    float3 distance = input[i].distanceSquared(clusters[j]);
+                    float distance = linalg::distance2(input[i], clusters[j]);
                     if (distance < minDistance)
                     {
                         minDistance = distance;
@@ -85,7 +87,7 @@ uint32_t kmeans_cluster3d(const float3 * input,                   // an array of
             {
                 if (counts[i]) // if this clump got any points added to it...
                 {
-                    float3 recip = 1.0f / counts[i];    // compute the average (center of those points)
+                    float3 recip = float3(1.0f / counts[i]);    // compute the average (center of those points)
                     centroids[i] *= recip;    // compute the average center of the points in this clump.
                     clusters[i] = centroids[i]; // store it as the new cluster.
                 }
@@ -101,7 +103,7 @@ uint32_t kmeans_cluster3d(const float3 * input,                   // an array of
             if (error < errorThreshold) // early exit if our first guess is already good enough (if all input points are the same)
                 break;
 
-        } while (fabs(error - old_error) > errorThreshold); // keep going until the error is reduced by this threshold amount.
+        } while (std::fabs(error - old_error) > errorThreshold); // keep going until the error is reduced by this threshold amount.
 
     }
 
@@ -111,7 +113,7 @@ uint32_t kmeans_cluster3d(const float3 * input,                   // an array of
     // as an existing clump, then it is pruned and all indices which used to point to it, now point to the one
     // it is closest too.
     uint32_t outCount = 0; // number of clumps output after pruning performed.
-    float3 d2 = collapseDistance*collapseDistance; // squared collapse distance.
+    float d2 = collapseDistance * collapseDistance; // squared collapse distance.
     for (uint32_t i=0; i<clumpCount; i++)
     {
         if (counts[i] == 0) // if no points ended up in this clump, eliminate it.
@@ -121,7 +123,7 @@ uint32_t kmeans_cluster3d(const float3 * input,                   // an array of
         uint32_t remapIndex = outCount; // by default this clump will be remapped to its current index.
         for (uint32_t j=0; j<outCount; j++)
         {
-            float3 distance = clusters[i].distanceSquared(clusters[j]);
+            float distance = linalg::distance2(clusters[i], clusters[j]);
             if (distance < d2)
             {
                 remapIndex = j;
