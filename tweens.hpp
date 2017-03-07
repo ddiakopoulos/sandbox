@@ -82,7 +82,7 @@ struct Quartic
 
 /*
  * A simple playback manager for basic animation curves. 
- * Next: explore threaded approach
+ * Next: explore threaded approach, on_start callback & delay
  */
 
 class SimpleTweenPlayer
