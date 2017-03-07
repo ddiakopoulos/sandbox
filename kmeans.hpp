@@ -1,16 +1,16 @@
-uint32_t kmeans_cluster3d(const float *input,          // an array of input 3d data points.
+uint32_t kmeans_cluster3d(const float *input,            // an array of input 3d data points.
                              uint32_t inputSize,             // the number of input data points.
                              uint32_t clumpCount,            // the number of clumps you wish to produce
-                             float    *outputClusters,    // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
+                             float3    * clusters,          // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
                              uint32_t    *outputIndices,     // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
                              float errorThreshold,        // The error threshold to converge towards before giving up.
                              float collapseDistance)      // distance so small it is not worth bothering to create a new clump.
 {
     uint32_t convergeCount = 64; // maximum number of iterations attempting to converge to a solution..
 
-    uint32_t *counts = //bytes count?
+    std::vector<uint32_t> counts(clumpCount);
 
-    float3 error=0;
+    float error=0;
     if (inputCount <= clumpCount) // if the number of input points is less than our clumping size, just return the input points.
     {
         clumpCount = inputCount;
@@ -141,9 +141,9 @@ uint32_t kmeans_cluster3d(const float *input,          // an array of input 3d d
         }
     }
 
-
     clumpCount = outCount;
     return clumpCount;
+
 };
 
 uint32_t kmeans_cluster3d(const float *input,          // an array of input 3d data points.
