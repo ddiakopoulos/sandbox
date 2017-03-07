@@ -19,12 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\algo_misc.hpp" />
     <ClInclude Include="..\arcball.hpp" />
     <ClInclude Include="..\avl_imgui.hpp" />
     <ClInclude Include="..\base64.hpp" />
     <ClInclude Include="..\bit_mask.hpp" />
     <ClInclude Include="..\camera.hpp" />
     <ClInclude Include="..\circular_buffer.hpp" />
+    <ClInclude Include="..\kmeans.hpp" />
     <ClInclude Include="..\lru_cache.hpp" />
     <ClInclude Include="..\mpmc_blocking_queue.hpp" />
     <ClInclude Include="..\dsp_filters.hpp" />
@@ -48,6 +50,7 @@
     <ClInclude Include="..\parabolic_pointer.hpp" />
     <ClInclude Include="..\parallel_transport_frames.hpp" />
     <ClInclude Include="..\pid_controller.hpp" />
+    <ClInclude Include="..\pointcloud_processing.hpp" />
     <ClInclude Include="..\poisson_disk.hpp" />
     <ClInclude Include="..\procedural_mesh.hpp" />
     <ClInclude Include="..\procedural_sky.hpp" />
@@ -81,6 +84,7 @@
     <ClInclude Include="..\time_keeper.hpp" />
     <ClInclude Include="..\trajectory.hpp" />
     <ClInclude Include="..\try_locker.hpp" />
+    <ClInclude Include="..\tweens.hpp" />
     <ClInclude Include="..\util.hpp" />
   </ItemGroup>
   <ItemGroup>

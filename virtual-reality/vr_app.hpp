@@ -6,6 +6,7 @@
 #include "radix_sort.hpp"
 #include "procedural_mesh.hpp"
 #include "sobol_sequence.h"
+#include "kmeans.hpp"
 
 using namespace avl;
 

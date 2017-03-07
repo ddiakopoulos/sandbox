@@ -219,6 +219,18 @@
     <ClInclude Include="..\radix_sort.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\algo_misc.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tweens.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pointcloud_processing.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kmeans.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">

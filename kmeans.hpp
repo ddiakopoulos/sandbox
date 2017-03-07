@@ -1,3 +1,8 @@
+// A C++11 variant of code published by John W. Ratcliff 
+// Originally provided under the MIT License here: http://codesuppository.blogspot.com/2010/12/k-means-clustering-algorithm.html
+
+#pragma once
+
 #ifndef kmeans_clustering_hpp
 #define kmeans_clustering_hpp
 
@@ -7,14 +12,13 @@
 
 using namespace avl;
 
-uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an array of input 3d data points.
-                            const uint32_t clumpCount,                  // the number of clumps you wish to produce
+ uint32_t kmeans_cluster_3d(const std::vector<float3> & input,          // Input Data
+                            const uint32_t clumpCount,                  // The number of clumps you wish to produce
                             std::vector<float3> & clusters,             // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
                             std::vector<uint32_t> & outputIndices,      // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
                             const float errorThreshold,                 // The error threshold to converge towards before giving up.
-                            const float collapseDistance)               // distance so small it is not worth bothering to create a new clump.
+                            const float collapseDistance)               // Distance so small it is not worth bothering to create a new clump.
 {
-
     const uint32_t inputSize = input.size();
 
     // Maximum number of iterations attempting to converge to a solution
@@ -40,9 +44,9 @@ uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an ar
         std::vector<float3> centroids(clumpCount);
 
         // Take a sampling of the input points as initial centroid estimates
-        for (uint32_t i=0; i<clumpCount; i++)
+        for (uint32_t i = 0; i<clumpCount; i++)
         {
-            uint32_t index = (i*inputSize)/clumpCount;
+            uint32_t index = (i * inputSize) / clumpCount;
             assert(index < inputSize);
             clusters[i] = input[index];
         }
@@ -52,10 +56,10 @@ uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an ar
 
         do
         {
-            old_error = error;  // preserve the old error
+            old_error = error; // preserve the old error
 
             // reset the counts and centroids to current cluster location
-            for (uint32_t i=0; i<clumpCount; i++)
+            for (uint32_t i = 0; i < clumpCount; i++)
             {
                 counts[i] = 0;
                 centroids[i] = float3(0, 0, 0);
@@ -68,7 +72,7 @@ uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an ar
                 float minDistance  = std::numeric_limits<float>::max();
 
                 // Find the nearest clump to this point
-                for (uint32_t j=0; j<clumpCount; j++)
+                for (uint32_t j = 0; j < clumpCount; j++)
                 {
                     float distance = linalg::distance2(input[i], clusters[j]);
                     if (distance < minDistance)
@@ -96,15 +100,12 @@ uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an ar
                 }
             }
 
-            // decrement the convergence counter and bail if it is taking too long to converge to a solution.
+            // Decrement the convergence counter and bail if it is taking too long to converge to a solution.
             convergeCount--;
-            if (convergeCount == 0)
-            {
-                break;
-            }
+            if (convergeCount == 0) break;
 
-            if (error < errorThreshold) // early exit if our first guess is already good enough (if all input points are the same)
-                break;
+            // early exit if our first guess is already good enough (if all input points are the same)
+            if (error < errorThreshold) break;
 
         } while (std::fabs(error - old_error) > errorThreshold); // keep going until the error is reduced by this threshold amount.
     }
@@ -152,20 +153,24 @@ uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an ar
     return outClusterCount;
 };
 
-/*
-uint32_t kmeans_cluster3d(const float *input,          // an array of input 3d data points.
-                             uint32_t inputSize,             // the number of input data points.
-                             uint32_t clumpCount,            // the number of clumps you wish to produce
-                             float    *outputClusters,    // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
-                             uint32_t    *outputIndices,     // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
-                             float errorThreshold,        // The error threshold to converge towards before giving up.
-                             float collapseDistance)      // distance so small it is not worth bothering to create a new clump.
+// Debug itility function to automatically create new 'subpointclouds" based on segmented/clustered pointcloud
+std::vector<std::vector<float3>> make_kmeans_cluster(const std::vector<float3> & input, const uint32_t clumpCount, const float errorThreshold, const float collapseDistance)
 {
-    const Vec3d< float > *_input = (const Vec3d<float> *)input;
-    Vec3d<float> *_output = (Vec3d<float> *)outputClusters;
-    return kmeans_cluster< Vec3d<float>, float >(_input,inputSize,clumpCount,_output,outputIndices,errorThreshold,collapseDistance);
-}
+    std::vector<float3> clusterCentroids(clumpCount);
+    std::vector<uint32_t> clusterIndices(input.size());
 
-*/
+    auto numOutputClusters = kmeans_cluster_3d(input, clumpCount, clusterCentroids, clusterIndices, errorThreshold, collapseDistance);
+
+    std::vector<std::vector<float3>> outputClusters(clusterCentroids.size());
+
+    // Lookup the cluster of each input vertex and copy it to a new 'subpointcloud'
+    for (int i = 0; i < input.size(); ++i)
+    {
+        auto clusterList = outputClusters[clusterIndices[i]];
+        clusterList.push_back(input[i]);
+    }
+
+    return outputClusters;
+}
 
 #endif
