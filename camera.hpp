@@ -10,6 +10,62 @@
 
 namespace avl
 {
+	inline float4 make_frustum_coords(const float aspectRatio, const float nearClip, const float vfov)
+	{
+		const float top = nearClip * std::tan((vfov * (float(ANVIL_PI) * 2.f) / 360.0f) / 2.0f);
+		const float right = top * aspectRatio;
+		const float bottom = -top;
+		const float left = -right;
+		return{ top, right, bottom, left };
+	}
+
+	inline std::array<float3, 4> make_near_clip_coords(Pose pose, float nearClip, float farClip, float aspectRatio, const float vfov)
+	{
+		const float3 viewDirection = safe_normalize(-pose.zdir());
+		const float3 eye = pose.position;
+
+		auto leftDir = pose.xdir();
+		auto upDir = pose.ydir();
+
+		const auto coords = make_frustum_coords(aspectRatio, nearClip, vfov);
+
+		float frustumTop = coords[0];
+		float frustumRight = coords[1];
+		float frustumBottom = coords[2];
+		float frustumLeft = coords[3];
+
+		float3 topLeft = eye + (nearClip * viewDirection) + (frustumTop * upDir) + (frustumLeft * leftDir);
+		float3 topRight = eye + (nearClip  * viewDirection) + (frustumTop * upDir) + (frustumRight * leftDir);
+		float3 bottomLeft = eye + (nearClip  * viewDirection) + (frustumBottom * upDir) + (frustumLeft * leftDir);
+		float3 bottomRight = eye + (nearClip  * viewDirection) + (frustumBottom * upDir) + (frustumRight * leftDir);
+
+		return{ topLeft, topRight, bottomLeft, bottomRight };
+	}
+
+	inline std::array<float3, 4> make_far_clip_coords(Pose pose, float nearClip, float farClip, float aspectRatio, const float vfov)
+	{
+		const float3 viewDirection = safe_normalize(-pose.zdir());
+		const float3 eye = pose.position;
+		const float ratio = farClip / nearClip;
+
+		const auto leftDir = pose.xdir();
+		const auto upDir = pose.ydir();
+
+		const auto coords = make_frustum_coords(aspectRatio, nearClip, vfov);
+
+		float frustumTop = coords[0];
+		float frustumRight = coords[1];
+		float frustumBottom = coords[2];
+		float frustumLeft = coords[3];
+
+		float3 topLeft = eye + (farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumLeft * leftDir);
+		float3 topRight = eye + (farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumRight * leftDir);
+		float3 bottomLeft = eye + (farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumLeft * leftDir);
+		float3 bottomRight = eye + (farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumRight * leftDir);
+
+		return{ topLeft, topRight, bottomLeft, bottomRight };
+	}
+
     struct GlCamera
     {
         Pose pose;
@@ -26,18 +82,9 @@ namespace avl
         
         float4x4 get_view_matrix() const { return make_view_matrix_from_pose(pose); }
         
-        float4 make_frustum_coords(float aspectRatio) const
-        {
-            const float top = nearClip * std::tan((fov * (float(ANVIL_PI) * 2.f) / 360.0f) / 2.0f);
-            const float right = top * aspectRatio;
-            const float bottom = -top;
-            const float left = -right;
-            return {top, right, bottom, left};
-        }
-        
         float4x4 get_projection_matrix(float aspectRatio) const
         {
-            float4 f = make_frustum_coords(aspectRatio);
+            float4 f = make_frustum_coords(aspectRatio, nearClip, fov);
             return make_projection_matrix(f[3], f[1], f[2], f[0], nearClip, farClip); // fixme
         }
         
@@ -89,53 +136,6 @@ namespace avl
         }
         
     };
-    
-    inline std::array<float3, 4> make_near_clip_coords(GlCamera & cam, float aspectRatio)
-    {
-        float3 viewDirection = safe_normalize(cam.get_view_direction());
-        float3 eye = cam.get_eye_point();
-        
-        auto leftDir = cam.pose.xdir();
-        auto upDir = cam.pose.ydir();
-        
-        auto coords = cam.make_frustum_coords(aspectRatio);
-        
-        float frustumTop = coords[0];
-        float frustumRight = coords[1];
-        float frustumBottom = coords[2];
-        float frustumLeft = coords[3];
-        
-        float3 topLeft = eye + (cam.nearClip * viewDirection) + (frustumTop * upDir) + (frustumLeft * leftDir);
-        float3 topRight = eye + (cam.nearClip  * viewDirection) + (frustumTop * upDir) + (frustumRight * leftDir);
-        float3 bottomLeft = eye + (cam.nearClip  * viewDirection) + (frustumBottom * upDir) + (frustumLeft * leftDir);
-        float3 bottomRight = eye + (cam.nearClip  * viewDirection) + (frustumBottom * upDir) + (frustumRight * leftDir);
-        
-        return {topLeft, topRight, bottomLeft, bottomRight};
-    }
-    
-    inline std::array<float3, 4> make_far_clip_coords(GlCamera & cam, float aspectRatio)
-    {
-        float3 viewDirection = safe_normalize(cam.get_view_direction());
-        float3 eye = cam.get_eye_point();
-        float ratio = cam.farClip / cam.nearClip;
-        
-        auto leftDir = cam.pose.xdir();
-        auto upDir = cam.pose.ydir();
-        
-        auto coords = cam.make_frustum_coords(aspectRatio);
-        
-        float frustumTop = coords[0];
-        float frustumRight = coords[1];
-        float frustumBottom = coords[2];
-        float frustumLeft = coords[3];
-        
-        float3 topLeft = eye + (cam.farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumLeft * leftDir);
-        float3 topRight = eye + (cam.farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumRight * leftDir);
-        float3 bottomLeft = eye + (cam.farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumLeft * leftDir);
-        float3 bottomRight = eye + (cam.farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumRight * leftDir);
-        
-        return {topLeft, topRight, bottomLeft, bottomRight};
-    }
     
     class FlyCameraController
     {

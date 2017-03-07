@@ -52,6 +52,7 @@
     <ClInclude Include="..\poisson_disk.hpp" />
     <ClInclude Include="..\procedural_mesh.hpp" />
     <ClInclude Include="..\procedural_sky.hpp" />
+    <ClInclude Include="..\radix_sort.hpp" />
     <ClInclude Include="..\reaction_diffusion.hpp" />
     <ClInclude Include="..\renderable_grid.hpp" />
     <ClInclude Include="..\running_statistics.hpp" />

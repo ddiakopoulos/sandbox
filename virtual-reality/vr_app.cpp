@@ -155,6 +155,10 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 		// Update the the pose of the controller mesh we render
 		scene.controllers[0].set_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
 		scene.controllers[1].set_pose(hmd->get_controller(vr::TrackedControllerRole_RightHand).p);
+
+		sceneDebugRenderer.draw_axis(scene.controllers[0].get_pose());
+		sceneDebugRenderer.draw_axis(scene.controllers[1].get_pose());
+
 	}
 
 	// Iterate scene and make objects visible to the renderer
@@ -173,6 +177,7 @@ void VirtualRealityApp::on_draw()
 
 	physicsEngine->get_world()->debugDrawWorld();
 	renderer->add_debug_renderable(physicsDebugRenderer.get());
+	renderer->add_debug_renderable(&sceneDebugRenderer);
 
 	if (hmd)
 	{
@@ -224,6 +229,7 @@ void VirtualRealityApp::on_draw()
 	}
 
 	physicsDebugRenderer->clear();
+	sceneDebugRenderer.clear();
 
 	glfwSwapBuffers(window);
 	gl_check_error(__FILE__, __LINE__);

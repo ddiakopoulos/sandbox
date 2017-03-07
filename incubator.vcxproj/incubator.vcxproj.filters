@@ -222,6 +222,9 @@
     <ClInclude Include="..\spmc_stealing_queue.hpp">
       <Filter>source\queues</Filter>
     </ClInclude>
+    <ClInclude Include="..\radix_sort.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
