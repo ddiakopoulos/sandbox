@@ -7,15 +7,16 @@
 
 using namespace avl;
 
-uint32_t kmeans_cluster3d(const float3 * input,                   // an array of input 3d data points.
+uint32_t kmeans_cluster3d(const std::vector<float3> & input,                   // an array of input 3d data points.
                              uint32_t inputSize,                // the number of input data points.
                              uint32_t clumpCount,               // the number of clumps you wish to produce
-                             float3    * clusters,              // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
-                             uint32_t    *outputIndices,        // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
+                            std::vector<float3> & clusters,              // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
+                            std::vector<uint32_t> & outputIndices,        // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
                              float errorThreshold,              // The error threshold to converge towards before giving up.
                              float collapseDistance)            // distance so small it is not worth bothering to create a new clump.
 {
-    uint32_t convergeCount = 64; // maximum number of iterations attempting to converge to a solution..
+
+    uint32_t convergeCount = 64; // Maximum number of iterations attempting to converge to a solution.
 
     std::vector<uint32_t> counts(clumpCount);
 
@@ -26,10 +27,7 @@ uint32_t kmeans_cluster3d(const float3 * input,                   // an array of
         clumpCount = inputSize;
         for (uint32_t i=0; i<inputSize; i++)
         {
-            if (outputIndices)
-            {
-                outputIndices[i] = i;
-            }
+            outputIndices[i] = i;
             clusters[i] = input[i];
             counts[i] = 1;
         }
@@ -132,16 +130,13 @@ uint32_t kmeans_cluster3d(const float3 * input,                   // an array of
             }
         }
         // If we have fewer output clumps than input clumps so far, then we need to remap the old indices to the new ones.
-        if (outputIndices)
+        if (outCount != i || !add) // we need to remap indices!  everything that was index 'i' now needs to be remapped to 'outCount'
         {
-            if (outCount != i || !add) // we need to remap indices!  everything that was index 'i' now needs to be remapped to 'outCount'
+            for (uint32_t j=0; j<inputSize; j++)
             {
-                for (uint32_t j=0; j<inputSize; j++)
+                if (outputIndices[j] == i)
                 {
-                    if (outputIndices[j] == i)
-                    {
-                        outputIndices[j] = remapIndex;
-                    }
+                    outputIndices[j] = remapIndex;
                 }
             }
         }
