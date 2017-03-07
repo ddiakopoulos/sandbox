@@ -5,6 +5,7 @@
 #include "bullet_debug.hpp"
 #include "radix_sort.hpp"
 #include "procedural_mesh.hpp"
+#include "sobol_sequence.h"
 
 using namespace avl;
 
