@@ -8,7 +8,6 @@
 using namespace avl;
 
 uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an array of input 3d data points.
-                            const uint32_t inputSize,                   // the number of input data points.
                             const uint32_t clumpCount,                  // the number of clumps you wish to produce
                             std::vector<float3> & clusters,             // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
                             std::vector<uint32_t> & outputIndices,      // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
@@ -16,9 +15,11 @@ uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an ar
                             const float collapseDistance)               // distance so small it is not worth bothering to create a new clump.
 {
 
+    const uint32_t inputSize = input.size();
+
     // Maximum number of iterations attempting to converge to a solution
     uint32_t convergeCount = 32; 
-    uint32_t outCount = 0; // Number of clumps output after processing
+    uint32_t outClusterCount = 0;
     std::vector<uint32_t> counts(clumpCount);
 
     float error = 0.f;
@@ -26,7 +27,7 @@ uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an ar
     // If the number of input points is less than our clumping size, just return the input points
     if (inputSize <= clumpCount)
     {
-        outCount = inputSize;
+        outClusterCount = inputSize;
         for (auto i = 0; i < inputSize; i++)
         {
             outputIndices[i] = i;
@@ -106,53 +107,49 @@ uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an ar
                 break;
 
         } while (std::fabs(error - old_error) > errorThreshold); // keep going until the error is reduced by this threshold amount.
-
     }
 
     // Pruning of Clumps: 
-    // The rules are; first, if a clump has no 'counts' then we prune it as it's unused.
-    // The second, is if the centroid of this clump is essentially  the same (based on the distance tolerance)
-    // as an existing clump, then it is pruned and all indices which used to point to it, now point to the one
-    // it is closest too.
-    float d2 = collapseDistance * collapseDistance;
-    for (uint32_t i=0; i<clumpCount; i++)
+    // The rules are; first, if a clump has no 'counts' then we prune it as it's unused. The second,
+    // is if the centroid of this clump is essentially  the same (based on the distance tolerance) as an existing clump, 
+    // then it is pruned and all indices which used to point to it, now point to the one it is closest too.
+    float distSqr = collapseDistance * collapseDistance;
+
+    for (uint32_t i = 0; i < clumpCount; i++)
     {
         // If no points ended up in this clump, eliminate it.
         if (counts[i] == 0) continue;
 
-        // see if this clump is too close to any already accepted clump.
+        // See if this clump is too close to any already accepted clump
+
         bool add = true;
-        uint32_t remapIndex = outCount; // by default this clump will be remapped to its current index.
-        for (uint32_t j=0; j<outCount; j++)
+        uint32_t remapIndex = outClusterCount; // by default this clump will be remapped to its current index.
+
+        for (uint32_t j = 0; j < outClusterCount; j++)
         {
             float distance = linalg::distance2(clusters[i], clusters[j]);
-            if (distance < d2)
+            if (distance < distSqr)
             {
                 remapIndex = j;
                 add = false; // we do not add this clump
                 break;
             }
         }
+
         // If we have fewer output clumps than input clumps so far, then we need to remap the old indices to the new ones.
-        if (outCount != i || !add) // we need to remap indices!  everything that was index 'i' now needs to be remapped to 'outCount'
+        if (outClusterCount != i || !add)
         {
-            for (uint32_t j=0; j<inputSize; j++)
+            // We need to remap indices. Everything that was index 'i' now needs to be remapped to 'outCount'
+            for (uint32_t j = 0; j < inputSize; j++)
             {
-                if (outputIndices[j] == i)
-                {
-                    outputIndices[j] = remapIndex;
-                }
+                if (outputIndices[j] == i) outputIndices[j] = remapIndex;
             }
         }
-        if (add)
-        {
-            clusters[outCount] = clusters[i];
-            outCount++;
-        }
+
+        if (add) clusters[outClusterCount++] = clusters[i];
     }
 
-    return outCount;
-
+    return outClusterCount;
 };
 
 /*
