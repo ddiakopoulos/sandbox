@@ -7,20 +7,18 @@
 
 using namespace avl;
 
-uint32_t kmeans_cluster3d(const std::vector<float3> & input,                   // an array of input 3d data points.
-                            const uint32_t inputSize,                // the number of input data points.
-                            const uint32_t clumpCount,               // the number of clumps you wish to produce
-                            std::vector<float3> & clusters,              // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
-                            std::vector<uint32_t> & outputIndices,        // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
-                            const float errorThreshold,              // The error threshold to converge towards before giving up.
-                            const float collapseDistance)            // distance so small it is not worth bothering to create a new clump.
+uint32_t kmeans_cluster_3d(const std::vector<float3> & input,           // an array of input 3d data points.
+                            const uint32_t inputSize,                   // the number of input data points.
+                            const uint32_t clumpCount,                  // the number of clumps you wish to produce
+                            std::vector<float3> & clusters,             // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
+                            std::vector<uint32_t> & outputIndices,      // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
+                            const float errorThreshold,                 // The error threshold to converge towards before giving up.
+                            const float collapseDistance)               // distance so small it is not worth bothering to create a new clump.
 {
 
     // Maximum number of iterations attempting to converge to a solution
     uint32_t convergeCount = 32; 
-
-    uint32_t outCount = 0; // number of clumps output after processing
-
+    uint32_t outCount = 0; // Number of clumps output after processing
     std::vector<uint32_t> counts(clumpCount);
 
     float error = 0.f;
@@ -48,8 +46,7 @@ uint32_t kmeans_cluster3d(const std::vector<float3> & input,                   /
             clusters[i] = input[index];
         }
 
-        // Here is the main convergence loop
-        float old_error = std::numeric_limits<float>::max();   // old and initial error estimates
+        float old_error = std::numeric_limits<float>::max(); // old and initial error estimates
         error = old_error;
 
         do
@@ -64,11 +61,12 @@ uint32_t kmeans_cluster3d(const std::vector<float3> & input,                   /
             }
             error = 0;
 
-            // For each input data point, figure out which cluster it is closest too and add it to that cluster.
-            for (uint32_t i=0; i<inputSize; i++)
+            // For each input data point, figure out which cluster it is closest too and add it to that cluster:
+            for (uint32_t i = 0; i < inputSize; i++)
             {
                 float minDistance  = std::numeric_limits<float>::max();
-                // find the nearest clump to this point.
+
+                // Find the nearest clump to this point
                 for (uint32_t j=0; j<clumpCount; j++)
                 {
                     float distance = linalg::distance2(input[i], clusters[j]);
@@ -78,19 +76,21 @@ uint32_t kmeans_cluster3d(const std::vector<float3> & input,                   /
                         outputIndices[i] = j; // save which clump this point indexes
                     }
                 }
-                uint32_t index = outputIndices[i]; // which clump was nearest to this point.
-                centroids[index]+=input[i];
-                counts[index]++;    // increment the counter indicating how many points are in this clump.
+
+                uint32_t index = outputIndices[i]; // which clump was nearest to this point
+                centroids[index] += input[i];
+                counts[index]++; // increment the counter indicating how many points are in this clump.
                 error+=minDistance; // save the error accumulation
             }
 
-            // Now, for each clump, compute the mean and store the result.
+            // Now, for each clump, compute the mean and store the result:
             for (uint32_t i=0; i < clumpCount; i++)
             {
-                if (counts[i]) // if this clump got any points added to it...
+                // Did this clump get any points added to it? 
+                if (counts[i])
                 {
-                    float3 recip = float3(1.0f / counts[i]);    // compute the average (center of those points)
-                    centroids[i] *= recip;    // compute the average center of the points in this clump.
+                    float3 recip = float3(1.0f / counts[i]); // compute the average (center of those points)
+                    centroids[i] *= recip; // compute the average center of the points in this clump.
                     clusters[i] = centroids[i]; // store it as the new cluster.
                 }
             }
@@ -109,16 +109,17 @@ uint32_t kmeans_cluster3d(const std::vector<float3> & input,                   /
 
     }
 
-    // ok..now we prune the clumps if necessary.
+    // Pruning of Clumps: 
     // The rules are; first, if a clump has no 'counts' then we prune it as it's unused.
     // The second, is if the centroid of this clump is essentially  the same (based on the distance tolerance)
     // as an existing clump, then it is pruned and all indices which used to point to it, now point to the one
     // it is closest too.
-    float d2 = collapseDistance * collapseDistance; // squared collapse distance.
+    float d2 = collapseDistance * collapseDistance;
     for (uint32_t i=0; i<clumpCount; i++)
     {
-        if (counts[i] == 0) // if no points ended up in this clump, eliminate it.
-            continue;
+        // If no points ended up in this clump, eliminate it.
+        if (counts[i] == 0) continue;
+
         // see if this clump is too close to any already accepted clump.
         bool add = true;
         uint32_t remapIndex = outCount; // by default this clump will be remapped to its current index.
