@@ -5,6 +5,13 @@
 #include <functional>
 #include "linalg_util.hpp"
 
+struct SimpleHarmonicOscillator
+{
+    float frequency = 0, amplitude = 0, phase = 0;
+    float value() const { return std::sin(phase) * amplitude; }
+    void update(float timestep) { phase += frequency * timestep; }
+};
+
 inline std::vector<bool> make_euclidean_pattern(int steps, int pulses)
 {
     std::vector<bool> pattern;
