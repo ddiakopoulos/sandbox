@@ -83,13 +83,10 @@ namespace avl
         operator std::string() const { return ss.str(); }
         template<class T> as_string & operator << (const T & val) { ss << val; return *this; }
     };
-    
-    enum class LogChannel : uint8_t { LOG_SILENT, LOG_ERROR, LOG_INFO };
-    
-    inline void print_log(LogChannel severity, const char * file, int line, const std::string & message)
+
+    inline void pretty_print(const char * file, const int line, const std::string & message)
     {
-        if (severity == LogChannel::LOG_ERROR) std::cerr << file << " : " << line << " - " << message << std::endl;
-        else std::cout << file << " : " << line << " - " << message << std::endl;
+        std::cout << file << " : " << line << " - " << message << std::endl;
     }
     
     class Noncopyable
@@ -155,7 +152,7 @@ namespace avl
     }
 }
 
-#define ANVIL_ERROR(...) avl::print_log(avl::LogChannel::LOG_ERROR, __FILE__, __LINE__, avl::as_string() << __VA_ARGS__)
-#define ANVIL_INFO(...) avl::print_log(avl::LogChannel::LOG_INFO, __FILE__, __LINE__, avl::as_string() << __VA_ARGS__)
+#define ANVIL_ERROR(...) avl::pretty_print(__FILE__, __LINE__, avl::as_string() << __VA_ARGS__)
+#define ANVIL_INFO(...) avl::pretty_print(__FILE__, __LINE__, avl::as_string() << __VA_ARGS__)
 
 #endif

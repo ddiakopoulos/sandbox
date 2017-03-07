@@ -219,8 +219,8 @@ double compute_confidence(const CircularBuffer<T> & b)
 // tl;dr: use on pointclouds (as first step to PCA) or IMU data
 inline linalg::aliases::float3x3 compute_covariance_matrix(const CircularBuffer<linalg::aliases::float3> & b)
 {
-	linalg::aliases::float3 mean = compute_mean<linalg::aliases::float3>(b);
-	linalg::aliases::float3x3 total;
+    linalg::aliases::float3 mean = compute_mean<linalg::aliases::float3>(b);
+    linalg::aliases::float3x3 total;
 
     for (int i = 0; i < b.get_current_size(); i++) 
     {
@@ -250,7 +250,7 @@ inline linalg::aliases::float3x3 compute_covariance_matrix(const CircularBuffer<
 inline linalg::aliases::float3 compute_pearson_coefficient(const CircularBuffer<linalg::aliases::float3> & b)
 {
     auto cov = compute_covariance_matrix(b);
-	linalg::aliases::float3 pearson;
+    linalg::aliases::float3 pearson;
     pearson.x = cov[0][1] / (sqrt(cov[0][0]) * sqrt(cov[1][1]));
     pearson.y = cov[1][2] / (sqrt(cov[1][1]) * sqrt(cov[2][2]));
     pearson.z = cov[2][0] / (sqrt(cov[2][2]) * sqrt(cov[0][0]));
