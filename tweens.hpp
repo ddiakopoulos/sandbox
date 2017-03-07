@@ -5,7 +5,7 @@
 #include "linalg_util.hpp"
 #include <list>
 #include <functional>
-
+#include <thread>
 
 struct Linear
 {
@@ -80,6 +80,11 @@ struct Quartic
     }
 };
 
+/*
+ * A simple playback manager for basic animation curves. 
+ * Next: explore threaded approach
+ */
+
 class SimpleTweenPlayer
 {
     struct Tween
@@ -87,6 +92,7 @@ class SimpleTweenPlayer
         void * variable;
         float t0, t1;
         std::function<void(float t)> on_update;
+        std::function<void()> on_finish;
     };
 
     std::list<Tween> tweens;
@@ -107,6 +113,7 @@ public:
             else
             {
                 it->on_update(1.0f);
+                if (it->on_finish) it->on_finish();
                 it = tweens.erase(it);
             }
         }
