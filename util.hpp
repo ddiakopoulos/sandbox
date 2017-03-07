@@ -65,15 +65,15 @@ namespace avl
     {
         std::random_device rd;
         std::mt19937_64 gen;
-		std::uniform_real_distribution<float> full { 0.f, 1.f };
-		std::uniform_real_distribution<float> safe { 0.001f, 0.999f };
-		std::uniform_real_distribution<float> two_pi { 0.f, float(ANVIL_TWO_PI) };
+        std::uniform_real_distribution<float> full { 0.f, 1.f };
+        std::uniform_real_distribution<float> safe { 0.001f, 0.999f };
+        std::uniform_real_distribution<float> two_pi { 0.f, float(ANVIL_TWO_PI) };
     public:
-		UniformRandomGenerator() : rd(), gen(rd()) { }
+        UniformRandomGenerator() : rd(), gen(rd()) { }
         float random_float() { return full(gen); }
-		float random_float(float max) { std::uniform_real_distribution<float> custom(0.f, max); return custom(gen); }
-		float random_float_sphere() { return two_pi(gen); }
-		float random_float_safe() { return safe(gen); }
+        float random_float(float max) { std::uniform_real_distribution<float> custom(0.f, max); return custom(gen); }
+        float random_float_sphere() { return two_pi(gen); }
+        float random_float_safe() { return safe(gen); }
         int random_int(int max) { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }
     };
     
@@ -98,19 +98,19 @@ namespace avl
         Noncopyable & operator = (const Noncopyable& r) = delete;
     };
      
-	template <typename T>
-	class Singleton : public Noncopyable
-	{
-	private:
-		Singleton(const Singleton<T> &);
-		Singleton & operator = (const Singleton<T> &);
-	protected:
-		static T * single;
-		Singleton() = default;
-		~Singleton() = default;
-	public:
-		static T & get_instance() { if (!single) single = new T(); return *single; };
-	};
+    template <typename T>
+    class Singleton : public Noncopyable
+    {
+    private:
+        Singleton(const Singleton<T> &);
+        Singleton & operator = (const Singleton<T> &);
+    protected:
+        static T * single;
+        Singleton() = default;
+        ~Singleton() = default;
+    public:
+        static T & get_instance() { if (!single) single = new T(); return *single; };
+    };
 
     inline std::string codepoint_to_utf8(uint32_t codepoint)
     {

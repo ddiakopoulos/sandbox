@@ -128,7 +128,7 @@ namespace poisson
             std::vector<float2> processingList;
             std::vector<float2> outputList;
             Grid grid(bounds, 3);
-			UniformRandomGenerator r;
+            UniformRandomGenerator r;
             
             // add the initial points
             for (auto p : initialSet)
@@ -194,7 +194,7 @@ namespace poisson
             std::vector<float3> processingList;
             std::vector<float3> outputList;
             Volume grid(bounds, 3);
-			UniformRandomGenerator r;
+            UniformRandomGenerator r;
             
             for (auto p : initialSet)
             {
@@ -244,20 +244,20 @@ namespace poisson
         }
     };
 
-	// Returns a set of poisson disk samples inside a rectangular area, with a minimum separation and with
-	// a packing determined by how high k is. The higher k is the higher the algorithm will be slow.
-	// If no initialSet of points is provided the area center will be used as the initial point.
-	inline std::vector<float2> make_poisson_disk_distribution(const Bounds2D & bounds, const std::vector<float2> & initialSet, int k, float separation = 1.0)
-	{
-		poisson::PoissonDiskGenerator2D gen;
-		return gen.build(bounds, initialSet, k, separation);
-	}
+    // Returns a set of poisson disk samples inside a rectangular area, with a minimum separation and with
+    // a packing determined by how high k is. The higher k is the higher the algorithm will be slow.
+    // If no initialSet of points is provided the area center will be used as the initial point.
+    inline std::vector<float2> make_poisson_disk_distribution(const Bounds2D & bounds, const std::vector<float2> & initialSet, int k, float separation = 1.0)
+    {
+        poisson::PoissonDiskGenerator2D gen;
+        return gen.build(bounds, initialSet, k, separation);
+    }
 
-	inline std::vector<float3> make_poisson_disk_distribution(const Bounds3D & bounds, const std::vector<float3> & initialSet, int k, float separation = 1.0)
-	{
-		poisson::PoissonDiskGenerator3D gen;
-		return gen.build(bounds, initialSet, k, separation);
-	} 
+    inline std::vector<float3> make_poisson_disk_distribution(const Bounds3D & bounds, const std::vector<float3> & initialSet, int k, float separation = 1.0)
+    {
+        poisson::PoissonDiskGenerator3D gen;
+        return gen.build(bounds, initialSet, k, separation);
+    } 
 }
 
 #endif

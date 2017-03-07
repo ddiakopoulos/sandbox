@@ -9,18 +9,18 @@
 
 namespace avl
 {
-	
+    
 struct FogShaderParams
 {
     GlTexture2D gradientTex;
 
-	float startDistance = 0.0f;
-	float endDistance = 64.0f;
-	int textureWidth = 32;
+    float startDistance = 0.0f;
+    float endDistance = 64.0f;
+    int textureWidth = 32;
 
-	float heightFogThickness = 1.15f;
-	float heightFogFalloff = 0.1f;
-	float heightFogBaseHeight = -16.0f;
+    float heightFogThickness = 1.15f;
+    float heightFogFalloff = 0.1f;
+    float heightFogBaseHeight = -16.0f;
 
     float3 color = {1, 1, 1};
 
@@ -29,7 +29,7 @@ struct FogShaderParams
         if (!gradientTex) generate_gradient_tex();
 
         float scale = 1.0f / (endDistance - startDistance);
-		float add = -startDistance / (endDistance - startDistance);
+        float add = -startDistance / (endDistance - startDistance);
 
         prog.bind();
         prog.uniform("u_gradientFogScaleAdd", float2(scale, add));
@@ -85,20 +85,20 @@ struct RaycastResult
 struct Material;
 struct Renderable
 {
-	virtual void update(const float & dt) {}
-	virtual void draw() const {};
-	virtual Bounds3D get_bounds() const = 0;
-	virtual float3 get_scale() const = 0;
-	virtual Pose get_pose() const = 0;
-	virtual void set_pose(const Pose & p) = 0;
-	virtual RaycastResult raycast(const Ray & worldRay) const = 0;
-	virtual Material * get_material() const = 0;
-	virtual void set_material(Material * const m) = 0;
+    virtual void update(const float & dt) {}
+    virtual void draw() const {};
+    virtual Bounds3D get_bounds() const = 0;
+    virtual float3 get_scale() const = 0;
+    virtual Pose get_pose() const = 0;
+    virtual void set_pose(const Pose & p) = 0;
+    virtual RaycastResult raycast(const Ray & worldRay) const = 0;
+    virtual Material * get_material() const = 0;
+    virtual void set_material(Material * const m) = 0;
 };
 
 struct DebugRenderable
 {
-	virtual void draw(const float4x4 & viewProj) = 0;
+    virtual void draw(const float4x4 & viewProj) = 0;
 };
 
 } // end namespace avl

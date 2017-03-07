@@ -22,7 +22,7 @@ class ShaderMonitor
         std::string vertexPath;
         std::string fragmentPath;
         bool shouldRecompile = false;
-		std::string errorStr;
+        std::string errorStr;
         ShaderAsset(GlShader & program, const std::string & v, const std::string & f) : program(program), vertexPath(v), fragmentPath(f) {};
     };
     
@@ -33,7 +33,7 @@ class ShaderMonitor
         {
             if (action == efsw::Actions::Modified)
             {
-				std::cout << "Shader file updated: " << filename << std::endl;
+                std::cout << "Shader file updated: " << filename << std::endl;
                 if (callback) callback(filename);
             }
         }
@@ -65,11 +65,11 @@ public:
         fileWatcher->watch();
     }
 
-	std::shared_ptr<GlShader> watch(const std::string & vertexShader, const std::string & fragmentShader, const std::string geomPath = "")
+    std::shared_ptr<GlShader> watch(const std::string & vertexShader, const std::string & fragmentShader, const std::string geomPath = "")
     {
-		std::shared_ptr<GlShader> watchedShader = std::make_shared<GlShader>(read_file_text(vertexShader), read_file_text(fragmentShader), read_file_text(geomPath));
+        std::shared_ptr<GlShader> watchedShader = std::make_shared<GlShader>(read_file_text(vertexShader), read_file_text(fragmentShader), read_file_text(geomPath));
         shaders.emplace_back(new ShaderAsset(*watchedShader.get(), vertexShader, fragmentShader));
-		return watchedShader;
+        return watchedShader;
     }
     
     // Call this regularly on the gl thread
@@ -81,18 +81,18 @@ public:
             {
                 try
                 {
-					shader->shouldRecompile = false;
+                    shader->shouldRecompile = false;
                     shader->program = GlShader(read_file_text(shader->vertexPath), read_file_text(shader->fragmentPath));
-					if (shader->errorStr.length() > 0)
-					{
-						shader->errorStr = "";
-						std::cout << "Shader recompiled successfully" << std::endl;
-					}
+                    if (shader->errorStr.length() > 0)
+                    {
+                        shader->errorStr = "";
+                        std::cout << "Shader recompiled successfully" << std::endl;
+                    }
                 }
                 catch (const std::exception & e)
                 {
-					shader->errorStr = e.what();
-					std::cout << shader->errorStr << std::endl;
+                    shader->errorStr = e.what();
+                    std::cout << shader->errorStr << std::endl;
                 }
             }
         }

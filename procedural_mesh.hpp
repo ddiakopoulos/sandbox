@@ -55,7 +55,7 @@ namespace avl
     {
         Geometry sphereGeom;
         
-		uint32_t U = 32, V = 32;
+        uint32_t U = 32, V = 32;
         
         for (uint32_t ui = 0; ui < U; ++ui)
         {
@@ -342,7 +342,7 @@ namespace avl
         // Top + Bottom
         for (uint32_t i = 0; i < rs; i++)
         {
-			uint32_t x = i + rs;
+            uint32_t x = i + rs;
             uint4 q = uint4(i, (i) % rs + (2 * rs), (i + 1) % rs + (2 * rs), (i + 1) % rs); // -Z end
             uint4 q2 = uint4(x, (x) % (2 * rs) + (2 * rs), (i + 1) % rs + (3 * rs), ((i + 1) % rs) + rs); // +Z end
             ringGeom.faces.push_back({q.w,q.z,q.x});
@@ -547,11 +547,11 @@ namespace avl
                 plane.faces.push_back({indexOffset + 0, indexOffset + 1, indexOffset + 2});
                 plane.faces.push_back({indexOffset + 0, indexOffset + 2, indexOffset + 3});
 
-				if (withBackface)
-				{
-					plane.faces.push_back({ indexOffset + 2, indexOffset + 1, indexOffset + 0 });
-					plane.faces.push_back({ indexOffset + 3, indexOffset + 2, indexOffset + 0 });
-				}
+                if (withBackface)
+                {
+                    plane.faces.push_back({ indexOffset + 2, indexOffset + 1, indexOffset + 0 });
+                    plane.faces.push_back({ indexOffset + 3, indexOffset + 2, indexOffset + 0 });
+                }
                 
                 indexOffset += 4;
             }
@@ -647,7 +647,7 @@ namespace avl
         axis.colors.emplace_back(1.0, 0.0, 0.0, 1.0);
         axis.colors.emplace_back(1.0, 0.0, 0.0, 1.0);
 
-		axis.normals.emplace_back(0.0, 0.0, 1.0);
+        axis.normals.emplace_back(0.0, 0.0, 1.0);
         axis.normals.emplace_back(0.0, 0.0, 1.0);
         axis.normals.emplace_back(0.0, 1.0, 0.0);
         axis.normals.emplace_back(0.0, 1.0, 0.0);
@@ -765,7 +765,7 @@ namespace avl
         
         float operator() (const float phi) const 
         {
-			/*
+            /*
             const float r = m * phi / 4.0f;
 
             float t1 = std::abs(std::cos(r) / (1.0 / a));
@@ -775,11 +775,11 @@ namespace avl
             t2 = std::pow(t2, n3);
 
             return std::pow(t1 + t2, -1.0f / n1);
-			*/
+            */
 
-			float raux1 = std::pow(std::abs(1.f / a * std::cos(m * phi / 4.f)), n2) + std::pow(std::abs(1.f / b * std::sin(m * phi / 4.f)), n3);
-			float r1 = std::pow(std::abs(raux1), -1.0f / n1);
-			return r1;
+            float raux1 = std::pow(std::abs(1.f / a * std::cos(m * phi / 4.f)), n2) + std::pow(std::abs(1.f / b * std::sin(m * phi / 4.f)), n3);
+            float r1 = std::pow(std::abs(raux1), -1.0f / n1);
+            return r1;
         }
     };
 
