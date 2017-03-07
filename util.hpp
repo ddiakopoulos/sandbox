@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <memory>
+#include "geometric.hpp"
 #include "linalg_util.hpp"
 
 #define ANVIL_PI            3.1415926535897931
@@ -61,6 +63,38 @@
 namespace avl
 {
     
+    struct ScreenSpaceAutoLayout
+    {
+        float aspectRatio { 1 };
+        URect placement { { 0,0 },{ 0,0 },{ 1,0 },{ 1,0 } };
+        Bounds2D bounds;
+
+        std::vector<std::shared_ptr<ScreenSpaceAutoLayout>> children;
+
+        void add_child(const URect & placement, std::shared_ptr<ScreenSpaceAutoLayout> child = std::make_shared<ScreenSpaceAutoLayout>())
+        {
+            child->placement = placement;
+            children.push_back(child);
+        }
+
+        void layout()
+        {
+            for (auto & child : children)
+            {
+                auto size = child->bounds.size();
+                child->bounds = child->placement.resolve(bounds);
+                auto childAspect = child->bounds.width() / child->bounds.height();
+                if (childAspect > 0)
+                {
+                    float xpadding = (1 - std::min((child->bounds.height() * childAspect) / child->bounds.width(), 1.0f)) / 2;
+                    float ypadding = (1 - std::min((child->bounds.width() / childAspect) / child->bounds.height(), 1.0f)) / 2;
+                    child->bounds = URect{ { xpadding, 0 },{ ypadding, 0 },{ 1 - xpadding, 0 },{ 1 - ypadding, 0 } }.resolve(child->bounds);
+                }
+                if (child->bounds.size() != size) child->layout();
+            }
+        }
+    };
+
     class UniformRandomGenerator
     {
         std::random_device rd;

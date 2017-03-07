@@ -35,7 +35,6 @@
     <ClInclude Include="..\GL_API.hpp" />
     <ClInclude Include="..\gpu_timer.hpp" />
     <ClInclude Include="..\human_time.hpp" />
-    <ClInclude Include="..\image.hpp" />
     <ClInclude Include="..\index.hpp" />
     <ClInclude Include="..\linalg_util.hpp" />
     <ClInclude Include="..\math_util.hpp" />
@@ -59,7 +58,6 @@
     <ClInclude Include="..\scene.hpp" />
     <ClInclude Include="..\signal.hpp" />
     <ClInclude Include="..\simplex_noise.hpp" />
-    <ClInclude Include="..\sketch.hpp" />
     <ClInclude Include="..\solvers.hpp" />
     <ClInclude Include="..\splines.hpp" />
     <ClInclude Include="..\spmc_stealing_queue.hpp" />

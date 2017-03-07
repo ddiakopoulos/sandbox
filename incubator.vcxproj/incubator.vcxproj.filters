@@ -99,9 +99,6 @@
     <ClInclude Include="..\signal.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\sketch.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\string_utils.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
@@ -191,9 +188,6 @@
     </ClInclude>
     <ClInclude Include="..\parallel_transport_frames.hpp">
       <Filter>source\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\image.hpp">
-      <Filter>source\rendering</Filter>
     </ClInclude>
     <ClInclude Include="..\gpu_timer.hpp">
       <Filter>source\rendering</Filter>
