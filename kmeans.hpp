@@ -8,24 +8,28 @@
 using namespace avl;
 
 uint32_t kmeans_cluster3d(const std::vector<float3> & input,                   // an array of input 3d data points.
-                             uint32_t inputSize,                // the number of input data points.
-                             uint32_t clumpCount,               // the number of clumps you wish to produce
+                            const uint32_t inputSize,                // the number of input data points.
+                            const uint32_t clumpCount,               // the number of clumps you wish to produce
                             std::vector<float3> & clusters,              // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
                             std::vector<uint32_t> & outputIndices,        // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
-                             float errorThreshold,              // The error threshold to converge towards before giving up.
-                             float collapseDistance)            // distance so small it is not worth bothering to create a new clump.
+                            const float errorThreshold,              // The error threshold to converge towards before giving up.
+                            const float collapseDistance)            // distance so small it is not worth bothering to create a new clump.
 {
 
-    uint32_t convergeCount = 64; // Maximum number of iterations attempting to converge to a solution.
+    // Maximum number of iterations attempting to converge to a solution
+    uint32_t convergeCount = 32; 
+
+    uint32_t outCount = 0; // number of clumps output after processing
 
     std::vector<uint32_t> counts(clumpCount);
 
     float error = 0.f;
 
-    if (inputSize <= clumpCount) // if the number of input points is less than our clumping size, just return the input points.
+    // If the number of input points is less than our clumping size, just return the input points
+    if (inputSize <= clumpCount)
     {
-        clumpCount = inputSize;
-        for (uint32_t i=0; i<inputSize; i++)
+        outCount = inputSize;
+        for (auto i = 0; i < inputSize; i++)
         {
             outputIndices[i] = i;
             clusters[i] = input[i];
@@ -36,7 +40,7 @@ uint32_t kmeans_cluster3d(const std::vector<float3> & input,                   /
     {
         std::vector<float3> centroids(clumpCount);
 
-        // Take a sampling of the input points as initial centroid estimates.
+        // Take a sampling of the input points as initial centroid estimates
         for (uint32_t i=0; i<clumpCount; i++)
         {
             uint32_t index = (i*inputSize)/clumpCount;
@@ -110,7 +114,6 @@ uint32_t kmeans_cluster3d(const std::vector<float3> & input,                   /
     // The second, is if the centroid of this clump is essentially  the same (based on the distance tolerance)
     // as an existing clump, then it is pruned and all indices which used to point to it, now point to the one
     // it is closest too.
-    uint32_t outCount = 0; // number of clumps output after pruning performed.
     float d2 = collapseDistance * collapseDistance; // squared collapse distance.
     for (uint32_t i=0; i<clumpCount; i++)
     {
@@ -147,8 +150,7 @@ uint32_t kmeans_cluster3d(const std::vector<float3> & input,                   /
         }
     }
 
-    clumpCount = outCount;
-    return clumpCount;
+    return outCount;
 
 };
 
