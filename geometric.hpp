@@ -846,23 +846,40 @@ namespace avl
         return true;
     }
 
-    enum class FrustumPlane : int
+    enum FrustumPlane
     {
-        FRUSTUM_RIGHT,
-        FRUSTUM_LEFT,
-        BUSTUM_BOTTOM,
-        FRUSTUM_TOP,
-        FRUSTUM_NEAR,
-        FRUSTUM_FAR
+        RIGHT,
+        LEFT,
+        BOTTOM,
+        TOP,
+        NEAR,
+        FAR
     };
 
     struct Frustum
     {
-        Frustum();
+        Plane planes[6];
+
+        Frustum()
+        {
+            planes[FrustumPlane::RIGHT] = Plane({-1, 0, 0}, 1.f );
+            planes[FrustumPlane::LEFT] = Plane({1, 0, 0 }, 1.f);
+            planes[FrustumPlane::BOTTOM] = Plane({0, 0, 1 }, 1.f);
+            planes[FrustumPlane::TOP] = Plane({0, 0, -1}, 1.f );
+            planes[FrustumPlane::NEAR] = Plane({0, 1, 0 }, 1.f);
+            planes[FrustumPlane::FAR] = Plane({0, -1, 0}, 1.f );
+        }
+
         Frustum(const float4x4 & viewProj)
         {
 
         }
+        
+        std::array<float3, 6> get_corners() const
+        {
+
+        }
+
     };
 
 }
