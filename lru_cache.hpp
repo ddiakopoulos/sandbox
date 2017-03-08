@@ -31,7 +31,7 @@ template <typename K, typename V>
 struct KeyValuePair 
 {
     K key; V value;
-    KeyValuePair(const K& k, const V& v) : key(k), value(v) {}
+    KeyValuePair(const K & k, const V & v) : key(k), value(v) {}
 };
 
 /*
@@ -51,14 +51,12 @@ struct KeyValuePair
         std::for_each(keys.begin(), keys.end(), f);
     }
  */
-
 template <class Key, class Value, class lock_type = null_lock_t,
           class map_type = std::unordered_map<Key, typename std::list<KeyValuePair<Key, Value>>::iterator>>
-
 class LeastRecentlyUsedCache : public avl::Noncopyable 
 {
 
-  typedef std::list<KeyValuePair<Key, Value>> list_type;
+    typedef std::list<KeyValuePair<Key, Value>> list_type;
 
 protected:
 
@@ -78,11 +76,11 @@ protected:
 
 private:
 
-  mutable lock_type lock;
-  map_type cache;
-  list_type keys;
-  size_t maxSize;
-  size_t elasticity;
+    mutable lock_type lock;
+    map_type cache;
+    list_type keys;
+    size_t maxSize;
+    size_t elasticity;
  
 public:
 
@@ -91,25 +89,6 @@ public:
     // unbounded cache (but in that case, using an std::unordered_map directly is better)
     explicit LeastRecentlyUsedCache(size_t maxSize = 64, size_t elasticity = 10) : maxSize(maxSize), elasticity(elasticity) { }
     ~LeastRecentlyUsedCache() = default;
-
-    size_t size() const 
-    {
-        std::lock_guard<lock_type> g(lock);
-        return cache.size();
-    }
-
-    bool empty() const 
-    {
-        std::lock_guard<lock_type> g(lock);
-        return cache.empty();
-    }
-
-    void clear() 
-    {
-        std::lock_guard<lock_type> g(lock);
-        cache.clear();
-        keys.clear();
-    }
 
     void insert(const Key & k, const Value & v) 
     {
@@ -158,10 +137,29 @@ public:
         return true;
     }
 
-    bool contains(const Key & k) 
+    bool contains(const Key & k) const
     {
         std::lock_guard<lock_type> g(lock);
         return cache.find(k) != cache.end();
+    }
+
+    size_t size() const
+    {
+        std::lock_guard<lock_type> g(lock);
+        return cache.size();
+    }
+
+    bool empty() const
+    {
+        std::lock_guard<lock_type> g(lock);
+        return cache.empty();
+    }
+
+    void clear()
+    {
+        std::lock_guard<lock_type> g(lock);
+        cache.clear();
+        keys.clear();
     }
 
     size_t get_max_size() const { return maxSize; }

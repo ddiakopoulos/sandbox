@@ -153,7 +153,7 @@ using namespace avl;
     return outClusterCount;
 };
 
-// Debug itility function to automatically create new 'subpointclouds" based on segmented/clustered pointcloud
+// Debug utility function to automatically create new 'subpointclouds" based on segmented/clustered pointcloud
 std::vector<std::vector<float3>> make_kmeans_cluster(const std::vector<float3> & input, const uint32_t clumpCount, const float errorThreshold, const float collapseDistance)
 {
     std::vector<float3> clusterCentroids(clumpCount);
