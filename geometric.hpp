@@ -919,9 +919,9 @@ namespace avl
         }
         
         // Returns F/N/T/B/L/R
-        std::array<float3, 6> get_corners() const
+        std::array<float3, 8> get_corners() const
         {
-            std::array<float3, 6> corners;
+            std::array<float3, 8> corners;
 
             Line farLeft = intersect_plane_plane(planes[FrustumPlane::LEFT], planes[FrustumPlane::FAR]);
             Line farRight = intersect_plane_plane(planes[FrustumPlane::RIGHT], planes[FrustumPlane::FAR]);

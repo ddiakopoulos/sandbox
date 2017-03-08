@@ -153,6 +153,14 @@ void VR_Renderer::render_frame()
 
         glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
 
+        Frustum f(v.viewProj);
+        
+        for (auto p : f.get_corners())
+        {
+            std::cout << "Pt: " << p << std::endl;
+        }
+        std::cout << "-----------------" << std::endl;
+
         // Render into 4x multisampled fbo
         glEnable(GL_MULTISAMPLE);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
