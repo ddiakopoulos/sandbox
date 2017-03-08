@@ -685,22 +685,28 @@ namespace avl
         float3 get_direction() const { return safe_normalize (second - first); };
     };
     
+    //////////////
+    //   Line   //
+    //////////////
+
+    struct Line
+    {
+        float3 point, direction;
+        Line(const float3 & pt, const float3 & dir) : point(pt), direction(dir) {}
+    };
+    
     /////////////////////////////////
     // Object-Object intersections //
     /////////////////////////////////
     
-    // The point where the line p0-p2 intersects the plane n&d
-    inline float3 intersect_plane_line(const float3 & n, const float & d, const float3 & p0, const float3 & p1)
+    // http://paulbourke.net/geometry/pointlineplane/
+    inline Line intersect_plane_plane(const Plane & p1, const Plane & p2)
     {
-        float3 dif = p1 - p0;
-        float dn = dot(n, dif);
-        float t = -(d + dot(n, p0)) / dn;
-        return p0 + (dif*t);
-    }
-    
-    inline float3 intersect_plane_line(const float4 & plane, const float3 & p0, const float3 & p1)
-    {
-        return intersect_plane_line(plane.xyz(), plane.w, p0, p1);
+        const float ndn = dot(p1.get_normal(), p2.get_normal());
+        const float recDeterminant = 1.f / (1.f - (ndn * ndn));
+        const float c1 = (-p1.get_distance() + (p2.get_distance() * ndn)) * recDeterminant;
+        const float c2 = (-p2.get_distance() + (p1.get_distance() * ndn)) * recDeterminant;
+        return Line((c1 * p1.get_normal()) + (c2 * p2.get_normal()), normalize(cross(p1.get_normal(), p2.get_normal())));
     }
     
     //////////////////////////////
