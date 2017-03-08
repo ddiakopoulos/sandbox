@@ -174,6 +174,13 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
         auto rightHandButton = hmd->get_controller(vr::TrackedControllerRole_RightHand).trigger.down;
         
+        /* ToDo
+        * Both Hands
+        * Trackpack Control / Release
+        * Dynamic Meshes (i.e. something other than StaticMesh)
+        * Clamp Velocity
+        * Mesh gen on a thread (future)
+        */
         if (rightHandButton)
         {
             auto rightPose = hmd->get_controller(vr::TrackedControllerRole_RightHand).p;
@@ -181,13 +188,16 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
             scene.params.position = rightPose.position;
             scene.params.forward = -qzdir(rightPose.orientation);
 
-            auto parabolicGeometry = make_parabolic_pointer(scene.navMesh, scene.params);
-
-            StaticMesh pointer;
-            pointer.set_static_mesh(parabolicGeometry);
-            pointer.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
-            pointer.set_material(scene.namedMaterialList["material-debug"].get());
-            scene.models.push_back(std::move(pointer));
+            Geometry pointerGeom;
+            float3 hitLocation;
+            if (make_parabolic_pointer(scene.navMesh, scene.params, pointerGeom, hitLocation))
+            {
+                StaticMesh pointer;
+                pointer.set_static_mesh(pointerGeom);
+                pointer.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
+                pointer.set_material(scene.namedMaterialList["material-debug"].get());
+                scene.models.push_back(std::move(pointer));
+            }
         }
     }
 

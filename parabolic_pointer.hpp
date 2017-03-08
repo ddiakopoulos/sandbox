@@ -211,35 +211,30 @@ struct ParabolicPointerParams
     float pointCount = 32.f;
 };
 
-inline Geometry make_parabolic_pointer(const Geometry & navMesh, const ParabolicPointerParams & params)
+inline bool make_parabolic_pointer(const Geometry & navMesh, const ParabolicPointerParams & params, Geometry & pointer, float3 & worldHit)
 {
-    Geometry pointerGeometry;
-
     float3 forwardDirScaled = params.forward * float3(10.0); // transform local to world 
     // float3 v_n = normalize(v);
     // float currentAngle = clamp_initial_velocity(params.position, v, v_n);
 
-    float3 acceleration = float3(0, 1, 0) * -9.8f;
-
     std::vector<float3> points;
-
-    const bool solution = compute_parabolic_curve(params.position, forwardDirScaled, acceleration, params.pointSpacing, params.pointCount, navMesh, points);
+    const bool solution = compute_parabolic_curve(params.position, forwardDirScaled, float3(0, -9.8f, 0), params.pointSpacing, params.pointCount, navMesh, points);
 
     //std::cout << gotCurve << " :: " << points.size() << std::endl;
     // float3 selectedPoint = points[points.size()-1];
-
-    if (solution)
-    {
-        pointerGeometry = make_parabolic_geometry(points, forwardDirScaled, 0.1);
-        pointerGeometry.compute_bounds();
-        pointerGeometry.compute_normals();
-    }
 
     //std::cout << "Parabola Points: " << std::endl;
     //for (auto p : points) std::cout << p << std::endl;
     //std::cout << "-------------------------------------------------------" << std::endl;
 
-    return pointerGeometry;
+    if (solution)
+    {
+        pointer = make_parabolic_geometry(points, forwardDirScaled, 0.1);
+        worldHit = points[points.size() - 1];
+        return true;
+    }
+
+    return false;
 }
 
 #endif // end parabolic_pointer_hpp
