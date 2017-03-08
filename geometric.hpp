@@ -708,6 +708,13 @@ namespace avl
         const float c2 = (-p2.get_distance() + (p1.get_distance() * ndn)) * recDeterminant;
         return Line((c1 * p1.get_normal()) + (c2 * p2.get_normal()), normalize(cross(p1.get_normal(), p2.get_normal())));
     }
+
+    inline float3 intersect_line_plane(const Line & l, const Plane & p)
+    {
+        const float d = dot(l.direction, p.get_normal());
+        const float dist = p.distance_to(l.point) / d;
+        return (l.point - (dist * l.direction));
+    }
     
     //////////////////////////////
     // Ray-object intersections //
