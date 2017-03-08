@@ -846,6 +846,25 @@ namespace avl
         return true;
     }
 
+    enum class FrustumPlane : int
+    {
+        FRUSTUM_RIGHT,
+        FRUSTUM_LEFT,
+        BUSTUM_BOTTOM,
+        FRUSTUM_TOP,
+        FRUSTUM_NEAR,
+        FRUSTUM_FAR
+    };
+
+    struct Frustum
+    {
+        Frustum();
+        Frustum(const float4x4 & viewProj)
+        {
+
+        }
+    };
+
 }
 
 #endif // end geometric_h
