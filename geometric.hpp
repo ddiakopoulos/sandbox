@@ -872,7 +872,37 @@ namespace avl
 
         Frustum(const float4x4 & viewProj)
         {
+            planes[FrustumPlane::RIGHT].equation.x = viewProj[0][3] - viewProj[0][0];
+            planes[FrustumPlane::RIGHT].equation.y = viewProj[1][3] - viewProj[1][0];
+            planes[FrustumPlane::RIGHT].equation.z = viewProj[2][3] - viewProj[2][0];
+            planes[FrustumPlane::RIGHT].equation.w = viewProj[3][3] - viewProj[3][0];
 
+            planes[FrustumPlane::LEFT].equation.x = viewProj[0][3] + viewProj[0][0];
+            planes[FrustumPlane::LEFT].equation.y = viewProj[1][3] + viewProj[1][0];
+            planes[FrustumPlane::LEFT].equation.z = viewProj[2][3] + viewProj[2][0];
+            planes[FrustumPlane::LEFT].equation.w = viewProj[3][3] + viewProj[3][0];
+
+            planes[FrustumPlane::BOTTOM].equation.x = viewProj[0][3] + viewProj[0][1];
+            planes[FrustumPlane::BOTTOM].equation.y = viewProj[1][3] + viewProj[1][1];
+            planes[FrustumPlane::BOTTOM].equation.z = viewProj[2][3] + viewProj[2][1];
+            planes[FrustumPlane::BOTTOM].equation.w = viewProj[3][3] + viewProj[3][1];
+
+            planes[FrustumPlane::TOP].equation.x = viewProj[0][3] - viewProj[0][1];
+            planes[FrustumPlane::TOP].equation.y = viewProj[1][3] - viewProj[1][1];
+            planes[FrustumPlane::TOP].equation.z = viewProj[2][3] - viewProj[2][1];
+            planes[FrustumPlane::TOP].equation.w = viewProj[3][3] - viewProj[3][1];
+
+            planes[FrustumPlane::FAR].equation.x = viewProj[0][3] - viewProj[0][2];
+            planes[FrustumPlane::FAR].equation.y = viewProj[1][3] - viewProj[1][2];
+            planes[FrustumPlane::FAR].equation.z = viewProj[2][3] - viewProj[2][2];
+            planes[FrustumPlane::FAR].equation.w = viewProj[3][3] - viewProj[3][2];
+
+            planes[FrustumPlane::NEAR].equation.x = viewProj[0][3] + viewProj[0][2];
+            planes[FrustumPlane::NEAR].equation.y = viewProj[1][3] + viewProj[1][2];
+            planes[FrustumPlane::NEAR].equation.z = viewProj[2][3] + viewProj[2][2];
+            planes[FrustumPlane::NEAR].equation.w = viewProj[3][3] + viewProj[3][2];
+
+            for (auto p : planes) p.normalize();
         }
         
         std::array<float3, 6> get_corners() const
