@@ -905,9 +905,26 @@ namespace avl
             for (auto p : planes) p.normalize();
         }
         
+        // Returns F/N/T/B/L/R
         std::array<float3, 6> get_corners() const
         {
+            std::array<float3, 6> corners;
 
+            Line farLeft = intersect_plane_plane(planes[FrustumPlane::LEFT], planes[FrustumPlane::FAR]);
+            Line farRight = intersect_plane_plane(planes[FrustumPlane::RIGHT], planes[FrustumPlane::FAR]);
+            Line nearLeft = intersect_plane_plane(planes[FrustumPlane::LEFT], planes[FrustumPlane::NEAR]);
+            Line nearRight = intersect_plane_plane(planes[FrustumPlane::RIGHT], planes[FrustumPlane::NEAR]);
+
+            corners[0] = intersect_line_plane(farLeft, planes[FrustumPlane::TOP]);
+            corners[1] = intersect_line_plane(farRight, planes[FrustumPlane::TOP]);
+            corners[2] = intersect_line_plane(farLeft, planes[FrustumPlane::BOTTOM]);
+            corners[3] = intersect_line_plane(farRight, planes[FrustumPlane::BOTTOM]);
+            corners[4] = intersect_line_plane(nearLeft, planes[FrustumPlane::TOP]);
+            corners[5] = intersect_line_plane(nearRight, planes[FrustumPlane::TOP]);
+            corners[6] = intersect_line_plane(nearLeft, planes[FrustumPlane::BOTTOM]);
+            corners[7] = intersect_line_plane(nearRight, planes[FrustumPlane::BOTTOM]);
+
+            return corners;
         }
 
     };
