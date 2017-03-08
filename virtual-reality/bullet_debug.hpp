@@ -42,7 +42,6 @@ class PhysicsDebugRenderer : public btIDebugDraw, public DebugRenderable
     GlMesh debugMesh;
     GlShader debugShader;
 
-
     int debugMode = 0;
     bool hasNewInfo{ false };
 

@@ -147,7 +147,7 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
     g.texCoords.resize(points.size() * 2);
 
     const float3 right = normalize(cross(fwd, float3(0, 1, 0)));
-    const float3 thickness = float3(0.5);
+    const float3 thickness = float3(0.1);
 
     for (int x = 0; x < points.size(); x++)
     {
@@ -205,38 +205,39 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
 
 struct ParabolicPointerParams
 {
-    float3 position = {0, 5, 0};
-    float3 velocity = {0, 0, -1};
-    float pointSpacing = 0.5f;
-    float pointCount = 64.f;
+    float3 position = {0, 0, 0};
+    float3 forward = {0, 0, 0};
+    float pointSpacing = 1.0f;
+    float pointCount = 32.f;
 };
 
 inline Geometry make_parabolic_pointer(const Geometry & navMesh, const ParabolicPointerParams & params)
 {
-    float3 v = params.velocity * float3(10.0); // transform local to world 
-    float3 v_n = normalize(v);
+    Geometry pointerGeometry;
+
+    float3 forwardDirScaled = params.forward * float3(10.0); // transform local to world 
+    // float3 v_n = normalize(v);
     // float currentAngle = clamp_initial_velocity(params.position, v, v_n);
 
-    float3 acceleration =  float3(0, 1, 0) * -9.8f;
+    float3 acceleration = float3(0, 1, 0) * -9.8f;
 
     std::vector<float3> points;
 
-    bool gotCurve = compute_parabolic_curve(params.position, v, acceleration, params.pointSpacing, params.pointCount, navMesh, points);
+    const bool solution = compute_parabolic_curve(params.position, forwardDirScaled, acceleration, params.pointSpacing, params.pointCount, navMesh, points);
 
-    std::cout << gotCurve << " --- " << points.size() << std::endl;
-    float3 selectedPoint = points[points.size()-1];
+    //std::cout << gotCurve << " :: " << points.size() << std::endl;
+    // float3 selectedPoint = points[points.size()-1];
 
-    Geometry pointerGeometry;
-    if (gotCurve)
+    if (solution)
     {
-        pointerGeometry = make_parabolic_geometry(points, v, 0.1);
+        pointerGeometry = make_parabolic_geometry(points, forwardDirScaled, 0.1);
         pointerGeometry.compute_bounds();
         pointerGeometry.compute_normals();
     }
 
     //std::cout << "Parabola Points: " << std::endl;
     //for (auto p : points) std::cout << p << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
+    //std::cout << "-------------------------------------------------------" << std::endl;
 
     return pointerGeometry;
 }

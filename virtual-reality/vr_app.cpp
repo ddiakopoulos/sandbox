@@ -108,6 +108,17 @@ void VirtualRealityApp::setup_scene()
             controller.set_material(scene.namedMaterialList["material-textured"].get());
             scene.controllers.push_back(std::move(controller));
         }
+
+        // Set up the ground plane used as a nav mesh for the parabolic pointer.
+        // Doesn't need a separate renderable object (since handled by the debug grid already)
+        scene.navMesh = make_plane(48, 48, 96, 96);
+
+        // Flip nav mesh since it's not automatically the correct orientation to be a floor
+        for (auto & p : scene.navMesh.vertices)
+        {
+            float4x4 model = make_rotation_matrix({ 1, 0, 0 }, -ANVIL_PI / 2);
+            p = transform_coord(model, p);
+        }
     }
 }
 
@@ -161,6 +172,23 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
         sceneDebugRenderer.draw_axis(scene.controllers[0].get_pose());
         sceneDebugRenderer.draw_axis(scene.controllers[1].get_pose());
 
+        auto rightHandButton = hmd->get_controller(vr::TrackedControllerRole_RightHand).trigger.down;
+        
+        if (rightHandButton)
+        {
+            auto rightPose = hmd->get_controller(vr::TrackedControllerRole_RightHand).p;
+
+            scene.params.position = rightPose.position;
+            scene.params.forward = -qzdir(rightPose.orientation);
+
+            auto parabolicGeometry = make_parabolic_pointer(scene.navMesh, scene.params);
+
+            StaticMesh pointer;
+            pointer.set_static_mesh(parabolicGeometry);
+            pointer.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
+            pointer.set_material(scene.namedMaterialList["material-debug"].get());
+            scene.models.push_back(std::move(pointer));
+        }
     }
 
     // Iterate scene and make objects visible to the renderer

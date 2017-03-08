@@ -5,8 +5,8 @@
 #include "bullet_debug.hpp"
 #include "radix_sort.hpp"
 #include "procedural_mesh.hpp"
-#include "sobol_sequence.h"
-#include "kmeans.hpp"
+#include "parabolic_pointer.hpp"
+#include <future>
 
 using namespace avl;
 
@@ -22,16 +22,18 @@ class DebugLineRenderer : public DebugRenderable
     Geometry sphere = make_sphere(1.f);
 
     constexpr static const char debugVertexShader[] = R"(#version 330 
-    layout(location = 0) in vec3 v; 
-    layout(location = 1) in vec3 c; 
-    uniform mat4 u_mvp; 
-    out vec3 oc; 
-    void main() { gl_Position = u_mvp * vec4(v.xyz, 1); oc = c; })";
+        layout(location = 0) in vec3 v; 
+        layout(location = 1) in vec3 c; 
+        uniform mat4 u_mvp; 
+        out vec3 oc; 
+        void main() { gl_Position = u_mvp * vec4(v.xyz, 1); oc = c; }
+    )";
 
     constexpr static const char debugFragmentShader[] = R"(#version 330 
-    in vec3 oc; 
-    out vec4 f_color; 
-    void main() { f_color = vec4(oc.rgb, 1); })";
+        in vec3 oc; 
+        out vec4 f_color; 
+        void main() { f_color = vec4(oc.rgb, 1); }
+    )";
 
 public:
 
@@ -61,6 +63,7 @@ public:
         vertices.clear();
     }
 
+    // Coordinates should be provided pre-transformed to world-space
     void draw_line(const float3 & from, const float3 & to, const float3 color = float3(1, 1, 1))
     {
         vertices.push_back({from, color});
@@ -180,6 +183,11 @@ public:
 struct Scene
 {
     RenderableGrid grid {0.25f, 24, 24 };
+    Geometry navMesh;
+
+    ParabolicPointerParams params;
+    std::future<Geometry> pointerFuture;
+    bool regeneratePointer = false;
 
     std::unique_ptr<MotionControllerVR> leftController;
     std::unique_ptr<MotionControllerVR> rightController;
