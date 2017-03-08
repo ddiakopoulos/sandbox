@@ -46,7 +46,9 @@ void VirtualRealityApp::setup_physics()
         btIDebugDraw::DBG_DrawWireframe |
         btIDebugDraw::DBG_DrawContactPoints |
         btIDebugDraw::DBG_DrawConstraints |
-        btIDebugDraw::DBG_DrawConstraintLimits);
+        btIDebugDraw::DBG_DrawConstraintLimits |
+        btIDebugDraw::DBG_DrawFeaturesText | 
+        btIDebugDraw::DBG_DrawText);
 
     // Hook up debug renderer
     physicsEngine->get_world()->setDebugDrawer(physicsDebugRenderer.get());

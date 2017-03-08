@@ -6,40 +6,42 @@
 #include "bullet_utils.hpp"
 #include "linalg_util.hpp"
 #include "geometric.hpp"
-#include "btBulletCollisionCommon.h"
-#include <vector>
 #include "GL_API.hpp"
 #include "scene.hpp"
+#include "stb/stb_easy_font.h"
+#include "btBulletCollisionCommon.h"
 
 using namespace avl;
 
-constexpr const char debugVertexShader[] = R"(#version 330
-    layout(location = 0) in vec3 vertex;
-    layout(location = 1) in vec3 color;
-    uniform mat4 u_mvp;
-    out vec3 outColor;
-    void main()
-    {
-        gl_Position = u_mvp * vec4(vertex.xyz, 1);
-        outColor = color;
-    }
-)";
-
-constexpr const char debugFragmentShader[] = R"(#version 330
-    in vec3 outColor;
-    out vec4 f_color;
-    void main()
-    {
-        f_color = vec4(outColor.rgb, 1);
-    }
-)";
-
 class PhysicsDebugRenderer : public btIDebugDraw, public DebugRenderable
 {
+    constexpr const static char debugVertexShader[] = R"(#version 330
+        layout(location = 0) in vec3 vertex;
+        layout(location = 1) in vec3 color;
+        uniform mat4 u_mvp;
+        out vec3 outColor;
+        void main()
+        {
+            gl_Position = u_mvp * vec4(vertex.xyz, 1);
+            outColor = color;
+        }
+    )";
+
+    constexpr static const char debugFragmentShader[] = R"(#version 330
+        in vec3 outColor;
+        out vec4 f_color;
+        void main()
+        {
+            f_color = vec4(outColor.rgb, 1);
+        }
+    )";
+
+    std::vector<std::pair<float3, std::string>> text;
     struct Vertex { float3 position; float3 color; };
     std::vector<Vertex> vertices;
     GlMesh debugMesh;
     GlShader debugShader;
+
 
     int debugMode = 0;
     bool hasNewInfo{ false };
@@ -69,13 +71,13 @@ public:
 
     void clear()
     {
-
+        text.clear();
         vertices.clear();
     }
 
     void drawContactPoint(const btVector3 & pointOnB, const btVector3 & normalOnB, btScalar distance, int lifeTime, const btVector3 & color)
     {
-        // ... 
+        drawLine(pointOnB, pointOnB + normalOnB * distance, color);
     }
 
     void drawLine(const btVector3 & from, const btVector3 & to, const btVector3 & color)
@@ -84,12 +86,12 @@ public:
         vertices.push_back({ from_bt(to), from_bt(color) });
     }
 
-    void reportErrorWarning(const char * warningString) { std::cout << "Bullet Warning: " << warningString << std::endl; }
-
-    void draw3dText(const btVector3 & location, const char * textString)
+    void draw3dText(const btVector3 & position, const char * textString)
     {
-        // ...
+        text.emplace_back(from_bt(position), textString);
     }
+
+    void reportErrorWarning(const char * warningString) { std::cout << "Bullet Warning: " << warningString << std::endl; }
 
     void setDebugMode(int debugMode) override { this->debugMode = debugMode; }
 
