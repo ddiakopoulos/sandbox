@@ -271,8 +271,6 @@ void VirtualRealityApp::on_draw()
 
     physicsDebugRenderer->clear();
 
-    // sceneDebugRenderer.clear();
-
     glfwSwapBuffers(window);
     gl_check_error(__FILE__, __LINE__);
 }
