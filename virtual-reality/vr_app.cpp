@@ -204,6 +204,7 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
     // Iterate scene and make objects visible to the renderer
     auto renderableObjectsInScene = scene.gather();
     for (auto & obj : renderableObjectsInScene) { renderer->add_renderable(obj); }
+
     renderer->add_debug_renderable(&scene.grid);
 }
 
@@ -216,9 +217,8 @@ void VirtualRealityApp::on_draw()
     glViewport(0, 0, width, height);
 
     physicsEngine->get_world()->debugDrawWorld();
-    renderer->add_debug_renderable(physicsDebugRenderer.get());
 
-    //renderer->add_debug_renderable(&sceneDebugRenderer);
+    renderer->add_debug_renderable(physicsDebugRenderer.get());
 
     if (hmd)
     {

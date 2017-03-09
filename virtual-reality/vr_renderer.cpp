@@ -51,7 +51,13 @@ void VR_Renderer::run_skybox_pass()
 
 void VR_Renderer::run_forward_pass(const uniforms::per_view & uniforms)
 {
+
     sceneDebugRenderer.draw(uniforms.viewProj);
+
+    for (auto obj : debugSet)
+    {
+        obj->draw(uniforms.viewProj);
+    }
 
     for (auto obj : renderSet)
     {

@@ -171,6 +171,7 @@ struct LightSet
 class VR_Renderer
 {
     std::vector<Renderable *> renderSet;
+    std::vector<DebugRenderable *> debugSet;
 
     LightSet * lightSet;
 
@@ -229,7 +230,7 @@ public:
     // A `DebugRenderable` is for rapid prototyping, exposing a single `draw(viewProj)` interface.
     // The list of these is drawn before `Renderable` objects, where they use their own shading
     // programs and emit their own draw calls.
-    // void add_debug_renderable(DebugRenderable * object) { debugSet.push_back(object); }
+    void add_debug_renderable(DebugRenderable * object) { debugSet.push_back(object); }
 };
 
 #endif // end vr_renderer_hpp
