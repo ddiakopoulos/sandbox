@@ -80,11 +80,11 @@ namespace avl
                 idx2 = (smooth) ? uniqueVertIndices[f.z] - 1 : f.z;
                 
                 const float3 v0 = vertices[idx0];
-                const float3 v1 = vertices[idx1];
+                const float3 v1 = vertices[idx1];  
                 const float3 v2 = vertices[idx2];
                 
                 float3 e0 = v1 - v0;
-                float3 e1 = v2 - v0;
+                float3 e1 = v2 - v0;                                 
                 float3 e2 = v2 - v1;
                 
                 if (length2(e0) < NORMAL_EPSILON) continue;

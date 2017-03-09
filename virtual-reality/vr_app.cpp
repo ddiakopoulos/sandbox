@@ -172,7 +172,7 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
         //sceneDebugRenderer.draw_axis(scene.controllers[0].get_pose());
         //sceneDebugRenderer.draw_axis(scene.controllers[1].get_pose());
 
-        auto rightHandButton = hmd->get_controller(vr::TrackedControllerRole_RightHand).trigger.down;
+        auto rightHandButton = hmd->get_controller(vr::TrackedControllerRole_RightHand).trigger;
         
         /* ToDo
         * Both Hands
@@ -181,7 +181,7 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
         * Clamp Velocity
         * Mesh gen on a thread (future)
         */
-        if (rightHandButton)
+        if (rightHandButton.down && !rightHandButton.lastDown)
         {
             auto rightPose = hmd->get_controller(vr::TrackedControllerRole_RightHand).p;
 
@@ -196,6 +196,7 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
                 pointer.set_static_mesh(pointerGeom);
                 pointer.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
                 pointer.set_material(scene.namedMaterialList["material-debug"].get());
+                //pointer.set_mesh_render_mode(GL_QUADS);
                 scene.models.push_back(std::move(pointer));
             }
         }

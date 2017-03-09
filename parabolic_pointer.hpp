@@ -143,16 +143,17 @@ float clamp_initial_velocity(const float3 origin, float3 & velocity, float3 & ve
 inline Geometry make_parabolic_geometry(const std::vector<float3> & points, const float3 fwd, const float uvoffset)
 {
     Geometry g;
+
     g.vertices.resize(points.size() * 2);
     g.texCoords.resize(points.size() * 2);
 
-    const float3 right = normalize(cross(fwd, float3(0, 1, 0)));
+    const float3 right = normalize(cross(fwd, float3(0, +1, 0)));
     const float3 thickness = float3(0.1);
 
     for (int x = 0; x < points.size(); x++)
     {
-        g.vertices[2 * x] = points[x] - right * thickness;
-        g.vertices[2 * x + 1] = points[x] + right * thickness;
+        g.vertices[2 * x] = points[x] - right * thickness / 2.f;
+        g.vertices[2 * x + 1] = points[x] + right * thickness / 2.f;
 
         float uvoffset_mod = uvoffset;
         if (x == points.size() - 1 && x > 1) 
@@ -168,36 +169,55 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
 
     std::vector<int> indices(2 * 3 * (g.vertices.size() - 2));
 
-    for (int x = 0; x < g.vertices.size() / 2 - 1; x++)
+    for (int x = 0; x < (g.vertices.size() / 2) - 1; x++)
     {
+
+        auto compute_normal = [](float3 v0, float3 v1, float3 v2) -> float3
+        {
+            float3 e0 = v1 - v0;
+            float3 e1 = v2 - v0;
+            return safe_normalize(cross(e0, e1));
+        };
+
         int p1 = 2 * x;
         int p2 = 2 * x + 1;
         int p3 = 2 * x + 2;
         int p4 = 2 * x + 3;
 
+        // Front facing
         indices[12 * x + 0] = p1;
         indices[12 * x + 1] = p2;
         indices[12 * x + 2] = p3;
+        g.normals.push_back(compute_normal(g.vertices[p1], g.vertices[p2], g.vertices[p3]));
 
         indices[12 * x + 3] = p3;
         indices[12 * x + 4] = p2;
         indices[12 * x + 5] = p4;
+        g.normals.push_back(compute_normal(g.vertices[p3], g.vertices[p2], g.vertices[p4]));
 
+        // Back facing
         indices[12 * x + 6] = p3;
         indices[12 * x + 7] = p2;
         indices[12 * x + 8] = p1;
+        g.normals.push_back(compute_normal(g.vertices[p1], g.vertices[p2], g.vertices[p3]));
 
         indices[12 * x + 9] = p4;
         indices[12 * x + 10] = p2;
         indices[12 * x + 11] = p3;
+        g.normals.push_back(compute_normal(g.vertices[p3], g.vertices[p2], g.vertices[p4]));
     }
 
-    for (int i = 0; i < indices.size(); i+=3)
+    for (int i = 0; i < indices.size(); i += 3)
     {
-         g.faces.emplace_back(indices[i + 0], indices[i + 1], indices[i + 2]);
+        g.faces.emplace_back(indices[i + 0], indices[i + 1], indices[i + 2]);
     }
 
-    g.compute_normals();
+    for (auto n : g.normals)
+    {
+        std::cout << n << std::endl;
+    }
+
+    //g.compute_normals(false);
     g.compute_bounds();
 
     return g;

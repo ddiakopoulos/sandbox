@@ -9,6 +9,9 @@
 #include "scene.hpp"
 #include "camera.hpp"
 #include "gpu_timer.hpp"
+#include "procedural_mesh.hpp"
+
+using namespace avl;
 
 class DebugLineRenderer : public DebugRenderable
 {
