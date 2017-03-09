@@ -51,10 +51,7 @@ void VR_Renderer::run_skybox_pass()
 
 void VR_Renderer::run_forward_pass(const uniforms::per_view & uniforms)
 {
-    for (auto obj : debugSet)
-    {
-        obj->draw(uniforms.viewProj);
-    }
+    sceneDebugRenderer.draw(uniforms.viewProj);
 
     for (auto obj : renderSet)
     {
@@ -73,6 +70,8 @@ void VR_Renderer::run_forward_pass(const uniforms::per_view & uniforms)
             throw std::runtime_error("cannot draw object without bound material");
         }
     }
+
+    sceneDebugRenderer.clear();
 }
 
 void VR_Renderer::run_forward_wireframe_pass()
@@ -152,14 +151,6 @@ void VR_Renderer::render_frame()
         perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
 
         glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
-
-        Frustum f(v.viewProj);
-        
-        for (auto p : f.get_corners())
-        {
-            std::cout << "Pt: " << p << std::endl;
-        }
-        std::cout << "-----------------" << std::endl;
 
         // Render into 4x multisampled fbo
         glEnable(GL_MULTISAMPLE);

@@ -10,95 +10,6 @@
 
 using namespace avl;
 
-class DebugLineRenderer : public DebugRenderable
-{
-    struct Vertex { float3 position; float3 color; };
-    std::vector<Vertex> vertices;
-    GlMesh debugMesh;
-    GlShader debugShader;
-
-    Geometry axis = make_axis();
-    Geometry box = make_cube();
-    Geometry sphere = make_sphere(1.f);
-
-    constexpr static const char debugVertexShader[] = R"(#version 330 
-        layout(location = 0) in vec3 v; 
-        layout(location = 1) in vec3 c; 
-        uniform mat4 u_mvp; 
-        out vec3 oc; 
-        void main() { gl_Position = u_mvp * vec4(v.xyz, 1); oc = c; }
-    )";
-
-    constexpr static const char debugFragmentShader[] = R"(#version 330 
-        in vec3 oc; 
-        out vec4 f_color; 
-        void main() { f_color = vec4(oc.rgb, 1); }
-    )";
-
-public:
-
-    DebugLineRenderer()
-    {
-        debugShader = GlShader(debugVertexShader, debugFragmentShader);
-    }
-
-    virtual void draw(const float4x4 & viewProj) override
-    {
-        debugMesh.set_vertices(vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
-        debugMesh.set_attribute(0, &Vertex::position);
-        debugMesh.set_attribute(1, &Vertex::color);
-        debugMesh.set_non_indexed(GL_LINES);
-
-        auto model = Identity4x4;
-        auto modelViewProjectionMatrix = mul(viewProj, model);
-
-        debugShader.bind();
-        debugShader.uniform("u_mvp", modelViewProjectionMatrix);
-        debugMesh.draw_elements();
-        debugShader.unbind();
-    }
-
-    void clear()
-    {
-        vertices.clear();
-    }
-
-    // Coordinates should be provided pre-transformed to world-space
-    void draw_line(const float3 & from, const float3 & to, const float3 color = float3(1, 1, 1))
-    {
-        vertices.push_back({from, color});
-        vertices.push_back({to, color});
-    }
-
-    void draw_box(const Pose & pose, const float & half, const float3 color = float3(1, 1, 1))
-    {
-        // todo - apply exents and position
-        for (const auto v : box.vertices) vertices.push_back({ v, color });
-    }
-
-    void draw_sphere(const Pose & pose, const float & radius, const float3 color = float3(1, 1, 1))
-    {
-        // todo - apply radius and position
-        for (const auto v : sphere.vertices) vertices.push_back({ v, color });
-    }
-
-    void draw_axis(const Pose & pose, const float3 color = float3(1, 1, 1))
-    {
-        for (int i = 0; i < axis.vertices.size(); ++i)
-        {
-            auto v = axis.vertices[i];
-            v = pose.transform_coord(v);
-            vertices.push_back({ v, axis.colors[i].xyz() });
-        }
-    }
-
-    void draw_frustum(const Pose & pose, const float4x4 & view, const float3 color = float3(1, 1, 1))
-    {
-        // todo - make_near_clip_coords / make_far_clip_coords
-    }
-
-};
-
 float4x4 make_directional_light_view_proj(const uniforms::directional_light & light, const float3 & eyePoint)
 {
     const Pose p = look_at_pose(eyePoint, eyePoint + -light.direction);
@@ -223,8 +134,6 @@ struct VirtualRealityApp : public GLFWApp
 
     std::shared_ptr<BulletEngineVR> physicsEngine;
     std::unique_ptr<PhysicsDebugRenderer> physicsDebugRenderer;
-
-    DebugLineRenderer sceneDebugRenderer;
 
     VirtualRealityApp();
     ~VirtualRealityApp();
