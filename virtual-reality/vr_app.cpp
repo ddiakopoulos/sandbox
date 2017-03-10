@@ -179,13 +179,12 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
         for (int i = 0; i < trackpadStates.size(); ++i)
         {
             const auto state = trackpadStates[i];
-            if (state.released)
+
+            if (state.down)
             {
                 auto pose = hmd->get_controller(vr::ETrackedControllerRole(i + 1)).p;
                 scene.params.position = pose.position;
                 scene.params.forward = -qzdir(pose.orientation);
-                Geometry pointerGeom;
-                float3 hitLocation;
 
                 // Setup some basic properties if this is the first time we're using the teleportation arc
                 if (scene.teleportationArc.get_bounds().size() <= float3(0.f))
@@ -194,6 +193,8 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
                     scene.teleportationArc.set_material(scene.namedMaterialList["material-debug"].get());
                 }
 
+                Geometry pointerGeom;
+                float3 hitLocation;
                 if (make_parabolic_pointer(scene.navMesh, scene.params, pointerGeom, hitLocation))
                 {
                     scene.teleportationArc.set_static_mesh(pointerGeom);
