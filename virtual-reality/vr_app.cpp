@@ -198,6 +198,7 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
                 if (make_parabolic_pointer(scene.navMesh, scene.params, pointerGeom, hitLocation))
                 {
                     scene.teleportationArc.set_static_mesh(pointerGeom);
+                    hmd->set_world_pose(Pose(float4(0, 0, 0, 1), hitLocation));
                 }
             }
         }

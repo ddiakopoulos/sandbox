@@ -79,6 +79,8 @@ public:
 
     std::shared_ptr<OpenVR_Controller::ControllerRenderData> get_controller_render_data() { return controllerRenderData; }
 
+    void set_world_pose(const Pose & p) { worldPose = p; }
+
     Pose get_hmd_pose() const { return worldPose * hmdPose; }
 
     void set_hmd_pose(Pose p) { hmdPose = p; }
