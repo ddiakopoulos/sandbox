@@ -169,15 +169,15 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
 
     std::vector<int> indices(2 * 3 * (g.vertices.size() - 2));
 
+    auto compute_normal = [](float3 v0, float3 v1, float3 v2) -> float3
+    {
+        float3 e0 = v1 - v0;
+        float3 e1 = v2 - v0;
+        return safe_normalize(cross(e0, e1));
+    };
+
     for (int x = 0; x < (g.vertices.size() / 2) - 1; x++)
     {
-
-        auto compute_normal = [](float3 v0, float3 v1, float3 v2) -> float3
-        {
-            float3 e0 = v1 - v0;
-            float3 e1 = v2 - v0;
-            return safe_normalize(cross(e0, e1));
-        };
 
         int p1 = 2 * x;
         int p2 = 2 * x + 1;
@@ -212,12 +212,6 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
         g.faces.emplace_back(indices[i + 0], indices[i + 1], indices[i + 2]);
     }
 
-    for (auto n : g.normals)
-    {
-        std::cout << n << std::endl;
-    }
-
-    //g.compute_normals(false);
     g.compute_bounds();
 
     return g;

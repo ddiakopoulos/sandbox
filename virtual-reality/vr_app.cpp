@@ -172,34 +172,40 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
         //sceneDebugRenderer.draw_axis(scene.controllers[0].get_pose());
         //sceneDebugRenderer.draw_axis(scene.controllers[1].get_pose());
 
-        auto rightHandButton = hmd->get_controller(vr::TrackedControllerRole_RightHand).trigger;
-        
+        std::vector<OpenVR_Controller::ButtonState> trackpadStates = { 
+            hmd->get_controller(vr::TrackedControllerRole_RightHand).pad, 
+            hmd->get_controller(vr::TrackedControllerRole_RightHand).pad };
+
+        for (int i = 0; i < trackpadStates.size(); ++i)
+        {
+            const auto state = trackpadStates[i];
+            if (state.released)
+            {
+                auto pose = hmd->get_controller(vr::ETrackedControllerRole(i + 1)).p;
+                scene.params.position = pose.position;
+                scene.params.forward = -qzdir(pose.orientation);
+                Geometry pointerGeom;
+                float3 hitLocation;
+
+                // Setup some basic properties if this is the first time we're using the teleportation arc
+                if (scene.teleportationArc.get_bounds().size() <= float3(0.f))
+                {
+                    scene.teleportationArc.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
+                    scene.teleportationArc.set_material(scene.namedMaterialList["material-debug"].get());
+                }
+
+                if (make_parabolic_pointer(scene.navMesh, scene.params, pointerGeom, hitLocation))
+                {
+                    scene.teleportationArc.set_static_mesh(pointerGeom);
+                }
+            }
+        }
+
         /* ToDo
-        * Both Hands
-        * Trackpack Control / Release
         * Dynamic Meshes (i.e. something other than StaticMesh)
         * Clamp Velocity
         * Mesh gen on a thread (future)
         */
-        if (rightHandButton.down && !rightHandButton.lastDown)
-        {
-            auto rightPose = hmd->get_controller(vr::TrackedControllerRole_RightHand).p;
-
-            scene.params.position = rightPose.position;
-            scene.params.forward = -qzdir(rightPose.orientation);
-
-            Geometry pointerGeom;
-            float3 hitLocation;
-            if (make_parabolic_pointer(scene.navMesh, scene.params, pointerGeom, hitLocation))
-            {
-                StaticMesh pointer;
-                pointer.set_static_mesh(pointerGeom);
-                pointer.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
-                pointer.set_material(scene.namedMaterialList["material-debug"].get());
-                //pointer.set_mesh_render_mode(GL_QUADS);
-                scene.models.push_back(std::move(pointer));
-            }
-        }
     }
 
     // Iterate scene and make objects visible to the renderer

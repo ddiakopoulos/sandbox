@@ -97,7 +97,6 @@ struct Scene
     Geometry navMesh;
 
     ParabolicPointerParams params;
-    std::future<Geometry> pointerFuture;
     bool regeneratePointer = false;
 
     std::unique_ptr<MotionControllerVR> leftController;
@@ -107,6 +106,7 @@ struct Scene
 
     std::vector<StaticMesh> models;
     std::vector<StaticMesh> controllers;
+    StaticMesh teleportationArc;
 
     std::map<std::string, std::shared_ptr<Material>> namedMaterialList;
 
@@ -115,6 +115,7 @@ struct Scene
         std::vector<Renderable *> objectList;
         for (auto & model : models) objectList.push_back(&model);
         for (auto & ctrlr : controllers) objectList.push_back(&ctrlr);
+        objectList.push_back(&teleportationArc);
         return objectList;
     }
 };
