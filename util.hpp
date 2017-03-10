@@ -64,25 +64,19 @@
 namespace avl
 {
     
-    class perf_timer
-    {
-        std::chrono::high_resolution_clock::time_point t0;
-        double timestamp = 0.f;
-    public:
-        perf_timer() {};
-        const double & get() { return timestamp; }
-        void start() { t0 = std::chrono::high_resolution_clock::now(); }
-        void stop() { timestamp = std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - t0).count() * 1000; }
-    };
-
     class scoped_timer
     {
-        perf_timer t;
         std::string message;
+        std::chrono::high_resolution_clock::time_point t0;
     public:
-        scoped_timer(std::string message) : message(message) { t.start(); }
-        ~scoped_timer() { t.stop(); std::cout << message << " completed in " << t.get() << " ms" << std::endl; }
+        scoped_timer(std::string message) : message{ std::move(message) }, t0{ std::chrono::high_resolution_clock::now() } {}
+        ~scoped_timer()
+        {
+            std::cout << message << " completed in " << std::to_string((std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - t0).count() * 1000)) << " ms" << std::endl;
+        }
     };
+
+    #define AVL_SCOPED_TIMER(MESSAGE) scoped_timer scoped_timer ## __LINE__(MESSAGE)
 
     struct ScreenSpaceAutoLayout
     {

@@ -85,8 +85,8 @@ public:
 
     double elapsed_ms()
     {
-        GLint start_available;
-        GLint end_available;
+        GLint start_available{ 0 };
+        GLint end_available{ 0 };
 
         GLuint64 timer_start;
         GLuint64 timer_end;

@@ -43,18 +43,19 @@ inline float3 project_onto_plane(const float3 planeNormal, const float3 vector)
     return vector - (dot(vector, planeNormal) * planeNormal);
 }
 
-inline bool linecast(const float3 p1, const float3 p2, float3 & hitPoint, const Geometry & g)
+inline bool linecast(const Bounds3D & b, const float3 & p1, const float3 & p2, float3 & hitPoint)
 {
-    scoped_timer("linecast");
+    AVL_SCOPED_TIMER("linecast");
+
     Ray r = between(p1, p2);
 
     float outT = 0.0f;
     float3 outNormal = {0, 0, 0};
-    if (intersect_ray_mesh(r, g, &outT, &outNormal))
+
+    if (intersect_ray_box(r, b, nullptr, &outT, &outNormal))
     {
         hitPoint = r.calculate_position(outT);
-        // Proximity check (ray could be far away -- is it consistent with the next point?)
-        if (distance(hitPoint, p2) <= 1.0) return true;
+        if (distance(hitPoint, p2) <= 1.0) return true; // Proximity check (ray could be far away -- is it consistent with the next point?)
         else return false;
     }
     hitPoint = float3(0, 0, 0);
@@ -67,9 +68,9 @@ inline bool linecast(const float3 p1, const float3 p2, float3 & hitPoint, const 
 // accel  - initial acceleration
 // dist   - distance between sample points
 // points - number of sample points
-inline bool compute_parabolic_curve(const float3 p0, const float3 v0, const float3 accel, const float dist, const int points, const Geometry & g, std::vector<float3> & curve)
+inline bool compute_parabolic_curve(const float3 p0, const float3 v0, const float3 accel, const float dist, const int points, const Bounds3D & bounds, std::vector<float3> & curve)
 {
-    scoped_timer("compute curve");
+    AVL_SCOPED_TIMER("compute_parabolic_curve");
 
     curve.clear();
     curve.push_back(p0);
@@ -83,7 +84,7 @@ inline bool compute_parabolic_curve(const float3 p0, const float3 v0, const floa
         float3 next = parabolic_curve(p0, v0, accel, t);
 
         float3 castHit;
-        bool cast = linecast(last, next, castHit, g);
+        bool cast = linecast(bounds, last, next, castHit);
 
         if (cast)
         {
@@ -145,7 +146,7 @@ float clamp_initial_velocity(const float3 origin, float3 & velocity, float3 & ve
 
 inline Geometry make_parabolic_geometry(const std::vector<float3> & points, const float3 fwd, const float uvoffset)
 {
-    scoped_timer("make parabolic geometry");
+    AVL_SCOPED_TIMER("make_parabolic_geometry");
 
     Geometry g;
 
@@ -223,20 +224,21 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
 
 struct ParabolicPointerParams
 {
+    Bounds3D navMeshBounds;
     float3 position = {0, 0, 0};
     float3 forward = {0, 0, 0};
-    float pointSpacing = 1.0f;
+    float pointSpacing = 0.25f;
     float pointCount = 32.f;
 };
 
-inline bool make_parabolic_pointer(const Geometry & navMesh, const ParabolicPointerParams & params, Geometry & pointer, float3 & worldHit)
+inline bool make_parabolic_pointer(const ParabolicPointerParams & params, Geometry & pointer, float3 & worldHit)
 {
-    float3 forwardDirScaled = params.forward * float3(10.0); // transform local to world 
-    // float3 v_n = normalize(v);
-    // float currentAngle = clamp_initial_velocity(params.position, v, v_n);
+    float3 forwardDirScaled = params.forward * float3(10.0);
+    float3 normalizedScale = normalize(forwardDirScaled);
+    float currentAngle = clamp_initial_velocity(params.position, forwardDirScaled, normalizedScale);
 
     std::vector<float3> points;
-    const bool solution = compute_parabolic_curve(params.position, forwardDirScaled, float3(0, -9.8f, 0), params.pointSpacing, params.pointCount, navMesh, points);
+    const bool solution = compute_parabolic_curve(params.position, forwardDirScaled, float3(0, -20.f, 0), params.pointSpacing, params.pointCount, params.navMeshBounds, points);
 
     //std::cout << gotCurve << " :: " << points.size() << std::endl;
     // float3 selectedPoint = points[points.size()-1];

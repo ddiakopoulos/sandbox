@@ -8,6 +8,7 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
 
+    gpuTimer.init();
     cameraController.set_camera(&debugCam);
 
     try
@@ -56,6 +57,8 @@ void VirtualRealityApp::setup_physics()
 
 void VirtualRealityApp::setup_scene()
 {
+    scoped_timer("setup_scene");
+
     // Materials first since other objects need to reference them
     auto normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
     scene.namedMaterialList["material-debug"] = std::make_shared<DebugMaterial>(normalShader);
@@ -122,6 +125,7 @@ void VirtualRealityApp::setup_scene()
 
         scene.teleportationArc.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
         scene.teleportationArc.set_material(scene.namedMaterialList["material-debug"].get());
+        scene.params.navMeshBounds = scene.navMesh.compute_bounds();
     }
 }
 
@@ -176,8 +180,9 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
         //sceneDebugRenderer.draw_axis(scene.controllers[1].get_pose());
 
         std::vector<OpenVR_Controller::ButtonState> trackpadStates = { 
-            hmd->get_controller(vr::TrackedControllerRole_RightHand).pad, 
+            hmd->get_controller(vr::TrackedControllerRole_LeftHand).pad, 
             hmd->get_controller(vr::TrackedControllerRole_RightHand).pad };
+
 
         for (int i = 0; i < trackpadStates.size(); ++i)
         {
@@ -185,26 +190,25 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
             if (state.down)
             {
+                AVL_SCOPED_TIMER("Button Press");
+
                 auto pose = hmd->get_controller(vr::ETrackedControllerRole(i + 1)).p;
                 scene.params.position = pose.position;
                 scene.params.forward = -qzdir(pose.orientation);
 
                 Geometry pointerGeom;
                 float3 hitLocation;
-                if (make_parabolic_pointer(scene.navMesh, scene.params, pointerGeom, hitLocation))
+                
+                if (make_parabolic_pointer(scene.params, pointerGeom, hitLocation))
                 {
-                    scoped_timer("set mesh and teleport");
                     scene.teleportationArc.set_static_mesh(pointerGeom);
-                    hmd->set_world_pose(Pose(float4(0, 0, 0, 1), hitLocation));
+                    //hmd->set_world_pose(Pose(float4(0, 0, 0, 1), hitLocation));
                 }
+
+                t.stop();
             }
         }
 
-        /* ToDo
-        * Dynamic Meshes (i.e. something other than StaticMesh)
-        * Clamp Velocity
-        * Mesh gen on a thread (future)
-        */
     }
 
     // Iterate scene and make objects visible to the renderer
@@ -228,12 +232,14 @@ void VirtualRealityApp::on_draw()
 
     if (hmd)
     {
+        gpuTimer.start();
         EyeData left = { hmd->get_eye_pose(vr::Hmd_Eye::Eye_Left), hmd->get_proj_matrix(vr::Hmd_Eye::Eye_Left, 0.01, 25.f) };
         EyeData right = { hmd->get_eye_pose(vr::Hmd_Eye::Eye_Right), hmd->get_proj_matrix(vr::Hmd_Eye::Eye_Right, 0.01, 25.f) };
         renderer->set_eye_data(left, right);
         renderer->render_frame();
         hmd->submit(renderer->get_eye_texture(Eye::LeftEye), renderer->get_eye_texture(Eye::RightEye));
         hmd->update();
+        gpuTimer.stop();
     }
     else
     {
@@ -276,6 +282,8 @@ void VirtualRealityApp::on_draw()
     }
 
     physicsDebugRenderer->clear();
+
+    //std::cout << "GPU Time: " << gpuTimer.elapsed_ms() << std::endl;
 
     glfwSwapBuffers(window);
     gl_check_error(__FILE__, __LINE__);

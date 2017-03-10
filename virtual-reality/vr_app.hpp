@@ -138,6 +138,9 @@ struct VirtualRealityApp : public GLFWApp
     std::vector<ScreenViewport> viewports;
     Scene scene;
 
+    TimeKeeper t;
+    GlGpuTimer gpuTimer;
+
     std::shared_ptr<BulletEngineVR> physicsEngine;
     std::unique_ptr<PhysicsDebugRenderer> physicsDebugRenderer;
 
