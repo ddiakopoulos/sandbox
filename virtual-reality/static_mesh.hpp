@@ -52,11 +52,6 @@ public:
         mesh = make_mesh_from_geometry(geom, usage);
     }
 
-    void update_geometry_dynamic(const Geometry & g)
-    {
-        // mesh.set_vertices(vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
-    }
-
     void set_mesh_render_mode(GLenum renderMode)
     {
         if (renderMode != GL_TRIANGLE_STRIP) mesh.set_non_indexed(renderMode);

@@ -163,6 +163,8 @@ struct GlBuffer : public GlBufferObject
 	GlBuffer() {}
 	void set_buffer_data(const GLsizeiptr size, const GLvoid * data, const GLenum usage) { glNamedBufferDataEXT(*this, size, data, usage); this->size = size; }
 	void set_buffer_data(const std::vector<GLubyte> & bytes, const GLenum usage) { set_buffer_data(bytes.size(), bytes.data(), usage); }
+    void set_buffer_sub_data(const GLsizeiptr size, const GLintptr offset, const GLvoid * data) { glNamedBufferSubDataEXT(*this, offset, size, data); this->size = size; }
+    void set_buffer_sub_data(const std::vector<GLubyte> & bytes, const GLintptr offset, const GLenum usage) { set_buffer_sub_data(bytes.size(), offset, bytes.data()); }
 };
 
 ////////////////////////
