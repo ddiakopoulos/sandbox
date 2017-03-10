@@ -147,8 +147,8 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
     if (hmd)
     {
-        scene.leftController->update(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
-        scene.rightController->update(hmd->get_controller(vr::TrackedControllerRole_RightHand).p);
+        scene.leftController->update(hmd->get_controller(vr::TrackedControllerRole_LeftHand).get_pose(hmd->get_world_pose()));
+        scene.rightController->update(hmd->get_controller(vr::TrackedControllerRole_RightHand).get_pose(hmd->get_world_pose()));
 
         physicsEngine->update(e.timestep_ms);
 
@@ -173,8 +173,8 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
         }
 
         // Update the the pose of the controller mesh we render
-        scene.controllers[0].set_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).p);
-        scene.controllers[1].set_pose(hmd->get_controller(vr::TrackedControllerRole_RightHand).p);
+        scene.controllers[0].set_pose(hmd->get_controller(vr::TrackedControllerRole_LeftHand).get_pose(hmd->get_world_pose()));
+        scene.controllers[1].set_pose(hmd->get_controller(vr::TrackedControllerRole_RightHand).get_pose(hmd->get_world_pose()));
 
         //sceneDebugRenderer.draw_axis(scene.controllers[0].get_pose());
         //sceneDebugRenderer.draw_axis(scene.controllers[1].get_pose());
@@ -190,22 +190,34 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
             if (state.down)
             {
-                AVL_SCOPED_TIMER("Button Press");
-
-                auto pose = hmd->get_controller(vr::ETrackedControllerRole(i + 1)).p;
+                auto pose = hmd->get_controller(vr::ETrackedControllerRole(i + 1)).get_pose(hmd->get_world_pose());
                 scene.params.position = pose.position;
                 scene.params.forward = -qzdir(pose.orientation);
 
                 Geometry pointerGeom;
-                float3 hitLocation;
                 
-                if (make_parabolic_pointer(scene.params, pointerGeom, hitLocation))
+                if (make_parabolic_pointer(scene.params, pointerGeom, scene.teleportLocation))
                 {
+                    scene.needsTeleport = true;
                     scene.teleportationArc.set_static_mesh(pointerGeom);
-                    //hmd->set_world_pose(Pose(float4(0, 0, 0, 1), hitLocation));
                 }
+            }
 
-                t.stop();
+            if (state.released && scene.needsTeleport)
+            {
+                scene.needsTeleport = false;
+
+                std::cout << "Hmd was at: " << hmd->get_hmd_pose() << std::endl;
+
+                scene.teleportLocation.y = hmd->get_hmd_pose().position.y;
+                Pose teleportPose(hmd->get_hmd_pose().orientation, scene.teleportLocation);
+
+                hmd->set_world_pose({}); // reset world pose
+                auto hmd_pose = hmd->get_hmd_pose(); // pose is now in the HMD's own coordinate system
+                hmd->set_world_pose(teleportPose * hmd_pose.inverse());
+
+                std::cout << "Teleportation Location:" << teleportPose << std::endl;
+                std::cout << "Hmd now at at: " << hmd->get_hmd_pose() << std::endl;
             }
         }
 

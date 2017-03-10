@@ -20,6 +20,12 @@ inline Pose make_pose(const vr::HmdMatrix34_t & m)
 
 struct OpenVR_Controller
 {
+private:
+
+    Pose p;
+
+public:
+
     struct ControllerRenderData
     {
         Geometry mesh;
@@ -47,7 +53,9 @@ struct OpenVR_Controller
     ButtonState trigger;
     float2 touchpad = float2(0.0f, 0.0f);
 
-    Pose p;
+    void set_pose(const Pose & newPose) { p = newPose; }
+
+    const Pose get_pose(const Pose & worldPose) const { return worldPose * p; }
 
     Ray forward_ray() const { return Ray(p.position, p.transform_vector(float3(0.0f, 0.0f, -1.0f))); }
 
@@ -74,9 +82,8 @@ public:
     const OpenVR_Controller & get_controller(const vr::ETrackedControllerRole controller)     
     {
         // Update controller pose based on teleported (worldPose) location too
-        controllers[0].p = worldPose * controllers[0].p;
-        controllers[1].p = worldPose * controllers[1].p;
-
+        //controllers[0].p = worldPose * controllers[0].p;
+        //controllers[1].p = worldPose * controllers[1].p;
         if (controller == vr::TrackedControllerRole_LeftHand) return controllers[0];
         if (controller == vr::TrackedControllerRole_RightHand) return controllers[1];
     }
@@ -84,6 +91,7 @@ public:
     std::shared_ptr<OpenVR_Controller::ControllerRenderData> get_controller_render_data() { return controllerRenderData; }
 
     void set_world_pose(const Pose & p) { worldPose = p; }
+    Pose get_world_pose() { return worldPose; }
 
     Pose get_hmd_pose() const { return worldPose * hmdPose; }
 

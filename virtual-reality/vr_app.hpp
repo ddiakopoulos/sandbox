@@ -107,6 +107,8 @@ struct Scene
     std::vector<StaticMesh> models;
     std::vector<StaticMesh> controllers;
     StaticMesh teleportationArc;
+    bool needsTeleport{ false };
+    float3 teleportLocation;
 
     std::map<std::string, std::shared_ptr<Material>> namedMaterialList;
 

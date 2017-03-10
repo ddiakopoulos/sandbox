@@ -45,8 +45,6 @@ inline float3 project_onto_plane(const float3 planeNormal, const float3 vector)
 
 inline bool linecast(const Bounds3D & b, const float3 & p1, const float3 & p2, float3 & hitPoint)
 {
-    AVL_SCOPED_TIMER("linecast");
-
     Ray r = between(p1, p2);
 
     float outT = 0.0f;
@@ -70,8 +68,6 @@ inline bool linecast(const Bounds3D & b, const float3 & p1, const float3 & p2, f
 // points - number of sample points
 inline bool compute_parabolic_curve(const float3 p0, const float3 v0, const float3 accel, const float dist, const int points, const Bounds3D & bounds, std::vector<float3> & curve)
 {
-    AVL_SCOPED_TIMER("compute_parabolic_curve");
-
     curve.clear();
     curve.push_back(p0);
 
@@ -146,8 +142,6 @@ float clamp_initial_velocity(const float3 origin, float3 & velocity, float3 & ve
 
 inline Geometry make_parabolic_geometry(const std::vector<float3> & points, const float3 fwd, const float uvoffset)
 {
-    AVL_SCOPED_TIMER("make_parabolic_geometry");
-
     Geometry g;
 
     g.vertices.resize(points.size() * 2);
@@ -234,18 +228,11 @@ struct ParabolicPointerParams
 inline bool make_parabolic_pointer(const ParabolicPointerParams & params, Geometry & pointer, float3 & worldHit)
 {
     float3 forwardDirScaled = params.forward * float3(10.0);
-    float3 normalizedScale = normalize(forwardDirScaled);
-    float currentAngle = clamp_initial_velocity(params.position, forwardDirScaled, normalizedScale);
+    //float3 normalizedScale = normalize(forwardDirScaled);
+    //float currentAngle = clamp_initial_velocity(params.position, forwardDirScaled, normalizedScale);
 
     std::vector<float3> points;
     const bool solution = compute_parabolic_curve(params.position, forwardDirScaled, float3(0, -20.f, 0), params.pointSpacing, params.pointCount, params.navMeshBounds, points);
-
-    //std::cout << gotCurve << " :: " << points.size() << std::endl;
-    // float3 selectedPoint = points[points.size()-1];
-
-    //std::cout << "Parabola Points: " << std::endl;
-    //for (auto p : points) std::cout << p << std::endl;
-    //std::cout << "-------------------------------------------------------" << std::endl;
 
     if (solution)
     {
