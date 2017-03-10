@@ -45,6 +45,7 @@ inline float3 project_onto_plane(const float3 planeNormal, const float3 vector)
 
 inline bool linecast(const float3 p1, const float3 p2, float3 & hitPoint, const Geometry & g)
 {
+    scoped_timer("linecast");
     Ray r = between(p1, p2);
 
     float outT = 0.0f;
@@ -68,6 +69,8 @@ inline bool linecast(const float3 p1, const float3 p2, float3 & hitPoint, const 
 // points - number of sample points
 inline bool compute_parabolic_curve(const float3 p0, const float3 v0, const float3 accel, const float dist, const int points, const Geometry & g, std::vector<float3> & curve)
 {
+    scoped_timer("compute curve");
+
     curve.clear();
     curve.push_back(p0);
 
@@ -142,6 +145,8 @@ float clamp_initial_velocity(const float3 origin, float3 & velocity, float3 & ve
 
 inline Geometry make_parabolic_geometry(const std::vector<float3> & points, const float3 fwd, const float uvoffset)
 {
+    scoped_timer("make parabolic geometry");
+
     Geometry g;
 
     g.vertices.resize(points.size() * 2);
@@ -178,7 +183,6 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
 
     for (int x = 0; x < (g.vertices.size() / 2) - 1; x++)
     {
-
         int p1 = 2 * x;
         int p2 = 2 * x + 1;
         int p3 = 2 * x + 2;

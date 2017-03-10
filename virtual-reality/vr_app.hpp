@@ -112,10 +112,15 @@ struct Scene
 
     std::vector<Renderable *> gather()
     {
+        auto valid_bounds = [](const Renderable * r) -> bool
+        {
+            return r->get_bounds().volume() > 0.f ? true : false;
+        };
+
         std::vector<Renderable *> objectList;
-        for (auto & model : models) objectList.push_back(&model);
-        for (auto & ctrlr : controllers) objectList.push_back(&ctrlr);
-        objectList.push_back(&teleportationArc);
+        for (auto & model : models) if (valid_bounds(&model)) objectList.push_back(&model);
+        for (auto & ctrlr : controllers) if (valid_bounds(&ctrlr)) objectList.push_back(&ctrlr);
+        if (valid_bounds(&teleportationArc)) objectList.push_back(&teleportationArc);
         return objectList;
     }
 };

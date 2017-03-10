@@ -119,6 +119,9 @@ void VirtualRealityApp::setup_scene()
             float4x4 model = make_rotation_matrix({ 1, 0, 0 }, -ANVIL_PI / 2);
             p = transform_coord(model, p);
         }
+
+        scene.teleportationArc.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
+        scene.teleportationArc.set_material(scene.namedMaterialList["material-debug"].get());
     }
 }
 
@@ -186,17 +189,11 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
                 scene.params.position = pose.position;
                 scene.params.forward = -qzdir(pose.orientation);
 
-                // Setup some basic properties if this is the first time we're using the teleportation arc
-                if (scene.teleportationArc.get_bounds().size() <= float3(0.f))
-                {
-                    scene.teleportationArc.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
-                    scene.teleportationArc.set_material(scene.namedMaterialList["material-debug"].get());
-                }
-
                 Geometry pointerGeom;
                 float3 hitLocation;
                 if (make_parabolic_pointer(scene.navMesh, scene.params, pointerGeom, hitLocation))
                 {
+                    scoped_timer("set mesh and teleport");
                     scene.teleportationArc.set_static_mesh(pointerGeom);
                     hmd->set_world_pose(Pose(float4(0, 0, 0, 1), hitLocation));
                 }
