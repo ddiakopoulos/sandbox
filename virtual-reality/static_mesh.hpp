@@ -44,12 +44,12 @@ public:
         return{ hit, outT, outNormal };
     }
 
-    void set_static_mesh(const Geometry & g, const float scale = 1.f)
+    void set_static_mesh(const Geometry & g, const float scale = 1.f, const GLenum usage = GL_STATIC_DRAW)
     {
         geom = g;
         if (scale != 1.f) rescale_geometry(geom, scale);
         bounds = geom.compute_bounds();
-        mesh = make_mesh_from_geometry(geom);
+        mesh = make_mesh_from_geometry(geom, usage);
     }
 
     void update_geometry_dynamic(const Geometry & g)

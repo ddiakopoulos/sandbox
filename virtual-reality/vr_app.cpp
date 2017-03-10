@@ -195,11 +195,10 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
                 scene.params.forward = -qzdir(pose.orientation);
 
                 Geometry pointerGeom;
-                
                 if (make_parabolic_pointer(scene.params, pointerGeom, scene.teleportLocation))
                 {
                     scene.needsTeleport = true;
-                    scene.teleportationArc.set_static_mesh(pointerGeom);
+                    scene.teleportationArc.set_static_mesh(pointerGeom, 1.f, GL_DYNAMIC_DRAW);
                 }
             }
 
@@ -218,6 +217,9 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
                 std::cout << "Teleportation Location:" << teleportPose << std::endl;
                 std::cout << "Hmd now at at: " << hmd->get_hmd_pose() << std::endl;
+
+                Geometry emptyGeom;
+                scene.teleportationArc.set_static_mesh(emptyGeom, GL_DYNAMIC_DRAW);
             }
         }
 

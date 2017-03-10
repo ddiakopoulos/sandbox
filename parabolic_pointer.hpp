@@ -101,8 +101,8 @@ inline float angle_between(float3 a, float3 b, float3 origin)
     return std::acos(dot(da, db));
 }
 
-// Clamps the given velocity vector so that it can't be more than 45 degrees above the horizontal.
-// This is done so that it is easier to leverage the maximum distance (at the 45 degree angle) of parabolic motion.
+// Clamps the given velocity vector so that it can't be more than N degrees above the horizontal.
+// This is done so that it is easier to leverage the maximum distance (at the N degree angle) of parabolic motion.
 // Returns angle with reference to the XZ plane
 float clamp_initial_velocity(const float3 origin, float3 & velocity, float3 & velocity_normalized) 
 {
@@ -111,7 +111,6 @@ float clamp_initial_velocity(const float3 origin, float3 & velocity, float3 & ve
 
     // Find the angle between the XZ plane and the velocity
     float angle = to_degrees(angle_between(velocity_fwd, velocity, origin)); 
-    std::cout << "Clamped angle is: " << angle << std::endl;
 
     // Calculate positivity/negativity of the angle using the cross product
     // Below is "right" from controller's perspective (could also be left, but it doesn't matter for our purposes)
@@ -123,14 +122,16 @@ float clamp_initial_velocity(const float3 origin, float3 & velocity, float3 & ve
         angle *= -1.0;
     }
 
-    // Clamp the angle if it is greater than 45 degrees
-    if(angle > 45.0) 
+    const float clampAngle = 75.f;
+
+    // Clamp the angle
+    if(angle > clampAngle)
     {
-        velocity = slerp(velocity_fwd, velocity, 45.f / angle);
+        velocity = slerp(velocity_fwd, velocity, clampAngle / angle);
         velocity /= length(velocity);
         velocity_normalized = velocity;
         velocity *= length(float3(10)); // initial velocity...
-        angle = 45.0;
+        angle = clampAngle;
     } 
     else
     {
@@ -221,15 +222,15 @@ struct ParabolicPointerParams
     Bounds3D navMeshBounds;
     float3 position = {0, 0, 0};
     float3 forward = {0, 0, 0};
-    float pointSpacing = 0.25f;
-    float pointCount = 32.f;
+    float pointSpacing = 0.1f;
+    float pointCount = 32.f; // pointSpacing * pointCount is maximum travel distance in meters
 };
 
 inline bool make_parabolic_pointer(const ParabolicPointerParams & params, Geometry & pointer, float3 & worldHit)
 {
     float3 forwardDirScaled = params.forward * float3(10.0);
-    //float3 normalizedScale = normalize(forwardDirScaled);
-    //float currentAngle = clamp_initial_velocity(params.position, forwardDirScaled, normalizedScale);
+    float3 normalizedScale = normalize(forwardDirScaled);
+    float currentAngle = clamp_initial_velocity(params.position, forwardDirScaled, normalizedScale);
 
     std::vector<float3> points;
     const bool solution = compute_parabolic_curve(params.position, forwardDirScaled, float3(0, -20.f, 0), params.pointSpacing, params.pointCount, params.navMeshBounds, points);
