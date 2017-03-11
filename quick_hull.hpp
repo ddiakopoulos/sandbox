@@ -713,12 +713,43 @@ namespace quickhull
         // we reuse these vectors. This reduces the amount of std::vectors we have to deal with, and impact on performance is remarkable.
         Pool<std::vector<size_t>> m_indexVectorPool;
 
-        inline std::unique_ptr<std::vector<size_t>> getIndexVectorFromPool();
+        std::unique_ptr<std::vector<size_t>> getIndexVectorFromPool()
+        {
+            auto r = std::move(m_indexVectorPool.get());
+            r->clear();
+            return r;
+        }
 
-        inline void reclaimToIndexVectorPool(std::unique_ptr<std::vector<size_t>> & ptr);
+        // Reduce memory usage! Huge vectors are needed at the beginning of iteration when faces have 
+        // many points on their positive side. Later on, smaller vectors will suffice.
+        void reclaimToIndexVectorPool(std::unique_ptr<std::vector<size_t>> & ptr)
+        {
+            const size_t oldSize = ptr->size();
+            if ((oldSize + 1) * 128 < ptr->capacity())
+            {
+                ptr.reset(nullptr);
+                return;
+            }
+            m_indexVectorPool.reclaim(ptr);
+        }
         
         // Associates a point with a face if the point resides on the positive side of the plane. Returns true if the points was on the positive side.
-        inline bool addPointToFace(typename MeshBuilder::Face& f, size_t pointIndex);
+        bool addPointToFace(typename MeshBuilder::Face& f, size_t pointIndex)
+        {
+            const float D = getSignedDistanceToPlane(m_vertexData[pointIndex], f.m_P);
+            if (D > 0 && D*D > m_epsilonSquared * length2(f.m_P.get_normal()))
+            {
+                if (!f.m_pointsOnPositiveSide) f.m_pointsOnPositiveSide = std::move(getIndexVectorFromPool());
+                f.m_pointsOnPositiveSide->push_back(pointIndex);
+                if (D > f.m_mostDistantPointDist)
+                {
+                    f.m_mostDistantPointDist = D;
+                    f.m_mostDistantPoint = pointIndex;
+                }
+                return true;
+            }
+            return false;
+        }
         
         // This will update m_mesh from which we create the ConvexHull object that getConvexHull function returns
         void createConvexHalfEdgeMesh()
@@ -1057,43 +1088,6 @@ namespace quickhull
         // Get diagnostics about last generated convex hull
         const DiagnosticsData & getDiagnostics() { return m_diagnostics; }
     };
-    
-    std::unique_ptr<std::vector<size_t>> QuickHull::getIndexVectorFromPool() 
-    {
-        auto r = std::move(m_indexVectorPool.get());
-        r->clear();
-        return r;
-    }
-    
-    void QuickHull::reclaimToIndexVectorPool(std::unique_ptr<std::vector<size_t>> & ptr) 
-    {
-        // Reduce memory usage! Huge vectors are needed at the beginning of iteration when faces have 
-        // many points on their positive side. Later on, smaller vectors will suffice.
-        const size_t oldSize = ptr->size();
-        if ((oldSize + 1) * 128 < ptr->capacity()) 
-        {
-            ptr.reset(nullptr);
-            return;
-        }
-        m_indexVectorPool.reclaim(ptr);
-    }
-
-    bool QuickHull::addPointToFace(typename MeshBuilder::Face & f, size_t pointIndex) 
-    {
-        const float D = getSignedDistanceToPlane(m_vertexData[pointIndex], f.m_P);
-        if (D > 0 && D*D > m_epsilonSquared * length2(f.m_P.get_normal())) 
-        {
-            if (!f.m_pointsOnPositiveSide) f.m_pointsOnPositiveSide = std::move(getIndexVectorFromPool());
-            f.m_pointsOnPositiveSide->push_back(pointIndex);
-            if (D > f.m_mostDistantPointDist) 
-            {
-                f.m_mostDistantPointDist = D;
-                f.m_mostDistantPoint = pointIndex;
-            }
-            return true;
-        }
-        return false;
-    }
 
 } // namespace quickhull
 
