@@ -293,7 +293,7 @@ struct LightTransportApp : public GLFWApp
 
 	std::shared_ptr<Film> film;
 	Scene scene;
-	TimeKeeper sceneTimer;
+	SimpleTimer sceneTimer;
 
 	GlCamera camera;
 	FlyCameraController cameraController;

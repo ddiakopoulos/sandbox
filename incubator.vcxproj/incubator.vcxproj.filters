@@ -102,12 +102,6 @@
     <ClInclude Include="..\string_utils.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\time_keeper.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\try_locker.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\bit_mask.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
@@ -230,6 +224,9 @@
     </ClInclude>
     <ClInclude Include="..\quick_hull.hpp">
       <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\simple_timer.hpp">
+      <Filter>source\tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,7 @@
 #include <random>
 #include <memory>
 #include <chrono>
+#include <mutex>
 #include "geometric.hpp"
 #include "linalg_util.hpp"
 
@@ -63,7 +64,16 @@
 
 namespace avl
 {
-    
+    class TryLocker
+    {
+        std::mutex & mutex;
+        bool locked = false;
+    public:
+        TryLocker(std::mutex & m) : mutex(m) { if (mutex.try_lock()) locked = true; }
+        virtual ~TryLocker() { if (locked) mutex.unlock(); }
+        bool is_locked() const { return locked; }
+    };
+
     class scoped_timer
     {
         std::string message;

@@ -81,9 +81,8 @@
     <ClInclude Include="..\third_party\oscpkt_udp.hpp" />
     <ClInclude Include="..\third_party\tinyply.h" />
     <ClInclude Include="..\third_party\tiny_obj_loader.h" />
-    <ClInclude Include="..\time_keeper.hpp" />
+    <ClInclude Include="..\simple_timer.hpp" />
     <ClInclude Include="..\trajectory.hpp" />
-    <ClInclude Include="..\try_locker.hpp" />
     <ClInclude Include="..\tweens.hpp" />
     <ClInclude Include="..\util.hpp" />
   </ItemGroup>

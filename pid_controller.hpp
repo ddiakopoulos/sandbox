@@ -3,7 +3,7 @@
 #ifndef pid_controller_h
 #define pid_controller_h
 
-#include "time_keeper.hpp"
+#include "simple_timer.hpp"
 #include "math_util.hpp"
 #include <iostream>
 #include <limits>
@@ -94,7 +94,7 @@ namespace avl
 
         Integrator integrator;
         double runningError = 0.0;
-        TimeKeeper timer;
+        SimpleTimer timer;
 
     };
 
