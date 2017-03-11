@@ -48,7 +48,6 @@
     <ClInclude Include="..\oriented_bounding_box.hpp" />
     <ClInclude Include="..\parabolic_pointer.hpp" />
     <ClInclude Include="..\parallel_transport_frames.hpp" />
-    <ClInclude Include="..\pid_controller.hpp" />
     <ClInclude Include="..\pointcloud_processing.hpp" />
     <ClInclude Include="..\poisson_disk.hpp" />
     <ClInclude Include="..\procedural_mesh.hpp" />

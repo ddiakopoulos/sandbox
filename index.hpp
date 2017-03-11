@@ -11,7 +11,6 @@
 #include "signal.hpp"
 #include "one_euro.hpp"
 #include "geometry.hpp"
-#include "pid_controller.hpp"
 #include "dsp_filters.hpp"
 #include "bit_mask.hpp"
 #include "file_io.hpp"

@@ -69,9 +69,6 @@
     <ClInclude Include="..\math_util.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\pid_controller.hpp">
-      <Filter>source\math</Filter>
-    </ClInclude>
     <ClInclude Include="..\one_euro.hpp">
       <Filter>source\math</Filter>
     </ClInclude>

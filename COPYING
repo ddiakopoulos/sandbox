@@ -1,4 +1,4 @@
-Original code licensed is released into the public domain (See LICENSE for more details). 
+﻿Original code licensed is released into the public domain (See LICENSE for more details). 
 
 This project strictly avoids the inclusion of code under the the following licenses: GPL, LGPL, MPL, AGPL, CC-*-NC, and various restrictive academic variants.
 
@@ -80,9 +80,6 @@ Copyright (C) Wieden + Kennedy, 2014
 
 https://github.com/mattdesl/glsl-fxaa/blob/master/fxaa.glsl (BSD 3-Clause)
 Copyright (C) Armin Ronacher, 2011
-
-https://github.com/BlockoS/PID/blob/master/PID.h (Apache 2.0)
-Copyright (C) Vincent Cruz, 2015
 
 https://bitbucket.org/SpartanJ/efsw (MIT)
 Copyright (C) James Wynn & Martín Lucas Golini, 2012+
