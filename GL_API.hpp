@@ -161,9 +161,9 @@ struct GlBuffer : public GlBufferObject
 {
 	GLsizeiptr size;
 	GlBuffer() {}
-	void set_buffer_data(const GLsizeiptr size, const GLvoid * data, const GLenum usage) { glNamedBufferDataEXT(*this, size, data, usage); this->size = size; }
+	void set_buffer_data(const GLsizeiptr s, const GLvoid * data, const GLenum usage) { this->size = s; glNamedBufferDataEXT(*this, size, data, usage);  }
 	void set_buffer_data(const std::vector<GLubyte> & bytes, const GLenum usage) { set_buffer_data(bytes.size(), bytes.data(), usage); }
-    void set_buffer_sub_data(const GLsizeiptr size, const GLintptr offset, const GLvoid * data) { glNamedBufferSubDataEXT(*this, offset, size, data); this->size = size; }
+    void set_buffer_sub_data(const GLsizeiptr s, const GLintptr offset, const GLvoid * data) { glNamedBufferSubDataEXT(*this, offset, s, data);  }
     void set_buffer_sub_data(const std::vector<GLubyte> & bytes, const GLintptr offset, const GLenum usage) { set_buffer_sub_data(bytes.size(), offset, bytes.data()); }
 };
 
@@ -389,6 +389,8 @@ public:
 	}
 
 	void set_vertex_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { vertexBuffer.set_buffer_data(size, data, usage); }
+    GlBuffer & get_vertex_data_buffer() { return vertexBuffer; };
+
 	void set_instance_data(GLsizeiptr size, const GLvoid * data, GLenum usage) { instanceBuffer.set_buffer_data(size, data, usage); }
 
 	void set_index_data(GLenum mode, GLenum type, GLsizei count, const GLvoid * data, GLenum usage)
@@ -399,6 +401,7 @@ public:
 		indexType = type;
 		indexCount = count;
 	}
+    GlBuffer & get_index_data_buffer() { return indexBuffer; };
 
 	void set_attribute(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * offset)
 	{

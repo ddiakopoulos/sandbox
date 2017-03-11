@@ -668,6 +668,7 @@ namespace avl
         Plane(const float3 & normal, const float3 & point) { equation = float4(normal.x, normal.y, normal.z, -dot(normal, point)); }
         float3 get_normal() const { return equation.xyz(); }
         bool is_negative_half_space(const float3 & point) const { return (dot(get_normal(), point) < -equation.w); }; // +eq.w?
+        bool is_positive_half_space(const float3 & point) const { return (dot(get_normal(), point) > -equation.w); };
         void normalize() { float n = 1.0f / length(get_normal()); equation *= n; };
         float get_distance() const { return equation.w; }
         float distance_to(float3 point) const { return dot(get_normal(), point) + equation.w; };
