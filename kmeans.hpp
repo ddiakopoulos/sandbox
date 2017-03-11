@@ -161,12 +161,14 @@ std::vector<std::vector<float3>> make_kmeans_cluster(const std::vector<float3> &
 
     auto numOutputClusters = kmeans_cluster_3d(input, clumpCount, clusterCentroids, clusterIndices, errorThreshold, collapseDistance);
 
+    std::cout << "Num OUtput: " << numOutputClusters << std::endl;
+
     std::vector<std::vector<float3>> outputClusters(clusterCentroids.size());
 
     // Lookup the cluster of each input vertex and copy it to a new 'subpointcloud'
     for (int i = 0; i < input.size(); ++i)
     {
-        auto clusterList = outputClusters[clusterIndices[i]];
+        auto & clusterList = outputClusters[clusterIndices[i]];
         clusterList.push_back(input[i]);
     }
 
