@@ -1,15 +1,12 @@
 /*
-* Implementation of the 3D QuickHull algorithm originally by Antti Kuukka (Public DOmain)
+* Implementation of the 3D QuickHull algorithm originally by Antti Kuukka
 * INPUT:  a list of points in 3D space (for example, vertices of a 3D mesh)
 * OUTPUT: a ConvexHull object which provides vertex and index buffers of the generated convex hull as a triangle mesh.
 * The implementation is thread-safe if each thread is using its own QuickHull object.
 * [1] http://box2d.org/files/GDC2014/DirkGregorius_ImplementingQuickHull.pdf
-* [2] http://www.cs.smith.edu/~orourke/books/compgeom.html
-* [3] http://www.flipcode.com/archives/The_Half-Edge_Data_Structure.shtml
-* [4] http://doc.cgal.org/latest/HalfedgeDS/index.html
-* [5] http://thomasdiewald.com/blog/?p=1888
-* [6] https://fgiesen.wordpress.com/2012/02/21/half-edge-based-mesh-representations-theory/
-* License:  This is free and unencumbered software released into the public domain.
+* [2] http://thomasdiewald.com/blog/?p=1888
+* [3] https://fgiesen.wordpress.com/2012/02/21/half-edge-based-mesh-representations-theory/
+* License: This is free and unencumbered software released into the public domain.
 * Original source: https://github.com/akuukka/quickhull
 */
 
@@ -62,25 +59,6 @@ namespace quickhull
             data.erase(it);
             return r;
         }
-    };
-
-    ////////////////////////////
-    //   Vertex Data Source   //
-    ////////////////////////////
-
-    class VertexDataSource 
-    {
-        const float3 * source;
-        size_t count;
-    public:
-        VertexDataSource(const float3 * pointer, size_t count) : source(pointer), count(count) { }
-        VertexDataSource(const std::vector<float3> & vec) : source(&vec[0]), count(vec.size()) { }
-        VertexDataSource() : source(nullptr), count(0) { }
-        VertexDataSource & operator= (const VertexDataSource& other) = default;
-        size_t size() const { return count; }
-        const float3 & operator[](size_t index) const { return source[index]; }
-        const float3 * begin() const { return source; }
-        const float3 * end() const { return source + count; }
     };
 
     //////////////////////
@@ -235,22 +213,14 @@ namespace quickhull
 
     struct HalfEdgeMesh 
     {
-        struct HalfEdge 
-        {
-            size_t m_endVertex;
-            size_t m_opp;
-            size_t m_face;
-            size_t m_next;
-        };
-        
-        // Index of one of the half edges of this face
-        struct Face { size_t m_halfEdgeIndex; };
+        struct HalfEdge { size_t m_endVertex, m_opp, m_face, m_next; };
+        struct Face { size_t m_halfEdgeIndex; }; // Index of one of the half edges of this face
         
         std::vector<float3> m_vertices;
         std::vector<Face> m_faces;
         std::vector<HalfEdge> m_halfEdges;
         
-        HalfEdgeMesh(const MeshBuilder & builderObject, const VertexDataSource & vertexData )
+        HalfEdgeMesh(const MeshBuilder & builderObject, const std::vector<float3> & vertexData )
         {
             std::unordered_map<size_t, size_t> faceMapping, halfEdgeMapping, vertexMapping;
             
@@ -317,15 +287,13 @@ namespace quickhull
     class ConvexHull 
     {
         std::unique_ptr<std::vector<float3>> m_optimizedVertexBuffer;
-        VertexDataSource m_vertices;
+        std::vector<float3> & m_vertices;
         std::vector<size_t> m_indices;
 
     public:
 
-        ConvexHull() {}
-
         // Construct vertex and index buffers from half edge mesh and pointcloud
-        ConvexHull(const MeshBuilder & mesh, const VertexDataSource & pointCloud, bool CCW, bool useOriginalIndices) 
+        ConvexHull(const MeshBuilder & mesh, std::vector<float3> & pointCloud, bool CCW, bool useOriginalIndices) : m_vertices(pointCloud)
         {
             if (!useOriginalIndices) 
             {
@@ -412,12 +380,12 @@ namespace quickhull
                 }
             }
             
-            if (!useOriginalIndices)  m_vertices = VertexDataSource(*m_optimizedVertexBuffer);
+            if (!useOriginalIndices) m_vertices = *m_optimizedVertexBuffer;
             else m_vertices = pointCloud;
         }
 
         std::vector<size_t> & getIndexBuffer() { return m_indices; }
-        VertexDataSource & getVertexBuffer() { return m_vertices; }
+        std::vector<float3> & getVertexBuffer() { return m_vertices; }
     };
 
     class QuickHull 
@@ -427,8 +395,9 @@ namespace quickhull
         float m_epsilon, m_epsilonSquared, m_scale;
         bool m_planar;
 
+        std::vector<float3> & m_vertexData;
+
         std::vector<float3> m_planarPointCloudTemp;
-        VertexDataSource m_vertexData;
         MeshBuilder m_mesh;
 
         std::array<size_t, 6> m_extremeValues;
@@ -543,6 +512,7 @@ namespace quickhull
                     maxI=i;
                 }
             }
+
             if (maxD == m_epsilon) 
             {
                 // All the points seem to lie on a 2D subspace of R^3. How to handle this? Well, let's add one extra point to the point 
@@ -557,7 +527,7 @@ namespace quickhull
                 m_planarPointCloudTemp.push_back(extraPoint);
                 maxI = m_planarPointCloudTemp.size() - 1;
 
-                m_vertexData = VertexDataSource(m_planarPointCloudTemp);
+                m_vertexData = m_planarPointCloudTemp;
             }
 
             // Enforce CCW orientation (if user prefers clockwise orientation, swap two vertices in each triangle when final mesh is created)
@@ -869,11 +839,7 @@ namespace quickhull
                                 m_newHalfEdgeIndices.push_back(halfEdges[j]);
                                 disableCounter++;
                             }
-                            else 
-                            {
-                                // Mark for reusal on later iteration step
-                                m_mesh.disableHalfEdge(halfEdges[j]);
-                            }
+                            else m_mesh.disableHalfEdge(halfEdges[j]); // Mark for reusal on later iteration step
                         }
                     }
 
@@ -980,16 +946,12 @@ namespace quickhull
         }
         
         // Constructs the convex hull into a MeshBuilder object which can be converted to a ConvexHull or Mesh object
-        void buildMesh(const VertexDataSource & pointCloud, bool CCW, bool useOriginalIndices, float eps)
+        void buildMesh(bool CCW, bool useOriginalIndices, float eps)
         {
-            m_vertexData = pointCloud;
-            
-            // Very first: find extreme values and use them to compute the scale of the point cloud.
-            m_extremeValues = getExtremeValues();
+            m_extremeValues = getExtremeValues(); // find extreme values and use them to compute the scale of the point cloud.
             m_scale = getScale(m_extremeValues);
             
-            // Epsilon we use depends on the scale
-            m_epsilon = Epsilon * m_scale;
+            m_epsilon = Epsilon * m_scale; // Epsilon we use depends on the scale
             m_epsilonSquared = m_epsilon*m_epsilon;
             
             m_planar = false; // The planar case happens when all the points appear to lie on a two dimensional subspace of R^3.
@@ -1003,30 +965,30 @@ namespace quickhull
                 {
                     if (he.m_endVertex == extraPointIndex) he.m_endVertex = 0;
                 }
-                m_vertexData = pointCloud;
                 m_planarPointCloudTemp.clear();
             }
         }
-        
-        // The public getConvexHull functions will setup a VertexDataSource object and call this
-        ConvexHull getConvexHull(const VertexDataSource & pointCloud, bool CCW, bool useOriginalIndices, float eps)
+
+        ConvexHull getConvexHull(bool CCW, bool useOriginalIndices, float eps)
         {
-            buildMesh(pointCloud, CCW, useOriginalIndices, eps);
+            buildMesh(CCW, useOriginalIndices, eps);
             return ConvexHull(m_mesh, m_vertexData, CCW, useOriginalIndices);
         }
 
     public:
         
+        // Fair warning: QuickHull has the capacity to mutate the output of pointCloud.
+        QuickHull(std::vector<float3> & pointCloud) : m_vertexData(pointCloud) { }
+
         /*
          * UseOriginalIndices: should the output mesh use same vertex indices as the original point cloud. If this is false,
          * then we generate a new vertex buffer which contains only the vertices that are part of the convex hull.
          * Epsilon : minimum distance to a plane to consider a point being on positive of it (for a point cloud with scale 1)
          */
-        ConvexHull getConvexHull(const std::vector<float3> & pointCloud, bool formatOutputCCW, bool useOriginalIndices, float eps = 0.00001)
+        ConvexHull computeConvexHull(bool formatOutputCCW, bool useOriginalIndices, float eps = 0.00001)
         {
-            assert(pointCloud.size() >= 3);
-            VertexDataSource vertexDataSource(pointCloud);
-            return getConvexHull(vertexDataSource, formatOutputCCW, useOriginalIndices, eps);
+            assert(m_vertexData.size() >= 3);
+            return getConvexHull(formatOutputCCW, useOriginalIndices, eps);
         }
         
         const size_t & getFailedHorizonEdges() { return m_failedHorizonEdges; }

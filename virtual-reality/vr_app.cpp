@@ -138,8 +138,8 @@ void VirtualRealityApp::setup_scene()
 
             {
                 AVL_SCOPED_TIMER("Quickhull...");
-                quickhull::QuickHull qhull;
-                auto hull = qhull.getConvexHull(c, false, false);
+                quickhull::QuickHull qhull(c);
+                auto hull = qhull.computeConvexHull(false, false);
 
                 for (auto pt : hull.getVertexBuffer())
                 {
