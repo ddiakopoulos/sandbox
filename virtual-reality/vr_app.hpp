@@ -7,6 +7,7 @@
 #include "procedural_mesh.hpp"
 #include "parabolic_pointer.hpp"
 #include <future>
+#include "quick_hull.hpp"
 
 using namespace avl;
 

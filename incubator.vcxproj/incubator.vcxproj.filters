@@ -231,6 +231,9 @@
     <ClInclude Include="..\kmeans.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
+    <ClInclude Include="..\quick_hull.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">

@@ -1,5 +1,5 @@
 #include "vr_app.hpp"
-
+#include "kmeans.hpp"
 // Material manager -> setup, get
 // Serialization
 
@@ -126,6 +126,46 @@ void VirtualRealityApp::setup_scene()
         scene.teleportationArc.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
         scene.teleportationArc.set_material(scene.namedMaterialList["material-debug"].get());
         scene.params.navMeshBounds = scene.navMesh.compute_bounds();
+
+        Geometry g = make_cylinder(0.5f, 0.5f, 1.5f, 24.f, 12.f);
+
+        auto clusters = make_kmeans_cluster(g.vertices, 2, 0.1f, 0.05f);
+
+        for (auto c : clusters)
+        {
+            StaticMesh cluster;
+            Geometry newGeom;
+
+            {
+                AVL_SCOPED_TIMER("Quickhull...");
+                quickhull::QuickHull qhull;
+                auto hull = qhull.getConvexHull(c, false, false);
+
+                for (auto pt : hull.getVertexBuffer())
+                {
+                    newGeom.vertices.push_back(pt);
+                    //std::cout << pt << std::endl;
+                }
+
+                auto & idxBuffer = hull.getIndexBuffer();
+                for (int idx = 0; idx < idxBuffer.size(); idx += 3)
+                {
+                    newGeom.faces.push_back(uint3(idxBuffer[idx], idxBuffer[idx + 1], idxBuffer[idx + 2]));
+                }
+
+                newGeom.compute_bounds();
+                newGeom.compute_normals(false);
+            }
+
+            cluster.set_static_mesh(newGeom, 1.00f);
+            cluster.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 1.0f, 0)));
+            //cluster.set_mesh_render_mode(GL_LINES);
+            cluster.set_material(scene.namedMaterialList["material-debug"].get());
+            scene.models.push_back(std::move(cluster));
+
+            std::cout << "--------------\n";
+        }
+
     }
 }
 
