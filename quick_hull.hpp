@@ -24,6 +24,12 @@ using namespace avl;
  * INPUT:  a list of points in 3D space (for example, vertices of a 3D mesh)
  * OUTPUT: a ConvexHull object which provides vertex and index buffers of the generated convex hull as a triangle mesh.
  * The implementation is thread-safe if each thread is using its own QuickHull object.
+ * [1] http://box2d.org/files/GDC2014/DirkGregorius_ImplementingQuickHull.pdf
+ * [2] http://www.cs.smith.edu/~orourke/books/compgeom.html
+ * [3] http://www.flipcode.com/archives/The_Half-Edge_Data_Structure.shtml
+ * [4] http://doc.cgal.org/latest/HalfedgeDS/index.html
+ * [5] http://thomasdiewald.com/blog/?p=1888
+ * [6] https://fgiesen.wordpress.com/2012/02/21/half-edge-based-mesh-representations-theory/
  */
 
 namespace quickhull 
@@ -45,18 +51,9 @@ namespace quickhull
         return dot(p.get_normal(),v) + p.get_distance();
     }
 
-    inline float3 getTriangleNormal(const float3 & a, const float3 & b,const float3 & c) 
+    inline float3 getTriangleNormal(const float3 & a, const float3 & b, const float3 & c) 
     {
-        float x = a.x - c.x;
-        float y = a.y - c.y;
-        float z = a.z - c.z;
-        float rhsx = b.x - c.x;
-        float rhsy = b.y - c.y;
-        float rhsz = b.z - c.z;
-        float px = y * rhsz - z * rhsy;
-        float py = z * rhsx - x * rhsz;
-        float pz = x * rhsy - y * rhsx;
-        return{ px,py,pz };
+        return safe_normalize(cross(b - a, c - a));
     }
 
     //////////////////
@@ -800,7 +797,7 @@ namespace quickhull
                 auto & tf = m_mesh.m_faces[topFaceIndex];
                 tf.m_inFaceStack = 0;
 
-                assert(!tf.m_pointsOnPositiveSide || tf.m_pointsOnPositiveSide->size()>0);
+                assert(!tf.m_pointsOnPositiveSide || tf.m_pointsOnPositiveSide->size() > 0);
                 if (!tf.m_pointsOnPositiveSide || tf.isDisabled()) continue;
                 
                 // Pick the most distant point to this triangle plane as the point to which we extrude
@@ -873,12 +870,10 @@ namespace quickhull
                 {
                     m_diagnostics.m_failedHorizonEdges++;
 
-                    std::cerr << "Failed to solve horizon edge." << std::endl;
-
                     auto it = std::find(tf.m_pointsOnPositiveSide->begin(),tf.m_pointsOnPositiveSide->end(),activePointIndex);
                     tf.m_pointsOnPositiveSide->erase(it);
 
-                    if (tf.m_pointsOnPositiveSide->size()==0) 
+                    if (tf.m_pointsOnPositiveSide->size() == 0) 
                     {
                         reclaimToIndexVectorPool(tf.m_pointsOnPositiveSide);
                     }
