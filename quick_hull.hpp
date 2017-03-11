@@ -1,4 +1,5 @@
 // This is free and unencumbered software released into the public domain.
+// Original source: https://github.com/akuukka/quickhull
 
 #pragma once
 
@@ -268,8 +269,8 @@ namespace quickhull
         
         HalfEdgeMesh(const MeshBuilder & builderObject, const VertexDataSource & vertexData )
         {
-            std::unordered_map<size_t,size_t> faceMapping;
-            std::unordered_map<size_t,size_t> halfEdgeMapping;
+            std::unordered_map<size_t, size_t> faceMapping;
+            std::unordered_map<size_t, size_t> halfEdgeMapping;
             std::unordered_map<size_t, size_t> vertexMapping;
             
             size_t i = 0;
@@ -341,61 +342,7 @@ namespace quickhull
     public:
 
         ConvexHull() {}
-        
-        ConvexHull(const ConvexHull & o) 
-        {
-            m_indices = o.m_indices;
-            if (o.m_optimizedVertexBuffer) 
-            {
-                m_optimizedVertexBuffer.reset(new std::vector<float3>(*o.m_optimizedVertexBuffer));
-                m_vertices = VertexDataSource(*m_optimizedVertexBuffer);
-            }
-            else m_vertices = o.m_vertices;
-        }
-        
-        ConvexHull & operator= (const ConvexHull & o) 
-        {
-            if (&o == this) return *this;
 
-            m_indices = o.m_indices;
-
-            if (o.m_optimizedVertexBuffer) 
-            {
-                m_optimizedVertexBuffer.reset(new std::vector<float3>(*o.m_optimizedVertexBuffer));
-                m_vertices = VertexDataSource(*m_optimizedVertexBuffer);
-            }
-            else m_vertices = o.m_vertices;
-            return *this;
-        }
-        
-        ConvexHull(ConvexHull && o) 
-        {
-            m_indices = std::move(o.m_indices);
-            if (o.m_optimizedVertexBuffer) 
-            {
-                m_optimizedVertexBuffer = std::move(o.m_optimizedVertexBuffer);
-                o.m_vertices = VertexDataSource();
-                m_vertices = VertexDataSource(*m_optimizedVertexBuffer);
-            }
-            else m_vertices = o.m_vertices;
-        }
-        
-        ConvexHull & operator= (ConvexHull && o) 
-        {
-            if (&o == this) {return *this; }
-
-            m_indices = std::move(o.m_indices);
-
-            if (o.m_optimizedVertexBuffer) 
-            {
-                m_optimizedVertexBuffer = std::move(o.m_optimizedVertexBuffer);
-                o.m_vertices = VertexDataSource();
-                m_vertices = VertexDataSource(*m_optimizedVertexBuffer);
-            }
-            else m_vertices = o.m_vertices;
-            return *this;
-        }
-        
         // Construct vertex and index buffers from half edge mesh and pointcloud
         ConvexHull(const MeshBuilder & mesh, const VertexDataSource & pointCloud, bool CCW, bool useOriginalIndices) 
         {
