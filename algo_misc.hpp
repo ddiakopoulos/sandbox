@@ -4,6 +4,29 @@
 #include "util.hpp"
 #include <functional>
 #include "linalg_util.hpp"
+#include "geometric.hpp"
+
+using namespace avl;
+
+// Cantor set on the xz plane
+struct CantorSet
+{
+    std::vector<Line> lines{ {float3(-1, 0, 0), float3(1, 0, 0)} };
+
+    std::vector<Line> compute(const Line & line) const
+    {
+        const float3 p0 = line.point;
+        const float3 pn = line.direction;
+        const float3 p1 = (pn - p0) / 3.0f + p0;
+        const float3 p2 = ((pn - p0) * 2.f) / 3.f + p0;
+
+        std::vector<Line> next;
+        next.emplace_back({ p0, p1 });
+        next.emplace_back({ p2, pn });
+
+        return next;
+    }
+};
 
 struct SimpleHarmonicOscillator
 {
