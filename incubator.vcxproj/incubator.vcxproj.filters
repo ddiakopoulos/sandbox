@@ -111,9 +111,6 @@
     <ClInclude Include="..\bit_mask.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\base64.hpp">
-      <Filter>source\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\util.hpp">
       <Filter>source\app</Filter>
     </ClInclude>
