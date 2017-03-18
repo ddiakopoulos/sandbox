@@ -31,11 +31,13 @@ VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizeP
         glNamedFramebufferTexture2DEXT(eyeFramebuffers[eye], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eyeTextures[eye], 0);
         eyeFramebuffers[eye].check_complete();
     }
+
+    timer.start();
 }
 
 VR_Renderer::~VR_Renderer()
 {
-
+    timer.stop();
 }
 
 void VR_Renderer::set_eye_data(const EyeData left, const EyeData right)
@@ -138,7 +140,15 @@ void VR_Renderer::render_frame()
 
     // Per frame uniform buffer
     uniforms::per_scene b = {};
-    b.time = 0.0f;
+    b.time = timer.milliseconds().count();
+    b.resolution = renderSizePerEye;
+    b.invResolution = 1.f / b.resolution;
+    if (lights)
+    {
+        b.activePointLights = lights->pointLights.size();
+        std::memcpy(&b.directional_light, lights->directionalLight, sizeof(uniforms::directional_light));
+        std::memcpy(&b.point_lights, lights->pointLights.data(), lights->pointLights.size() * sizeof(uniforms::point_light));
+    }
     perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
 
     glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);

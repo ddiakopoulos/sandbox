@@ -1,6 +1,6 @@
 #version 420
 
-const int MAX_POINT_LIGHTS = 12;
+const int MAX_POINT_LIGHTS = 4;
 
 struct DirectionalLight
 {
@@ -13,7 +13,7 @@ struct PointLight
 {
     vec3 color;
     vec3 position;
-    vec3 attenuation; // constant, linear, quadratic
+    float radius;
 };
 
 layout(binding = 0, std140) uniform PerScene

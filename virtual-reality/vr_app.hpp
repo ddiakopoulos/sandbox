@@ -15,8 +15,8 @@ using namespace avl;
 float4x4 make_directional_light_view_proj(const uniforms::directional_light & light, const float3 & eyePoint)
 {
     const Pose p = look_at_pose(eyePoint, eyePoint + -light.direction);
-    const float halfSize = light.size * 0.5f;
-    return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), make_view_matrix_from_pose(p));
+    const float halfArea = light.amount * 0.5f;
+    return mul(make_orthographic_matrix(-halfArea, halfArea, -halfArea, halfArea, -halfArea, halfArea), make_view_matrix_from_pose(p));
 }
 
 float4x4 make_spot_light_view_proj(const uniforms::spot_light & light)
@@ -103,18 +103,21 @@ struct Scene
 
     std::unique_ptr<MotionControllerVR> leftController;
     std::unique_ptr<MotionControllerVR> rightController;
-
-    std::vector<std::shared_ptr<BulletObjectVR>> physicsObjects;
-
-    std::vector<StaticMesh> models;
     std::vector<StaticMesh> controllers;
     StaticMesh teleportationArc;
     bool needsTeleport{ false };
     float3 teleportLocation;
 
+    std::vector<std::shared_ptr<BulletObjectVR>> physicsObjects;
+
+    std::vector<StaticMesh> models;
+
+    uniforms::directional_light directionalLight;
+    std::vector<uniforms::point_light> pointLights;
+
     std::map<std::string, std::shared_ptr<Material>> namedMaterialList;
 
-    std::vector<Renderable *> gather()
+    void gather_scene(std::vector<Renderable *> & objects, LightCollection & lights)
     {
         uint32_t invalidBounds = 0;
         auto valid_bounds = [&invalidBounds](const Renderable * r) -> bool
@@ -124,14 +127,14 @@ struct Scene
             return result;
         };
 
-        std::vector<Renderable *> objectList;
-        for (auto & model : models) if (valid_bounds(&model)) objectList.push_back(&model);
-        for (auto & ctrlr : controllers) if (valid_bounds(&ctrlr)) objectList.push_back(&ctrlr);
-        if (valid_bounds(&teleportationArc)) objectList.push_back(&teleportationArc);
+        for (auto & model : models) if (valid_bounds(&model)) objects.push_back(&model);
+        for (auto & ctrlr : controllers) if (valid_bounds(&ctrlr)) objects.push_back(&ctrlr);
+        if (valid_bounds(&teleportationArc)) objects.push_back(&teleportationArc);
 
-        // if (invalidBounds) throw std::runtime_error("one or more rendered objects have no bounds computed");
-
-        return objectList;
+        for (auto ptLight : pointLights)
+        {
+            lights.pointLights.push_back(&ptLight);
+        }
     }
 };
 

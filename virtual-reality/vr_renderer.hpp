@@ -10,6 +10,7 @@
 #include "camera.hpp"
 #include "gpu_timer.hpp"
 #include "procedural_mesh.hpp"
+#include "simple_timer.hpp"
 
 using namespace avl;
 
@@ -113,13 +114,13 @@ using namespace avl;
 
 namespace uniforms
 {
-    static const int MAX_POINT_LIGHTS = 12;
+    static const int MAX_POINT_LIGHTS = 4;
 
     struct point_light
     {
         ALIGNED(16) float3    color;
         ALIGNED(16) float3    position;
-        ALIGNED(16) float3    attenuation; // constant, linear, quadratic
+        ALIGNED(16) float     radius;
     };
 
     struct directional_light
@@ -171,11 +172,11 @@ struct EyeData
     float4x4 projectionMatrix;
 };
 
-struct LightSet
+struct LightCollection
 {
     uniforms::directional_light * directionalLight;
     std::vector<uniforms::point_light *> pointLights;
-    std::vector<uniforms::spot_light *> spotLights;
+    //std::vector<uniforms::spot_light *> spotLights;
 };
 
 class VR_Renderer
@@ -183,10 +184,11 @@ class VR_Renderer
     std::vector<Renderable *> renderSet;
     std::vector<DebugRenderable *> debugSet;
 
-    LightSet * lightSet;
+    LightCollection * lights;
 
     float2 renderSizePerEye;
     GlGpuTimer renderTimer;
+    SimpleTimer timer;
 
     GlBuffer perScene;
     GlBuffer perView;
@@ -231,7 +233,7 @@ public:
 
     void set_eye_data(const EyeData left, const EyeData right);
 
-    GLuint get_eye_texture(Eye e) { return eyeTextures[(int) e]; }
+    GLuint get_eye_texture(const Eye e) { return eyeTextures[(int) e]; }
 
     // A `Renderable` is a generic interface for this engine, appropriate for use with
     // the material system and all customizations (frustum culling, etc)
@@ -241,6 +243,8 @@ public:
     // The list of these is drawn before `Renderable` objects, where they use their own shading
     // programs and emit their own draw calls.
     void add_debug_renderable(DebugRenderable * object) { debugSet.push_back(object); }
+
+    void set_lights(LightCollection * collection) { lights = collection; }
 };
 
 #endif // end vr_renderer_hpp

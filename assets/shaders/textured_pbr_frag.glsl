@@ -8,7 +8,7 @@
 #define saturate(x) clamp(x, 0.0, 1.0)
 #define PI 3.1415926535897932384626433832795
 
-const int MAX_POINT_LIGHTS = 12;
+const int MAX_POINT_LIGHTS = 4;
 
 struct DirectionalLight
 {
@@ -21,18 +21,17 @@ struct PointLight
 {
     vec3 color;
     vec3 position;
-    vec3 attenuation; // constant, linear, quadratic
+    float radius;
 };
 
 layout(binding = 0, std140) uniform PerScene
 {
     float u_time;
     int u_activePointLights;
-        vec2 resolution;
+    vec2 resolution;
     vec2 invResolution;
     DirectionalLight u_directionalLight;
     PointLight u_pointLights[MAX_POINT_LIGHTS];
-
 };
 
 layout(binding = 1, std140) uniform PerView
@@ -109,15 +108,16 @@ vec3 get_fresnel(vec3 specularColor, float VoH)
 // http://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
 float get_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius)
 {
+    const float cutoff = 0.0052f;
+
     float r = lightRadius;
     vec3 L = lightPosition - vertexPosition;
     float dist = length(L);
     float d = max(dist - r, 0);
     L /= dist;
     float denom = d / r + 1.0f;
-    float cutoff = 0.0052f;
 
-    float attenuation = 1.0f / (denom*denom);
+    float attenuation = 1.0f / (denom * denom);
     attenuation = (attenuation - cutoff) / (1.0 - cutoff);
     attenuation = max(attenuation, 0.0);
     return attenuation;
@@ -125,40 +125,45 @@ float get_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius
 
 void main()
 {
-    vec3 viewDir = normalize(u_eyePos - v_world_position);
-    vec3 lightDir = normalize(u_lightPosition - v_world_position);
+    // Surface properties
 
-    vec3 N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
-    vec3 L = lightDir; 
-    vec3 V = viewDir; 
-    vec3 H = normalize(V + L); // half vector
-    
-    float NoL = saturate(dot(N, L));
-    float NoV = saturate(dot(N, V));
-    float VoH = saturate(dot(V, H));
-    float NoH = saturate(dot(N, H));
-    
     float roughnessMask = texture(s_roughness, v_texcoord).r;
     float metallicMask = texture(s_metallic, v_texcoord).r;
-
     vec3 albedo = texture(s_albedo, v_texcoord).xyz;
     vec3 diffuseColor = albedo - albedo * u_metallic * metallicMask;
     vec3 specularColor = mix(vec3(0.08 * u_specular), albedo, u_metallic * metallicMask);
-    
-    // compute the BRDF
-    // f = D * F * G / (4 * (N.L) * (N.V));
-    float distribution = get_normal_distribution(u_roughness * roughnessMask, NoH);
-    vec3 fresnel = get_fresnel(specularColor, VoH);
-    float geom = get_geometric_shadowing(u_roughness * roughnessMask, NoV, NoL, VoH);
 
-    // get the specular and diffuse and combine them
-    vec3 diffuse = compute_diffuse_term(diffuseColor, u_roughness * roughnessMask, NoV, NoL, VoH);
-    vec3 specular = NoL * (distribution * fresnel * geom);
-    vec3 directLighting = u_lightColor * (diffuse + specular);
-    
-    // get the light attenuation from its radius
-    float attenuation = get_attenuation(u_lightPosition, v_world_position, u_lightRadius);
-    directLighting *= attenuation;
-    
+    vec3 viewDir = normalize(u_eyePos - v_world_position);
+
+    vec3 directLighting = vec3(0, 0, 0);
+
+    for (int i = 0; i < u_activePointLights; ++i)
+    {
+        vec3 N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
+        vec3 L = normalize(u_pointLights[i].position - v_world_position); 
+        vec3 V = viewDir; 
+        vec3 H = normalize(V + L); // half vector
+        
+        float NoL = saturate(dot(N, L));
+        float NoV = saturate(dot(N, V));
+        float VoH = saturate(dot(V, H));
+        float NoH = saturate(dot(N, H));
+        
+        // compute the BRDF
+        // f = D * F * G / (4 * (N.L) * (N.V));
+        float distribution = get_normal_distribution(u_roughness * roughnessMask, NoH);
+        vec3 fresnel = get_fresnel(specularColor, VoH);
+        float geom = get_geometric_shadowing(u_roughness * roughnessMask, NoV, NoL, VoH);
+
+        // get the specular and diffuse and combine them
+        vec3 diffuseTerm = compute_diffuse_term(diffuseColor, u_roughness * roughnessMask, NoV, NoL, VoH);
+        vec3 specularTerm = NoL * (distribution * fresnel * geom);
+
+        directLighting += u_pointLights[i].color * (diffuseTerm + specularTerm);
+        
+        float attenuation = get_attenuation(u_lightPosition, v_world_position, u_pointLights[i].radius);
+        directLighting *= attenuation;
+    }
+
     f_color = vec4(directLighting, 1);
 }
