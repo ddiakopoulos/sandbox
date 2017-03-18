@@ -126,78 +126,6 @@ void VirtualRealityApp::setup_scene()
         scene.teleportationArc.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
         scene.teleportationArc.set_material(scene.namedMaterialList["material-debug"].get());
         scene.params.navMeshBounds = scene.navMesh.compute_bounds();
-
-        //Geometry g = make_cylinder(0.5f, 0.5f, 1.5f, 24.f, 12.f);
-
-        //auto clusters = make_kmeans_cluster(g.vertices, 2, 0.1f, 0.05f);
-
-        /*
-        for (auto c : clusters)
-        {
-            StaticMesh cluster;
-            Geometry newGeom;
-
-            {
-                AVL_SCOPED_TIMER("Quickhull...");
-                quickhull::QuickHull qhull(c);
-                auto hull = qhull.computeConvexHull(false, false);
-
-                for (auto pt : hull.getVertexBuffer())
-                {
-                    newGeom.vertices.push_back(pt);
-                    //std::cout << pt << std::endl;
-                }
-
-                auto & idxBuffer = hull.getIndexBuffer();
-                for (int idx = 0; idx < idxBuffer.size(); idx += 3)
-                {
-                    newGeom.faces.push_back(uint3(idxBuffer[idx], idxBuffer[idx + 1], idxBuffer[idx + 2]));
-                }
-
-                newGeom.compute_bounds();
-                newGeom.compute_normals(false);
-            }
-
-            cluster.set_static_mesh(newGeom, 1.00f);
-            cluster.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 1.0f, 0)));
-            //cluster.set_mesh_render_mode(GL_LINES);
-            cluster.set_material(scene.namedMaterialList["material-debug"].get());
-            scene.models.push_back(std::move(cluster));
-
-            std::cout << "--------------\n";
-        }
-        */
-
-        /*
-        {
-            Geometry g;
-            CantorSet set;
-            float stepSize = 0.25f;
-            for (int i = 0; i < 4; ++i)
-            {
-                set.step(stepSize);
-                stepSize += 0.25f;
-            }
-
-            StaticMesh cantor;
-
-            for (auto line : set.lines)
-            {
-                std::cout << line.point << ", " << line.direction << std::endl;
-                g.vertices.emplace_back(line.point);
-                g.vertices.emplace_back(line.direction);
-            }
-
-            cantor.set_static_mesh(g, 1.00f);
-            cantor.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 1.0f, 0)));
-            cantor.set_mesh_render_mode(GL_LINES);
-            cantor.set_material(scene.namedMaterialList["material-debug"].get());
-            scene.models.push_back(std::move(cantor));
-
-
-        }
-        */
-
     }
 }
 
@@ -254,31 +182,6 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
         std::vector<OpenVR_Controller::ButtonState> trackpadStates = { 
             hmd->get_controller(vr::TrackedControllerRole_LeftHand).pad, 
             hmd->get_controller(vr::TrackedControllerRole_RightHand).pad };
-
-        {
-            CantorSet set;
-            float stepSize = 0.25f;
-
-            for (int i = 0; i < 4; ++i)
-            {
-                set.step();
-                stepSize += 0.25f;
-
-                std::cout << "Set: " << stepSize << " ------------------------- " << std::endl;
-                for (auto line : set.lines)
-                {
-                    line.point.y = stepSize;
-                    line.direction.y = stepSize;
-                    renderer->sceneDebugRenderer.draw_line(line.point, line.direction);
-                    std::cout << line.point << ", " << line.direction << std::endl;
-                }
-
-            }
-
-            for (auto line : set.lines) renderer->sceneDebugRenderer.draw_line(line.point, line.direction);
-
-            std::cout << "================================================== \n" << std::endl;
-        }
 
         for (int i = 0; i < trackpadStates.size(); ++i)
         {
