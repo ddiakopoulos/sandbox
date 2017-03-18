@@ -148,11 +148,7 @@ void VR_Renderer::render_frame()
     b.directional_light.color = lights.directionalLight->color;
     b.directional_light.direction = lights.directionalLight->direction;
     b.directional_light.amount = lights.directionalLight->amount;
-
-    for (int i = 0; i < (int)std::min(lights.pointLights.size(), size_t(4)); ++i)
-    {
-        b.point_lights[i] = *lights.pointLights[i];
-    }
+    for (int i = 0; i < (int)std::min(lights.pointLights.size(), size_t(4)); ++i) b.point_lights[i] = *lights.pointLights[i];
 
     perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
 

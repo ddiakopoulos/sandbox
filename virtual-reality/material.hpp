@@ -98,6 +98,15 @@ namespace avl
         GlTexture2D normal;
         GlTexture2D metallic;
         GlTexture2D roughness;
+        GlTexture2D emissive;
+        GlTexture2D occlusion;
+
+        float roughnessFactor{ 1.f };
+        float metallicFactor{ 1.f };
+        float specularFactor{ 1.f };
+
+        float3 emissiveColor{ float3(1, 1, 1) };
+        float emissiveStrength{ 1.f };
 
     public:
 
@@ -110,15 +119,17 @@ namespace avl
         {
             program->bind();
 
-
-            program->uniform("u_lightPosition", float3(0, 2, 0));
-            program->uniform("u_lightColor", float3(1.f, 1.f, 1.f));
-            program->uniform("u_lightRadius", 4.0f);
+            program->uniform("u_roughness", roughnessFactor);
+            program->uniform("u_metallic", metallicFactor);
+            program->uniform("u_specular", specularFactor);
 
             program->texture("s_albedo", 0, albedo, GL_TEXTURE_2D);
             program->texture("s_normal", 1, normal, GL_TEXTURE_2D);
             program->texture("s_roughness", 2, metallic, GL_TEXTURE_2D);
             program->texture("s_metallic", 3, roughness, GL_TEXTURE_2D);
+
+            //program->texture("s_emissive", 4, emissive, GL_TEXTURE_2D);
+            //program->texture("s_occlusion", 5, occlusion, GL_TEXTURE_2D);
 
             program->unbind();
         }
@@ -129,13 +140,21 @@ namespace avl
 
             program->uniform("u_modelMatrix", modelMatrix);
             program->uniform("u_modelMatrixIT", inv(transpose(modelMatrix)));
-
         }
+
+        void set_emissive_strength(const float & strength) { emissiveStrength = strength; }
+        void set_emissive_color(const float3 & color) { emissiveColor = color; }
+
+        void set_roughness(const float & term) { roughnessFactor = term; }
+        void set_metallic(const float & term) { metallicFactor = term; }
+        void set_specular(const float & term) { specularFactor = term; }
 
         void set_albedo_texture(GlTexture2D & tex) { albedo = std::move(tex); }
         void set_normal_texture(GlTexture2D & tex) { normal = std::move(tex); }
         void set_metallic_texture(GlTexture2D & tex) { metallic = std::move(tex); }
         void set_roughness_texture(GlTexture2D & tex) { roughness = std::move(tex); }
+        void set_emissive_texture(GlTexture2D & tex) { emissive = std::move(tex); }
+        void set_occulusion_texture(GlTexture2D & tex) { occlusion = std::move(tex); }
     };
 
 }
