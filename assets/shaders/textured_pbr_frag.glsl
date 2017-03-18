@@ -34,9 +34,9 @@ uniform sampler2D s_normal;
 uniform sampler2D s_roughness;
 uniform sampler2D s_metallic;
 
-uniform float u_roughness;
-uniform float u_metallic;
-uniform float u_specular;
+uniform float u_roughness = 1.0;
+uniform float u_metallic = 1.0;
+uniform float u_specular = 1.0;
 
 out vec4 f_color;
 
@@ -117,7 +117,6 @@ void main()
     float roughnessMask = texture(s_roughness, v_texcoord).r;
     float metallicMask = texture(s_metallic, v_texcoord).r;
 
-    // deduce the diffuse and specular color from the base color and how metallic the material is
     vec3 albedo = texture(s_albedo, v_texcoord).xyz;
     vec3 diffuseColor = albedo - albedo * u_metallic * metallicMask;
     vec3 specularColor = mix(vec3(0.08 * u_specular), albedo, u_metallic * metallicMask);
