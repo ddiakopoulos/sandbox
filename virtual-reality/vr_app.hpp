@@ -117,7 +117,7 @@ struct Scene
 
     std::map<std::string, std::shared_ptr<Material>> namedMaterialList;
 
-    void gather_scene(std::vector<Renderable *> & objects, LightCollection & lights)
+    void gather(std::vector<Renderable *> & objects, LightCollection & lights)
     {
         uint32_t invalidBounds = 0;
         auto valid_bounds = [&invalidBounds](const Renderable * r) -> bool
@@ -131,6 +131,7 @@ struct Scene
         for (auto & ctrlr : controllers) if (valid_bounds(&ctrlr)) objects.push_back(&ctrlr);
         if (valid_bounds(&teleportationArc)) objects.push_back(&teleportationArc);
 
+        lights.directionalLight = &directionalLight;
         for (auto ptLight : pointLights)
         {
             lights.pointLights.push_back(&ptLight);

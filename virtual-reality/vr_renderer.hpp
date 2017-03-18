@@ -23,7 +23,7 @@ class DebugLineRenderer : public DebugRenderable
 
     Geometry axis = make_axis();
     Geometry box = make_cube();
-    Geometry sphere = make_sphere(1.f);
+    Geometry sphere = make_sphere(0.1f);
 
     constexpr static const char debugVertexShader[] = R"(#version 330 
         layout(location = 0) in vec3 v; 
@@ -76,14 +76,22 @@ public:
 
     void draw_box(const Pose & pose, const float & half, const float3 color = float3(1, 1, 1))
     {
-        // todo - apply exents and position
-        for (const auto v : box.vertices) vertices.push_back({ v, color });
+        // todo - apply exents
+        for (const auto v : box.vertices)
+        {
+            auto tV = pose.transform_coord(v);
+            vertices.push_back({ tV, color });
+        }
     }
 
     void draw_sphere(const Pose & pose, const float & radius, const float3 color = float3(1, 1, 1))
     {
-        // todo - apply radius and position
-        for (const auto v : sphere.vertices) vertices.push_back({ v, color });
+        // todo - apply radius
+        for (const auto v : sphere.vertices)
+        {
+            auto tV = pose.transform_coord(v);
+            vertices.push_back({ tV, color });
+        }
     }
 
     void draw_axis(const Pose & pose, const float3 color = float3(1, 1, 1))
@@ -181,10 +189,10 @@ struct LightCollection
 
 class VR_Renderer
 {
-    std::vector<Renderable *> renderSet;
     std::vector<DebugRenderable *> debugSet;
 
-    LightCollection * lights;
+    std::vector<Renderable *> renderSet;
+    LightCollection lights;
 
     float2 renderSizePerEye;
     GlGpuTimer renderTimer;
@@ -235,16 +243,18 @@ public:
 
     GLuint get_eye_texture(const Eye e) { return eyeTextures[(int) e]; }
 
-    // A `Renderable` is a generic interface for this engine, appropriate for use with
-    // the material system and all customizations (frustum culling, etc)
-    void add_renderable(Renderable * object) { renderSet.push_back(object); }
-
     // A `DebugRenderable` is for rapid prototyping, exposing a single `draw(viewProj)` interface.
     // The list of these is drawn before `Renderable` objects, where they use their own shading
     // programs and emit their own draw calls.
     void add_debug_renderable(DebugRenderable * object) { debugSet.push_back(object); }
 
-    void set_lights(LightCollection * collection) { lights = collection; }
+    // These lists are small for now and easily copyable: 
+
+    // A `Renderable` is a generic interface for this engine, appropriate for use with
+    // the material system and all customizations (frustum culling, etc)
+    void add_renderables(const std::vector<Renderable *> & set) { renderSet = set; }
+
+    void set_lights(const LightCollection & collection) { lights = collection; }
 };
 
 #endif // end vr_renderer_hpp

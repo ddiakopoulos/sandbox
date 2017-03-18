@@ -143,12 +143,9 @@ void VR_Renderer::render_frame()
     b.time = timer.milliseconds().count();
     b.resolution = renderSizePerEye;
     b.invResolution = 1.f / b.resolution;
-    if (lights)
-    {
-        b.activePointLights = lights->pointLights.size();
-        std::memcpy(&b.directional_light, lights->directionalLight, sizeof(uniforms::directional_light));
-        std::memcpy(&b.point_lights, lights->pointLights.data(), lights->pointLights.size() * sizeof(uniforms::point_light));
-    }
+    b.activePointLights = lights.pointLights.size();
+    std::memcpy(&b.directional_light, lights.directionalLight, sizeof(uniforms::directional_light));
+    std::memcpy(&b.point_lights, lights.pointLights.data(), lights.pointLights.size() * sizeof(uniforms::point_light));
     perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
 
     glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);

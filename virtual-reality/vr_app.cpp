@@ -59,6 +59,13 @@ void VirtualRealityApp::setup_scene()
 {
     scoped_timer("setup_scene");
 
+    scene.directionalLight.direction = float3(0, -1.f, 0);
+    scene.directionalLight.color = float3(1.f, 0, 0);
+    scene.directionalLight.amount = 1.f;
+
+    scene.pointLights.push_back(uniforms::point_light{ float3(0, 1.f, 0), float3(-1, 1, 0), 4.f });
+    scene.pointLights.push_back(uniforms::point_light{ float3(0, 0, 1.f), float3(+1, 1, 0), 4.f });
+
     auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
     auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
     pbrMaterial->set_albedo_texture(load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png"));
@@ -203,6 +210,7 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
             hmd->get_controller(vr::TrackedControllerRole_LeftHand).pad, 
             hmd->get_controller(vr::TrackedControllerRole_RightHand).pad };
 
+        // Todo: refactor
         for (int i = 0; i < trackpadStates.size(); ++i)
         {
             const auto state = trackpadStates[i];
@@ -225,17 +233,12 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
             {
                 scene.needsTeleport = false;
 
-                std::cout << "Hmd was at: " << hmd->get_hmd_pose() << std::endl;
-
                 scene.teleportLocation.y = hmd->get_hmd_pose().position.y;
                 Pose teleportPose(hmd->get_hmd_pose().orientation, scene.teleportLocation);
 
                 hmd->set_world_pose({}); // reset world pose
                 auto hmd_pose = hmd->get_hmd_pose(); // pose is now in the HMD's own coordinate system
                 hmd->set_world_pose(teleportPose * hmd_pose.inverse());
-
-                std::cout << "Teleportation Location:" << teleportPose << std::endl;
-                std::cout << "Hmd now at at: " << hmd->get_hmd_pose() << std::endl;
 
                 Geometry emptyGeom;
                 scene.teleportationArc.set_static_mesh(emptyGeom, GL_DYNAMIC_DRAW);
@@ -244,9 +247,23 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
     }
 
+    static float angle = 0.f;
+
+    scene.pointLights[0].position = float3(2 * sin(angle), 1.f, 2 * cos(angle));
+    scene.pointLights[1].position = float3(2 * sin(-angle), 1.f, 2 * cos(-angle));
+
+    renderer->sceneDebugRenderer.draw_sphere(Pose(scene.pointLights[0].position), 0.1f, float3(0, 1, 0));
+    renderer->sceneDebugRenderer.draw_sphere(Pose(scene.pointLights[1].position), 0.1f, float3(0, 0, 1));
+
+    angle += 0.001f;
+
     // Iterate scene and make objects visible to the renderer
-    auto renderableObjectsInScene = scene.gather();
-    for (auto & obj : renderableObjectsInScene) { renderer->add_renderable(obj); }
+    std::vector <Renderable *> renderables;
+    LightCollection lightCollection;
+    scene.gather(renderables, lightCollection);
+
+    renderer->add_renderables(renderables);
+    renderer->set_lights(lightCollection);
 
     renderer->add_debug_renderable(&scene.grid);
 }
