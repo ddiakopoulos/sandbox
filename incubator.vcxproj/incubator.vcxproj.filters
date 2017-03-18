@@ -257,8 +257,10 @@
     <ClCompile Include="..\third_party\imgui\imgui_draw.cpp">
       <Filter>third_party\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\impl.cpp" />
     <ClCompile Include="..\glfw_app.cpp">
+      <Filter>source\app</Filter>
+    </ClCompile>
+    <ClCompile Include="..\impl.cpp">
       <Filter>source\app</Filter>
     </ClCompile>
   </ItemGroup>

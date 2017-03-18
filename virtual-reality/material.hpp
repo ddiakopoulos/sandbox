@@ -110,6 +110,16 @@ namespace avl
         {
             program->bind();
 
+
+            program->uniform("u_lightPosition", float3(0, 2, 0));
+            program->uniform("u_lightColor", float3(1.f, 1.f, 1.f));
+            program->uniform("u_lightRadius", 4.0f);
+
+            program->texture("s_albedo", 0, albedo, GL_TEXTURE_2D);
+            program->texture("s_normal", 1, normal, GL_TEXTURE_2D);
+            program->texture("s_roughness", 2, metallic, GL_TEXTURE_2D);
+            program->texture("s_metallic", 3, roughness, GL_TEXTURE_2D);
+
             program->unbind();
         }
 
@@ -120,14 +130,6 @@ namespace avl
             program->uniform("u_modelMatrix", modelMatrix);
             program->uniform("u_modelMatrixIT", inv(transpose(modelMatrix)));
 
-            program->uniform("u_lightPosition", float3(0, 10, 0));
-            program->uniform("u_lightColor", float3(1, 1, 1));
-            program->uniform("u_lightRadius", 4.0f);
-
-            program->texture("s_albedo", 0, albedo, GL_TEXTURE_2D);
-            program->texture("s_normal", 1, normal, GL_TEXTURE_2D);
-            program->texture("s_roughness", 2, metallic, GL_TEXTURE_2D);
-            program->texture("s_metallic", 3, roughness, GL_TEXTURE_2D);
         }
 
         void set_albedo_texture(GlTexture2D & tex) { albedo = std::move(tex); }

@@ -47,3 +47,5 @@ imgui.ini
 intermediate/
 
 render_*.png
+
+nonfree/*

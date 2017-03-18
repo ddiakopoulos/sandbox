@@ -40,6 +40,7 @@ namespace avl
             cube.texCoords.push_back(verts[i].texCoord);
         }
         
+        cube.compute_bounds();
         cube.compute_normals(false);
         cube.compute_tangents();
         
@@ -79,6 +80,9 @@ namespace avl
                 sphereGeom.faces.push_back({ui * V + vi, un * V + vn, ui * V + vn});
             }
         }
+
+        sphereGeom.compute_bounds();
+
         return sphereGeom;
     }
     

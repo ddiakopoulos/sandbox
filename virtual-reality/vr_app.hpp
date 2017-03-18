@@ -116,15 +116,21 @@ struct Scene
 
     std::vector<Renderable *> gather()
     {
-        auto valid_bounds = [](const Renderable * r) -> bool
+        uint32_t invalidBounds = 0;
+        auto valid_bounds = [&invalidBounds](const Renderable * r) -> bool
         {
-            return r->get_bounds().volume() > 0.f ? true : false;
+            auto result = r->get_bounds().volume() > 0.f ? true : false;
+            invalidBounds += (uint32_t) !result;
+            return result;
         };
 
         std::vector<Renderable *> objectList;
         for (auto & model : models) if (valid_bounds(&model)) objectList.push_back(&model);
         for (auto & ctrlr : controllers) if (valid_bounds(&ctrlr)) objectList.push_back(&ctrlr);
         if (valid_bounds(&teleportationArc)) objectList.push_back(&teleportationArc);
+
+        // if (invalidBounds) throw std::runtime_error("one or more rendered objects have no bounds computed");
+
         return objectList;
     }
 };

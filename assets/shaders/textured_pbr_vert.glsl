@@ -28,11 +28,10 @@ out vec2 v_texcoord;
 out vec3 v_tangent;
 out vec3 v_bitangent;
 
-
 void main()
 {
     vec4 worldPosition = u_modelMatrix * vec4(inPosition, 1.0);
-    gl_Position = u_viewProj * worldPosition;
+    gl_Position = u_viewProjMatrix * worldPosition;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal, 1.0)).xyz);
     v_world_position = worldPosition.xyz;
     v_texcoord = inTexCoord.st;

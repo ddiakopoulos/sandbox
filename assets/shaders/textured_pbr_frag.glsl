@@ -2,6 +2,8 @@
 
 // http://gamedev.stackexchange.com/questions/63832/normals-vs-normal-maps/63833
 // http://blog.selfshadow.com/publications/blending-in-detail/
+// http://www.trentreed.net/blog/physically-based-shading-and-image-based-lighting/
+// http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 
 #define saturate(x) clamp(x, 0.0, 1.0)
 #define PI 3.1415926535897932384626433832795
@@ -94,19 +96,19 @@ float get_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius
     float cutoff = 0.0052f;
 
     float attenuation = 1.0f / (denom*denom);
-    attenuation = (attenuation - cutoff) / (1 - cutoff);
-    attenuation = max(attenuation, 0);
+    attenuation = (attenuation - cutoff) / (1.0 - cutoff);
+    attenuation = max(attenuation, 0.0);
     return attenuation;
 }
 
 void main()
 {
-    vec3 eyeDir = normalize(u_eyePos - v_world_position);
+    vec3 viewDir = normalize(u_eyePos - v_world_position);
+    vec3 lightDir = normalize(u_lightPosition - v_world_position);
 
-    vec3 N = blend_normals(v_normal, texture( s_normal, v_texcoord ).xyz);
-
-    vec3 L = normalize(u_lightPosition - v_world_position); // light direction
-    vec3 V = eyeDir; //normalize(-v_world_position); // position
+    vec3 N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
+    vec3 L = lightDir; 
+    vec3 V = viewDir; 
     vec3 H = normalize(V + L); // half vector
     
     float NoL = saturate(dot(N, L));
@@ -123,12 +125,12 @@ void main()
     
     // compute the BRDF
     // f = D * F * G / (4 * (N.L) * (N.V));
-    float distribution = get_normal_distribution(u_roughness, NoH);
+    float distribution = get_normal_distribution(u_roughness * roughnessMask, NoH);
     vec3 fresnel = get_fresnel(specularColor, VoH);
-    float geom = get_geometric_shadowing(u_roughness, NoV, NoL, VoH);
+    float geom = get_geometric_shadowing(u_roughness * roughnessMask, NoV, NoL, VoH);
 
     // get the specular and diffuse and combine them
-    vec3 diffuse = compute_diffuse_term(diffuseColor, u_roughness, NoV, NoL, VoH);
+    vec3 diffuse = compute_diffuse_term(diffuseColor, u_roughness * roughnessMask, NoV, NoL, VoH);
     vec3 specular = NoL * (distribution * fresnel * geom);
     vec3 directLighting = u_lightColor * (diffuse + specular);
     

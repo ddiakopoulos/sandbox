@@ -59,6 +59,14 @@ void VirtualRealityApp::setup_scene()
 {
     scoped_timer("setup_scene");
 
+    auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
+    auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
+    pbrMaterial->set_albedo_texture(load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png"));
+    pbrMaterial->set_normal_texture(load_image("../assets/textures/pbr/rusted_iron_2048/normal.png"));
+    pbrMaterial->set_metallic_texture(load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png"));
+    pbrMaterial->set_roughness_texture(load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png"));
+    scene.namedMaterialList["material-pbr"] = pbrMaterial;
+
     // Materials first since other objects need to reference them
     auto normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
     scene.namedMaterialList["material-debug"] = std::make_shared<DebugMaterial>(normalShader);
@@ -87,14 +95,14 @@ void VirtualRealityApp::setup_scene()
 
         physicsEngine->add_object(cubePhysicsObj.get());
         scene.physicsObjects.push_back(cubePhysicsObj);
-        scene.models.push_back(std::move(cube));
+        //scene.models.push_back(std::move(cube));
     }
 
     {
         StaticMesh sphere;
-        sphere.set_static_mesh(make_sphere(1.0f), 1.0f);
-        sphere.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 1.0f, 0)));
-        sphere.set_material(scene.namedMaterialList["material-debug"].get());
+        sphere.set_static_mesh(make_cube(), 0.25f);
+        sphere.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0.25f, 0)));
+        sphere.set_material(scene.namedMaterialList["material-pbr"].get());
         scene.models.push_back(std::move(sphere));
     }
 
@@ -110,12 +118,6 @@ void VirtualRealityApp::setup_scene()
         auto texturedMaterial = std::make_shared<TexturedMaterial>(texturedShader);
         texturedMaterial->set_diffuse_texture(controllerRenderModel->tex);
         scene.namedMaterialList["material-textured"] = texturedMaterial;
-
-        // This section sucks I think:
-        auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
-        auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
-        pbrMaterial->set_diffuse_texture(controllerRenderModel->tex);
-        scene.namedMaterialList["material-pbr"] = pbrMaterial;
 
         // Create renderable controllers
         for (int i = 0; i < 2; ++i)
