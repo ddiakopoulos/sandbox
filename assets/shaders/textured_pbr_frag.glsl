@@ -8,9 +8,31 @@
 #define saturate(x) clamp(x, 0.0, 1.0)
 #define PI 3.1415926535897932384626433832795
 
+const int MAX_POINT_LIGHTS = 12;
+
+struct DirectionalLight
+{
+    vec3 color;
+    vec3 direction;
+    float amount;
+};
+
+struct PointLight
+{
+    vec3 color;
+    vec3 position;
+    vec3 attenuation; // constant, linear, quadratic
+};
+
 layout(binding = 0, std140) uniform PerScene
 {
     float u_time;
+    int u_activePointLights;
+        vec2 resolution;
+    vec2 invResolution;
+    DirectionalLight u_directionalLight;
+    PointLight u_pointLights[MAX_POINT_LIGHTS];
+
 };
 
 layout(binding = 1, std140) uniform PerView

@@ -99,11 +99,14 @@ void VirtualRealityApp::setup_scene()
     }
 
     {
-        StaticMesh sphere;
-        sphere.set_static_mesh(make_cube(), 0.25f);
-        sphere.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0.25f, 0)));
-        sphere.set_material(scene.namedMaterialList["material-pbr"].get());
-        scene.models.push_back(std::move(sphere));
+        //auto shaderball = load_geometry_from_obj_no_texture("../assets/models/shaderball/shaderball.obj")[0];
+        //rescale_geometry(shaderball, 2.f);
+
+        StaticMesh materialTestMesh;
+        materialTestMesh.set_static_mesh(make_cube(), 0.25f);
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0.25f, 0)));
+        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        scene.models.push_back(std::move(materialTestMesh));
     }
 
     if (hmd)

@@ -428,14 +428,21 @@ namespace avl
         std::string err;
         bool status = tinyobj::LoadObj(shapes, materials, err, asset.c_str());
 
-        if (status && !err.empty())
-            std::cerr << "tinyobj sys: " + err << std::endl;
+        if (status && !err.empty()) std::cerr << "tinyobj sys: " + err << std::endl;
 
         // Parse tinyobj data into geometry struct
         for (unsigned int i = 0; i < shapes.size(); i++)
         {
             Geometry g;
             tinyobj::mesh_t *mesh = &shapes[i].mesh;
+
+            for (size_t i = 0; i < mesh->normals.size(); i += 3)
+            {
+                float n1 = mesh->normals[i + 0];
+                float n2 = mesh->normals[i + 1];
+                float n3 = mesh->normals[i + 2];
+                g.normals.push_back({ n1, n2, n3});
+            }
 
             for (size_t i = 0; i < mesh->indices.size(); i += 3)
             {
@@ -444,6 +451,7 @@ namespace avl
                 uint32_t idx3 = mesh->indices[i + 2];
                 g.faces.push_back({ idx1, idx2, idx3 });
             }
+
             for (size_t i = 0; i < mesh->texcoords.size(); i += 2)
             {
                 float uv1 = mesh->texcoords[i + 0];

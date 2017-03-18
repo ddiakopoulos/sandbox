@@ -113,33 +113,20 @@ using namespace avl;
 
 namespace uniforms
 {
-    // Add resolution
-    struct per_scene
-    {
-        static const int      binding = 0;
-        float                 time;
-    };
-
-    struct per_view
-    {
-        static const int      binding = 1;
-        ALIGNED(16) float4x4  view;
-        ALIGNED(16) float4x4  viewProj;
-        ALIGNED(16) float3    eyePos;
-    };
-
-    struct directional_light
-    {
-        ALIGNED(16) float3    color;
-        ALIGNED(16) float3    direction;
-        ALIGNED(16) float     size;
-    };
+    static const int MAX_POINT_LIGHTS = 12;
 
     struct point_light
     {
         ALIGNED(16) float3    color;
         ALIGNED(16) float3    position;
         ALIGNED(16) float3    attenuation; // constant, linear, quadratic
+    };
+
+    struct directional_light
+    {
+        ALIGNED(16) float3    color;
+        ALIGNED(16) float3    direction;
+        ALIGNED(16) float     amount; // constant
     };
 
     struct spot_light
@@ -149,6 +136,26 @@ namespace uniforms
         ALIGNED(16) float3    position;
         ALIGNED(16) float3    attenuation; // constant, linear, quadratic
         ALIGNED(16) float     cutoff;
+    };
+
+    // Add resolution
+    struct per_scene
+    {
+        static const int      binding = 0;
+        ALIGNED(16) float     time;
+        ALIGNED(16) float     activePointLights;
+        ALIGNED(16) float2    resolution;
+        ALIGNED(16) float2    invResolution;
+        directional_light     directional_light;
+        point_light           point_lights[MAX_POINT_LIGHTS];
+    };
+
+    struct per_view
+    {
+        static const int      binding = 1;
+        ALIGNED(16) float4x4  view;
+        ALIGNED(16) float4x4  viewProj;
+        ALIGNED(16) float3    eyePos;
     };
 }
 
