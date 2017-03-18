@@ -329,7 +329,7 @@ namespace avl
     }
 
     // Handles trimeshes only
-    inline Geometry load_geometry_from_ply(const std::string & path)
+    inline Geometry load_geometry_from_ply(const std::string & path, bool smooth = false)
     {
         Geometry geo;
 
@@ -406,8 +406,10 @@ namespace avl
             }
             else geo.faces = flatFaces;
 
-            geo.compute_normals(false);
+            geo.compute_normals(smooth);
+
             if (faces.size() && flatTexCoords.size()) geo.compute_tangents();
+
             geo.compute_bounds();
         }
         catch (const std::exception & e)

@@ -61,7 +61,7 @@ void VirtualRealityApp::setup_scene()
 
     scene.directionalLight.direction = float3(0, -1.f, 0);
     scene.directionalLight.color = float3(1.f, 0, 0);
-    //scene.directionalLight.amount = 1.f;
+    scene.directionalLight.amount = 1.f;
 
     scene.pointLights.push_back(uniforms::point_light{ float3(0, 1.f, 0), float3(-1, 1, 0), 4.f });
     scene.pointLights.push_back(uniforms::point_light{ float3(0, 0, 1.f), float3(+1, 1, 0), 4.f });
@@ -91,7 +91,7 @@ void VirtualRealityApp::setup_scene()
 
     {
         StaticMesh cube;
-        cube.set_static_mesh(make_cube(), 0.25f);
+        cube.set_static_mesh(make_cube(), 0.1f);
         cube.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 2.0f, 0)));
         cube.set_material(scene.namedMaterialList["material-debug"].get());
 
@@ -102,16 +102,45 @@ void VirtualRealityApp::setup_scene()
 
         physicsEngine->add_object(cubePhysicsObj.get());
         scene.physicsObjects.push_back(cubePhysicsObj);
-        //scene.models.push_back(std::move(cube));
+        scene.models.push_back(std::move(cube));
     }
 
     {
-        //auto shaderball = load_geometry_from_obj_no_texture("../assets/models/shaderball/shaderball.obj")[0];
-        //rescale_geometry(shaderball, 2.f);
-
+        scoped_timer("load torus knot");
+        auto geom = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply", true);
         StaticMesh materialTestMesh;
-        materialTestMesh.set_static_mesh(make_cube(), 0.25f);
-        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0.25f, 0)));
+        materialTestMesh.set_static_mesh(geom, 0.5f);
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(-1, 0.5f, 0)));
+        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        scene.models.push_back(std::move(materialTestMesh));
+    }
+
+    {
+        scoped_timer("load cuboid");
+        auto geom = load_geometry_from_ply("../assets/models/geometry/SphereCuboidUniform.ply", true);
+        StaticMesh materialTestMesh;
+        materialTestMesh.set_static_mesh(geom, 0.5f);
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(+1, 0.5f, 0)));
+        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        scene.models.push_back(std::move(materialTestMesh));
+    }
+
+    {
+        scoped_timer("load capsule");
+        auto geom = load_geometry_from_ply("../assets/models/geometry/CapsuleUniform.ply", true);
+        StaticMesh materialTestMesh;
+        materialTestMesh.set_static_mesh(geom, 0.5f);
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0.5f, -1)));
+        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        scene.models.push_back(std::move(materialTestMesh));
+    }
+
+    {
+        scoped_timer("load cone");
+        auto geom = load_geometry_from_ply("../assets/models/geometry/ConeUniform.ply", true);
+        StaticMesh materialTestMesh;
+        materialTestMesh.set_static_mesh(geom, 0.5f);
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0.5f, +1)));
         materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
         scene.models.push_back(std::move(materialTestMesh));
     }
@@ -248,9 +277,9 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
     }
 
     static float angle = 0.f;
-    scene.pointLights[0].position = float3(2 * sin(angle), 1.f, 2 * cos(angle));
-    scene.pointLights[1].position = float3(2 * sin(-angle), 1.f, 2 * cos(-angle));
-    angle += 0.001f;
+    scene.pointLights[0].position = float3(1.5 * sin(angle), 1.5f, 1.5 * cos(angle));
+    scene.pointLights[1].position = float3(1.5 * sin(-angle), 1.5f, 1.5 * cos(-angle));
+    angle += 0.01f;
 
     // Iterate scene and make objects visible to the renderer
     std::vector<Renderable *> renderables;

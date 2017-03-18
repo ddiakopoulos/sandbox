@@ -154,12 +154,12 @@ void main()
         vec3 diffuseTerm = compute_diffuse_term(diffuseColor, u_roughness * roughnessMask, NoV, NoL, VoH);
         vec3 specularTerm = NoL * (distribution * fresnel * geom);
 
-        vec3 Lo += u_pointLights[i].color * (diffuseTerm + specularTerm);
+        vec3 Lo = u_pointLights[i].color * (diffuseTerm + specularTerm);
         
         float attenuation = get_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
         Lo *= attenuation;
 
-        directLighting *= Lo;
+        directLighting += Lo;
     }
 
     f_color = vec4(directLighting, 1);
