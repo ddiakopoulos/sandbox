@@ -91,6 +91,41 @@ namespace avl
         }
     };
 
+    class MetallicRoughnessMaterial : public Material
+    {
+
+        GlTexture2D albedo;
+        GlTexture2D normal;
+        GlTexture2D metallic;
+        GlTexture2D roughness;
+
+    public:
+
+        MetallicRoughnessMaterial(std::shared_ptr<GlShader> shader)
+        {
+            program = shader;
+        }
+
+        virtual void update_uniforms() override
+        {
+            program->bind();
+
+            program->unbind();
+        }
+
+        virtual void use(const float4x4 & modelMatrix) override
+        {
+            program->bind();
+            program->uniform("u_modelMatrix", modelMatrix);
+            program->uniform("u_modelMatrixIT", inv(transpose(modelMatrix)));
+        }
+
+        void set_albedo_texture(GlTexture2D & tex) { albedo = std::move(tex); }
+        void set_normal_texture(GlTexture2D & tex) { normal = std::move(tex); }
+        void set_metallic_texture(GlTexture2D & tex) { metallic = std::move(tex); }
+        void set_roughness_texture(GlTexture2D & tex) { roughness = std::move(tex); }
+    };
+
 }
 
 #endif // end vr_material_hpp

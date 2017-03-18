@@ -74,20 +74,29 @@ void VirtualRealityApp::setup_scene()
     physicsEngine->add_object(groundObject.get());
     scene.physicsObjects.push_back(groundObject);
 
-    StaticMesh cube;
-    cube.set_static_mesh(make_cube(), 0.25f);
-    cube.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 2.0f, 0)));
-    cube.set_material(scene.namedMaterialList["material-debug"].get());
+    {
+        StaticMesh cube;
+        cube.set_static_mesh(make_cube(), 0.25f);
+        cube.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 2.0f, 0)));
+        cube.set_material(scene.namedMaterialList["material-debug"].get());
 
-    btCollisionShape * cubeCollisionShape = new btBoxShape(to_bt(cube.get_bounds().size() * 0.5f));
-    auto cubePhysicsObj = std::make_shared<BulletObjectVR>(cube.get_pose().matrix(), cubeCollisionShape, physicsEngine->get_world(), 0.88f); // transformed
-    cubePhysicsObj->body->setRestitution(0.4f);
-    // auto cubePhysicsObj = std::make_shared<BulletObjectVR>(new btDefaultMotionState(), cubeCollisionShape, physicsEngine->get_world()); // default motion state
-    cube.set_physics_component(cubePhysicsObj.get());
+        btCollisionShape * cubeCollisionShape = new btBoxShape(to_bt(cube.get_bounds().size() * 0.5f));
+        auto cubePhysicsObj = std::make_shared<BulletObjectVR>(cube.get_pose().matrix(), cubeCollisionShape, physicsEngine->get_world(), 0.88f); // transformed
+        cubePhysicsObj->body->setRestitution(0.4f);
+        cube.set_physics_component(cubePhysicsObj.get());
 
-    physicsEngine->add_object(cubePhysicsObj.get());
-    scene.physicsObjects.push_back(cubePhysicsObj);
-    //scene.models.push_back(std::move(cube));
+        physicsEngine->add_object(cubePhysicsObj.get());
+        scene.physicsObjects.push_back(cubePhysicsObj);
+        scene.models.push_back(std::move(cube));
+    }
+
+    {
+        StaticMesh sphere;
+        sphere.set_static_mesh(make_sphere(1.0f), 1.0f);
+        sphere.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 1.0f, 0)));
+        sphere.set_material(scene.namedMaterialList["material-debug"].get());
+        scene.models.push_back(std::move(sphere));
+    }
 
     if (hmd)
     {
@@ -101,6 +110,12 @@ void VirtualRealityApp::setup_scene()
         auto texturedMaterial = std::make_shared<TexturedMaterial>(texturedShader);
         texturedMaterial->set_diffuse_texture(controllerRenderModel->tex);
         scene.namedMaterialList["material-textured"] = texturedMaterial;
+
+        // This section sucks I think:
+        auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
+        auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
+        pbrMaterial->set_diffuse_texture(controllerRenderModel->tex);
+        scene.namedMaterialList["material-pbr"] = pbrMaterial;
 
         // Create renderable controllers
         for (int i = 0; i < 2; ++i)
@@ -124,7 +139,7 @@ void VirtualRealityApp::setup_scene()
         }
 
         scene.teleportationArc.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0, 0)));
-        scene.teleportationArc.set_material(scene.namedMaterialList["material-debug"].get());
+        scene.teleportationArc.set_material(scene.namedMaterialList["material-textured-pbr"].get());
         scene.params.navMeshBounds = scene.navMesh.compute_bounds();
     }
 }
