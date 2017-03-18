@@ -1,5 +1,8 @@
 #version 420
 
+// http://gamedev.stackexchange.com/questions/63832/normals-vs-normal-maps/63833
+// http://blog.selfshadow.com/publications/blending-in-detail/
+
 #define saturate(x) clamp(x, 0.0, 1.0)
 #define PI 3.1415926535897932384626433832795
 
@@ -17,6 +20,9 @@ layout(binding = 1, std140) uniform PerView
 
 in vec3 v_world_position;
 in vec3 v_normal;
+in vec2 v_texcoord;
+in vec3 v_tangent;
+in vec3 v_bitangent;
 
 // Single point light
 uniform vec3 u_lightPosition;
@@ -34,8 +40,16 @@ uniform float u_specular;
 
 out vec4 f_color;
 
+vec3 blend_normals(vec3 geometric, vec3 detail)
+{
+    vec3 n1 = geometric;
+    vec3 n2 = detail;
+    mat3 nBasis = mat3(vec3(n1.z, n1.y, -n1.x), vec3(n1.x, n1.z, -n1.y), vec3(n1.x, n1.y,  n1.z));
+    return normalize(n2.x*nBasis[0] + n2.y*nBasis[1] + n2.z*nBasis[2]);
+}
+
 // Gotanda 2012, "Beyond a Simple Physically Based Blinn-Phong Model in Real-Time"
-vec3 get_diffuse(vec3 diffuseColor, float roughness4, float NoV, float NoL, float VoH)
+vec3 compute_diffuse_term(vec3 diffuseColor, float roughness4, float NoV, float NoL, float VoH)
 {
     float VoL = 2 * VoH - 1;
     float c1 = 1 - 0.5 * roughness4 / (roughness4 + 0.33);
@@ -89,7 +103,8 @@ void main()
 {
     vec3 eyeDir = normalize(u_eyePos - v_world_position);
 
-    vec3 N = normalize(v_normal); // normal in world space
+    vec3 N = blend_normals(v_normal, texture( s_normal, v_texcoord ).xyz);
+
     vec3 L = normalize(u_lightPosition - v_world_position); // light direction
     vec3 V = eyeDir; //normalize(-v_world_position); // position
     vec3 H = normalize(V + L); // half vector
@@ -99,9 +114,13 @@ void main()
     float VoH = saturate(dot(V, H));
     float NoH = saturate(dot(N, H));
     
+    float roughnessMask = texture(s_roughness, v_texcoord).r;
+    float metallicMask = texture(s_metallic, v_texcoord).r;
+
     // deduce the diffuse and specular color from the base color and how metallic the material is
-    vec3 diffuseColor = u_baseColor - u_baseColor * u_metallic;
-    vec3 specularColor = mix(vec3(0.08 * u_specular), u_baseColor, u_metallic);
+    vec3 albedo = texture(s_albedo, v_texcoord).xyz;
+    vec3 diffuseColor = albedo - albedo * u_metallic * metallicMask;
+    vec3 specularColor = mix(vec3(0.08 * u_specular), albedo, u_metallic * metallicMask);
     
     // compute the BRDF
     // f = D * F * G / (4 * (N.L) * (N.V));
@@ -110,7 +129,7 @@ void main()
     float geom = get_geometric_shadowing(u_roughness, NoV, NoL, VoH);
 
     // get the specular and diffuse and combine them
-    vec3 diffuse = get_diffuse(diffuseColor, u_roughness, NoV, NoL, VoH);
+    vec3 diffuse = compute_diffuse_term(diffuseColor, u_roughness, NoV, NoL, VoH);
     vec3 specular = NoL * (distribution * fresnel * geom);
     vec3 directLighting = u_lightColor * (diffuse + specular);
     
