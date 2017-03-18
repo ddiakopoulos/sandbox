@@ -18,12 +18,12 @@ struct PointLight
 
 layout(binding = 0, std140) uniform PerScene
 {
+	DirectionalLight u_directionalLight;
+    PointLight u_pointLights[MAX_POINT_LIGHTS];
     float u_time;
     int u_activePointLights;
     vec2 resolution;
     vec2 invResolution;
-    DirectionalLight u_directionalLight;
-    PointLight u_pointLights[MAX_POINT_LIGHTS];
 };
 
 layout(binding = 1, std140) uniform PerView

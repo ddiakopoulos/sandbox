@@ -120,6 +120,8 @@ using namespace avl;
     #define ALIGNED(n) alignas(n)
 #endif
 
+// https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)#Memory_layout
+
 namespace uniforms
 {
     static const int MAX_POINT_LIGHTS = 4;
@@ -128,14 +130,14 @@ namespace uniforms
     {
         ALIGNED(16) float3    color;
         ALIGNED(16) float3    position;
-        ALIGNED(16) float     radius;
+        float       radius;
     };
 
     struct directional_light
     {
         ALIGNED(16) float3    color;
         ALIGNED(16) float3    direction;
-        ALIGNED(16) float     amount; // constant
+        float       amount; // constant
     };
 
     struct spot_light
@@ -144,19 +146,19 @@ namespace uniforms
         ALIGNED(16) float3    direction;
         ALIGNED(16) float3    position;
         ALIGNED(16) float3    attenuation; // constant, linear, quadratic
-        ALIGNED(16) float     cutoff;
+        float                 cutoff;
     };
 
     // Add resolution
     struct per_scene
     {
-        static const int      binding = 0;
-        ALIGNED(16) float     time;
-        ALIGNED(16) float     activePointLights;
-        ALIGNED(16) float2    resolution;
-        ALIGNED(16) float2    invResolution;
-        directional_light     directional_light;
-        point_light           point_lights[MAX_POINT_LIGHTS];
+        static const int     binding = 0;
+        directional_light    directional_light;
+        point_light          point_lights[MAX_POINT_LIGHTS];
+        float                time;
+        int                  activePointLights;
+        ALIGNED(8) float2    resolution;
+        ALIGNED(8) float2    invResolution;
     };
 
     struct per_view

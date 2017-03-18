@@ -12,6 +12,7 @@
 
 using namespace avl;
 
+/*
 float4x4 make_directional_light_view_proj(const uniforms::directional_light & light, const float3 & eyePoint)
 {
     const Pose p = look_at_pose(eyePoint, eyePoint + -light.direction);
@@ -24,6 +25,7 @@ float4x4 make_spot_light_view_proj(const uniforms::spot_light & light)
     const Pose p = look_at_pose(light.position, light.position + light.direction);
     return mul(make_perspective_matrix(to_radians(light.cutoff * 2.0f), 1.0f, 0.1f, 1000.f), make_view_matrix_from_pose(p));
 }
+*/
 
 struct ScreenViewport
 {
@@ -132,7 +134,7 @@ struct Scene
         if (valid_bounds(&teleportationArc)) objects.push_back(&teleportationArc);
 
         lights.directionalLight = &directionalLight;
-        for (auto ptLight : pointLights)
+        for (auto & ptLight : pointLights)
         {
             lights.pointLights.push_back(&ptLight);
         }

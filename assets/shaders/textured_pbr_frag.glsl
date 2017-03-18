@@ -19,19 +19,19 @@ struct DirectionalLight
 
 struct PointLight
 {
-    vec3 color;
-    vec3 position;
-    float radius;
+    vec3 color; // 12
+    vec3 position; // 12
+    float radius; // 4
 };
 
 layout(binding = 0, std140) uniform PerScene
 {
+    DirectionalLight u_directionalLight;
+    PointLight u_pointLights[MAX_POINT_LIGHTS];
     float u_time;
     int u_activePointLights;
     vec2 resolution;
     vec2 invResolution;
-    DirectionalLight u_directionalLight;
-    PointLight u_pointLights[MAX_POINT_LIGHTS];
 };
 
 layout(binding = 1, std140) uniform PerView
@@ -46,11 +46,6 @@ in vec3 v_normal;
 in vec2 v_texcoord;
 in vec3 v_tangent;
 in vec3 v_bitangent;
-
-// Single point light
-uniform vec3 u_lightPosition;
-uniform vec3 u_lightColor;
-uniform float u_lightRadius;
 
 uniform sampler2D s_albedo;
 uniform sampler2D s_normal;
@@ -126,20 +121,21 @@ float get_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius
 void main()
 {
     // Surface properties
-
     float roughnessMask = texture(s_roughness, v_texcoord).r;
     float metallicMask = texture(s_metallic, v_texcoord).r;
+
     vec3 albedo = texture(s_albedo, v_texcoord).xyz;
     vec3 diffuseColor = albedo - albedo * u_metallic * metallicMask;
     vec3 specularColor = mix(vec3(0.08 * u_specular), albedo, u_metallic * metallicMask);
 
     vec3 viewDir = normalize(u_eyePos - v_world_position);
+    vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
 
     vec3 directLighting = vec3(0, 0, 0);
 
     for (int i = 0; i < u_activePointLights; ++i)
     {
-        vec3 N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
+        vec3 N = normalWorld;
         vec3 L = normalize(u_pointLights[i].position - v_world_position); 
         vec3 V = viewDir; 
         vec3 H = normalize(V + L); // half vector
@@ -161,8 +157,8 @@ void main()
 
         directLighting += u_pointLights[i].color * (diffuseTerm + specularTerm);
         
-        float attenuation = get_attenuation(u_lightPosition, v_world_position, u_pointLights[i].radius);
-        directLighting *= attenuation;
+        //float attenuation = get_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
+        //directLighting *= attenuation;   
     }
 
     f_color = vec4(directLighting, 1);

@@ -61,7 +61,7 @@ void VirtualRealityApp::setup_scene()
 
     scene.directionalLight.direction = float3(0, -1.f, 0);
     scene.directionalLight.color = float3(1.f, 0, 0);
-    scene.directionalLight.amount = 1.f;
+    //scene.directionalLight.amount = 1.f;
 
     scene.pointLights.push_back(uniforms::point_light{ float3(0, 1.f, 0), float3(-1, 1, 0), 4.f });
     scene.pointLights.push_back(uniforms::point_light{ float3(0, 0, 1.f), float3(+1, 1, 0), 4.f });
@@ -248,17 +248,12 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
     }
 
     static float angle = 0.f;
-
     scene.pointLights[0].position = float3(2 * sin(angle), 1.f, 2 * cos(angle));
     scene.pointLights[1].position = float3(2 * sin(-angle), 1.f, 2 * cos(-angle));
-
-    renderer->sceneDebugRenderer.draw_sphere(Pose(scene.pointLights[0].position), 0.1f, float3(0, 1, 0));
-    renderer->sceneDebugRenderer.draw_sphere(Pose(scene.pointLights[1].position), 0.1f, float3(0, 0, 1));
-
     angle += 0.001f;
 
     // Iterate scene and make objects visible to the renderer
-    std::vector <Renderable *> renderables;
+    std::vector<Renderable *> renderables;
     LightCollection lightCollection;
     scene.gather(renderables, lightCollection);
 
@@ -266,6 +261,8 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
     renderer->set_lights(lightCollection);
 
     renderer->add_debug_renderable(&scene.grid);
+    renderer->sceneDebugRenderer.draw_sphere(Pose(scene.pointLights[0].position), 0.1f, float3(0, 1, 0));
+    renderer->sceneDebugRenderer.draw_sphere(Pose(scene.pointLights[1].position), 0.1f, float3(0, 0, 1));
 }
 
 void VirtualRealityApp::on_draw()
