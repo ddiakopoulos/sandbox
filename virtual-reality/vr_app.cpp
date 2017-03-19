@@ -8,6 +8,9 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
 
+    igm.reset(new gui::ImGuiManager(window));
+    gui::make_dark_theme();
+
     gpuTimer.init();
     cameraController.set_camera(&debugCam);
 
@@ -193,6 +196,7 @@ void VirtualRealityApp::on_window_resize(int2 size)
 void VirtualRealityApp::on_input(const InputEvent & event) 
 {
     cameraController.handle_input(event);
+    if (igm) igm->update_input(event);
 }
 
 void VirtualRealityApp::on_update(const UpdateEvent & e) 
@@ -298,6 +302,8 @@ void VirtualRealityApp::on_draw()
 {
     glfwMakeContextCurrent(window);
 
+    if (igm) igm->begin_frame();
+
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
@@ -313,9 +319,9 @@ void VirtualRealityApp::on_draw()
         EyeData right = { hmd->get_eye_pose(vr::Hmd_Eye::Eye_Right), hmd->get_proj_matrix(vr::Hmd_Eye::Eye_Right, 0.01, 25.f) };
         renderer->set_eye_data(left, right);
         renderer->render_frame();
+        gpuTimer.stop();
         hmd->submit(renderer->get_eye_texture(Eye::LeftEye), renderer->get_eye_texture(Eye::RightEye));
         hmd->update();
-        gpuTimer.stop();
     }
     else
     {
@@ -359,7 +365,9 @@ void VirtualRealityApp::on_draw()
 
     physicsDebugRenderer->clear();
 
-    //std::cout << "GPU Time: " << gpuTimer.elapsed_ms() << std::endl;
+    ImGui::Text("Render Frame: %f", gpuTimer.elapsed_ms());
+
+    if (igm) igm->end_frame();
 
     glfwSwapBuffers(window);
     gl_check_error(__FILE__, __LINE__);

@@ -155,7 +155,6 @@ vec3 compute_pbr(vec3 lightPosition, vec3 lightColor)
 
 void main()
 {
-
     vec3 directLighting = vec3(0, 0, 0);
 
     // Compute directional light

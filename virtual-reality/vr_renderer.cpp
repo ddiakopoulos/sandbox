@@ -1,5 +1,6 @@
 #include "vr_renderer.hpp"
 #include "material.hpp"
+#include "avl_imgui.hpp"
 
 VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizePerEye)
 {
@@ -160,6 +161,8 @@ void VR_Renderer::render_frame()
 
     for (int eye : { (int)Eye::LeftEye, (int) Eye::RightEye })
     {
+        renderTimer.start();
+
         // Per view uniform buffer
         uniforms::per_view v = {};
         v.view = eyes[eye].pose.inverse().matrix();
@@ -191,7 +194,11 @@ void VR_Renderer::render_frame()
 
         // Execute the post passes after having resolved the multisample framebuffers
         run_post_pass();
+
+        renderTimer.stop();
     }
+
+    ImGui::Text("Render Per Eye: %f", renderTimer.elapsed_ms());
 
     renderSet.clear();
     debugSet.clear();
