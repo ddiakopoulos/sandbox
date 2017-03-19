@@ -19,9 +19,9 @@ struct DirectionalLight
 
 struct PointLight
 {
-    vec3 color; // 12
-    vec3 position; // 12
-    float radius; // 4
+    vec3 color;
+    vec3 position;
+    float radius;
 };
 
 layout(binding = 0, std140) uniform PerScene
@@ -101,7 +101,7 @@ vec3 get_fresnel(vec3 specularColor, float VoH)
 }
 
 // http://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
-float get_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius)
+float point_light_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius)
 {
     const float cutoff = 0.0052f;
 
@@ -118,7 +118,7 @@ float get_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius
     return attenuation;
 }
 
-void main()
+vec3 compute_pbr(vec3 lightPosition, vec3 lightColor)
 {
     // Surface properties
     float roughnessMask = texture(s_roughness, v_texcoord).r;
@@ -131,34 +131,46 @@ void main()
     vec3 viewDir = normalize(u_eyePos - v_world_position);
     vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
 
+    vec3 N = normalWorld;
+    vec3 L = normalize(lightPosition - v_world_position); 
+    vec3 V = viewDir; 
+    vec3 H = normalize(V + L); // half vector
+    
+    float NoL = saturate(dot(N, L));
+    float NoV = saturate(dot(N, V));
+    float VoH = saturate(dot(V, H));
+    float NoH = saturate(dot(N, H));
+    
+    // compute the BRDF
+    // f = D * F * G / (4 * (N.L) * (N.V));
+    float specularDistribution = get_normal_distribution(u_roughness * roughnessMask, NoH);
+    float geometricShadowing = get_geometric_shadowing(u_roughness * roughnessMask, NoV, NoL, VoH);
+    vec3 specularFresnel = get_fresnel(specularColor, VoH);
+
+    vec3 diffuseTerm = compute_diffuse_term(diffuseColor, u_roughness * roughnessMask, NoV, NoL, VoH);
+    vec3 specularTerm = NoL * (specularDistribution * specularFresnel * geometricShadowing);
+
+    return lightColor * (diffuseTerm + specularTerm);
+}
+
+void main()
+{
+
     vec3 directLighting = vec3(0, 0, 0);
 
+    // Compute directional light
+    {
+        vec3 Lo = compute_pbr(u_directionalLight.direction, u_directionalLight.color);
+        Lo *= u_directionalLight.amount;
+        directLighting += Lo;
+    }
+
+    // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
-        vec3 N = normalWorld;
-        vec3 L = normalize(u_pointLights[i].position - v_world_position); 
-        vec3 V = viewDir; 
-        vec3 H = normalize(V + L); // half vector
-        
-        float NoL = saturate(dot(N, L));
-        float NoV = saturate(dot(N, V));
-        float VoH = saturate(dot(V, H));
-        float NoH = saturate(dot(N, H));
-        
-        // compute the BRDF
-        // f = D * F * G / (4 * (N.L) * (N.V));
-        float distribution = get_normal_distribution(u_roughness * roughnessMask, NoH);
-        vec3 fresnel = get_fresnel(specularColor, VoH);
-        float geom = get_geometric_shadowing(u_roughness * roughnessMask, NoV, NoL, VoH);
-
-        vec3 diffuseTerm = compute_diffuse_term(diffuseColor, u_roughness * roughnessMask, NoV, NoL, VoH);
-        vec3 specularTerm = NoL * (distribution * fresnel * geom);
-
-        vec3 Lo = u_pointLights[i].color * (diffuseTerm + specularTerm);
-        
-        float attenuation = get_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
+        vec3 Lo = compute_pbr(u_pointLights[i].position - v_world_position, u_pointLights[i].color);
+        float attenuation = point_light_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
         Lo *= attenuation;
-
         directLighting += Lo;
     }
 

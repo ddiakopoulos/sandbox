@@ -60,8 +60,8 @@ void VirtualRealityApp::setup_scene()
     scoped_timer("setup_scene");
 
     scene.directionalLight.direction = float3(0, -1.f, 0);
-    scene.directionalLight.color = float3(1.f, 0, 0);
-    scene.directionalLight.amount = 1.f;
+    scene.directionalLight.color = float3(1.f, 1.f, 1.f);
+    scene.directionalLight.amount = 0.1f;
 
     scene.pointLights.push_back(uniforms::point_light{ float3(0, 1.f, 0), float3(-1, 1, 0), 4.f });
     scene.pointLights.push_back(uniforms::point_light{ float3(0, 0, 1.f), float3(+1, 1, 0), 4.f });

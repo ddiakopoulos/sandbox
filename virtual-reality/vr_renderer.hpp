@@ -137,7 +137,7 @@ namespace uniforms
     {
         ALIGNED(16) float3    color;
         ALIGNED(16) float3    direction;
-        float       amount; // constant
+        float                 amount; // constant
     };
 
     struct spot_light
