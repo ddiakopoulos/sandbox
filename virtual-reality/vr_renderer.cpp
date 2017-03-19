@@ -19,6 +19,7 @@ VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizeP
       
     std::cout << "Left Texture: "  <<  eyeTextures[0] << std::endl;
     std::cout << "Right Texture: " <<  eyeTextures[1] << std::endl;
+    std::cout << "Render Size per Eye: " << renderSizePerEye << std::endl;
 
     // Generate textures and framebuffers for the left and right eye images
     for (int eye : { (int) Eye::LeftEye, (int) Eye::RightEye })
@@ -32,6 +33,9 @@ VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizeP
         glNamedFramebufferTexture2DEXT(eyeFramebuffers[eye], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eyeTextures[eye], 0);
         eyeFramebuffers[eye].check_complete();
     }
+
+    leftBloom.reset(new BloomPass(renderSizePerEye));
+    rightBloom.reset(new BloomPass(renderSizePerEye));
 
     timer.start();
 }
@@ -54,7 +58,6 @@ void VR_Renderer::run_skybox_pass()
 
 void VR_Renderer::run_forward_pass(const uniforms::per_view & uniforms)
 {
-
     sceneDebugRenderer.draw(uniforms.viewProj);
 
     for (auto obj : debugSet)
@@ -81,6 +84,9 @@ void VR_Renderer::run_forward_pass(const uniforms::per_view & uniforms)
     }
 
     sceneDebugRenderer.clear();
+
+    outputTextureHandles[0] = eyeTextures[0];
+    outputTextureHandles[1] = eyeTextures[1];
 }
 
 void VR_Renderer::run_forward_wireframe_pass()
@@ -95,7 +101,11 @@ void VR_Renderer::run_shadow_pass()
 
 void VR_Renderer::run_bloom_pass()
 {
+    leftBloom->execute(eyeTextures[0]);
+    rightBloom->execute(eyeTextures[1]);
 
+    outputTextureHandles[0] = leftBloom->get_output();
+    outputTextureHandles[1] = rightBloom->get_output();
 }
 
 void VR_Renderer::run_reflection_pass()
