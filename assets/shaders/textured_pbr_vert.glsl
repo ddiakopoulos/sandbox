@@ -55,7 +55,7 @@ void main()
     gl_Position = u_viewProjMatrix * worldPosition;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal, 1.0)).xyz);
     v_world_position = worldPosition.xyz;
-    v_texcoord = inTexCoord.st;
+    v_texcoord = inTexCoord.st; //vec2(1, -1);
     v_tangent = inTangent;
     v_bitangent = inBitangent;
 }

@@ -66,16 +66,8 @@ void VirtualRealityApp::setup_scene()
     scene.directionalLight.color = float3(1.f, 1.f, 1.f);
     scene.directionalLight.amount = 0.1f;
 
-    scene.pointLights.push_back(uniforms::point_light{ float3(0, 1.f, 0), float3(-1, 1, 0), 4.f });
-    scene.pointLights.push_back(uniforms::point_light{ float3(0, 0, 1.f), float3(+1, 1, 0), 4.f });
-
-    auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
-    auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
-    pbrMaterial->set_albedo_texture(load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png"));
-    pbrMaterial->set_normal_texture(load_image("../assets/textures/pbr/rusted_iron_2048/normal.png"));
-    pbrMaterial->set_metallic_texture(load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png"));
-    pbrMaterial->set_roughness_texture(load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png"));
-    scene.namedMaterialList["material-pbr"] = pbrMaterial;
+    scene.pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-1, 1, 0), 4.f });
+    scene.pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.f, 0.85f), float3(+1, 1, 0), 4.f });
 
     // Materials first since other objects need to reference them
     auto normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
@@ -109,6 +101,34 @@ void VirtualRealityApp::setup_scene()
     }
 
     {
+        auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
+        auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
+        pbrMaterial->set_albedo_texture(load_image("../assets/models/cerberus/albedo.png", true));
+        pbrMaterial->set_normal_texture(load_image("../assets/models/cerberus/normal.png", true));
+        pbrMaterial->set_metallic_texture(load_image("../assets/models/cerberus/metallic.png", true));
+        pbrMaterial->set_roughness_texture(load_image("../assets/models/cerberus/roughness.png", true));
+        scene.namedMaterialList["material-pbr"] = pbrMaterial;
+
+        auto geom = load_geometry_from_obj_no_texture("../assets/models/cerberus/cerberus.obj")[0];
+        StaticMesh materialTestMesh;
+        materialTestMesh.set_static_mesh(geom, 2.f);
+        materialTestMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, -ANVIL_PI / 2.f), float3(0, 0.75f, 0)));
+        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        scene.models.push_back(std::move(materialTestMesh));
+    }
+
+    {
+        scoped_timer("load capsule");
+        auto geom = load_geometry_from_ply("../assets/models/geometry/CapsuleUniform.ply", true);
+        StaticMesh materialTestMesh;
+        materialTestMesh.set_static_mesh(geom, 0.5f);
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0.5f, -1)));
+        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        scene.models.push_back(std::move(materialTestMesh));
+    }
+
+    /*
+    {
         scoped_timer("load torus knot");
         auto geom = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply", true);
         StaticMesh materialTestMesh;
@@ -129,16 +149,6 @@ void VirtualRealityApp::setup_scene()
     }
 
     {
-        scoped_timer("load capsule");
-        auto geom = load_geometry_from_ply("../assets/models/geometry/CapsuleUniform.ply", true);
-        StaticMesh materialTestMesh;
-        materialTestMesh.set_static_mesh(geom, 0.5f);
-        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0.5f, -1)));
-        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
-        scene.models.push_back(std::move(materialTestMesh));
-    }
-
-    {
         scoped_timer("load cone");
         auto geom = load_geometry_from_ply("../assets/models/geometry/ConeUniform.ply", true);
         StaticMesh materialTestMesh;
@@ -147,6 +157,7 @@ void VirtualRealityApp::setup_scene()
         materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
         scene.models.push_back(std::move(materialTestMesh));
     }
+    */
 
     if (hmd)
     {

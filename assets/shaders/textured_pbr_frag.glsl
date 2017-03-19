@@ -10,6 +10,68 @@
 
 const int MAX_POINT_LIGHTS = 4;
 
+#define DEFAULT_GAMMA 2.2
+
+float linearrgb_to_srgb1(const in float c, const in float gamma)
+{
+    float v = 0.0;
+    if(c < 0.0031308) {
+        if ( c > 0.0)
+            v = c * 12.92;
+    } else {
+        v = 1.055 * pow(c, 1.0/ gamma) - 0.055;
+    }
+    return v;
+}
+
+vec4 linearTosRGB(const in vec4 col_from, const in float gamma)
+{
+    vec4 col_to;
+    col_to.r = linearrgb_to_srgb1(col_from.r, gamma);
+    col_to.g = linearrgb_to_srgb1(col_from.g, gamma);
+    col_to.b = linearrgb_to_srgb1(col_from.b, gamma);
+    col_to.a = col_from.a;
+    return col_to;
+}
+
+vec3 linearTosRGB(const in vec3 col_from, const in float gamma)
+{
+    vec3 col_to;
+    col_to.r = linearrgb_to_srgb1(col_from.r, gamma);
+    col_to.g = linearrgb_to_srgb1(col_from.g, gamma);
+    col_to.b = linearrgb_to_srgb1(col_from.b, gamma);
+    return col_to;
+}
+
+float sRGBToLinear(const in float c, const in float gamma)
+{
+    float v = 0.0;
+    if ( c < 0.04045 ) {
+        if ( c >= 0.0 )
+            v = c * ( 1.0 / 12.92 );
+    } else {
+        v = pow( ( c + 0.055 ) * ( 1.0 / 1.055 ), gamma );
+    }
+    return v;
+}
+vec4 sRGBToLinear(const in vec4 col_from, const in float gamma)
+{
+    vec4 col_to;
+    col_to.r = sRGBToLinear(col_from.r, gamma);
+    col_to.g = sRGBToLinear(col_from.g, gamma);
+    col_to.b = sRGBToLinear(col_from.b, gamma);
+    col_to.a = col_from.a;
+    return col_to;
+}
+vec3 sRGBToLinear(const in vec3 col_from, const in float gamma)
+{
+    vec3 col_to;
+    col_to.r = sRGBToLinear(col_from.r, gamma);
+    col_to.g = sRGBToLinear(col_from.g, gamma);
+    col_to.b = sRGBToLinear(col_from.b, gamma);
+    return col_to;
+}
+
 struct DirectionalLight
 {
     vec3 color;
@@ -67,13 +129,13 @@ vec3 blend_normals(vec3 geometric, vec3 detail)
 }
 
 // Gotanda 2012, "Beyond a Simple Physically Based Blinn-Phong Model in Real-Time"
-vec3 compute_diffuse_term(vec3 diffuseColor, float roughness4, float NoV, float NoL, float VoH)
+vec3 compute_diffuse_term(vec3 color, float roughness4, float NoV, float NoL, float VoH)
 {
     float VoL = 2 * VoH - 1;
     float c1 = 1 - 0.5 * roughness4 / (roughness4 + 0.33);
     float cosri = VoL - NoV * NoL;
     float c2 = 0.45 * roughness4 / (roughness4 + 0.09) * cosri * (cosri >= 0 ? min(1, NoL / NoV) : NoL);
-    return diffuseColor / PI * (NoL * c1 + c2);
+    return color / PI * (NoL * c1 + c2);
 }
 
 // GGX normal distribution
@@ -121,12 +183,12 @@ float point_light_attenuation(vec3 lightPosition, vec3 vertexPosition, float lig
 vec3 compute_pbr(vec3 lightPosition, vec3 lightColor)
 {
     // Surface properties
-    float roughnessMask = texture(s_roughness, v_texcoord).r;
-    float metallicMask = texture(s_metallic, v_texcoord).r;
+    float roughnessMask = sRGBToLinear(texture(s_roughness, v_texcoord), DEFAULT_GAMMA).r;
+    float metallicMask = sRGBToLinear(texture(s_metallic, v_texcoord), DEFAULT_GAMMA).r;
 
-    vec3 albedo = texture(s_albedo, v_texcoord).xyz;
+    vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
     vec3 diffuseColor = albedo - albedo * u_metallic * metallicMask;
-    vec3 specularColor = mix(vec3(0.08 * u_specular), albedo, u_metallic * metallicMask);
+    //vec3 specularColor = mix(vec3(0.08 * u_specular), albedo, u_metallic * metallicMask);
 
     vec3 viewDir = normalize(u_eyePos - v_world_position);
     vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
@@ -145,33 +207,36 @@ vec3 compute_pbr(vec3 lightPosition, vec3 lightColor)
     // f = D * F * G / (4 * (N.L) * (N.V));
     float specularDistribution = get_normal_distribution(u_roughness * roughnessMask, NoH);
     float geometricShadowing = get_geometric_shadowing(u_roughness * roughnessMask, NoV, NoL, VoH);
-    vec3 specularFresnel = get_fresnel(specularColor, VoH);
+    //vec3 specularFresnel = vec3(1, 1, 1); //get_fresnel(specularColor, VoH);
 
     vec3 diffuseTerm = compute_diffuse_term(diffuseColor, u_roughness * roughnessMask, NoV, NoL, VoH);
-    vec3 specularTerm = NoL * (specularDistribution * specularFresnel * geometricShadowing);
+    vec3 specularTerm = vec3(NoL * (specularDistribution * geometricShadowing));
 
-    return lightColor * (diffuseTerm + specularTerm);
+    return diffuseColor; //lightColor * (diffuseTerm + specularTerm);
 }
 
 void main()
 {
-    vec3 directLighting = vec3(0, 0, 0);
+    vec3 ambientLight = vec3(0.1, 0.1, 0.1);
+    vec3 directLighting = ambientLight;
 
     // Compute directional light
+    /*
     {
         vec3 Lo = compute_pbr(u_directionalLight.direction, u_directionalLight.color);
         Lo *= u_directionalLight.amount;
         directLighting += Lo;
     }
+    */
 
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
-        vec3 Lo = compute_pbr(u_pointLights[i].position - v_world_position, u_pointLights[i].color);
+        vec3 Lo = compute_pbr(u_pointLights[i].position, u_pointLights[i].color);
         float attenuation = point_light_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
         Lo *= attenuation;
         directLighting += Lo;
     }
 
-    f_color = vec4(directLighting, 1);
+    f_color = linearTosRGB(vec4(directLighting, 1), DEFAULT_GAMMA);
 }

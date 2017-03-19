@@ -53,9 +53,12 @@ namespace avl
 
     #include "third_party/stb/stb_image.h" 
 
-    inline GlTexture2D load_image(const std::string & path)
+    inline GlTexture2D load_image(const std::string & path, bool flip = false)
     {
         auto binaryFile = avl::read_file_binary(path);
+
+        if (flip) stbi_set_flip_vertically_on_load(1);
+        else stbi_set_flip_vertically_on_load(0);
 
         int width, height, nBytes;
         auto data = stbi_load_from_memory(binaryFile.data(), (int)binaryFile.size(), &width, &height, &nBytes, 0);

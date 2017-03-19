@@ -438,14 +438,6 @@ namespace avl
             Geometry g;
             tinyobj::mesh_t *mesh = &shapes[i].mesh;
 
-            for (size_t i = 0; i < mesh->normals.size(); i += 3)
-            {
-                float n1 = mesh->normals[i + 0];
-                float n2 = mesh->normals[i + 1];
-                float n3 = mesh->normals[i + 2];
-                g.normals.push_back({ n1, n2, n3});
-            }
-
             for (size_t i = 0; i < mesh->indices.size(); i += 3)
             {
                 uint32_t idx1 = mesh->indices[i + 0];
@@ -466,6 +458,8 @@ namespace avl
                 float3 vert = float3(mesh->positions[v + 0], mesh->positions[v + 1], mesh->positions[v + 2]);
                 g.vertices.push_back(vert);
             }
+
+            if (g.normals.size() == 0) g.compute_normals(false);
 
             meshList.push_back(g);
         }

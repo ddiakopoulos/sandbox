@@ -119,14 +119,14 @@ namespace avl
         {
             program->bind();
 
-            program->uniform("u_roughness", roughnessFactor);
-            program->uniform("u_metallic", metallicFactor);
-            program->uniform("u_specular", specularFactor);
+            //program->uniform("u_roughness", roughnessFactor);
+            //program->uniform("u_metallic", metallicFactor);
+            //program->uniform("u_specular", specularFactor);
 
             program->texture("s_albedo", 0, albedo, GL_TEXTURE_2D);
             program->texture("s_normal", 1, normal, GL_TEXTURE_2D);
-            program->texture("s_roughness", 2, metallic, GL_TEXTURE_2D);
-            program->texture("s_metallic", 3, roughness, GL_TEXTURE_2D);
+            program->texture("s_roughness", 2, roughness, GL_TEXTURE_2D);
+            program->texture("s_metallic", 3, metallic, GL_TEXTURE_2D);
 
             //program->texture("s_emissive", 4, emissive, GL_TEXTURE_2D);
             //program->texture("s_occlusion", 5, occlusion, GL_TEXTURE_2D);
