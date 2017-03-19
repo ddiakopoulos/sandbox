@@ -170,6 +170,80 @@ namespace uniforms
     };
 }
 
+struct BloomPass
+{
+    // Build a 3x3 texel offset lookup table for doing a 2x downsample
+    void luminance_offset_2x2(float2 size)
+    {
+        float4 offsets[16];
+
+        float du = 1.0f / size.x;
+        float dv = 1.0f / size.y;
+
+        int idx = 0;
+        for (int y = 0; y < 3; ++y)
+        {
+            for (int x = 0; x < 3; ++x)
+            {
+                offsets[idx].x = (x) * du;
+                offsets[idx].y = (y) * dv;
+                ++idx;
+            }
+        }
+
+        for (int n = 0; n < idx; ++n)
+        {
+            hdr_lumShader->uniform("u_offset[" + std::to_string(n) + "]", offsets[n]);
+        }
+    }
+
+    // Build a 4x4 texel offset lookup table for doing a 4x downsample
+    void luminance_offset_4x4(float2 size)
+    {
+        float4 offsets[16];
+
+        float du = 1.0f / size.x;
+        float dv = 1.0f / size.y;
+
+        int idx = 0;
+        for (int y = 0; y < 4; ++y)
+        {
+            for (int x = 0; x < 4; ++x)
+            {
+                offsets[idx].x = (x) * du;
+                offsets[idx].y = (y) * dv;
+                ++idx;
+            }
+        }
+
+        for (int n = 0; n < idx; ++n)
+        {
+            hdr_avgLumShader->uniform("u_offset[" + std::to_string(n) + "]", offsets[n]);
+        }
+    }
+
+    float middleGrey = 1.0f;
+    float whitePoint = 1.5f;
+    float threshold = 0.66f;
+
+    std::shared_ptr<GlShader> hdr_lumShader;
+    std::shared_ptr<GlShader> hdr_avgLumShader;
+    std::shared_ptr<GlShader> hdr_blurShader;
+    std::shared_ptr<GlShader> hdr_brightShader;
+    std::shared_ptr<GlShader> hdr_tonemapShader;
+
+    BloomPass()
+    {
+
+    }
+
+    ~BloomPass()
+    {
+
+    }
+
+};
+
 enum class Eye : int
 {
     LeftEye = 0, 
