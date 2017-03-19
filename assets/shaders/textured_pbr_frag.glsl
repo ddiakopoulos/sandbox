@@ -4,6 +4,7 @@
 // http://blog.selfshadow.com/publications/blending-in-detail/
 // http://www.trentreed.net/blog/physically-based-shading-and-image-based-lighting/
 // http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
+// http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
 
 #define saturate(x) clamp(x, 0.0, 1.0)
 #define PI 3.1415926535897932384626433832795
@@ -15,61 +16,67 @@ const int MAX_POINT_LIGHTS = 4;
 float linearrgb_to_srgb1(const in float c, const in float gamma)
 {
     float v = 0.0;
-    if(c < 0.0031308) {
-        if ( c > 0.0)
-            v = c * 12.92;
-    } else {
+    if(c < 0.0031308) 
+    {
+        if (c > 0.0) v = c * 12.92;
+    } 
+    else 
+    {
         v = 1.055 * pow(c, 1.0/ gamma) - 0.055;
     }
     return v;
 }
 
-vec4 linearTosRGB(const in vec4 col_from, const in float gamma)
+vec4 linearTosRGB(const in vec4 from, const in float gamma)
 {
-    vec4 col_to;
-    col_to.r = linearrgb_to_srgb1(col_from.r, gamma);
-    col_to.g = linearrgb_to_srgb1(col_from.g, gamma);
-    col_to.b = linearrgb_to_srgb1(col_from.b, gamma);
-    col_to.a = col_from.a;
-    return col_to;
+    vec4 to;
+    to.r = linearrgb_to_srgb1(from.r, gamma);
+    to.g = linearrgb_to_srgb1(from.g, gamma);
+    to.b = linearrgb_to_srgb1(from.b, gamma);
+    to.a = from.a;
+    return to;
 }
 
-vec3 linearTosRGB(const in vec3 col_from, const in float gamma)
+vec3 linearTosRGB(const in vec3 from, const in float gamma)
 {
-    vec3 col_to;
-    col_to.r = linearrgb_to_srgb1(col_from.r, gamma);
-    col_to.g = linearrgb_to_srgb1(col_from.g, gamma);
-    col_to.b = linearrgb_to_srgb1(col_from.b, gamma);
-    return col_to;
+    vec3 to;
+    to.r = linearrgb_to_srgb1(from.r, gamma);
+    to.g = linearrgb_to_srgb1(from.g, gamma);
+    to.b = linearrgb_to_srgb1(from.b, gamma);
+    return to;
 }
 
 float sRGBToLinear(const in float c, const in float gamma)
 {
     float v = 0.0;
-    if ( c < 0.04045 ) {
-        if ( c >= 0.0 )
-            v = c * ( 1.0 / 12.92 );
-    } else {
-        v = pow( ( c + 0.055 ) * ( 1.0 / 1.055 ), gamma );
+    if (c < 0.04045) 
+    {
+        if (c >= 0.0) v = c * (1.0 / 12.92);
+    } 
+    else 
+    {
+        v = pow((c + 0.055) * (1.0 / 1.055), gamma);
     }
     return v;
 }
-vec4 sRGBToLinear(const in vec4 col_from, const in float gamma)
+
+vec4 sRGBToLinear(const in vec4 from, const in float gamma)
 {
-    vec4 col_to;
-    col_to.r = sRGBToLinear(col_from.r, gamma);
-    col_to.g = sRGBToLinear(col_from.g, gamma);
-    col_to.b = sRGBToLinear(col_from.b, gamma);
-    col_to.a = col_from.a;
-    return col_to;
+    vec4 to;
+    to.r = sRGBToLinear(from.r, gamma);
+    to.g = sRGBToLinear(from.g, gamma);
+    to.b = sRGBToLinear(from.b, gamma);
+    to.a = from.a;
+    return to;
 }
-vec3 sRGBToLinear(const in vec3 col_from, const in float gamma)
+
+vec3 sRGBToLinear(const in vec3 from, const in float gamma)
 {
-    vec3 col_to;
-    col_to.r = sRGBToLinear(col_from.r, gamma);
-    col_to.g = sRGBToLinear(col_from.g, gamma);
-    col_to.b = sRGBToLinear(col_from.b, gamma);
-    return col_to;
+    vec3 to;
+    to.r = sRGBToLinear(from.r, gamma);
+    to.g = sRGBToLinear(from.g, gamma);
+    to.b = sRGBToLinear(from.b, gamma);
+    return to;
 }
 
 struct DirectionalLight
@@ -128,113 +135,87 @@ vec3 blend_normals(vec3 geometric, vec3 detail)
     return normalize(n2.x*nBasis[0] + n2.y*nBasis[1] + n2.z*nBasis[2]);
 }
 
-// Gotanda 2012, "Beyond a Simple Physically Based Blinn-Phong Model in Real-Time"
-vec3 compute_diffuse_term(vec3 color, float roughness4, float NoV, float NoL, float VoH)
+// Blinn-Phong normal distribution, defined as 2d Gaussian distribution of microfacets' slopes. Sharp highlights.
+float NDF_Beckmann(float NoH, float alphaSqr)
 {
-    float VoL = 2 * VoH - 1;
-    float c1 = 1 - 0.5 * roughness4 / (roughness4 + 0.33);
-    float cosri = VoL - NoV * NoL;
-    float c2 = 0.45 * roughness4 / (roughness4 + 0.09) * cosri * (cosri >= 0 ? min(1, NoL / NoV) : NoL);
-    return color / PI * (NoL * c1 + c2);
+    float NoH2 = NoH * NoH;
+    return 1.0 / (PI * alphaSqr * NoH2 * NoH2) * exp((NoH2 - 1.0) / (alphaSqr * NoH2));
 }
 
-// GGX normal distribution
-float get_normal_distribution(float roughness4, float NoH)
+// A popular model with a long tail. 
+float NDF_GGX(float NoH, float alphaSqr)
 {
-    float d = (NoH * roughness4 - NoH) * NoH + 1;
-    return roughness4 / (d*d);
+    return alphaSqr / (PI * pow(NoH * NoH * (alphaSqr - 1.0) + 1.0, 2.0));
 }
 
-// Smith GGX geometric shadowing from "Physically-Based Shading at Disney"
-float get_geometric_shadowing(float roughness4, float NoV, float NoL, float VoH)
-{   
-    float gSmithV = NoV + sqrt(NoV * (NoV - NoV * roughness4) + roughness4);
-    float gSmithL = NoL + sqrt(NoL * (NoL - NoL * roughness4) + roughness4);
-    return 1.0 / (gSmithV * gSmithL);
+// Geometric attenuation/shadowing
+float schlick_smith_visibility(float NoL, float NoV, float alpha)
+{
+    float k = pow(0.8 + 0.5 * alpha, 2.0) / 2.0;
+    float GL = 1.0 / (NoL * (1.0 - k) + k);
+    float GV = 1.0 / (NoV * (1.0 - k) + k);
+    return GL * GV;
 }
 
-// Fresnel term
-vec3 get_fresnel(vec3 specularColor, float VoH)
+float fresnel_schlick(float ct, float F0)
 {
-    vec3 specularColorSqrt = sqrt(clamp(vec3(0, 0, 0), vec3(0.99, 0.99, 0.99), specularColor));
-    vec3 n = (1 + specularColorSqrt) / (1 - specularColorSqrt);
-    vec3 g = sqrt(n * n + VoH * VoH - 1);
-    return 0.5 * pow((g - VoH) / (g + VoH), vec3(2.0)) * (1 + pow(((g+VoH)*VoH - 1) / ((g-VoH)*VoH + 1), vec3(2.0)));
+    return F0 + (1.0 - F0) * pow(1.0 - ct, 5.0);
 }
 
-// http://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
-float point_light_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius)
+float shade_pbr(vec3 N, vec3 V, vec3 L, float roughness, float F0) 
 {
-    const float cutoff = 0.0052f;
+    float alpha = roughness * roughness;
+    float alphaSqr = alpha * alpha;
 
-    float r = lightRadius;
-    vec3 L = lightPosition - vertexPosition;
-    float dist = length(L);
-    float d = max(dist - r, 0);
-    L /= dist;
-    float denom = d / r + 1.0f;
+    vec3 H = normalize(V + L);
 
-    float attenuation = 1.0f / (denom * denom);
-    attenuation = (attenuation - cutoff) / (1.0 - cutoff);
-    attenuation = max(attenuation, 0.0);
-    return attenuation;
-}
-
-vec3 compute_pbr(vec3 lightPosition, vec3 lightColor)
-{
-    // Surface properties
-    float roughnessMask = sRGBToLinear(texture(s_roughness, v_texcoord), DEFAULT_GAMMA).r;
-    float metallicMask = sRGBToLinear(texture(s_metallic, v_texcoord), DEFAULT_GAMMA).r;
-
-    vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
-    vec3 diffuseColor = albedo - albedo * u_metallic * metallicMask;
-    //vec3 specularColor = mix(vec3(0.08 * u_specular), albedo, u_metallic * metallicMask);
-
-    vec3 viewDir = normalize(u_eyePos - v_world_position);
-    vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
-
-    vec3 N = normalWorld;
-    vec3 L = normalize(lightPosition - v_world_position); 
-    vec3 V = viewDir; 
-    vec3 H = normalize(V + L); // half vector
-    
     float NoL = saturate(dot(N, L));
     float NoV = saturate(dot(N, V));
-    float VoH = saturate(dot(V, H));
     float NoH = saturate(dot(N, H));
-    
-    // compute the BRDF
-    // f = D * F * G / (4 * (N.L) * (N.V));
-    float specularDistribution = get_normal_distribution(u_roughness * roughnessMask, NoH);
-    float geometricShadowing = get_geometric_shadowing(u_roughness * roughnessMask, NoV, NoL, VoH);
-    //vec3 specularFresnel = vec3(1, 1, 1); //get_fresnel(specularColor, VoH);
+    float LoH = saturate(dot(L, H));
 
-    vec3 diffuseTerm = compute_diffuse_term(diffuseColor, u_roughness * roughnessMask, NoV, NoL, VoH);
-    vec3 specularTerm = vec3(NoL * (specularDistribution * geometricShadowing));
+    // Normal distribution
+    float Di = NDF_GGX(NoH, alphaSqr);
 
-    return diffuseColor; //lightColor * (diffuseTerm + specularTerm);
+    // Fresnel term
+    float Fs = fresnel_schlick(NoV, F0);
+
+    // Geometry term is used for describing how much the microfacet is blocked by another microfacet
+    float Vs = schlick_smith_visibility(NoL, NoV, alpha);
+
+    return Di * Fs * Vs;
 }
+
 
 void main()
 {
-    vec3 ambientLight = vec3(0.1, 0.1, 0.1);
-    vec3 directLighting = ambientLight;
+    vec3 directLighting = vec3(0.0, 0.0, 0.0);
 
-    // Compute directional light
-    /*
-    {
-        vec3 Lo = compute_pbr(u_directionalLight.direction, u_directionalLight.color);
-        Lo *= u_directionalLight.amount;
-        directLighting += Lo;
-    }
-    */
+    // Surface properties
+    float roughness = sRGBToLinear(texture(s_roughness, v_texcoord), DEFAULT_GAMMA).r;
+    float metallic = sRGBToLinear(texture(s_metallic, v_texcoord), DEFAULT_GAMMA).r;
 
+    vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
+    vec3 viewDir = normalize(u_eyePos - v_world_position);
+    vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
+    
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
-        vec3 Lo = compute_pbr(u_pointLights[i].position, u_pointLights[i].color);
-        float attenuation = point_light_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
-        Lo *= attenuation;
+        vec3 N = normalWorld;
+        vec3 V = viewDir;
+        vec3 L = normalize(u_pointLights[i].position - v_world_position); 
+
+        float fresnel = pow(max(1.0 - abs(dot(N, V)), 0.0), 1.5f + roughness); 
+
+        // F0 (Fresnel reflection coefficient), otherwise known as specular reflectance. 
+        // 0.04 is the default for non-metals in UE4
+        vec3 F0 = vec3(0.1); 
+
+        F0 = mix(F0, u_pointLights[i].color, metallic);
+        vec3 spec = u_pointLights[i].color * shade_pbr(N, V, L, roughness, F0.r);
+
+        vec3 Lo = (albedo) + spec;
         directLighting += Lo;
     }
 
