@@ -226,15 +226,50 @@ struct BloomPass
     float whitePoint = 1.5f;
     float threshold = 0.66f;
 
-    std::shared_ptr<GlShader> hdr_lumShader;
-    std::shared_ptr<GlShader> hdr_avgLumShader;
-    std::shared_ptr<GlShader> hdr_blurShader;
-    std::shared_ptr<GlShader> hdr_brightShader;
-    std::shared_ptr<GlShader> hdr_tonemapShader;
+    GlShader hdr_lumShader;
+    GlShader hdr_avgLumShader;
+    GlShader hdr_blurShader;
+    GlShader hdr_brightShader;
+    GlShader hdr_tonemapShader;
 
-    BloomPass()
+    GlFramebuffer luminance_0, luminance_1, luminance_2, luminance_3, luminance_4, brightFramebuffer, blurFramebuffer;
+    GlTexture2D luminanceTex_0, luminanceTex_1, luminanceTex_2, luminanceTex_3, luminanceTex_4, brightTex, blurTex;
+
+    float2 perEyeSize;
+
+    BloomPass(float2 size) : perEyeSize(size)
     {
+        luminanceTex_0.setup(128, 128, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_1.setup(64, 64, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_2.setup(16, 16, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_3.setup(4, 4, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_4.setup(1, 1, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        brightTex.setup(perEyeSize.x / 2, perEyeSize.y / 2, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        blurTex.setup(perEyeSize.x / 8, perEyeSize.y / 8, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
 
+        glNamedFramebufferTexture2DEXT(luminance_0, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_0, 0);
+        glNamedFramebufferTexture2DEXT(luminance_1, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_1, 0);
+        glNamedFramebufferTexture2DEXT(luminance_2, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_2, 0);
+        glNamedFramebufferTexture2DEXT(luminance_3, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_3, 0);
+        glNamedFramebufferTexture2DEXT(luminance_4, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_4, 0);
+        glNamedFramebufferTexture2DEXT(brightFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brightTex, 0);
+        glNamedFramebufferTexture2DEXT(blurFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blurTex, 0);
+
+        luminance_0.check_complete();
+        luminance_1.check_complete();
+        luminance_2.check_complete();
+        luminance_3.check_complete();
+        luminance_4.check_complete();
+        brightFramebuffer.check_complete();
+        blurFramebuffer.check_complete();
+
+        hdr_lumShader = GlShader("../assets/shaders/hdr/hdr_lum_vert.glsl", "../assets/shaders/hdr/hdr_lum_frag.glsl");
+        hdr_avgLumShader = GlShader("../assets/shaders/hdr/hdr_lumavg_vert.glsl", "../assets/shaders/hdr/hdr_lumavg_frag.glsl");
+        hdr_blurShader = GlShader("../assets/shaders/hdr/hdr_blur_vert.glsl", "../assets/shaders/hdr/hdr_blur_frag.glsl");
+        hdr_brightShader = GlShader("../assets/shaders/hdr/hdr_bright_vert.glsl", "../assets/shaders/hdr/hdr_bright_frag.glsl");
+        hdr_tonemapShader = GlShader("../assets/shaders/hdr/hdr_tonemap_vert.glsl", "../assets/shaders/hdr/hdr_tonemap_frag.glsl");
+
+        gl_check_error(__FILE__, __LINE__);
     }
 
     ~BloomPass()
