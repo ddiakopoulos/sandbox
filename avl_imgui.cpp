@@ -185,14 +185,18 @@ namespace gui
         
         if (e.type == InputEvent::Type::KEY)
         {
-            if (e.action == GLFW_PRESS)
-                io.KeysDown[e.value[0]] = true;
-            if (e.action == GLFW_RELEASE)
-                io.KeysDown[e.value[0]] = false;
-            
-            io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-            io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-            io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+            if (io.WantCaptureKeyboard)
+            {
+                if (e.action == GLFW_PRESS) io.KeysDown[e.value[0]] = true;
+                if (e.action == GLFW_RELEASE) io.KeysDown[e.value[0]] = false;
+                io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+                io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+                io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+            }
+            else
+            {
+                for (auto & k : capturedKeys) { ImGui::GetIO().KeysDown[e.value[0]] = false; }
+            }
         }
         
         if (e.type == InputEvent::Type::CHAR)
@@ -404,12 +408,12 @@ namespace gui
     //   Helper Functionality   //
     //////////////////////////////
 
-    void Image(const GlTexture2D & texture, const ImVec2 & size, const ImVec2 & uv0, const ImVec2 & uv1, const ImVec4 & tint_col, const ImVec4 & border_col)
+    void Image(const int & texture, const ImVec2 & size, const ImVec2 & uv0, const ImVec2 & uv1, const ImVec4 & tint_col, const ImVec4 & border_col)
     {
         ImGui::Image((void *)(intptr_t) texture, size, uv0, uv1, tint_col, border_col);
     }
 
-    bool ImageButton(const GlTexture2D & texture, const ImVec2 & size, const ImVec2 & uv0, const ImVec2 & uv1, int frame_padding, const ImVec4 & bg_col, const ImVec4 & tint_col)
+    bool ImageButton(const int & texture, const ImVec2 & size, const ImVec2 & uv0, const ImVec2 & uv1, int frame_padding, const ImVec4 & bg_col, const ImVec4 & tint_col)
     {
         return ImGui::ImageButton((void *)(intptr_t) texture, size, uv0, uv1, frame_padding, bg_col, tint_col);
     }
@@ -457,57 +461,5 @@ namespace gui
         bool result = ImGui::Combo(label, current_item, (const char*) &charArray[0], height_in_items);
         return result;
     }
-    
-    ////////////////////////////////
-    //   Scoped ImGui Utilities   //
-    ////////////////////////////////
 
-    ScopedWindow::ScopedWindow(const std::string &name, ImGuiWindowFlags flags) { ImGui::Begin(name.c_str(), nullptr, flags); }
-
-    ScopedWindow::ScopedWindow(const std::string &name, float2 size, float fillAlpha, ImGuiWindowFlags flags) { ImGui::Begin(name.c_str(), nullptr, size, fillAlpha, flags); }
-
-    ScopedWindow::~ScopedWindow() { ImGui::End(); }
-
-    ScopedChild::ScopedChild(const std::string &name, float2 size, bool border, ImGuiWindowFlags extraFlags) { ImGui::BeginChild(name.c_str(), size, border, extraFlags); }
-
-    ScopedChild::~ScopedChild() { ImGui::EndChild(); }
-
-    ScopedGroup::ScopedGroup() { ImGui::BeginGroup(); }
-
-    ScopedGroup::~ScopedGroup() { ImGui::EndGroup(); }
-
-    ScopedStyleColor::ScopedStyleColor(ImGuiCol idx, const ImVec4 & col) { ImGui::PushStyleColor(idx, col); }
-
-    ScopedStyleColor::~ScopedStyleColor() { ImGui::PopStyleColor(); }
-
-    ScopedStyleVar::ScopedStyleVar(ImGuiStyleVar idx, float val) { ImGui::PushStyleVar(idx, val); }
-
-    ScopedStyleVar::ScopedStyleVar(ImGuiStyleVar idx, const ImVec2 &val) { ImGui::PushStyleVar(idx, val); }
-
-    ScopedStyleVar::~ScopedStyleVar() { ImGui::PopStyleVar(); }
-
-    ScopedItemWidth::ScopedItemWidth(float itemWidth) { ImGui::PushItemWidth(itemWidth); }
-
-    ScopedItemWidth::~ScopedItemWidth() { ImGui::PopItemWidth(); }
-
-    ScopedTextWrapPos::ScopedTextWrapPos(float wrapPosX) { ImGui::PushTextWrapPos(wrapPosX); }
-
-    ScopedTextWrapPos::~ScopedTextWrapPos() { ImGui::PopTextWrapPos(); }
-
-    ScopedId::ScopedId(const std::string &name) { ImGui::PushID(name.c_str()); }
-
-    ScopedId::ScopedId(const void *ptrId) { ImGui::PushID(ptrId); }
-
-    ScopedId::ScopedId(const int intId) { ImGui::PushID(intId); }
-
-    ScopedId::~ScopedId() { ImGui::PopID(); }
-
-    ScopedMainMenuBar::ScopedMainMenuBar() { opened = ImGui::BeginMainMenuBar(); }
-
-    ScopedMainMenuBar::~ScopedMainMenuBar() { if (opened) ImGui::EndMainMenuBar(); }
-
-    ScopedMenuBar::ScopedMenuBar() { opened = ImGui::BeginMenuBar(); }
-
-    ScopedMenuBar::~ScopedMenuBar() { if (opened) ImGui::EndMenuBar(); }
-
-}
+} // end namespace gui

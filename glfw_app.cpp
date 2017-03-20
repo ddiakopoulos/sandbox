@@ -235,6 +235,15 @@ void GLFWApp::exit()
     glfwSetWindowShouldClose(window, 1);
 }
 
+int GLFWApp::get_mods() const
+{
+    int mods = 0;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) || glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL)) mods |= GLFW_MOD_CONTROL;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT)) mods |= GLFW_MOD_SHIFT;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) || glfwGetKey(window, GLFW_KEY_RIGHT_ALT)) mods |= GLFW_MOD_ALT;
+    return mods;
+}
+
 namespace avl
 {
     int main(int argc, char * argv[]) 

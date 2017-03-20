@@ -81,6 +81,8 @@ namespace avl
         void set_fullscreen(bool state);
         bool get_fullscreen();
 
+        int get_mods() const;
+
     protected:
 
         GLFWwindow * window;

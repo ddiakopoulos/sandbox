@@ -23,6 +23,14 @@ operator avl::float4() const { return avl::float4(x,y,z,w); }
 
 #include "imgui/imgui.h"
 
+using namespace avl;
+
+struct ui_rect
+{
+    int2 min, max;
+    bool contains(const int2 & p) const { return all(gequal(p, min)) && all(less(p, max)); }
+};
+
 class GlTexture2D;
 namespace avl
 {
@@ -61,6 +69,8 @@ namespace gui
 
         void begin_frame();
         void end_frame();
+
+        bool capturedKeys[1024];
     };
     
     inline void make_dark_theme()
@@ -131,83 +141,12 @@ namespace gui
     //   Helper Functionality   //
     //////////////////////////////
 
-    void Image(const GlTexture2D & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1), const ImVec2& uv1 = ImVec2(1,0), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
-    bool ImageButton(const GlTexture2D & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1),  const ImVec2& uv1 = ImVec2(1,0), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,1), const ImVec4& tint_col = ImVec4(1,1,1,1));
+    void Image(const int & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1), const ImVec2& uv1 = ImVec2(1,0), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
+    bool ImageButton(const int & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1),  const ImVec2& uv1 = ImVec2(1,0), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,1), const ImVec4& tint_col = ImVec4(1,1,1,1));
     bool ListBox(const char* label, int* current_item, const std::vector<std::string>& items, int height_in_items = -1);
     bool InputText(const char* label, std::string* buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
     bool InputTextMultiline(const char* label, std::string* buf, const ImVec2& size = ImVec2(0,0), ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
     bool Combo(const char* label, int* current_item, const std::vector<std::string>& items, int height_in_items = -1);
-    
-    ////////////////////////////////
-    //   Scoped ImGui Utilities   //
-    ////////////////////////////////
-
-    struct ScopedWindow : avl::Noncopyable
-    {
-        ScopedWindow(const std::string &name = "Debug", ImGuiWindowFlags flags = 0);
-        ScopedWindow(const std::string &name, avl::float2 size, float fillAlpha = -1.0f, ImGuiWindowFlags flags = 0);
-        ~ScopedWindow();
-    };
-    
-    struct ScopedChild : avl::Noncopyable
-    {
-        ScopedChild(const std::string &name, avl::float2 size = avl::float2(0.f, 0.f), bool border = false, ImGuiWindowFlags extraFlags = 0);
-        ~ScopedChild();
-    };
-    
-    struct ScopedGroup : avl::Noncopyable
-    {
-        ScopedGroup();
-        ~ScopedGroup();
-    };
-
-    struct ScopedStyleColor : avl::Noncopyable
-    {
-        ScopedStyleColor(ImGuiCol idx, const ImVec4& col);
-        ~ScopedStyleColor();
-    };
-    
-    struct ScopedStyleVar : avl::Noncopyable
-    {
-        ScopedStyleVar(ImGuiStyleVar idx, float val);
-        ScopedStyleVar(ImGuiStyleVar idx, const ImVec2 &val);
-        ~ScopedStyleVar();
-    };
-    
-    struct ScopedItemWidth : avl::Noncopyable
-    {
-        ScopedItemWidth(float itemWidth);
-        ~ScopedItemWidth();
-    };
-    
-    struct ScopedTextWrapPos : avl::Noncopyable
-    {
-        ScopedTextWrapPos(float wrapPosX = 0.0f);
-        ~ScopedTextWrapPos();
-    };
-    
-    struct ScopedId : avl::Noncopyable
-    {
-        ScopedId(const std::string &name);
-        ScopedId(const void *ptrId);
-        ScopedId(const int intId);
-        ~ScopedId();
-    };
-    
-    struct ScopedMainMenuBar : avl::Noncopyable
-    {
-        ScopedMainMenuBar();
-        ~ScopedMainMenuBar();
-        bool opened;
-    };
-    
-    struct ScopedMenuBar : avl::Noncopyable
-    {
-        ScopedMenuBar();
-        ~ScopedMenuBar();
-        bool opened;
-    };
-    
 }
 
 #endif // AVL_IMGUI_H

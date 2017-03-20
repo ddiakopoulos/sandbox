@@ -215,14 +215,14 @@ struct BloomPass
     {
         fsQuad = make_fullscreen_quad();
 
-        luminanceTex_0.setup(128, 128, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_1.setup(64, 64, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_2.setup(16, 16, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_3.setup(4, 4, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_4.setup(1, 1, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        brightTex.setup(perEyeSize.x / 2, perEyeSize.y / 2, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        blurTex.setup(perEyeSize.x / 8, perEyeSize.y / 8, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
-        outputTex.setup(perEyeSize.x, perEyeSize.y, GL_RGBA32F, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_0.setup(128, 128, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_1.setup(64, 64, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_2.setup(16, 16, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_3.setup(4, 4, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_4.setup(1, 1, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        brightTex.setup(perEyeSize.x / 2, perEyeSize.y / 2, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        blurTex.setup(perEyeSize.x / 8, perEyeSize.y / 8, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        outputTex.setup(perEyeSize.x, perEyeSize.y, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
 
         glNamedFramebufferTexture2DEXT(luminance_0, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_0, 0);
         glNamedFramebufferTexture2DEXT(luminance_1, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_1, 0);
@@ -356,7 +356,6 @@ struct BloomPass
     {
         return outputTex.id();
     }
-
 };
 
 enum class Eye : int

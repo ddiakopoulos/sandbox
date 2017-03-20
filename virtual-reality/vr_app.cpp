@@ -319,6 +319,16 @@ void VirtualRealityApp::on_draw()
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
+    imgui_menu_stack menu(*this, igm->capturedKeys);
+
+    menu.app_menu_begin();
+    {
+        menu.begin("File");
+        if (menu.item("Exit", GLFW_MOD_ALT, GLFW_KEY_F4)) exit();
+        menu.end();
+    }
+    menu.app_menu_end();
+
     physicsEngine->get_world()->debugDrawWorld();
 
     renderer->add_debug_renderable(physicsDebugRenderer.get());
@@ -341,6 +351,13 @@ void VirtualRealityApp::on_draw()
         renderer->set_eye_data(centerEye, centerEye);
         renderer->render_frame();
     }
+
+    imgui_fixed_window_begin("Debug Views", { { 0, height - 240 }, { width, height } });
+    gui::Image(renderer->get_eye_texture(Eye::LeftEye), { 240, 180 });
+    ImGui::SameLine();
+    gui::Image(renderer->get_eye_texture(Eye::RightEye), { 240, 180 });
+    ImGui::SameLine();
+    imgui_fixed_window_end();
 
     Bounds2D rect{ { 0.f, 0.f },{ (float)width,(float)height } };
 
