@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec3 inPosition;
 
-uniform mat4 u_modelViewProj;
+uniform mat4 u_modelViewProj = mat4(1.0);
 
 out gl_PerVertex
 {

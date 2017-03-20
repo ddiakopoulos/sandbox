@@ -189,8 +189,11 @@ struct BloomPass
     GlShader hdr_brightShader;
     GlShader hdr_tonemapShader;
 
-    GlFramebuffer luminance_0, luminance_1, luminance_2, luminance_3, luminance_4, brightFramebuffer, blurFramebuffer, outputFramebuffer;
-    GlTexture2D luminanceTex_0, luminanceTex_1, luminanceTex_2, luminanceTex_3, luminanceTex_4, brightTex, blurTex, outputTex;
+    GlFramebuffer brightFramebuffer, blurFramebuffer, outputFramebuffer;
+    GlFramebuffer luminance[5];
+
+    GlTexture2D brightTex, blurTex, outputTex;
+    GlTexture2D luminanceTex[5];
 
     GlMesh fsQuad;
 
@@ -200,29 +203,25 @@ struct BloomPass
     {
         fsQuad = make_fullscreen_quad();
 
-        luminanceTex_0.setup(128, 128, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_1.setup(64, 64,   GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_2.setup(16, 16,   GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_3.setup(4, 4,     GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_4.setup(1, 1,     GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex[0].setup(128, 128, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex[1].setup(64, 64,   GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex[2].setup(16, 16,   GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex[3].setup(4, 4,     GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex[4].setup(1, 1,     GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         brightTex.setup(perEyeSize.x / 2, perEyeSize.y / 2, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         blurTex.setup(perEyeSize.x / 8, perEyeSize.y / 8, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         outputTex.setup(perEyeSize.x, perEyeSize.y, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
 
-        glNamedFramebufferTexture2DEXT(luminance_0, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_0, 0);
-        glNamedFramebufferTexture2DEXT(luminance_1, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_1, 0);
-        glNamedFramebufferTexture2DEXT(luminance_2, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_2, 0);
-        glNamedFramebufferTexture2DEXT(luminance_3, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_3, 0);
-        glNamedFramebufferTexture2DEXT(luminance_4, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex_4, 0);
+        glNamedFramebufferTexture2DEXT(luminance[0], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex[0], 0);
+        glNamedFramebufferTexture2DEXT(luminance[1], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex[1], 0);
+        glNamedFramebufferTexture2DEXT(luminance[2], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex[2], 0);
+        glNamedFramebufferTexture2DEXT(luminance[3], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex[3], 0);
+        glNamedFramebufferTexture2DEXT(luminance[4], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex[4], 0);
         glNamedFramebufferTexture2DEXT(brightFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brightTex, 0);
         glNamedFramebufferTexture2DEXT(blurFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blurTex, 0);
         glNamedFramebufferTexture2DEXT(outputFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outputTex, 0);
 
-        luminance_0.check_complete();
-        luminance_1.check_complete();
-        luminance_2.check_complete();
-        luminance_3.check_complete();
-        luminance_4.check_complete();
+        for (auto & l : luminance) l.check_complete();
         brightFramebuffer.check_complete();
         blurFramebuffer.check_complete();
         outputFramebuffer.check_complete();
@@ -254,7 +253,7 @@ struct BloomPass
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_FRAMEBUFFER_SRGB);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, luminance_0); // 128x128 surface area - calculate luminance 
+        glBindFramebuffer(GL_FRAMEBUFFER, luminance[0]); // 128x128 surface area - calculate luminance 
         glViewport(0, 0, 128, 128);
         hdr_lumShader.bind();
         hdr_lumShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
@@ -263,41 +262,22 @@ struct BloomPass
         hdr_lumShader.unbind();
 
         {
-            //hdr_avgLumShader.bind();
-
-            hdr_post.uniform("u_modelViewProj", Identity4x4);
-
-            glActiveShaderProgram(downsample_pipeline, hdr_avgLumShader.handle());
             glBindProgramPipeline(downsample_pipeline);
 
-            glBindFramebuffer(GL_FRAMEBUFFER, luminance_1);// 64x64 surface area - downscale + average
-            glViewport(0, 0, 64, 64);
-            hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_0, GL_TEXTURE_2D);
-            //hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
-            fsQuad.draw_elements();
+            std::vector<float3> downsampleTargets = { {0, 64, 64}, {1, 16, 16}, {2, 4, 4}, {3, 1, 1} };
 
-            glBindFramebuffer(GL_FRAMEBUFFER, luminance_2); // 16x16 surface area - downscale + average
-            glViewport(0, 0, 16, 16);
-            hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_1, GL_TEXTURE_2D);
-            //hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
-            fsQuad.draw_elements();
+            auto downsample = [&](const int idx, const float2 targetSize)
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, luminance[idx + 1]);
+                glViewport(0, 0, targetSize.x, targetSize.y);
+                hdr_avgLumShader.texture("s_texColor", 0, luminance[idx], GL_TEXTURE_2D);
+                fsQuad.draw_elements();
+            };
 
-            glBindFramebuffer(GL_FRAMEBUFFER, luminance_3); // 4x4 surface area - downscale + average
-            glViewport(0, 0, 4, 4);
-            hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_2, GL_TEXTURE_2D);
-            //hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
-            fsQuad.draw_elements();
-
-            glBindFramebuffer(GL_FRAMEBUFFER, luminance_4); // 1x1 surface area - downscale + average
-            glViewport(0, 0, 1, 1);
-            hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_3, GL_TEXTURE_2D);
-            //hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
-            fsQuad.draw_elements();
+            for (auto target : downsampleTargets) downsample(target.x, float2(target.y, target.z));
 
             glBindProgramPipeline(0);
         }
-
-        gl_check_error(__FILE__, __LINE__);
 
         // Readback luminance value
         // std::vector<float> lumValue = { 0, 0, 0, 0 };
@@ -311,7 +291,7 @@ struct BloomPass
         glViewport(0, 0, perEyeSize.x / 2, perEyeSize.y / 2);
         hdr_brightShader.bind();
         hdr_brightShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
-        hdr_brightShader.texture("s_texLum", 1, luminanceTex_4, GL_TEXTURE_2D); // 1x1
+        hdr_brightShader.texture("s_texLum", 1, luminanceTex[4], GL_TEXTURE_2D); // 1x1
         hdr_brightShader.uniform("u_tonemap", tonemap);
         hdr_brightShader.uniform("u_modelViewProj", Identity4x4);
         fsQuad.draw_elements();
@@ -334,7 +314,7 @@ struct BloomPass
         glViewport(0, 0, perEyeSize.x, perEyeSize.y);
         hdr_tonemapShader.bind();
         hdr_tonemapShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
-        hdr_tonemapShader.texture("s_texLum", 1, luminanceTex_4, GL_TEXTURE_2D); // 1x1
+        hdr_tonemapShader.texture("s_texLum", 1, luminanceTex[4], GL_TEXTURE_2D); // 1x1
         hdr_tonemapShader.texture("s_texBlur", 2, blurTex, GL_TEXTURE_2D);
         hdr_tonemapShader.uniform("u_tonemap", tonemap);
         hdr_tonemapShader.uniform("u_modelViewProj", Identity4x4);
@@ -349,7 +329,7 @@ struct BloomPass
 
     GLuint get_output_texture() const { return outputTex.id(); }
 
-    GLuint get_luminance_texture() const { return luminanceTex_1.id(); }
+    GLuint get_luminance_texture() const { return luminanceTex[1].id(); }
 
     GLuint get_bright_tex() const { return brightTex.id(); }
 
