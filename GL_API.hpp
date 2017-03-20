@@ -16,7 +16,6 @@ namespace
 		glCompileShader(shader);
 
 		GLint status, length;
-
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
 		if (status == GL_FALSE)
@@ -246,7 +245,7 @@ class GlShader
 {
 	GLuint program;
 	bool enabled = false;
-	void check() const { if (!enabled) throw std::runtime_error("shader not enabled"); };
+
 protected:
 	GlShader(const GlShader & r) = delete;
 	GlShader & operator = (const GlShader & r) = delete;
@@ -254,20 +253,42 @@ public:
 
 	GlShader() : program() {}
 
-	GlShader(const std::string & vertexShader, const std::string & fragmentShader, const std::string & geometryShader = "")
+    GlShader(const GLuint type, const std::string & src)
+    {
+        program = glCreateProgram();
+
+        ::compile_shader(program, type, src.c_str());
+        glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_TRUE);
+
+        glLinkProgram(program);
+
+        GLint status, length;
+        glGetProgramiv(program, GL_LINK_STATUS, &status);
+
+        if (status == GL_FALSE)
+        {
+            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+            std::vector<GLchar> buffer(length);
+            glGetProgramInfoLog(program, (GLsizei)buffer.size(), nullptr, buffer.data());
+            std::cerr << "GL Link Error: " << buffer.data() << std::endl;
+            throw std::runtime_error("GLSL Link Failure");
+        }
+    }
+
+	GlShader(const std::string & vert, const std::string & frag, const std::string & geom = "")
 	{
 		program = glCreateProgram();
-		compile_shader(program, GL_VERTEX_SHADER, vertexShader.c_str());
-		compile_shader(program, GL_FRAGMENT_SHADER, fragmentShader.c_str());
 
-		if (geometryShader.length() != 0)
-			::compile_shader(program, GL_GEOMETRY_SHADER, geometryShader.c_str());
+        glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_FALSE);
+
+		::compile_shader(program, GL_VERTEX_SHADER, vert.c_str());
+		::compile_shader(program, GL_FRAGMENT_SHADER, frag.c_str());
+
+		if (geom.length() != 0) ::compile_shader(program, GL_GEOMETRY_SHADER, geom.c_str());
 
 		glLinkProgram(program);
 
-		GLint status;
-		GLint length;
-
+		GLint status, length;
 		glGetProgramiv(program, GL_LINK_STATUS, &status);
 
 		if (status == GL_FALSE)
@@ -291,6 +312,7 @@ public:
 
 	void reflect_debug_print()
 	{
+        std::cout << "======== [Reflecting Prog " << program << "] ========" << std::endl;
 		GLint count;
 		glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
 		for (GLuint i = 0; i < static_cast<GLuint>(count); ++i)
@@ -300,27 +322,28 @@ public:
 			glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_BLOCK_INDEX, &block_index);
 			if (block_index != -1) continue;
 			GLint loc = glGetUniformLocation(program, buffer);
+            std::cout << "Location: " << loc << ", " << buffer << std::endl;
 		}
+        std::cout << "====================================" << std::endl;
 	}
 
-	void uniform(const std::string & name, int scalar) const { check(); glUniform1i(get_uniform_location(name), scalar); }
-	void uniform(const std::string & name, float scalar) const { check(); glUniform1f(get_uniform_location(name), scalar); }
-	void uniform(const std::string & name, const linalg::aliases::float2 & vec) const { check(); glUniform2fv(get_uniform_location(name), 1, &vec.x); }
-	void uniform(const std::string & name, const linalg::aliases::float3 & vec) const { check(); glUniform3fv(get_uniform_location(name), 1, &vec.x); }
-	void uniform(const std::string & name, const linalg::aliases::float4 & vec) const { check(); glUniform4fv(get_uniform_location(name), 1, &vec.x); }
-	void uniform(const std::string & name, const linalg::aliases::float3x3 & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
-	void uniform(const std::string & name, const linalg::aliases::float4x4 & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
+	void uniform(const std::string & name, int scalar) const { glProgramUniform1i(program, get_uniform_location(name), scalar); }
+	void uniform(const std::string & name, float scalar) const { glProgramUniform1f(program, get_uniform_location(name), scalar); }
+	void uniform(const std::string & name, const linalg::aliases::float2 & vec) const { glProgramUniform2fv(program, get_uniform_location(name), 1, &vec.x); }
+	void uniform(const std::string & name, const linalg::aliases::float3 & vec) const { glProgramUniform3fv(program, get_uniform_location(name), 1, &vec.x); }
+	void uniform(const std::string & name, const linalg::aliases::float4 & vec) const { glProgramUniform4fv(program, get_uniform_location(name), 1, &vec.x); }
+	void uniform(const std::string & name, const linalg::aliases::float3x3 & mat) const { glProgramUniformMatrix3fv(program, get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
+	void uniform(const std::string & name, const linalg::aliases::float4x4 & mat) const { glProgramUniformMatrix4fv(program, get_uniform_location(name), 1, GL_FALSE, &mat.x.x); }
 
-	void uniform(const std::string & name, const int elements, const std::vector<int> & scalar) const { check(); glUniform1iv(get_uniform_location(name), elements, scalar.data()); }
-	void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { check(); glUniform1fv(get_uniform_location(name), elements, scalar.data()); }
-	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float2> & vec) const { check(); glUniform2fv(get_uniform_location(name), elements, &vec[0].x); }
-	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float3> & vec) const { check(); glUniform3fv(get_uniform_location(name), elements, &vec[0].x); }
-	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float3x3> & mat) const { check(); glUniformMatrix3fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
-	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float4x4> & mat) const { check(); glUniformMatrix4fv(get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
+	void uniform(const std::string & name, const int elements, const std::vector<int> & scalar) const { glProgramUniform1iv(program, get_uniform_location(name), elements, scalar.data()); }
+	void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { glProgramUniform1fv(program, get_uniform_location(name), elements, scalar.data()); }
+	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float2> & vec) const { glProgramUniform2fv(program, get_uniform_location(name), elements, &vec[0].x); }
+	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float3> & vec) const { glProgramUniform3fv(program, get_uniform_location(name), elements, &vec[0].x); }
+	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float3x3> & mat) const { glProgramUniformMatrix3fv(program, get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
+	void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float4x4> & mat) const { glProgramUniformMatrix4fv(program, get_uniform_location(name), elements, GL_FALSE, &mat[0].x.x); }
 
 	void texture(GLint loc, GLenum target, int unit, GLuint tex) const
 	{
-		check();
 		glBindMultiTextureEXT(GL_TEXTURE0 + unit, target, tex);
 		glProgramUniform1i(program, loc, unit);
 	}

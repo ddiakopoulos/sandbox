@@ -172,6 +172,12 @@ namespace uniforms
 
 struct BloomPass
 {
+    union 
+    {
+        GLuint pipelines[1];
+        struct  { GLuint downsample_pipeline; };
+    };
+
     // Build a texel offset lookup table for downsampling
     void luminance_offset(GlShader & shader, float2 size, float2 dims)
     {
@@ -198,6 +204,7 @@ struct BloomPass
     float whitePoint = 1.5f;
     float threshold = 0.66f;
 
+    GlShader hdr_post;
     GlShader hdr_lumShader;
     GlShader hdr_avgLumShader;
     GlShader hdr_blurShader;
@@ -242,16 +249,25 @@ struct BloomPass
         blurFramebuffer.check_complete();
         outputFramebuffer.check_complete();
 
-        hdr_lumShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_lum_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_lum_frag.glsl"));
-        hdr_avgLumShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_lumavg_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_lumavg_frag.glsl"));
+        hdr_post = GlShader(GL_VERTEX_SHADER, read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"));
+        hdr_lumShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_lum_frag.glsl"));
+        hdr_avgLumShader = GlShader(GL_FRAGMENT_SHADER, read_file_text("../assets/shaders/hdr/hdr_lumavg_frag.glsl"));
         hdr_blurShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_blur_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_blur_frag.glsl"));
-        hdr_brightShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_bright_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_bright_frag.glsl"));
+        hdr_brightShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_bright_frag.glsl"));
         hdr_tonemapShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_tonemap_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_tonemap_frag.glsl"));
+
+        glCreateProgramPipelines(GLsizei(1), pipelines);
+        glBindProgramPipeline(downsample_pipeline);
+        glUseProgramStages(downsample_pipeline, GL_VERTEX_SHADER_BIT, hdr_post.handle());
+        glUseProgramStages(downsample_pipeline, GL_FRAGMENT_SHADER_BIT, hdr_avgLumShader.handle());
 
         gl_check_error(__FILE__, __LINE__);
     }
 
-    ~BloomPass() { }
+    ~BloomPass() 
+    {
+        glDeleteProgramPipelines(GLsizei(1), pipelines);
+    }
 
     void execute(const GlTexture2D & sceneColorTex)
     {
@@ -269,43 +285,50 @@ struct BloomPass
         fsQuad.draw_elements();
         hdr_lumShader.unbind();
 
-        glBindFramebuffer(GL_FRAMEBUFFER, luminance_1);// 64x64 surface area - downscale + average
-        glViewport(0, 0, 64, 64);
-        hdr_avgLumShader.bind();
-        luminance_offset(hdr_avgLumShader, float2(128, 128), float2(4, 4));
-        hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_0, GL_TEXTURE_2D);
-        hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
-        fsQuad.draw_elements();
-        hdr_avgLumShader.unbind();
+        {
+            hdr_avgLumShader.bind();
 
-        glBindFramebuffer(GL_FRAMEBUFFER, luminance_2); // 16x16 surface area - downscale + average
-        glViewport(0, 0, 16, 16);
-        hdr_avgLumShader.bind();
-        luminance_offset(hdr_avgLumShader, float2(64, 64), float2(4, 4));
-        hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_1, GL_TEXTURE_2D);
-        hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
-        fsQuad.draw_elements();
-        hdr_avgLumShader.unbind();
+            glActiveShaderProgram(downsample_pipeline, hdr_avgLumShader.handle());
+            glBindProgramPipeline(downsample_pipeline);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, luminance_3); // 4x4 surface area - downscale + average
-        glViewport(0, 0, 4, 4);
-        hdr_avgLumShader.bind();
-        luminance_offset(hdr_avgLumShader, float2(16, 16), float2(4, 4));
-        hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_2, GL_TEXTURE_2D);
-        hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
-        fsQuad.draw_elements();
-        hdr_avgLumShader.unbind();
+            glBindFramebuffer(GL_FRAMEBUFFER, luminance_1);// 64x64 surface area - downscale + average
+            glViewport(0, 0, 64, 64);
+            luminance_offset(hdr_avgLumShader, float2(128, 128), float2(4, 4));
+            hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_0, GL_TEXTURE_2D);
+            hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
+            fsQuad.draw_elements();
+
+            glActiveShaderProgram(downsample_pipeline, hdr_avgLumShader.handle());
+            glBindProgramPipeline(downsample_pipeline);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, luminance_2); // 16x16 surface area - downscale + average
+            glViewport(0, 0, 16, 16);
+            luminance_offset(hdr_avgLumShader, float2(64, 64), float2(4, 4));
+            hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_1, GL_TEXTURE_2D);
+            hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
+            fsQuad.draw_elements();
+
+            glActiveShaderProgram(downsample_pipeline, hdr_avgLumShader.handle());
+            glBindProgramPipeline(downsample_pipeline);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, luminance_3); // 4x4 surface area - downscale + average
+            glViewport(0, 0, 4, 4);
+            luminance_offset(hdr_avgLumShader, float2(16, 16), float2(4, 4));
+            hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_2, GL_TEXTURE_2D);
+            hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
+            fsQuad.draw_elements();
+
+            glBindFramebuffer(GL_FRAMEBUFFER, luminance_4); // 1x1 surface area - downscale + average
+            glViewport(0, 0, 1, 1);
+            luminance_offset(hdr_avgLumShader, float2(4, 4), float2(4, 4));
+            hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_3, GL_TEXTURE_2D);
+            hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
+            fsQuad.draw_elements();
+
+            glBindProgramPipeline(0);
+        }
 
         gl_check_error(__FILE__, __LINE__);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, luminance_4); // 1x1 surface area - downscale + average
-        glViewport(0, 0, 1, 1);
-        hdr_avgLumShader.bind();
-        luminance_offset(hdr_avgLumShader, float2(4, 4), float2(4, 4));
-        hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_3, GL_TEXTURE_2D);
-        hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
-        fsQuad.draw_elements();
-        hdr_avgLumShader.unbind();
 
         // Readback luminance value
         // std::vector<float> lumValue = { 0, 0, 0, 0 };
@@ -335,6 +358,10 @@ struct BloomPass
         fsQuad.draw_elements();
         hdr_blurShader.unbind();
 
+        //glBlendEquation(GL_FUNC_ADD);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glEnable(GL_BLEND);
+
         glBindFramebuffer(GL_FRAMEBUFFER, outputFramebuffer);
         glViewport(0, 0, perEyeSize.x, perEyeSize.y);
         hdr_tonemapShader.bind();
@@ -354,7 +381,7 @@ struct BloomPass
 
     GLuint get_output_texture() const { return outputTex.id(); }
 
-    GLuint get_luminance_texture() const { return luminanceTex_0.id(); }
+    GLuint get_luminance_texture() const { return luminanceTex_1.id(); }
 
     GLuint get_bright_tex() const { return brightTex.id(); }
 
