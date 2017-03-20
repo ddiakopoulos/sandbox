@@ -11,6 +11,7 @@
 #include "gpu_timer.hpp"
 #include "procedural_mesh.hpp"
 #include "simple_timer.hpp"
+#include "avl_imgui.hpp"
 
 using namespace avl;
 
@@ -199,6 +200,58 @@ struct BloomPass
 
     float2 perEyeSize;
 
+    struct AsyncRead1
+    {
+        GLuint pbo[2];
+        int idx{ 0 };
+        
+        AsyncRead1()
+        {
+            glGenBuffers(2, pbo);
+
+            glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[0]);
+            glBufferData(GL_PIXEL_PACK_BUFFER, 16, NULL, GL_STREAM_DRAW); // 16 bytes
+
+            glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[1]);
+            glBufferData(GL_PIXEL_PACK_BUFFER, 16, NULL, GL_STREAM_DRAW); // 16 bytes
+
+            glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+        }
+
+        ~AsyncRead1()
+        {
+            glDeleteBuffers(1, &pbo[0]);
+            glDeleteBuffers(1, &pbo[1]);
+        }
+
+        float4 download()
+        {
+            int current = idx, next = 1 - idx;
+
+            glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[current]);
+            glReadPixels(0, 0, 1, 1, GL_BGRA, GL_FLOAT, NULL);
+
+            glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo[next]);
+            GLubyte * v = (GLubyte*) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+
+            float4 result;
+
+            if (v != NULL) 
+            {
+                std::memcpy(&result.x, v, 16);
+                glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+            }
+
+            glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+            idx = !idx;
+
+            return result;
+        }
+    };
+
+    AsyncRead1 avgLuminance;
+ 
     BloomPass(float2 size) : perEyeSize(size)
     {
         fsQuad = make_fullscreen_quad();
@@ -227,8 +280,9 @@ struct BloomPass
         outputFramebuffer.check_complete();
 
         hdr_post = GlShader(GL_VERTEX_SHADER, read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"));
-        hdr_lumShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_lum_frag.glsl"));
         hdr_avgLumShader = GlShader(GL_FRAGMENT_SHADER, read_file_text("../assets/shaders/hdr/hdr_lumavg_frag.glsl"));
+
+        hdr_lumShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_lum_frag.glsl"));
         hdr_blurShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_blur_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_blur_frag.glsl"));
         hdr_brightShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_bright_frag.glsl"));
         hdr_tonemapShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_tonemap_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_tonemap_frag.glsl"));
@@ -279,12 +333,17 @@ struct BloomPass
         }
 
         // Readback luminance value
-        // std::vector<float> lumValue = { 0, 0, 0, 0 };
-        //glActiveTexture(GL_TEXTURE0);
-        //glBindTexture(GL_TEXTURE_2D, luminanceTex_4.get_gl_handle());
-        //glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, lumValue.data());
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, luminance[4]);
+        auto lumValue = avgLuminance.download();
+        glBindTexture(GL_TEXTURE_2D, 0);
 
         float4 tonemap = { middleGrey, whitePoint * whitePoint, threshold, 0.0f };
+        
+        ImGui::SliderFloat("MiddleGrey", &tonemap.x, 0.1f, 1.0f);
+        ImGui::SliderFloat("WhitePoint", &tonemap.y, 0.1f, 2.0f);
+        ImGui::SliderFloat("Threshold", &tonemap.z, 0.1f, 2.0f);
+        ImGui::Text("Luminance %f", lumValue.x);
 
         glBindFramebuffer(GL_FRAMEBUFFER, brightFramebuffer);
         glViewport(0, 0, perEyeSize.x / 2, perEyeSize.y / 2);
