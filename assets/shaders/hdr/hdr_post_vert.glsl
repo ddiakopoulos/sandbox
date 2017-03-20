@@ -1,8 +1,13 @@
-#version 330
+#version 450 core
 
 layout(location = 0) in vec3 inPosition;
 
 uniform mat4 u_modelViewProj;
+
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
 
 out vec2 v_texcoord0;
 
