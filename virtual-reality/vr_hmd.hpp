@@ -81,9 +81,6 @@ public:
 
     const OpenVR_Controller & get_controller(const vr::ETrackedControllerRole controller)     
     {
-        // Update controller pose based on teleported (worldPose) location too
-        //controllers[0].p = worldPose * controllers[0].p;
-        //controllers[1].p = worldPose * controllers[1].p;
         if (controller == vr::TrackedControllerRole_LeftHand) return controllers[0];
         if (controller == vr::TrackedControllerRole_RightHand) return controllers[1];
     }

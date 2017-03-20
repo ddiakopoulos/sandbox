@@ -216,10 +216,10 @@ struct BloomPass
         fsQuad = make_fullscreen_quad();
 
         luminanceTex_0.setup(128, 128, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_1.setup(64, 64, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_2.setup(16, 16, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_3.setup(4, 4, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        luminanceTex_4.setup(1, 1, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_1.setup(64, 64,   GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_2.setup(16, 16,   GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_3.setup(4, 4,     GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        luminanceTex_4.setup(1, 1,     GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         brightTex.setup(perEyeSize.x / 2, perEyeSize.y / 2, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         blurTex.setup(perEyeSize.x / 8, perEyeSize.y / 8, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         outputTex.setup(perEyeSize.x, perEyeSize.y, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
@@ -253,7 +253,7 @@ struct BloomPass
 
     ~BloomPass() { }
 
-    void execute(GlTexture2D & sceneColorTex)
+    void execute(const GlTexture2D & sceneColorTex)
     {
         // Disable culling and depth testing for post processing
         glDisable(GL_CULL_FACE);
@@ -261,7 +261,7 @@ struct BloomPass
         glEnable(GL_FRAMEBUFFER_SRGB);
 
         glBindFramebuffer(GL_FRAMEBUFFER, luminance_0); // 128x128 surface area - calculate luminance 
-        glViewport(0, 0, perEyeSize.x, perEyeSize.y);
+        glViewport(0, 0, 128, 128);
         hdr_lumShader.bind();
         luminance_offset(hdr_lumShader, float2(128, 128), float2(3, 3));
         hdr_lumShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
@@ -270,7 +270,7 @@ struct BloomPass
         hdr_lumShader.unbind();
 
         glBindFramebuffer(GL_FRAMEBUFFER, luminance_1);// 64x64 surface area - downscale + average
-        glViewport(0, 0, perEyeSize.x, perEyeSize.y);
+        glViewport(0, 0, 64, 64);
         hdr_avgLumShader.bind();
         luminance_offset(hdr_avgLumShader, float2(128, 128), float2(4, 4));
         hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_0, GL_TEXTURE_2D);
@@ -279,7 +279,7 @@ struct BloomPass
         hdr_avgLumShader.unbind();
 
         glBindFramebuffer(GL_FRAMEBUFFER, luminance_2); // 16x16 surface area - downscale + average
-        glViewport(0, 0, perEyeSize.x, perEyeSize.y);
+        glViewport(0, 0, 16, 16);
         hdr_avgLumShader.bind();
         luminance_offset(hdr_avgLumShader, float2(64, 64), float2(4, 4));
         hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_1, GL_TEXTURE_2D);
@@ -288,7 +288,7 @@ struct BloomPass
         hdr_avgLumShader.unbind();
 
         glBindFramebuffer(GL_FRAMEBUFFER, luminance_3); // 4x4 surface area - downscale + average
-        glViewport(0, 0, perEyeSize.x, perEyeSize.y);
+        glViewport(0, 0, 4, 4);
         hdr_avgLumShader.bind();
         luminance_offset(hdr_avgLumShader, float2(16, 16), float2(4, 4));
         hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_2, GL_TEXTURE_2D);
@@ -299,7 +299,7 @@ struct BloomPass
         gl_check_error(__FILE__, __LINE__);
 
         glBindFramebuffer(GL_FRAMEBUFFER, luminance_4); // 1x1 surface area - downscale + average
-        glViewport(0, 0, perEyeSize.x, perEyeSize.y);
+        glViewport(0, 0, 1, 1);
         hdr_avgLumShader.bind();
         luminance_offset(hdr_avgLumShader, float2(4, 4), float2(4, 4));
         hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_3, GL_TEXTURE_2D);
@@ -316,7 +316,7 @@ struct BloomPass
         float4 tonemap = { middleGrey, whitePoint * whitePoint, threshold, 0.0f };
 
         glBindFramebuffer(GL_FRAMEBUFFER, brightFramebuffer);
-        glViewport(0, 0, perEyeSize.x, perEyeSize.y);
+        glViewport(0, 0, perEyeSize.x / 2, perEyeSize.y / 2);
         hdr_brightShader.bind();
         luminance_offset(hdr_brightShader, float2(perEyeSize.x / 2.f, perEyeSize.y / 2.f), float2(4, 4));
         hdr_brightShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
@@ -327,7 +327,7 @@ struct BloomPass
         hdr_brightShader.unbind();
 
         glBindFramebuffer(GL_FRAMEBUFFER, blurFramebuffer);
-        glViewport(0, 0, perEyeSize.x, perEyeSize.y);
+        glViewport(0, 0, perEyeSize.x / 8, perEyeSize.y / 8);
         hdr_blurShader.bind();
         hdr_blurShader.texture("s_texColor", 0, brightTex, GL_TEXTURE_2D);
         hdr_blurShader.uniform("u_viewTexel", float2(1.f / (perEyeSize.x / 8.f), 1.f / (perEyeSize.y / 8.f)));
@@ -352,10 +352,13 @@ struct BloomPass
         glDisable(GL_FRAMEBUFFER_SRGB);
     }
 
-    GLuint get_output() const
-    {
-        return outputTex.id();
-    }
+    GLuint get_output_texture() const { return outputTex.id(); }
+
+    GLuint get_luminance_texture() const { return luminanceTex_0.id(); }
+
+    GLuint get_bright_tex() const { return brightTex.id(); }
+
+    GLuint get_blur_tex() const { return blurTex.id(); }
 };
 
 enum class Eye : int
@@ -400,8 +403,6 @@ class VR_Renderer
 
     GLuint outputTextureHandles[2] = { 0, 0 };
 
-    std::unique_ptr<BloomPass> leftBloom, rightBloom;
-
     void run_skybox_pass();
     void run_forward_pass(const uniforms::per_view & uniforms);
     void run_forward_wireframe_pass();
@@ -425,6 +426,8 @@ class VR_Renderer
     bool renderBlackout { false };
 
 public:
+
+    std::unique_ptr<BloomPass> leftBloom, rightBloom;
 
     DebugLineRenderer sceneDebugRenderer;
 

@@ -104,8 +104,8 @@ void VR_Renderer::run_bloom_pass()
     leftBloom->execute(eyeTextures[0]);
     rightBloom->execute(eyeTextures[1]);
 
-    outputTextureHandles[0] = leftBloom->get_output();
-    outputTextureHandles[1] = rightBloom->get_output();
+    outputTextureHandles[0] = leftBloom->get_output_texture();
+    outputTextureHandles[1] = rightBloom->get_output_texture();
 }
 
 void VR_Renderer::run_reflection_pass()

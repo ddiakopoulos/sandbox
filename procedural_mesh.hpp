@@ -755,7 +755,7 @@ namespace avl
         Geometry g;
         g.vertices = { {-1.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f} };
         g.faces = {{0, 1, 2}, {3, 4, 5}};
-        //g.texCoords = {{0, 0}, {1, 0}, {0, 1}, {0, 1}, {1, 0}, {1, 1}};
+        g.texCoords = {{0, 0}, {1, 0}, {0, 1}, {0, 1}, {1, 0}, {1, 1}};
         return make_mesh_from_geometry(g);
     }
 

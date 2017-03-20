@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <string>
 
 #include "linalg_util.hpp"
 #include "util.hpp"
@@ -141,7 +142,7 @@ namespace gui
     //   Helper Functionality   //
     //////////////////////////////
 
-    void Image(const int & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1), const ImVec2& uv1 = ImVec2(1,0), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
+    void Img(const int & texture, const char * label, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1), const ImVec2& uv1 = ImVec2(1,0), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
     bool ImageButton(const int & texture, const ImVec2 & size, const ImVec2 & uv0 = ImVec2(0,1),  const ImVec2& uv1 = ImVec2(1,0), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,1), const ImVec4& tint_col = ImVec4(1,1,1,1));
     bool ListBox(const char* label, int* current_item, const std::vector<std::string>& items, int height_in_items = -1);
     bool InputText(const char* label, std::string* buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);

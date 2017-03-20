@@ -408,9 +408,26 @@ namespace gui
     //   Helper Functionality   //
     //////////////////////////////
 
-    void Image(const int & texture, const ImVec2 & size, const ImVec2 & uv0, const ImVec2 & uv1, const ImVec4 & tint_col, const ImVec4 & border_col)
+    void Image(const int & texture, const char * label, ImVec2 & size, const ImVec2 & uv0, const ImVec2 & uv1, const ImVec4 & tint_col, const ImVec4 & border_col)
     {
         ImGui::Image((void *)(intptr_t) texture, size, uv0, uv1, tint_col, border_col);
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text(label);
+            ImGui::EndTooltip();
+        }
+    }
+
+    void Img(const int & texture, const char * label, const ImVec2 & size, const ImVec2 & uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
+    {
+        ImGui::Image((void *)(intptr_t)texture, size, uv0, uv1, tint_col, border_col);
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text(label);
+            ImGui::EndTooltip();
+        }
     }
 
     bool ImageButton(const int & texture, const ImVec2 & size, const ImVec2 & uv0, const ImVec2 & uv1, int frame_padding, const ImVec4 & bg_col, const ImVec4 & tint_col)

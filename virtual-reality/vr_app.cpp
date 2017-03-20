@@ -352,11 +352,11 @@ void VirtualRealityApp::on_draw()
         renderer->render_frame();
     }
 
-    imgui_fixed_window_begin("Debug Views", { { 0, height - 240 }, { width, height } });
-    gui::Image(renderer->get_eye_texture(Eye::LeftEye), { 240, 180 });
-    ImGui::SameLine();
-    gui::Image(renderer->get_eye_texture(Eye::RightEye), { 240, 180 });
-    ImGui::SameLine();
+    imgui_fixed_window_begin("Render Debug Views", { { 0, height - 220 }, { width, height } });
+    gui::Img(renderer->leftBloom->get_luminance_texture(), "Left Luminance", { 240, 180 }); ImGui::SameLine();
+    gui::Img(renderer->leftBloom->get_bright_tex(), "Left Bright", { 240, 180 }); ImGui::SameLine();
+    gui::Img(renderer->leftBloom->get_blur_tex(), "Left Blur", { 240, 180 }); ImGui::SameLine();
+    gui::Img(renderer->leftBloom->get_output_texture(), "Left Output", { 240, 180 }); ImGui::SameLine();
     imgui_fixed_window_end();
 
     Bounds2D rect{ { 0.f, 0.f },{ (float)width,(float)height } };
