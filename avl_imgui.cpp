@@ -408,17 +408,6 @@ namespace gui
     //   Helper Functionality   //
     //////////////////////////////
 
-    void Image(const int & texture, const char * label, ImVec2 & size, const ImVec2 & uv0, const ImVec2 & uv1, const ImVec4 & tint_col, const ImVec4 & border_col)
-    {
-        ImGui::Image((void *)(intptr_t) texture, size, uv0, uv1, tint_col, border_col);
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text(label);
-            ImGui::EndTooltip();
-        }
-    }
-
     void Img(const int & texture, const char * label, const ImVec2 & size, const ImVec2 & uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
     {
         ImGui::Image((void *)(intptr_t)texture, size, uv0, uv1, tint_col, border_col);
@@ -477,6 +466,87 @@ namespace gui
         std::vector<char> charArray(itemsNames.begin(), itemsNames.end());
         bool result = ImGui::Combo(label, current_item, (const char*) &charArray[0], height_in_items);
         return result;
+    }
+    ////////////////////
+    //   Menu Stack   //
+    ////////////////////
+
+    imgui_menu_stack::imgui_menu_stack(const GLFWApp & app, bool * keys) : current_mods(app.get_mods()), keys(keys) { }
+
+    void imgui_menu_stack::app_menu_begin()
+    {
+        assert(open.empty());
+        open.push_back(ImGui::BeginMainMenuBar());
+    }
+
+    void imgui_menu_stack::begin(const char * label, bool enabled)
+    {
+        open.push_back(open.back() ? ImGui::BeginMenu(label, true) : false);
+    }
+
+    bool imgui_menu_stack::item(const char * label, int mods, int key, bool enabled)
+    {
+        bool invoked = (key && mods == current_mods && keys[key]);
+        if (open.back())
+        {
+            std::string shortcut;
+            if (key)
+            {
+                if (mods & GLFW_MOD_CONTROL) shortcut += "Ctrl+";
+                if (mods & GLFW_MOD_SHIFT) shortcut += "Shift+";
+                if (mods & GLFW_MOD_ALT) shortcut += "Alt+";
+                if (key >= GLFW_KEY_A && key <= GLFW_KEY_Z) shortcut += static_cast<char>('A' + (key - GLFW_KEY_A));
+                else if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9) shortcut += static_cast<char>('0' + (key - GLFW_KEY_0));
+                else if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F25) shortcut += 'F' + std::to_string(1 + (key - GLFW_KEY_F1));
+                else if (key == GLFW_KEY_SPACE) shortcut += "Space";
+                else if (key == GLFW_KEY_APOSTROPHE) shortcut += '\'';
+                else if (key == GLFW_KEY_COMMA) shortcut += ',';
+                else if (key == GLFW_KEY_MINUS) shortcut += '-';
+                else if (key == GLFW_KEY_PERIOD) shortcut += '.';
+                else if (key == GLFW_KEY_SLASH) shortcut += '/';
+                else if (key == GLFW_KEY_SEMICOLON) shortcut += ';';
+                else if (key == GLFW_KEY_EQUAL) shortcut += '=';
+                else if (key == GLFW_KEY_LEFT_BRACKET) shortcut += '[';
+                else if (key == GLFW_KEY_BACKSLASH) shortcut += '\\';
+                else if (key == GLFW_KEY_RIGHT_BRACKET) shortcut += ']';
+                else if (key == GLFW_KEY_GRAVE_ACCENT) shortcut += '`';
+                else if (key == GLFW_KEY_ESCAPE) shortcut += "Escape";
+                else if (key == GLFW_KEY_ENTER) shortcut += "Enter";
+                else if (key == GLFW_KEY_TAB) shortcut += "Tab";
+                else if (key == GLFW_KEY_BACKSPACE) shortcut += "Backspace";
+                else if (key == GLFW_KEY_INSERT) shortcut += "Insert";
+                else if (key == GLFW_KEY_DELETE) shortcut += "Delete";
+                else if (key == GLFW_KEY_RIGHT) shortcut += "Right Arrow";
+                else if (key == GLFW_KEY_LEFT) shortcut += "Left Arrow";
+                else if (key == GLFW_KEY_DOWN) shortcut += "Down Arrow";
+                else if (key == GLFW_KEY_UP) shortcut += "Up Arrow";
+                else if (key == GLFW_KEY_PAGE_UP) shortcut += "Page Up";
+                else if (key == GLFW_KEY_PAGE_DOWN) shortcut += "Page Down";
+                else if (key == GLFW_KEY_HOME) shortcut += "Home";
+                else if (key == GLFW_KEY_END) shortcut += "End";
+                else if (key == GLFW_KEY_CAPS_LOCK) shortcut += "Caps Lock";
+                else if (key == GLFW_KEY_SCROLL_LOCK) shortcut += "Scroll Lock";
+                else if (key == GLFW_KEY_NUM_LOCK) shortcut += "Num Lock";
+                else if (key == GLFW_KEY_PRINT_SCREEN) shortcut += "Print Screen";
+                else if (key == GLFW_KEY_PAUSE) shortcut += "Pause";
+                else assert(false && "bad shortcut key");
+            }
+            invoked |= ImGui::MenuItem(label, shortcut.c_str(), false, enabled);
+        }
+        return invoked;
+    }
+
+    void imgui_menu_stack::end()
+    {
+        if (open.back()) ImGui::EndMenu();
+        open.pop_back();
+    }
+
+    void imgui_menu_stack::app_menu_end()
+    {
+        if (open.back()) ImGui::EndMainMenuBar();
+        open.pop_back();
+        assert(open.empty());
     }
 
 } // end namespace gui

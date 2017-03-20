@@ -35,6 +35,7 @@ struct ui_rect
 class GlTexture2D;
 namespace avl
 {
+    class GLFWApp;
     struct InputEvent;
 }
 
@@ -148,6 +149,39 @@ namespace gui
     bool InputText(const char* label, std::string* buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
     bool InputTextMultiline(const char* label, std::string* buf, const ImVec2& size = ImVec2(0,0), ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
     bool Combo(const char* label, int* current_item, const std::vector<std::string>& items, int height_in_items = -1);
+
+    class imgui_menu_stack
+    {
+        bool * keys;
+        int current_mods;
+        std::vector<bool> open;
+    public:
+        imgui_menu_stack(const GLFWApp & app, bool * keys);
+        void app_menu_begin();
+        void begin(const char * label, bool enabled = true);
+        bool item(const char * label, int mods = 0, int key = 0, bool enabled = true);
+        void end();
+        void app_menu_end();
+    };
+
+    inline void imgui_fixed_window_begin(const char * name, const ui_rect & r)
+    {
+        ImGui::SetNextWindowPos(r.min);
+        ImGui::SetNextWindowSize(r.max - r.min);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0));
+        bool result = ImGui::Begin(name, NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+        ImGui::TextColored({ 1,1,0.5f,1 }, name);
+        ImGui::Separator();
+        assert(result);
+    }
+
+    inline void imgui_fixed_window_end()
+    {
+        ImGui::End();
+        ImGui::PopStyleVar(2);
+    }
+
 }
 
 #endif // AVL_IMGUI_H

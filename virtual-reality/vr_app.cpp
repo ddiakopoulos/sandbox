@@ -1,5 +1,6 @@
 #include "vr_app.hpp"
-#include "kmeans.hpp"
+#include "avl_imgui.hpp"
+
 // Material manager -> setup, get
 // Serialization
 
@@ -319,7 +320,7 @@ void VirtualRealityApp::on_draw()
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    imgui_menu_stack menu(*this, igm->capturedKeys);
+    gui::imgui_menu_stack menu(*this, igm->capturedKeys);
 
     menu.app_menu_begin();
     {
@@ -352,12 +353,12 @@ void VirtualRealityApp::on_draw()
         renderer->render_frame();
     }
 
-    imgui_fixed_window_begin("Render Debug Views", { { 0, height - 220 }, { width, height } });
+    gui::imgui_fixed_window_begin("Render Debug Views", { { 0, height - 220 }, { width, height } });
     gui::Img(renderer->leftBloom->get_luminance_texture(), "Left Luminance", { 240, 180 }); ImGui::SameLine();
     gui::Img(renderer->leftBloom->get_bright_tex(), "Left Bright", { 240, 180 }); ImGui::SameLine();
     gui::Img(renderer->leftBloom->get_blur_tex(), "Left Blur", { 240, 180 }); ImGui::SameLine();
     gui::Img(renderer->leftBloom->get_output_texture(), "Left Output", { 240, 180 }); ImGui::SameLine();
-    imgui_fixed_window_end();
+    gui::imgui_fixed_window_end();
 
     Bounds2D rect{ { 0.f, 0.f },{ (float)width,(float)height } };
 
