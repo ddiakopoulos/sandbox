@@ -1,6 +1,5 @@
-#version 330
+#version 450 core
 
-uniform vec4 u_offset[16];
 uniform vec4 u_tonemap;
 
 uniform sampler2D s_texColor;
@@ -34,19 +33,19 @@ void main()
 {
     float lum = clamp(texture(s_texLum, v_texcoord0).r, 0.1, 0.7);
 
-    vec3 rgb = vec3(0.0, 0.0, 0.0);
+    vec4 r = textureGather(s_texColor, v_texcoord0, 0);
+    vec4 g = textureGather(s_texColor, v_texcoord0, 1);
+    vec4 b = textureGather(s_texColor, v_texcoord0, 2);
+    vec4 a = textureGather(s_texColor, v_texcoord0, 3);
 
-    rgb += texture(s_texColor, v_texcoord0 + u_offset[0].xy).rgb;
-    rgb += texture(s_texColor, v_texcoord0 + u_offset[1].xy).rgb;
-    rgb += texture(s_texColor, v_texcoord0 + u_offset[2].xy).rgb;
-    rgb += texture(s_texColor, v_texcoord0 + u_offset[3].xy).rgb;
-    rgb += texture(s_texColor, v_texcoord0 + u_offset[4].xy).rgb;
-    rgb += texture(s_texColor, v_texcoord0 + u_offset[5].xy).rgb;
-    rgb += texture(s_texColor, v_texcoord0 + u_offset[6].xy).rgb;
-    rgb += texture(s_texColor, v_texcoord0 + u_offset[7].xy).rgb;
-    rgb += texture(s_texColor, v_texcoord0 + u_offset[8].xy).rgb;
+    vec4 sum = vec4(0);
+    for (int i=0;i<4;++i)
+    {
+        sum += vec4(r[i], g[i], b[i], a[i]);  
+    }
+    sum /= 4.0f;
 
-    rgb *= 1.0/9.0;
+    vec3 rgb = sum.xyz;
 
     float middleGrey = u_tonemap.x;
     float whiteSqr = u_tonemap.y;
