@@ -259,7 +259,6 @@ struct BloomPass
         hdr_lumShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
         hdr_lumShader.uniform("u_modelViewProj", Identity4x4);
         fsQuad.draw_elements();
-        hdr_lumShader.unbind();
 
         {
             glBindProgramPipeline(downsample_pipeline);
@@ -295,7 +294,6 @@ struct BloomPass
         hdr_brightShader.uniform("u_tonemap", tonemap);
         hdr_brightShader.uniform("u_modelViewProj", Identity4x4);
         fsQuad.draw_elements();
-        hdr_brightShader.unbind();
 
         glBindFramebuffer(GL_FRAMEBUFFER, blurFramebuffer);
         glViewport(0, 0, perEyeSize.x / 8, perEyeSize.y / 8);
@@ -304,11 +302,6 @@ struct BloomPass
         hdr_blurShader.uniform("u_viewTexel", float2(1.f / (perEyeSize.x / 8.f), 1.f / (perEyeSize.y / 8.f)));
         hdr_blurShader.uniform("u_modelViewProj", Identity4x4);
         fsQuad.draw_elements();
-        hdr_blurShader.unbind();
-
-        //glBlendEquation(GL_FUNC_ADD);
-        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        //glEnable(GL_BLEND);
 
         glBindFramebuffer(GL_FRAMEBUFFER, outputFramebuffer);
         glViewport(0, 0, perEyeSize.x, perEyeSize.y);
@@ -320,14 +313,13 @@ struct BloomPass
         hdr_tonemapShader.uniform("u_modelViewProj", Identity4x4);
         hdr_tonemapShader.uniform("u_viewTexel", float2(1.f / (float)perEyeSize.x, 1.f / (float)perEyeSize.y));
         fsQuad.draw_elements();
-        hdr_tonemapShader.unbind();
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_FRAMEBUFFER_SRGB);
     }
 
-    GLuint get_output_texture() const { return outputTex.id(); }
+    GLuint get_output_texture() const { return outputFramebuffer.id(); }
 
     GLuint get_luminance_texture() const { return luminanceTex[1].id(); }
 
@@ -383,13 +375,13 @@ class VR_Renderer
     void run_forward_wireframe_pass();
     void run_shadow_pass();
 
-    void run_bloom_pass();
+    void run_post_pass(const int eye);
+
+    void run_bloom_pass(const int eye);
     void run_reflection_pass();
     void run_ssao_pass();
     void run_smaa_pass();
     void run_blackout_pass();
-
-    void run_post_pass();
 
     bool renderPost{ true };
     bool renderWireframe { false };
@@ -402,7 +394,7 @@ class VR_Renderer
 
 public:
 
-    std::unique_ptr<BloomPass> leftBloom, rightBloom;
+    std::unique_ptr<BloomPass> bloom;
 
     DebugLineRenderer sceneDebugRenderer;
 

@@ -34,8 +34,7 @@ VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizeP
         eyeFramebuffers[eye].check_complete();
     }
 
-    leftBloom.reset(new BloomPass(renderSizePerEye));
-    rightBloom.reset(new BloomPass(renderSizePerEye));
+    bloom.reset(new BloomPass(renderSizePerEye));
 
     timer.start();
 }
@@ -99,13 +98,10 @@ void VR_Renderer::run_shadow_pass()
 
 }
 
-void VR_Renderer::run_bloom_pass()
+void VR_Renderer::run_bloom_pass(const int eye)
 {
-    leftBloom->execute(eyeTextures[0]);
-    rightBloom->execute(eyeTextures[1]);
-
-    outputTextureHandles[0] = leftBloom->get_output_texture();
-    outputTextureHandles[1] = rightBloom->get_output_texture();
+    bloom->execute(eyeTextures[eye]);
+    glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }
 
 void VR_Renderer::run_reflection_pass()
@@ -128,11 +124,11 @@ void VR_Renderer::run_blackout_pass()
 
 }
 
-void VR_Renderer::run_post_pass()
+void VR_Renderer::run_post_pass(const int eye)
 {
     if (!renderPost) return;
 
-    if (renderBloom) run_bloom_pass();
+    if (renderBloom) run_bloom_pass(eye);
 
     if (renderReflection) run_reflection_pass();
 
@@ -203,7 +199,7 @@ void VR_Renderer::render_frame()
         glBlitNamedFramebuffer(multisampleFramebuffer, eyeTextures[eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
         // Execute the post passes after having resolved the multisample framebuffers
-        run_post_pass();
+        run_post_pass(eye);
 
         renderTimer.stop();
     }
