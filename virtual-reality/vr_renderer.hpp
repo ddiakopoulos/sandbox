@@ -263,7 +263,7 @@ struct BloomPass
         hdr_lumShader.unbind();
 
         {
-            hdr_avgLumShader.bind();
+            //hdr_avgLumShader.bind();
 
             glActiveShaderProgram(downsample_pipeline, hdr_avgLumShader.handle());
             glBindProgramPipeline(downsample_pipeline);
@@ -274,17 +274,11 @@ struct BloomPass
             hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
             fsQuad.draw_elements();
 
-            glActiveShaderProgram(downsample_pipeline, hdr_avgLumShader.handle());
-            glBindProgramPipeline(downsample_pipeline);
-
             glBindFramebuffer(GL_FRAMEBUFFER, luminance_2); // 16x16 surface area - downscale + average
             glViewport(0, 0, 16, 16);
             hdr_avgLumShader.texture("s_texColor", 0, luminanceTex_1, GL_TEXTURE_2D);
             hdr_avgLumShader.uniform("u_modelViewProj", Identity4x4);
             fsQuad.draw_elements();
-
-            glActiveShaderProgram(downsample_pipeline, hdr_avgLumShader.handle());
-            glBindProgramPipeline(downsample_pipeline);
 
             glBindFramebuffer(GL_FRAMEBUFFER, luminance_3); // 4x4 surface area - downscale + average
             glViewport(0, 0, 4, 4);
