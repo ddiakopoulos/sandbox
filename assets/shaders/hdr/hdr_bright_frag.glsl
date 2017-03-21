@@ -3,7 +3,7 @@
 uniform vec4 u_tonemap;
 
 uniform sampler2D s_texColor;
-uniform sampler2D s_texLum;
+uniform float u_exposure;
 
 in vec2 v_texcoord0;
 
@@ -31,7 +31,7 @@ vec3 reinhard2(vec3 x, float whiteSqr)
 
 void main()
 {
-    float lum = clamp(texture(s_texLum, v_texcoord0).r, 0.1, 0.7);
+    float lum = clamp(u_exposure, 0.05, 0.9);
 
     vec4 r = textureGather(s_texColor, v_texcoord0, 0);
     vec4 g = textureGather(s_texColor, v_texcoord0, 1);

@@ -22,7 +22,7 @@ VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizeP
     std::cout << "Render Size per Eye: " << renderSizePerEye << std::endl;
 
     // Generate textures and framebuffers for the left and right eye images
-    for (int eye : { (int) Eye::LeftEye, (int) Eye::RightEye })
+    for (int eye : { 0, 1 })
     {
         glTextureImage2DEXT(eyeTextures[eye], GL_TEXTURE_2D, 0, GL_RGBA8, renderSizePerEye.x, renderSizePerEye.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         glTextureParameteriEXT(eyeTextures[eye], GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -50,18 +50,18 @@ void VR_Renderer::set_eye_data(const EyeData left, const EyeData right)
     eyes[1] = right;
 }
 
-void VR_Renderer::run_skybox_pass()
+void VR_Renderer::run_skybox_pass(const RenderPassData & d)
 {
 
 }
 
-void VR_Renderer::run_forward_pass(const uniforms::per_view & uniforms)
+void VR_Renderer::run_forward_pass(const RenderPassData & d)
 {
-    sceneDebugRenderer.draw(uniforms.viewProj);
+    sceneDebugRenderer.draw(d.perView.viewProj);
 
     for (auto obj : debugSet)
     {
-        obj->draw(uniforms.viewProj);
+        obj->draw(d.perView.viewProj);
     }
 
     for (auto obj : renderSet)
@@ -88,55 +88,55 @@ void VR_Renderer::run_forward_pass(const uniforms::per_view & uniforms)
     outputTextureHandles[1] = eyeTextures[1];
 }
 
-void VR_Renderer::run_forward_wireframe_pass()
+void VR_Renderer::run_forward_wireframe_pass(const RenderPassData & d)
 {
 
 }
 
-void VR_Renderer::run_shadow_pass()
+void VR_Renderer::run_shadow_pass(const RenderPassData & d)
 {
 
 }
 
-void VR_Renderer::run_bloom_pass(const int eye)
+void VR_Renderer::run_bloom_pass(const RenderPassData & d)
 {
-    bloom->execute(eyeTextures[eye]);
-    glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    bloom->execute(eyeTextures[d.eye]);
+    glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }
 
-void VR_Renderer::run_reflection_pass()
-{
-
-}
-
-void VR_Renderer::run_ssao_pass()
+void VR_Renderer::run_reflection_pass(const RenderPassData & d)
 {
 
 }
 
-void VR_Renderer::run_smaa_pass()
+void VR_Renderer::run_ssao_pass(const RenderPassData & d)
 {
 
 }
 
-void VR_Renderer::run_blackout_pass()
+void VR_Renderer::run_smaa_pass(const RenderPassData & d)
 {
 
 }
 
-void VR_Renderer::run_post_pass(const int eye)
+void VR_Renderer::run_blackout_pass(const RenderPassData & d)
+{
+
+}
+
+void VR_Renderer::run_post_pass(const RenderPassData & d)
 {
     if (!renderPost) return;
 
-    if (renderBloom) run_bloom_pass(eye);
+    if (renderBloom) run_bloom_pass(d);
 
-    if (renderReflection) run_reflection_pass();
+    if (renderReflection) run_reflection_pass(d);
 
-    if (renderSSAO) run_ssao_pass();
+    if (renderSSAO) run_ssao_pass(d);
 
-    if (renderSMAA) run_smaa_pass();
+    if (renderSMAA) run_smaa_pass(d);
 
-    if (renderBlackout) run_blackout_pass();
+    if (renderBlackout) run_blackout_pass(d);
 }
 
 void VR_Renderer::render_frame()
@@ -165,7 +165,7 @@ void VR_Renderer::render_frame()
     GLfloat defaultColor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
     GLfloat defaultDepth = 1.f;
 
-    for (int eye : { (int)Eye::LeftEye, (int) Eye::RightEye })
+    for (int eye : { 0, 1 })
     {
         renderTimer.start();
 
@@ -178,6 +178,8 @@ void VR_Renderer::render_frame()
 
         glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
 
+        RenderPassData data(eye, v);
+
         // Render into 4x multisampled fbo
         glEnable(GL_MULTISAMPLE);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
@@ -186,12 +188,12 @@ void VR_Renderer::render_frame()
         glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
         // Execute the forward passes
-        run_skybox_pass();
+        run_skybox_pass(data);
 
-        run_forward_pass(v);
+        run_forward_pass(data);
 
-        if (renderWireframe) run_forward_wireframe_pass();
-        if (renderShadows) run_shadow_pass();
+        if (renderWireframe) run_forward_wireframe_pass(data);
+        if (renderShadows) run_shadow_pass(data);
 
         glDisable(GL_MULTISAMPLE);
 
@@ -199,7 +201,7 @@ void VR_Renderer::render_frame()
         glBlitNamedFramebuffer(multisampleFramebuffer, eyeTextures[eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
         // Execute the post passes after having resolved the multisample framebuffers
-        run_post_pass(eye);
+        run_post_pass(data);
 
         renderTimer.stop();
     }

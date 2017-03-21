@@ -340,16 +340,23 @@ struct BloomPass
 
         float4 tonemap = { middleGrey, whitePoint * whitePoint, threshold, 0.0f };
         
+        const float lumTarget = 0.4f;
+        const float exposureTarget = lumValue.x += 0.1 * (lumTarget - lumValue.x);
+        float exposureCtrl = 0.86f;
+        exposureCtrl = exposureCtrl * 0.1 + exposureTarget * 0.9;
+        const float exposure = std::exp(exposureCtrl*exposureCtrl) - 1.0f;
+
         ImGui::SliderFloat("MiddleGrey", &tonemap.x, 0.1f, 1.0f);
         ImGui::SliderFloat("WhitePoint", &tonemap.y, 0.1f, 2.0f);
         ImGui::SliderFloat("Threshold", &tonemap.z, 0.1f, 2.0f);
         ImGui::Text("Luminance %f", lumValue.x);
+        ImGui::Text("Exposure %f", exposure);
 
         glBindFramebuffer(GL_FRAMEBUFFER, brightFramebuffer);
         glViewport(0, 0, perEyeSize.x / 2, perEyeSize.y / 2);
         hdr_brightShader.bind();
         hdr_brightShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
-        hdr_brightShader.texture("s_texLum", 1, luminanceTex[4], GL_TEXTURE_2D); // 1x1
+        hdr_brightShader.uniform("u_exposure", exposure);
         hdr_brightShader.uniform("u_tonemap", tonemap);
         hdr_brightShader.uniform("u_modelViewProj", Identity4x4);
         fsQuad.draw_elements();
@@ -366,8 +373,8 @@ struct BloomPass
         glViewport(0, 0, perEyeSize.x, perEyeSize.y);
         hdr_tonemapShader.bind();
         hdr_tonemapShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
-        hdr_tonemapShader.texture("s_texLum", 1, luminanceTex[4], GL_TEXTURE_2D); // 1x1
         hdr_tonemapShader.texture("s_texBlur", 2, blurTex, GL_TEXTURE_2D);
+        hdr_tonemapShader.uniform("u_exposure", exposure);
         hdr_tonemapShader.uniform("u_tonemap", tonemap);
         hdr_tonemapShader.uniform("u_modelViewProj", Identity4x4);
         hdr_tonemapShader.uniform("u_viewTexel", float2(1.f / (float)perEyeSize.x, 1.f / (float)perEyeSize.y));
@@ -408,6 +415,14 @@ struct LightCollection
 
 class VR_Renderer
 {
+
+    struct RenderPassData
+    {
+        const uniforms::per_view & perView;
+        const int & eye;
+        RenderPassData(const int & eye, const uniforms::per_view & perView) : perView(perView), eye(eye) {}
+    };
+
     std::vector<DebugRenderable *> debugSet;
 
     std::vector<Renderable *> renderSet;
@@ -429,18 +444,18 @@ class VR_Renderer
 
     GLuint outputTextureHandles[2] = { 0, 0 };
 
-    void run_skybox_pass();
-    void run_forward_pass(const uniforms::per_view & uniforms);
-    void run_forward_wireframe_pass();
-    void run_shadow_pass();
+    void run_skybox_pass(const RenderPassData & d);
+    void run_forward_pass(const RenderPassData & d);
+    void run_forward_wireframe_pass(const RenderPassData & d);
+    void run_shadow_pass(const RenderPassData & d);
 
-    void run_post_pass(const int eye);
+    void run_post_pass(const RenderPassData & d);
 
-    void run_bloom_pass(const int eye);
-    void run_reflection_pass();
-    void run_ssao_pass();
-    void run_smaa_pass();
-    void run_blackout_pass();
+    void run_bloom_pass(const RenderPassData & d);
+    void run_reflection_pass(const RenderPassData & d);
+    void run_ssao_pass(const RenderPassData & d);
+    void run_smaa_pass(const RenderPassData & d);
+    void run_blackout_pass(const RenderPassData & d);
 
     bool renderPost{ true };
     bool renderWireframe { false };

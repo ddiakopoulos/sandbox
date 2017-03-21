@@ -3,8 +3,8 @@
 uniform vec4 u_tonemap;
 
 uniform sampler2D s_texColor;
-uniform sampler2D s_texLum;
 uniform sampler2D s_texBlur;
+uniform float u_exposure;
 
 in vec2 v_texcoord0;
 
@@ -12,6 +12,8 @@ in vec4 v_texcoord1;
 in vec4 v_texcoord2;
 in vec4 v_texcoord3;
 in vec4 v_texcoord4;
+
+
 
 out vec4 f_color;
 
@@ -145,7 +147,7 @@ vec4 blur9(sampler2D sampler, vec2 _uv0, vec4 _uv1, vec4 _uv2, vec4 _uv3, vec4 _
 void main()
 {
     vec3 rgb = texture(s_texColor, v_texcoord0).rgb;
-    float lum = clamp(texture(s_texLum, v_texcoord0).r, 0.1, 0.7);
+    float lum = clamp(u_exposure, 0.05, 0.9);
 
     //vec3 Yxy = convertRGB2Yxy(rgb);
 
