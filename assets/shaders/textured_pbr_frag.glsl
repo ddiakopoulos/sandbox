@@ -8,6 +8,7 @@
 
 #define saturate(x) clamp(x, 0.0, 1.0)
 #define PI 3.1415926535897932384626433832795
+#define INV_PI 1.0/PI
 
 const int MAX_POINT_LIGHTS = 4;
 
@@ -121,11 +122,25 @@ uniform sampler2D s_normal;
 uniform sampler2D s_roughness;
 uniform sampler2D s_metallic;
 
+uniform samplerCube sc_radiance;
+uniform samplerCube sc_irradiance;
+
 uniform float u_roughness = 1.0;
 uniform float u_metallic = 1.0;
 uniform float u_specular = 1.0;
 
 out vec4 f_color;
+
+// http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
+vec3 fix_cube_lookup(vec3 v, float cubeSize, float lod) 
+{
+    float M = max(max(abs(v.x), abs(v.y)), abs(v.z));
+    float scale = 1 - exp2(lod) / cubeSize;
+    if (abs(v.x) != M) v.x *= scale;
+    if (abs(v.y) != M) v.y *= scale;
+    if (abs(v.z) != M) v.z *= scale;
+    return v;
+}
 
 vec3 blend_normals(vec3 geometric, vec3 detail)
 {
@@ -162,6 +177,17 @@ float fresnel_schlick(float ct, float F0)
     return F0 + (1.0 - F0) * pow(1.0 - ct, 5.0);
 }
 
+// https://www.unrealengine.com/blog/physically-based-shading-on-mobile
+vec3 env_brdf_approx(vec3 spec, float roughness, float NoV)
+{
+    const vec4 c0 = vec4(-1, -0.0275, -0.572, 0.022);
+    const vec4 c1 = vec4(1, 0.0425, 1.04, -0.04);
+    vec4 r = roughness * c0 + c1;
+    float a004 = min(r.x * r.x, exp2(-9.28 * NoV)) * r.x + r.y;
+    vec2 AB = vec2(-1.04, 1.04) * a004 + r.zw;
+    return spec * AB.x + AB.y;
+}
+
 float shade_pbr(vec3 N, vec3 V, vec3 L, float roughness, float F0) 
 {
     float alpha = roughness * roughness;
@@ -186,38 +212,70 @@ float shade_pbr(vec3 N, vec3 V, vec3 L, float roughness, float F0)
     return Di * Fs * Vs;
 }
 
-
 void main()
-{
-    vec3 directLighting = vec3(0.0, 0.0, 0.0);
-
+{   
     // Surface properties
     float roughness = sRGBToLinear(texture(s_roughness, v_texcoord), DEFAULT_GAMMA).r;
+    float roughness4 = pow(roughness, 4.0);
     float metallic = sRGBToLinear(texture(s_metallic, v_texcoord), DEFAULT_GAMMA).r;
 
     vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
     vec3 viewDir = normalize(u_eyePos - v_world_position);
     vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
     
+    vec3 N = normalWorld;
+    vec3 V = viewDir;
+
+    vec3 diffuseContrib = vec3(0.0, 0.0, 0.0);
+    vec3 specularContrib = vec3(0.0, 0.0, 0.0);
+
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
-        vec3 N = normalWorld;
-        vec3 V = viewDir;
         vec3 L = normalize(u_pointLights[i].position - v_world_position); 
 
         float fresnel = pow(max(1.0 - abs(dot(N, V)), 0.0), 1.5f + roughness); 
 
         // F0 (Fresnel reflection coefficient), otherwise known as specular reflectance. 
         // 0.04 is the default for non-metals in UE4
-        vec3 F0 = vec3(0.1); 
+        vec3 F0 = vec3(0.04); 
 
         F0 = mix(F0, u_pointLights[i].color, metallic);
-        vec3 spec = u_pointLights[i].color * shade_pbr(N, V, L, roughness, F0.r);
+        vec3 specularColor = u_pointLights[i].color * shade_pbr(N, V, L, roughness, F0.r);
 
-        vec3 Lo = (albedo) + spec;
-        directLighting += Lo;
+        diffuseContrib += albedo; // wrong
+        specularContrib += specularColor;
     }
 
-    f_color = linearTosRGB(vec4(directLighting, 1), DEFAULT_GAMMA);
+    int numMips = 6;
+    float mipLevel = numMips - 1.0 + log2(roughness);
+    vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
+
+    vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA);
+    vec3 irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA);
+
+    float NoV = saturate(dot(N, V));
+    specularContrib += env_brdf_approx(specularContrib, roughness4, NoV);
+
+    // Combine direct lighting and IBL
+    vec3 Lo = (diffuseContrib * irradiance) + (specularContrib * radiance);
+
+    f_color = vec4(Lo, 1); //linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
 }
+
+/*
+vec3 calculate_ibl_diffuse(samplerCube _irradianceMap, vec3 _normal, float intensity)
+{
+    vec3 diffuseIBL = texture(_irradianceMap, _normal).rgb;
+    return diffuseIBL * INV_PI * ambientIntensity;
+}
+
+vec3 calc_ibl_specular(samplerCube _radianceMap, int _numMips, vec3 _reflectNormal, float _NoV, float _roughness, float _intensity)
+{
+    float mipLevel = _numMips - 1 + log2(_roughness);
+    vec3 PrefilteredColor = textureLod(_radianceMap, _reflectNormal, mipLevel).rgb;
+
+    vec3 specularIBL = EnvBRDFApprox(PrefilteredColor, _roughness, _NoV);
+    return specularIBL * INV_PI * _intensity;
+}
+*/

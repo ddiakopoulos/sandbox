@@ -123,6 +123,9 @@ namespace avl
         float3 emissiveColor{ float3(1, 1, 1) };
         float emissiveStrength{ 1.f };
 
+        GlTextureObject radianceCubemap;
+        GlTextureObject irradianceCubemap;
+
     public:
 
         MetallicRoughnessMaterial(std::shared_ptr<GlShader> shader)
@@ -142,6 +145,9 @@ namespace avl
             program->texture("s_normal", 1, normal, GL_TEXTURE_2D);
             program->texture("s_roughness", 2, roughness, GL_TEXTURE_2D);
             program->texture("s_metallic", 3, metallic, GL_TEXTURE_2D);
+
+            program->texture("sc_radiance", 4, radianceCubemap, GL_TEXTURE_CUBE_MAP);
+            program->texture("sc_irradiance", 5, irradianceCubemap, GL_TEXTURE_CUBE_MAP);
 
             //program->texture("s_emissive", 4, emissive, GL_TEXTURE_2D);
             //program->texture("s_occlusion", 5, occlusion, GL_TEXTURE_2D);
@@ -170,6 +176,8 @@ namespace avl
         void set_roughness_texture(GlTexture2D & tex) { roughness = std::move(tex); }
         void set_emissive_texture(GlTexture2D & tex) { emissive = std::move(tex); }
         void set_occulusion_texture(GlTexture2D & tex) { occlusion = std::move(tex); }
+        void set_radiance_cubemap(GlTextureObject & cubemap) { radianceCubemap = std::move(cubemap); }
+        void set_irrradiance_cubemap(GlTextureObject & cubemap) { irradianceCubemap = std::move(cubemap); }
     };
 
 }
