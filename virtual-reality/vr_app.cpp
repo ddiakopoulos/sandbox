@@ -74,6 +74,9 @@ void VirtualRealityApp::setup_scene()
     auto normalShader = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
     scene.namedMaterialList["material-debug"] = std::make_shared<DebugMaterial>(normalShader);
 
+    auto wireframeShader = shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl");
+    scene.namedMaterialList["material-wireframe"] = std::make_shared<WireframeMaterial>(wireframeShader);
+
     // Slightly offset from debug-rendered physics floor
     scene.grid.set_origin(float3(0, -.01f, 0));
 
@@ -114,7 +117,7 @@ void VirtualRealityApp::setup_scene()
         StaticMesh materialTestMesh;
         materialTestMesh.set_static_mesh(geom, 2.f);
         materialTestMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, -ANVIL_PI / 2.f), float3(0, 0.75f, 0)));
-        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        materialTestMesh.set_material(scene.namedMaterialList["material-wireframe"].get());
         scene.models.push_back(std::move(materialTestMesh));
     }
 

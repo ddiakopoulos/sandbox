@@ -34,6 +34,21 @@ namespace avl
         }
     };
 
+    class WireframeMaterial : public Material
+    {
+    public:
+        WireframeMaterial(std::shared_ptr<GlShader> shader)
+        {
+            program = shader;
+        }
+
+        virtual void use(const float4x4 & modelMatrix) override
+        {
+            program->bind();
+            program->uniform("u_modelMatrix", modelMatrix);
+        }
+    };
+
     class TexturedMaterial : public Material
     {
 

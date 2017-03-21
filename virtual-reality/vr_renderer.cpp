@@ -178,7 +178,7 @@ void VR_Renderer::render_frame()
 
         glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
 
-        RenderPassData data(eye, v);
+        const RenderPassData data(eye, v);
 
         // Render into 4x multisampled fbo
         glEnable(GL_MULTISAMPLE);
