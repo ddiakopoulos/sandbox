@@ -4,6 +4,8 @@
 // Material manager -> setup, get
 // Serialization
 
+#include "gli/gli.hpp"
+
 VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
 {
     int windowWidth, windowHeight;
@@ -105,19 +107,70 @@ void VirtualRealityApp::setup_scene()
     }
 
     {
+        auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
+        auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
+
+        gli::texture_cube radianceHandle(gli::load_dds((char *) radianceBinary.data(), radianceBinary.size()));
+        gli::texture_cube irradianceHandle(gli::load_dds((char *)irradianceBinary.data(), irradianceBinary.size()));
+
+        GlTexture2D radianceTex;
+        GlTexture2D irradianceTex;
+
+        auto load_cubemap = [](GlTexture2D & t, const gli::texture_cube & tex)
+        {
+            for (gli::texture_cube::size_type Face = 0; Face < 6; ++Face)
+            {
+                for (std::size_t Level = 0; Level < tex.levels(); ++Level)
+                {
+                    std::cout << GLsizei(tex[Face][Level].extent().x) << ", " << GLsizei(tex[Face][Level].extent().y) << std::endl;
+
+                    gli::gl GL(gli::gl::PROFILE_GL33);
+                    gli::gl::format const Format = GL.translate(tex.format(), tex.swizzles());
+                    GLenum Target = GL.translate(tex.target());
+
+                    glTextureImage2DEXT(
+                        t,
+                        GL_TEXTURE_CUBE_MAP_POSITIVE_X + GLenum(Face),
+                        GLint(Level),
+                        Format.Internal,
+                        GLsizei(tex[Face][Level].extent().x),
+                        GLsizei(tex[Face][Level].extent().y),
+                        0,
+                        Format.External,
+                        Format.Type,
+                        tex[Face][Level].data());
+
+                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, tex.base_level());
+                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, tex.max_level());
+
+                    gl_check_error(__FILE__, __LINE__);
+                }
+            }
+        };
+
+        load_cubemap(radianceTex, radianceHandle);
+        load_cubemap(irradianceTex, irradianceHandle);
+
         auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
         auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
         pbrMaterial->set_albedo_texture(load_image("../assets/models/cerberus/albedo.png", true));
         pbrMaterial->set_normal_texture(load_image("../assets/models/cerberus/normal.png", true));
         pbrMaterial->set_metallic_texture(load_image("../assets/models/cerberus/metallic.png", true));
         pbrMaterial->set_roughness_texture(load_image("../assets/models/cerberus/roughness.png", true));
+        pbrMaterial->set_radiance_cubemap(radianceTex);
+        pbrMaterial->set_irrradiance_cubemap(irradianceTex);
         scene.namedMaterialList["material-pbr"] = pbrMaterial;
 
         auto geom = load_geometry_from_obj_no_texture("../assets/models/cerberus/cerberus.obj")[0];
         StaticMesh materialTestMesh;
         materialTestMesh.set_static_mesh(geom, 2.f);
         materialTestMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, -ANVIL_PI / 2.f), float3(0, 0.75f, 0)));
-        materialTestMesh.set_material(scene.namedMaterialList["material-wireframe"].get());
+        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
         scene.models.push_back(std::move(materialTestMesh));
     }
 
