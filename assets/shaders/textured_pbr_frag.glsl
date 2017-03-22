@@ -128,10 +128,7 @@ uniform samplerCube sc_irradiance;
 
 uniform float u_roughness = 1.0;
 uniform float u_metallic = 1.0;
-uniform float u_specular = 1.0;
-
-uniform mat4 u_modelMatrix;
-uniform mat4 u_modelMatrixIT;
+uniform float u_ambientIntensity = 1.0;
 
 out vec4 f_color;
 
@@ -237,9 +234,9 @@ float point_light_attenuation(vec3 lightPosition, vec3 vertexPosition, float lig
 void main()
 {   
     // Surface properties
-    float roughness = sRGBToLinear(texture(s_roughness, v_texcoord), DEFAULT_GAMMA).r;
+    float roughness = sRGBToLinear(texture(s_roughness, v_texcoord), DEFAULT_GAMMA).r * u_roughness;
     float roughness4 = pow(roughness, 4.0);
-    float metallic = sRGBToLinear(texture(s_metallic, v_texcoord), DEFAULT_GAMMA).r;
+    float metallic = sRGBToLinear(texture(s_metallic, v_texcoord), DEFAULT_GAMMA).r * u_metallic;
 
     vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
     vec3 viewDir = normalize(u_eyePos - v_world_position);
@@ -248,56 +245,53 @@ void main()
     vec3 N = normalWorld;
     vec3 V = viewDir;
 
-    vec3 diffuseContrib = vec3(0.0, 0.0, 0.0);
-    vec3 specularContrib = vec3(0.0, 0.0, 0.0);
+    vec3 diffuseContrib = vec3(0);
+    vec3 specularContrib = vec3(0);
 
     // Compute directional light
     {
         vec3 L = normalize(u_directionalLight.direction);
+        float NoL = saturate(dot(N, L));
+
         vec3 F0 = mix(vec3(0.04), u_directionalLight.color, metallic);
         vec3 specularColor = u_directionalLight.color * shade_pbr(N, V, L, roughness, F0.r);
-        specularColor *= u_directionalLight.amount;
-        specularContrib += specularColor;
 
-        float NoL = saturate(dot(N, L));
         diffuseContrib += NoL * u_directionalLight.color * albedo;
+        specularContrib += (specularColor * u_directionalLight.amount);
     }
 
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
         vec3 L = normalize(u_pointLights[i].position - v_world_position); 
+        float NoL = saturate(dot(N, L));
 
         // F0 (Fresnel reflection coefficient), otherwise known as specular reflectance. 
         // 0.04 is the default for non-metals in UE4
-        vec3 F0 = vec3(0.04); 
-
-        F0 = mix(F0, u_pointLights[i].color, metallic);
+        vec3 F0 = mix(vec3(0.04), u_pointLights[i].color, metallic);
         vec3 specularColor = u_pointLights[i].color * shade_pbr(N, V, L, roughness, F0.r);
 
         float attenuation = point_light_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
-        specularColor *= attenuation;
 
-        float NoL = saturate(dot(N, L));
         diffuseContrib += NoL * u_pointLights[i].color * albedo;
-        specularContrib += specularColor;
+        specularContrib += (specularColor * attenuation);
     }
+
+    // Compute image-based lighting
 
     const int NUM_MIP_LEVELS = 7;
     float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
     vec3 cubemapLookup = fix_cube_lookup(reflect(-V, N), 512, mipLevel);
 
-    vec3 irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA);
-    vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA);
+    vec3 irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
+    vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
 
     vec3 baseSpecular = mix(vec3(0.04), albedo, metallic);
     float NoV = saturate(dot(N, V));
     specularContrib += env_brdf_approx(baseSpecular, roughness4, NoV);
 
-    const float ambientIntensity = 1.0f;
-
     // Combine direct lighting and IBL
-    vec3 Lo = (diffuseContrib * (irradiance * ambientIntensity)) + (specularContrib * (radiance  * ambientIntensity));
+    vec3 Lo = (diffuseContrib * irradiance) + (specularContrib * radiance );
 
     f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
 }
