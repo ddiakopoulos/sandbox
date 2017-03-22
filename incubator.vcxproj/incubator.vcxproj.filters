@@ -225,6 +225,12 @@
     <ClInclude Include="..\simple_timer.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\third_party\im3d\im3d.h">
+      <Filter>source\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\im3d\im3d_config.h">
+      <Filter>source\app</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
@@ -261,6 +267,9 @@
       <Filter>source\app</Filter>
     </ClCompile>
     <ClCompile Include="..\impl.cpp">
+      <Filter>source\app</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\im3d\im3d.cpp">
       <Filter>source\app</Filter>
     </ClCompile>
   </ItemGroup>

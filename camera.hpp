@@ -97,9 +97,11 @@ namespace avl
             return make_projection_matrix(left, right, bottom, top, nearClip, farClip);
         }
         
-        void set_orientation(float4 o) { pose.orientation = safe_normalize(o); }
+        void set_pose(const Pose & p) { pose = p; }
+
+        void set_orientation(const float4 & o) { pose.orientation = safe_normalize(o); }
         
-        void set_position(float3 p) { pose.position = p; }
+        void set_position(const float3 & pos) { pose.position = pos; }
         
         void set_perspective(float vFov, float nearClip, float farClip)
         {

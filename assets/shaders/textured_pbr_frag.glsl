@@ -130,6 +130,9 @@ uniform float u_roughness = 1.0;
 uniform float u_metallic = 1.0;
 uniform float u_specular = 1.0;
 
+uniform mat4 u_modelMatrix;
+uniform mat4 u_modelMatrixIT;
+
 out vec4 f_color;
 
 // http://the-witness.net/news/2012/02/seamless-cube-map-filtering/

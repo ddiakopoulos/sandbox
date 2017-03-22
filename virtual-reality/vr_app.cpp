@@ -149,16 +149,21 @@ void VirtualRealityApp::setup_scene()
 
         auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
         auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
-        pbrMaterial->set_albedo_texture(load_image("../assets/models/cerberus/albedo.png", true));
-        pbrMaterial->set_normal_texture(load_image("../assets/models/cerberus/normal.png", true));
-        pbrMaterial->set_metallic_texture(load_image("../assets/models/cerberus/metallic.png", true));
-        pbrMaterial->set_roughness_texture(load_image("../assets/models/cerberus/roughness.png", true));
+        pbrMaterial->set_albedo_texture(load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
+        pbrMaterial->set_normal_texture(load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
+        pbrMaterial->set_metallic_texture(load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
+        pbrMaterial->set_roughness_texture(load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
         pbrMaterial->set_radiance_cubemap(radianceTex);
         pbrMaterial->set_irrradiance_cubemap(irradianceTex);
         scene.namedMaterialList["material-pbr"] = pbrMaterial;
 
 
         /*
+        pbrMaterial->set_albedo_texture(load_image("../assets/models/cerberus/albedo.png", true));
+        pbrMaterial->set_normal_texture(load_image("../assets/models/cerberus/normal.png", true));
+        pbrMaterial->set_metallic_texture(load_image("../assets/models/cerberus/metallic.png", true));
+        pbrMaterial->set_roughness_texture(load_image("../assets/models/cerberus/roughness.png", true));
+
         auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
         auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
         pbrMaterial->set_albedo_texture(load_image("../assets/models/pbr_chest/albedo.png", true));
@@ -175,17 +180,34 @@ void VirtualRealityApp::setup_scene()
         materialTestMesh.set_static_mesh(geom, 1.33f);
         materialTestMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, -ANVIL_PI), float3(0, 0.75f, 0)));
         materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+       // scene.models.push_back(std::move(materialTestMesh));
+    }
+
+    scoped_timer t("load capsule");
+    auto capsuleGeom = load_geometry_from_ply("../assets/models/geometry/CapsuleUniform.ply", true);
+
+    {
+        StaticMesh materialTestMesh;
+        materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.33f, -0.5)));
+        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
         scene.models.push_back(std::move(materialTestMesh));
     }
 
     {
-        scoped_timer t("load capsule");
-        auto geom = load_geometry_from_ply("../assets/models/geometry/CapsuleUniform.ply", true);
         StaticMesh materialTestMesh;
-        materialTestMesh.set_static_mesh(geom, 0.5f);
-        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(0, 0.5f, -1)));
-        materialTestMesh.set_material(scene.namedMaterialList["material-wireframe"].get());
-        //scene.models.push_back(std::move(materialTestMesh));
+        materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.33f, 0.0)));
+        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        scene.models.push_back(std::move(materialTestMesh));
+    }
+
+    {
+        StaticMesh materialTestMesh;
+        materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.33f, +0.5)));
+        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        scene.models.push_back(std::move(materialTestMesh));
     }
 
     /*
@@ -269,6 +291,23 @@ void VirtualRealityApp::on_input(const InputEvent & event)
 {
     cameraController.handle_input(event);
     if (igm) igm->update_input(event);
+
+    if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS)
+    {
+        if (event.value[0] == GLFW_MOUSE_BUTTON_LEFT)
+        {
+            for (auto & model : scene.models)
+            {
+                auto worldRay = debugCam.get_world_ray(event.cursor, float2(event.windowSize));
+                RaycastResult rc = model.raycast(worldRay);
+
+                if (rc.hit)
+                {
+                    std::cout << "Hit Model" << std::endl;
+                }
+            }
+        }
+    }
 }
 
 void VirtualRealityApp::on_update(const UpdateEvent & e) 
@@ -404,6 +443,9 @@ void VirtualRealityApp::on_draw()
         gpuTimer.stop();
         hmd->submit(renderer->get_eye_texture(Eye::LeftEye), renderer->get_eye_texture(Eye::RightEye));
         hmd->update();
+
+        // Todo: derive center eye
+        debugCam.set_pose(hmd->get_eye_pose(vr::Hmd_Eye::Eye_Left));
     }
     else
     {
@@ -453,8 +495,11 @@ void VirtualRealityApp::on_draw()
     }
 
     physicsDebugRenderer->clear();
+    
+    const auto hpose = hmd->get_hmd_pose();
 
     ImGui::Text("Render Frame: %f", gpuTimer.elapsed_ms());
+    ImGui::Text("Head Pose: %f, %f, %f", hpose.position.x, hpose.position.y, hpose.position.z);
 
     if (igm) igm->end_frame();
 

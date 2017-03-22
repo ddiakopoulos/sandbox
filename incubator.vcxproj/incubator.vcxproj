@@ -68,6 +68,8 @@
     <ClInclude Include="..\string_utils.hpp" />
     <ClInclude Include="..\texture_view.hpp" />
     <ClInclude Include="..\third_party\fontstash.h" />
+    <ClInclude Include="..\third_party\im3d\im3d.h" />
+    <ClInclude Include="..\third_party\im3d\im3d_config.h" />
     <ClInclude Include="..\third_party\imgui\imconfig.h" />
     <ClInclude Include="..\third_party\imgui\imgui.h" />
     <ClInclude Include="..\third_party\imgui\imgui_internal.h" />
@@ -90,6 +92,7 @@
     <ClCompile Include="..\impl.cpp" />
     <ClCompile Include="..\nvg.cpp" />
     <ClCompile Include="..\third_party\efsw.cpp" />
+    <ClCompile Include="..\third_party\im3d\im3d.cpp" />
     <ClCompile Include="..\third_party\imgui\imgui.cpp" />
     <ClCompile Include="..\third_party\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\third_party\json.cpp" />
