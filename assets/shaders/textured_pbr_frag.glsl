@@ -9,6 +9,7 @@
 #define saturate(x) clamp(x, 0.0, 1.0)
 #define PI 3.1415926535897932384626433832795
 #define INV_PI 1.0/PI
+#define RCP_4PI 1.0 / (4 * PI)
 
 const int MAX_POINT_LIGHTS = 4;
 
@@ -178,14 +179,14 @@ float fresnel_schlick(float ct, float F0)
 }
 
 // https://www.unrealengine.com/blog/physically-based-shading-on-mobile
-vec3 env_brdf_approx(vec3 spec, float roughness, float NoV)
+vec3 env_brdf_approx(vec3 specularColor, float roughness, float NoV)
 {
     const vec4 c0 = vec4(-1, -0.0275, -0.572, 0.022);
     const vec4 c1 = vec4(1, 0.0425, 1.04, -0.04);
     vec4 r = roughness * c0 + c1;
     float a004 = min(r.x * r.x, exp2(-9.28 * NoV)) * r.x + r.y;
     vec2 AB = vec2(-1.04, 1.04) * a004 + r.zw;
-    return spec * AB.x + AB.y;
+    return specularColor * AB.x + AB.y;
 }
 
 float shade_pbr(vec3 N, vec3 V, vec3 L, float roughness, float F0) 
@@ -212,6 +213,24 @@ float shade_pbr(vec3 N, vec3 V, vec3 L, float roughness, float F0)
     return Di * Fs * Vs;
 }
 
+// http://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
+float point_light_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius)
+{
+    const float cutoff = 0.0052f;
+
+    float r = lightRadius;
+    vec3 L = lightPosition - vertexPosition;
+    float dist = length(L);
+    float d = max(dist - r, 0);
+    L /= dist;
+    float denom = d / r + 1.0f;
+
+    float attenuation = 1.0f / (denom * denom);
+    attenuation = (attenuation - cutoff) / (1.0 - cutoff);
+    attenuation = max(attenuation, 0.0);
+    return attenuation;
+}
+
 void main()
 {   
     // Surface properties
@@ -221,20 +240,30 @@ void main()
 
     vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
     vec3 viewDir = normalize(u_eyePos - v_world_position);
-    vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz);
-    
+    vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2 - 1);
+
     vec3 N = normalWorld;
     vec3 V = viewDir;
 
     vec3 diffuseContrib = vec3(0.0, 0.0, 0.0);
     vec3 specularContrib = vec3(0.0, 0.0, 0.0);
 
+    // Compute directional light
+    {
+        vec3 L = normalize(u_directionalLight.direction);
+        vec3 F0 = mix(vec3(0.04), u_directionalLight.color, metallic);
+        vec3 specularColor = u_directionalLight.color * shade_pbr(N, V, L, roughness, F0.r);
+        specularColor *= u_directionalLight.amount;
+        specularContrib += specularColor;
+
+        float NoL = saturate(dot(N, L));
+        diffuseContrib += NoL * u_directionalLight.color * albedo;
+    }
+
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
         vec3 L = normalize(u_pointLights[i].position - v_world_position); 
-
-        float fresnel = pow(max(1.0 - abs(dot(N, V)), 0.0), 1.5f + roughness); 
 
         // F0 (Fresnel reflection coefficient), otherwise known as specular reflectance. 
         // 0.04 is the default for non-metals in UE4
@@ -243,39 +272,29 @@ void main()
         F0 = mix(F0, u_pointLights[i].color, metallic);
         vec3 specularColor = u_pointLights[i].color * shade_pbr(N, V, L, roughness, F0.r);
 
-        diffuseContrib += albedo; // wrong
+        float attenuation = point_light_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
+        specularColor *= attenuation;
+
+        float NoL = saturate(dot(N, L));
+        diffuseContrib += NoL * u_pointLights[i].color * albedo;
         specularContrib += specularColor;
     }
 
-    int numMips = 6;
-    float mipLevel = numMips - 1.0 + log2(roughness);
-    vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
+    const int NUM_MIP_LEVELS = 7;
+    float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
+    vec3 cubemapLookup = fix_cube_lookup(reflect(-V, N), 512, mipLevel);
 
-    vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA);
     vec3 irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA);
+    vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA);
 
+    vec3 baseSpecular = mix(vec3(0.04), albedo, metallic);
     float NoV = saturate(dot(N, V));
-    specularContrib += env_brdf_approx(specularContrib, roughness4, NoV);
+    specularContrib += env_brdf_approx(baseSpecular, roughness4, NoV);
+
+    const float ambientIntensity = 1.0f;
 
     // Combine direct lighting and IBL
-    vec3 Lo = (diffuseContrib * irradiance) + (specularContrib * radiance);
+    vec3 Lo = (diffuseContrib * (irradiance * ambientIntensity)) + (specularContrib * (radiance  * ambientIntensity));
 
-    f_color = vec4(Lo, 1); //linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
+    f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
 }
-
-/*
-vec3 calculate_ibl_diffuse(samplerCube _irradianceMap, vec3 _normal, float intensity)
-{
-    vec3 diffuseIBL = texture(_irradianceMap, _normal).rgb;
-    return diffuseIBL * INV_PI * ambientIntensity;
-}
-
-vec3 calc_ibl_specular(samplerCube _radianceMap, int _numMips, vec3 _reflectNormal, float _NoV, float _roughness, float _intensity)
-{
-    float mipLevel = _numMips - 1 + log2(_roughness);
-    vec3 PrefilteredColor = textureLod(_radianceMap, _reflectNormal, mipLevel).rgb;
-
-    vec3 specularIBL = EnvBRDFApprox(PrefilteredColor, _roughness, _NoV);
-    return specularIBL * INV_PI * _intensity;
-}
-*/

@@ -31,5 +31,5 @@ vec3 wireframe(vec3 color)
 
 void main()
 {
-    f_color = vec4(wireframe(vec3(0.5) + vec3(1, 1, 1)), 1.0);
+    f_color = vec4(wireframe(vec3(0.5) + vec3(1, 1, 1)), 0.1);
 }

@@ -457,7 +457,7 @@ class VR_Renderer
     void run_smaa_pass(const RenderPassData & d);
     void run_blackout_pass(const RenderPassData & d);
 
-    bool renderPost{ true };
+    bool renderPost{ false };
     bool renderWireframe { false };
     bool renderShadows { false };
     bool renderBloom { true };
