@@ -18,7 +18,7 @@ class AssetDatabase
 {
     std::map<std::string, T> table;
 public:
-    void register_asset(const std::string & name, T & asset)
+    void register_asset(const std::string & name, T && asset)
     {
         table[name] = std::move(asset);
     }

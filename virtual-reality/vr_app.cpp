@@ -116,16 +116,11 @@ void VirtualRealityApp::setup_scene()
         gli::texture_cube radianceHandle(gli::load_dds((char *) radianceBinary.data(), radianceBinary.size()));
         gli::texture_cube irradianceHandle(gli::load_dds((char *)irradianceBinary.data(), irradianceBinary.size()));
 
-        GlTexture2D radianceTex;
-        GlTexture2D irradianceTex;
-
-        texDatabase.register_asset("wells-radiance", radianceTex);
-
-        std::cout << texDatabase.get_asset("wells-radiance") << std::endl;
-
-        auto load_cubemap = [](GlTexture2D & t, const gli::texture_cube & tex)
+        auto load_cubemap = [](const gli::texture_cube & tex) -> GlTexture2D
         {
             AVL_SCOPED_TIMER("load_cubemap");
+
+            GlTexture2D t;
 
             for (gli::texture_cube::size_type Face = 0; Face < 6; ++Face)
             {
@@ -145,10 +140,15 @@ void VirtualRealityApp::setup_scene()
                     //gl_check_error(__FILE__, __LINE__);
                 }
             }
+
+            return t;
         };
 
-        load_cubemap(radianceTex, radianceHandle);
-        load_cubemap(irradianceTex, irradianceHandle);
+
+        texDatabase.register_asset("wells-radiance", load_cubemap(radianceHandle));
+        std::cout << texDatabase.get_asset("wells-radiance") << std::endl;
+
+        load_cubemap(irradianceHandle);
 
         auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
         auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
@@ -156,8 +156,8 @@ void VirtualRealityApp::setup_scene()
         pbrMaterial->set_normal_texture(load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
         pbrMaterial->set_metallic_texture(load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
         pbrMaterial->set_roughness_texture(load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
-        pbrMaterial->set_radiance_cubemap(radianceTex);
-        pbrMaterial->set_irrradiance_cubemap(irradianceTex);
+        pbrMaterial->set_radiance_cubemap(texDatabase.get_asset("wells-radiance"));
+        pbrMaterial->set_irrradiance_cubemap(texDatabase.get_asset("wells-radiance"));
         scene.namedMaterialList["material-pbr"] = pbrMaterial;
 
 
