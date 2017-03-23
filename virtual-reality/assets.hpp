@@ -12,7 +12,7 @@ struct UniqueAsset : public Noncopyable
 {
     std::string name;
     T asset;
-    UniqueAsset(const std::string name, T & asset) : name(name), asset(std::move(asset)) {}
+    UniqueAsset(const std::string name, T && asset) : name(name), asset(std::move(asset)) {}
 };
 
 template<typename T>

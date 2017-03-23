@@ -14,7 +14,7 @@ struct ExperimentalApp : public GLFWApp
         auto loadTexEmptyTex = []() -> GlTexture2D
         {
             GlTexture2D newTex;
-            std::cout << "Generated Tex Handle:" << newTex.id() << std::endl;
+            std::cout << "Generated Tex Handle:" << newTex << std::endl;
             return newTex;
         };
 
@@ -23,7 +23,6 @@ struct ExperimentalApp : public GLFWApp
         auto & tex = textures.get_asset("empty-tex");
 
         std::cout << "Got: " << tex << std::endl;
-
     }
     
     void on_window_resize(int2 size) override {}
