@@ -8,6 +8,7 @@
 #include "GL_API.hpp"
 #include <memory>
 #include <vector>
+#include <map>
 
 template<typename T>
 struct UniqueAsset : public Noncopyable
@@ -23,7 +24,12 @@ class AssetDatabase : public Noncopyable
     std::map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
 public:
     void register_asset(const std::string & name, T && asset) { table[name] = std::make_shared<UniqueAsset<T>>(name, std::move(asset)); }
-    std::shared_ptr<UniqueAsset<T>> get_asset(const std::string & name) { return table[name]; }
+    std::shared_ptr<UniqueAsset<T>> get_asset(const std::string & name) 
+    { 
+        auto r = table[name]; 
+        if (r) return r; 
+        else throw std::invalid_argument("no asset for this name");
+    }
     std::shared_ptr<UniqueAsset<T>> operator[](const std::string & name) { return get_asset(name); }
     std::vector<std::shared_ptr<UniqueAsset<T>>> list()
     {

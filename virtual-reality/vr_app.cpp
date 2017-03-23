@@ -116,12 +116,15 @@ void VirtualRealityApp::setup_scene()
         gli::texture_cube radianceHandle(gli::load_dds((char *)radianceBinary.data(), radianceBinary.size()));
         gli::texture_cube irradianceHandle(gli::load_dds((char *)irradianceBinary.data(), irradianceBinary.size()));
 
-        texDatabase.register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
-        texDatabase.register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
+        auto noasset = texDatabase["rusted-iron-albedo"];
+        std::cout << noasset->asset << std::endl;
+
         texDatabase.register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
         texDatabase.register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
         texDatabase.register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
         texDatabase.register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
+        texDatabase.register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
+        texDatabase.register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
 
         auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
         auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
