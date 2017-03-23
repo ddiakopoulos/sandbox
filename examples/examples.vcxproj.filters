@@ -69,5 +69,8 @@
     <ClInclude Include="textured_model_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
+    <ClInclude Include="asset_test.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
