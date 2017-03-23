@@ -41,7 +41,7 @@ inline GlTexture2D load_image(const std::string & path, bool flip = false)
     return tex;
 }
 
-GlTexture2D load_cubemap(const gli::texture_cube & tex)
+inline GlTexture2D load_cubemap(const gli::texture_cube & tex)
 {
     GlTexture2D t;
 

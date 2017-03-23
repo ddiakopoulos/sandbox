@@ -108,13 +108,14 @@ namespace avl
 
     class MetallicRoughnessMaterial : public Material
     {
-
-        std::shared_ptr<UniqueAsset<GlTexture2D>> albedo;
-        std::shared_ptr<UniqueAsset<GlTexture2D>> normal;
-        std::shared_ptr<UniqueAsset<GlTexture2D>> metallic;
-        std::shared_ptr<UniqueAsset<GlTexture2D>> roughness;
-        std::shared_ptr<UniqueAsset<GlTexture2D>> emissive;
-        std::shared_ptr<UniqueAsset<GlTexture2D>> occlusion;
+        texture_handle albedo;
+        texture_handle normal;
+        texture_handle metallic;
+        texture_handle roughness;
+        texture_handle emissive;
+        texture_handle occlusion;
+        texture_handle radianceCubemap;
+        texture_handle irradianceCubemap;
 
         float roughnessFactor{ 1.f };
         float metallicFactor{ 1.f };
@@ -123,8 +124,6 @@ namespace avl
         float3 emissiveColor{ float3(1, 1, 1) };
         float emissiveStrength{ 1.f };
 
-        GlTextureObject radianceCubemap;
-        GlTextureObject irradianceCubemap;
 
     public:
 
@@ -142,12 +141,12 @@ namespace avl
             //program->uniform("u_ambientIntensity", ambientIntensity);
 
             program->texture("s_albedo", 0, albedo->asset, GL_TEXTURE_2D);
-            program->texture("s_normal", 1, normal, GL_TEXTURE_2D);
-            program->texture("s_roughness", 2, roughness, GL_TEXTURE_2D);
-            program->texture("s_metallic", 3, metallic, GL_TEXTURE_2D);
+            program->texture("s_normal", 1, normal->asset, GL_TEXTURE_2D);
+            program->texture("s_roughness", 2, roughness->asset, GL_TEXTURE_2D);
+            program->texture("s_metallic", 3, metallic->asset, GL_TEXTURE_2D);
 
-            program->texture("sc_radiance", 4, radianceCubemap, GL_TEXTURE_CUBE_MAP);
-            program->texture("sc_irradiance", 5, irradianceCubemap, GL_TEXTURE_CUBE_MAP);
+            program->texture("sc_radiance", 4, radianceCubemap->asset, GL_TEXTURE_CUBE_MAP);
+            program->texture("sc_irradiance", 5, irradianceCubemap->asset, GL_TEXTURE_CUBE_MAP);
 
             //program->texture("s_emissive", 6, emissive, GL_TEXTURE_2D);
             //program->texture("s_occlusion", 7, occlusion, GL_TEXTURE_2D);
@@ -170,14 +169,14 @@ namespace avl
         void set_metallic(const float & value) { metallicFactor = value; }
         void set_ambientIntensity(const float & value) { ambientIntensity = value; }
 
-        void set_albedo_texture(GlTexture2D & tex) { albedo = std::move(tex); }
-        void set_normal_texture(GlTexture2D & tex) { normal = std::move(tex); }
-        void set_metallic_texture(GlTexture2D & tex) { metallic = std::move(tex); }
-        void set_roughness_texture(GlTexture2D & tex) { roughness = std::move(tex); }
-        void set_emissive_texture(GlTexture2D & tex) { emissive = std::move(tex); }
-        void set_occulusion_texture(GlTexture2D & tex) { occlusion = std::move(tex); }
-        void set_radiance_cubemap(GlTextureObject & cubemap) { radianceCubemap = std::move(cubemap); }
-        void set_irrradiance_cubemap(GlTextureObject & cubemap) { irradianceCubemap = std::move(cubemap); }
+        void set_albedo_texture(texture_handle asset) { albedo = asset; }
+        void set_normal_texture(texture_handle asset) { normal = asset; }
+        void set_metallic_texture(texture_handle asset) { metallic = asset; }
+        void set_roughness_texture(texture_handle asset) { roughness = asset; }
+        void set_emissive_texture(texture_handle asset) { emissive = asset; }
+        void set_occulusion_texture(texture_handle asset) { occlusion = asset; }
+        void set_radiance_cubemap(texture_handle asset) { radianceCubemap = asset; }
+        void set_irrradiance_cubemap(texture_handle asset) { irradianceCubemap = asset; }
     };
 
 }

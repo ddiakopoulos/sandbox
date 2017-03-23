@@ -5,6 +5,7 @@
 
 #include "util.hpp"
 #include "linalg_util.hpp"
+#include "GL_API.hpp"
 #include <memory>
 #include <vector>
 
@@ -22,7 +23,7 @@ class AssetDatabase : public Noncopyable
     std::map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
 public:
     void register_asset(const std::string & name, T && asset) { table[name] = std::make_shared<UniqueAsset<T>>(name, std::move(asset)); }
-    std::shared_ptr<UniqueAsset> & get_asset(const std::string & name) { return table[name]; }
+    std::shared_ptr<UniqueAsset<T>> get_asset(const std::string & name) { return table[name]; }
     std::vector<std::shared_ptr<UniqueAsset<T>>> list()
     {
         std::vector<std::shared_ptr<UniqueAsset<T>>> l;
@@ -30,5 +31,7 @@ public:
         return l;
     }
 };
+
+typedef std::shared_ptr<UniqueAsset<GlTexture2D>> texture_handle;
 
 #endif // end vr_assets_hpp

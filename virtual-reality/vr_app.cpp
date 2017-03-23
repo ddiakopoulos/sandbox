@@ -118,13 +118,17 @@ void VirtualRealityApp::setup_scene()
 
         texDatabase.register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
         texDatabase.register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
+        texDatabase.register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
+        texDatabase.register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
+        texDatabase.register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
+        texDatabase.register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
 
         auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
         auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
-        pbrMaterial->set_albedo_texture(load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
-        pbrMaterial->set_normal_texture(load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
-        pbrMaterial->set_metallic_texture(load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
-        pbrMaterial->set_roughness_texture(load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
+        pbrMaterial->set_albedo_texture(texDatabase.get_asset("rusted-iron-albedo"));
+        pbrMaterial->set_normal_texture(texDatabase.get_asset("rusted-iron-normal"));
+        pbrMaterial->set_metallic_texture(texDatabase.get_asset("rusted-iron-metallic"));
+        pbrMaterial->set_roughness_texture(texDatabase.get_asset("rusted-iron-roughness"));
         pbrMaterial->set_radiance_cubemap(texDatabase.get_asset("wells-radiance-cubemap"));
         pbrMaterial->set_irrradiance_cubemap(texDatabase.get_asset("wells-irradiance-cubemap"));
         scene.namedMaterialList["material-pbr"] = pbrMaterial;

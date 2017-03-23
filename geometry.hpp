@@ -7,6 +7,7 @@
 #include "string_utils.hpp"
 #include "GL_API.hpp"
 #include "file_io.hpp"
+#include "asset_io.hpp"
 
 #include "tinyply.h"
 #include "tiny_obj_loader.h"
