@@ -27,6 +27,12 @@ struct ExperimentalApp : public GLFWApp
                 std::cout << "Got: " << tex << std::endl;
             }
 
+            auto list = textures.list();
+            for (auto tex : list)
+            {
+                std::cout << "List: " << tex->name << std::endl;
+            }
+
             std::cout << "Exiting..." << std::endl;
         }
     }

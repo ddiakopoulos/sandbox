@@ -6,6 +6,7 @@
 #include "util.hpp"
 #include "linalg_util.hpp"
 #include <memory>
+#include <vector>
 
 template<typename T>
 struct UniqueAsset : public Noncopyable
@@ -20,13 +21,16 @@ class AssetDatabase
 {
     std::map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
 public:
-    void register_asset(const std::string & name, T && asset)
+    void register_asset(const std::string & name, T && asset) { table[name] = std::make_shared<UniqueAsset<T>>(name, std::move(asset)); }
+    T & get_asset(const std::string & name) { return table[name]->asset; }
+    std::vector<std::shared_ptr<UniqueAsset<T>>> list()
     {
-        table[name] = std::make_shared<UniqueAsset<T>>(name, std::move(asset));
-    }
-    T & get_asset(const std::string & name)
-    {
-        return table[name]->asset;
+        std::vector<std::shared_ptr<UniqueAsset<T>>> l;
+        for (auto & item : table)
+        {
+            l.push_back(item.second);
+        }
+        return l;
     }
 };
 

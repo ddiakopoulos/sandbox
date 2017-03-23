@@ -122,7 +122,7 @@ class GlObject
 	std::string n;
 public:
 	GlObject() {}
-	GlObject(GLuint h) : handle(h) {}
+	GlObject(GLuint h) : handle(g) {}
 	~GlObject() { if (handle) factory_t::destroy(handle); }
 	GlObject(const GlObject & r) = delete;
 	GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); std::swap(n, r.n);  return *this; }
