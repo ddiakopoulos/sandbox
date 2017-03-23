@@ -31,6 +31,11 @@ struct ExperimentalApp : public GLFWApp
             for (auto tex : list)
             {
                 std::cout << "List: " << tex->name << std::endl;
+
+                GlTexture2D someNewHandle;
+                std::cout << "A new asset: " << someNewHandle << std::endl;
+
+                tex->asset = std::move(someNewHandle);
             }
 
             std::cout << "Exiting..." << std::endl;

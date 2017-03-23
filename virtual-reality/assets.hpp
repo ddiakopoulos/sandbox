@@ -17,7 +17,7 @@ struct UniqueAsset : public Noncopyable
 };
 
 template<typename T>
-class AssetDatabase
+class AssetDatabase : public Noncopyable
 {
     std::map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
 public:
