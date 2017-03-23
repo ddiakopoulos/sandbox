@@ -113,7 +113,7 @@ void VirtualRealityApp::setup_scene()
         auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
         auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
 
-        gli::texture_cube radianceHandle(gli::load_dds((char *) radianceBinary.data(), radianceBinary.size()));
+        gli::texture_cube radianceHandle(gli::load_dds((char *)radianceBinary.data(), radianceBinary.size()));
         gli::texture_cube irradianceHandle(gli::load_dds((char *)irradianceBinary.data(), irradianceBinary.size()));
 
         texDatabase.register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
@@ -125,12 +125,12 @@ void VirtualRealityApp::setup_scene()
 
         auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
         auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
-        pbrMaterial->set_albedo_texture(texDatabase.get_asset("rusted-iron-albedo"));
-        pbrMaterial->set_normal_texture(texDatabase.get_asset("rusted-iron-normal"));
-        pbrMaterial->set_metallic_texture(texDatabase.get_asset("rusted-iron-metallic"));
-        pbrMaterial->set_roughness_texture(texDatabase.get_asset("rusted-iron-roughness"));
-        pbrMaterial->set_radiance_cubemap(texDatabase.get_asset("wells-radiance-cubemap"));
-        pbrMaterial->set_irrradiance_cubemap(texDatabase.get_asset("wells-irradiance-cubemap"));
+        pbrMaterial->set_albedo_texture(texDatabase["rusted-iron-albedo"]);
+        pbrMaterial->set_normal_texture(texDatabase["rusted-iron-normal"]);
+        pbrMaterial->set_metallic_texture(texDatabase["rusted-iron-metallic"]);
+        pbrMaterial->set_roughness_texture(texDatabase["rusted-iron-roughness"]);
+        pbrMaterial->set_radiance_cubemap(texDatabase["wells-radiance-cubemap"]);
+        pbrMaterial->set_irrradiance_cubemap(texDatabase["wells-irradiance-cubemap"]);
         scene.namedMaterialList["material-pbr"] = pbrMaterial;
 
         /*

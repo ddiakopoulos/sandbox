@@ -24,6 +24,7 @@ class AssetDatabase : public Noncopyable
 public:
     void register_asset(const std::string & name, T && asset) { table[name] = std::make_shared<UniqueAsset<T>>(name, std::move(asset)); }
     std::shared_ptr<UniqueAsset<T>> get_asset(const std::string & name) { return table[name]; }
+    std::shared_ptr<UniqueAsset<T>> operator[](const std::string & name) { return get_asset(name); }
     std::vector<std::shared_ptr<UniqueAsset<T>>> list()
     {
         std::vector<std::shared_ptr<UniqueAsset<T>>> l;
