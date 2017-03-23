@@ -119,6 +119,10 @@ void VirtualRealityApp::setup_scene()
         GlTexture2D radianceTex;
         GlTexture2D irradianceTex;
 
+        texDatabase.register_asset("wells-radiance", radianceTex);
+
+        std::cout << texDatabase.get_asset("wells-radiance") << std::endl;
+
         auto load_cubemap = [](GlTexture2D & t, const gli::texture_cube & tex)
         {
             AVL_SCOPED_TIMER("load_cubemap");

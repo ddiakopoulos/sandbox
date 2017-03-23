@@ -13,9 +13,19 @@
 
 using namespace avl;
 
-struct AssetDatabase
+template<typename T>
+class AssetDatabase
 {
-
+    std::map<std::string, T> table;
+public:
+    void register_asset(const std::string & name, T & asset)
+    {
+        table[name] = std::move(asset);
+    }
+    T & get_asset(const std::string & name)
+    {
+        return table[name];
+    }
 };
 
 struct ScreenViewport
@@ -134,6 +144,8 @@ struct Scene
 
 struct VirtualRealityApp : public GLFWApp
 {
+    AssetDatabase<GlTexture2D> texDatabase;
+
     std::unique_ptr<VR_Renderer> renderer;
     std::unique_ptr<OpenVR_HMD> hmd;
 
