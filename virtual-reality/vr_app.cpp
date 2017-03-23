@@ -116,42 +116,38 @@ void VirtualRealityApp::setup_scene()
         gli::texture_cube radianceHandle(gli::load_dds((char *)radianceBinary.data(), radianceBinary.size()));
         gli::texture_cube irradianceHandle(gli::load_dds((char *)irradianceBinary.data(), irradianceBinary.size()));
 
-        auto noasset = texDatabase["rusted-iron-albedo"];
-        std::cout << noasset->asset << std::endl;
-
         texDatabase.register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
         texDatabase.register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
         texDatabase.register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
         texDatabase.register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
+
+        texDatabase.register_asset("cerberus-albedo", load_image("../assets/models/cerberus/albedo.png", true));
+        texDatabase.register_asset("cerberus-normal", load_image("../assets/models/cerberus/normal.png", true));
+        texDatabase.register_asset("cerberus-metallic", load_image("../assets/models/cerberus/metallic.png", true));
+        texDatabase.register_asset("cerberus-roughness", load_image("../assets/models/cerberus/roughness.png", true));
+
         texDatabase.register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
         texDatabase.register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
 
-        auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
-        auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
-        pbrMaterial->set_albedo_texture(texDatabase["rusted-iron-albedo"]);
-        pbrMaterial->set_normal_texture(texDatabase["rusted-iron-normal"]);
-        pbrMaterial->set_metallic_texture(texDatabase["rusted-iron-metallic"]);
-        pbrMaterial->set_roughness_texture(texDatabase["rusted-iron-roughness"]);
-        pbrMaterial->set_radiance_cubemap(texDatabase["wells-radiance-cubemap"]);
-        pbrMaterial->set_irrradiance_cubemap(texDatabase["wells-irradiance-cubemap"]);
-        scene.namedMaterialList["material-pbr"] = pbrMaterial;
+        auto metallicRoughnessShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
 
-        /*
-        pbrMaterial->set_albedo_texture(load_image("../assets/models/cerberus/albedo.png", true));
-        pbrMaterial->set_normal_texture(load_image("../assets/models/cerberus/normal.png", true));
-        pbrMaterial->set_metallic_texture(load_image("../assets/models/cerberus/metallic.png", true));
-        pbrMaterial->set_roughness_texture(load_image("../assets/models/cerberus/roughness.png", true));
+        auto rustedIronMaterial = std::make_shared<MetallicRoughnessMaterial>(metallicRoughnessShader);
+        rustedIronMaterial->set_albedo_texture(texDatabase["rusted-iron-albedo"]);
+        rustedIronMaterial->set_normal_texture(texDatabase["rusted-iron-normal"]);
+        rustedIronMaterial->set_metallic_texture(texDatabase["rusted-iron-metallic"]);
+        rustedIronMaterial->set_roughness_texture(texDatabase["rusted-iron-roughness"]);
+        rustedIronMaterial->set_radiance_cubemap(texDatabase["wells-radiance-cubemap"]);
+        rustedIronMaterial->set_irrradiance_cubemap(texDatabase["wells-irradiance-cubemap"]);
+        scene.namedMaterialList["material-rusted-iron"] = rustedIronMaterial;
 
-        auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
-        auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
-        pbrMaterial->set_albedo_texture(load_image("../assets/models/pbr_chest/albedo.png", true));
-        pbrMaterial->set_normal_texture(load_image("../assets/models/pbr_chest/normal.png", true));
-        pbrMaterial->set_metallic_texture(load_image("../assets/models/pbr_chest/metallic.png", true));
-        pbrMaterial->set_roughness_texture(load_image("../assets/models/pbr_chest/roughness.png", true));
-        pbrMaterial->set_radiance_cubemap(radianceTex);
-        pbrMaterial->set_irrradiance_cubemap(irradianceTex);
-        scene.namedMaterialList["material-pbr"] = pbrMaterial;
-        */
+        auto cerberusMaterial = std::make_shared<MetallicRoughnessMaterial>(metallicRoughnessShader);
+        cerberusMaterial->set_albedo_texture(texDatabase["cerberus-albedo"]);
+        cerberusMaterial->set_normal_texture(texDatabase["cerberus-normal"]);
+        cerberusMaterial->set_metallic_texture(texDatabase["cerberus-metallic"]);
+        cerberusMaterial->set_roughness_texture(texDatabase["cerberus-roughness"]);
+        cerberusMaterial->set_radiance_cubemap(texDatabase["wells-radiance-cubemap"]);
+        cerberusMaterial->set_irrradiance_cubemap(texDatabase["wells-irradiance-cubemap"]);
+        scene.namedMaterialList["material-cerberus"] = cerberusMaterial;
 
         auto geom = load_geometry_from_obj_no_texture("../assets/models/cerberus/cerberus.obj")[0];
         StaticMesh materialTestMesh;
@@ -168,7 +164,7 @@ void VirtualRealityApp::setup_scene()
         StaticMesh materialTestMesh;
         materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
         materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.33f, -0.5)));
-        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        materialTestMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
         scene.models.push_back(std::move(materialTestMesh));
     }
 
@@ -176,7 +172,7 @@ void VirtualRealityApp::setup_scene()
         StaticMesh materialTestMesh;
         materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
         materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.33f, 0.0)));
-        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        materialTestMesh.set_material(scene.namedMaterialList["material-cerberus"].get());
         scene.models.push_back(std::move(materialTestMesh));
     }
 
@@ -184,7 +180,7 @@ void VirtualRealityApp::setup_scene()
         StaticMesh materialTestMesh;
         materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
         materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.33f, +0.5)));
-        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        materialTestMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
         scene.models.push_back(std::move(materialTestMesh));
     }
 
