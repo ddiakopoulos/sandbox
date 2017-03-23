@@ -3,7 +3,6 @@
 
 struct ExperimentalApp : public GLFWApp
 {
-    AssetDatabase<GlTexture2D> textures;
 
     ExperimentalApp() : GLFWApp(600, 600, "Lens Dev")
     {
@@ -11,18 +10,25 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
-        auto loadTexEmptyTex = []() -> GlTexture2D
         {
-            GlTexture2D newTex;
-            std::cout << "Generated Tex Handle:" << newTex << std::endl;
-            return newTex;
-        };
+            AssetDatabase<GlTexture2D> textures;
 
-        textures.register_asset("empty-tex", loadTexEmptyTex());
-        
-        auto & tex = textures.get_asset("empty-tex");
+            auto loadTexEmptyTex = []() -> GlTexture2D
+            {
+                GlTexture2D newTex;
+                std::cout << "Generated Handle: " << newTex << std::endl;
+                return newTex;
+            };
 
-        std::cout << "Got: " << tex << std::endl;
+            textures.register_asset("empty-tex", loadTexEmptyTex());
+
+            {
+                auto & tex = textures.get_asset("empty-tex");
+                std::cout << "Got: " << tex << std::endl;
+            }
+
+            std::cout << "Exiting..." << std::endl;
+        }
     }
     
     void on_window_resize(int2 size) override {}
