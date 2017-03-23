@@ -1500,5 +1500,8 @@
     <ClInclude Include="static_mesh.hpp">
       <Filter>Source Files\game-objects</Filter>
     </ClInclude>
+    <ClInclude Include="assets.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

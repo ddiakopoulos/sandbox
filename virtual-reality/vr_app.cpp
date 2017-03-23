@@ -145,10 +145,8 @@ void VirtualRealityApp::setup_scene()
         };
 
 
-        texDatabase.register_asset("wells-radiance", load_cubemap(radianceHandle));
-        std::cout << texDatabase.get_asset("wells-radiance") << std::endl;
-
-        load_cubemap(irradianceHandle);
+        texDatabase.register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
+        texDatabase.register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
 
         auto pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
         auto pbrMaterial = std::make_shared<MetallicRoughnessMaterial>(pbrShader);
@@ -156,10 +154,9 @@ void VirtualRealityApp::setup_scene()
         pbrMaterial->set_normal_texture(load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
         pbrMaterial->set_metallic_texture(load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
         pbrMaterial->set_roughness_texture(load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
-        pbrMaterial->set_radiance_cubemap(texDatabase.get_asset("wells-radiance"));
-        pbrMaterial->set_irrradiance_cubemap(texDatabase.get_asset("wells-radiance"));
+        pbrMaterial->set_radiance_cubemap(texDatabase.get_asset("wells-radiance-cubemap"));
+        pbrMaterial->set_irrradiance_cubemap(texDatabase.get_asset("wells-irradiance-cubemap"));
         scene.namedMaterialList["material-pbr"] = pbrMaterial;
-
 
         /*
         pbrMaterial->set_albedo_texture(load_image("../assets/models/cerberus/albedo.png", true));

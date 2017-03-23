@@ -10,23 +10,10 @@
 #include "quick_hull.hpp"
 #include "algo_misc.hpp"
 #include "avl_imgui.hpp"
+#include "assets.hpp"
 
 using namespace avl;
 
-template<typename T>
-class AssetDatabase
-{
-    std::map<std::string, T> table;
-public:
-    void register_asset(const std::string & name, T && asset)
-    {
-        table[name] = std::move(asset);
-    }
-    T & get_asset(const std::string & name)
-    {
-        return table[name];
-    }
-};
 
 struct ScreenViewport
 {
