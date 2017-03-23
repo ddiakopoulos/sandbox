@@ -22,14 +22,11 @@ class AssetDatabase : public Noncopyable
     std::map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
 public:
     void register_asset(const std::string & name, T && asset) { table[name] = std::make_shared<UniqueAsset<T>>(name, std::move(asset)); }
-    T & get_asset(const std::string & name) { return table[name]->asset; }
+    std::shared_ptr<UniqueAsset> & get_asset(const std::string & name) { return table[name]; }
     std::vector<std::shared_ptr<UniqueAsset<T>>> list()
     {
         std::vector<std::shared_ptr<UniqueAsset<T>>> l;
-        for (auto & item : table)
-        {
-            l.push_back(item.second);
-        }
+        for (auto & item : table) l.push_back(item.second);
         return l;
     }
 };

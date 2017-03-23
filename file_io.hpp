@@ -39,42 +39,6 @@ namespace avl
         return str;
     }
 
-    inline std::vector<uint8_t> load_image_data(const std::string & path)
-    {
-        auto binaryFile = read_file_binary(path);
-
-        int width, height, nBytes;
-        auto data = stbi_load_from_memory(binaryFile.data(), (int)binaryFile.size(), &width, &height, &nBytes, 0);
-        std::vector<uint8_t> d(width * height * nBytes);
-        memcpy(d.data(), data, nBytes * width * height);
-        stbi_image_free(data);
-        return d;
-    }
-
-    #include "third_party/stb/stb_image.h" 
-
-    inline GlTexture2D load_image(const std::string & path, bool flip = false)
-    {
-        auto binaryFile = avl::read_file_binary(path);
-
-        if (flip) stbi_set_flip_vertically_on_load(1);
-        else stbi_set_flip_vertically_on_load(0);
-
-        int width, height, nBytes;
-        auto data = stbi_load_from_memory(binaryFile.data(), (int)binaryFile.size(), &width, &height, &nBytes, 0);
-
-        GlTexture2D tex;
-        switch (nBytes)
-        {
-        case 3: tex.setup(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, data, true); break;
-        case 4: tex.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, data, true); break;
-        default: throw std::runtime_error("unsupported number of channels");
-        }
-        tex.set_name(path);
-        stbi_image_free(data);
-        return tex;
-    }
-
 }
 
 #endif // file_io_h

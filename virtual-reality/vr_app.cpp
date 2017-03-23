@@ -1,6 +1,6 @@
 #include "vr_app.hpp"
 #include "avl_imgui.hpp"
-#include "gli/gli.hpp"
+#include "asset_io.hpp"
 
 // Material manager -> setup, get
 // Serialization
@@ -115,35 +115,6 @@ void VirtualRealityApp::setup_scene()
 
         gli::texture_cube radianceHandle(gli::load_dds((char *) radianceBinary.data(), radianceBinary.size()));
         gli::texture_cube irradianceHandle(gli::load_dds((char *)irradianceBinary.data(), irradianceBinary.size()));
-
-        auto load_cubemap = [](const gli::texture_cube & tex) -> GlTexture2D
-        {
-            AVL_SCOPED_TIMER("load_cubemap");
-
-            GlTexture2D t;
-
-            for (gli::texture_cube::size_type Face = 0; Face < 6; ++Face)
-            {
-                for (std::size_t Level = 0; Level < tex.levels(); ++Level)
-                {
-                    gli::gl GL(gli::gl::PROFILE_GL33);
-                    gli::gl::format const fmt = GL.translate(tex.format(), tex.swizzles());
-                    auto w = GLsizei(tex[Face][Level].extent().x), h = GLsizei(tex[Face][Level].extent().y);
-                    glTextureImage2DEXT(t, GL_TEXTURE_CUBE_MAP_POSITIVE_X + GLenum(Face), GLint(Level), fmt.Internal, w, h, 0, fmt.External, fmt.Type, tex[Face][Level].data());
-                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, tex.base_level());
-                    glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, tex.max_level());
-                    //gl_check_error(__FILE__, __LINE__);
-                }
-            }
-
-            return t;
-        };
-
 
         texDatabase.register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
         texDatabase.register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));

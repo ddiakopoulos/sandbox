@@ -14,7 +14,6 @@
 
 using namespace avl;
 
-
 struct ScreenViewport
 {
     float2 bmin, bmax;
@@ -80,7 +79,6 @@ public:
             // Contact points
         }
     }
-
 };
 
 struct Scene

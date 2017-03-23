@@ -6,7 +6,7 @@
 #include "GL_API.hpp"
 #include "linalg_util.hpp"
 #include "geometric.hpp"
-#include <memory>
+#include "assets.hpp"
 
 namespace avl
 {
@@ -109,12 +109,12 @@ namespace avl
     class MetallicRoughnessMaterial : public Material
     {
 
-        GlTexture2D albedo;
-        GlTexture2D normal;
-        GlTexture2D metallic;
-        GlTexture2D roughness;
-        GlTexture2D emissive;
-        GlTexture2D occlusion;
+        std::shared_ptr<UniqueAsset<GlTexture2D>> albedo;
+        std::shared_ptr<UniqueAsset<GlTexture2D>> normal;
+        std::shared_ptr<UniqueAsset<GlTexture2D>> metallic;
+        std::shared_ptr<UniqueAsset<GlTexture2D>> roughness;
+        std::shared_ptr<UniqueAsset<GlTexture2D>> emissive;
+        std::shared_ptr<UniqueAsset<GlTexture2D>> occlusion;
 
         float roughnessFactor{ 1.f };
         float metallicFactor{ 1.f };
@@ -141,7 +141,7 @@ namespace avl
             //program->uniform("u_metallic", metallicFactor);
             //program->uniform("u_ambientIntensity", ambientIntensity);
 
-            program->texture("s_albedo", 0, albedo, GL_TEXTURE_2D);
+            program->texture("s_albedo", 0, albedo->asset, GL_TEXTURE_2D);
             program->texture("s_normal", 1, normal, GL_TEXTURE_2D);
             program->texture("s_roughness", 2, roughness, GL_TEXTURE_2D);
             program->texture("s_metallic", 3, metallic, GL_TEXTURE_2D);
