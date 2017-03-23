@@ -1,10 +1,9 @@
 #include "vr_app.hpp"
 #include "avl_imgui.hpp"
+#include "gli/gli.hpp"
 
 // Material manager -> setup, get
 // Serialization
-
-#include "gli/gli.hpp"
 
 VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
 {

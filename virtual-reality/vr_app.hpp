@@ -13,6 +13,11 @@
 
 using namespace avl;
 
+struct AssetDatabase
+{
+
+};
+
 struct ScreenViewport
 {
     float2 bmin, bmax;

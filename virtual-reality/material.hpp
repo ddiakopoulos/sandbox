@@ -118,7 +118,7 @@ namespace avl
 
         float roughnessFactor{ 1.f };
         float metallicFactor{ 1.f };
-        float specularFactor{ 1.f };
+        float ambientIntensity{ 1.f };
 
         float3 emissiveColor{ float3(1, 1, 1) };
         float emissiveStrength{ 1.f };
@@ -139,7 +139,7 @@ namespace avl
 
             //program->uniform("u_roughness", roughnessFactor);
             //program->uniform("u_metallic", metallicFactor);
-            //program->uniform("u_specular", specularFactor);
+            //program->uniform("u_ambientIntensity", ambientIntensity);
 
             program->texture("s_albedo", 0, albedo, GL_TEXTURE_2D);
             program->texture("s_normal", 1, normal, GL_TEXTURE_2D);
@@ -149,8 +149,8 @@ namespace avl
             program->texture("sc_radiance", 4, radianceCubemap, GL_TEXTURE_CUBE_MAP);
             program->texture("sc_irradiance", 5, irradianceCubemap, GL_TEXTURE_CUBE_MAP);
 
-            //program->texture("s_emissive", 4, emissive, GL_TEXTURE_2D);
-            //program->texture("s_occlusion", 5, occlusion, GL_TEXTURE_2D);
+            //program->texture("s_emissive", 6, emissive, GL_TEXTURE_2D);
+            //program->texture("s_occlusion", 7, occlusion, GL_TEXTURE_2D);
 
             program->unbind();
         }
@@ -166,9 +166,9 @@ namespace avl
         void set_emissive_strength(const float & strength) { emissiveStrength = strength; }
         void set_emissive_color(const float3 & color) { emissiveColor = color; }
 
-        void set_roughness(const float & term) { roughnessFactor = term; }
-        void set_metallic(const float & term) { metallicFactor = term; }
-        void set_specular(const float & term) { specularFactor = term; }
+        void set_roughness(const float & value) { roughnessFactor = value; }
+        void set_metallic(const float & value) { metallicFactor = value; }
+        void set_ambientIntensity(const float & value) { ambientIntensity = value; }
 
         void set_albedo_texture(GlTexture2D & tex) { albedo = std::move(tex); }
         void set_normal_texture(GlTexture2D & tex) { normal = std::move(tex); }
