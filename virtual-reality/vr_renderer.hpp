@@ -199,6 +199,7 @@ struct BloomPass
     GlMesh fsQuad;
 
     float2 perEyeSize;
+    float exposure = 0.5f;
 
     struct AsyncRead1
     {
@@ -251,7 +252,7 @@ struct BloomPass
     };
 
     AsyncRead1 avgLuminance;
- 
+
     BloomPass(float2 size) : perEyeSize(size)
     {
         fsQuad = make_fullscreen_quad();
@@ -339,18 +340,22 @@ struct BloomPass
         glBindTexture(GL_TEXTURE_2D, 0);
 
         float4 tonemap = { middleGrey, whitePoint * whitePoint, threshold, 0.0f };
-        
+
+        /*
         const float lumTarget = 0.4f;
         const float exposureTarget = lumValue.x += 0.1 * (lumTarget - lumValue.x);
         float exposureCtrl = 0.86f;
         exposureCtrl = exposureCtrl * 0.1 + exposureTarget * 0.9;
         const float exposure = std::exp(exposureCtrl*exposureCtrl) - 1.0f;
-
-        ImGui::SliderFloat("MiddleGrey", &tonemap.x, 0.1f, 1.0f);
-        ImGui::SliderFloat("WhitePoint", &tonemap.y, 0.1f, 2.0f);
-        ImGui::SliderFloat("Threshold", &tonemap.z, 0.1f, 2.0f);
-        ImGui::Text("Luminance %f", lumValue.x);
         ImGui::Text("Exposure %f", exposure);
+        */
+
+        ImGui::SliderFloat("MiddleGrey", &middleGrey, 0.1f, 1.0f);
+        ImGui::SliderFloat("WhitePoint", &whitePoint, 0.1f, 2.0f);
+        ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
+        ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
+        //ImGui::Text("Luminance %f", lumValue.x);
+
 
         glBindFramebuffer(GL_FRAMEBUFFER, brightFramebuffer);
         glViewport(0, 0, perEyeSize.x / 2, perEyeSize.y / 2);
@@ -373,11 +378,9 @@ struct BloomPass
         glViewport(0, 0, perEyeSize.x, perEyeSize.y);
         hdr_tonemapShader.bind();
         hdr_tonemapShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
-        hdr_tonemapShader.texture("s_texBlur", 2, blurTex, GL_TEXTURE_2D);
+        hdr_tonemapShader.texture("s_texBright", 1, brightTex, GL_TEXTURE_2D);
         hdr_tonemapShader.uniform("u_exposure", exposure);
         hdr_tonemapShader.uniform("u_tonemap", tonemap);
-        hdr_tonemapShader.uniform("u_modelViewProj", Identity4x4);
-        hdr_tonemapShader.uniform("u_viewTexel", float2(1.f / (float)perEyeSize.x, 1.f / (float)perEyeSize.y));
         fsQuad.draw_elements();
 
         glEnable(GL_CULL_FACE);
@@ -457,7 +460,7 @@ class VR_Renderer
     void run_smaa_pass(const RenderPassData & d);
     void run_blackout_pass(const RenderPassData & d);
 
-    bool renderPost{ false };
+    bool renderPost{ true };
     bool renderWireframe { false };
     bool renderShadows { false };
     bool renderBloom { true };
