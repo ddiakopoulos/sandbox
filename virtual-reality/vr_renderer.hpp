@@ -356,7 +356,6 @@ struct BloomPass
         ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
         //ImGui::Text("Luminance %f", lumValue.x);
 
-
         glBindFramebuffer(GL_FRAMEBUFFER, brightFramebuffer);
         glViewport(0, 0, perEyeSize.x / 2, perEyeSize.y / 2);
         hdr_brightShader.bind();
@@ -390,11 +389,32 @@ struct BloomPass
 
     GLuint get_output_texture() const { return outputFramebuffer.id(); }
 
-    GLuint get_luminance_texture() const { return luminanceTex[1].id(); }
+    GLuint get_luminance_texture() const { return luminanceTex[0].id(); }
 
     GLuint get_bright_tex() const { return brightTex.id(); }
 
     GLuint get_blur_tex() const { return blurTex.id(); }
+};
+
+struct ShadowPass
+{
+
+    ShadowPass()
+    {
+
+    }
+
+    ~ShadowPass()
+    {
+
+    }
+
+    void execute(const GlTexture2D & sceneColorTex)
+    {
+
+    }
+
+    GLuint get_output_texture() const { return outputFramebuffer.id(); }
 };
 
 enum class Eye : int
@@ -463,7 +483,7 @@ class VR_Renderer
     bool renderPost{ true };
     bool renderWireframe { false };
     bool renderShadows { false };
-    bool renderBloom { true };
+    bool renderBloom { false };
     bool renderReflection { false };
     bool renderSSAO { false };
     bool renderSMAA { false };
