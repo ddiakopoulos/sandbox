@@ -320,13 +320,13 @@ namespace avl
         return m;
     }
 
-    inline uint32_t make_vert(std::vector<std::tuple<float3, float2>> & buffer, const float3 & position, float2 texcoord)
+    inline size_t make_vert(std::vector<std::tuple<float3, float2>> & buffer, const float3 & position, float2 texcoord)
     {
         auto vert = std::make_tuple(position, texcoord);
         auto it = std::find(begin(buffer), end(buffer), vert);
         if (it != end(buffer)) return it - begin(buffer);
         buffer.push_back(vert); // Add to unique list if we didn't find it
-        return (uint32_t)buffer.size() - 1;
+        return (size_t) buffer.size() - 1;
     }
 
     // Handles trimeshes only

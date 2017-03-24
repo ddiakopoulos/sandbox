@@ -32,7 +32,7 @@ struct ui_rect
     bool contains(const int2 & p) const { return all(gequal(p, min)) && all(less(p, max)); }
 };
 
-class GlTexture2D;
+struct GlTexture2D;
 namespace avl
 {
     class GLFWApp;

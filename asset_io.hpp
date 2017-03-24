@@ -58,8 +58,8 @@ inline GlTexture2D load_cubemap(const gli::texture_cube & tex)
             glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, tex.base_level());
-            glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, tex.max_level());
+            glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, (GLint) tex.base_level());
+            glTextureParameteriEXT(t, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, (GLint) tex.max_level());
             gl_check_error(__FILE__, __LINE__);
         }
     }

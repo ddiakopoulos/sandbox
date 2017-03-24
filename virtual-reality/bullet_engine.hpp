@@ -62,7 +62,7 @@ public:
     // Add a new rigid body based on BulletObjectVR wrapper
     void add_object(BulletObjectVR * object)
     {
-        object->body->setDamping(0.3, 0.5);
+        object->body->setDamping(0.3f, 0.5f);
         dynamicsWorld->addRigidBody(object->body.get());
     }
 

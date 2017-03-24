@@ -162,7 +162,7 @@ template<typename T>
 inline T compute_min(const CircularBuffer<T> & b)
 {
     T min = std::numeric_limits<T>::max();
-    for (uint64_t i = 0; i < b.get_current_size(); i++) if (b[i] < min) min = b[i];
+    for (size_t i = 0; i < b.get_current_size(); i++) if (b[i] < min) min = b[i];
     return min;
 }
 
@@ -170,7 +170,7 @@ template<typename T>
 inline T compute_max(const CircularBuffer<T> & b)
 {
     T max = std::numeric_limits<T>::min();
-    for (uint64_t i = 0; i < b.get_current_size(); i++) if (buffer[i] > max) max = buffer[i];
+    for (size_t i = 0; i < b.get_current_size(); i++) if (buffer[i] > max) max = buffer[i];
     return max;
 }
 
@@ -187,8 +187,8 @@ template<typename T>
 inline T compute_mean(const CircularBuffer<T> & b)
 {
     T sum = T();
-    for (int i = 0; i < b.get_current_size(); i++) sum += b[i];
-    return sum / T(b.get_current_size());
+    for (size_t i = 0; i < b.get_current_size(); i++) sum += b[i];
+    return sum / (T) b.get_current_size();
 }
 
 template<typename T>
@@ -196,7 +196,7 @@ inline T compute_variance(const CircularBuffer<T> & b)
 {
     T mean = compute_mean(b);
     T sum = T();
-    for (int i = 0; i < b.get_current_size(); i++) sum += pow(b[i] - mean, 2);
+    for (size_t i = 0; i < b.get_current_size(); i++) sum += pow(b[i] - mean, 2);
     return (sum / T(b.get_current_size()));
 }
 

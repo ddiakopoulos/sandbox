@@ -454,9 +454,9 @@ namespace avl
             else
                 ty -= halfLength;
             
-            capsule.vertices.emplace_back(0, ty, -r);
+            capsule.vertices.emplace_back(0.f, ty, -r);
             capsule.normals.push_back(safe_normalize(float3(0.f, y, -1.f)));
-            capsule.texCoords.emplace_back(0, i / float(segments));
+            capsule.texCoords.emplace_back(0.f, i / float(segments));
             
             for (int j = 1; j < doubleSegments; ++j)
             {
@@ -474,9 +474,9 @@ namespace avl
                 capsule.texCoords.emplace_back(j / float(segments), i / float(segments));
             }
             
-            capsule.vertices.emplace_back(0, ty, -r);
+            capsule.vertices.emplace_back(0.f, ty, -r);
             capsule.normals.push_back(safe_normalize(float3(0.f, y, -1.f)));
-            capsule.texCoords.emplace_back(2, i / float(segments));
+            capsule.texCoords.emplace_back(2.f, i / float(segments));
         }
         
         for (int j = 0; j < doubleSegments; ++j)
@@ -538,10 +538,10 @@ namespace avl
                 float u = (w + width / 2.0) * rw;
                 float v = (h + height / 2.0) * rh;
                 
-                plane.vertices.emplace_back(w, h + oh, 0);
-                plane.vertices.emplace_back(w, h, 0);
-                plane.vertices.emplace_back(w + ow, h, 0);
-                plane.vertices.emplace_back(w + ow, h + oh, 0);
+                plane.vertices.emplace_back(w, h + oh, 0.f);
+                plane.vertices.emplace_back(w, h, 0.f);
+                plane.vertices.emplace_back(w + ow, h, 0.f);
+                plane.vertices.emplace_back(w + ow, h + oh, 0.f);
                 
                 plane.texCoords.emplace_back(u, v + ov);
                 plane.texCoords.emplace_back(u, v);
@@ -637,26 +637,26 @@ namespace avl
     {
         Geometry axis;
         
-        axis.vertices.emplace_back(0.0, 0.0, 0.0);
-        axis.vertices.emplace_back(1.0, 0.0, 0.0);
-        axis.vertices.emplace_back(0.0, 0.0, 0.0);
-        axis.vertices.emplace_back(0.0, 1.0, 0.0);
-        axis.vertices.emplace_back(0.0, 0.0, 0.0);
-        axis.vertices.emplace_back(0.0, 0.0, 1.0);
-        
-        axis.colors.emplace_back(0.0, 0.0, 1.0, 1.0);
-        axis.colors.emplace_back(0.0, 0.0, 1.0, 1.0);
-        axis.colors.emplace_back(0.0, 1.0, 0.0, 1.0);
-        axis.colors.emplace_back(0.0, 1.0, 0.0, 1.0);
-        axis.colors.emplace_back(1.0, 0.0, 0.0, 1.0);
-        axis.colors.emplace_back(1.0, 0.0, 0.0, 1.0);
+        axis.vertices.emplace_back(0.f, 0.f, 0.f);
+        axis.vertices.emplace_back(1.f, 0.f, 0.f);
+        axis.vertices.emplace_back(0.f, 0.f, 0.f);
+        axis.vertices.emplace_back(0.f, 1.f, 0.f);
+        axis.vertices.emplace_back(0.f, 0.f, 0.f);
+        axis.vertices.emplace_back(0.f, 0.f, 1.f);
 
-        axis.normals.emplace_back(0.0, 0.0, 1.0);
-        axis.normals.emplace_back(0.0, 0.0, 1.0);
-        axis.normals.emplace_back(0.0, 1.0, 0.0);
-        axis.normals.emplace_back(0.0, 1.0, 0.0);
-        axis.normals.emplace_back(1.0, 0.0, 0.0);
-        axis.normals.emplace_back(1.0, 0.0, 0.0);
+        axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
+        axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
+        axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
+        axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
+        axis.colors.emplace_back(1.f, 0.f, 0.f, 1.f);
+        axis.colors.emplace_back(1.f, 0.f, 0.f, 1.f);
+
+        axis.normals.emplace_back(0.f, 0.f, 1.f);
+        axis.normals.emplace_back(0.f, 0.f, 1.f);
+        axis.normals.emplace_back(0.f, 1.f, 0.f);
+        axis.normals.emplace_back(0.f, 1.f, 0.f);
+        axis.normals.emplace_back(1.f, 0.f, 0.f);
+        axis.normals.emplace_back(1.f, 0.f, 0.f);
 
         return axis;
     }
