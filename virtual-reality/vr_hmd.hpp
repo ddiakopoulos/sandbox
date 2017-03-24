@@ -100,6 +100,19 @@ public:
 
     Pose get_eye_pose(vr::Hmd_Eye eye) { return get_hmd_pose() * make_pose(hmd->GetEyeToHeadTransform(eye)); }
 
+    void get_optical_properties(vr::Hmd_Eye eye, float & aspectRatio, float & vfov)
+    {
+        float l_left = 0.0f, l_right = 0.0f, l_top = 0.0f, l_bottom = 0.0f;
+        hmd->GetProjectionRaw(vr::Hmd_Eye::Eye_Left, &l_left, &l_right, &l_top, &l_bottom);
+
+        float r_left = 0.0f, r_right = 0.0f, r_top = 0.0f, r_bottom = 0.0f;
+        hmd->GetProjectionRaw(vr::Hmd_Eye::Eye_Right, &r_left, &r_right, &r_top, &r_bottom);
+
+        float2 tanHalfFov = float2(max(-l_left, l_right, -r_left, r_right), max(-l_top, l_bottom, -r_top, r_bottom));
+        aspectRatio = tanHalfFov.x / tanHalfFov.y;
+        vfov = 2.0f * std::atan(tanHalfFov.y);
+    }
+
     void update();
 
     void submit(const GLuint leftEye, const GLuint rightEye);

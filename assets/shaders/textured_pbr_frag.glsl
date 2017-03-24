@@ -95,6 +95,14 @@ struct PointLight
     float radius;
 };
 
+struct ShadowCascades
+{
+    float cascadesNear[4];
+    float cascadesFar[4];
+    vec2 cascadesPlane[4];
+    mat4 cascadesMatrix[4];
+};
+
 layout(binding = 0, std140) uniform PerScene
 {
     DirectionalLight u_directionalLight;
@@ -110,9 +118,11 @@ layout(binding = 1, std140) uniform PerView
     mat4 u_viewMatrix;
     mat4 u_viewProjMatrix;
     vec3 u_eyePos;
+    ShadowCascades shadows;
 };
 
 in vec3 v_world_position;
+in vec3 v_view_space_position;
 in vec3 v_normal;
 in vec2 v_texcoord;
 in vec3 v_tangent;
@@ -131,6 +141,39 @@ uniform float u_metallic = 1.0;
 uniform float u_ambientIntensity = 1.0;
 
 out vec4 f_color;
+
+vec4 get_cascade_weights(float depth, vec4 splitNear, vec4 splitFar)
+{
+    vec4 near = step(splitNear, vec4(depth));
+    vec4 far = step(depth, splitFar);
+ 
+    return near * far;
+}
+
+mat4 get_cascade_viewproj(vec4 weights, mat4 viewProj[4])
+{
+    return viewProj[0] * weights.x + viewProj[1] * weights.y + viewProj[2] * weights.z + viewProj[3] * weights.w;
+}
+
+float get_cascade_layer(vec4 weights) 
+{
+    return 0.0 * weights.x + 1.0 * weights.y + 2.0 * weights.z + 3.0 * weights.w;   
+}
+
+float get_cascade_near(vec4 weights) 
+{
+    return shadows.cascadesNear[0] * weights.x + shadows.cascadesNear[1] * weights.y + shadows.cascadesNear[2] * weights.z + shadows.cascadesNear[3] * weights.w;
+}
+
+float get_cascade_far(vec4 weights) 
+{
+    return shadows.cascadesFar[0] * weights.x + shadows.cascadesFar[1] * weights.y + shadows.cascadesFar[2] * weights.z + shadows.cascadesFar[3] * weights.w;
+}
+
+vec3 get_cascade_weighted_color(vec4 weights) 
+{
+    return vec3(1,0,0) * weights.x + vec3(0,1,0) * weights.y + vec3(0,0,1) * weights.z + vec3(1,0,1) * weights.w;
+}
 
 // http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
 vec3 fix_cube_lookup(vec3 v, float cubeSize, float lod) 
@@ -293,5 +336,13 @@ void main()
     // Combine direct lighting and IBL
     vec3 Lo = (diffuseContrib * irradiance) + (specularContrib * radiance );
 
-    f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
+    //f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
+
+    // Find frustum
+    vec4 cascadeWeights = get_cascade_weights(
+            -v_world_position.z, 
+            vec4(shadows.cascadesPlane[0].x, shadows.cascadesPlane[1].x, shadows.cascadesPlane[2].x, shadows.cascadesPlane[3].x), 
+            vec4(shadows.cascadesPlane[0].y, shadows.cascadesPlane[1].y, shadows.cascadesPlane[2].y, shadows.cascadesPlane[3].y));
+
+    f_color = vec4(get_cascade_weighted_color(cascadeWeights), 1);
 }

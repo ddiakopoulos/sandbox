@@ -221,6 +221,7 @@ struct GlTexture2D : public GlTextureObject
 struct GlTexture3D : public GlTextureObject
 {
 	float width{ 0 }, height{ 0 }, depth{ 0 };
+    GlTexture3D() {}
 	GlTexture3D(float width, float height, float depth) : width(width), height(height), depth(depth) {}
 
 	void setup(GLenum target, GLsizei width, GLsizei height, GLsizei depth, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels)

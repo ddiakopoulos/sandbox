@@ -46,6 +46,12 @@ namespace avl
     {
         return std::max(a, std::max(b, c));
     }
+
+    template <typename T>
+    T max(const T& a, const T& b, const T& c, const T& d)
+    {
+        return std::max(a, std::max(b, std::max(c, d)));
+    }
     
     template<typename T> 
     T clamp(const T& val, const T& min, const T& max) 

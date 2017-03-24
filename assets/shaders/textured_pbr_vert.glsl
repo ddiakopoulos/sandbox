@@ -16,6 +16,14 @@ struct PointLight
     float radius;
 };
 
+struct ShadowCascades
+{
+    float cascadesNear[4];
+    float cascadesFar[4];
+    vec2 cascadesPlane[4];
+    mat4 cascadesMatrix[4];
+};
+
 layout(binding = 0, std140) uniform PerScene
 {
 	DirectionalLight u_directionalLight;
@@ -31,6 +39,7 @@ layout(binding = 1, std140) uniform PerView
     mat4 u_viewMatrix;
     mat4 u_viewProjMatrix;
     vec3 u_eyePos;
+    ShadowCascades shadows;
 };
 
 layout(location = 0) in vec3 inPosition;
@@ -42,9 +51,11 @@ layout(location = 5) in vec3 inBitangent;
 
 uniform mat4 u_modelMatrix;
 uniform mat4 u_modelMatrixIT;
+uniform mat4 u_modelViewMatrix;
 
 out vec3 v_normal;
 out vec3 v_world_position;
+out vec3 v_view_space_position;
 out vec2 v_texcoord;
 out vec3 v_tangent;
 out vec3 v_bitangent;
@@ -53,7 +64,8 @@ void main()
 {
     vec4 worldPosition = u_modelMatrix * vec4(inPosition, 1.0);
     gl_Position = u_viewProjMatrix * worldPosition;
-    v_normal = inNormal;//normalize((u_modelMatrixIT * vec4(inNormal, 1.0)).xyz);
+    v_view_space_position = (u_modelViewMatrix * vec4(inPosition, 1.0)).xyz;
+    v_normal = normalize((u_modelMatrixIT * vec4(inNormal, 1.0)).xyz);
     v_world_position = worldPosition.xyz;
     v_texcoord = inTexCoord.st; //vec2(1, -1);
     v_tangent = inTangent;

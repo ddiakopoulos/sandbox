@@ -150,6 +150,14 @@ namespace uniforms
         float                 cutoff;
     };
 
+    struct shadow_cascades
+    {
+        float                 cascadesNear[4];
+        float                 cascadesFar[4];
+        ALIGNED(8) float2     cascadesPlane[4];
+        ALIGNED(16) float4x4  cascadesMatrix[4];
+    };
+
     // Add resolution
     struct per_scene
     {
@@ -168,6 +176,7 @@ namespace uniforms
         ALIGNED(16) float4x4  view;
         ALIGNED(16) float4x4  viewProj;
         ALIGNED(16) float3    eyePos;
+        shadow_cascades       cascades;
     };
 }
 
@@ -396,12 +405,64 @@ struct BloomPass
     GLuint get_blur_tex() const { return blurTex.id(); }
 };
 
+// http://developer.download.nvidia.com/SDK/10.5/opengl/src/cascaded_shadow_maps/doc/cascaded_shadow_maps.pdf
+
 struct ShadowPass
 {
+    GlTexture3D shadowArrayColor, shadowArrayDepth;
+    GlFramebuffer shadowArrayFramebuffer;
 
-    ShadowPass()
+    std::vector<float4x4> viewMatrices { Identity4x4, Identity4x4, Identity4x4, Identity4x4 };
+    std::vector<float4x4> projMatrices { Identity4x4, Identity4x4, Identity4x4, Identity4x4 };
+    std::vector<float4x4> shadowMatrices { Identity4x4, Identity4x4, Identity4x4, Identity4x4 };
+
+    std::vector<float2> splitPlanes;
+    std::vector<float> nearPlanes;
+    std::vector<float> farPlanes;
+
+    float resolution = 1024.f; // shadowmap resolution
+    float expCascade = 120.f;  // overshadowing constant
+    float splitLambda = 0.5f;  // frustum split constant
+
+    GlMesh fsQuad;
+
+    float mix(float a, float b, float t)
     {
+        return a * (1 - t) + b * t;
+    }
 
+    GlShader cascadeShader;
+    float2 perEyeSize;
+
+    ShadowPass(float2 size) : perEyeSize(size)
+    {
+        fsQuad = make_fullscreen_quad();
+
+        cascadeShader = GlShader(
+            read_file_text("../assets/shaders/shadow/shadowcascade_vert.glsl"), 
+            read_file_text("../assets/shaders/shadow/shadowcascade_frag.glsl"),
+            read_file_text("../assets/shaders/shadow/shadowcascade_geom.glsl"));
+
+        gl_check_error(__FILE__, __LINE__);
+
+        shadowArrayFramebuffer.width = resolution;
+        shadowArrayFramebuffer.height = resolution;
+        shadowArrayFramebuffer.depth = 4;
+
+        shadowArrayColor.setup(GL_TEXTURE_2D_ARRAY, resolution, resolution, 4, GL_R16F, GL_RGB, GL_FLOAT, nullptr);
+        shadowArrayDepth.setup(GL_TEXTURE_2D_ARRAY, resolution, resolution, 4, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
+        //glBindFramebuffer(GL_FRAMEBUFFER, shadowArrayFramebuffer);
+        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, shadowArrayColor, 0);
+        //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowArrayDepth, 0);
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glNamedFramebufferTextureEXT(shadowArrayFramebuffer, GL_COLOR_ATTACHMENT0, shadowArrayColor, 0);
+        glNamedFramebufferTextureEXT(shadowArrayFramebuffer, GL_DEPTH_ATTACHMENT, shadowArrayDepth, 0);
+
+        shadowArrayFramebuffer.check_complete();
+
+        gl_check_error(__FILE__, __LINE__);
     }
 
     ~ShadowPass()
@@ -409,12 +470,97 @@ struct ShadowPass
 
     }
 
-    void execute(const GlTexture2D & sceneColorTex)
+    void execute(const Pose pose, const float near, const float far, const float aspectRatio, const float vfov)
     {
+        nearPlanes.clear();
+        farPlanes.clear();
+        splitPlanes.clear();
 
+        const float3 lightDir = float3(-0.25, -1, 0);
+
+        for (size_t i = 0; i < 4; ++i)
+        {
+            // Find the split planes using GPU Gem 3. Chap 10 "Practical Split Scheme".
+            // http://http.developer.nvidia.com/GPUGems3/gpugems3_ch10.html
+            float splitNear = i > 0 ? mix(near + (static_cast<float>(i) / 4.0f) * (far - near), near * pow(far / near, static_cast<float>(i) / 4.0f), splitLambda) : near;
+            float splitFar = i < 4 - 1 ? mix(near + (static_cast<float>(i + 1) / 4.0f) * (far - near), near * pow(far / near, static_cast<float>(i + 1) / 4.0f), splitLambda) : far;
+
+            // Compute the boundaries of the camera frustum as they intersect the cascade split planes
+            auto nc = make_near_clip_coords(pose, splitNear, splitFar, aspectRatio, vfov);
+            auto fc = make_far_clip_coords(pose, splitNear, splitFar, aspectRatio, vfov);
+
+            // Debug: these can be visualized in worldspace
+            float3 splitVertices[8] = { nc[0], nc[1], nc[2], nc[3], fc[0], fc[1], fc[2], fc[3] };
+
+            // Split centroid for the view matrix
+            float3 splitCentroid = { 0, 0, 0 };
+            for (size_t i = 0; i < 8; ++i) splitCentroid += splitVertices[i];
+            splitCentroid /= 8.0f;
+
+            const float dist = std::max(splitFar - splitNear, distance(fc[0], fc[1]));
+            const Pose cascadePose = look_at_pose(splitCentroid - lightDir * dist, splitCentroid);
+            const float4x4 viewMat = make_view_matrix_from_pose(cascadePose);
+
+            // Transform split vertices to light viewspace
+            float3 splitVerticesLS[8];
+            for (int i = 0; i < 8; ++i)
+            {
+                splitVerticesLS[i] = transform_coord(viewMat, splitVertices[i]);
+            }
+
+            // Find the frustum bounding box in light viewspace
+            float3 min = splitVerticesLS[0];
+            float3 max = splitVerticesLS[0];
+            for (int i = 1; i < 8; ++i)
+            {
+                min = avl::min(min, splitVerticesLS[i]);
+                max = avl::max(max, splitVerticesLS[i]);
+            }
+
+            // Ortho projection matrix with the corners
+            const float nearOffset = 10.0f;
+            const float farOffset = 20.0f;
+            const float4x4 projMat = make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset);
+            const float4x4 shadowBias = { { 0.5f,0,0,0 },{ 0,0.5f,0,0 },{ 0,0,0.5f,0 },{ 0.5f,0.5f,0.5f,1 } };
+
+            viewMatrices[i] = viewMat;
+            projMatrices[i] = projMat;
+            shadowMatrices[i] = mul(shadowBias, projMat, viewMat);
+
+            splitPlanes.push_back(float2(splitNear, splitFar));
+            nearPlanes.push_back(-max.z - nearOffset);
+            farPlanes.push_back(-min.z + farOffset);
+
+            //std::cout << i << ", near: " << splitNear << ", far: " << splitFar << std::endl;
+
+            //ImGui::Text("%i Split Near %f", i, splitNear);
+            //ImGui::Text("%i Split Far %f", i, splitFar);
+            //ImGui::Spacing();
+        }
+
+
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowArrayFramebuffer);
+        glViewport(0, 0, resolution, resolution);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        cascadeShader.bind();
+
+        cascadeShader.uniform("u_cascadeNear", (int) nearPlanes.size(), nearPlanes);
+        cascadeShader.uniform("u_cascadeFar", (int) farPlanes.size(), farPlanes);
+        cascadeShader.uniform("u_cascadeViewMatrixArray", (int) viewMatrices.size(), viewMatrices);
+        cascadeShader.uniform("u_cascadeProjMatrixArray", (int) projMatrices.size(), projMatrices);
+        cascadeShader.uniform("u_expC", expCascade);
+
+        /*
+        for (const auto & model : sceneObjects)
+        {
+            shadowCascadeShader.uniform("u_modelMatrix", model.get_model());
+            model.draw();
+        }
+        */
     }
 
-    GLuint get_output_texture() const { return outputFramebuffer.id(); }
+    GLuint get_output_texture() const { return shadowArrayColor.id(); }
 };
 
 enum class Eye : int
@@ -426,6 +572,10 @@ enum class Eye : int
 struct EyeData
 {
     Pose pose;
+    float nearClip;
+    float farClip;
+    float vfov;
+    float aspectRatio;
     float4x4 projectionMatrix;
 };
 
@@ -443,7 +593,12 @@ class VR_Renderer
     {
         const uniforms::per_view & perView;
         const int & eye;
-        RenderPassData(const int & eye, const uniforms::per_view & perView) : perView(perView), eye(eye) {}
+        const EyeData & data;
+        RenderPassData(const int & eye, const EyeData & data, const uniforms::per_view & perView) 
+            : perView(perView), eye(eye), data(data)
+        {
+
+        }
     };
 
     std::vector<DebugRenderable *> debugSet;
@@ -482,7 +637,7 @@ class VR_Renderer
 
     bool renderPost{ true };
     bool renderWireframe { false };
-    bool renderShadows { false };
+    bool renderShadows { true };
     bool renderBloom { false };
     bool renderReflection { false };
     bool renderSSAO { false };
@@ -492,6 +647,7 @@ class VR_Renderer
 public:
 
     std::unique_ptr<BloomPass> bloom;
+    std::unique_ptr<ShadowPass> shadow;
 
     DebugLineRenderer sceneDebugRenderer;
 

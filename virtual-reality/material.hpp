@@ -15,7 +15,7 @@ namespace avl
     {
         std::shared_ptr<GlShader> program;
         virtual void update_uniforms() {}
-        virtual void use(const float4x4 & modelMatrix) {}
+        virtual void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) {}
     };
 
     class DebugMaterial : public Material
@@ -26,7 +26,7 @@ namespace avl
             program = shader;
         }
 
-        virtual void use(const float4x4 & modelMatrix) override
+        virtual void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) override
         {
             program->bind();
             program->uniform("u_modelMatrix", modelMatrix);
@@ -42,7 +42,7 @@ namespace avl
             program = shader;
         }
 
-        virtual void use(const float4x4 & modelMatrix) override
+        virtual void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) override
         {
             program->bind();
             program->uniform("u_modelMatrix", modelMatrix);
@@ -93,7 +93,7 @@ namespace avl
             program->unbind();
         }
 
-        virtual void use(const float4x4 & modelMatrix) override
+        virtual void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) override
         {
             program->bind();
             program->uniform("u_modelMatrix", modelMatrix);
@@ -154,12 +154,12 @@ namespace avl
             program->unbind();
         }
 
-        virtual void use(const float4x4 & modelMatrix) override
+        virtual void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) override
         {
             program->bind();
-
             program->uniform("u_modelMatrix", modelMatrix);
             program->uniform("u_modelMatrixIT", inv(transpose(modelMatrix)));
+            program->uniform("u_modelViewMatrix", mul(viewMatrix, modelMatrix));
         }
 
         void set_emissive_strength(const float & strength) { emissiveStrength = strength; }

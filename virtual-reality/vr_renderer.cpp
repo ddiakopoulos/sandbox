@@ -35,6 +35,7 @@ VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizeP
     }
 
     bloom.reset(new BloomPass(renderSizePerEye));
+    shadow.reset(new ShadowPass(renderSizePerEye));
 
     timer.start();
 }
@@ -72,7 +73,7 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
         if (mat)
         {
             mat->update_uniforms();
-            mat->use(modelMatrix);
+            mat->use(modelMatrix, d.perView.view);
             obj->draw();
         }
         else
@@ -95,6 +96,15 @@ void VR_Renderer::run_forward_wireframe_pass(const RenderPassData & d)
 
 void VR_Renderer::run_shadow_pass(const RenderPassData & d)
 {
+    // Update + Bind
+    shadow->execute(d.data.pose, d.data.nearClip, d.data.farClip, d.data.aspectRatio, d.data.vfov);
+
+    for (Renderable * obj : renderSet)
+    {
+        const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
+        shadow->cascadeShader.uniform("u_modelMatrix", modelMatrix);
+        obj->draw();
+    }
 
 }
 
@@ -165,40 +175,50 @@ void VR_Renderer::render_frame()
     GLfloat defaultColor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
     GLfloat defaultDepth = 1.f;
 
-    for (int eye : { 0, 1 })
+    for (int eyeIdx : { 0, 1 })
     {
         renderTimer.start();
 
         // Per view uniform buffer
         uniforms::per_view v = {};
-        v.view = eyes[eye].pose.inverse().matrix();
-        v.viewProj = mul(eyes[eye].projectionMatrix, eyes[eye].pose.inverse().matrix());
-        v.eyePos = eyes[eye].pose.position;
+        v.view = eyes[eyeIdx].pose.inverse().matrix();
+        v.viewProj = mul(eyes[eyeIdx].projectionMatrix, eyes[eyeIdx].pose.inverse().matrix());
+        v.eyePos = eyes[eyeIdx].pose.position;
+
+        const RenderPassData data(eyeIdx, eyes[eyeIdx], v);
+
+        if (renderShadows)
+        {
+            run_shadow_pass(data);
+
+            for (int c = 0; c < 4; c++)
+            {
+                v.cascades.cascadesNear[c] = shadow->nearPlanes[c];
+                v.cascades.cascadesFar[c] = shadow->farPlanes[c];
+                v.cascades.cascadesPlane[c] = shadow->splitPlanes[c];
+                v.cascades.cascadesMatrix[c] = shadow->shadowMatrices[c];
+            }
+        }
+
+        // Update the per-view info now that we've computed the cascade data
         perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
-
-        glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
-
-        const RenderPassData data(eye, v);
-
+        
         // Render into 4x multisampled fbo
         glEnable(GL_MULTISAMPLE);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
-
+        glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
         glClearNamedFramebufferfv(multisampleFramebuffer, GL_COLOR, 0, &defaultColor[0]);
         glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
         // Execute the forward passes
         run_skybox_pass(data);
-
         run_forward_pass(data);
-
         if (renderWireframe) run_forward_wireframe_pass(data);
-        if (renderShadows) run_shadow_pass(data);
 
         glDisable(GL_MULTISAMPLE);
 
         // Resolve multisample into per-eye textures
-        glBlitNamedFramebuffer(multisampleFramebuffer, eyeTextures[eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+        glBlitNamedFramebuffer(multisampleFramebuffer, eyeTextures[eyeIdx], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
         // Execute the post passes after having resolved the multisample framebuffers
         run_post_pass(data);

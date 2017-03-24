@@ -28,6 +28,7 @@ public:
     virtual void set_pose(const Pose & p) override { pose = p; }
     virtual Bounds3D get_bounds() const override { return bounds; }
     virtual float3 get_scale() const override { return scale; }
+    virtual void set_scale(const float3 & s) { scale = s; }
     virtual void draw() const override { mesh.draw_elements(); }
     virtual void update(const float & dt) override { }
     virtual Material * get_material() const override { return material; }

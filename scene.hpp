@@ -89,6 +89,7 @@ struct Renderable
     virtual void draw() const {};
     virtual Bounds3D get_bounds() const = 0;
     virtual float3 get_scale() const = 0;
+    virtual void set_scale(const float3 & s) = 0;
     virtual Pose get_pose() const = 0;
     virtual void set_pose(const Pose & p) = 0;
     virtual RaycastResult raycast(const Ray & worldRay) const = 0;

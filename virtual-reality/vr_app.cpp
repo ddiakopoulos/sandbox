@@ -149,12 +149,26 @@ void VirtualRealityApp::setup_scene()
         cerberusMaterial->set_irrradiance_cubemap(texDatabase["wells-irradiance-cubemap"]);
         scene.namedMaterialList["material-cerberus"] = cerberusMaterial;
 
+        /*
         auto geom = load_geometry_from_obj_no_texture("../assets/models/cerberus/cerberus.obj")[0];
         StaticMesh materialTestMesh;
         materialTestMesh.set_static_mesh(geom, 1.33f);
         materialTestMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, -ANVIL_PI), float3(0, 0.75f, 0)));
         materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
-       // scene.models.push_back(std::move(materialTestMesh));
+        scene.models.push_back(std::move(materialTestMesh));
+        */
+
+        auto terrain = load_geometry_from_obj_no_texture("../assets/nonfree/terrain.obj");
+
+        for (auto t : terrain)
+        {
+            StaticMesh terrainMesh;
+            terrainMesh.set_static_mesh(t, 1.0f);
+            terrainMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(0, -2.0f, 0)));
+            terrainMesh.set_scale(float3(3.f));
+            terrainMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
+            scene.models.push_back(std::move(terrainMesh));
+        }
     }
 
     scoped_timer t("load capsule");
@@ -410,10 +424,26 @@ void VirtualRealityApp::on_draw()
     if (hmd)
     {
         gpuTimer.start();
-        EyeData left = { hmd->get_eye_pose(vr::Hmd_Eye::Eye_Left), hmd->get_proj_matrix(vr::Hmd_Eye::Eye_Left, 0.01, 25.f) };
-        EyeData right = { hmd->get_eye_pose(vr::Hmd_Eye::Eye_Right), hmd->get_proj_matrix(vr::Hmd_Eye::Eye_Right, 0.01, 25.f) };
-        renderer->set_eye_data(left, right);
+
+        EyeData eyes[2] = {};
+
+        for (auto eye : {vr::Hmd_Eye::Eye_Left, vr::Hmd_Eye::Eye_Right})
+        {
+            float vfov = 0.0f;
+            float aspectRatio = 0.0f;
+            hmd->get_optical_properties(eye, aspectRatio, vfov);
+
+            eyes[eye].pose = hmd->get_eye_pose(eye);
+            eyes[eye].projectionMatrix = hmd->get_proj_matrix(eye, 0.05, 25.f);
+            eyes[eye].nearClip = 0.05f;
+            eyes[eye].farClip = 25.f;
+            eyes[eye].vfov = vfov;
+            eyes[eye].aspectRatio = aspectRatio;
+        }
+
+        renderer->set_eye_data(eyes[0], eyes[1]);
         renderer->render_frame();
+
         gpuTimer.stop();
         hmd->submit(renderer->get_eye_texture(Eye::LeftEye), renderer->get_eye_texture(Eye::RightEye));
         hmd->update();
@@ -423,13 +453,14 @@ void VirtualRealityApp::on_draw()
     }
     else
     {
-        const float4x4 projMatrix = debugCam.get_projection_matrix(float(width) / float(height));
-        const EyeData centerEye = { debugCam.get_pose(), projMatrix };
-        renderer->set_eye_data(centerEye, centerEye);
-        renderer->render_frame();
+        //const float4x4 projMatrix = debugCam.get_projection_matrix(float(width) / float(height));
+        //const EyeData centerEye = { debugCam.get_pose(), projMatrix };
+        //renderer->set_eye_data(centerEye, centerEye);
+        //renderer->render_frame();
     }
 
     gui::imgui_fixed_window_begin("Render Debug Views", { { 0, height - 220 }, { width, height } });
+    gui::Img(renderer->shadow->get_output_texture(), "Shadow", { 240, 180 }); ImGui::SameLine();
     gui::Img(renderer->bloom->get_luminance_texture(), "Luminance", { 240, 180 }); ImGui::SameLine();
     gui::Img(renderer->bloom->get_bright_tex(), "Bright", { 240, 180 }); ImGui::SameLine();
     gui::Img(renderer->bloom->get_blur_tex(), "Blur", { 240, 180 }); ImGui::SameLine();
