@@ -180,6 +180,7 @@ void VR_Renderer::render_frame()
     GLfloat defaultColor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
     GLfloat defaultDepth = 1.f;
 
+    // Fixme: center eye
     const RenderPassData shadowData(0, eyes[0], {});
 
     if (renderShadows)
@@ -197,7 +198,7 @@ void VR_Renderer::render_frame()
         v.viewProj = mul(eyes[eyeIdx].projectionMatrix, eyes[eyeIdx].pose.inverse().matrix());
         v.eyePos = float4(eyes[eyeIdx].pose.position, 1);
 
-        const RenderPassData data(eyeIdx, eyes[eyeIdx], v);
+        const RenderPassData renderPassData(eyeIdx, eyes[eyeIdx], v);
 
         if (renderShadows)
         {
@@ -221,9 +222,9 @@ void VR_Renderer::render_frame()
         glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
         // Execute the forward passes
-        run_skybox_pass(data);
-        run_forward_pass(data);
-        if (renderWireframe) run_forward_wireframe_pass(data);
+        run_skybox_pass(renderPassData);
+        run_forward_pass(renderPassData);
+        if (renderWireframe) run_forward_wireframe_pass(renderPassData);
 
         glDisable(GL_MULTISAMPLE);
 
@@ -231,7 +232,7 @@ void VR_Renderer::render_frame()
         glBlitNamedFramebuffer(multisampleFramebuffer, eyeTextures[eyeIdx], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
         // Execute the post passes after having resolved the multisample framebuffers
-        run_post_pass(data);
+        run_post_pass(renderPassData);
 
         renderTimer.stop();
     }

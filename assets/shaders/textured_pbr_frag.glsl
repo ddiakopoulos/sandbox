@@ -135,16 +135,14 @@ uniform float u_roughness = 1.0;
 uniform float u_metallic = 1.0;
 uniform float u_ambientIntensity = 1.0;
 
-// uniform 
+uniform float u_overshadowConstant = 120.0;
+uniform sampler2DArray s_csmArray;
 
 out vec4 f_color;
 
 vec4 get_cascade_weights(float depth, vec4 splitNear, vec4 splitFar)
 {
-    vec4 near = step(splitNear, vec4(depth));
-    vec4 far = step(depth, splitFar);
- 
-    return near * far;
+    return (step(splitNear, vec4(depth))) * (step(depth, splitFar)); // near * far
 }
 
 mat4 get_cascade_viewproj(vec4 weights, mat4 viewProj[4])
@@ -157,17 +155,15 @@ float get_cascade_layer(vec4 weights)
     return 0.0 * weights.x + 1.0 * weights.y + 2.0 * weights.z + 3.0 * weights.w;   
 }
 
-/*
 float get_cascade_near(vec4 weights) 
 {
-    return cascadesNear[0] * weights.x + cascadesNear[1] * weights.y + cascadesNear[2] * weights.z + cascadesNear[3] * weights.w;
+    return u_cascadesNear[0] * weights.x + u_cascadesNear[1] * weights.y + u_cascadesNear[2] * weights.z + u_cascadesNear[3] * weights.w;
 }
 
 float get_cascade_far(vec4 weights) 
 {
-    return cascadesFar[0] * weights.x + cascadesFar[1] * weights.y + cascadesFar[2] * weights.z + cascadesFar[3] * weights.w;
+    return u_cascadesFar[0] * weights.x + u_cascadesFar[1] * weights.y + u_cascadesFar[2] * weights.z + u_cascadesFar[3] * weights.w;
 }
-*/
 
 vec3 get_cascade_weighted_color(vec4 weights) 
 {
@@ -290,6 +286,12 @@ void main()
     vec3 diffuseContrib = vec3(0);
     vec3 specularContrib = vec3(0);
 
+    // Find the four view-space bounds for CSM
+    vec4 cascadeWeights = get_cascade_weights(
+            -v_view_space_position.z,
+            vec4(u_cascadesPlane[0].x, u_cascadesPlane[1].x, u_cascadesPlane[2].x, u_cascadesPlane[3].x), 
+            vec4(u_cascadesPlane[0].y, u_cascadesPlane[1].y, u_cascadesPlane[2].y, u_cascadesPlane[3].y));
+
     // Compute directional light
     {
         vec3 L = normalize(u_directionalLight.direction);
@@ -320,7 +322,6 @@ void main()
     }
 
     // Compute image-based lighting
-
     const int NUM_MIP_LEVELS = 7;
     float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
     vec3 cubemapLookup = fix_cube_lookup(reflect(-V, N), 512, mipLevel);
@@ -335,19 +336,8 @@ void main()
     // Combine direct lighting and IBL
     vec3 Lo = (diffuseContrib * irradiance) + (specularContrib * radiance);
 
-    //f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
+    f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
 
-    // Find frustum
-    vec4 cascadeWeights = get_cascade_weights(
-            -v_view_space_position.z, 
-            vec4(u_cascadesPlane[0].x, u_cascadesPlane[1].x, u_cascadesPlane[2].x, u_cascadesPlane[3].x), 
-            vec4(u_cascadesPlane[0].y, u_cascadesPlane[1].y, u_cascadesPlane[2].y, u_cascadesPlane[3].y));
-    
-    //vec4 cascadeWeights = get_cascade_weights(
-    //        -v_view_space_position.z, 
-    //        vec4(0.05, 1, 3, 5), 
-    //        vec4(1, 3, 5, 7));
-
-    float layer = get_cascade_layer(cascadeWeights);
-    f_color = vec4(get_cascade_weighted_color(cascadeWeights), 1.0);
+    //float layer = get_cascade_layer(cascadeWeights);
+    //f_color = vec4(get_cascade_weighted_color(cascadeWeights), 1.0);
 }
