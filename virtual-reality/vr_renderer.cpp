@@ -97,15 +97,19 @@ void VR_Renderer::run_forward_wireframe_pass(const RenderPassData & d)
 
 void VR_Renderer::run_shadow_pass(const RenderPassData & d)
 {
-    // Update + Bind
-    shadow->execute(d.data.pose, d.data.nearClip, d.data.farClip, d.data.aspectRatio, d.data.vfov);
+    shadow->update_cascades(d.data.pose, d.data.nearClip, d.data.farClip, d.data.aspectRatio, d.data.vfov);
+
+    shadow->pre_draw();
 
     for (Renderable * obj : renderSet)
     {
+        // Check if should cast shadow
         const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
         shadow->cascadeShader.uniform("u_modelMatrix", modelMatrix);
         obj->draw();
     }
+
+    shadow->post_draw();
 
 }
 

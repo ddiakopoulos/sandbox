@@ -400,7 +400,6 @@ struct BloomPass
 };
 
 // http://developer.download.nvidia.com/SDK/10.5/opengl/src/cascaded_shadow_maps/doc/cascaded_shadow_maps.pdf
-
 struct ShadowPass
 {
     GlTexture3D shadowArrayColor, shadowArrayDepth;
@@ -420,13 +419,11 @@ struct ShadowPass
 
     GlMesh fsQuad;
 
-    float mix(float a, float b, float t)
-    {
-        return a * (1 - t) + b * t;
-    }
-
     GlShader cascadeShader;
     float2 perEyeSize;
+    float3 lightDir = float3(-0.25, -1, 0);
+
+    float mix(float a, float b, float t) { return a * (1 - t) + b * t; }
 
     ShadowPass(float2 size) : perEyeSize(size)
     {
@@ -446,11 +443,6 @@ struct ShadowPass
         shadowArrayColor.setup(GL_TEXTURE_2D_ARRAY, resolution, resolution, 4, GL_R16F, GL_RGB, GL_FLOAT, nullptr);
         shadowArrayDepth.setup(GL_TEXTURE_2D_ARRAY, resolution, resolution, 4, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
-        //glBindFramebuffer(GL_FRAMEBUFFER, shadowArrayFramebuffer);
-        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, shadowArrayColor, 0);
-        //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowArrayDepth, 0);
-        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
         glNamedFramebufferTextureEXT(shadowArrayFramebuffer, GL_COLOR_ATTACHMENT0, shadowArrayColor, 0);
         glNamedFramebufferTextureEXT(shadowArrayFramebuffer, GL_DEPTH_ATTACHMENT, shadowArrayDepth, 0);
 
@@ -459,14 +451,7 @@ struct ShadowPass
         gl_check_error(__FILE__, __LINE__);
     }
 
-    ~ShadowPass()
-    {
-
-    }
-
-    float3 lightDir = float3(-0.25, -1, 0);
-
-    void execute(const Pose pose, const float near, const float far, const float ar, const float vfov)
+    void update_cascades(const Pose pose, const float near, const float far, const float ar, const float vfov)
     {
         nearPlanes.clear();
         farPlanes.clear();
@@ -505,10 +490,7 @@ struct ShadowPass
 
             // Transform split vertices to light viewspace
             float3 splitVerticesLS[8];
-            for (int i = 0; i < 8; ++i)
-            {
-                splitVerticesLS[i] = transform_coord(viewMat, splitVertices[i]);
-            }
+            for (int i = 0; i < 8; ++i) splitVerticesLS[i] = transform_coord(viewMat, splitVertices[i]);
 
             // Find the frustum bounding box in light viewspace
             float3 min = splitVerticesLS[0];
@@ -533,18 +515,26 @@ struct ShadowPass
             farPlanes.push_back(-min.z + farOffset);
         }
 
-        /*
+    }
+
+    void pre_draw()
+    {
         glBindFramebuffer(GL_FRAMEBUFFER, shadowArrayFramebuffer);
         glViewport(0, 0, resolution, resolution);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         cascadeShader.bind();
-        cascadeShader.uniform("u_cascadeNear", (int) nearPlanes.size(), nearPlanes);
-        cascadeShader.uniform("u_cascadeFar", (int) farPlanes.size(), farPlanes);
-        cascadeShader.uniform("u_cascadeViewMatrixArray", (int) viewMatrices.size(), viewMatrices);
-        cascadeShader.uniform("u_cascadeProjMatrixArray", (int) projMatrices.size(), projMatrices);
+        cascadeShader.uniform("u_cascadeNear", (int)nearPlanes.size(), nearPlanes);
+        cascadeShader.uniform("u_cascadeFar", (int)farPlanes.size(), farPlanes);
+        cascadeShader.uniform("u_cascadeViewMatrixArray", (int)viewMatrices.size(), viewMatrices);
+        cascadeShader.uniform("u_cascadeProjMatrixArray", (int)projMatrices.size(), projMatrices);
         cascadeShader.uniform("u_expC", expCascade);
-        */
+    }
+
+    void post_draw()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        cascadeShader.unbind();
     }
 
     GLuint get_output_texture() const { return shadowArrayColor.id(); }
