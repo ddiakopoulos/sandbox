@@ -4,6 +4,9 @@
 #define gl_api_hpp
 
 #include "glfw_app.hpp"
+#include <map>
+#include <string>
+#include <vector>
 
 namespace
 {
@@ -311,9 +314,9 @@ public:
 
 	GlShader & operator = (GlShader && r) { std::swap(program, r.program); return *this; }
 
-	void reflect_debug_print()
+	std::map<uint32_t, std::string> reflect()
 	{
-        std::cout << "======== [Reflecting Prog " << program << "] ========" << std::endl;
+        std::map<uint32_t, std::string> locations;
 		GLint count;
 		glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
 		for (GLuint i = 0; i < static_cast<GLuint>(count); ++i)
@@ -323,9 +326,9 @@ public:
 			glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_BLOCK_INDEX, &block_index);
 			if (block_index != -1) continue;
 			GLint loc = glGetUniformLocation(program, buffer);
-            std::cout << "Location: " << loc << ", " << buffer << std::endl;
+            locations[loc] = std::string(buffer);
 		}
-        std::cout << "====================================" << std::endl;
+        return locations;
 	}
 
 	void uniform(const std::string & name, int scalar) const { glProgramUniform1i(program, get_uniform_location(name), scalar); }
