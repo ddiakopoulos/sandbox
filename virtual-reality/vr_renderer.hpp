@@ -563,20 +563,19 @@ struct LightCollection
     //std::vector<uniforms::spot_light *> spotLights;
 };
 
+struct RenderPassData
+{
+    const uniforms::per_view & perView;
+    const int & eye;
+    const EyeData & data;
+    const GLuint & csmArrayHandle;
+    RenderPassData(const int & eye, const EyeData & data, const uniforms::per_view & perView, const GLuint csmArray)
+        : perView(perView), eye(eye), data(data), csmArrayHandle(csmArray)
+    {}
+};
+
 class VR_Renderer
 {
-
-    struct RenderPassData
-    {
-        const uniforms::per_view & perView;
-        const int & eye;
-        const EyeData & data;
-        RenderPassData(const int & eye, const EyeData & data, const uniforms::per_view & perView) 
-            : perView(perView), eye(eye), data(data)
-        {
-
-        }
-    };
 
     std::vector<DebugRenderable *> debugSet;
 

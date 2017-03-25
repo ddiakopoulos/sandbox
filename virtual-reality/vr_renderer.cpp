@@ -56,15 +56,13 @@ void VR_Renderer::run_skybox_pass(const RenderPassData & d)
 
 }
 
+// Do I want to use exceptions in the renderer?
 void VR_Renderer::run_forward_pass(const RenderPassData & d)
 {
     sceneDebugRenderer.draw(d.perView.viewProj);
+    for (auto obj : debugSet) { obj->draw(d.perView.viewProj);}
 
-    for (auto obj : debugSet)
-    {
-        obj->draw(d.perView.viewProj);
-    }
-
+    // Loop through and update all material properties
     for (auto obj : renderSet)
     {
         const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
@@ -72,15 +70,21 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
 
         if (mat)
         {
-            mat->update_uniforms();
-            mat->use(modelMatrix, d.perView.view);
-            obj->draw();
+            mat->update_uniforms(&d);
         }
         else
         {
-            // Do I want to use exceptions in the renderer?
             throw std::runtime_error("cannot draw object without bound material");
         }
+    }
+
+    // Now draw
+    for (auto obj : renderSet)
+    {
+        const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
+        Material * mat = obj->get_material();
+        mat->use(modelMatrix, d.perView.view);
+        obj->draw();
     }
 
     sceneDebugRenderer.clear();
@@ -181,7 +185,7 @@ void VR_Renderer::render_frame()
     GLfloat defaultDepth = 1.f;
 
     // Fixme: center eye
-    const RenderPassData shadowData(0, eyes[0], {});
+    const RenderPassData shadowData(0, eyes[0], {}, 0);
 
     if (renderShadows)
     {
@@ -198,7 +202,7 @@ void VR_Renderer::render_frame()
         v.viewProj = mul(eyes[eyeIdx].projectionMatrix, eyes[eyeIdx].pose.inverse().matrix());
         v.eyePos = float4(eyes[eyeIdx].pose.position, 1);
 
-        const RenderPassData renderPassData(eyeIdx, eyes[eyeIdx], v);
+        const RenderPassData renderPassData(eyeIdx, eyes[eyeIdx], v, shadow->shadowArrayColor);
 
         if (renderShadows)
         {
