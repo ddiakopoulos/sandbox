@@ -541,6 +541,9 @@
     <ClCompile Include="vr_app.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="material.cpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="third_party\bullet3\src\btBulletCollisionCommon.h">

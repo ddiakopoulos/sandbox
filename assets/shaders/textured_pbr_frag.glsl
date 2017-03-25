@@ -287,10 +287,23 @@ void main()
     vec3 specularContrib = vec3(0);
 
     // Find the four view-space bounds for CSM
-    vec4 cascadeWeights = get_cascade_weights(
-            -v_view_space_position.z,
+    const vec4 cascadeWeights = get_cascade_weights(-v_view_space_position.z,
             vec4(u_cascadesPlane[0].x, u_cascadesPlane[1].x, u_cascadesPlane[2].x, u_cascadesPlane[3].x), 
             vec4(u_cascadesPlane[0].y, u_cascadesPlane[1].y, u_cascadesPlane[2].y, u_cascadesPlane[3].y));
+
+    const mat4 shadowViewProjMatrix = get_cascade_viewproj(cascadeWeights, u_cascadesMatrix);
+    const vec4 sCoord = shadowViewProjMatrix * vec4(v_world_position, 1.0);
+
+    // Shadow term (ESM)
+    float esmShadowTerm = 1.0;
+    if (sCoord.z > 0.0 && sCoord.x > 0.0 && sCoord.y > 0 && sCoord.x <= 1 && sCoord.y <= 1) 
+    {
+        const float depth = sCoord.z - 0.0052; // bias
+        const float occluderDepth = texture(s_csmArray, vec3(sCoord.xy, get_cascade_layer(cascadeWeights))).r;
+        const float occluder = exp(u_overshadowConstant * occluderDepth);
+        const float receiver = exp(-u_overshadowConstant * depth);
+        esmShadowTerm = clamp(occluder * receiver, 0.0, 1.0);
+    }
 
     // Compute directional light
     {
@@ -334,7 +347,7 @@ void main()
     specularContrib += env_brdf_approx(baseSpecular, roughness4, NoV);
 
     // Combine direct lighting and IBL
-    vec3 Lo = (diffuseContrib * irradiance) + (specularContrib * radiance);
+    vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * esmShadowTerm;
 
     f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
 

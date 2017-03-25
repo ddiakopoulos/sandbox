@@ -161,6 +161,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="material.cpp" />
     <ClCompile Include="vr_app.cpp" />
     <ClCompile Include="vr_renderer.cpp" />
     <ClCompile Include="third_party\bullet3\src\Bullet3Collision\BroadPhaseCollision\b3DynamicBvh.cpp" />

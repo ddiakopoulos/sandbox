@@ -114,7 +114,6 @@ void VR_Renderer::run_shadow_pass(const RenderPassData & d)
     }
 
     shadow->post_draw();
-
 }
 
 void VR_Renderer::run_bloom_pass(const RenderPassData & d)
