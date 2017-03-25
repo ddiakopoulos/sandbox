@@ -191,7 +191,7 @@ void VR_Renderer::render_frame()
         run_shadow_pass(shadowData);
     }
 
-    for (int eyeIdx : { 0 })
+    for (int eyeIdx : { 0, 1 })
     {
         renderTimer.start();
 
