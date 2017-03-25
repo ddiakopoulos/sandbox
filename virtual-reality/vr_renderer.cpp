@@ -101,7 +101,7 @@ void VR_Renderer::run_forward_wireframe_pass(const RenderPassData & d)
 
 void VR_Renderer::run_shadow_pass(const RenderPassData & d)
 {
-    shadow->update_cascades(d.data.pose, d.data.nearClip, d.data.farClip, d.data.aspectRatio, d.data.vfov);
+    shadow->update_cascades(d.data.pose, d.data.nearClip, d.data.farClip, d.data.aspectRatio, d.data.vfov, d.perScene.directional_light.direction);
 
     shadow->pre_draw();
 
@@ -184,7 +184,7 @@ void VR_Renderer::render_frame()
     GLfloat defaultDepth = 1.f;
 
     // Fixme: center eye
-    const RenderPassData shadowData(0, eyes[0], {}, 0);
+    const RenderPassData shadowData(0, eyes[0], b, {}, 0);
 
     if (renderShadows)
     {
@@ -201,7 +201,7 @@ void VR_Renderer::render_frame()
         v.viewProj = mul(eyes[eyeIdx].projectionMatrix, eyes[eyeIdx].pose.inverse().matrix());
         v.eyePos = float4(eyes[eyeIdx].pose.position, 1);
 
-        const RenderPassData renderPassData(eyeIdx, eyes[eyeIdx], v, shadow->shadowArrayColor);
+        const RenderPassData renderPassData(eyeIdx, eyes[eyeIdx], b, v, shadow->shadowArrayColor);
 
         if (renderShadows)
         {

@@ -131,7 +131,7 @@ namespace uniforms
     {
         ALIGNED(16) float3    color;
         ALIGNED(16) float3    position;
-        float       radius;
+        float                 radius;
     };
 
     struct directional_light
@@ -421,7 +421,6 @@ struct ShadowPass
 
     GlShader cascadeShader;
     float2 perEyeSize;
-    float3 lightDir = float3(-0.25, -1, 0);
 
     float mix(float a, float b, float t) { return a * (1 - t) + b * t; }
 
@@ -451,7 +450,7 @@ struct ShadowPass
         gl_check_error(__FILE__, __LINE__);
     }
 
-    void update_cascades(const Pose pose, const float near, const float far, const float ar, const float vfov)
+    void update_cascades(const Pose pose, const float near, const float far, const float ar, const float vfov, const float3 lightDir)
     {
         nearPlanes.clear();
         farPlanes.clear();
@@ -460,10 +459,8 @@ struct ShadowPass
         projMatrices.clear();
         shadowMatrices.clear();
 
-        static float aspectRatio = 1.0f;
-
-        ImGui::SliderFloat3("Light Dir", &lightDir.x, -1.f, 1.f);
-        ImGui::SliderFloat("AR", &aspectRatio, 0.5f, 2.f);
+        float aspectRatio = ar; // 1.0f;
+        //ImGui::SliderFloat("AR", &aspectRatio, 0.5f, 2.f);
 
         for (size_t i = 0; i < 4; ++i)
         {
@@ -565,18 +562,18 @@ struct LightCollection
 
 struct RenderPassData
 {
+    const uniforms::per_scene & perScene;
     const uniforms::per_view & perView;
     const int & eye;
     const EyeData & data;
     const GLuint & csmArrayHandle;
-    RenderPassData(const int & eye, const EyeData & data, const uniforms::per_view & perView, const GLuint csmArray)
-        : perView(perView), eye(eye), data(data), csmArrayHandle(csmArray)
+    RenderPassData(const int & eye, const EyeData & data, const uniforms::per_scene & perScene, const uniforms::per_view & perView, const GLuint csmArray)
+        : perScene(perScene), perView(perView), eye(eye), data(data), csmArrayHandle(csmArray)
     {}
 };
 
 class VR_Renderer
 {
-
     std::vector<DebugRenderable *> debugSet;
 
     std::vector<Renderable *> renderSet;
