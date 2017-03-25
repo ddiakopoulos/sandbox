@@ -1,5 +1,4 @@
-#version 330
-#extension GL_ARB_gpu_shader5: require
+#version 420
 
 layout(triangles, invocations = 4) in; // one for each cascade
 layout(triangle_strip, max_vertices = 3) out;

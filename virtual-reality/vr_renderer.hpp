@@ -150,15 +150,6 @@ namespace uniforms
         float                 cutoff;
     };
 
-    struct shadow_cascades
-    {
-        float                 cascadesNear[4];
-        float                 cascadesFar[4];
-        ALIGNED(8) float2     cascadesPlane[4];
-        ALIGNED(16) float4x4  cascadesMatrix[4];
-    };
-
-    // Add resolution
     struct per_scene
     {
         static const int     binding = 0;
@@ -175,8 +166,11 @@ namespace uniforms
         static const int      binding = 1;
         ALIGNED(16) float4x4  view;
         ALIGNED(16) float4x4  viewProj;
-        ALIGNED(16) float3    eyePos;
-        shadow_cascades       cascades;
+        ALIGNED(16) float4    eyePos;
+        ALIGNED(16) float4    cascadesPlane[4];
+        ALIGNED(16) float4x4  cascadesMatrix[4];
+        float                 cascadesNear[4];
+        float                 cascadesFar[4];
     };
 }
 
@@ -412,9 +406,9 @@ struct ShadowPass
     GlTexture3D shadowArrayColor, shadowArrayDepth;
     GlFramebuffer shadowArrayFramebuffer;
 
-    std::vector<float4x4> viewMatrices { Identity4x4, Identity4x4, Identity4x4, Identity4x4 };
-    std::vector<float4x4> projMatrices { Identity4x4, Identity4x4, Identity4x4, Identity4x4 };
-    std::vector<float4x4> shadowMatrices { Identity4x4, Identity4x4, Identity4x4, Identity4x4 };
+    std::vector<float4x4> viewMatrices;
+    std::vector<float4x4> projMatrices;
+    std::vector<float4x4> shadowMatrices;
 
     std::vector<float2> splitPlanes;
     std::vector<float> nearPlanes;
@@ -470,13 +464,21 @@ struct ShadowPass
 
     }
 
-    void execute(const Pose pose, const float near, const float far, const float aspectRatio, const float vfov)
+    float3 lightDir = float3(-0.25, -1, 0);
+
+    void execute(const Pose pose, const float near, const float far, const float ar, const float vfov)
     {
         nearPlanes.clear();
         farPlanes.clear();
         splitPlanes.clear();
+        viewMatrices.clear();
+        projMatrices.clear();
+        shadowMatrices.clear();
 
-        const float3 lightDir = float3(-0.25, -1, 0);
+        static float aspectRatio = 1.0f;
+
+        ImGui::SliderFloat3("Light Dir", &lightDir.x, -1.f, 1.f);
+        ImGui::SliderFloat("AR", &aspectRatio, 0.5f, 2.f);
 
         for (size_t i = 0; i < 4; ++i)
         {
@@ -498,7 +500,7 @@ struct ShadowPass
             splitCentroid /= 8.0f;
 
             const float dist = std::max(splitFar - splitNear, distance(fc[0], fc[1]));
-            const Pose cascadePose = look_at_pose(splitCentroid - lightDir * dist, splitCentroid);
+            const Pose cascadePose = look_at_pose(splitCentroid, splitCentroid + -lightDir); //  flipped
             const float4x4 viewMat = make_view_matrix_from_pose(cascadePose);
 
             // Transform split vertices to light viewspace
@@ -523,40 +525,25 @@ struct ShadowPass
             const float4x4 projMat = make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset);
             const float4x4 shadowBias = { { 0.5f,0,0,0 },{ 0,0.5f,0,0 },{ 0,0,0.5f,0 },{ 0.5f,0.5f,0.5f,1 } };
 
-            viewMatrices[i] = viewMat;
-            projMatrices[i] = projMat;
-            shadowMatrices[i] = mul(shadowBias, projMat, viewMat);
-
+            viewMatrices.push_back(viewMat);
+            projMatrices.push_back(projMat);
+            shadowMatrices.push_back(mul(shadowBias, projMat, viewMat));
             splitPlanes.push_back(float2(splitNear, splitFar));
             nearPlanes.push_back(-max.z - nearOffset);
             farPlanes.push_back(-min.z + farOffset);
-
-            //std::cout << i << ", near: " << splitNear << ", far: " << splitFar << std::endl;
-
-            //ImGui::Text("%i Split Near %f", i, splitNear);
-            //ImGui::Text("%i Split Far %f", i, splitFar);
-            //ImGui::Spacing();
         }
 
-
+        /*
         glBindFramebuffer(GL_FRAMEBUFFER, shadowArrayFramebuffer);
         glViewport(0, 0, resolution, resolution);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         cascadeShader.bind();
-
         cascadeShader.uniform("u_cascadeNear", (int) nearPlanes.size(), nearPlanes);
         cascadeShader.uniform("u_cascadeFar", (int) farPlanes.size(), farPlanes);
         cascadeShader.uniform("u_cascadeViewMatrixArray", (int) viewMatrices.size(), viewMatrices);
         cascadeShader.uniform("u_cascadeProjMatrixArray", (int) projMatrices.size(), projMatrices);
         cascadeShader.uniform("u_expC", expCascade);
-
-        /*
-        for (const auto & model : sceneObjects)
-        {
-            shadowCascadeShader.uniform("u_modelMatrix", model.get_model());
-            model.draw();
-        }
         */
     }
 

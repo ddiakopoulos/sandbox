@@ -434,9 +434,9 @@ void VirtualRealityApp::on_draw()
             hmd->get_optical_properties(eye, aspectRatio, vfov);
 
             eyes[eye].pose = hmd->get_eye_pose(eye);
-            eyes[eye].projectionMatrix = hmd->get_proj_matrix(eye, 0.05, 25.f);
+            eyes[eye].projectionMatrix = hmd->get_proj_matrix(eye, 0.05, 10.f);
             eyes[eye].nearClip = 0.05f;
-            eyes[eye].farClip = 25.f;
+            eyes[eye].farClip = 10.f;
             eyes[eye].vfov = vfov;
             eyes[eye].aspectRatio = aspectRatio;
         }
@@ -461,10 +461,10 @@ void VirtualRealityApp::on_draw()
 
     gui::imgui_fixed_window_begin("Render Debug Views", { { 0, height - 220 }, { width, height } });
     gui::Img(renderer->shadow->get_output_texture(), "Shadow", { 240, 180 }); ImGui::SameLine();
-    gui::Img(renderer->bloom->get_luminance_texture(), "Luminance", { 240, 180 }); ImGui::SameLine();
-    gui::Img(renderer->bloom->get_bright_tex(), "Bright", { 240, 180 }); ImGui::SameLine();
-    gui::Img(renderer->bloom->get_blur_tex(), "Blur", { 240, 180 }); ImGui::SameLine();
-    gui::Img(renderer->bloom->get_output_texture(), "Output", { 240, 180 }); ImGui::SameLine();
+    //gui::Img(renderer->bloom->get_luminance_texture(), "Luminance", { 240, 180 }); ImGui::SameLine();
+    //gui::Img(renderer->bloom->get_bright_tex(), "Bright", { 240, 180 }); ImGui::SameLine();
+    //gui::Img(renderer->bloom->get_blur_tex(), "Blur", { 240, 180 }); ImGui::SameLine();
+    //gui::Img(renderer->bloom->get_output_texture(), "Output", { 240, 180 }); ImGui::SameLine();
     gui::imgui_fixed_window_end();
 
     Bounds2D rect{ { 0.f, 0.f },{ (float)width,(float)height } };

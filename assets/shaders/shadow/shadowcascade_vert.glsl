@@ -1,5 +1,4 @@
-#version 330
-#extension GL_ARB_gpu_shader5: require
+#version 420
 
 layout(location = 0) in vec3 inPosition;
 

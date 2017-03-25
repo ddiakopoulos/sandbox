@@ -95,14 +95,6 @@ struct PointLight
     float radius;
 };
 
-struct ShadowCascades
-{
-    float cascadesNear[4];
-    float cascadesFar[4];
-    vec2 cascadesPlane[4];
-    mat4 cascadesMatrix[4];
-};
-
 layout(binding = 0, std140) uniform PerScene
 {
     DirectionalLight u_directionalLight;
@@ -117,8 +109,11 @@ layout(binding = 1, std140) uniform PerView
 {
     mat4 u_viewMatrix;
     mat4 u_viewProjMatrix;
-    vec3 u_eyePos;
-    ShadowCascades shadows;
+    vec4 u_eyePos;
+    vec4 u_cascadesPlane[4];
+    mat4 u_cascadesMatrix[4];
+    float u_cascadesNear[4];
+    float u_cascadesFar[4];
 };
 
 in vec3 v_world_position;
@@ -140,6 +135,8 @@ uniform float u_roughness = 1.0;
 uniform float u_metallic = 1.0;
 uniform float u_ambientIntensity = 1.0;
 
+// uniform 
+
 out vec4 f_color;
 
 vec4 get_cascade_weights(float depth, vec4 splitNear, vec4 splitFar)
@@ -160,15 +157,17 @@ float get_cascade_layer(vec4 weights)
     return 0.0 * weights.x + 1.0 * weights.y + 2.0 * weights.z + 3.0 * weights.w;   
 }
 
+/*
 float get_cascade_near(vec4 weights) 
 {
-    return shadows.cascadesNear[0] * weights.x + shadows.cascadesNear[1] * weights.y + shadows.cascadesNear[2] * weights.z + shadows.cascadesNear[3] * weights.w;
+    return cascadesNear[0] * weights.x + cascadesNear[1] * weights.y + cascadesNear[2] * weights.z + cascadesNear[3] * weights.w;
 }
 
 float get_cascade_far(vec4 weights) 
 {
-    return shadows.cascadesFar[0] * weights.x + shadows.cascadesFar[1] * weights.y + shadows.cascadesFar[2] * weights.z + shadows.cascadesFar[3] * weights.w;
+    return cascadesFar[0] * weights.x + cascadesFar[1] * weights.y + cascadesFar[2] * weights.z + cascadesFar[3] * weights.w;
 }
+*/
 
 vec3 get_cascade_weighted_color(vec4 weights) 
 {
@@ -282,7 +281,7 @@ void main()
     float metallic = sRGBToLinear(texture(s_metallic, v_texcoord), DEFAULT_GAMMA).r * u_metallic;
 
     vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
-    vec3 viewDir = normalize(u_eyePos - v_world_position);
+    vec3 viewDir = normalize(u_eyePos.xyz - v_world_position);
     vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2 - 1);
 
     vec3 N = normalWorld;
@@ -334,15 +333,21 @@ void main()
     specularContrib += env_brdf_approx(baseSpecular, roughness4, NoV);
 
     // Combine direct lighting and IBL
-    vec3 Lo = (diffuseContrib * irradiance) + (specularContrib * radiance );
+    vec3 Lo = (diffuseContrib * irradiance) + (specularContrib * radiance);
 
     //f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
 
     // Find frustum
     vec4 cascadeWeights = get_cascade_weights(
-            -v_world_position.z, 
-            vec4(shadows.cascadesPlane[0].x, shadows.cascadesPlane[1].x, shadows.cascadesPlane[2].x, shadows.cascadesPlane[3].x), 
-            vec4(shadows.cascadesPlane[0].y, shadows.cascadesPlane[1].y, shadows.cascadesPlane[2].y, shadows.cascadesPlane[3].y));
+            -v_view_space_position.z, 
+            vec4(u_cascadesPlane[0].x, u_cascadesPlane[1].x, u_cascadesPlane[2].x, u_cascadesPlane[3].x), 
+            vec4(u_cascadesPlane[0].y, u_cascadesPlane[1].y, u_cascadesPlane[2].y, u_cascadesPlane[3].y));
+    
+    //vec4 cascadeWeights = get_cascade_weights(
+    //        -v_view_space_position.z, 
+    //        vec4(0.05, 1, 3, 5), 
+    //        vec4(1, 3, 5, 7));
 
-    f_color = vec4(get_cascade_weighted_color(cascadeWeights), 1);
+    float layer = get_cascade_layer(cascadeWeights);
+    f_color = vec4(get_cascade_weighted_color(cascadeWeights), 1.0);
 }

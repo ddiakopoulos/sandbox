@@ -85,6 +85,7 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
 
     sceneDebugRenderer.clear();
 
+    // Refactor this
     outputTextureHandles[0] = eyeTextures[0];
     outputTextureHandles[1] = eyeTextures[1];
 }
@@ -175,7 +176,14 @@ void VR_Renderer::render_frame()
     GLfloat defaultColor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
     GLfloat defaultDepth = 1.f;
 
-    for (int eyeIdx : { 0, 1 })
+    const RenderPassData shadowData(0, eyes[0], {});
+
+    if (renderShadows)
+    {
+        run_shadow_pass(shadowData);
+    }
+
+    for (int eyeIdx : { 0 })
     {
         renderTimer.start();
 
@@ -183,20 +191,18 @@ void VR_Renderer::render_frame()
         uniforms::per_view v = {};
         v.view = eyes[eyeIdx].pose.inverse().matrix();
         v.viewProj = mul(eyes[eyeIdx].projectionMatrix, eyes[eyeIdx].pose.inverse().matrix());
-        v.eyePos = eyes[eyeIdx].pose.position;
+        v.eyePos = float4(eyes[eyeIdx].pose.position, 1);
 
         const RenderPassData data(eyeIdx, eyes[eyeIdx], v);
 
         if (renderShadows)
         {
-            run_shadow_pass(data);
-
             for (int c = 0; c < 4; c++)
             {
-                v.cascades.cascadesNear[c] = shadow->nearPlanes[c];
-                v.cascades.cascadesFar[c] = shadow->farPlanes[c];
-                v.cascades.cascadesPlane[c] = shadow->splitPlanes[c];
-                v.cascades.cascadesMatrix[c] = shadow->shadowMatrices[c];
+                v.cascadesPlane[c] = float4(shadow->splitPlanes[c].x, shadow->splitPlanes[c].y, 0, 0);
+                v.cascadesMatrix[c] = shadow->shadowMatrices[c];
+                v.cascadesNear[c] = shadow->nearPlanes[c];
+                v.cascadesFar[c] = shadow->farPlanes[c];
             }
         }
 

@@ -16,14 +16,6 @@ struct PointLight
     float radius;
 };
 
-struct ShadowCascades
-{
-    float cascadesNear[4];
-    float cascadesFar[4];
-    vec2 cascadesPlane[4];
-    mat4 cascadesMatrix[4];
-};
-
 layout(binding = 0, std140) uniform PerScene
 {
 	DirectionalLight u_directionalLight;
@@ -38,8 +30,11 @@ layout(binding = 1, std140) uniform PerView
 {
     mat4 u_viewMatrix;
     mat4 u_viewProjMatrix;
-    vec3 u_eyePos;
-    ShadowCascades shadows;
+    vec4 u_eyePos;
+    vec4 u_cascadesPlane[4];
+    mat4 u_cascadesMatrix[4];
+    float u_cascadesNear[4];
+    float u_cascadesFar[4];
 };
 
 layout(location = 0) in vec3 inPosition;

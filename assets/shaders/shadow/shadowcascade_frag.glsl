@@ -1,5 +1,4 @@
-#version 330
-#extension GL_ARB_gpu_shader5: require
+#version 420
 
 uniform float u_cascadeNear[4];
 uniform float u_cascadeFar[4];
