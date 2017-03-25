@@ -413,8 +413,8 @@ struct ShadowPass
     std::vector<float> nearPlanes;
     std::vector<float> farPlanes;
 
-    float resolution = 1024.f; // shadowmap resolution
-    float expCascade = 120.f;  // overshadowing constant
+    float resolution = 512.f; // shadowmap resolution
+    float expCascade = 100.f;  // overshadowing constant
     float splitLambda = 0.5f;  // frustum split constant
 
     GlMesh fsQuad;
@@ -482,7 +482,7 @@ struct ShadowPass
             splitCentroid /= 8.0f;
 
             const float dist = std::max(splitFar - splitNear, distance(fc[0], fc[1]));
-            const Pose cascadePose = look_at_pose(splitCentroid, splitCentroid + -lightDir); //  flipped
+            const Pose cascadePose = look_at_pose(splitCentroid - lightDir * dist, splitCentroid); //  flipped
             const float4x4 viewMat = make_view_matrix_from_pose(cascadePose);
 
             // Transform split vertices to light viewspace
@@ -520,12 +520,16 @@ struct ShadowPass
         glViewport(0, 0, resolution, resolution);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        gl_check_error(__FILE__, __LINE__);
+
         cascadeShader.bind();
         cascadeShader.uniform("u_cascadeNear", (int)nearPlanes.size(), nearPlanes);
         cascadeShader.uniform("u_cascadeFar", (int)farPlanes.size(), farPlanes);
         cascadeShader.uniform("u_cascadeViewMatrixArray", (int)viewMatrices.size(), viewMatrices);
         cascadeShader.uniform("u_cascadeProjMatrixArray", (int)projMatrices.size(), projMatrices);
         cascadeShader.uniform("u_expC", expCascade);
+
+        gl_check_error(__FILE__, __LINE__);
     }
 
     void post_draw()

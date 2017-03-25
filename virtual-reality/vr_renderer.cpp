@@ -65,25 +65,15 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
     // Loop through and update all material properties
     for (auto obj : renderSet)
     {
-        const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
-        Material * mat = obj->get_material();
-
-        if (mat)
-        {
-            mat->update_uniforms(&d);
-        }
-        else
-        {
-            throw std::runtime_error("cannot draw object without bound material");
-        }
+        if (Material * mat = obj->get_material()) mat->update_uniforms(&d);
+        else throw std::runtime_error("cannot draw object without bound material");
     }
 
     // Now draw
     for (auto obj : renderSet)
     {
-        const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
         Material * mat = obj->get_material();
-        mat->use(modelMatrix, d.perView.view);
+        mat->use(mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale())), d.perView.view);
         obj->draw();
     }
 
@@ -236,6 +226,8 @@ void VR_Renderer::render_frame()
 
         // Execute the post passes after having resolved the multisample framebuffers
         run_post_pass(renderPassData);
+
+        gl_check_error(__FILE__, __LINE__);
 
         renderTimer.stop();
     }

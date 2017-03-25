@@ -155,16 +155,6 @@ float get_cascade_layer(vec4 weights)
     return 0.0 * weights.x + 1.0 * weights.y + 2.0 * weights.z + 3.0 * weights.w;   
 }
 
-float get_cascade_near(vec4 weights) 
-{
-    return u_cascadesNear[0] * weights.x + u_cascadesNear[1] * weights.y + u_cascadesNear[2] * weights.z + u_cascadesNear[3] * weights.w;
-}
-
-float get_cascade_far(vec4 weights) 
-{
-    return u_cascadesFar[0] * weights.x + u_cascadesFar[1] * weights.y + u_cascadesFar[2] * weights.z + u_cascadesFar[3] * weights.w;
-}
-
 vec3 get_cascade_weighted_color(vec4 weights) 
 {
     return vec3(1,0,0) * weights.x + vec3(0,1,0) * weights.y + vec3(0,0,1) * weights.z + vec3(1,0,1) * weights.w;
@@ -276,7 +266,7 @@ void main()
     float roughness4 = pow(roughness, 4.0);
     float metallic = sRGBToLinear(texture(s_metallic, v_texcoord), DEFAULT_GAMMA).r * u_metallic;
 
-    vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
+    vec3 albedo = vec3(1);// sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
     vec3 viewDir = normalize(u_eyePos.xyz - v_world_position);
     vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2 - 1);
 
@@ -285,6 +275,8 @@ void main()
 
     vec3 diffuseContrib = vec3(0);
     vec3 specularContrib = vec3(0);
+    vec3 irradiance = vec3(1);
+    vec3 radiance = vec3(1);
 
     // Find the four view-space bounds for CSM
     const vec4 cascadeWeights = get_cascade_weights(-v_view_space_position.z,
@@ -317,6 +309,7 @@ void main()
         specularContrib += (specularColor * u_directionalLight.amount);
     }
 
+    /*
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
@@ -333,18 +326,21 @@ void main()
         diffuseContrib += NoL * u_pointLights[i].color * albedo;
         specularContrib += (specularColor * attenuation);
     }
+    */
 
     // Compute image-based lighting
+    /*
     const int NUM_MIP_LEVELS = 7;
     float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
     vec3 cubemapLookup = fix_cube_lookup(reflect(-V, N), 512, mipLevel);
 
-    vec3 irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
-    vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
+    irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
+    radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
 
     vec3 baseSpecular = mix(vec3(0.04), albedo, metallic);
     float NoV = saturate(dot(N, V));
     specularContrib += env_brdf_approx(baseSpecular, roughness4, NoV);
+    */
 
     // Combine direct lighting and IBL
     vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * esmShadowTerm;

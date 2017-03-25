@@ -563,6 +563,7 @@ namespace avl
         
         plane.compute_normals(false);
         plane.compute_tangents();
+        plane.compute_bounds();
         
         return plane;
     }

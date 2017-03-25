@@ -68,9 +68,9 @@ void VirtualRealityApp::setup_scene()
 {
     AVL_SCOPED_TIMER("setup_scene");
 
-    scene.directionalLight.direction = float3(0, -1.f, 0);
+    scene.directionalLight.direction = float3(-0.35, -.30f, -0.60f);
     scene.directionalLight.color = float3(1.f, 1.f, 1.f);
-    scene.directionalLight.amount = 0.1f;
+    scene.directionalLight.amount = 0.5f;
 
     scene.pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-1, 1, 0), 4.f });
     scene.pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.f, 0.85f), float3(+1, 1, 0), 4.f });
@@ -149,6 +149,14 @@ void VirtualRealityApp::setup_scene()
         cerberusMaterial->set_irrradiance_cubemap(texDatabase["wells-irradiance-cubemap"]);
         scene.namedMaterialList["material-cerberus"] = cerberusMaterial;
 
+        //auto floor = make_plane(48.f, 48.f, 256, 256, true);
+        StaticMesh floorMesh;
+        floorMesh.set_static_mesh(make_cube(), 1.0f);
+        floorMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, ANVIL_PI / 2), float3(0, -8.f, 0))); 
+        floorMesh.set_scale(float3(8.f));
+        floorMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
+        scene.models.push_back(std::move(floorMesh));
+
         /*
         auto geom = load_geometry_from_obj_no_texture("../assets/models/cerberus/cerberus.obj")[0];
         StaticMesh materialTestMesh;
@@ -156,7 +164,6 @@ void VirtualRealityApp::setup_scene()
         materialTestMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, -ANVIL_PI), float3(0, 0.75f, 0)));
         materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
         scene.models.push_back(std::move(materialTestMesh));
-        */
 
         auto terrain = load_geometry_from_obj_no_texture("../assets/nonfree/terrain.obj");
 
@@ -169,6 +176,7 @@ void VirtualRealityApp::setup_scene()
             terrainMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
             scene.models.push_back(std::move(terrainMesh));
         }
+        */
     }
 
     scoped_timer t("load capsule");
@@ -462,7 +470,7 @@ void VirtualRealityApp::on_draw()
     }
 
     gui::imgui_fixed_window_begin("Render Debug Views", { { 0, height - 220 }, { width, height } });
-    gui::Img(renderer->shadow->get_output_texture(), "Shadow", { 240, 180 }); ImGui::SameLine();
+    //gui::Img(renderer->shadow->get_output_texture(), "Shadow", { 240, 180 }); ImGui::SameLine();
     //gui::Img(renderer->bloom->get_luminance_texture(), "Luminance", { 240, 180 }); ImGui::SameLine();
     //gui::Img(renderer->bloom->get_bright_tex(), "Bright", { 240, 180 }); ImGui::SameLine();
     //gui::Img(renderer->bloom->get_blur_tex(), "Blur", { 240, 180 }); ImGui::SameLine();
