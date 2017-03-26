@@ -454,13 +454,13 @@ struct ShadowPass
             // Find the split planes using GPU Gem 3. Chap 10 "Practical Split Scheme".
             // http://http.developer.nvidia.com/GPUGems3/gpugems3_ch10.html
 
-            float splitNear = C > 0 ? mix(near + (static_cast<float>(C) / 4.0f) * (far - near), 
+            const float splitNear = C > 0 ? mix(near + (static_cast<float>(C) / 4.0f) * (far - near), 
                     near * pow(far / near, static_cast<float>(C) / 4.0f), splitLambda) : near;
 
-            float splitFar = C < 4 - 1 ? mix(near + (static_cast<float>(C + 1) / 4.0f) * (far - near), 
+            const float splitFar = C < 4 - 1 ? mix(near + (static_cast<float>(C + 1) / 4.0f) * (far - near), 
                 near * pow(far / near, static_cast<float>(C + 1) / 4.0f), splitLambda) : far;
 
-            float4x4 splitProjectionMatrix = make_perspective_matrix(vfov, aspectRatio, splitNear, splitFar);
+            const float4x4 splitProjectionMatrix = make_perspective_matrix(vfov, aspectRatio, splitNear, splitFar);
 
             // Extract the frustum points
             float4 splitFrustumVerts[8] = {
@@ -504,10 +504,11 @@ struct ShadowPass
             }
 
             // Create an orthogonal projection matrix with the corners
-            float nearOffset = 10.0f;
-            float farOffset = 20.0f;
+            const float nearOffset = 10.0f;
+            const float farOffset = 20.0f;
             const float4x4 shadowProjectionMatrix = make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset);
-            const float4x4 shadowBias = { { 0.5f,0,0,0 },{ 0,0.5f,0,0 },{ 0,0,0.5f,0 },{ 0.5f,0.5f,0.5f,1 } };
+            //const float4x4 shadowBias = { { 0.5f,0,0,0 },{ 0,0.5f,0,0 },{ 0,0,0.5f,0 },{ 0.5f,0.5f,0.5f,1 } };
+            //mul(mul(shadowProjectionMatrix, splitViewMatrix), shadowBias)
 
             viewMatrices.push_back(splitViewMatrix);
             projMatrices.push_back(shadowProjectionMatrix);
