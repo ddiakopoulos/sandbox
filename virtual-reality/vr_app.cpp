@@ -527,7 +527,6 @@ void VirtualRealityApp::on_draw()
     for (int i = 0; i < 4; ++i)
     {
         glViewport(0, 0, width, height);
-        glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         csmViews[i]->draw(uiSurface.children[i]->bounds, 
             float2(width, height), 
