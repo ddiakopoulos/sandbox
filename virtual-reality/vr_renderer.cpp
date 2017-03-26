@@ -35,7 +35,7 @@ VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizeP
     }
 
     bloom.reset(new BloomPass(renderSizePerEye));
-    shadow.reset(new ShadowPass(renderSizePerEye));
+    shadow.reset(new ShadowPass());
 
     timer.start();
 }
@@ -62,20 +62,17 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
     sceneDebugRenderer.draw(d.perView.viewProj);
     for (auto obj : debugSet) { obj->draw(d.perView.viewProj);}
 
-    /*
     // Loop through and update all material properties
     for (auto obj : renderSet)
     {
         if (Material * mat = obj->get_material()) mat->update_uniforms(&d);
         else throw std::runtime_error("cannot draw object without bound material");
     }
-    */
 
     // Now draw
     for (auto obj : renderSet)
     {
         Material * mat = obj->get_material();
-        if (Material * mat = obj->get_material()) mat->update_uniforms(&d);
         mat->use(mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale())), d.perView.view);
         obj->draw();
     }

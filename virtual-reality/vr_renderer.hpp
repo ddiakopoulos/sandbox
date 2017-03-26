@@ -420,11 +420,10 @@ struct ShadowPass
     GlMesh fsQuad;
 
     GlShader cascadeShader;
-    float2 perEyeSize;
 
     float mix(float a, float b, float t) { return a * (1 - t) + b * t; }
 
-    ShadowPass(float2 size) : perEyeSize(size)
+    ShadowPass()
     {
         fsQuad = make_fullscreen_quad();
 
@@ -455,7 +454,7 @@ struct ShadowPass
             // http://http.developer.nvidia.com/GPUGems3/gpugems3_ch10.html
 
             const float splitNear = C > 0 ? mix(near + (static_cast<float>(C) / 4.0f) * (far - near), 
-                    near * pow(far / near, static_cast<float>(C) / 4.0f), splitLambda) : near;
+                near * pow(far / near, static_cast<float>(C) / 4.0f), splitLambda) : near;
 
             const float splitFar = C < 4 - 1 ? mix(near + (static_cast<float>(C + 1) / 4.0f) * (far - near), 
                 near * pow(far / near, static_cast<float>(C + 1) / 4.0f), splitLambda) : far;
@@ -535,9 +534,6 @@ struct ShadowPass
         cascadeShader.uniform("u_cascadeFar", (int)farPlanes.size(), farPlanes);
         cascadeShader.uniform("u_cascadeViewMatrixArray", (int)viewMatrices.size(), viewMatrices);
         cascadeShader.uniform("u_cascadeProjMatrixArray", (int)projMatrices.size(), projMatrices);
-        cascadeShader.uniform("u_expC", expCascade);
-
-        gl_check_error(__FILE__, __LINE__);
     }
 
     void post_draw()
