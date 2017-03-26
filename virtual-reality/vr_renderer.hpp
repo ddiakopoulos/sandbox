@@ -17,6 +17,16 @@
 #include "bloom_pass.hpp"
 #include "shadow_pass.hpp"
 
+/*
+ * To Do - 3.25.2017
+ * [ ] Shadow pass should be rendered from cyclops eye
+ * [ ] Clean up RenderPassData struct
+ * [ ] Better naming all-around
+ * [ ] ImGui controls for all passes
+ * [ ] Volume/height fog
+ * [ ] Built-in wireframe renderer
+*/
+
 using namespace avl;
 
 enum class Eye : int

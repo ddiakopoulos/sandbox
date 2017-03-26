@@ -22,6 +22,7 @@
     <ClInclude Include="..\algo_misc.hpp" />
     <ClInclude Include="..\arcball.hpp" />
     <ClInclude Include="..\asset_io.hpp" />
+    <ClInclude Include="..\async_pbo.hpp" />
     <ClInclude Include="..\avl_imgui.hpp" />
     <ClInclude Include="..\bit_mask.hpp" />
     <ClInclude Include="..\camera.hpp" />

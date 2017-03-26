@@ -234,6 +234,9 @@
     <ClInclude Include="..\asset_io.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\async_pbo.hpp">
+      <Filter>source\rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">

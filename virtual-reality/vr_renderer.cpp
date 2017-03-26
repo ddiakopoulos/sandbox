@@ -105,12 +105,14 @@ void VR_Renderer::run_shadow_pass(const RenderPassData & d)
     }
 
     shadow->post_draw();
+    ImGui::Text("Shadow Pass %f", renderTimer.elapsed_ms());
 }
 
 void VR_Renderer::run_bloom_pass(const RenderPassData & d)
 {
     bloom->execute(eyeTextures[d.eye]);
     glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    ImGui::Text("Bloom Pass %f", renderTimer.elapsed_ms());
 }
 
 void VR_Renderer::run_reflection_pass(const RenderPassData & d)
@@ -177,15 +179,11 @@ void VR_Renderer::render_frame()
     // Fixme: center eye
     const RenderPassData shadowData(0, eyes[0], b, {}, 0);
 
-    if (renderShadows)
-    {
-        run_shadow_pass(shadowData);
-    }
+    if (renderShadows) run_shadow_pass(shadowData);
 
+    renderTimer.start();
     for (int eyeIdx : { 0, 1 })
     {
-        renderTimer.start();
-
         // Per view uniform buffer
         uniforms::per_view v = {};
         v.view = eyes[eyeIdx].pose.inverse().matrix();
@@ -217,6 +215,7 @@ void VR_Renderer::render_frame()
 
         // Execute the forward passes
         run_skybox_pass(renderPassData);
+
         run_forward_pass(renderPassData);
         if (renderWireframe) run_forward_wireframe_pass(renderPassData);
 
@@ -229,11 +228,9 @@ void VR_Renderer::render_frame()
         run_post_pass(renderPassData);
 
         gl_check_error(__FILE__, __LINE__);
-
-        renderTimer.stop();
     }
-
-    ImGui::Text("Render Per Eye: %f", renderTimer.elapsed_ms());
+    renderTimer.stop();
+    ImGui::Text("Render (Both Eyes) %f", renderTimer.elapsed_ms());
 
     renderSet.clear();
     debugSet.clear();

@@ -136,7 +136,7 @@ uniform float u_roughness = 1.0;
 uniform float u_metallic = 1.0;
 uniform float u_ambientIntensity = 1.0;
 
-uniform float u_overshadowConstant = 120.0;
+uniform float u_overshadowConstant = 100.0;
 uniform sampler2DArray s_csmArray;
 
 out vec4 f_color;
@@ -260,18 +260,8 @@ float point_light_attenuation(vec3 lightPosition, vec3 vertexPosition, float lig
     return attenuation;
 }
 
-bool IsVertexInShadowMap(vec3 coord)
-{
-    return coord.z > 0.0
-        && coord.x > 0.0
-        && coord.y > 0.0
-        && coord.x <= 1.0
-        && coord.y <= 1.0;
-}
-
 float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos, mat4 viewProjArray[4], vec4 splitPlanes[4])
 {
-
     vec4 weights = get_cascade_weights(-viewPos.z,
         vec4(splitPlanes[0].x, splitPlanes[1].x, splitPlanes[2].x, splitPlanes[3].x),
         vec4(splitPlanes[0].y, splitPlanes[1].y, splitPlanes[2].y, splitPlanes[3].y)
@@ -282,19 +272,21 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
     vec4 vertexLightPostion = lightViewProj * vec4(worldPos, 1.0);
 
     // Compute erspective divide and transform to 0-1 range
-    vec3 coords = (vertexLightPostion.xyz / vertexLightPostion.w) * 0.5 + 0.5;
+    vec3 coords = (vertexLightPostion.xyz / vertexLightPostion.w) / 2.0 + 0.5;
 
     if (!(coords.z > 0.0 && coords.x > 0.0 && coords.y > 0.0 && coords.x <= 1.0 && coords.y <= 1.0)) return 0;
 
-    float bias = 0.0019;
+    float bias = 0.0010;
     float currentDepth = coords.z;
 
-    // Non-PCF path
+    float shadowTerm = 0.0;
+
+    // Non-PCF path, hard shadows
     // float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
-    // float shadowTerm = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    // shadowTerm = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
     // Percentage-closer filtering
-    float shadowTerm = 0.0;
+    /*
     vec2 texelSize = 1.0 / textureSize(map, 0).xy;
     for (int x = -1; x <= 1; ++x)
     {
@@ -305,6 +297,14 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
         }
     }
     shadowTerm /= 9.0;
+    */
+
+    // Exponential Shadow Filtering
+    float depth = (coords.z + bias);
+    float occluderDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
+    float occluder = exp(u_overshadowConstant * occluderDepth);
+    float receiver = exp(-u_overshadowConstant * depth);
+    shadowTerm = 1.0 - clamp(occluder * receiver, 0.0, 1.0);
 
     return shadowTerm;
 }

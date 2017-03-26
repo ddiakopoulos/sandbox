@@ -345,10 +345,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="assets.hpp" />
+    <ClInclude Include="bloom_pass.hpp" />
     <ClInclude Include="bullet_debug.hpp" />
     <ClInclude Include="bullet_engine.hpp" />
     <ClInclude Include="bullet_utils.hpp" />
+    <ClInclude Include="debug_line_renderer.hpp" />
     <ClInclude Include="material.hpp" />
+    <ClInclude Include="shadow_pass.hpp" />
+    <ClInclude Include="uniforms.hpp" />
     <ClInclude Include="vr_app.hpp" />
     <ClInclude Include="vr_renderer.hpp" />
     <ClInclude Include="static_mesh.hpp" />

@@ -11,6 +11,16 @@
 #include "file_io.hpp"
 #include "procedural_mesh.hpp"
 
+/*
+ * To Do - 3.25.2017
+ * [ ] Break out tonemapping into a separate pass (does not strictly belong to bloom)
+ * [ ] Blur should be two passes, instead of the (simple) 3x3 single-pass kernel
+ * [ ] Possibility to add an upsampling pass nicer visual quality
+ * [ ] Downsampling for average scene luminance not used currently; auto-exposure experimentation
+ * [ ] Downsampling is an ideal candidate for compute shader experimentation
+ * [ ] Performance profiling (perEyeSize can be tweaked)
+ */
+
 using namespace avl;
 
 struct BloomPass
@@ -128,7 +138,7 @@ struct BloomPass
         // Readback luminance value
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, luminance[4]);
-        auto lumValue = avgLuminance.download();
+        float4 lumValue = avgLuminance.download();
         glBindTexture(GL_TEXTURE_2D, 0);
 
         float4 tonemap = { middleGrey, whitePoint * whitePoint, threshold, 0.0f };

@@ -10,6 +10,17 @@
 #include "file_io.hpp"
 #include "procedural_mesh.hpp"
 
+/*
+ * To Do - 3.25.2017
+ * [ ] Set shadow map resolution at runtime (default 1024^2)
+ * [ ] Set number of cascades used at compile time (default 4)
+ * [ ] Configurable filtering modes (ESM, PCF, PCSS + PCF)
+ * [ ] Experiment with Moment Shadow Maps
+ * [ ] Frustum depth-split is a good candidate for compute shader experimentation (default far-near/4)
+ * [ ] Blending / overlap between cascades
+ * [ ] Performance profiling
+ */
+
 using namespace avl;
 
 // http://developer.download.nvidia.com/SDK/10.5/opengl/src/cascaded_shadow_maps/doc/cascaded_shadow_maps.pdf

@@ -23,6 +23,9 @@
     <Filter Include="Source Files\game-objects">
       <UniqueIdentifier>{5f2e3684-8b5d-476c-83c5-07521d010dec}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\renderer\render-passes">
+      <UniqueIdentifier>{2e42920d-29fe-48a4-9edc-d82dd5bd24a9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="third_party\bullet3\src\Bullet3Collision\BroadPhaseCollision\b3DynamicBvh.cpp">
@@ -1505,6 +1508,18 @@
     </ClInclude>
     <ClInclude Include="assets.hpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_line_renderer.hpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="uniforms.hpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="bloom_pass.hpp">
+      <Filter>Source Files\renderer\render-passes</Filter>
+    </ClInclude>
+    <ClInclude Include="shadow_pass.hpp">
+      <Filter>Source Files\renderer\render-passes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
