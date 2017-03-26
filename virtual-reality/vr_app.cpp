@@ -37,6 +37,18 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
 
     setup_scene();
 
+    uiSurface.bounds = { 0, 0, (float)windowWidth, (float)windowHeight };
+    uiSurface.add_child({ { 0.0000f, +10 },{ 0, +10 },{ 0.1667f, -10 },{ 0.133f, +10 } });
+    uiSurface.add_child({ { 0.1667f, +10 },{ 0, +10 },{ 0.3334f, -10 },{ 0.133f, +10 } });
+    uiSurface.add_child({ { 0.3334f, +10 },{ 0, +10 },{ 0.5009f, -10 },{ 0.133f, +10 } });
+    uiSurface.add_child({ { 0.5000f, +10 },{ 0, +10 },{ 0.6668f, -10 },{ 0.133f, +10 } });
+    uiSurface.layout();
+
+    for (int i = 0; i < 4; ++i)
+    {
+        csmViews.push_back(std::make_shared<GLTextureView3D>(renderer->shadow->get_output_texture()));
+    }
+
     gl_check_error(__FILE__, __LINE__);
 }
 
@@ -68,7 +80,7 @@ void VirtualRealityApp::setup_scene()
 {
     AVL_SCOPED_TIMER("setup_scene");
 
-    scene.directionalLight.direction = float3(-0.35, -.30f, -0.60f);
+    scene.directionalLight.direction = float3(-1.f, 1.f, 1.f);
     scene.directionalLight.color = float3(1.f, 1.f, 1.f);
     scene.directionalLight.amount = 0.5f;
 
@@ -152,8 +164,8 @@ void VirtualRealityApp::setup_scene()
         //auto floor = make_plane(48.f, 48.f, 256, 256, true);
         StaticMesh floorMesh;
         floorMesh.set_static_mesh(make_cube(), 1.0f);
-        floorMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, ANVIL_PI / 2), float3(0, -8.f, 0))); 
-        floorMesh.set_scale(float3(8.f));
+        floorMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, ANVIL_PI / 2), float3(0, -4.01f, 0))); 
+        floorMesh.set_scale(float3(4.f));
         floorMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
         scene.models.push_back(std::move(floorMesh));
 
@@ -185,7 +197,7 @@ void VirtualRealityApp::setup_scene()
     {
         StaticMesh materialTestMesh;
         materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
-        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.33f, -0.5)));
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.45f, -0.66)));
         materialTestMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
         scene.models.push_back(std::move(materialTestMesh));
     }
@@ -193,15 +205,15 @@ void VirtualRealityApp::setup_scene()
     {
         StaticMesh materialTestMesh;
         materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
-        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.33f, 0.0)));
+        materialTestMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 1, 0, 0 }, -ANVIL_PI / 2), float3(1.5, 0.45f, 0.0)));
         materialTestMesh.set_material(scene.namedMaterialList["material-cerberus"].get());
-        scene.models.push_back(std::move(materialTestMesh));
+        //scene.models.push_back(std::move(materialTestMesh));
     }
 
     {
         StaticMesh materialTestMesh;
         materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
-        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.33f, +0.5)));
+        materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.45f, +0.66)));
         materialTestMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
         scene.models.push_back(std::move(materialTestMesh));
     }
@@ -468,7 +480,11 @@ void VirtualRealityApp::on_draw()
         //renderer->set_eye_data(centerEye, centerEye);
         //renderer->render_frame();
     }
-
+    
+    
+    // for (int i = 0; i < 4; ++i) csmViews[i]->draw(uiSurface.children[i]->bounds, int2(width, height), i);
+  
+    /*
     gui::imgui_fixed_window_begin("Render Debug Views", { { 0, height - 220 }, { width, height } });
     //gui::Img(renderer->shadow->get_output_texture(), "Shadow", { 240, 180 }); ImGui::SameLine();
     //gui::Img(renderer->bloom->get_luminance_texture(), "Luminance", { 240, 180 }); ImGui::SameLine();
@@ -476,6 +492,7 @@ void VirtualRealityApp::on_draw()
     //gui::Img(renderer->bloom->get_blur_tex(), "Blur", { 240, 180 }); ImGui::SameLine();
     //gui::Img(renderer->bloom->get_output_texture(), "Output", { 240, 180 }); ImGui::SameLine();
     gui::imgui_fixed_window_end();
+    */
 
     Bounds2D rect{ { 0.f, 0.f },{ (float)width,(float)height } };
 
@@ -510,10 +527,9 @@ void VirtualRealityApp::on_draw()
     }
 
     physicsDebugRenderer->clear();
-    
-    const auto hpose = hmd->get_hmd_pose();
 
     ImGui::Text("Render Frame: %f", gpuTimer.elapsed_ms());
+    const auto hpose = hmd->get_hmd_pose();
     ImGui::Text("Head Pose: %f, %f, %f", hpose.position.x, hpose.position.y, hpose.position.z);
 
     if (igm) igm->end_frame();

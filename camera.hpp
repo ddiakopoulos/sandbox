@@ -112,17 +112,17 @@ namespace avl
         
         void look_at(float3 target)
         {
-            pose = look_at_pose(pose.position, target);
+            pose = look_at_pose_rh(pose.position, target);
         }
         
         void look_at(float3 eyePoint, float3 target)
         {
-            pose = look_at_pose(eyePoint, target);
+            pose = look_at_pose_rh(eyePoint, target);
         }
         
         void look_at(float3 eyePoint, float3 target, float3 upDirection)
         {
-            pose = look_at_pose(eyePoint, target, upDirection);
+            pose = look_at_pose_rh(eyePoint, target, upDirection);
         }
         
         float get_focal_length() const
@@ -322,7 +322,7 @@ namespace avl
             std::vector<float3> upVecs = {{0, -1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, 1}, {0, -1, 0}, {0, -1, 0}};
             for (int i = 0; i < 6; ++i)
             {
-                auto f = std::pair<GLenum, Pose>(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, look_at_pose(float3(0, 0, 0), targets[i], upVecs[i]));
+                auto f = std::pair<GLenum, Pose>(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, look_at_pose_rh(float3(0, 0, 0), targets[i], upVecs[i]));
                 faces.push_back(f);
             }
      

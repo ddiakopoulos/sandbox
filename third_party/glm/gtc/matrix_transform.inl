@@ -529,6 +529,8 @@ namespace glm
 		vec<3, T, P> const s(normalize(cross(f, up)));
 		vec<3, T, P> const u(cross(s, f));
 
+        std::cout << "glm: " << glm::to_string(f) << ", " << glm::to_string(s) << ", " << glm::to_string(u) << std::endl;
+
 		mat<4, 4, T, P> Result(1);
 		Result[0][0] = s.x;
 		Result[1][0] = s.y;

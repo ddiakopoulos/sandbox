@@ -133,6 +133,9 @@ struct VirtualRealityApp : public GLFWApp
 
     std::unique_ptr<VR_Renderer> renderer;
     std::unique_ptr<OpenVR_HMD> hmd;
+    ScreenSpaceAutoLayout uiSurface;
+
+    std::vector<std::shared_ptr<GLTextureView3D>> csmViews;
 
     GlCamera debugCam;
     FlyCameraController cameraController;

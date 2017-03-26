@@ -415,7 +415,7 @@ namespace avl
     {
         auto r = mul(transform, float4(coord,1)); return (r.xyz() / r.w);
     }
-    
+
     inline float3 transform_vector(const float4x4 & transform, const float3 & vector)
     {
         return mul(transform, float4(vector,0)).xyz();
@@ -485,7 +485,7 @@ namespace avl
         return pose.inverse().matrix();
     }
 
-    inline Pose look_at_pose(float3 eyePoint, float3 target, float3 worldUp = {0,1,0})
+    inline Pose look_at_pose_lh(float3 eyePoint, float3 target, float3 worldUp = {0,1,0})
     {
         Pose p;
         float3 zDir = normalize(eyePoint - target);
@@ -493,6 +493,17 @@ namespace avl
         float3 yDir = cross(zDir, xDir);
         p.position = eyePoint;
         p.orientation = normalize(make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
+        return p;
+    }
+
+    inline Pose look_at_pose_rh(float3 eyePoint, float3 target, float3 worldUp = { 0,1,0 })
+    {
+        Pose p;
+        float3 zDir = normalize(eyePoint - target);
+        float3 xDir = normalize(cross(zDir, worldUp));
+        float3 yDir = cross(xDir, zDir);
+        p.position = eyePoint;
+        p.orientation = normalize(make_rotation_quat_from_rotation_matrix({ xDir, yDir, zDir }));
         return p;
     }
 

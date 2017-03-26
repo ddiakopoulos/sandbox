@@ -286,7 +286,7 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
 
     if (!(coords.z > 0.0 && coords.x > 0.0 && coords.y > 0.0 && coords.x <= 1.0 && coords.y <= 1.0)) return 0;
 
-    float bias = 0.0025;
+    float bias = 0.0019;
     float currentDepth = coords.z;
 
     // Non-PCF path
@@ -343,7 +343,6 @@ void main()
         specularContrib += (specularColor * u_directionalLight.amount);
     }
 
-    /*
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
@@ -360,10 +359,8 @@ void main()
         diffuseContrib += NoL * u_pointLights[i].color * albedo;
         specularContrib += (specularColor * attenuation);
     }
-    */
 
     // Compute image-based lighting
-    /*
     const int NUM_MIP_LEVELS = 7;
     float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
     vec3 cubemapLookup = fix_cube_lookup(reflect(-V, N), 512, mipLevel);
@@ -374,19 +371,10 @@ void main()
     vec3 baseSpecular = mix(vec3(0.04), albedo, metallic);
     float NoV = saturate(dot(N, V));
     specularContrib += env_brdf_approx(baseSpecular, roughness4, NoV);
-    */
 
-    // Combine direct lighting and IBL
-    vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * shadowVisibility;
+    // Combine direct lighting, IBL, and shadow visbility
+    vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * (shadowVisibility);
+    //f_color = vec4(vec3(shadowVisibility), 1.0);
 
-    //f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
-
-    //const vec4 cascadeWeights = get_cascade_weights(-v_view_space_position.z,
-    //        vec4(u_cascadesPlane[0].x, u_cascadesPlane[1].x, u_cascadesPlane[2].x, u_cascadesPlane[3].x), 
-    //        vec4(u_cascadesPlane[0].y, u_cascadesPlane[1].y, u_cascadesPlane[2].y, u_cascadesPlane[3].y));
-
-    //float layer = get_cascade_layer(cascadeWeights);
-    //f_color = vec4(get_cascade_weighted_color(cascadeWeights), 1.0);
-
-    f_color = vec4(vec3(shadowVisibility), 1.0);
+    f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
 }
