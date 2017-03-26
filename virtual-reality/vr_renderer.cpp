@@ -62,17 +62,20 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
     sceneDebugRenderer.draw(d.perView.viewProj);
     for (auto obj : debugSet) { obj->draw(d.perView.viewProj);}
 
+    /*
     // Loop through and update all material properties
     for (auto obj : renderSet)
     {
         if (Material * mat = obj->get_material()) mat->update_uniforms(&d);
         else throw std::runtime_error("cannot draw object without bound material");
     }
+    */
 
     // Now draw
     for (auto obj : renderSet)
     {
         Material * mat = obj->get_material();
+        if (Material * mat = obj->get_material()) mat->update_uniforms(&d);
         mat->use(mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale())), d.perView.view);
         obj->draw();
     }
@@ -91,7 +94,8 @@ void VR_Renderer::run_forward_wireframe_pass(const RenderPassData & d)
 
 void VR_Renderer::run_shadow_pass(const RenderPassData & d)
 {
-    shadow->update_cascades(d.data.pose, d.data.nearClip, d.data.farClip, d.data.aspectRatio, d.data.vfov, d.perScene.directional_light.direction);
+
+    shadow->update_cascades(make_view_matrix_from_pose(d.data.pose), d.data.nearClip, d.data.farClip, d.data.aspectRatio, d.data.vfov, d.perScene.directional_light.direction);
 
     shadow->pre_draw();
 
@@ -191,7 +195,7 @@ void VR_Renderer::render_frame()
         v.viewProj = mul(eyes[eyeIdx].projectionMatrix, eyes[eyeIdx].pose.inverse().matrix());
         v.eyePos = float4(eyes[eyeIdx].pose.position, 1);
 
-        const RenderPassData renderPassData(eyeIdx, eyes[eyeIdx], b, v, shadow->shadowArrayColor);
+        const RenderPassData renderPassData(eyeIdx, eyes[eyeIdx], b, v, shadow->shadowArrayDepth);
 
         if (renderShadows)
         {
