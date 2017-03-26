@@ -62,22 +62,17 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
     sceneDebugRenderer.draw(d.perView.viewProj);
     for (auto obj : debugSet) { obj->draw(d.perView.viewProj);}
 
-    // Loop through and update all material properties
-    for (auto obj : renderSet)
-    {
-        if (Material * mat = obj->get_material()) mat->update_uniforms(&d);
-        else throw std::runtime_error("cannot draw object without bound material");
-    }
-
     // Now draw
     for (auto obj : renderSet)
     {
-        Material * mat = obj->get_material();
-        mat->use(mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale())), d.perView.view);
-        obj->draw();
+        if (Material * mat = obj->get_material())
+        {
+            mat->update_uniforms(&d);
+            mat->use(mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale())), d.perView.view);
+            obj->draw();
+        }
+        else throw std::runtime_error("cannot draw object without bound material");
     }
-
-    sceneDebugRenderer.clear();
 
     // Refactor this
     outputTextureHandles[0] = eyeTextures[0];
@@ -91,14 +86,13 @@ void VR_Renderer::run_forward_wireframe_pass(const RenderPassData & d)
 
 void VR_Renderer::run_shadow_pass(const RenderPassData & d)
 {
-
     shadow->update_cascades(make_view_matrix_from_pose(d.data.pose), d.data.nearClip, d.data.farClip, d.data.aspectRatio, d.data.vfov, d.perScene.directional_light.direction);
 
     shadow->pre_draw();
 
     for (Renderable * obj : renderSet)
     {
-        // Check if should cast shadow
+        // Fixme - check if should cast shadow
         const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
         shadow->cascadeShader.uniform("u_modelMatrix", modelMatrix);
         obj->draw();
@@ -231,6 +225,8 @@ void VR_Renderer::render_frame()
     }
     renderTimer.stop();
     ImGui::Text("Render (Both Eyes) %f", renderTimer.elapsed_ms());
+
+    sceneDebugRenderer.clear();
 
     renderSet.clear();
     debugSet.clear();
