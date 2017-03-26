@@ -49,6 +49,7 @@ uniform mat4 u_modelMatrixIT;
 uniform mat4 u_modelViewMatrix;
 
 out vec3 v_normal;
+out vec3 v_position;
 out vec3 v_world_position;
 out vec3 v_view_space_position;
 out vec2 v_texcoord;
@@ -59,6 +60,7 @@ void main()
 {
     vec4 worldPosition = u_modelMatrix * vec4(inPosition, 1.0);
     gl_Position = u_viewProjMatrix * worldPosition;
+    v_position = inPosition;
     v_view_space_position = (u_modelViewMatrix * vec4(inPosition, 1.0)).xyz;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal, 1.0)).xyz);
     v_world_position = worldPosition.xyz;
