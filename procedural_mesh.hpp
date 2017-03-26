@@ -751,12 +751,26 @@ namespace avl
         return make_mesh_from_geometry(make_tetrahedron());
     }
     
-    inline GlMesh make_fullscreen_quad(bool backfacing = false)
+    inline GlMesh make_fullscreen_quad_ndc()
     {
         Geometry g;
-        g.vertices = { {-1.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f} };
-        g.faces = {{0, 1, 2}, {3, 4, 5}};
-        g.texCoords = {{0, 0}, {1, 0}, {0, 1}, {0, 1}, {1, 0}, {1, 1}};
+        g.vertices = { { -1.0f, -1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } };
+        g.texCoords = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
+        g.faces = { { 0, 1, 2 },{ 3, 4, 5 } };
+        return make_mesh_from_geometry(g);
+    }
+
+    inline GlMesh make_fullscreen_quad()
+    {
+        return make_fullscreen_quad_ndc();
+    }
+
+    inline GlMesh make_fullscreen_quad_screenspace()
+    {
+        Geometry g;
+        g.vertices = { { 0.0f, 0.0f, 0.0f },{ 1.0f, 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 0.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } };
+        g.texCoords = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
+        g.faces = { { 0, 1, 2 },{ 3, 4, 5 } };
         return make_mesh_from_geometry(g);
     }
 

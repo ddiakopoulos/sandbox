@@ -38,15 +38,15 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
     setup_scene();
 
     uiSurface.bounds = { 0, 0, (float)windowWidth, (float)windowHeight };
-    uiSurface.add_child({ { 0.0000f, +10 },{ 0, +10 },{ 0.1667f, -10 },{ 0.133f, +10 } });
-    uiSurface.add_child({ { 0.1667f, +10 },{ 0, +10 },{ 0.3334f, -10 },{ 0.133f, +10 } });
-    uiSurface.add_child({ { 0.3334f, +10 },{ 0, +10 },{ 0.5009f, -10 },{ 0.133f, +10 } });
-    uiSurface.add_child({ { 0.5000f, +10 },{ 0, +10 },{ 0.6668f, -10 },{ 0.133f, +10 } });
+    uiSurface.add_child({ { 0.0000f, +20 },{ 0, +20 },{ 0.1667f, -10 },{ 0.133f, +10 } });
+    uiSurface.add_child({ { 0.1667f, +20 },{ 0, +20 },{ 0.3334f, -10 },{ 0.133f, +10 } });
+    uiSurface.add_child({ { 0.3334f, +20 },{ 0, +20 },{ 0.5009f, -10 },{ 0.133f, +10 } });
+    uiSurface.add_child({ { 0.5000f, +20 },{ 0, +20 },{ 0.6668f, -10 },{ 0.133f, +10 } });
     uiSurface.layout();
 
     for (int i = 0; i < 4; ++i)
     {
-        csmViews.push_back(std::make_shared<GLTextureView3D>(renderer->shadow->get_output_texture()));
+        csmViews.push_back(std::make_shared<GLTextureView3D>());
     }
 
     gl_check_error(__FILE__, __LINE__);
@@ -59,7 +59,7 @@ VirtualRealityApp::~VirtualRealityApp()
 
 void VirtualRealityApp::setup_physics()
 {
-    scoped_timer t("setup physics");
+    AVL_SCOPED_TIMER("setup_physics");
 
     physicsEngine.reset(new BulletEngineVR());
 
@@ -72,7 +72,7 @@ void VirtualRealityApp::setup_physics()
         btIDebugDraw::DBG_DrawFeaturesText | 
         btIDebugDraw::DBG_DrawText);
 
-    // Hook up debug renderer
+    // Allow bullet world to make calls into our debug renderer
     physicsEngine->get_world()->setDebugDrawer(physicsDebugRenderer.get());
 }
 
@@ -95,7 +95,7 @@ void VirtualRealityApp::setup_scene()
     scene.namedMaterialList["material-wireframe"] = std::make_shared<WireframeMaterial>(wireframeShader);
 
     // Slightly offset from debug-rendered physics floor
-    scene.grid.set_origin(float3(0, -.01f, 0));
+    scene.grid.set_origin(float3(0, +0.01f, 0));
 
     // Bullet considers an object with 0 mass infinite/static/immovable
     btCollisionShape * ground = new btStaticPlaneShape({ 0.f, +1.f, 0.f }, 0.f);
@@ -292,7 +292,10 @@ void VirtualRealityApp::setup_scene()
 
 void VirtualRealityApp::on_window_resize(int2 size)
 {
-
+    int windowWidth, windowHeight;
+    glfwGetWindowSize(window, &windowWidth, &windowHeight);
+    uiSurface.bounds = { 0, 0, (float)windowWidth, (float)windowHeight };
+    uiSurface.layout();
 }
 
 void VirtualRealityApp::on_input(const InputEvent & event) 
@@ -428,7 +431,6 @@ void VirtualRealityApp::on_draw()
     glViewport(0, 0, width, height);
 
     gui::imgui_menu_stack menu(*this, igm->capturedKeys);
-
     menu.app_menu_begin();
     {
         menu.begin("File");
@@ -480,19 +482,15 @@ void VirtualRealityApp::on_draw()
         //renderer->set_eye_data(centerEye, centerEye);
         //renderer->render_frame();
     }
-    
-    
-    // for (int i = 0; i < 4; ++i) csmViews[i]->draw(uiSurface.children[i]->bounds, int2(width, height), i);
-  
-    /*
-    gui::imgui_fixed_window_begin("Render Debug Views", { { 0, height - 220 }, { width, height } });
+
+
+    //gui::imgui_fixed_window_begin("Render Debug Views", { { 0, height - 220 }, { width, height } });
     //gui::Img(renderer->shadow->get_output_texture(), "Shadow", { 240, 180 }); ImGui::SameLine();
     //gui::Img(renderer->bloom->get_luminance_texture(), "Luminance", { 240, 180 }); ImGui::SameLine();
     //gui::Img(renderer->bloom->get_bright_tex(), "Bright", { 240, 180 }); ImGui::SameLine();
     //gui::Img(renderer->bloom->get_blur_tex(), "Blur", { 240, 180 }); ImGui::SameLine();
     //gui::Img(renderer->bloom->get_output_texture(), "Output", { 240, 180 }); ImGui::SameLine();
-    gui::imgui_fixed_window_end();
-    */
+    //gui::imgui_fixed_window_end();
 
     Bounds2D rect{ { 0.f, 0.f },{ (float)width,(float)height } };
 
@@ -524,6 +522,17 @@ void VirtualRealityApp::on_draw()
         glTexCoord2f(0, 1); glVertex2f(-1, +1);
         glEnd();
         glDisable(GL_TEXTURE_2D);
+    }
+
+    for (int i = 0; i < 4; ++i)
+    {
+        glViewport(0, 0, width, height);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+        csmViews[i]->draw(uiSurface.children[i]->bounds, 
+            float2(width, height), 
+            renderer->shadow->get_output_texture(), 
+            GL_TEXTURE_2D_ARRAY, i);
     }
 
     physicsDebugRenderer->clear();
