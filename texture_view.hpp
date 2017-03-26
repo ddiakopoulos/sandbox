@@ -8,13 +8,12 @@
 static const char s_textureVert[] = R"(#version 330
     layout(location = 0) in vec3 position;
     layout(location = 3) in vec2 uvs;
-    uniform mat4 u_model;
-    uniform mat4 u_projection;
+    uniform mat4 u_mvp;
     out vec2 texCoord;
     void main()
     {
         texCoord = uvs;
-        gl_Position = u_projection * u_model * vec4(position.xy, 0.0, 1.0);
+        gl_Position = u_mvp * vec4(position.xy, 0.0, 1.0);
     
     }
 )";
@@ -22,13 +21,12 @@ static const char s_textureVert[] = R"(#version 330
 static const char s_textureVertFlip[] = R"(#version 330
     layout(location = 0) in vec3 position;
     layout(location = 3) in vec2 uvs;
-    uniform mat4 u_model;
-    uniform mat4 u_projection;
+    uniform mat4 u_mvp;
     out vec2 texCoord;
     void main()
     {
         texCoord = vec2(uvs.x, 1 - uvs.y);
-        gl_Position = u_projection * u_model * vec4(position.xy, 0.0, 1.0);
+        gl_Position = u_mvp * vec4(position.xy, 0.0, 1.0);
     
     }
 )";
@@ -76,34 +74,22 @@ namespace avl
     struct GLTextureView : public Noncopyable
     {
         GlShader program;
-        GlMesh mesh;
-        GLuint texture;
+        GlMesh mesh = make_fullscreen_quad_screenspace();
         
-        GLTextureView(GLuint tex, bool flip = false) : texture(tex)
+        GLTextureView(bool flip = false)
         {
-            Geometry g;
-            g.vertices = { {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f} };
-            g.texCoords = { {0.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f} };
-            g.faces = {{0, 1, 2}, {3, 4, 5}};
-            mesh = make_mesh_from_geometry(g);
             program = flip ? GlShader(s_textureVertFlip, s_textureFrag) : GlShader(s_textureVert, s_textureFrag);
         }
         
-        void draw(Bounds2D rect, int2 windowSize)
+        void draw(const Bounds2D & rect, const float2 windowSize, const GLuint tex)
         {
-            program.bind();
-            
             const float4x4 projection = make_orthographic_matrix(0.0f, windowSize.x, windowSize.y, 0.0f, -1.0f, 1.0f);
-
-            float4x4 model = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
-            model = mul(make_scaling_matrix({ (float) rect.width(), (float) rect.height(), 0.f}), model);
-            model = mul(make_translation_matrix({(float) rect.min().x, (float) rect.min().y, 0.f}), model);
-            program.uniform("u_model", model);
-            program.uniform("u_projection", projection);
-            program.texture("u_texture", 0, texture, GL_TEXTURE_2D);
-            
+            float4x4 model = make_scaling_matrix({ rect.width(), rect.height(), 0.f });
+            model = mul(make_translation_matrix({ rect.min().x, rect.min().y, 0.f }), model);
+            program.bind();
+            program.uniform("u_mvp", mul(projection, model));
+            program.texture("u_texture", 0, tex, GL_TEXTURE_2D);
             mesh.draw_elements();
-            
             program.unbind();
         }
         
@@ -128,7 +114,7 @@ namespace avl
             program.unbind();
         }
     };
-    
+ 
 }
 
 #endif // texture_view_h
