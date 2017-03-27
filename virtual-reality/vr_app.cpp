@@ -164,19 +164,20 @@ void VirtualRealityApp::setup_scene()
         //auto floor = make_plane(48.f, 48.f, 256, 256, true);
         StaticMesh floorMesh;
         floorMesh.set_static_mesh(make_cube(), 1.0f);
-        floorMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, ANVIL_PI / 2), float3(0, -4.01f, 0))); 
-        floorMesh.set_scale(float3(4.f));
+        floorMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, ANVIL_PI / 2), float3(0, -2.01f, 0))); 
+        floorMesh.set_scale(float3(2.f));
         floorMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
         scene.models.push_back(std::move(floorMesh));
 
-        /*
+
         auto geom = load_geometry_from_obj_no_texture("../assets/models/cerberus/cerberus.obj")[0];
         StaticMesh materialTestMesh;
         materialTestMesh.set_static_mesh(geom, 1.33f);
         materialTestMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, -ANVIL_PI), float3(0, 0.75f, 0)));
-        materialTestMesh.set_material(scene.namedMaterialList["material-pbr"].get());
+        materialTestMesh.set_material(scene.namedMaterialList["material-cerberus"].get());
         scene.models.push_back(std::move(materialTestMesh));
 
+        /*
         auto terrain = load_geometry_from_obj_no_texture("../assets/nonfree/terrain.obj");
 
         for (auto t : terrain)

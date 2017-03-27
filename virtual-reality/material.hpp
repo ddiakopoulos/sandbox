@@ -18,6 +18,7 @@ namespace avl
         std::shared_ptr<GlShader> program;
         virtual void update_uniforms(const RenderPassData * data) {}
         virtual void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) {}
+        uint32_t id() { return (uint32_t) program->handle(); }
     };
 
     class DebugMaterial : public Material

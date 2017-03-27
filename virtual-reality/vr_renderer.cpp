@@ -62,7 +62,11 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
     sceneDebugRenderer.draw(d.perView.viewProj);
     for (auto obj : debugSet) { obj->draw(d.perView.viewProj);}
 
-    // Now draw
+    std::sort(renderSet.begin(), renderSet.end(), [](Renderable * lhs, Renderable * rhs)
+    {
+        return (lhs->get_material()->id() < rhs->get_material()->id());
+    });
+
     for (auto obj : renderSet)
     {
         if (Material * mat = obj->get_material())
@@ -99,14 +103,12 @@ void VR_Renderer::run_shadow_pass(const RenderPassData & d)
     }
 
     shadow->post_draw();
-    ImGui::Text("Shadow Pass %f", renderTimer.elapsed_ms());
 }
 
 void VR_Renderer::run_bloom_pass(const RenderPassData & d)
 {
     bloom->execute(eyeTextures[d.eye]);
     glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-    ImGui::Text("Bloom Pass %f", renderTimer.elapsed_ms());
 }
 
 void VR_Renderer::run_reflection_pass(const RenderPassData & d)

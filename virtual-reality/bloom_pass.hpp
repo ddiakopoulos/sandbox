@@ -179,7 +179,7 @@ struct BloomPass
         glViewport(0, 0, perEyeSize.x, perEyeSize.y);
         hdr_tonemapShader.bind();
         hdr_tonemapShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
-        hdr_tonemapShader.texture("s_texBright", 1, brightTex, GL_TEXTURE_2D);
+        hdr_tonemapShader.texture("s_texBright", 1, blurTex, GL_TEXTURE_2D);
         hdr_tonemapShader.uniform("u_exposure", exposure);
         hdr_tonemapShader.uniform("u_tonemap", tonemap);
         fsQuad.draw_elements();
