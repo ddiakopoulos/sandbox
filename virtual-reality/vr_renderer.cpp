@@ -62,7 +62,6 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
     sceneDebugRenderer.draw(d.perView.viewProj);
     for (auto obj : debugSet) { obj->draw(d.perView.viewProj);}
 
-    /*
     // This is done per-eye but should be done per frame instead...
     auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
     {
@@ -90,8 +89,8 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
         top->draw();
         renderQueue.pop();
     }
-    */
 
+    /*
     for (auto obj : renderSet)
     {
         Material * mat = obj->get_material();
@@ -99,6 +98,7 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
         mat->use(mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale())), d.perView.view);
         obj->draw();
     }
+    */
 
     // Refactor this
     outputTextureHandles[0] = eyeTextures[0];
