@@ -129,6 +129,9 @@ struct Scene
 
 struct VirtualRealityApp : public GLFWApp
 {
+    uint64_t frameCount = 0;
+    bool shouldTakeScreenshot = false;
+
     AssetDatabase<GlTexture2D> texDatabase;
 
     std::unique_ptr<VR_Renderer> renderer;

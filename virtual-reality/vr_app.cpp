@@ -5,6 +5,25 @@
 // Material manager -> setup, get
 // Serialization
 
+inline bool take_screenshot(int2 size)
+{
+    HumanTime t;
+    std::string timestamp =
+        std::to_string(t.month + 1) + "." +
+        std::to_string(t.monthDay) + "." +
+        std::to_string(t.year) + "-" +
+        std::to_string(t.hour) + "." +
+        std::to_string(t.minute) + "." +
+        std::to_string(t.second);
+
+    std::vector<uint8_t> screenShot(size.x * size.y * 3);
+    glReadPixels(0, 0, size.x, size.y, GL_RGB, GL_UNSIGNED_BYTE, screenShot.data());
+    auto flipped = screenShot;
+    for (int y = 0; y<size.y; ++y) memcpy(flipped.data() + y*size.x * 3, screenShot.data() + (size.y - y - 1)*size.x * 3, size.x * 3);
+    stbi_write_png(std::string("render_" + timestamp + ".png").c_str(), size.x, size.y, 3, flipped.data(), 3 * size.x);
+    return false;
+}
+
 VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
 {
     scoped_timer t("constructor");
@@ -543,7 +562,17 @@ void VirtualRealityApp::on_draw()
 
     if (igm) igm->end_frame();
 
+    // Take a screenshot every 15 seconds to track application
+    // development progress
+    if (frameCount % (90 * 15) == 0)
+    {
+        take_screenshot({ width, height });
+    }
+
     glfwSwapBuffers(window);
+
+    frameCount++;
+
     gl_check_error(__FILE__, __LINE__);
 }
 
