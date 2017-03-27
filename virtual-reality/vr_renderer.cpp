@@ -63,7 +63,9 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
 
     std::sort(renderSet.begin(), renderSet.end(), [](Renderable * lhs, Renderable * rhs)
     {
-        return (lhs->get_material()->id() < rhs->get_material()->id());
+        auto lid = lhs->get_material()->id();
+        auto rid = rhs->get_material()->id();
+        return lid > rid;
     });
 
     for (auto obj : renderSet)
