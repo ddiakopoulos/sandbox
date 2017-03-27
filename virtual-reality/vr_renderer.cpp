@@ -78,12 +78,16 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
 
     std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(renderSortFunc)> renderQueue(renderSortFunc);
 
-    for (auto obj : renderSet)
+    for (auto obj : renderSet) { renderQueue.push(obj); }
+
+    while (!renderQueue.empty())
     {
-        Material * mat = obj->get_material();
+        auto top = renderQueue.top();
+        Material * mat = top->get_material();
         mat->update_uniforms(&d);
-        mat->use(mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale())), d.perView.view);
-        obj->draw();
+        mat->use(mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale())), d.perView.view);
+        top->draw();
+        renderQueue.pop();
     }
 
     // Refactor this
