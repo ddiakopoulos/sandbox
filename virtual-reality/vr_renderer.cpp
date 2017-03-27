@@ -1,6 +1,7 @@
 #include "vr_renderer.hpp"
 #include "material.hpp"
 #include "avl_imgui.hpp"
+#include <queue>
 
 VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizePerEye)
 {
@@ -62,7 +63,7 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
     for (auto obj : debugSet) { obj->draw(d.perView.viewProj);}
 
     // This is done per-eye but should be done per frame instead...
-    std::sort(renderSet.begin(), renderSet.end(), [&d](Renderable * lhs, Renderable * rhs)
+    auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
     {
         auto lid = lhs->get_material()->id();
         auto rid = rhs->get_material()->id();
@@ -73,7 +74,9 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
 
         if (lid != rid) return lid > rid;
         else return lDist < rDist;
-    });
+    };
+
+    std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(renderSortFunc)> renderQueue(renderSortFunc);
 
     for (auto obj : renderSet)
     {
