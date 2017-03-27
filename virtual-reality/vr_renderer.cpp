@@ -61,11 +61,18 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
     sceneDebugRenderer.draw(d.perView.viewProj);
     for (auto obj : debugSet) { obj->draw(d.perView.viewProj);}
 
-    std::sort(renderSet.begin(), renderSet.end(), [](Renderable * lhs, Renderable * rhs)
+    // This is done per-eye but should be done per frame instead...
+    std::sort(renderSet.begin(), renderSet.end(), [&d](Renderable * lhs, Renderable * rhs)
     {
         auto lid = lhs->get_material()->id();
         auto rid = rhs->get_material()->id();
-        return lid > rid;
+
+        auto cameraPositionWS = d.perView.eyePos.xyz();
+        auto lDist = distance(cameraPositionWS, lhs->get_pose().position);
+        auto rDist = distance(cameraPositionWS, rhs->get_pose().position);
+
+        if (lid != rid) return lid > rid;
+        else return lDist < rDist;
     });
 
     for (auto obj : renderSet)
