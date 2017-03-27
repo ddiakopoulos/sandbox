@@ -15,7 +15,7 @@
  * To Do - 3.25.2017
  * [ ] Break out tonemapping into a separate pass (does not strictly belong to bloom)
  * [ ] Blur should be two passes, instead of the (simple) 3x3 single-pass kernel
- * [ ] Possibility to add an upsampling pass nicer visual quality
+ * [ ] Possibility to add upsampling pass nicer for visual quality
  * [ ] Downsampling for average scene luminance not used currently; auto-exposure experimentation
  * [ ] Downsampling is an ideal candidate for compute shader experimentation
  * [ ] Performance profiling (perEyeSize can be tweaked)
@@ -150,13 +150,8 @@ struct BloomPass
         exposureCtrl = exposureCtrl * 0.1 + exposureTarget * 0.9;
         const float exposure = std::exp(exposureCtrl*exposureCtrl) - 1.0f;
         ImGui::Text("Exposure %f", exposure);
+        ImGui::Text("Luminance %f", lumValue.x);
         */
-
-        ImGui::SliderFloat("MiddleGrey", &middleGrey, 0.1f, 1.0f);
-        ImGui::SliderFloat("WhitePoint", &whitePoint, 0.1f, 2.0f);
-        ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
-        ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
-        //ImGui::Text("Luminance %f", lumValue.x);
 
         glBindFramebuffer(GL_FRAMEBUFFER, brightFramebuffer);
         glViewport(0, 0, perEyeSize.x / 2, perEyeSize.y / 2);
@@ -187,6 +182,14 @@ struct BloomPass
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_FRAMEBUFFER_SRGB);
+    }
+
+    void gather_imgui()
+    {
+        ImGui::SliderFloat("MiddleGrey", &middleGrey, 0.1f, 1.0f);
+        ImGui::SliderFloat("WhitePoint", &whitePoint, 0.1f, 2.0f);
+        ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
+        ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
     }
 
     GLuint get_output_texture() const { return outputFramebuffer.id(); }

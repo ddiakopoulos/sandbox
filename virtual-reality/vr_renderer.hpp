@@ -123,10 +123,7 @@ public:
 
     void set_eye_data(const EyeData left, const EyeData right);
 
-    GLuint get_eye_texture(const Eye e) 
-    { 
-        return outputTextureHandles[(int)e];
-    }
+    GLuint get_eye_texture(const Eye e) { return outputTextureHandles[(int)e]; }
 
     // A `DebugRenderable` is for rapid prototyping, exposing a single `draw(viewProj)` interface.
     // The list of these is drawn before `Renderable` objects, where they use their own shading

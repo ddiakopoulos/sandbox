@@ -56,7 +56,6 @@ void VR_Renderer::run_skybox_pass(const RenderPassData & d)
 
 }
 
-// Do I want to use exceptions in the renderer?
 void VR_Renderer::run_forward_pass(const RenderPassData & d)
 {
     sceneDebugRenderer.draw(d.perView.viewProj);
@@ -69,13 +68,10 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
 
     for (auto obj : renderSet)
     {
-        if (Material * mat = obj->get_material())
-        {
-            mat->update_uniforms(&d);
-            mat->use(mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale())), d.perView.view);
-            obj->draw();
-        }
-        else throw std::runtime_error("cannot draw object without bound material");
+        Material * mat = obj->get_material();
+        mat->update_uniforms(&d);
+        mat->use(mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale())), d.perView.view);
+        obj->draw();
     }
 
     // Refactor this
@@ -227,6 +223,8 @@ void VR_Renderer::render_frame()
     }
     renderTimer.stop();
     ImGui::Text("Render (Both Eyes) %f", renderTimer.elapsed_ms());
+
+    bloom->gather_imgui();
 
     sceneDebugRenderer.clear();
 

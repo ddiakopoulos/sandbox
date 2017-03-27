@@ -2,9 +2,7 @@
 #include "avl_imgui.hpp"
 #include "asset_io.hpp"
 
-// Material manager -> setup, get
-// Serialization
-
+// fixme: make async using pbo & write on separate thread
 inline bool take_screenshot(int2 size)
 {
     HumanTime t;
@@ -563,7 +561,7 @@ void VirtualRealityApp::on_draw()
     if (igm) igm->end_frame();
 
     // Take a screenshot every 15 seconds to track application
-    // development progress
+    // development progress. 
     if (frameCount % (90 * 15) == 0)
     {
         take_screenshot({ width, height });

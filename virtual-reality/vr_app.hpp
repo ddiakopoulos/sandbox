@@ -124,6 +124,14 @@ struct Scene
         {
             lights.pointLights.push_back(&ptLight);
         }
+
+        // Validate existance of material on object
+        for (auto obj : objects)
+        {
+            Material * mat = obj->get_material();
+            if (!mat) throw std::runtime_error("object does not have material");
+        }
+
     }
 };
 
