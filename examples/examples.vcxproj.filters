@@ -24,13 +24,7 @@
     <ClInclude Include="empty_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
-    <ClInclude Include="euclidean_app.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
     <ClInclude Include="geometric_algo_dev.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
-    <ClInclude Include="glass_material_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
     <ClInclude Include="hdr_skydome.hpp">
@@ -40,9 +34,6 @@
       <Filter>applications</Filter>
     </ClInclude>
     <ClInclude Include="lens_dev.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
-    <ClInclude Include="manipulation_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
     <ClInclude Include="meshline_app.hpp">
@@ -55,12 +46,6 @@
       <Filter>applications</Filter>
     </ClInclude>
     <ClInclude Include="simplex_noise_app.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
-    <ClInclude Include="render_experiments.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
-    <ClInclude Include="ssao_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
     <ClInclude Include="terrain_app.hpp">

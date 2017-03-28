@@ -14,9 +14,6 @@ Authored by Sean T. Barrett, 1998+
 https://github.com/sgorsten/linalg (Public Domain)
 Authored by Sterling G. Orsten, 2014
 
-https://github.com/sgorsten/editor (Public Domain)
-Authored by Sterling G. Orsten, 2015
-
 https://github.com/sgorsten/workbench (Public Domain)
 Authored by Sterling G. Orsten, 2015
 
@@ -35,8 +32,11 @@ Authored by Emil Ernerfeldt, 2015
 https://github.com/mstump/queues/tree/master/include (Public Domain)
 Authored by Matt Stump, 2014 and inspired by Dmitry Vyukov (http://www.1024cores.net/home/lock-free-algorithms)
 
-https://github.com/forrestthewoods/lib_fts
+https://github.com/forrestthewoods/lib_fts (Public Domain)
 Authored by Forrest Smith, 2016+
+
+http://marc-b-reynolds.github.io/shf/2016/04/18/sobol.html (Public Domain)
+Authored by Marc B. Reynolds, 2010+
 
 ////////////////////////////////////////
 //   Permissively Licensed Libraries  //
@@ -48,8 +48,23 @@ Copyright (C) Camilla Berglund, 2006-2011
 http://www.geometrictools.com/ (Boost)
 Copyright (C) Geometric Tools, 1998-2015
 
+https://github.com/g-truc/gli (MIT)
+Copyright (C) G-Truc Creation, 2010+
+
+https://github.com/g-truc/glm (MIT)
+Copyright (C) G-Truc Creation, 2005+
+
 https://github.com/cinder/Cinder (BSD 2-Clause)
 Copyright (C) The Barbarian Group, 2010+
+
+https://bitbucket.org/SpartanJ/efsw (MIT)
+Copyright (C) James Wynn & Martín Lucas Golini, 2012+
+
+https://github.com/ocornut/imgui (MIT)
+Copyright (C) Omar Cornut and ImGui contributors, 2014-2015 
+
+https://github.com/bkaradzic/bgfx (BSD 2-Clause)
+Copyright (C) Branimir Karadzic, 2010-2016
 
 https://github.com/syoyo/tinyobjloader (BSD 2-Clause)
 Copyright (C) Syoyo Fujita, 2012 - 2015
@@ -57,14 +72,8 @@ Copyright (C) Syoyo Fujita, 2012 - 2015
 https://github.com/melax/sandbox (MIT)
 Copyright (C) Stan Melax, 2014
 
-https://github.com/bclucas/Alloy-Graphics-Library/ (BSD 2-Clause)
-Copyright (C) Blake C. Lucas, 2015
-
-https://github.com/dmsovetov/foo (MIT)
+https://github.com/dmsovetov/Nimble (MIT)
 Copyright (C) Dmitry Sovetov, 2015
-
-http://gruntthepeon.free.fr/oscpkt/ (zlib/libpng)
-Copyright (C) Julien Pommier, 2015
 
 https://github.com/memononen/nanovg/ (zlib/libpng)
 Copyright (C) Mikko Mononen, 2015
@@ -72,7 +81,7 @@ Copyright (C) Mikko Mononen, 2015
 https://github.com/caseman/noise (MIT)
 Copyright (C) Casey Duncan, 2008
 
-https://hal.inria.fr/hal-00670496/ (Boost)
+https://hal.inria.fr/hal-00670496/ (One Euro Filter) (Boost)
 Copyright (C) Reviatech, 2012
 
 https://github.com/wieden-kennedy/Cinder-Sampling (Apache 2.0)
@@ -81,23 +90,14 @@ Copyright (C) Wieden + Kennedy, 2014
 https://github.com/mattdesl/glsl-fxaa/blob/master/fxaa.glsl (BSD 3-Clause)
 Copyright (C) Armin Ronacher, 2011
 
-https://bitbucket.org/SpartanJ/efsw (MIT)
-Copyright (C) James Wynn & Martín Lucas Golini, 2012+
-
 https://github.com/spite/THREE.MeshLine (MIT)
 Copyright (C) Jaume Sanchez Elias, 2015
 
 https://github.com/spite/THREE.DecalGeometry (MIT)
 Copyright (C) Jaume Sanchez Elias, 2014
 
-https://github.com/bkaradzic/bgfx (BSD 2-Clause)
-Copyright (C) Branimir Karadzic, 2010-2016
-
 https://github.com/PointCloudLibrary/pcl (BSD 3 Clause)
 Copyright (C) The Point Cloud Library Authors, 2009+
-
-https://github.com/ocornut/imgui (MIT)
-Copyright (C) Omar Cornut and ImGui contributors, 2014-2015 
 
 https://github.com/simongeilfus/PoissonDiskDistribution (MIT)
 Copyright (C) Simon Geilfus, 2015

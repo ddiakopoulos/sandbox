@@ -4,17 +4,14 @@
 #define movement_tracker_hpp
 
 #include "linalg_util.hpp"
-
 #include <deque>
 #include <utility>
 #include <vector>
 #include <memory>
 
-// Tracks movement and gives info about velocity.
 template<typename T>
 class MovementTracker
 {
-protected:
 
     struct Sample
     {
@@ -22,10 +19,38 @@ protected:
         T where;
     };
 
-public:
+    // From where shall we calculate velocity? Return false on "not at all"
+    bool velocity_calc_begin(size_t & out_index, double now) const
+    {
+       // if (timeList.size() < 2) return false; // Not enough data
+       // if (duration() < min_velocity_time()) return false; // Not enough data
+        double vel_time = velocity_time();
+        for (size_t i=0; i<timeList.size()-1; ++i) 
+        {
+            if (now - timeList[i].when < vel_time) 
+            {
+                //if (timeList.size() - i < min_velocity_samples()) return false; // Too few samples
+                out_index = i;
+                return true;
+            }
+        }
+        return false;
+    }
 
-    MovementTracker() { }
-    ~MovementTracker() { }
+    // The minimum number of samples for there to be any velocity calculated.
+    static size_t min_velocity_samples() { return 15; }
+
+    // Minimum time before we have a good velocity
+    static double min_velocity_time() { return 0.01f; }
+
+    // The time over which we calculate velocity.
+    static double velocity_time() { return 0.5f; }
+
+    std::unique_ptr<Sample> start;
+    std::deque<Sample> timeList;
+    const uint32_t maxHistory = 10; // Do not keep points older than this
+
+public:
 
     void clear()
     {
@@ -112,43 +137,11 @@ public:
     void flush(double now)
     {
         while (!timeList.empty() && timeList.front().when < now - (double) maxHistory) 
-		{
-            timeList.pop_front();
-		}
-    }
-
-private:
-
-    // From where shall we calculate velocity? Return false on "not at all"
-    bool velocity_calc_begin(size_t & out_index, double now) const
-    {
-       // if (timeList.size() < 2) return false; // Not enough data
-       // if (duration() < min_velocity_time()) return false; // Not enough data
-        double vel_time = velocity_time();
-        for (size_t i=0; i<timeList.size()-1; ++i) 
         {
-            if (now - timeList[i].when < vel_time) 
-            {
-                //if (timeList.size() - i < min_velocity_samples()) return false; // Too few samples
-                out_index = i;
-                return true;
-            }
+            timeList.pop_front();
         }
-        return false;
     }
 
-    // The minimum number of samples for there to be any velocity calculated.
-    static size_t min_velocity_samples() { return 15; }
-
-    // Minimum time before we have a good velocity
-    static double min_velocity_time() { return 0.01f; }
-
-    // The time over which we calculate velocity.
-    static double velocity_time() { return 0.5f; }
-
-    std::unique_ptr<Sample> start;
-	std::deque<Sample> timeList;
-    const uint32_t maxHistory = 10; // Do not keep points older than this
 };
 
-#endif // end movement_tracker_h
+#endif // end movement_tracker_hpp

@@ -12,12 +12,12 @@
 
 using namespace avl;
 
- uint32_t kmeans_cluster_3d(const std::vector<float3> & input,          // Input Data
-                            const uint32_t clumpCount,                  // The number of clumps you wish to produce
-                            std::vector<float3> & clusters,             // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
-                            std::vector<uint32_t> & outputIndices,      // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
-                            const float errorThreshold,                 // The error threshold to converge towards before giving up.
-                            const float collapseDistance)               // Distance so small it is not worth bothering to create a new clump.
+ uint32_t kmeans_cluster_3d(const std::vector<float3> & input,      // Input Data
+                            const uint32_t clumpCount,              // The number of clumps you wish to produce
+                            std::vector<float3> & clusters,         // The output array of clumps 3d vectors, should be at least 'clumpCount' in size.
+                            std::vector<uint32_t> & outputIndices,  // A set of indices which remaps the input vertices to clumps; should be at least 'inputSize'
+                            const float errorThreshold,             // The error threshold to converge towards before giving up.
+                            const float collapseDistance)           // Distance so small it is not worth bothering to create a new clump.
 {
     const uint32_t inputSize = input.size();
 
@@ -154,15 +154,15 @@ using namespace avl;
 };
 
 // Debug utility function to automatically create new 'subpointclouds" based on segmented/clustered pointcloud
-std::vector<std::vector<float3>> make_kmeans_cluster(const std::vector<float3> & input, const uint32_t clumpCount, const float errorThreshold, const float collapseDistance)
+std::vector<std::vector<float3>> make_kmeans_cluster(const std::vector<float3> & input, 
+    const uint32_t clumpCount, 
+    const float errorThreshold, 
+    const float collapseDistance)
 {
     std::vector<float3> clusterCentroids(clumpCount);
     std::vector<uint32_t> clusterIndices(input.size());
 
     auto numOutputClusters = kmeans_cluster_3d(input, clumpCount, clusterCentroids, clusterIndices, errorThreshold, collapseDistance);
-
-    std::cout << "Num OUtput: " << numOutputClusters << std::endl;
-
     std::vector<std::vector<float3>> outputClusters(clusterCentroids.size());
 
     // Lookup the cluster of each input vertex and copy it to a new 'subpointcloud'
