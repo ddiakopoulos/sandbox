@@ -46,6 +46,18 @@ struct SceneOctree
             index.z = (a.z > b.z) ? 1 : 0;
             return index;
         }
+
+        void increase_occupancy()
+        {
+            occupancy++;
+            if (parent) parent->occupancy++;
+        }
+
+        void decrease_occupancy()
+        {
+            occupancy--;
+            if (parent) parent->occupancy--;
+        }
     };
 
     Node * root;
@@ -99,7 +111,8 @@ struct SceneOctree
         }
         else
         {
-            // ... fit into existing node
+            child->increase_occupancy();
+            // todo: add renderable to list
         }
     }
     
