@@ -84,6 +84,18 @@ namespace avl
             return false;
         }
 
+        void surround(const float3 & p) 
+        { 
+            _min = linalg::min(_min, p); 
+            _max = linalg::max(_max, p); 
+        }
+
+        void surround(const Bounds3D & other) 
+        { 
+            _min = linalg::min(_min, other._min);
+            _max = linalg::max(_max, other._max);
+        }
+
         uint32_t maximum_extent() const
         {
             auto d = _max - _min;
