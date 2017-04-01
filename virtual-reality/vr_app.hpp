@@ -131,7 +131,14 @@ struct SceneOctree
         // todo: valid box / root check
         Bounds3D bounds = node->get_bounds();
 
-        if ()
+        if (!inside(bounds, root->box))
+        {
+            root->increase_occupancy();
+        }
+        else
+        {
+            add(node, root);
+        }
     }
 
     void remove(Renderable * node)
@@ -140,7 +147,7 @@ struct SceneOctree
     }
 
     // Debugging Only
-    void draw(const float4x4 & viewProj, Node * node)
+    void debug_draw(Node * node)
     {
         if (!node) node = root;
         if (node->occupancy == 0) return;
@@ -149,14 +156,14 @@ struct SceneOctree
 
         // Recurse into children
         Node * child;
-        if ((child = node->arr[{0, 0, 0}]) != nullptr) draw(viewProj, child);
-        if ((child = node->arr[{0, 0, 1}]) != nullptr) draw(viewProj, child);
-        if ((child = node->arr[{0, 1, 0}]) != nullptr) draw(viewProj, child);
-        if ((child = node->arr[{0, 1, 1}]) != nullptr) draw(viewProj, child);
-        if ((child = node->arr[{1, 0, 0}]) != nullptr) draw(viewProj, child);
-        if ((child = node->arr[{1, 0, 1}]) != nullptr) draw(viewProj, child);
-        if ((child = node->arr[{1, 1, 0}]) != nullptr) draw(viewProj, child);
-        if ((child = node->arr[{1, 1, 1}]) != nullptr) draw(viewProj, child);
+        if ((child = node->arr[{0, 0, 0}]) != nullptr) debug_draw(child);
+        if ((child = node->arr[{0, 0, 1}]) != nullptr) debug_draw(child);
+        if ((child = node->arr[{0, 1, 0}]) != nullptr) debug_draw(child);
+        if ((child = node->arr[{0, 1, 1}]) != nullptr) debug_draw(child);
+        if ((child = node->arr[{1, 0, 0}]) != nullptr) debug_draw(child);
+        if ((child = node->arr[{1, 0, 1}]) != nullptr) debug_draw(child);
+        if ((child = node->arr[{1, 1, 0}]) != nullptr) debug_draw(child);
+        if ((child = node->arr[{1, 1, 1}]) != nullptr) debug_draw(child);
     }
 };
 
