@@ -141,6 +141,13 @@ struct SceneOctree
 
         // Recurse into children
         if ((child = node->arr[{0, 0, 0}]) != nullptr) draw(viewProj, child);
+        if ((child = node->arr[{0, 0, 1}]) != nullptr) draw(viewProj, child);
+        if ((child = node->arr[{0, 1, 0}]) != nullptr) draw(viewProj, child);
+        if ((child = node->arr[{0, 1, 1}]) != nullptr) draw(viewProj, child);
+        if ((child = node->arr[{1, 0, 0}]) != nullptr) draw(viewProj, child);
+        if ((child = node->arr[{1, 0, 1}]) != nullptr) draw(viewProj, child);
+        if ((child = node->arr[{1, 1, 0}]) != nullptr) draw(viewProj, child);
+        if ((child = node->arr[{1, 1, 1}]) != nullptr) draw(viewProj, child);
     }
 };
 
