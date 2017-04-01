@@ -72,12 +72,11 @@ struct SceneOctree
             {
                 child->arr[lookup] = new Node(child);
 
-                auto octantMin = child->box.min();
-                auto octantMax = child->box.max();
-                auto octantCenter = child->box.center();
+                const float3 octantMin = child->box.min();
+                const float3 octantMax = child->box.max();
+                const float3 octantCenter = child->box.center();
 
                 float3 min, max;
-
                 for (int axis : { 0, 1, 2 })
                 {
                     if (lookup[axis] == 0)
@@ -91,9 +90,12 @@ struct SceneOctree
                         max[axis] = octantMax[axis];
                     }
                 }
+
+                child->arr[lookup]->box = Bounds3D(min, max);
             }
 
-            // ... recursive add
+            // Recurse into a new depth
+            add(node, child->arr[lookup], ++depth);
         }
         else
         {
