@@ -16,14 +16,22 @@ using namespace avl;
 
 struct SceneOctree
 {
-
+ 
     struct Node
     {
-
+        Node * parent = nullptr;
+        Node(Node * parent) : parent(parent) {}
+        Bounds3D box;
     };
 
     Node * root;
-    uint32_t depth;
+    uint32_t maxDepth = { 12 };
+    GlShader * shader;
+
+    SceneOctree(GlShader * wireframeShader) : shader(wireframeShader)
+    {
+
+    }
 
     void add(Renderable * node, Node * child, int depth = 0)
     {
@@ -38,6 +46,14 @@ struct SceneOctree
     void remove(Renderable * node)
     {
 
+    }
+
+    // Debugging Only
+    void draw(const float4x4 & viewProj)
+    {
+        shader->bind();
+        shader->uniform("u_mvp", mul(viewProj, Identity4x4));
+        shader->unbind();
     }
 };
 
