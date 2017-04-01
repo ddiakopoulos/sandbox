@@ -80,6 +80,21 @@ public:
         }
     }
 
+    void draw_box(const Bounds3D & bounds, const float3 color = float3(1, 1, 1))
+    {
+        for (float a : {bounds.min().x, bounds.max().x}) 
+            for (float b : {bounds.min().y, bounds.max().y})
+                for (float c : {bounds.min().z, bounds.max().z}) vertices.push_back({ {a, b, c}, color });
+
+        for (float a : {bounds.min().x, bounds.max().x})
+            for (float b : {bounds.min().y, bounds.max().y})
+                for (float c : {bounds.min().z, bounds.max().z}) vertices.push_back({ {b, c, a}, color });
+
+        for (float a : {bounds.min().x, bounds.max().x})
+            for (float b : {bounds.min().y, bounds.max().y})
+                for (float c : {bounds.min().z, bounds.max().z}) vertices.push_back({ {c, a, b}, color });
+    }
+
     void draw_sphere(const Pose & pose, const float & radius, const float3 color = float3(1, 1, 1))
     {
         // todo - apply radius
