@@ -3,6 +3,20 @@
 #include "avl_imgui.hpp"
 #include <queue>
 
+float vfov_from_projection(const float4x4 & p)
+{
+    float t = p[1][1];
+    float fov = std::atan((1.0f / t)) * 2.0f;
+    return fov;
+}
+
+float aspect_from_projection(const float4x4 & p)
+{
+    float t = p[0][0];
+    float aspect = 1.0f / (t * (1.0f / p[1][1]));
+    return aspect;
+}
+
 VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizePerEye)
 {
     // Generate multisample render buffers for color and depth
@@ -112,7 +126,12 @@ void VR_Renderer::run_forward_wireframe_pass(const RenderPassData & d)
 
 void VR_Renderer::run_shadow_pass(const RenderPassData & d)
 {
-    shadow->update_cascades(make_view_matrix_from_pose(d.data.pose), d.data.nearClip, d.data.farClip, d.data.aspectRatio, d.data.vfov, d.perScene.directional_light.direction);
+    shadow->update_cascades(make_view_matrix_from_pose(d.data.pose), 
+        d.data.nearClip, 
+        d.data.farClip, 
+        aspect_from_projection(d.data.projectionMatrix),
+        vfov_from_projection(d.data.projectionMatrix),
+        d.perScene.directional_light.direction);
 
     shadow->pre_draw();
 

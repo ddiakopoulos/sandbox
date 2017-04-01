@@ -193,7 +193,7 @@ void VirtualRealityApp::setup_scene()
         materialTestMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, -ANVIL_PI), float3(0, 0.75f, 0)));
         materialTestMesh.set_material(scene.namedMaterialList["material-cerberus"].get());
         scene.models.push_back(std::move(materialTestMesh));
-        */
+
 
         auto terrain = load_geometry_from_obj_no_texture("../assets/nonfree/terrain.obj");
 
@@ -206,6 +206,7 @@ void VirtualRealityApp::setup_scene()
             terrainMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
             scene.models.push_back(std::move(terrainMesh));
         }
+        */
 
     }
 
