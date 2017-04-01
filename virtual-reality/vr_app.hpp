@@ -77,7 +77,7 @@ struct SceneOctree
     };
 
     Node * root;
-    uint32_t maxDepth = { 8 };
+    uint32_t maxDepth = { 12 };
     DebugLineRenderer & debugRenderer;
 
     SceneOctree(DebugLineRenderer & debugRenderer) : debugRenderer(debugRenderer)
@@ -86,10 +86,7 @@ struct SceneOctree
         root->box = Bounds3D({ -4, -4, -4 }, { +4, +4, +4 });
     }
 
-    ~SceneOctree()
-    {
-
-    }
+    ~SceneOctree() { }
 
     float3 get_resolution()
     {
@@ -98,11 +95,7 @@ struct SceneOctree
 
     void add(Renderable * node, Node * child, int depth = 0)
     {
-        if (!child)
-        {
-            std::cout << "Setting Child As Root @ Depth: " << depth << std::endl;
-            child = root;
-        }
+        if (!child) child = root;
 
         std::cout << "Current Depth: " << depth << std::endl;
 
@@ -180,24 +173,27 @@ struct SceneOctree
     }
 
     // Debugging Only
-    void debug_draw(Node * node)
+    void debug_draw(Node * node, float3 coordinate)
     {
         if (!node) node = root;
-        //if (node->occupancy == 0) return;
 
-        debugRenderer.draw_box(node->box, float3(1, 0, 0));
-        //std::cout << "Drawing: " << node->box << std::endl;
+        if (node->occupancy > 0)
+        {
+            debugRenderer.draw_box(node->box, coordinate);
+        }
+        std::cout << "Drawing: " << node->box << std::endl;
+        std::cout << "Occupancy: " << node->occupancy << std::endl;
 
         // Recurse into children
         Node * child;
-        if ((child = node->arr[{0, 0, 0}]) != nullptr) debug_draw(child);
-        if ((child = node->arr[{0, 0, 1}]) != nullptr) debug_draw(child);
-        if ((child = node->arr[{0, 1, 0}]) != nullptr) debug_draw(child);
-        if ((child = node->arr[{0, 1, 1}]) != nullptr) debug_draw(child);
-        if ((child = node->arr[{1, 0, 0}]) != nullptr) debug_draw(child);
-        if ((child = node->arr[{1, 0, 1}]) != nullptr) debug_draw(child);
-        if ((child = node->arr[{1, 1, 0}]) != nullptr) debug_draw(child);
-        if ((child = node->arr[{1, 1, 1}]) != nullptr) debug_draw(child);
+        if ((child = node->arr[{0, 0, 0}]) != nullptr) debug_draw(child, { 0, 0, 0 });
+        if ((child = node->arr[{0, 0, 1}]) != nullptr) debug_draw(child, { 0, 0, 1 });
+        if ((child = node->arr[{0, 1, 0}]) != nullptr) debug_draw(child, { 0, 1, 0 });
+        if ((child = node->arr[{0, 1, 1}]) != nullptr) debug_draw(child, { 0, 1, 1 });
+        if ((child = node->arr[{1, 0, 0}]) != nullptr) debug_draw(child, { 1, 0, 0 });
+        if ((child = node->arr[{1, 0, 1}]) != nullptr) debug_draw(child, { 1, 0, 1 });
+        if ((child = node->arr[{1, 1, 0}]) != nullptr) debug_draw(child, { 1, 1, 0 });
+        if ((child = node->arr[{1, 1, 1}]) != nullptr) debug_draw(child, { 1, 1, 1 });
     }
 };
 

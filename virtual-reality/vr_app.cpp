@@ -512,7 +512,7 @@ void VirtualRealityApp::on_draw()
     ImGui::SliderFloat3("Directional Light", &scene.directionalLight.direction.x, -1.f, 1.f);
     renderer->sceneDebugRenderer.draw_line({ 0, 1, 0 }, normalize(scene.directionalLight.direction), { 1, 0, 0 });
 
-    octree->debug_draw(octree->root);
+    octree->debug_draw(octree->root, float3(1, 1, 1));
 
     if (hmd)
     {

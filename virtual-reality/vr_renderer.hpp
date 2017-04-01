@@ -116,7 +116,7 @@ class VR_Renderer
     bool renderPost{ true };
     bool renderWireframe { false };
     bool renderShadows { true };
-    bool renderBloom { true };
+    bool renderBloom { false };
     bool renderReflection { false };
     bool renderSSAO { false };
     bool renderSMAA { false };
