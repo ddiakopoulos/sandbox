@@ -38,7 +38,6 @@ enum class Eye : int
 struct EyeData
 {
     Pose pose;
-    float nearClip, farClip;
     float4x4 projectionMatrix;
     float4x4 viewMatrix;
     float4x4 viewProjMatrix;

@@ -17,6 +17,13 @@ float aspect_from_projection(const float4x4 & p)
     return aspect;
 }
 
+float2 near_far_clip_from_projection(const float4x4 & p)
+{
+    float C = p[2][2];
+    float D = p[3][2];
+    return{ 2 * (D / (C - 1.0f)), D / (C + 1.0f) };
+}
+
 VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizePerEye)
 {
     // Generate multisample render buffers for color and depth
@@ -116,9 +123,11 @@ void VR_Renderer::run_forward_wireframe_pass(const RenderPassData & d)
 
 void VR_Renderer::run_shadow_pass(const RenderPassData & d)
 {
+    const float2 nearFarClip = near_far_clip_from_projection(d.data.projectionMatrix);
+
     shadow->update_cascades(make_view_matrix_from_pose(d.data.pose), 
-        d.data.nearClip, 
-        d.data.farClip, 
+        nearFarClip.x,
+        nearFarClip.y,
         aspect_from_projection(d.data.projectionMatrix),
         vfov_from_projection(d.data.projectionMatrix),
         d.shadow.directionalLight);

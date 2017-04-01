@@ -474,8 +474,6 @@ void VirtualRealityApp::on_draw()
         {
             eyes[eye].pose = hmd->get_eye_pose(eye);
             eyes[eye].projectionMatrix = hmd->get_proj_matrix(eye, 0.05, 10.f);
-            eyes[eye].nearClip = 0.05f;
-            eyes[eye].farClip = 10.f;
         }
 
         renderer->set_eye_data(eyes[0], eyes[1]);
