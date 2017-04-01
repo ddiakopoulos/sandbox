@@ -276,7 +276,15 @@ void VR_Renderer::render_frame()
     renderTimer.stop();
     ImGui::Text("Render (Both Eyes) %f", renderTimer.elapsed_ms());
 
-    bloom->gather_imgui();
+    ImGui::Checkbox("Render Shadows", &renderShadows);
+    ImGui::Checkbox("Render Wireframe", &renderWireframe);
+    ImGui::Checkbox("Render Post", &renderPost);
+    ImGui::Checkbox("Render Bloom", &renderBloom);
+    ImGui::Checkbox("Render Reflection", &renderReflection);
+    ImGui::Checkbox("Render SSAO", &renderSSAO);
+    ImGui::Checkbox("Render SMAA", &renderSMAA);
+
+    bloom->gather_imgui(renderBloom);
 
     sceneDebugRenderer.clear();
 

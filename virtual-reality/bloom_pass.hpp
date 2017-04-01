@@ -184,8 +184,9 @@ struct BloomPass
         glDisable(GL_FRAMEBUFFER_SRGB);
     }
 
-    void gather_imgui()
-    {
+    void gather_imgui(const bool enabled)
+    {   
+        if (!enabled) return;
         ImGui::SliderFloat("MiddleGrey", &middleGrey, 0.1f, 1.0f);
         ImGui::SliderFloat("WhitePoint", &whitePoint, 0.1f, 2.0f);
         ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
