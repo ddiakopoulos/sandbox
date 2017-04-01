@@ -36,11 +36,11 @@ struct SceneOctree
         VoxelArray<Node *> arr = { {2, 2, 2} };
         uint32_t occupancy{ 0 };
 
-        float3 get_indices(const Bounds3D & other) const
+        int3 get_indices(const Bounds3D & other) const
         {  
             const float3 a = other.center();
             const float3 b = box.center();
-            float3 index;
+            int3 index;
             index.x = (a.x > b.x) ? 1 : 0;
             index.y = (a.y > b.y) ? 1 : 0;
             index.z = (a.z > b.z) ? 1 : 0;
@@ -65,6 +65,38 @@ struct SceneOctree
 
         if (depth < maxDepth)
         {
+            int3 lookup = child->get_indices(bounds);
+
+            // No child for this octant
+            if (child->arr[lookup] == nullptr)
+            {
+                child->arr[lookup] = new Node(child);
+
+                auto octantMin = child->box.min();
+                auto octantMax = child->box.max();
+                auto octantCenter = child->box.center();
+
+                float3 min, max;
+
+                if (lookup.x == 0)
+                {
+                    min.x = octantMin.x;
+                    max.x = octantCenter.x;
+                }
+
+                if (lookup.y == 0)
+                {
+                    min.y = octantMin.y;
+                    max.y = octantCenter.y;
+                }
+
+                if (lookup.z == 0)
+                {
+                    min.z = octantMin.z;
+                    max.z = octantCenter.z;
+                }
+            }
+
             // ... recursive add
         }
         else
