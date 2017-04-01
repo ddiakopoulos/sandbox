@@ -62,9 +62,9 @@ struct SceneOctree
 
     Node * root;
     uint32_t maxDepth = { 12 };
-    GlShader * shader;
+    DebugLineRenderer & debugRenderer;
 
-    SceneOctree(GlShader * wireframeShader) : shader(wireframeShader)
+    SceneOctree(DebugLineRenderer & debugRenderer) : debugRenderer(debugRenderer)
     {
         root = new Node(nullptr);
         root->box = Bounds3D({ -128, -128, -128 }, { +128, +128, +128 });
@@ -133,13 +133,10 @@ struct SceneOctree
         if (!node) node = root;
         if (node->occupancy == 0) return;
 
-        shader->bind();
-        shader->uniform("u_mvp", mul(viewProj, Identity4x4));
-        shader->unbind();
-
-        Node * child;
+        debugRenderer.draw_box(node->box);
 
         // Recurse into children
+        Node * child;
         if ((child = node->arr[{0, 0, 0}]) != nullptr) draw(viewProj, child);
         if ((child = node->arr[{0, 0, 1}]) != nullptr) draw(viewProj, child);
         if ((child = node->arr[{0, 1, 0}]) != nullptr) draw(viewProj, child);
@@ -282,6 +279,8 @@ struct VirtualRealityApp : public GLFWApp
     std::unique_ptr<VR_Renderer> renderer;
     std::unique_ptr<OpenVR_HMD> hmd;
     ScreenSpaceAutoLayout uiSurface;
+
+    std::unique_ptr<SceneOctree> octree;
 
     std::vector<std::shared_ptr<GLTextureView3D>> csmViews;
 

@@ -66,6 +66,8 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
         csmViews.push_back(std::make_shared<GLTextureView3D>());
     }
 
+    octree.reset(new SceneOctree(renderer->sceneDebugRenderer));
+
     gl_check_error(__FILE__, __LINE__);
 }
 
