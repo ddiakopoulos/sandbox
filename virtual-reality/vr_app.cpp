@@ -309,6 +309,16 @@ void VirtualRealityApp::setup_scene()
         scene.teleportationArc.set_material(scene.namedMaterialList["material-textured-pbr"].get());
         scene.params.navMeshBounds = scene.navMesh.compute_bounds();
     }
+
+    std::vector<Renderable *> sceneObjects;
+    LightCollection lightCollection;
+    scene.gather(sceneObjects, lightCollection);
+
+   for (auto r : sceneObjects)
+   {
+       octree->add(r, nullptr, 0);
+   }
+
 }
 
 void VirtualRealityApp::on_window_resize(int2 size)

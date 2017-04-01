@@ -25,6 +25,15 @@ using namespace avl;
 // https://cs.brown.edu/courses/csci1230/lectures/CS123_17_Acceleration_Data_Structures_11.3.16.pptx.
 // http://www.piko3d.net/tutorials/space-partitioning-tutorial-piko3ds-dynamic-octree/
 
+inline bool inside(const Bounds3D & node, const Bounds3D & other)
+{
+    // Compare centers
+    if (linalg::all(greater(other.max(), node.center())) && linalg::all(less(other.min(), node.center()))) return false;
+
+    // Otherwise ensure we shouldn't move to parent
+    return linalg::all(less(other.size(), node.size()));
+}
+
 struct SceneOctree
 {
  
@@ -74,7 +83,7 @@ struct SceneOctree
     {
         if (!child) child = root;
 
-        Bounds3D bounds = child->box;
+        Bounds3D bounds = node->get_bounds();
 
         if (depth < maxDepth)
         {
@@ -117,9 +126,12 @@ struct SceneOctree
         }
     }
     
-    void update(Renderable * node)
+    void create(Renderable * node)
     {
+        // todo: valid box / root check
+        Bounds3D bounds = node->get_bounds();
 
+        if ()
     }
 
     void remove(Renderable * node)
