@@ -82,6 +82,8 @@ public:
 
     void draw_box(const Bounds3D & bounds, const float3 color = float3(1, 1, 1))
     {
+        std::cout << "Drawing: " << bounds << std::endl;
+
         for (float a : {bounds.min().x, bounds.max().x}) 
             for (float b : {bounds.min().y, bounds.max().y})
                 for (float c : {bounds.min().z, bounds.max().z}) vertices.push_back({ {a, b, c}, color });

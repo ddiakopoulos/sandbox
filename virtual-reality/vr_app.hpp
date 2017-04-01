@@ -28,10 +28,10 @@ using namespace avl;
 inline bool inside(const Bounds3D & node, const Bounds3D & other)
 {
     // Compare centers
-    if (linalg::all(greater(other.max(), node.center())) && linalg::all(less(other.min(), node.center()))) return false;
+    if (!(linalg::all(greater(other.max(), node.center())) && linalg::all(less(other.min(), node.center())))) return false;
 
     // Otherwise ensure we shouldn't move to parent
-    return linalg::all(less(other.size(), node.size()));
+    return linalg::all(less(node.size(), other.size()));
 }
 
 struct SceneOctree
@@ -81,7 +81,13 @@ struct SceneOctree
 
     void add(Renderable * node, Node * child, int depth = 0)
     {
-        if (!child) child = root;
+        if (!child)
+        {
+            std::cout << "Setting Child As Root @ Depth: " << depth << std::endl;
+            child = root;
+        }
+
+        std::cout << "Current Depth: " << depth << std::endl;
 
         Bounds3D bounds = node->get_bounds();
 
@@ -92,6 +98,8 @@ struct SceneOctree
             // No child for this octant
             if (child->arr[lookup] == nullptr)
             {
+                std::cout << "Creating Child For: " << lookup << std::endl;
+
                 child->arr[lookup] = new Node(child);
 
                 const float3 octantMin = child->box.min();
@@ -114,29 +122,37 @@ struct SceneOctree
                 }
 
                 child->arr[lookup]->box = Bounds3D(min, max);
+                std::cout << "... child has bounds: " << child->arr[lookup]->box << std::endl;
             }
+
+            std::cout << "Calling Add Recursively..." << std::endl;
 
             // Recurse into a new depth
             add(node, child->arr[lookup], ++depth);
         }
         else
         {
-            child->increase_occupancy();
+            std::cout << "Else increase_occupancy()" << std::endl;
             // todo: add renderable to list
+            child->increase_occupancy();
         }
     }
     
     void create(Renderable * node)
     {
         // todo: valid box / root check
+        //if (!node) return;
+
         Bounds3D bounds = node->get_bounds();
 
         if (!inside(bounds, root->box))
         {
+            std::cout << "Node: " << bounds << " not inside " << root->box << std::endl;
             root->increase_occupancy();
         }
         else
         {
+            std::cout << "Adding Node: " << bounds << std::endl;
             add(node, root);
         }
     }
@@ -150,9 +166,9 @@ struct SceneOctree
     void debug_draw(Node * node)
     {
         if (!node) node = root;
-        if (node->occupancy == 0) return;
+        //if (node->occupancy == 0) return;
 
-        debugRenderer.draw_box(node->box);
+        debugRenderer.draw_box(node->box, float3(0, 1, 0));
 
         // Recurse into children
         Node * child;
