@@ -13,7 +13,6 @@ namespace avl
         int3 size;
         std::vector<uint32_t> voxels;
     public:
-        VoxelArray() {}
         VoxelArray(const int3 & size) : size(size), voxels(size.x * size.y * size.z) {}
         const int3 & get_size() const { return size; }
         uint32_t operator[](const int3 & coords) const { return voxels[coords.z * size.x * size.y + coords.y * size.x + coords.x]; }

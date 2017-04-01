@@ -33,6 +33,7 @@ struct SceneOctree
         Node * parent = nullptr;
         Node(Node * parent) : parent(parent) {}
         Bounds3D box;
+        VoxelArray arr = { {2, 2, 2} };
     };
 
     Node * root;
@@ -46,7 +47,18 @@ struct SceneOctree
 
     void add(Renderable * node, Node * child, int depth = 0)
     {
+        if (!child) child = root;
 
+        Bounds3D bounds = child->box;
+
+        if (depth < maxDepth)
+        {
+            // ... recursive add
+        }
+        else
+        {
+            // ... fit into existing node
+        }
     }
     
     void update(Renderable * node)
