@@ -14,6 +14,17 @@
 
 using namespace avl;
 
+/*
+ * An octree is a tree data structure in which each internal node has exactly 
+ * eight children. Octrees are most often used to partition a three 
+ * dimensional space by recursively subdividing it into eight octants.
+*/
+
+// http://thomasdiewald.com/blog/?p=1488
+// https://www.gamedev.net/resources/_/technical/game-programming/introduction-to-octrees-r3529
+// https://cs.brown.edu/courses/csci1230/lectures/CS123_17_Acceleration_Data_Structures_11.3.16.pptx.
+// http://www.piko3d.net/tutorials/space-partitioning-tutorial-piko3ds-dynamic-octree/
+
 struct SceneOctree
 {
  
