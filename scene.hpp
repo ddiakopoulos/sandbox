@@ -87,6 +87,7 @@ struct Renderable
 {
     virtual void update(const float & dt) {}
     virtual void draw() const {};
+    virtual Bounds3D get_world_bounds() const = 0;
     virtual Bounds3D get_bounds() const = 0;
     virtual float3 get_scale() const = 0;
     virtual void set_scale(const float3 & s) = 0;

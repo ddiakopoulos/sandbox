@@ -70,7 +70,7 @@ struct SceneOctree
     };
 
     Node * root;
-    uint32_t maxDepth = { 12 };
+    uint32_t maxDepth = { 8 };
     DebugLineRenderer & debugRenderer;
 
     SceneOctree(DebugLineRenderer & debugRenderer) : debugRenderer(debugRenderer)
@@ -90,7 +90,7 @@ struct SceneOctree
 
         std::cout << "Current Depth: " << depth << std::endl;
 
-        Bounds3D bounds = node->get_bounds();
+        Bounds3D bounds = node->get_world_bounds();
 
         if (depth < maxDepth)
         {
@@ -144,7 +144,7 @@ struct SceneOctree
         // todo: valid box / root check
         //if (!node) return;
 
-        Bounds3D bounds = node->get_bounds();
+        Bounds3D bounds = node->get_world_bounds();
 
         if (!inside(bounds, root->box))
         {
@@ -286,8 +286,8 @@ struct Scene
         };
 
         for (auto & model : models) if (valid_bounds(&model)) objects.push_back(&model);
-        for (auto & ctrlr : controllers) if (valid_bounds(&ctrlr)) objects.push_back(&ctrlr);
-        if (valid_bounds(&teleportationArc)) objects.push_back(&teleportationArc);
+        //for (auto & ctrlr : controllers) if (valid_bounds(&ctrlr)) objects.push_back(&ctrlr);
+        //if (valid_bounds(&teleportationArc)) objects.push_back(&teleportationArc);
 
         lights.directionalLight = &directionalLight;
         for (auto & ptLight : pointLights)

@@ -315,7 +315,8 @@ void VirtualRealityApp::setup_scene()
     scene.gather(sceneObjects, lightCollection);
 
    for (auto r : sceneObjects)
-   {
+   {    
+       std::cout << "========= Adding Object: " << r->get_bounds() << std::endl;
        octree->create(r);
    }
 

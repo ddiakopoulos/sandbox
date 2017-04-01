@@ -34,6 +34,23 @@ public:
     virtual Material * get_material() const override { return material; }
     virtual void set_material(Material * const m) override { material = m; }
 
+    virtual Bounds3D get_world_bounds() const
+    {
+        Bounds3D result;
+        auto b = get_bounds();
+        auto p = get_pose();
+        for (auto x : { b.min().x,b.max().x }) for (auto y : { b.min().y,b.max().y }) for (auto z : { b.min().z,b.max().z })
+        {
+            result.surround(p.transform_coord({ x,y,z }));
+        }
+
+        // Apply Scale
+        //result._min = (result._min - result.center()) * get_scale() + result.center();
+        //result._max = (result._max - result.center()) * get_scale() + result.center();
+
+        return result;
+    }
+
     virtual RaycastResult raycast(const Ray & worldRay) const override
     {
         auto localRay = pose.inverse() * worldRay;
