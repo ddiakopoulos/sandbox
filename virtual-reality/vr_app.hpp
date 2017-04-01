@@ -39,7 +39,7 @@ struct SceneOctree
  
     struct Node
     {
-        Node * parent = nullptr;
+        std::unique_ptr<Node> parent;
         Node(Node * parent) : parent(parent) {}
         Bounds3D box;
         VoxelArray<Node *> arr = { {2, 2, 2} };
@@ -84,6 +84,11 @@ struct SceneOctree
     {
         root = new Node(nullptr);
         root->box = Bounds3D({ -4, -4, -4 }, { +4, +4, +4 });
+    }
+
+    ~SceneOctree()
+    {
+
     }
 
     float3 get_resolution()
@@ -181,7 +186,7 @@ struct SceneOctree
         //if (node->occupancy == 0) return;
 
         debugRenderer.draw_box(node->box, float3(1, 0, 0));
-        std::cout << "Drawing: " << node->box << std::endl;
+        //std::cout << "Drawing: " << node->box << std::endl;
 
         // Recurse into children
         Node * child;

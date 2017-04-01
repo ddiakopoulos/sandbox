@@ -442,6 +442,33 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
     }
 
+    std::vector<OpenVR_Controller::ButtonState> triggerStates = {
+        hmd->get_controller(vr::TrackedControllerRole_LeftHand).trigger,
+        hmd->get_controller(vr::TrackedControllerRole_RightHand).trigger };
+
+    for (int i = 0; i < triggerStates.size(); ++i)
+    {
+        const auto state = triggerStates[i];
+
+        if (state.released)
+        {
+            octree.reset(new SceneOctree(renderer->sceneDebugRenderer));
+
+            float3 spherePos = hmd->get_controller(vr::ETrackedControllerRole(i + 1)).get_pose(hmd->get_world_pose()).position;
+            std::cout << "Position: " << spherePos << std::endl;
+            StaticMesh sphere;
+            sphere.set_static_mesh(make_sphere(0.125));
+            sphere.set_pose(Pose(float4(0, 0, 0, 1), spherePos));
+            sphere.set_material(scene.namedMaterialList["material-rusted-iron"].get());
+            scene.models.push_back(std::move(sphere));
+
+            std::vector<Renderable *> sceneObjects;
+            LightCollection lightCollection;
+            scene.gather(sceneObjects, lightCollection);
+            for (auto r : sceneObjects) octree->create(r);
+        }
+    }
+
     static float angle = 0.f;
     scene.pointLights[0].position = float3(1.5 * sin(angle), 1.5f, 1.5 * cos(angle));
     scene.pointLights[1].position = float3(1.5 * sin(-angle), 1.5f, 1.5 * cos(-angle));
@@ -580,7 +607,7 @@ void VirtualRealityApp::on_draw()
     // development progress. 
     if (frameCount % (90 * 15) == 0)
     {
-        take_screenshot({ width, height });
+        //take_screenshot({ width, height });
     }
 
     glfwSwapBuffers(window);
