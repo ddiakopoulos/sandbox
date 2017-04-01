@@ -128,11 +128,19 @@ struct SceneOctree
     }
 
     // Debugging Only
-    void draw(const float4x4 & viewProj)
+    void draw(const float4x4 & viewProj, Node * node)
     {
+        if (!node) node = root;
+        if (node->occupancy == 0) return;
+
         shader->bind();
         shader->uniform("u_mvp", mul(viewProj, Identity4x4));
         shader->unbind();
+
+        Node * child;
+
+        // Recurse into children
+        if ((child = node->arr[{0, 0, 0}]) != nullptr) draw(viewProj, child);
     }
 };
 
