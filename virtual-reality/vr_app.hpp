@@ -25,17 +25,17 @@ struct SceneOctree
     Node * root;
     uint32_t depth;
 
-    void add()
+    void add(Renderable * node, Node * child, int depth = 0)
     {
 
     }
     
-    void update()
+    void update(Renderable * node)
     {
 
     }
 
-    void remove()
+    void remove(Renderable * node)
     {
 
     }
