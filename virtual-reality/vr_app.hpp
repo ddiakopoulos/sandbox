@@ -34,6 +34,18 @@ struct SceneOctree
         Node(Node * parent) : parent(parent) {}
         Bounds3D box;
         VoxelArray<Node *> arr = { {2, 2, 2} };
+        uint32_t occupancy{ 0 };
+
+        float3 get_indices(const Bounds3D & other) const
+        {  
+            const float3 a = other.center();
+            const float3 b = box.center();
+            float3 index;
+            index.x = (a.x > b.x) ? 1 : 0;
+            index.y = (a.y > b.y) ? 1 : 0;
+            index.z = (a.z > b.z) ? 1 : 0;
+            return index;
+        }
     };
 
     Node * root;
