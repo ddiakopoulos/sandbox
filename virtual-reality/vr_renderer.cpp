@@ -73,8 +73,8 @@ void VR_Renderer::run_skybox_pass(const RenderPassData & d)
 
 void VR_Renderer::run_forward_pass(const RenderPassData & d)
 {
-    sceneDebugRenderer.draw(d.perView.viewProj);
-    for (auto obj : debugSet) { obj->draw(d.perView.viewProj);}
+    sceneDebugRenderer.draw(d.data.viewProjMatrix);
+    for (auto obj : debugSet) { obj->draw(d.data.viewProjMatrix);}
 
     // This is done per-eye but should be done per frame instead...
     auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
@@ -82,7 +82,7 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
         auto lid = lhs->get_material()->id();
         auto rid = rhs->get_material()->id();
 
-        auto cameraPositionWS = d.perView.eyePos.xyz();
+        auto cameraPositionWS = d.data.pose.position;
         auto lDist = distance(cameraPositionWS, lhs->get_pose().position);
         auto rDist = distance(cameraPositionWS, rhs->get_pose().position);
 
@@ -99,20 +99,10 @@ void VR_Renderer::run_forward_pass(const RenderPassData & d)
         auto top = renderQueue.top();
         Material * mat = top->get_material();
         mat->update_uniforms(&d);
-        mat->use(mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale())), d.perView.view);
+        mat->use(mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale())), d.data.viewMatrix);
         top->draw();
         renderQueue.pop();
     }
-
-    /*
-    for (auto obj : renderSet)
-    {
-        Material * mat = obj->get_material();
-        mat->update_uniforms(&d);
-        mat->use(mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale())), d.perView.view);
-        obj->draw();
-    }
-    */
 
     // Refactor this
     outputTextureHandles[0] = eyeTextures[0];
@@ -131,7 +121,7 @@ void VR_Renderer::run_shadow_pass(const RenderPassData & d)
         d.data.farClip, 
         aspect_from_projection(d.data.projectionMatrix),
         vfov_from_projection(d.data.projectionMatrix),
-        d.perScene.directional_light.direction);
+        d.shadow.directionalLight);
 
     shadow->pre_draw();
 
@@ -214,9 +204,10 @@ void VR_Renderer::render_frame()
     GLfloat defaultDepth = 1.f;
 
     // Fixme: center eye
-    const RenderPassData shadowData(0, eyes[0], b, {}, 0);
+    const ShadowData d{ shadow->get_output_texture(), lights.directionalLight->direction };
+    const RenderPassData shadowPassData(0, eyes[0], d);
 
-    if (renderShadows) run_shadow_pass(shadowData);
+    if (renderShadows) run_shadow_pass(shadowPassData);
 
     renderTimer.start();
     for (int eyeIdx : { 0, 1 })
@@ -227,7 +218,11 @@ void VR_Renderer::render_frame()
         v.viewProj = mul(eyes[eyeIdx].projectionMatrix, eyes[eyeIdx].pose.inverse().matrix());
         v.eyePos = float4(eyes[eyeIdx].pose.position, 1);
 
-        const RenderPassData renderPassData(eyeIdx, eyes[eyeIdx], b, v, shadow->shadowArrayDepth);
+        // Update render pass data. 
+        eyes[eyeIdx].viewMatrix = v.view;
+        eyes[eyeIdx].viewProjMatrix = v.viewProj;
+
+        const RenderPassData renderPassData(eyeIdx, eyes[eyeIdx], d);
 
         if (renderShadows)
         {

@@ -472,16 +472,10 @@ void VirtualRealityApp::on_draw()
 
         for (auto eye : {vr::Hmd_Eye::Eye_Left, vr::Hmd_Eye::Eye_Right})
         {
-            float vfov = 0.0f;
-            float aspectRatio = 0.0f;
-            hmd->get_optical_properties(eye, aspectRatio, vfov);
-
             eyes[eye].pose = hmd->get_eye_pose(eye);
             eyes[eye].projectionMatrix = hmd->get_proj_matrix(eye, 0.05, 10.f);
             eyes[eye].nearClip = 0.05f;
             eyes[eye].farClip = 10.f;
-            eyes[eye].vfov = vfov;
-            eyes[eye].aspectRatio = aspectRatio;
         }
 
         renderer->set_eye_data(eyes[0], eyes[1]);

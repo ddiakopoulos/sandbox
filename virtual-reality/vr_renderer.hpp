@@ -38,11 +38,16 @@ enum class Eye : int
 struct EyeData
 {
     Pose pose;
-    float nearClip;
-    float farClip;
-    float vfov;
-    float aspectRatio;
+    float nearClip, farClip;
     float4x4 projectionMatrix;
+    float4x4 viewMatrix;
+    float4x4 viewProjMatrix;
+};
+
+struct ShadowData
+{
+    GLuint csmArrayHandle;
+    float3 directionalLight;
 };
 
 struct LightCollection
@@ -54,13 +59,12 @@ struct LightCollection
 
 struct RenderPassData
 {
-    const uniforms::per_scene & perScene;
-    const uniforms::per_view & perView;
     const int & eye;
     const EyeData & data;
-    const GLuint & csmArrayHandle;
-    RenderPassData(const int & eye, const EyeData & data, const uniforms::per_scene & perScene, const uniforms::per_view & perView, const GLuint csmArray)
-        : perScene(perScene), perView(perView), eye(eye), data(data), csmArrayHandle(csmArray)
+    const ShadowData & shadow;
+
+    RenderPassData(const int & eye, const EyeData & data, const ShadowData & shadowData)
+        : eye(eye), data(data), shadow(shadowData)
     {}
 };
 
