@@ -186,7 +186,7 @@ void VirtualRealityApp::setup_scene()
         floorMesh.set_pose(Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, ANVIL_PI / 2), float3(0, -2.01f, 0))); 
         floorMesh.set_scale(float3(2.f));
         floorMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
-        scene.models.push_back(std::move(floorMesh));
+        //scene.models.push_back(std::move(floorMesh));
         
         /*
         auto geom = load_geometry_from_obj_no_texture("../assets/models/cerberus/cerberus.obj")[0];
@@ -487,7 +487,7 @@ void VirtualRealityApp::on_draw()
         for (auto eye : {vr::Hmd_Eye::Eye_Left, vr::Hmd_Eye::Eye_Right})
         {
             eyes[eye].pose = hmd->get_eye_pose(eye);
-            eyes[eye].projectionMatrix = hmd->get_proj_matrix(eye, 0.05, 10.f);
+            eyes[eye].projectionMatrix = hmd->get_proj_matrix(eye, 0.05, 32.f);
         }
 
         renderer->set_eye_data(eyes[0], eyes[1]);

@@ -76,7 +76,8 @@ struct SceneOctree
     SceneOctree(DebugLineRenderer & debugRenderer) : debugRenderer(debugRenderer)
     {
         root = new Node(nullptr);
-        root->box = Bounds3D({ -128, -128, -128 }, { +128, +128, +128 });
+        root->box = Bounds3D({ -4, -4, -4 }, { +4, +4, +4 });
+        // root->increase_occupancy(); // ??
     }
 
     void add(Renderable * node, Node * child, int depth = 0)
@@ -168,7 +169,7 @@ struct SceneOctree
         if (!node) node = root;
         //if (node->occupancy == 0) return;
 
-        debugRenderer.draw_box(node->box, float3(0, 1, 0));
+        debugRenderer.draw_box(node->box, float3(1, 0, 0));
 
         // Recurse into children
         Node * child;
