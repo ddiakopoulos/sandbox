@@ -83,17 +83,32 @@ struct SceneOctree
                     min.x = octantMin.x;
                     max.x = octantCenter.x;
                 }
+                else
+                {
+                    min.x = octantCenter.x;
+                    max.x = octantMax.x;
+                }
 
                 if (lookup.y == 0)
                 {
                     min.y = octantMin.y;
                     max.y = octantCenter.y;
                 }
+                else
+                {
+                    min.y = octantCenter.y;
+                    max.y = octantMax.y;
+                }
 
                 if (lookup.z == 0)
                 {
                     min.z = octantMin.z;
                     max.z = octantCenter.z;
+                }
+                else
+                {
+                    min.z = octantCenter.z;
+                    max.z = octantMax.z;
                 }
             }
 
