@@ -7,16 +7,16 @@
 
 namespace avl
 {
-
+    template<typename T>
     class VoxelArray
     {
         int3 size;
-        std::vector<uint32_t> voxels;
+        std::vector<T> voxels;
     public:
         VoxelArray(const int3 & size) : size(size), voxels(size.x * size.y * size.z) {}
         const int3 & get_size() const { return size; }
-        uint32_t operator[](const int3 & coords) const { return voxels[coords.z * size.x * size.y + coords.y * size.x + coords.x]; }
-        uint32_t & operator[](const int3 & coords) { return voxels[coords.z * size.x * size.y + coords.y * size.x + coords.x]; }
+        T operator[](const int3 & coords) const { return voxels[coords.z * size.x * size.y + coords.y * size.x + coords.x]; }
+        T & operator[](const int3 & coords) { return voxels[coords.z * size.x * size.y + coords.y * size.x + coords.x]; }
     };
 
     inline float to_radians(float degrees) { return degrees * float(ANVIL_PI) / 180.0f; }

@@ -33,7 +33,7 @@ struct SceneOctree
         Node * parent = nullptr;
         Node(Node * parent) : parent(parent) {}
         Bounds3D box;
-        VoxelArray arr = { {2, 2, 2} };
+        VoxelArray<Node *> arr = { {2, 2, 2} };
     };
 
     Node * root;
