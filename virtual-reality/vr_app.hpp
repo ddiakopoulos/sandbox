@@ -67,6 +67,13 @@ struct SceneOctree
             occupancy--;
             if (parent) parent->occupancy--;
         }
+
+        // Returns true if the other is less than half the size of myself
+        bool check_fit(const Bounds3D & other)
+        {
+            return all(lequal(other.size(), (box.size() / 2.f)));
+        }
+
     };
 
     Node * root;
@@ -77,7 +84,11 @@ struct SceneOctree
     {
         root = new Node(nullptr);
         root->box = Bounds3D({ -4, -4, -4 }, { +4, +4, +4 });
-        // root->increase_occupancy(); // ??
+    }
+
+    float3 get_resolution()
+    {
+        return root->box.size() / (float) maxDepth;
     }
 
     void add(Renderable * node, Node * child, int depth = 0)
@@ -92,7 +103,7 @@ struct SceneOctree
 
         Bounds3D bounds = node->get_world_bounds();
 
-        if (depth < maxDepth)
+        if (depth < maxDepth && child->check_fit(bounds))
         {
             int3 lookup = child->get_indices(bounds);
 
@@ -153,7 +164,7 @@ struct SceneOctree
         }
         else
         {
-            std::cout << "Adding Node: " << bounds << std::endl;
+            std::cout << "+++++++++++ Adding Node: " << bounds << std::endl;
             add(node, root);
         }
     }
@@ -170,6 +181,7 @@ struct SceneOctree
         //if (node->occupancy == 0) return;
 
         debugRenderer.draw_box(node->box, float3(1, 0, 0));
+        std::cout << "Drawing: " << node->box << std::endl;
 
         // Recurse into children
         Node * child;

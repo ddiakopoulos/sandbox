@@ -51,7 +51,7 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
     }
 
     octree.reset(new SceneOctree(renderer->sceneDebugRenderer));
-
+    std::cout << "Octree Spatial Resolution:" << octree->get_resolution() << std::endl;
     setup_physics();
 
     setup_scene();
@@ -137,7 +137,7 @@ void VirtualRealityApp::setup_scene()
 
         physicsEngine->add_object(cubePhysicsObj.get());
         scene.physicsObjects.push_back(cubePhysicsObj);
-        scene.models.push_back(std::move(cube));
+        //scene.models.push_back(std::move(cube));
     }
 
     {
@@ -217,10 +217,10 @@ void VirtualRealityApp::setup_scene()
 
     {
         StaticMesh materialTestMesh;
-        materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
+        materialTestMesh.set_static_mesh(capsuleGeom, 1.0f);
         materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.45f, -0.66)));
         materialTestMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
-        scene.models.push_back(std::move(materialTestMesh));
+        //scene.models.push_back(std::move(materialTestMesh));
     }
 
     {
@@ -233,10 +233,10 @@ void VirtualRealityApp::setup_scene()
 
     {
         StaticMesh materialTestMesh;
-        materialTestMesh.set_static_mesh(capsuleGeom, 0.5f);
+        materialTestMesh.set_static_mesh(capsuleGeom, 1.0f);
         materialTestMesh.set_pose(Pose(float4(0, 0, 0, 1), float3(1.5, 0.45f, +0.66)));
         materialTestMesh.set_material(scene.namedMaterialList["material-rusted-iron"].get());
-        scene.models.push_back(std::move(materialTestMesh));
+       // scene.models.push_back(std::move(materialTestMesh));
     }
 
     /*
@@ -270,6 +270,14 @@ void VirtualRealityApp::setup_scene()
         scene.models.push_back(std::move(materialTestMesh));
     }
     */
+
+    {
+        StaticMesh sphere;
+        sphere.set_static_mesh(make_sphere(0.125));
+        sphere.set_pose(Pose(float4(0, 0, 0, 1), float3(0.25, 0.775, 0.15)));
+        sphere.set_material(scene.namedMaterialList["material-rusted-iron"].get());
+        scene.models.push_back(std::move(sphere));
+    }
 
     if (hmd)
     {
