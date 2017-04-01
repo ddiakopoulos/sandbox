@@ -56,6 +56,7 @@ VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizeP
         eyeFramebuffers[eye].check_complete();
     }
 
+    skybox.reset(new SkyboxPass());
     bloom.reset(new BloomPass(renderSizePerEye));
     shadow.reset(new ShadowPass());
 
@@ -75,7 +76,9 @@ void VR_Renderer::set_eye_data(const EyeData left, const EyeData right)
 
 void VR_Renderer::run_skybox_pass(const RenderPassData & d)
 {
-
+    glDisable(GL_DEPTH_TEST);
+    skybox->execute(d.data.pose.position, d.data.viewProjMatrix, near_far_clip_from_projection(d.data.projectionMatrix).y);
+    glDisable(GL_DEPTH_TEST);
 }
 
 void VR_Renderer::run_forward_pass(const RenderPassData & d)

@@ -16,6 +16,7 @@
 #include "debug_line_renderer.hpp"
 #include "bloom_pass.hpp"
 #include "shadow_pass.hpp"
+#include "procedural_sky.hpp"
 
 /*
  * To Do - 3.25.2017
@@ -28,6 +29,15 @@
 */
 
 using namespace avl;
+
+struct SkyboxPass
+{
+    HosekProceduralSky skybox;
+    void execute(const float3 & eye, const float4x4 & viewProj, const float farClip)
+    {
+        skybox.render(viewProj, eye, farClip);
+    }
+};
 
 enum class Eye : int
 {
@@ -114,6 +124,7 @@ class VR_Renderer
 
 public:
 
+    std::unique_ptr<SkyboxPass> skybox;
     std::unique_ptr<BloomPass> bloom;
     std::unique_ptr<ShadowPass> shadow;
 
