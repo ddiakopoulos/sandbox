@@ -66,7 +66,8 @@ struct SceneOctree
 
     SceneOctree(GlShader * wireframeShader) : shader(wireframeShader)
     {
-
+        root = new Node(nullptr);
+        root->box = Bounds3D({ -128, -128, -128 }, { +128, +128, +128 });
     }
 
     void add(Renderable * node, Node * child, int depth = 0)
