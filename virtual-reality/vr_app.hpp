@@ -14,6 +14,33 @@
 
 using namespace avl;
 
+struct SceneOctree
+{
+
+    struct Node
+    {
+
+    };
+
+    Node * root;
+    uint32_t depth;
+
+    void add()
+    {
+
+    }
+    
+    void update()
+    {
+
+    }
+
+    void remove()
+    {
+
+    }
+};
+
 struct ScreenViewport
 {
     float2 bmin, bmax;
