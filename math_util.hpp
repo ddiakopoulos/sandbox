@@ -102,10 +102,9 @@ namespace avl
         return outVal;
     }
     
-    // In radians
-    inline float3 spherical(float theta, float phi)
+    inline float3 spherical_coords(float thetaRad, float phiRad)
     {
-        return safe_normalize(float3(cos(phi) * sin(theta), sin(phi) * sin(theta), cos(theta)));
+        return safe_normalize(float3(cos(phiRad) * sin(thetaRad), sin(phiRad) * sin(thetaRad), cos(thetaRad)));
     }
     
     template <typename T>
@@ -129,6 +128,23 @@ namespace avl
         velocity += force * delta;
         float displacement = velocity * delta;
         return current + displacement;
+    }
+
+    inline float vfov_from_projection(const float4x4 & projection)
+    {
+        return std::atan((1.0f / projection[1][1])) * 2.0f;
+    }
+
+    inline float aspect_from_projection(const float4x4 & projection)
+    {
+        return 1.0f / (projection[0][0] * (1.0f / projection[1][1]));
+    }
+
+    inline float2 near_far_clip_from_projection(const float4x4 & projection)
+    {
+        float n = projection[2][2];
+        float f = projection[3][2];
+        return{ 2 * (f / (n - 1.0f)), f / (n + 1.0f) };
     }
 
 }

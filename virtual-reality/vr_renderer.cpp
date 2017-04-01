@@ -3,27 +3,6 @@
 #include "avl_imgui.hpp"
 #include <queue>
 
-float vfov_from_projection(const float4x4 & p)
-{
-    float t = p[1][1];
-    float fov = std::atan((1.0f / t)) * 2.0f;
-    return fov;
-}
-
-float aspect_from_projection(const float4x4 & p)
-{
-    float t = p[0][0];
-    float aspect = 1.0f / (t * (1.0f / p[1][1]));
-    return aspect;
-}
-
-float2 near_far_clip_from_projection(const float4x4 & p)
-{
-    float C = p[2][2];
-    float D = p[3][2];
-    return{ 2 * (D / (C - 1.0f)), D / (C + 1.0f) };
-}
-
 VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizePerEye)
 {
     // Generate multisample render buffers for color and depth

@@ -64,7 +64,7 @@ namespace avl
             {
                 float u = float(ui) / (U - 1) * float(ANVIL_PI);
                 float v = float(vi) / (V - 1) * 2 * float(ANVIL_PI);
-                float3 normal = spherical(u, v);
+                float3 normal = spherical_coords(u, v);
                 sphereGeom.vertices.push_back({normal * radius});
                 sphereGeom.normals.push_back(normal);
             }
