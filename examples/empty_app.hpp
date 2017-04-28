@@ -52,19 +52,14 @@ inline Geometry coordinate_system_geometry()
 
     Geometry axis;
 
-    axis.vertices.emplace_back(0.f, 0.f, 0.f);
-    axis.vertices.emplace_back(1.f, 0.f, 0.f);
-    axis.vertices.emplace_back(0.f, 0.f, 0.f);
-    axis.vertices.emplace_back(0.f, 1.f, 0.f);
-    axis.vertices.emplace_back(0.f, 0.f, 0.f);
-    axis.vertices.emplace_back(0.f, 0.f, 1.f);
+    for (auto a : { opengl_coords.get_right(), opengl_coords.get_up(),  opengl_coords.get_back() })
+    {
+        axis.vertices.emplace_back(0.f, 0.f, 0.f);
+        axis.vertices.emplace_back(a);
 
-    axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
-    axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
-    axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
-    axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
-    axis.colors.emplace_back(1.f, 0.f, 0.f, 1.f);
-    axis.colors.emplace_back(1.f, 0.f, 0.f, 1.f);
+        axis.colors.emplace_back(a, 1.f);
+        axis.colors.emplace_back(a, 1.f);
+    }
 
     return axis;
 }
