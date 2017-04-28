@@ -71,10 +71,8 @@ struct RenderPassData
     const int & eye;
     const EyeData & data;
     const ShadowData & shadow;
-
     RenderPassData(const int & eye, const EyeData & data, const ShadowData & shadowData)
-        : eye(eye), data(data), shadow(shadowData)
-    {}
+        : eye(eye), data(data), shadow(shadowData) {}
 };
 
 class VR_Renderer

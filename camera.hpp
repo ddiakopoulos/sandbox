@@ -112,17 +112,17 @@ namespace avl
         
         void look_at(float3 target)
         {
-            pose = look_at_pose_rh(pose.position, target);
+            pose = look_at_pose_lh(pose.position, target); // LH vs RH
         }
         
         void look_at(float3 eyePoint, float3 target)
         {
-            pose = look_at_pose_rh(eyePoint, target);
+            pose = look_at_pose_lh(eyePoint, target);
         }
         
         void look_at(float3 eyePoint, float3 target, float3 upDirection)
         {
-            pose = look_at_pose_rh(eyePoint, target, upDirection);
+            pose = look_at_pose_lh(eyePoint, target, upDirection);
         }
         
         float get_focal_length() const
@@ -152,7 +152,7 @@ namespace avl
     public:
         
         bool enableSpring = true;
-        float movementSpeed = 21.00f;
+        float movementSpeed = 10.00f;
         float3 lastLook;
         
         FlyCameraController() {}
