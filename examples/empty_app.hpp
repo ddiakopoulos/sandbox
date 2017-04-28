@@ -52,13 +52,13 @@ inline Geometry coordinate_system_geometry()
 
     Geometry axis;
 
-    for (auto a : { opengl_coords.get_right(), opengl_coords.get_up(),  opengl_coords.get_back() })
+    for (auto a : { opengl_coords.get_right(), opengl_coords.get_up(), opengl_coords.get_forward() })
     {
         axis.vertices.emplace_back(0.f, 0.f, 0.f);
         axis.vertices.emplace_back(a);
 
-        axis.colors.emplace_back(a, 1.f);
-        axis.colors.emplace_back(a, 1.f);
+        axis.colors.emplace_back(abs(a), 1.f);
+        axis.colors.emplace_back(abs(a), 1.f);
     }
 
     return axis;
