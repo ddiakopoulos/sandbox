@@ -112,17 +112,17 @@ namespace avl
         
         void look_at(float3 target)
         {
-            pose = look_at_pose_lh(pose.position, target); // LH vs RH
+            pose = look_at_pose_rh(pose.position, target); // LH vs RH
         }
         
         void look_at(float3 eyePoint, float3 target)
         {
-            pose = look_at_pose_lh(eyePoint, target);
+            pose = look_at_pose_rh(eyePoint, target);
         }
         
         void look_at(float3 eyePoint, float3 target, float3 upDirection)
         {
-            pose = look_at_pose_lh(eyePoint, target, upDirection);
+            pose = look_at_pose_rh(eyePoint, target, upDirection);
         }
         
         float get_focal_length() const
