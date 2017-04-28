@@ -21,6 +21,41 @@ constexpr const char basic_wireframe_frag[] = R"(#version 330
     }
 )";
 
+inline Geometry coordinate_system_geometry()
+{
+    Geometry axis;
+
+    axis.vertices.emplace_back(0.f, 0.f, 0.f);
+    axis.vertices.emplace_back(1.f, 0.f, 0.f);
+    axis.vertices.emplace_back(0.f, 0.f, 0.f);
+    axis.vertices.emplace_back(0.f, 1.f, 0.f);
+    axis.vertices.emplace_back(0.f, 0.f, 0.f);
+    axis.vertices.emplace_back(0.f, 0.f, 1.f);
+
+    axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
+    axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
+    axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
+    axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
+    axis.colors.emplace_back(1.f, 0.f, 0.f, 1.f);
+    axis.colors.emplace_back(1.f, 0.f, 0.f, 1.f);
+
+    axis.normals.emplace_back(0.f, 0.f, 1.f);
+    axis.normals.emplace_back(0.f, 0.f, 1.f);
+    axis.normals.emplace_back(0.f, 1.f, 0.f);
+    axis.normals.emplace_back(0.f, 1.f, 0.f);
+    axis.normals.emplace_back(1.f, 0.f, 0.f);
+    axis.normals.emplace_back(1.f, 0.f, 0.f);
+
+    return axis;
+}
+
+inline GlMesh make_coordinate_system_mesh()
+{
+    auto m = make_mesh_from_geometry(coordinate_system_geometry());
+    m.set_non_indexed(GL_LINES);
+    return m;
+}
+
 struct ExperimentalApp : public GLFWApp
 {
     std::unique_ptr<GlShader> wireframeShader;
@@ -42,12 +77,12 @@ struct ExperimentalApp : public GLFWApp
 
         wireframeShader.reset(new GlShader(basic_wireframe_vert, basic_wireframe_frag));
 
-        headMesh = make_axis_mesh();
+        headMesh = make_coordinate_system_mesh();
         cameraMesh = make_frustum_mesh(1.0);
 
         camera.position = float3(0, 1.75, 0.5f);
 
-        debugCamera.look_at({0, 2.5, -2.5}, {0, 2.0, 0});
+        debugCamera.look_at({0, 3.0, -3.5}, {0, 2.0, 0});
         cameraController.set_camera(&debugCamera);
     }
     
