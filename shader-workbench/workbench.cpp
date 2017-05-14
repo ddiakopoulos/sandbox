@@ -3,6 +3,44 @@
 
 using namespace avl;
 
+Geometry make_perlin_mesh(int gridSize = 32.f)
+{
+    Geometry terrain;
+
+    for (int x = 0; x <= gridSize; x++)
+    {
+        for (int z = 0; z <= gridSize; z++)
+        {
+            float y = ((noise::noise(float2(x * 0.1f, z * 0.1f))) + 1.0f) / 2.0f;
+            y = y * 2.0f;
+            terrain.vertices.push_back({ (float)x, (float) y, (float)z });
+        }
+    }
+
+    std::vector<uint4> quads;
+    for (int x = 0; x < gridSize; ++x)
+    {
+        for (int z = 0; z < gridSize; ++z)
+        {
+            std::uint32_t tlIndex = z * (gridSize + 1) + x;
+            std::uint32_t trIndex = z * (gridSize + 1) + (x + 1);
+            std::uint32_t blIndex = (z + 1) * (gridSize + 1) + x;
+            std::uint32_t brIndex = (z + 1) * (gridSize + 1) + (x + 1);
+            quads.push_back({ blIndex, tlIndex, trIndex, brIndex });
+        }
+    }
+
+    for (auto f : quads)
+    {
+        terrain.faces.push_back(uint3(f.x, f.y, f.z));
+        terrain.faces.push_back(uint3(f.x, f.z, f.w));
+    }
+
+    //terrain.compute_normals();
+
+    return terrain;
+}
+
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
     int width, height;
@@ -14,7 +52,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     holoScanShader = shaderMonitor.watch("../assets/shaders/holoscan_vert.glsl", "../assets/shaders/holoscan_frag.glsl");
 
-    terrainMesh = make_plane_mesh(8, 8, 128, 128);
+    terrainMesh = make_mesh_from_geometry(make_perlin_mesh(8));
 
     cam.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     flycam.set_camera(&cam);
@@ -70,7 +108,7 @@ void shader_workbench::on_draw()
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
     {
-        float4x4 terrainModelMatrix = make_rotation_matrix({ 1, 0, 0 }, -ANVIL_PI / 2);
+        float4x4 terrainModelMatrix = make_translation_matrix({ -4, 0, -4 });
 
         holoScanShader->bind();
         holoScanShader->uniform("u_time", elapsedTime);
@@ -87,7 +125,7 @@ void shader_workbench::on_draw()
 
     igm->begin_frame();
     ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
-    ImGui::SliderFloat("Triangle Scale", &triangleScale, 0.1f, 1.0f);
+    ImGui::SliderFloat("Triangle Scale", &triangleScale, 0.1f, 10.0f);
     igm->end_frame();
 
     gl_check_error(__FILE__, __LINE__);
