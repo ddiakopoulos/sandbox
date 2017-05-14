@@ -44,6 +44,8 @@ void shader_workbench::on_update(const UpdateEvent & e)
 
 void shader_workbench::on_draw() 
 {
+    gpuTimer.start();
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
@@ -73,8 +75,10 @@ void shader_workbench::on_draw()
         holoScanShader->unbind();
     }
 
+    gpuTimer.stop();
+
     igm->begin_frame();
-    ImGui::Text("Controls");
+    ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
     igm->end_frame();
 
     gl_check_error(__FILE__, __LINE__);
