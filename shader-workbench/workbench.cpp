@@ -36,8 +36,6 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
         terrain.faces.push_back(uint3(f.x, f.z, f.w));
     }
 
-    //terrain.compute_normals();
-
     return terrain;
 }
 
@@ -103,6 +101,9 @@ void shader_workbench::on_draw()
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
     const float4x4 projectionMatrix = cam.get_projection_matrix((float)width / (float)height);
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
@@ -120,6 +121,8 @@ void shader_workbench::on_draw()
         terrainMesh.draw_elements();
         holoScanShader->unbind();
     }
+
+    glDisable(GL_BLEND);
 
     gpuTimer.stop();
 

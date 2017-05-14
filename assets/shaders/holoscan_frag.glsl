@@ -65,7 +65,7 @@ vec3 largest_triangles_color(vec3 worldPosition)
     return vec3(mix(0.01, l, 1.0));
 }
 
-vec3 holo_scan_effect(in vec3 pos, in vec3 centerPosition)
+vec4 holo_scan_effect(in vec3 pos, in vec3 centerPosition)
 {
     float border = mod(u_time * speed, 5.0);
 
@@ -75,18 +75,18 @@ vec3 holo_scan_effect(in vec3 pos, in vec3 centerPosition)
     vec3 c1 = largest_triangles_color(pos);
     vec3 c2 = small_triangles_color(pos);
 
-    vec3 c = vec3(1.0, 1.0, 1.0) * smoothstep(border - 0.2, border, d); // rim
+    vec3 c = vec3(1, 1, 1) * smoothstep(border - 0.2, border, d); // rim
     c += c1;
     c += c2 * smoothstep(border - 0.5, border - 0.88, d); // Small triangle after front
     c *= smoothstep(border, border - 0.05, d); // front cut
     c *= smoothstep(border - 3.0, border - 0.5, d); // cut back
     c *= smoothstep(5.0, 4.0, border); // fade 
 
-    return c * vec3(0, 0.5, 1);
+    return vec4(c, 1) * vec4(0, 0.5, 1, 1.0);
 }
 
 void main()
 {
-    vec3 light = holo_scan_effect(v_world_position, vec3(0, 0, 0));
-    f_color = vec4(light, 1.0);
+    vec4 light = holo_scan_effect(v_world_position, vec3(0, 0, 0));
+    f_color = vec4(light);
 }
