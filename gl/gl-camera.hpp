@@ -98,29 +98,29 @@ namespace avl
         {
             switch (e.type)
             {
-                case InputEvent::KEY:
-                    switch (e.value[0])
+            case InputEvent::KEY:
+                switch (e.value[0])
                 {
                     case GLFW_KEY_W: bf = e.is_mouse_down(); break;
                     case GLFW_KEY_A: bl = e.is_mouse_down(); break;
                     case GLFW_KEY_S: bb = e.is_mouse_down(); break;
                     case GLFW_KEY_D: br = e.is_mouse_down(); break;
                 }
-                    break;
-                case InputEvent::MOUSE:
-                    switch (e.value[0])
+                break;
+            case InputEvent::MOUSE:
+                switch (e.value[0])
                 {
                     case GLFW_MOUSE_BUTTON_LEFT: ml = e.is_mouse_down(); break;
                     case GLFW_MOUSE_BUTTON_RIGHT: mr = e.is_mouse_down(); break;
                 }
-                    break;
-                case InputEvent::CURSOR:
-                    if (mr)
-                    {
-                        camYaw -= (e.cursor.x - lastCursor.x) * 0.01f;
-                        camPitch = clamp(camPitch - (e.cursor.y - lastCursor.y) * 0.01f, -1.57f, +1.57f);
-                    }
-                    break;
+                break;
+            case InputEvent::CURSOR:
+                if (mr)
+                {
+                    camYaw -= (e.cursor.x - lastCursor.x) * 0.01f;
+                    camPitch = clamp(camPitch - (e.cursor.y - lastCursor.y) * 0.01f, -1.57f, +1.57f);
+                }
+                break;
             }
             lastCursor = e.cursor;
         }
@@ -133,12 +133,9 @@ namespace avl
             
             if (bf || (ml && mr)) move.z -= 1 * movementSpeed;
             
-            if (bl)
-                move.x -= 1 * movementSpeed;
-            if (bb)
-                move.z += 1 * movementSpeed;
-            if (br)
-                move.x += 1 * movementSpeed;
+            if (bl) move.x -= 1 * movementSpeed;
+            if (bb) move.z += 1 * movementSpeed;
+            if (br) move.x += 1 * movementSpeed;
             
             auto current = cam->get_pose().position;
             auto target = cam->get_pose().transform_coord(move);

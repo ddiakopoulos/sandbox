@@ -8,6 +8,18 @@
 
 using namespace avl;
 
+template<typename T>
+class VoxelArray
+{
+    int3 size;
+    std::vector<T> voxels;
+public:
+    VoxelArray(const int3 & size) : size(size), voxels(size.x * size.y * size.z) {}
+    const int3 & get_size() const { return size; }
+    T operator[](const int3 & coords) const { return voxels[coords.z * size.x * size.y + coords.y * size.x + coords.x]; }
+    T & operator[](const int3 & coords) { return voxels[coords.z * size.x * size.y + coords.y * size.x + coords.x]; }
+};
+
 class SuperFormula
 {
     float m, n1, n2, n3, a, b;
