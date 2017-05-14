@@ -19,6 +19,8 @@ inline std::vector<uint8_t> load_image_data(const std::string & path)
     return d;
 }
 
+// fixme - these functions belong in a gl-xyz.hpp file
+
 inline GlTexture2D load_image(const std::string & path, bool flip = false)
 {
     auto binaryFile = avl::read_file_binary(path);

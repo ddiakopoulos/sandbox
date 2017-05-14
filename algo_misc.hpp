@@ -8,6 +8,20 @@
 
 using namespace avl;
 
+class SuperFormula
+{
+    float m, n1, n2, n3, a, b;
+public:
+    SuperFormula(const float m, const float n1, const float n2, const float n3, const float a = 1.0f, const float b = 1.0f) : m(m), n1(n1), n2(n2), n3(n3), a(a), b(b) {}
+
+    float operator() (const float phi) const
+    {
+        float raux1 = std::pow(std::abs(1.f / a * std::cos(m * phi / 4.f)), n2) + std::pow(std::abs(1.f / b * std::sin(m * phi / 4.f)), n3);
+        float r1 = std::pow(std::abs(raux1), -1.0f / n1);
+        return r1;
+    }
+};
+
 // Cantor set on the xz plane
 struct CantorSet
 {

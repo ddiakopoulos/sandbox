@@ -129,6 +129,15 @@ namespace avl
         return current + displacement;
     }
 
+    inline float4 make_frustum_coords(const float aspectRatio, const float nearClip, const float vfov)
+    {
+        const float top = nearClip * std::tan((vfov * (float(ANVIL_PI) * 2.f) / 360.0f) / 2.0f);
+        const float right = top * aspectRatio;
+        const float bottom = -top;
+        const float left = -right;
+        return{ top, right, bottom, left };
+    }
+
     inline float vfov_from_projection(const float4x4 & projection)
     {
         return std::atan((1.0f / projection[1][1])) * 2.0f;
@@ -144,6 +153,11 @@ namespace avl
         float n = projection[2][2];
         float f = projection[3][2];
         return{ 2 * (f / (n - 1.0f)), f / (n + 1.0f) };
+    }
+
+    inline float get_focal_length(const float & vFovRadians)
+    {
+        return (1.f / (tan(vFovRadians * 0.5f) * 2.0f));
     }
 
 }

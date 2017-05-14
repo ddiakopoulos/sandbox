@@ -142,8 +142,8 @@ public:
         shader.uniform("lineWidth", lineWidth);
         shader.uniform("color", color);
         shader.uniform("opacity", 1.0f);
-        shader.uniform("near", camera.nearClip);
-        shader.uniform("far", camera.farClip);
+        shader.uniform("near", 0.1f);
+        shader.uniform("far", 64.f);
         shader.uniform("sizeAttenuation", 0.0f);
         shader.uniform("useMap", 0.0f);
         

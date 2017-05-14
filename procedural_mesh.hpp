@@ -6,6 +6,7 @@
 #include "geometric.hpp"
 #include "splines.hpp"
 #include "geometry.hpp"
+#include "algo_misc.hpp"
 #include <assert.h>
 
 namespace avl
@@ -669,36 +670,7 @@ namespace avl
         tetrahedron.compute_normals();
         return tetrahedron;
     }
-    
-    // http://mathworld.wolfram.com/Superellipse.html
-    // https://en.wikipedia.org/wiki/Superformula
-    class SuperFormula
-    {
-        float m, n1, n2, n3, a, b;
-    public:
-        SuperFormula(const float m, const float n1, const float n2, const float n3, const float a = 1.0f, const float b = 1.0f) : m(m), n1(n1), n2(n2), n3(n3), a(a), b(b) {}
-        
-        float operator() (const float phi) const 
-        {
-            /*
-            const float r = m * phi / 4.0f;
 
-            float t1 = std::abs(std::cos(r) / (1.0 / a));
-            t1 = std::pow(t1, n2);
-
-            float t2 = std::abs(std::sin(r) / (1.0 / b));
-            t2 = std::pow(t2, n3);
-
-            return std::pow(t1 + t2, -1.0f / n1);
-            */
-
-            float raux1 = std::pow(std::abs(1.f / a * std::cos(m * phi / 4.f)), n2) + std::pow(std::abs(1.f / b * std::sin(m * phi / 4.f)), n3);
-            float r1 = std::pow(std::abs(raux1), -1.0f / n1);
-            return r1;
-        }
-    };
-
-    // http://paulbourke.net/geometry/supershape/
     inline Geometry make_supershape_3d(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
     {
         Geometry shape;

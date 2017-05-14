@@ -10,135 +10,52 @@
 
 namespace avl
 {
-	inline float4 make_frustum_coords(const float aspectRatio, const float nearClip, const float vfov)
-	{
-		const float top = nearClip * std::tan((vfov * (float(ANVIL_PI) * 2.f) / 360.0f) / 2.0f);
-		const float right = top * aspectRatio;
-		const float bottom = -top;
-		const float left = -right;
-		return{ top, right, bottom, left };
-	}
 
-	inline std::array<float3, 4> make_near_clip_coords(Pose pose, float nearClip, float farClip, float aspectRatio, const float vfov)
-	{
-		const float3 viewDirection = safe_normalize(-pose.zdir());
-		const float3 eye = pose.position;
+    ////////////////////////////////////////////////
+    //   Basic Retained-Mode Perspective Camera   //
+    ////////////////////////////////////////////////
 
-		auto leftDir = pose.xdir();
-		auto upDir = pose.ydir();
-
-		const auto coords = make_frustum_coords(aspectRatio, nearClip, vfov);
-
-		float frustumTop = coords[0];
-		float frustumRight = coords[1];
-		float frustumBottom = coords[2];
-		float frustumLeft = coords[3];
-
-		float3 topLeft = eye + (nearClip * viewDirection) + (frustumTop * upDir) + (frustumLeft * leftDir);
-		float3 topRight = eye + (nearClip  * viewDirection) + (frustumTop * upDir) + (frustumRight * leftDir);
-		float3 bottomLeft = eye + (nearClip  * viewDirection) + (frustumBottom * upDir) + (frustumLeft * leftDir);
-		float3 bottomRight = eye + (nearClip  * viewDirection) + (frustumBottom * upDir) + (frustumRight * leftDir);
-
-		return{ topLeft, topRight, bottomLeft, bottomRight };
-	}
-
-	inline std::array<float3, 4> make_far_clip_coords(Pose pose, float nearClip, float farClip, float aspectRatio, const float vfov)
-	{
-		const float3 viewDirection = safe_normalize(-pose.zdir());
-		const float3 eye = pose.position;
-		const float ratio = farClip / nearClip;
-
-		const auto leftDir = pose.xdir();
-		const auto upDir = pose.ydir();
-
-		const auto coords = make_frustum_coords(aspectRatio, nearClip, vfov);
-
-		float frustumTop = coords[0];
-		float frustumRight = coords[1];
-		float frustumBottom = coords[2];
-		float frustumLeft = coords[3];
-
-		float3 topLeft = eye + (farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumLeft * leftDir);
-		float3 topRight = eye + (farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumRight * leftDir);
-		float3 bottomLeft = eye + (farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumLeft * leftDir);
-		float3 bottomRight = eye + (farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumRight * leftDir);
-
-		return{ topLeft, topRight, bottomLeft, bottomRight };
-	}
-
-    struct GlCamera
+    class GlCamera
     {
         Pose pose;
+
+    public:
+
+        float4x4 get_view_matrix() const 
+        { 
+            return make_view_matrix_from_pose(pose); 
+        }
         
-        float fov = 60.0f;
-        float nearClip = 0.1f;
-        float farClip = 70.0f;
-        
+        float4x4 get_projection_matrix(float aspectRatio, float vFov = 72.0f, float nearClip = 0.01f, float farClip = 64.0f) const
+        {
+            const float4 f = make_frustum_coords(aspectRatio, nearClip, vFov);
+            return make_projection_matrix(f[3], f[1], f[2], f[0], nearClip, farClip);
+        }
+
         Pose get_pose() const { return pose; }
-        
-        float3 get_view_direction() const { return -pose.zdir(); }
-        
-        float3 get_eye_point() const { return pose.position; }
-        
-        float4x4 get_view_matrix() const { return make_view_matrix_from_pose(pose); }
-        
-        float4x4 get_projection_matrix(float aspectRatio) const
-        {
-            float4 f = make_frustum_coords(aspectRatio, nearClip, fov);
-            return make_projection_matrix(f[3], f[1], f[2], f[0], nearClip, farClip); // fixme
-        }
-        
-        float4x4 get_projection_matrix(float l, float r, float b, float t) const
-        {
-            float left = -tanf(to_radians(l)) * nearClip;
-            float right = tanf(to_radians(r)) * nearClip;
-            float bottom = -tanf(to_radians(b)) * nearClip;
-            float top = tanf(to_radians(t)) * nearClip;
-            return make_projection_matrix(left, right, bottom, top, nearClip, farClip);
-        }
-        
+        Pose & get_pose() { return pose; }
+
         void set_pose(const Pose & p) { pose = p; }
 
-        void set_orientation(const float4 & o) { pose.orientation = safe_normalize(o); }
+        float3 get_view_direction() const { return -pose.zdir(); }
+        float3 get_eye_point() const { return pose.position; }
+
+        void look_at(const float3 & target) { pose = look_at_pose_rh(pose.position, target); }
+        void look_at(const float3 & eyePoint, const float3 target) { pose = look_at_pose_rh(eyePoint, target); }
+        void look_at(const float3 & eyePoint, float3 const & target, float3 const & worldup) { pose = look_at_pose_rh(eyePoint, target, worldup); }
         
-        void set_position(const float3 & pos) { pose.position = pos; }
-        
-        void set_perspective(float vFov, float nearClip, float farClip)
+        Ray get_world_ray(const float2 cursor, const float2 viewport, const float vFov = 72.0f, const float nearClip = 0.01f, const float farClip = 64.0f)
         {
-            this->fov = vFov;
-            this->nearClip = nearClip;
-            this->farClip = farClip;
-        }
-        
-        void look_at(float3 target)
-        {
-            pose = look_at_pose_rh(pose.position, target); // LH vs RH
-        }
-        
-        void look_at(float3 eyePoint, float3 target)
-        {
-            pose = look_at_pose_rh(eyePoint, target);
-        }
-        
-        void look_at(float3 eyePoint, float3 target, float3 upDirection)
-        {
-            pose = look_at_pose_rh(eyePoint, target, upDirection);
-        }
-        
-        float get_focal_length() const
-        {
-            return (1.f / (tan(to_radians(fov) * 0.5f) * 2.0f));
-        }
-        
-        Ray get_world_ray(float2 cursor, float2 viewport)
-        {
-            float aspect = viewport.x / viewport.y;
-            auto cameraRay = ray_from_viewport_pixel(cursor, viewport, get_projection_matrix(aspect));
+            const float aspect = viewport.x / viewport.y;
+            auto cameraRay = ray_from_viewport_pixel(cursor, viewport, get_projection_matrix(aspect, vFov, nearClip, farClip));
             return pose * cameraRay;
         }
-        
     };
     
+    /////////////////////////////////////
+    //   Standard Free-Flying Camera   //
+    /////////////////////////////////////
+
     class FlyCameraController
     {
         GlCamera * cam;
@@ -232,11 +149,13 @@ namespace avl
                 float springyY = damped_spring(target.y, current.y, velocity.y, delta, 0.99f);
                 float springyZ = damped_spring(target.z, current.z, velocity.z, delta, 0.99f);
                 float3 dampedLocation = { springyX, springyY, springyZ };
-                cam->set_position(dampedLocation);
+                Pose & camPose = cam->get_pose();
+                camPose.position = dampedLocation;
             }
             else
             {
-                cam->set_position(target);
+                Pose & camPose = cam->get_pose();
+                camPose.position = target;
             }
             
             float3 lookVec;
@@ -248,21 +167,9 @@ namespace avl
         }
     };
     
-    inline Ray make_ray(const GlCamera & camera, const float aspectRatio, float uPos, float vPos, float imagePlaneApectRatio)
-    {
-        const float top = camera.nearClip * std::tan((camera.fov * (float(ANVIL_PI) / 2.f) / 360.f) / 2.f);
-        const float right = top * aspectRatio; // Is this correct?
-        const float left = -right;
-        float s = (uPos - 0.5f) * imagePlaneApectRatio;
-        float t = (vPos - 0.5f);
-        float viewDistance = imagePlaneApectRatio / std::abs(right - left) * camera.nearClip;
-        return Ray(camera.get_eye_point(), safe_normalize(camera.pose.xdir() * s + camera.pose.ydir() * t - (camera.get_view_direction() * viewDistance)));
-    }
-    
-    inline Ray make_ray(const GlCamera & camera, const float aspectRatio, const float2 & posPixels, const float2 & imageSizePixels)
-    {
-        return make_ray(camera, aspectRatio, posPixels.x / imageSizePixels.x, (imageSizePixels.y - posPixels.y) / imageSizePixels.y, imageSizePixels.x / imageSizePixels.y);
-    }
+    ////////////////////////
+    //   Cubemap Camera   //
+    ////////////////////////
 
     class CubemapCamera
     {
