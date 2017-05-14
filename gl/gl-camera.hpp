@@ -28,7 +28,7 @@ namespace avl
         
         float4x4 get_projection_matrix(float aspectRatio, float vFov = 72.0f, float nearClip = 0.01f, float farClip = 64.0f) const
         {
-            const float4 f = make_frustum_coords(aspectRatio, nearClip, vFov);
+            const float4 f = make_frustum_coords(aspectRatio, nearClip, to_radians(vFov));
             return make_projection_matrix(f[3], f[1], f[2], f[0], nearClip, farClip);
         }
 
@@ -47,7 +47,7 @@ namespace avl
         Ray get_world_ray(const float2 cursor, const float2 viewport, const float vFov = 72.0f, const float nearClip = 0.01f, const float farClip = 64.0f)
         {
             const float aspect = viewport.x / viewport.y;
-            auto cameraRay = ray_from_viewport_pixel(cursor, viewport, get_projection_matrix(aspect, vFov, nearClip, farClip));
+            auto cameraRay = ray_from_viewport_pixel(cursor, viewport, get_projection_matrix(aspect, to_radians(vFov), nearClip, farClip));
             return pose * cameraRay;
         }
     };

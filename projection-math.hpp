@@ -6,39 +6,39 @@
 namespace avl
 {
 
-    // Diagonal to vertical fov
-    inline float dfov_to_vfov(float diagonalFov, float aspectRatio)
+    inline float get_focal_length(float vFoV)
     {
-        return 2.f * atan(tan(diagonalFov / 2.f) / sqrt(1.f + aspectRatio * aspectRatio));
+        return (1.f / (tan(vFoV * 0.5f) * 2.0f));
     }
 
-    // Diagonal to horizontal fov
-    inline float dfov_to_hfov(float diagonalFov, float aspectRatio)
+    inline float dfov_to_vfov(float dFoV, float aspectRatio)
     {
-        return 2.f * atan(tan(diagonalFov / 2.f) / sqrt(1.f + 1.f / (aspectRatio * aspectRatio)));
+        return 2.f * atan(tan(dFoV / 2.f) / sqrt(1.f + aspectRatio * aspectRatio));
     }
 
-    // Vertical to diagonal fov
-    inline float vfov_to_dfov(float vFov, float aspectRatio)
+    inline float dfov_to_hfov(float dFoV, float aspectRatio)
     {
-        return 2.f * atan(tan(vFov / 2.f) * sqrt(1.f + aspectRatio * aspectRatio));
+        return 2.f * atan(tan(dFoV / 2.f) / sqrt(1.f + 1.f / (aspectRatio * aspectRatio)));
     }
 
-    // Horizontal to diagonal fov
-    inline float hfov_to_dfov(float hFov, float aspectRatio)
+    inline float vfov_to_dfov(float vFoV, float aspectRatio)
     {
-        return 2.f * atan(tan(hFov / 2.f) * sqrt(1.f + 1.f / (aspectRatio * aspectRatio)));
+        return 2.f * atan(tan(vFoV / 2.f) * sqrt(1.f + aspectRatio * aspectRatio));
     }
 
-    // Horizontal to vertical fov
-    inline float hfov_to_vfov(float hFov, float aspectRatio)
+    inline float hfov_to_dfov(float hFoV, float aspectRatio)
     {
-        return 2.f * atan(tan(hFov / 2.f) / aspectRatio);
+        return 2.f * atan(tan(hFoV / 2.f) * sqrt(1.f + 1.f / (aspectRatio * aspectRatio)));
     }
 
-    inline float4 make_frustum_coords(const float aspectRatio, const float nearClip, const float vfov)
+    inline float hfov_to_vfov(float hFoV, float aspectRatio)
     {
-        const float top = nearClip * std::tan((vfov * (float(ANVIL_PI) * 2.f) / 360.0f) / 2.0f);
+        return 2.f * atan(tan(hFoV / 2.f) / aspectRatio);
+    }
+
+    inline float4 make_frustum_coords(float aspectRatio, float nearClip, float vFoV)
+    {
+        const float top = nearClip * std::tan(vFoV / 2.0f);
         const float right = top * aspectRatio;
         const float bottom = -top;
         const float left = -right;
@@ -60,11 +60,6 @@ namespace avl
         float n = projection[2][2];
         float f = projection[3][2];
         return{ 2 * (f / (n - 1.0f)), f / (n + 1.0f) };
-    }
-
-    inline float get_focal_length(const float & vFovRadians)
-    {
-        return (1.f / (tan(vFovRadians * 0.5f) * 2.0f));
     }
 }
 

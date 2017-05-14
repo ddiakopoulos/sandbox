@@ -20,6 +20,7 @@ namespace avl
     template<typename T> T max(const T & a, const T & b, const T & c, const T & d) { return std::max(a, std::max(b, std::max(c, d))); }
     template<typename T> T sign(const T & a, const T & b) { return ((b) >= 0.0 ? std::abs(a) : -std::abs(a)); }
     template<typename T> T sign(const T & a) { return (a == 0) ? T(0) : ((a > 0.0) ? T(1) : T(-1)); }
+    template<typename T> T mix(const T & a, const T & b, const T & t) { return a * (T(1) - t) + b * t; }
     template<typename T> T clamp(const T & val, const T & min, const T & max) { return std::min(std::max(val, min), max); }
     template<typename T> T normalize(T value, T min, T max) { return clamp<T>((value - min) / (max - min), T(0), T(1)); }
     template<typename T> bool in_range(T val, T min, T max) { return (val >= min && val <= max); }

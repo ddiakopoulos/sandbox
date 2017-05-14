@@ -45,8 +45,6 @@ struct ShadowPass
 
     GlShader cascadeShader;
 
-    float mix(float a, float b, float t) { return a * (1 - t) + b * t; }
-
     ShadowPass()
     {
         fsQuad = make_fullscreen_quad();
