@@ -34,6 +34,11 @@ void shader_workbench::on_input(const InputEvent & event)
 {
     igm->update_input(event);
     flycam.handle_input(event);
+
+    if (event.type == InputEvent::KEY)
+    {
+        if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE) exit();
+    }
 }
 
 void shader_workbench::on_update(const UpdateEvent & e) 
@@ -44,14 +49,14 @@ void shader_workbench::on_update(const UpdateEvent & e)
 
 void shader_workbench::on_draw() 
 {
-    gpuTimer.start();
-
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
+
+    gpuTimer.start();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.66f, 0.66f, 0.66f, 1.0f);
