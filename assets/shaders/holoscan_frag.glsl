@@ -1,6 +1,6 @@
 #version 330
 
-const float speed = 0.001; // spread effect speed 
+const float speed = 2; // spread effect speed 
 const float effectRadius = 0.75; // maximum radius of effect
 
 uniform float u_time;
@@ -16,6 +16,17 @@ out vec4 f_color;
 
 float r(float n) { return fract(abs(sin(n*55.753) * 367.34)); }
 float r(vec2 n) { return r(dot(n, vec2(2.46, -1.21))); }
+
+vec3 expanding_ring(in vec3 pos, in vec3 centerPosition)
+{
+    float border = mod(u_time * speed, 5.0);
+    float d = (length(pos.xz - centerPosition.xz) + pos.y - centerPosition.y) / effectRadius;
+    vec3 c = vec3(1.0, 1.0, 1.0) * smoothstep(border - 0.2, border, d); // rim
+    c *= smoothstep(border, border - 0.05, d); // front cut
+    c *= smoothstep(border - 3.0, border - 0.5, d); // cut back
+    c *= smoothstep(5.0, 4.0, border); // fade 
+    return c;
+}
 
 vec3 small_triangles_color(vec3 worldPosition)
 {
@@ -64,11 +75,10 @@ vec3 holo_scan_effect(in vec3 pos, in vec3 centerPosition)
     vec3 c1 = largest_triangles_color(pos);
     vec3 c2 = small_triangles_color(pos);
 
-    vec3 c = vec3(1.0, 1.0, 1.0) * smoothstep(border - 0.2, border, d); // rim
-    c += c1;
-    c += c2 * smoothstep(border - 0.4, border - 0.66, d); // Small triangle after front
-    c *= smoothstep(border, border - 0.05, d); // front cut
-    c *= smoothstep(border - 3.0, border - 0.5, d); // cut back
+    vec3 c = expanding_ring(pos, centerPosition);
+
+    //c += c1;
+    c = c2 * smoothstep(border - 0.5, border - 0.55, d); // Small triangle after front
     c *= smoothstep(5.0, 4.0, border); // fade 
 
     return c * vec3(0, 0.5, 1);

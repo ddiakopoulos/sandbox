@@ -83,7 +83,7 @@ void shader_workbench::on_update(const UpdateEvent & e)
 {
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
-    elapsedTime += e.elapsed_s;
+    elapsedTime += e.timestep_ms;
 }
 
 void shader_workbench::on_draw() 
