@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="effects">
+      <UniqueIdentifier>{c9a425aa-c5ae-4a66-8c11-8c52ae651430}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="holo-scan-effect.hpp">
+      <Filter>effects</Filter>
+    </ClInclude>
+    <ClInclude Include="terrain-scan-effect.hpp">
+      <Filter>effects</Filter>
+    </ClInclude>
+    <ClInclude Include="area-light-ltc.hpp">
+      <Filter>effects</Filter>
+    </ClInclude>
+    <ClInclude Include="cheap-subsurface-scattering.hpp">
+      <Filter>effects</Filter>
+    </ClInclude>
+    <ClInclude Include="fade-to-skybox.hpp">
+      <Filter>effects</Filter>
+    </ClInclude>
+    <ClInclude Include="lab-teleportation-sphere.hpp">
+      <Filter>effects</Filter>
+    </ClInclude>
+    <ClInclude Include="triplanar-terrain.hpp">
+      <Filter>effects</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

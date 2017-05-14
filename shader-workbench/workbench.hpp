@@ -1,4 +1,11 @@
 #include "index.hpp"
+#include "holo-scan-effect.hpp"
+#include "terrain-scan-effect.hpp"
+#include "fade-to-skybox.hpp"
+#include "cheap-subsurface-scattering.hpp"
+#include "area-light-ltc.hpp"
+#include "lab-teleportation-sphere.hpp"
+#include "triplanar-terrain.hpp"
 
 struct shader_workbench : public GLFWApp
 {
@@ -6,7 +13,6 @@ struct shader_workbench : public GLFWApp
     FlyCameraController flycam;
     ShaderMonitor shaderMonitor{ "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
-
 
     shader_workbench();
     ~shader_workbench();
