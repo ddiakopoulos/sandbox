@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "index.hpp"
+#include "index.hpp"
 
 using namespace avl;
 
@@ -10,7 +11,6 @@ using namespace avl;
 //#include "examples/textured_model_app.hpp"
 //#include "examples/ssao_app.hpp"
 //#include "examples/camera_app.hpp"
-//#include "examples/euclidean_app.hpp" // Borked on windows
 //#include "examples/meshline_app.hpp"
 //#include "examples/reaction_app.hpp"
 //#include "examples/decal_app.hpp"
@@ -18,7 +18,6 @@ using namespace avl;
 //#include "examples/sandbox_app.hpp"
 //#include "examples/hdr_skydome.hpp"
 //#include "examples/instance_app.hpp"
-//#include "examples/manipulation_app.hpp"
 //#include "examples/shadow_app.hpp"
 //#include "examples/simplex_noise_app.hpp"
 //#include "examples/render_experiments.hpp"
