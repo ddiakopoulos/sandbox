@@ -16,6 +16,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "virtual-reality", "..\virtu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "examples", "..\examples\examples.vcxproj", "{93ED2D4D-908C-4383-9930-AF8922BE0EED}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shader-workbench", "..\shader-workbench\shader-workbench.vcxproj", "{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -64,6 +66,14 @@ Global
 		{93ED2D4D-908C-4383-9930-AF8922BE0EED}.Release|Win32.Build.0 = Release|Win32
 		{93ED2D4D-908C-4383-9930-AF8922BE0EED}.Release|x64.ActiveCfg = Release|x64
 		{93ED2D4D-908C-4383-9930-AF8922BE0EED}.Release|x64.Build.0 = Release|x64
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|Win32.Build.0 = Debug|Win32
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|x64.ActiveCfg = Debug|x64
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|x64.Build.0 = Debug|x64
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|Win32.ActiveCfg = Release|Win32
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|Win32.Build.0 = Release|Win32
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|x64.ActiveCfg = Release|x64
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
