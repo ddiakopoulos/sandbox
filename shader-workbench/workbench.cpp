@@ -3,12 +3,14 @@
 
 using namespace avl;
 
-shader_workbench::shader_workbench() : GLFWApp(1200, 1200, "Shader Workbench")
+shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
-    gl_check_error(__FILE__, __LINE__);
+
+    igm.reset(new gui::ImGuiManager(window));
+    gui::make_dark_theme();
 
     cam.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     flycam.set_camera(&cam);
@@ -26,6 +28,7 @@ void shader_workbench::on_window_resize(int2 size)
 
 void shader_workbench::on_input(const InputEvent & event) 
 {
+    igm->update_input(event);
     flycam.handle_input(event);
 }
 
@@ -52,6 +55,10 @@ void shader_workbench::on_draw()
     const float4x4 projectionMatrix = cam.get_projection_matrix((float)width / (float)height);
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
+
+    igm->begin_frame();
+    ImGui::Text("Controls");
+    igm->end_frame();
 
     gl_check_error(__FILE__, __LINE__);
 
