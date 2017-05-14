@@ -6,17 +6,20 @@
 #include "linalg_util.hpp"
 #include "geometric.hpp"
 #include "geometry.hpp"
-#include "scene.hpp"
-#include "camera.hpp"
-#include "gpu_timer.hpp"
 #include "procedural_mesh.hpp"
 #include "simple_timer.hpp"
-#include "avl_imgui.hpp"
 #include "uniforms.hpp"
 #include "debug_line_renderer.hpp"
+
+#include "gl-scene.hpp"
+#include "gl-camera.hpp"
+#include "gl-async-gpu-timer.hpp"
+#include "gl-procedural-sky.hpp"
+#include "gl-imgui.hpp"
+
 #include "bloom_pass.hpp"
 #include "shadow_pass.hpp"
-#include "procedural_sky.hpp"
+
 
 /*
  * To Do - 3.25.2017

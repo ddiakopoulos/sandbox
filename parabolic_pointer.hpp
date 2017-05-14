@@ -10,7 +10,7 @@ using namespace avl;
 #include "util.hpp"
 #include "linalg_util.hpp"
 #include "solvers.hpp"
-#include "GL_API.hpp"
+#include "gl-api.hpp"
 #include "geometric.hpp"
 
 // Parabolic motion equation, y = p0 + v0*t + 1/2at^2

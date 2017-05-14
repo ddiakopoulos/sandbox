@@ -6,7 +6,6 @@
 #include "util.hpp"
 #include "geometric.hpp"
 #include "geometry.hpp"
-#include "camera.hpp"
 
 namespace avl
 {

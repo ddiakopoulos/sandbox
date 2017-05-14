@@ -3,8 +3,7 @@
 #ifndef nvg_util_h
 #define nvg_util_h
 
-#include "GL_API.hpp"
-
+#include "gl-api.hpp"
 #include "third_party/nanovg.h"
 
 #include <stdint.h>

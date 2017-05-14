@@ -7,6 +7,7 @@
 #include "linalg_util.hpp"
 #include "geometric.hpp"
 #include "geometry.hpp"
+#include "gl-api.hpp"
 
 using namespace avl;
 

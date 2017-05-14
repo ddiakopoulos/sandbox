@@ -5,9 +5,9 @@
 
 #include "util.hpp"
 #include "linalg_util.hpp"
-#include "GL_API.hpp"
-#include "async_pbo.hpp"
-#include "avl_imgui.hpp"
+#include "gl-api.hpp"
+#include "gl-async-pbo.hpp"
+#include "gl-imgui.hpp"
 #include "file_io.hpp"
 #include "procedural_mesh.hpp"
 

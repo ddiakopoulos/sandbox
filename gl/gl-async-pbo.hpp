@@ -3,7 +3,7 @@
 #ifndef async_pbo_hpp
 #define async_pbo_hpp
 
-#include "GL_API.hpp"
+#include "gl-api.hpp"
 #include "linalg_util.hpp"
 
 struct AsyncRead1

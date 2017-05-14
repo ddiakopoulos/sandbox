@@ -5,8 +5,7 @@
 #ifndef meshline_h
 #define meshline_h
 
-#include "GL_API.hpp"
-#include <random>
+#include "gl-api.hpp"
 
 namespace avl
 {

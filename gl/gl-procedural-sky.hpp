@@ -4,8 +4,8 @@
 #include "linalg_util.hpp"
 #include "math_util.hpp"
 #include "util.hpp"
-#include "GL_API.hpp"
-#include "procedural_mesh.hpp"
+#include "gl-api.hpp"
+#include "gl-procedural-mesh.hpp"
 
 namespace
 {

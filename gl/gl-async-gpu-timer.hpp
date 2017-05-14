@@ -3,7 +3,7 @@
 #ifndef timer_gl_gpu_h
 #define timer_gl_gpu_h
 
-#include "GL_API.hpp"
+#include "gl-api.hpp"
 #include "util.hpp"
 
 class GlGpuTimer

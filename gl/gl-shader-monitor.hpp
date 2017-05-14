@@ -3,10 +3,9 @@
 #ifndef shader_monitor_h
 #define shader_monitor_h
 
-#include "GL_API.hpp"
+#include "gl-api.hpp"
 #include "util.hpp"
 #include "string_utils.hpp"
-
 #include "third_party/efsw/efsw.hpp"
 
 namespace avl

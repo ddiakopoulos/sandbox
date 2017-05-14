@@ -4,8 +4,8 @@
 #include "linalg_util.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
-#include "GL_API.hpp"
 #include "splines.hpp"
+#include "geometry.hpp"
 #include <assert.h>
 
 namespace avl
@@ -47,11 +47,6 @@ namespace avl
         return cube;
     }
     
-    inline GlMesh make_cube_mesh()
-    {
-        return make_mesh_from_geometry(make_cube());
-    }
-    
     inline Geometry make_sphere(float radius)
     {
         Geometry sphereGeom;
@@ -85,12 +80,7 @@ namespace avl
 
         return sphereGeom;
     }
-    
-    inline GlMesh make_sphere_mesh(float radius)
-    {
-        return make_mesh_from_geometry(make_sphere(radius));
-    }
-    
+
     inline Geometry make_cylinder(float radiusTop, float radiusBottom, float height, int radialSegments, int heightSegments, bool openEnded = false)
     {
         Geometry cylinderGeom;
@@ -223,11 +213,6 @@ namespace avl
         return cylinderGeom;
     }
     
-    inline GlMesh make_cylinder_mesh(float radiusTop, float radiusBottom, float height, int radialSegments, int heightSegments, bool openEnded = false)
-    {
-        return make_mesh_from_geometry(make_cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded));
-    }
-    
     inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
     {
         Geometry ringGeom;
@@ -296,11 +281,6 @@ namespace avl
         return ringGeom;
     }
     
-    inline GlMesh make_ring_mesh(float innerRadius = 1.0f, float outerRadius = 2.0f)
-    {
-        return make_mesh_from_geometry(make_ring(innerRadius, outerRadius));
-    }
-    
     inline Geometry make_3d_ring(float innerRadius = 1.0f, float outerRadius = 2.0f, float length = 1.0f)
     {
         Geometry ringGeom;
@@ -360,11 +340,6 @@ namespace avl
         return ringGeom;
     }
     
-    inline GlMesh make_3d_ring_mesh(float innerRadius = 1.0f, float outerRadius = 2.0f, float length = 1.0f)
-    {
-        return make_mesh_from_geometry(make_3d_ring(innerRadius, outerRadius, length));
-    }
-    
     inline Geometry make_frustum(float aspectRatio = 1.33333f)
     {
         Geometry frustum;
@@ -382,13 +357,6 @@ namespace avl
             {-1, -h, -1.0}, {-1, +h, -1.0}
         };
         return frustum;
-    }
-    
-    inline GlMesh make_frustum_mesh(float aspectRatio = 1.33333f)
-    {
-        auto frustumMesh = make_mesh_from_geometry(make_frustum(aspectRatio));
-        frustumMesh.set_non_indexed(GL_LINES);
-        return frustumMesh;
     }
     
     inline Geometry make_torus(uint32_t radial_segments = 24)
@@ -420,12 +388,7 @@ namespace avl
         torus.compute_tangents();
         return torus;
     }
-    
-    inline GlMesh make_torus_mesh(int radial_segments = 8)
-    {
-        return make_mesh_from_geometry(make_torus(radial_segments));
-    }
-    
+
     inline Geometry make_capsule(int segments, float radius, float length)
     {
         Geometry capsule;
@@ -514,11 +477,6 @@ namespace avl
         return capsule;
     }
     
-    inline GlMesh make_capsule_mesh(int segments, float radius, float length)
-    {
-        return make_mesh_from_geometry(make_capsule(segments, radius, length));
-    }
-    
     inline Geometry make_plane(float width, float height, uint32_t nw, uint32_t nh, bool withBackface = false)
     {
         Geometry plane;
@@ -567,11 +525,6 @@ namespace avl
         plane.compute_bounds();
         
         return plane;
-    }
-    
-    inline GlMesh make_plane_mesh(float width, float height, uint32_t nw, uint32_t nh)
-    {
-        return make_mesh_from_geometry(make_plane(width, height, nw, nh));
     }
     
     inline Geometry make_curved_plane()
@@ -630,11 +583,6 @@ namespace avl
         return plane;
     }
     
-    inline GlMesh make_curved_plane_mesh()
-    {
-        return make_mesh_from_geometry(make_curved_plane());
-    }
-    
     inline Geometry make_axis()
     {
         Geometry axis;
@@ -663,13 +611,6 @@ namespace avl
         return axis;
     }
     
-    inline GlMesh make_axis_mesh()
-    {
-        auto axisMesh = make_mesh_from_geometry(make_axis());
-        axisMesh.set_non_indexed(GL_LINES);
-        return axisMesh;
-    }
-    
     inline Geometry make_spiral(float resolution = 512.0f, float freq = 128.f)
     {
         Geometry spiral;
@@ -681,15 +622,7 @@ namespace avl
         }
         return spiral;
     }
-    
-    inline GlMesh make_spiral_mesh(float resolution = 512.0f, float freq = 128.f)
-    {
-        assert(freq < resolution);
-        auto sprialMesh = make_mesh_from_geometry(make_spiral());
-        sprialMesh.set_non_indexed(GL_LINE_STRIP);
-        return sprialMesh;
-    }
-    
+
     inline Geometry make_icosahedron()
     {
         Geometry icosahedron;
@@ -712,11 +645,6 @@ namespace avl
         return icosahedron;
     }
     
-    inline GlMesh make_icosahedron_mesh()
-    {
-        return make_mesh_from_geometry(make_icosahedron());
-    }
-    
     inline Geometry make_octohedron()
     {
         Geometry octohedron;
@@ -728,11 +656,6 @@ namespace avl
         octohedron.faces = {{0, 2, 4}, {0, 4, 3}, {0, 3, 5}, {0, 5, 2}, {1, 2, 5}, {1, 5, 3}, {1, 3, 4}, {1, 4, 2}};
         octohedron.compute_normals();
         return octohedron;
-    }
-    
-    inline GlMesh make_octohedron_mesh()
-    {
-        return make_mesh_from_geometry(make_octohedron());
     }
     
     inline Geometry make_tetrahedron()
@@ -747,34 +670,6 @@ namespace avl
         return tetrahedron;
     }
     
-    inline GlMesh make_tetrahedron_mesh()
-    {
-        return make_mesh_from_geometry(make_tetrahedron());
-    }
-    
-    inline GlMesh make_fullscreen_quad_ndc()
-    {
-        Geometry g;
-        g.vertices = { { -1.0f, -1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } };
-        g.texCoords = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
-        g.faces = { { 0, 1, 2 },{ 3, 4, 5 } };
-        return make_mesh_from_geometry(g);
-    }
-
-    inline GlMesh make_fullscreen_quad()
-    {
-        return make_fullscreen_quad_ndc();
-    }
-
-    inline GlMesh make_fullscreen_quad_screenspace()
-    {
-        Geometry g;
-        g.vertices = { { 0.0f, 0.0f, 0.0f },{ 1.0f, 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 0.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } };
-        g.texCoords = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
-        g.faces = { { 0, 1, 2 },{ 3, 4, 5 }, { 5, 4, 3 },{ 2, 1, 0 } }; // with backfaces
-        return make_mesh_from_geometry(g);
-    }
-
     // http://mathworld.wolfram.com/Superellipse.html
     // https://en.wikipedia.org/wiki/Superformula
     class SuperFormula
@@ -807,7 +702,7 @@ namespace avl
     inline Geometry make_supershape_3d(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
     {
         Geometry shape;
-        
+
         SuperFormula f1(m, n1, n2, n3, a, b);
         SuperFormula f2(m, n1, n2, n3, a, b);
 
@@ -816,13 +711,13 @@ namespace avl
         float lat_inc = ANVIL_PI / segments;
 
         // Longitude
-        for (int i = 0; i < segments + 1; ++i) 
+        for (int i = 0; i < segments + 1; ++i)
         {
             const float r1 = f1(theta);
             float phi = -ANVIL_PI / 2.0f; // reset phi 
 
             // Latitude
-            for (int j = 0; j < segments + 1; ++j) 
+            for (int j = 0; j < segments + 1; ++j)
             {
                 const float r2 = f2(phi);
                 const float radius = r1 * r2; // spherical product
@@ -854,18 +749,12 @@ namespace avl
 
         for (auto & q : quads)
         {
-            shape.faces.push_back({q.w,q.z,q.x});
-            shape.faces.push_back({q.z,q.y,q.x});
+            shape.faces.push_back({ q.w,q.z,q.x });
+            shape.faces.push_back({ q.z,q.y,q.x });
         }
 
         shape.compute_normals(true);
         return shape;
-    }
-
-    inline GlMesh make_supershape_3d_mesh(const int segments, const float m, const float n1, const float n2, const float n3, const float a = 1.0, const float b = 1.0)
-    {
-        auto mesh = make_mesh_from_geometry(make_supershape_3d(segments, m, n1, n2, n3, a, b));
-        return mesh;
     }
     
 }

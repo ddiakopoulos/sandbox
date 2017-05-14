@@ -3,8 +3,8 @@
 #ifndef renderable_grid_h
 #define renderable_grid_h
 
-#include "GL_API.hpp"
-#include "scene.hpp"
+#include "gl-api.hpp"
+#include "gl-scene.hpp"
 
 constexpr const char gridVertexShader[] = R"(#version 330
     layout(location = 0) in vec3 vertex;

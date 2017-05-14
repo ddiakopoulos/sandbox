@@ -1,6 +1,5 @@
 #include "vr_renderer.hpp"
 #include "material.hpp"
-#include "avl_imgui.hpp"
 #include <queue>
 
 VR_Renderer::VR_Renderer(float2 renderSizePerEye) : renderSizePerEye(renderSizePerEye)

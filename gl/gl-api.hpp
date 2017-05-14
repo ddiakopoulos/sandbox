@@ -3,7 +3,7 @@
 #ifndef gl_api_hpp
 #define gl_api_hpp
 
-#include "glfw_app.hpp"
+#include "glfw-app.hpp"
 #include <map>
 #include <string>
 #include <vector>

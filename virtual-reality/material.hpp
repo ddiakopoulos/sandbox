@@ -3,7 +3,7 @@
 #ifndef vr_material_hpp
 #define vr_material_hpp
 
-#include "GL_API.hpp"
+#include "gl-api.hpp"
 #include "linalg_util.hpp"
 #include "geometric.hpp"
 #include "assets.hpp"

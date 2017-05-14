@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <array>
-#include "GL_API.hpp"
+#include "gl-api.hpp"
 #include "math_util.hpp"
 #include "geometric.hpp"
 #include "stb/stb_image_write.h"

@@ -22,30 +22,37 @@
     <ClInclude Include="..\algo_misc.hpp" />
     <ClInclude Include="..\arcball.hpp" />
     <ClInclude Include="..\asset_io.hpp" />
-    <ClInclude Include="..\async_pbo.hpp" />
-    <ClInclude Include="..\avl_imgui.hpp" />
     <ClInclude Include="..\bit_mask.hpp" />
-    <ClInclude Include="..\camera.hpp" />
     <ClInclude Include="..\circular_buffer.hpp" />
+    <ClInclude Include="..\geometry.hpp" />
+    <ClInclude Include="..\gl\gl-api.hpp" />
+    <ClInclude Include="..\gl\gl-async-gpu-timer.hpp" />
+    <ClInclude Include="..\gl\gl-async-pbo.hpp" />
+    <ClInclude Include="..\gl\gl-camera.hpp" />
+    <ClInclude Include="..\gl\gl-imgui.hpp" />
+    <ClInclude Include="..\gl\gl-mesh.hpp" />
+    <ClInclude Include="..\gl\gl-nvg.hpp" />
+    <ClInclude Include="..\gl\gl-procedural-mesh.hpp" />
+    <ClInclude Include="..\gl\gl-procedural-sky.hpp" />
+    <ClInclude Include="..\gl\gl-renderable-grid.hpp" />
+    <ClInclude Include="..\gl\gl-renderable-meshline.hpp" />
+    <ClInclude Include="..\gl\gl-scene.hpp" />
+    <ClInclude Include="..\gl\gl-shader-monitor.hpp" />
+    <ClInclude Include="..\gl\gl-texture-view.hpp" />
+    <ClInclude Include="..\gl\glfw-app.hpp" />
     <ClInclude Include="..\kmeans.hpp" />
     <ClInclude Include="..\lru_cache.hpp" />
     <ClInclude Include="..\mpmc_blocking_queue.hpp" />
     <ClInclude Include="..\dsp_filters.hpp" />
     <ClInclude Include="..\file_io.hpp" />
     <ClInclude Include="..\geometric.hpp" />
-    <ClInclude Include="..\geometry.hpp" />
-    <ClInclude Include="..\glfw_app.hpp" />
-    <ClInclude Include="..\GL_API.hpp" />
-    <ClInclude Include="..\gpu_timer.hpp" />
     <ClInclude Include="..\human_time.hpp" />
     <ClInclude Include="..\index.hpp" />
     <ClInclude Include="..\linalg_util.hpp" />
     <ClInclude Include="..\math_util.hpp" />
-    <ClInclude Include="..\meshline.hpp" />
     <ClInclude Include="..\movement_tracker.hpp" />
     <ClInclude Include="..\mpmc_bounded_queue.hpp" />
     <ClInclude Include="..\mpsc_queue.hpp" />
-    <ClInclude Include="..\nvg.hpp" />
     <ClInclude Include="..\one_euro.hpp" />
     <ClInclude Include="..\oriented_bounding_box.hpp" />
     <ClInclude Include="..\parabolic_pointer.hpp" />
@@ -53,13 +60,10 @@
     <ClInclude Include="..\pointcloud_processing.hpp" />
     <ClInclude Include="..\poisson_disk.hpp" />
     <ClInclude Include="..\procedural_mesh.hpp" />
-    <ClInclude Include="..\procedural_sky.hpp" />
     <ClInclude Include="..\quick_hull.hpp" />
     <ClInclude Include="..\radix_sort.hpp" />
     <ClInclude Include="..\reaction_diffusion.hpp" />
-    <ClInclude Include="..\renderable_grid.hpp" />
     <ClInclude Include="..\running_statistics.hpp" />
-    <ClInclude Include="..\scene.hpp" />
     <ClInclude Include="..\signal.hpp" />
     <ClInclude Include="..\simplex_noise.hpp" />
     <ClInclude Include="..\solvers.hpp" />
@@ -68,7 +72,6 @@
     <ClInclude Include="..\spsc_bounded_queue.hpp" />
     <ClInclude Include="..\spsc_queue.hpp" />
     <ClInclude Include="..\string_utils.hpp" />
-    <ClInclude Include="..\texture_view.hpp" />
     <ClInclude Include="..\third_party\fontstash.h" />
     <ClInclude Include="..\third_party\im3d\im3d.h" />
     <ClInclude Include="..\third_party\im3d\im3d_config.h" />
@@ -90,9 +93,10 @@
     <ClInclude Include="..\util.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\avl_imgui.cpp" />
+    <ClCompile Include="..\gl\gl-imgui.cpp" />
+    <ClCompile Include="..\gl\gl-nvg.cpp" />
+    <ClCompile Include="..\gl\glfw-app.cpp" />
     <ClCompile Include="..\impl.cpp" />
-    <ClCompile Include="..\nvg.cpp" />
     <ClCompile Include="..\third_party\efsw.cpp" />
     <ClCompile Include="..\third_party\im3d\im3d.cpp" />
     <ClCompile Include="..\third_party\imgui\imgui.cpp" />
@@ -102,19 +106,6 @@
     <ClCompile Include="..\third_party\nanovg.cpp" />
     <ClCompile Include="..\third_party\tinyply.cpp" />
     <ClCompile Include="..\third_party\tiny_obj_loader.cc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\glfw_app.cpp">
-      <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DeploymentContent>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</DeploymentContent>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</DeploymentContent>
-    </ClCompile>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{992E85A7-B590-477B-A1B2-8A04AAAD0E10}</ProjectGuid>
@@ -193,7 +184,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\gl;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4305;4244;4800</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -210,7 +201,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\gl;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4305;4244;4800</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -229,7 +220,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\gl;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4305;4244;4800</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -250,7 +241,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\minivision;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\gl;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw-3.1.2\include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4305;4244;4800</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>

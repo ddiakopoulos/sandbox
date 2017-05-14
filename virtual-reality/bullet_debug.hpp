@@ -6,8 +6,8 @@
 #include "bullet_utils.hpp"
 #include "linalg_util.hpp"
 #include "geometric.hpp"
-#include "GL_API.hpp"
-#include "scene.hpp"
+#include "gl-api.hpp"
+#include "gl-scene.hpp"
 #include "stb/stb_easy_font.h"
 #include "btBulletCollisionCommon.h"
 

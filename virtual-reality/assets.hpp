@@ -5,7 +5,7 @@
 
 #include "util.hpp"
 #include "linalg_util.hpp"
-#include "GL_API.hpp"
+#include "gl-api.hpp"
 #include <memory>
 #include <vector>
 #include <map>

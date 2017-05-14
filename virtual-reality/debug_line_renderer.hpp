@@ -4,9 +4,9 @@
 #define debug_renderer_hpp
 
 #include "linalg_util.hpp"
-#include "GL_API.hpp"
+#include "gl-api.hpp"
+#include "gl-scene.hpp"
 #include "procedural_mesh.hpp"
-#include "scene.hpp"
 
 using namespace avl;
 

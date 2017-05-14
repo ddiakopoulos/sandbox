@@ -13,12 +13,6 @@
     <Filter Include="source\tools">
       <UniqueIdentifier>{10616b86-375f-450b-ab3f-8e2517e46f22}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\app">
-      <UniqueIdentifier>{11a7ec82-191b-4beb-ba51-981dacc2f378}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\rendering">
-      <UniqueIdentifier>{96253310-1f6d-4a4b-8ed0-6bdeb76e65c6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="third_party\imgui">
       <UniqueIdentifier>{b12263b9-093c-4d8a-814d-4c507b45ede6}</UniqueIdentifier>
     </Filter>
@@ -27,6 +21,18 @@
     </Filter>
     <Filter Include="source\queues">
       <UniqueIdentifier>{dd4ad3de-9911-4ad3-868e-03f188576ff1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\gl-app">
+      <UniqueIdentifier>{11a7ec82-191b-4beb-ba51-981dacc2f378}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\gl-app\im3d">
+      <UniqueIdentifier>{bafc05e2-37af-4fe3-9427-2e7416779f11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\gl-app\include">
+      <UniqueIdentifier>{98265854-15d5-4984-a362-8afe8d39950b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\gl-app\src">
+      <UniqueIdentifier>{38363ae1-2d43-4362-a0f3-121895974a7f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -60,9 +66,6 @@
     <ClInclude Include="..\third_party\tinyply.h">
       <Filter>third_party</Filter>
     </ClInclude>
-    <ClInclude Include="..\geometry.hpp">
-      <Filter>source\math</Filter>
-    </ClInclude>
     <ClInclude Include="..\geometric.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
@@ -77,12 +80,6 @@
     </ClInclude>
     <ClInclude Include="..\dsp_filters.hpp">
       <Filter>source\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\glfw_app.hpp">
-      <Filter>source\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\nvg.hpp">
-      <Filter>source\app</Filter>
     </ClInclude>
     <ClInclude Include="..\arcball.hpp">
       <Filter>source\tools</Filter>
@@ -102,26 +99,8 @@
     <ClInclude Include="..\bit_mask.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\util.hpp">
-      <Filter>source\app</Filter>
-    </ClInclude>
     <ClInclude Include="..\index.hpp">
       <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="..\GL_API.hpp">
-      <Filter>source\rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="..\texture_view.hpp">
-      <Filter>source\rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="..\renderable_grid.hpp">
-      <Filter>source\rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="..\scene.hpp">
-      <Filter>source\rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="..\avl_imgui.hpp">
-      <Filter>source\app</Filter>
     </ClInclude>
     <ClInclude Include="..\third_party\imgui\imconfig.h">
       <Filter>third_party\imgui</Filter>
@@ -138,12 +117,6 @@
     <ClInclude Include="..\poisson_disk.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\procedural_mesh.hpp">
-      <Filter>source\rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="..\meshline.hpp">
-      <Filter>source\rendering</Filter>
-    </ClInclude>
     <ClInclude Include="..\movement_tracker.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
@@ -153,17 +126,11 @@
     <ClInclude Include="..\simplex_noise.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\procedural_sky.hpp">
-      <Filter>source\rendering</Filter>
-    </ClInclude>
     <ClInclude Include="..\splines.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
     <ClInclude Include="..\oriented_bounding_box.hpp">
       <Filter>source\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\camera.hpp">
-      <Filter>source\rendering</Filter>
     </ClInclude>
     <ClInclude Include="..\solvers.hpp">
       <Filter>source\math</Filter>
@@ -176,9 +143,6 @@
     </ClInclude>
     <ClInclude Include="..\parallel_transport_frames.hpp">
       <Filter>source\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\gpu_timer.hpp">
-      <Filter>source\rendering</Filter>
     </ClInclude>
     <ClInclude Include="..\mpmc_bounded_queue.hpp">
       <Filter>source\queues</Filter>
@@ -225,17 +189,68 @@
     <ClInclude Include="..\simple_timer.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\third_party\im3d\im3d.h">
-      <Filter>source\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\im3d\im3d_config.h">
-      <Filter>source\app</Filter>
-    </ClInclude>
     <ClInclude Include="..\asset_io.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\async_pbo.hpp">
-      <Filter>source\rendering</Filter>
+    <ClInclude Include="..\third_party\im3d\im3d_config.h">
+      <Filter>source\gl-app\im3d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\im3d\im3d.h">
+      <Filter>source\gl-app\im3d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\util.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-api.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-async-gpu-timer.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-async-pbo.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-camera.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\glfw-app.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-imgui.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-mesh.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-nvg.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-procedural-mesh.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-procedural-sky.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-renderable-grid.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-renderable-meshline.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-scene.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-shader-monitor.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-texture-view.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\procedural_mesh.hpp">
+      <Filter>source\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\geometry.hpp">
+      <Filter>source\tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -254,14 +269,8 @@
     <ClCompile Include="..\third_party\tinyply.cpp">
       <Filter>third_party</Filter>
     </ClCompile>
-    <ClCompile Include="..\nvg.cpp">
-      <Filter>source\app</Filter>
-    </ClCompile>
     <ClCompile Include="..\third_party\efsw.cpp">
       <Filter>third_party</Filter>
-    </ClCompile>
-    <ClCompile Include="..\avl_imgui.cpp">
-      <Filter>source\app</Filter>
     </ClCompile>
     <ClCompile Include="..\third_party\imgui\imgui.cpp">
       <Filter>third_party\imgui</Filter>
@@ -269,14 +278,20 @@
     <ClCompile Include="..\third_party\imgui\imgui_draw.cpp">
       <Filter>third_party\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\glfw_app.cpp">
-      <Filter>source\app</Filter>
+    <ClCompile Include="..\third_party\im3d\im3d.cpp">
+      <Filter>source\gl-app\im3d</Filter>
     </ClCompile>
     <ClCompile Include="..\impl.cpp">
-      <Filter>source\app</Filter>
+      <Filter>source\gl-app\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\third_party\im3d\im3d.cpp">
-      <Filter>source\app</Filter>
+    <ClCompile Include="..\gl\glfw-app.cpp">
+      <Filter>source\gl-app\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gl\gl-imgui.cpp">
+      <Filter>source\gl-app\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gl\gl-nvg.cpp">
+      <Filter>source\gl-app\src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

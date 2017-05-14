@@ -6,8 +6,6 @@
 #include <string>
 #include <fstream>
 #include <streambuf>
-#include "third_party/stb/stb_image.h"
-#include "GL_API.hpp"
 
 namespace avl
 {

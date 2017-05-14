@@ -5,8 +5,8 @@
 
 #include "util.hpp"
 #include "linalg_util.hpp"
-#include "GL_API.hpp"
-#include "avl_imgui.hpp"
+#include "gl-api.hpp"
+#include "gl-imgui.hpp"
 #include "file_io.hpp"
 #include "procedural_mesh.hpp"
 

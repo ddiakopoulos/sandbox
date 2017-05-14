@@ -1,11 +1,10 @@
 #include <functional>
 #include <memory>
 
-#include "avl_imgui.hpp"
+#include "gl-imgui.hpp"
 #include "imgui/imgui_internal.h"
-
-#include "GL_API.hpp"
-#include "glfw_app.hpp"
+#include "gl-api.hpp"
+#include "glfw-app.hpp"
 
 // Implement singleton
 template<> gui::ImGuiApp * avl::Singleton<gui::ImGuiApp>::single = nullptr;
