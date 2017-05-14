@@ -85,6 +85,15 @@ namespace avl
             std::cout << message << " completed in " << std::to_string((std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - t0).count() * 1000)) << " ms" << std::endl;
         }
     };
+    class manual_timer
+    {
+        std::chrono::high_resolution_clock::time_point t0;
+        double timestamp{ 0.f };
+    public:
+        void start() { t0 = std::chrono::high_resolution_clock::now(); }
+        void stop() { timestamp = std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - t0).count() * 1000; }
+        const double & get() { return timestamp; }
+    };
 
     #define AVL_SCOPED_TIMER(MESSAGE) scoped_timer scoped_timer ## __LINE__(MESSAGE)
 

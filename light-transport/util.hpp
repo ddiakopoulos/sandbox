@@ -6,34 +6,6 @@
 #include "geometric.hpp"
 #include "util.hpp"
 
-////////////////
-//   Timers   //
-////////////////
-
-class PerfTimer
-{
-	std::chrono::high_resolution_clock::time_point t0;
-	double timestamp = 0.f;
-public:
-	PerfTimer() {};
-	const double & get() { return timestamp; }
-	void start() { t0 = std::chrono::high_resolution_clock::now(); }
-	void stop() { timestamp = std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - t0).count() * 1000; }
-};
-
-class ScopedTimer
-{
-	PerfTimer t;
-	std::string message;
-public:
-	ScopedTimer(std::string message) : message(message) { t.start(); }
-	~ScopedTimer()
-	{
-		t.stop();
-		std::cout << message << " completed in " << t.get() << " ms" << std::endl;
-	}
-};
-
 //////////////
 //   Math   //
 //////////////
@@ -76,7 +48,7 @@ inline float dielectric_reflectance(const float eta, const float cosThetaI, floa
 		cosThetaT = 0.0f;
 		return 1.0f;
 	}
-	cosThetaT = std::sqrt(max(1.0f - sinThetaTSq, 0.0f));
+	cosThetaT = std::sqrt(std::max(1.0f - sinThetaTSq, 0.0f));
 
 	float Rs = (eta * cosThetaI - cosThetaT) / (eta * cosThetaI + cosThetaT);
 	float Rp = (eta * cosThetaT - cosThetaI) / (eta * cosThetaT + cosThetaI);

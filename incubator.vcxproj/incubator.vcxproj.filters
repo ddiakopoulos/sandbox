@@ -186,9 +186,6 @@
     <ClInclude Include="..\third_party\im3d\im3d.h">
       <Filter>third_party\im3d</Filter>
     </ClInclude>
-    <ClInclude Include="..\util.hpp">
-      <Filter>source\gl-app\include</Filter>
-    </ClInclude>
     <ClInclude Include="..\gl\gl-api.hpp">
       <Filter>source\gl-app\include</Filter>
     </ClInclude>
@@ -251,6 +248,9 @@
     </ClInclude>
     <ClInclude Include="..\projection-math.hpp">
       <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\util.hpp">
+      <Filter>source\tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

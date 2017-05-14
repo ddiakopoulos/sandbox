@@ -6,6 +6,8 @@
 #include "light-transport/objects.hpp"
 #include "light-transport/util.hpp"
 #include "gl-api.hpp"
+#include "../util.hpp"
+
 #include <atomic>
 
 using namespace avl;
@@ -218,7 +220,7 @@ struct Film
 	std::vector<float3> samples;
 	float2 size;
 	Pose view = {};
-	float FoV = std::tan(to_radians(90) * 0.5f);
+	float FoV = std::tan(to_radians(90.f) * 0.5f);
 
 	Film(const int2 & size, const Pose & view) : samples(size.x * size.y), size(size), view(view) { }
 
@@ -307,7 +309,7 @@ struct LightTransportApp : public GLFWApp
 	std::mutex coordinateLock;
 	std::vector<std::thread> renderWorkers;
 	std::atomic<bool> earlyExit = { false };
-	std::map<std::thread::id, PerfTimer> renderTimers;
+	std::map<std::thread::id, avl::manual_timer> renderTimers;
 
 	std::mutex rLock;
 	std::condition_variable renderCv;
@@ -317,7 +319,7 @@ struct LightTransportApp : public GLFWApp
 
 	LightTransportApp() : GLFWApp(WIDTH * 2, HEIGHT, "Light Transport App")
 	{
-		ScopedTimer("Application Constructor");
+		scoped_timer constructor("Application Constructor");
 
 		glfwSwapInterval(1);
 
@@ -332,8 +334,7 @@ struct LightTransportApp : public GLFWApp
 		cameraController.set_camera(&camera);
 		cameraController.enableSpring = false;
 		cameraController.movementSpeed = 0.01f;
-		lookAt = look_at_pose_rh({ 0, +1.25, 4.5 }, { 0, 0, 0 });
-		camera.pose = lookAt;
+        camera.look_at({ 0, +1.25, 4.5 }, { 0, 0, 0 });
 
 		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
 
@@ -490,7 +491,7 @@ struct LightTransportApp : public GLFWApp
 
 		// Traverse + build BVH accelerator for the objects we've added to the scene
 		{
-			ScopedTimer("BVH Generation");
+			scoped_timer bvh("BVH Generation");
 			//scene.accelerate();
 		}
 
