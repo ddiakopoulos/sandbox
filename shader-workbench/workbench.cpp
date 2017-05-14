@@ -12,6 +12,8 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
+    // shaderMonitor.watch("../assets/shaders/xyz_vert.glsl", "../assets/shaders/xyz_frag.glsl");
+
     cam.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     flycam.set_camera(&cam);
 }
@@ -35,6 +37,7 @@ void shader_workbench::on_input(const InputEvent & event)
 void shader_workbench::on_update(const UpdateEvent & e) 
 {
     flycam.update(e.timestep_ms);
+    shaderMonitor.handle_recompile();
 }
 
 void shader_workbench::on_draw() 
