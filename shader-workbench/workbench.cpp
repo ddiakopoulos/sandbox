@@ -45,6 +45,7 @@ void shader_workbench::on_update(const UpdateEvent & e)
 {
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
+    elapsedTime += e.elapsed_s;
 }
 
 void shader_workbench::on_draw() 
@@ -72,10 +73,12 @@ void shader_workbench::on_draw()
         float4x4 terrainModelMatrix = make_rotation_matrix({ 1, 0, 0 }, -ANVIL_PI / 2);
 
         holoScanShader->bind();
+        holoScanShader->uniform("u_time", elapsedTime);
         holoScanShader->uniform("u_eye", cam.get_eye_point());
         holoScanShader->uniform("u_viewProj", viewProjectionMatrix);
         holoScanShader->uniform("u_modelMatrix", terrainModelMatrix);
         holoScanShader->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
+        holoScanShader->uniform("u_triangleScale", triangleScale);
         terrainMesh.draw_elements();
         holoScanShader->unbind();
     }
@@ -84,6 +87,7 @@ void shader_workbench::on_draw()
 
     igm->begin_frame();
     ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
+    ImGui::SliderFloat("Triangle Scale", &triangleScale, 0.1f, 1.0f);
     igm->end_frame();
 
     gl_check_error(__FILE__, __LINE__);

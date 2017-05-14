@@ -1,5 +1,6 @@
 #version 330
 
+uniform float u_time;
 uniform vec3 u_eye;
 uniform mat4 u_viewProj;
 uniform mat4 u_modelMatrix;
@@ -12,7 +13,7 @@ layout(location = 3) in vec2 inTexcoord;
 layout(location = 4) in vec3 inTangent;
 layout(location = 5) in vec3 inBitangent;
 
-out vec3 v_position;
+out vec3 v_world_position;
 out vec3 v_normal;
 out vec2 v_texcoord;
 out vec3 v_eyeDir;
@@ -20,7 +21,7 @@ out vec3 v_eyeDir;
 void main()
 {
     vec4 worldPos = u_modelMatrix * vec4(inPosition, 1);
-    v_position = worldPos.xyz;
+    v_world_position = worldPos.xyz;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal,0)).xyz);
     v_texcoord = inTexcoord;
     v_eyeDir = normalize(u_eye - worldPos.xyz);

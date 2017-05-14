@@ -14,6 +14,8 @@ struct shader_workbench : public GLFWApp
     ShaderMonitor shaderMonitor{ "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
     GlGpuTimer gpuTimer;
+    float elapsedTime{ 0 };
+    float triangleScale{ 0.1f };
 
     std::shared_ptr<GlShader> holoScanShader;
     GlMesh terrainMesh;
