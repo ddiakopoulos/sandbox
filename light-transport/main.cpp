@@ -5,6 +5,7 @@
 #include "light-transport/lights.hpp"
 #include "light-transport/objects.hpp"
 #include "light-transport/util.hpp"
+#include "gl-api.hpp"
 #include <atomic>
 
 using namespace avl;
@@ -288,7 +289,7 @@ struct LightTransportApp : public GLFWApp
 {
 	std::unique_ptr<gui::ImGuiManager> igm;
 
-	std::shared_ptr<GlTexture> renderSurface;
+	std::shared_ptr<GlTexture2D> renderSurface;
 	std::shared_ptr<GLTextureView> renderView;
 
 	std::shared_ptr<Film> film;
@@ -331,7 +332,7 @@ struct LightTransportApp : public GLFWApp
 		cameraController.set_camera(&camera);
 		cameraController.enableSpring = false;
 		cameraController.movementSpeed = 0.01f;
-		lookAt = look_at_pose({ 0, +1.25, 4.5 }, { 0, 0, 0 });
+		lookAt = look_at_pose_rh({ 0, +1.25, 4.5 }, { 0, 0, 0 });
 		camera.pose = lookAt;
 
 		film = std::make_shared<Film>(int2(WIDTH, HEIGHT), camera.get_pose());
@@ -510,9 +511,9 @@ struct LightTransportApp : public GLFWApp
 		}
 
 		// Create a GL texture to which we can render
-		renderSurface.reset(new GlTexture());
-		renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
-		renderView.reset(new GLTextureView(renderSurface->get_gl_handle(), false));
+		renderSurface.reset(new GlTexture2D());
+		renderSurface->setup(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, nullptr);
+		renderView.reset(new GLTextureView(false));
 
 		sceneTimer.start();
 	}
@@ -672,9 +673,10 @@ struct LightTransportApp : public GLFWApp
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(0.f, 0.f, 0.f, 1.0f);
 
-		renderSurface->load_data(WIDTH, HEIGHT, GL_RGB, GL_RGB, GL_FLOAT, film->samples.data());
-		Bounds2D renderArea = { 0, 0, (float)WIDTH, (float)HEIGHT };
-		renderView->draw(renderArea, { width, height });
+        glTextureImage2DEXT(renderSurface->id(), GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, film->samples.data());
+
+		Bounds2D renderArea = { 0.f, 0.f, (float)WIDTH, (float)HEIGHT };
+		renderView->draw(renderArea, float2(width, height), renderSurface->id());
 
 		if (igm) igm->begin_frame();
 		ImGui::Text("Application Runtime %.3lld seconds", sceneTimer.seconds().count());

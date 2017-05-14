@@ -3,9 +3,12 @@
 
 #pragma once
 
+#include "linalg_util.hpp"
 #include "geometric.hpp"
 #include "util.hpp"
 #include "light-transport/util.hpp"
+
+using namespace avl;
 
 // Uniformly sample a vector on the unit sphere 
 inline float3 uniform_sphere(const float2 & xi)

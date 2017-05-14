@@ -19,14 +19,16 @@
     <ClInclude Include="lights.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="objects.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="sampling.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
