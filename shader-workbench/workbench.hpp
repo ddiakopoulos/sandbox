@@ -14,6 +14,9 @@ struct shader_workbench : public GLFWApp
     ShaderMonitor shaderMonitor{ "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
 
+    std::shared_ptr<GlShader> holoScanShader;
+    GlMesh terrainMesh;
+
     shader_workbench();
     ~shader_workbench();
 

@@ -12,7 +12,9 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
-    // shaderMonitor.watch("../assets/shaders/xyz_vert.glsl", "../assets/shaders/xyz_frag.glsl");
+    holoScanShader = shaderMonitor.watch("../assets/shaders/holoscan_vert.glsl", "../assets/shaders/holoscan_frag.glsl");
+
+    terrainMesh = make_plane_mesh(8, 8, 128, 128);
 
     cam.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     flycam.set_camera(&cam);
@@ -58,6 +60,18 @@ void shader_workbench::on_draw()
     const float4x4 projectionMatrix = cam.get_projection_matrix((float)width / (float)height);
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
+
+    {
+        float4x4 terrainModelMatrix = make_rotation_matrix({ 1, 0, 0 }, -ANVIL_PI / 2);
+
+        holoScanShader->bind();
+        holoScanShader->uniform("u_eye", cam.get_eye_point());
+        holoScanShader->uniform("u_viewProj", viewProjectionMatrix);
+        holoScanShader->uniform("u_modelMatrix", terrainModelMatrix);
+        holoScanShader->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
+        terrainMesh.draw_elements();
+        holoScanShader->unbind();
+    }
 
     igm->begin_frame();
     ImGui::Text("Controls");
