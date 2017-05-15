@@ -24,7 +24,7 @@ out vec4 f_color;
 
 const float zNear = 0.01;
 const float zFar = 64.0;
-const vec3 scannerPosition = vec3(0, 0, 0);
+const vec3 scannerPosition = vec3(0, 1, 0);
 
 vec4 screenspace_bars(vec2 p)
 {
@@ -48,18 +48,18 @@ void main()
     float linearDepth = 2.0 * rawDepth - 1.0;
     linearDepth = 2.0 * zNear * zFar / (zFar + zNear - linearDepth * (zFar - zNear));
 
-    vec3 reconstructedPos = reconstruct_worldspace_position(v_texcoord, rawDepth);
+    //vec3 reconstructedPos = reconstruct_worldspace_position(v_texcoord, rawDepth);
 
     vec3 wsDir = linearDepth * v_ray;
     vec3 wsPos = u_eye + wsDir;
 
     vec4 scannerColor = vec4(0.0);
-    float dist = distance(wsPos, scannerPosition);
+    float dist = distance(wsPos, scannerPosition );
 
-    //if (dist < u_scanDistance && dist > u_scanDistance - u_scanWidth && linearDepth < 1)
+    // if (dist < u_scanDistance && dist > u_scanDistance - u_scanWidth) //  && linearDepth < 1
     //{
         float diff = 1 - (u_scanDistance - dist) / (u_scanWidth);
-        vec4 edge = mix(u_midColor, u_leadColor, pow(diff, u_leadSharp));
+        vec4 edge = u_leadColor; //mix(u_midColor, u_leadColor, pow(diff, u_leadSharp));
         scannerColor = mix(u_trailColor, edge, diff) + screenspace_bars(v_texcoord) * u_hbarColor;
         scannerColor *= diff;
     //}

@@ -12,7 +12,7 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
         for (int z = 0; z <= gridSize; z++)
         {
             float y = ((noise::noise(float2(x * 0.1f, z * 0.1f))) + 1.0f) / 2.0f;
-            y = y * 2.0f;
+            y = y * 3.0f;
             terrain.vertices.push_back({ (float)x, (float) y, (float)z });
         }
     }
@@ -36,20 +36,13 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
         terrain.faces.push_back(uint3(f.x, f.z, f.w));
     }
 
-    terrain.compute_normals();
+    terrain.compute_normals(false);
 
     return terrain;
 }
 
 inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const float4x4 & viewMatrix)
 {
-    /*
-    float4 coords = make_frustum_coords(1200.f / 800.f, 0.01f, 72.f); // { top, right, bottom, left }
-    const float camScale = coords.x * 64.f;
-    normalize(coords);
-    coords *= float4(camScale);
-    */
-
     // Extract the frustum points
     float4 frustumVerts[4] = {
         { -1.f, -1.f, 1.f, 1.f }, // bottom left
@@ -98,7 +91,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     //holoScanShader = shaderMonitor.watch("../assets/shaders/holoscan_vert.glsl", "../assets/shaders/holoscan_frag.glsl");
 
-    terrainMesh = make_mesh_from_geometry(make_perlin_mesh(8));
+    terrainMesh = make_mesh_from_geometry(make_perlin_mesh(16));
 
     sceneColorTexture.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     sceneDepthTexture.setup(width, height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
@@ -151,6 +144,8 @@ void shader_workbench::on_draw()
 
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendEquation(GL_FUNC_ADD);
 
     const float4x4 projectionMatrix = cam.get_projection_matrix((float)width / (float)height);
     const float4x4 viewMatrix = cam.get_view_matrix();
@@ -166,7 +161,7 @@ void shader_workbench::on_draw()
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float4x4 terrainModelMatrix = make_translation_matrix({ -4, 0, -4 });
+        float4x4 terrainModelMatrix = make_translation_matrix({ -8, 0, -8 });
 
         normalDebug->bind();
 
@@ -206,8 +201,8 @@ void shader_workbench::on_draw()
         fullscreenQuad.draw_elements();
 
         holoScanShader->unbind();
-    }
-
+    }    
+    
     //glDisable(GL_BLEND);
 
     gpuTimer.stop();
