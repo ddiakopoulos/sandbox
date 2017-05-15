@@ -146,6 +146,8 @@ void shader_workbench::on_draw()
         holoScanShader->uniform("u_time", elapsedTime);
         holoScanShader->uniform("u_eye", cam.get_eye_point());
 
+        holoScanShader->uniform("u_inverseProjection", inverse(projectionMatrix));
+
         holoScanShader->uniform("u_scanDistance", scanDistance);
         holoScanShader->uniform("u_scanWidth", scanWidth);
         holoScanShader->uniform("u_leadSharp", leadSharp);
@@ -156,6 +158,8 @@ void shader_workbench::on_draw()
 
         holoScanShader->texture("s_colorTex", 0, sceneColorTexture, GL_TEXTURE_2D);
         holoScanShader->texture("s_depthTex", 1, sceneDepthTexture, GL_TEXTURE_2D);
+
+        terrainMesh.draw_elements();
 
         fullscreenQuad.draw_elements();
 

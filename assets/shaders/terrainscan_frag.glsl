@@ -15,9 +15,9 @@ uniform vec4 u_hbarColor;
 uniform sampler2D s_colorTex;
 uniform sampler2D s_depthTex;
 
-in vec2 v_texcoord;
+uniform mat4 u_inverseProjection;
 
-//in vec3 v_normal;
+in vec2 v_texcoord;
 
 out vec4 f_color;
 
@@ -31,6 +31,14 @@ vec4 screenspace_bars(vec2 p)
     return vec4(v);
 }
 
+vec3 reconstruct_worldspace_position(in vec2 coord, in float rawDepth)
+{
+    vec4 vec = vec4(coord.x, coord.y, rawDepth, 1.0);
+    vec = vec * 2.0 - 1.0;
+    vec4 r = u_inverseProjection * vec;
+    return r.xyz / r.w;
+}
+
 void main()
 {
     vec4 sceneColor = texture(s_colorTex, v_texcoord);
@@ -38,6 +46,8 @@ void main()
     float rawDepth = texture(s_depthTex, v_texcoord).r;
     float linearDepth = 2.0 * rawDepth - 1.0;
     linearDepth = 2.0 * zNear * zFar / (zFar + zNear - linearDepth * (zFar - zNear));
+
+    vec3 reconstructedPos = reconstruct_worldspace_position(v_texcoord, rawDepth);
 
     //vec4 wsDir = rawDepth * i.interpolatedRay;
     vec3 wsDir = linearDepth * vec3(0, 0, 0);
