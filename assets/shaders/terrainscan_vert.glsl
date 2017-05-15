@@ -1,12 +1,15 @@
 #version 330
 
 layout(location = 0) in vec3 inPosition;
-layout(location = 3) in vec2 inTexcoord;
+layout(location = 1) in vec2 inTexcoord0;
+layout(location = 2) in vec3 inTexcoord1;
 
 out vec2 v_texcoord;
+out vec3 v_ray;
 
 void main()
 {
     gl_Position = vec4(inPosition, 1);
-    v_texcoord = inTexcoord; //(inPosition.xy + vec2(1,1)) / 2.0;
+    v_texcoord = inTexcoord0; 
+    v_ray = inTexcoord1;
 }

@@ -41,6 +41,48 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
     return terrain;
 }
 
+inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const float4x4 & viewMatrix)
+{
+    /*
+    float4 coords = make_frustum_coords(1200.f / 800.f, 0.01f, 72.f); // { top, right, bottom, left }
+    const float camScale = coords.x * 64.f;
+    normalize(coords);
+    coords *= float4(camScale);
+    */
+
+    // Extract the frustum points
+    float4 frustumVerts[4] = {
+        { -1.f, -1.f, 1.f, 1.f }, // bottom left
+        { -1.f, +1.f, 1.f, 1.f }, // bottom right
+        { +1.f, +1.f, 1.f, 1.f }, // top right
+        { +1.f, -1.f, 1.f, 1.f }  // top left
+    };
+
+
+    for (unsigned int j = 0; j < 4; ++j)
+    {
+        frustumVerts[j] = float4(transform_coord(inverse(mul(projectionMatrix, viewMatrix)), frustumVerts[j].xyz()), 1);
+    }
+
+    GlMesh mesh;
+
+    struct Vertex { float3 position; float2 texcoord; float3 ray; };
+    const float3 verts[6] = { { -1.0f, -1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } };
+    const float2 texcoords[6] = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
+    const float3 rayCoords[6] = { frustumVerts[0].xyz(), frustumVerts[3].xyz(),frustumVerts[1].xyz(),frustumVerts[1].xyz(),frustumVerts[3].xyz(), frustumVerts[2].xyz() };
+    const uint3 faces[2] = { { 0, 1, 2 },{ 3, 4, 5 } };
+    std::vector<Vertex> vertices;
+    for (int i = 0; i < 6; ++i) vertices.push_back({ verts[i], texcoords[i], rayCoords[i] });
+
+    mesh.set_vertices(vertices, GL_STATIC_DRAW);
+    mesh.set_attribute(0, &Vertex::position);
+    mesh.set_attribute(1, &Vertex::texcoord);
+    mesh.set_attribute(2, &Vertex::ray);
+    mesh.set_elements(faces, GL_STATIC_DRAW);
+
+    return mesh;
+}
+
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
     int width, height;
@@ -56,7 +98,6 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     //holoScanShader = shaderMonitor.watch("../assets/shaders/holoscan_vert.glsl", "../assets/shaders/holoscan_frag.glsl");
 
     terrainMesh = make_mesh_from_geometry(make_perlin_mesh(8));
-    fullscreenQuad = make_fullscreen_quad();
 
     sceneColorTexture.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     sceneDepthTexture.setup(width, height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
@@ -113,6 +154,8 @@ void shader_workbench::on_draw()
     const float4x4 projectionMatrix = cam.get_projection_matrix((float)width / (float)height);
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
+
+    fullscreenQuad = fullscreen_quad_extra(projectionMatrix, viewMatrix);
 
     // Main Scene
     {

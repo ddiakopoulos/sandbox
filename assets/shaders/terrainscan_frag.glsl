@@ -18,12 +18,13 @@ uniform sampler2D s_depthTex;
 uniform mat4 u_inverseProjection;
 
 in vec2 v_texcoord;
+in vec3 v_ray;
 
 out vec4 f_color;
 
 const float zNear = 0.01;
 const float zFar = 64.0;
-const vec3 scannerPosition = vec3(0, 1, 0);
+const vec3 scannerPosition = vec3(0, 0, 0);
 
 vec4 screenspace_bars(vec2 p)
 {
@@ -49,11 +50,10 @@ void main()
 
     vec3 reconstructedPos = reconstruct_worldspace_position(v_texcoord, rawDepth);
 
-    //vec4 wsDir = rawDepth * i.interpolatedRay;
-    vec3 wsDir = linearDepth * vec3(0, 0, 0);
-    vec3 wsPos = reconstructedPos; //u_eye + wsDir;
+    vec3 wsDir = linearDepth * v_ray * 0.01;
+    vec3 wsPos = u_eye + wsDir;
 
-    vec4 scannerColor = vec4(0, 0, 0, 0);
+    vec4 scannerColor = vec4(0.0);
     float dist = distance(wsPos, scannerPosition);
 
     //if (dist < u_scanDistance && dist > u_scanDistance - u_scanWidth && linearDepth < 1)
@@ -64,5 +64,5 @@ void main()
         scannerColor *= diff;
     //}
 
-    f_color =  sceneColor + scannerColor;
+    f_color = sceneColor + scannerColor;
 }
