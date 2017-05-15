@@ -96,7 +96,7 @@ void shader_workbench::on_draw()
     gpuTimer.start();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.66f, 0.66f, 0.66f, 1.0f);
+    glClearColor(0.33f, 0.33f, 0.33f, 1.0f);
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
