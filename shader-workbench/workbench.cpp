@@ -59,7 +59,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     fullscreenQuad = make_fullscreen_quad();
 
     sceneColorTexture.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    sceneDepthTexture.setup(width, height, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    sceneDepthTexture.setup(width, height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
     glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sceneColorTexture, 0);
     glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, sceneDepthTexture, 0);
     sceneFramebuffer.check_complete();
@@ -107,8 +107,6 @@ void shader_workbench::on_draw()
 
     gpuTimer.start();
 
-    //glEnable(GL_CULL_FACE);
-    //glEnable(GL_DEPTH_TEST);
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
@@ -118,6 +116,7 @@ void shader_workbench::on_draw()
 
     // Main Scene
     {
+        glEnable(GL_DEPTH_TEST);
 
         glBindFramebuffer(GL_FRAMEBUFFER, sceneFramebuffer);
         glViewport(0, 0, width, height);
@@ -140,6 +139,8 @@ void shader_workbench::on_draw()
 
     // Screenspace Effect
     {
+        glDisable(GL_DEPTH_TEST);
+
         holoScanShader->bind();
 
         holoScanShader->uniform("u_time", elapsedTime);
