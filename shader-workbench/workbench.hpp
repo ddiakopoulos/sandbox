@@ -22,12 +22,12 @@ struct shader_workbench : public GLFWApp
     float elapsedTime{ 0 };
 
     float scanDistance{ 1.0f };
-    float scanWidth{ 10.0f };
-    float leadSharp{ 10.0f };
-    float4 leadColor{1, 1, 1, 0};
-    float4 midColor{ 1, 1, 1, 0 };
-    float4 trailColor{ 1, 1, 1, 0 };
-    float4 hbarColor{ 0.5, 0.5, 0.5, 0 };
+    float scanWidth{ 5.0f };
+    float leadSharp{ 8.0f };
+    float4 leadColor{ 0.8f, 0.6f, 0.3f, 0};
+    float4 midColor{ 0.975f, 0.78f, 0.366f, 0 };
+    float4 trailColor{ 1.f, 0.83f, 1, 0 };
+    float4 hbarColor{ 0.05, 0.05, 0.05, 0 };
 
     std::shared_ptr<GlShader> holoScanShader;
     std::shared_ptr<GlShader> normalDebug;

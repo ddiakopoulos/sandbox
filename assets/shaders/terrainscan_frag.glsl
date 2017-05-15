@@ -34,7 +34,7 @@ vec4 screenspace_bars(vec2 p)
 vec3 reconstruct_worldspace_position(in vec2 coord, in float rawDepth)
 {
     vec4 vec = vec4(coord.x, coord.y, rawDepth, 1.0);
-    vec = vec * 2.0 - 1.0;
+    vec = vec * 2.0 - 1.0; // linearize
     vec4 r = u_inverseProjection * vec;
     return r.xyz / r.w;
 }
@@ -51,18 +51,18 @@ void main()
 
     //vec4 wsDir = rawDepth * i.interpolatedRay;
     vec3 wsDir = linearDepth * vec3(0, 0, 0);
-    vec3 wsPos = u_eye + wsDir;
+    vec3 wsPos = reconstructedPos; //u_eye + wsDir;
 
     vec4 scannerColor = vec4(0, 0, 0, 0);
     float dist = distance(wsPos, scannerPosition);
 
-    if (dist < u_scanDistance && dist > u_scanDistance - u_scanWidth && linearDepth < 1)
-    {
+    //if (dist < u_scanDistance && dist > u_scanDistance - u_scanWidth && linearDepth < 1)
+    //{
         float diff = 1 - (u_scanDistance - dist) / (u_scanWidth);
         vec4 edge = mix(u_midColor, u_leadColor, pow(diff, u_leadSharp));
         scannerColor = mix(u_trailColor, edge, diff) + screenspace_bars(v_texcoord) * u_hbarColor;
         scannerColor *= diff;
-    }
+    //}
 
-    f_color = sceneColor + scannerColor;
+    f_color =  sceneColor + scannerColor;
 }
