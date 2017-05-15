@@ -36,6 +36,8 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
         terrain.faces.push_back(uint3(f.x, f.z, f.w));
     }
 
+    terrain.compute_normals();
+
     return terrain;
 }
 
@@ -48,9 +50,19 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
-    holoScanShader = shaderMonitor.watch("../assets/shaders/holoscan_vert.glsl", "../assets/shaders/holoscan_frag.glsl");
+    holoScanShader = shaderMonitor.watch("../assets/shaders/terrainscan_vert.glsl", "../assets/shaders/terrainscan_frag.glsl");
+    normalDebug = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
+
+    //holoScanShader = shaderMonitor.watch("../assets/shaders/holoscan_vert.glsl", "../assets/shaders/holoscan_frag.glsl");
 
     terrainMesh = make_mesh_from_geometry(make_perlin_mesh(8));
+    fullscreenQuad = make_fullscreen_quad();
+
+    sceneColorTexture.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    sceneDepthTexture.setup(width, height, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sceneColorTexture, 0);
+    glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, sceneDepthTexture, 0);
+    sceneFramebuffer.check_complete();
 
     cam.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     flycam.set_camera(&cam);
@@ -95,40 +107,73 @@ void shader_workbench::on_draw()
 
     gpuTimer.start();
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.33f, 0.33f, 0.33f, 1.0f);
-
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    //glEnable(GL_CULL_FACE);
+    //glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
     const float4x4 projectionMatrix = cam.get_projection_matrix((float)width / (float)height);
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
+    // Main Scene
     {
+
+        glBindFramebuffer(GL_FRAMEBUFFER, sceneFramebuffer);
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         float4x4 terrainModelMatrix = make_translation_matrix({ -4, 0, -4 });
 
+        normalDebug->bind();
+
+        normalDebug->uniform("u_viewProj", viewProjectionMatrix);
+        normalDebug->uniform("u_modelMatrix", terrainModelMatrix);
+        normalDebug->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
+
+        terrainMesh.draw_elements();
+
+        normalDebug->unbind();
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    // Screenspace Effect
+    {
         holoScanShader->bind();
+
         holoScanShader->uniform("u_time", elapsedTime);
         holoScanShader->uniform("u_eye", cam.get_eye_point());
-        holoScanShader->uniform("u_viewProj", viewProjectionMatrix);
-        holoScanShader->uniform("u_modelMatrix", terrainModelMatrix);
-        holoScanShader->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
-        holoScanShader->uniform("u_triangleScale", triangleScale);
-        terrainMesh.draw_elements();
+
+        holoScanShader->uniform("u_scanDistance", scanDistance);
+        holoScanShader->uniform("u_scanWidth", scanWidth);
+        holoScanShader->uniform("u_leadSharp", leadSharp);
+        holoScanShader->uniform("u_leadColor", leadColor);
+        holoScanShader->uniform("u_midColor", midColor);
+        holoScanShader->uniform("u_trailColor", trailColor);
+        holoScanShader->uniform("u_hbarColor", hbarColor);
+
+        holoScanShader->texture("s_colorTex", 0, sceneColorTexture, GL_TEXTURE_2D);
+        holoScanShader->texture("s_depthTex", 1, sceneDepthTexture, GL_TEXTURE_2D);
+
+        fullscreenQuad.draw_elements();
+
         holoScanShader->unbind();
     }
 
-    glDisable(GL_BLEND);
+    //glDisable(GL_BLEND);
 
     gpuTimer.stop();
 
     igm->begin_frame();
     ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
-    ImGui::SliderFloat("Triangle Scale", &triangleScale, 0.1f, 10.0f);
+    ImGui::SliderFloat("Scan Distance", &scanDistance, 0.1f, 10.f);
+    ImGui::SliderFloat("Scan Width", &scanWidth, 0.1f, 10.f);
+    ImGui::SliderFloat("Lead Sharp", &leadSharp, 0.1f, 10.f);
+    ImGui::SliderFloat4("Lead Color", &leadColor.x, 0.0f, 1.f);
+    ImGui::SliderFloat4("Mid Color", &midColor.x, 0.0f, 1.f);
+    ImGui::SliderFloat4("Trail Color", &trailColor.x, 0.0f, 1.f);
+    ImGui::SliderFloat4("hbarColor Color", &hbarColor.x, 0.0f, 1.f);
     igm->end_frame();
 
     gl_check_error(__FILE__, __LINE__);

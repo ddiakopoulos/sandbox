@@ -14,11 +14,25 @@ struct shader_workbench : public GLFWApp
     ShaderMonitor shaderMonitor{ "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
     GlGpuTimer gpuTimer;
+
+    GlTexture2D sceneColorTexture;
+    GlTexture2D sceneDepthTexture;
+    GlFramebuffer sceneFramebuffer;
+
     float elapsedTime{ 0 };
-    float triangleScale{ 2.0f };
+
+    float scanDistance{ 1.0f };
+    float scanWidth{ 10.0f };
+    float leadSharp{ 10.0f };
+    float4 leadColor{1, 1, 1, 0};
+    float4 midColor{ 1, 1, 1, 0 };
+    float4 trailColor{ 1, 1, 1, 0 };
+    float4 hbarColor{ 0.5, 0.5, 0.5, 0 };
 
     std::shared_ptr<GlShader> holoScanShader;
-    GlMesh terrainMesh;
+    std::shared_ptr<GlShader> normalDebug;
+
+    GlMesh terrainMesh, fullscreenQuad;
 
     shader_workbench();
     ~shader_workbench();

@@ -1,6 +1,5 @@
 #version 330
 
-uniform float u_time;
 uniform vec3 u_eye;
 uniform mat4 u_viewProj;
 uniform mat4 u_modelMatrix;
