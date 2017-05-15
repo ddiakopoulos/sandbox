@@ -50,7 +50,7 @@ void main()
 
     vec3 reconstructedPos = reconstruct_worldspace_position(v_texcoord, rawDepth);
 
-    vec3 wsDir = linearDepth * v_ray * 0.01;
+    vec3 wsDir = linearDepth * v_ray;
     vec3 wsPos = u_eye + wsDir;
 
     vec4 scannerColor = vec4(0.0);

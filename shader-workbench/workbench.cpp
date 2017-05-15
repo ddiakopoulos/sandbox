@@ -61,7 +61,8 @@ inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const flo
 
     for (unsigned int j = 0; j < 4; ++j)
     {
-        frustumVerts[j] = float4(transform_coord(inverse(mul(projectionMatrix, viewMatrix)), frustumVerts[j].xyz()), 1);
+        frustumVerts[j] = normalize(float4(transform_coord(inverse(mul(projectionMatrix, viewMatrix)), frustumVerts[j].xyz()), 1));
+        std::cout << normalize(frustumVerts[j]) << std::endl;
     }
 
     GlMesh mesh;
