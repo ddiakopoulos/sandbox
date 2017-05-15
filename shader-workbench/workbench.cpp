@@ -43,7 +43,7 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
 
 inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const float4x4 & viewMatrix)
 {
-    // Extract the frustum points
+    // Extract the frustum coordinates of the far clip plane
     float4 frustumVerts[4] = {
         { -1.f, -1.f, 1.f, 1.f }, // bottom left
         { -1.f, +1.f, 1.f, 1.f }, // bottom right
@@ -51,11 +51,9 @@ inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const flo
         { +1.f, -1.f, 1.f, 1.f }  // top left
     };
 
-
     for (unsigned int j = 0; j < 4; ++j)
     {
         frustumVerts[j] = normalize(float4(transform_coord(inverse(mul(projectionMatrix, viewMatrix)), frustumVerts[j].xyz()), 1));
-        std::cout << normalize(frustumVerts[j]) << std::endl;
     }
 
     GlMesh mesh;
