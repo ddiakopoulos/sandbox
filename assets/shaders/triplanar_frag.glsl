@@ -2,7 +2,7 @@
 
 uniform float u_time;
 uniform vec3 u_eye;
-uniform vec3 u_scale;
+uniform vec3 u_scale = vec3(0.25, 0.25, 0.25);
 
 uniform sampler2D s_diffuseTextureA, s_diffuseTextureB;
 
@@ -32,9 +32,8 @@ void main()
     vec4 cy = texture(s_diffuseTextureB, ty);
     vec4 cz = texture(s_diffuseTextureA, tz); 
 
-    vec3 yCap = texture(s_diffuseTextureB, ty).rgb;
     float h = clamp(v_world_position.y - yCapHeight, 0, yCapTransition) / yCapTransition;
-    vec3 yDiff = yCap * h;
+    vec3 yDiff = cy.rgb * h;
 
     f_color = vec4((cx.rgb * bf.x) + (yDiff * bf.y) + (cz.rgb * bf.z), 1);
 }
