@@ -84,10 +84,9 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
-    holoScanShader = shaderMonitor.watch("../assets/shaders/terrainscan_vert.glsl", "../assets/shaders/terrainscan_frag.glsl");
+    terrainScan = shaderMonitor.watch("../assets/shaders/terrainscan_vert.glsl", "../assets/shaders/terrainscan_frag.glsl");
     normalDebug = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
-
-    //holoScanShader = shaderMonitor.watch("../assets/shaders/holoscan_vert.glsl", "../assets/shaders/holoscan_frag.glsl");
+    triplanarTexture = shaderMonitor.watch("../assets/shaders/triplanar_vert.glsl", "../assets/shaders/triplanar_frag.glsl");
 
     terrainMesh = make_mesh_from_geometry(make_perlin_mesh(16));
 
@@ -96,6 +95,13 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sceneColorTexture, 0);
     glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, sceneDepthTexture, 0);
     sceneFramebuffer.check_complete();
+
+    rustyTexture = load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true);
+    topTexture = load_image("../assets/nonfree/diffuse.png", true);
+    glTextureParameteriEXT(rustyTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteriEXT(rustyTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTextureParameteriEXT(topTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteriEXT(topTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     cam.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     flycam.set_camera(&cam);
@@ -129,6 +135,8 @@ void shader_workbench::on_update(const UpdateEvent & e)
     elapsedTime += e.timestep_ms;
 }
 
+static float3 scale = float3(0.25);
+
 void shader_workbench::on_draw() 
 {
     glfwMakeContextCurrent(window);
@@ -161,15 +169,18 @@ void shader_workbench::on_draw()
 
         float4x4 terrainModelMatrix = make_translation_matrix({ -8, 0, -8 });
 
-        normalDebug->bind();
+        triplanarTexture->bind();
 
-        normalDebug->uniform("u_viewProj", viewProjectionMatrix);
-        normalDebug->uniform("u_modelMatrix", terrainModelMatrix);
-        normalDebug->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
-
+        triplanarTexture->uniform("u_viewProj", viewProjectionMatrix);
+        triplanarTexture->uniform("u_modelMatrix", terrainModelMatrix);
+        triplanarTexture->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
+        triplanarTexture->texture("s_diffuseTextureA", 0, rustyTexture, GL_TEXTURE_2D);
+        triplanarTexture->texture("s_diffuseTextureB", 1, topTexture, GL_TEXTURE_2D);
+        triplanarTexture->texture("s_diffuseTextureB", 1, topTexture, GL_TEXTURE_2D);
+        triplanarTexture->uniform("u_scale", scale);
         terrainMesh.draw_elements();
 
-        normalDebug->unbind();
+        triplanarTexture->unbind();
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -178,27 +189,27 @@ void shader_workbench::on_draw()
     {
         glDisable(GL_DEPTH_TEST);
 
-        holoScanShader->bind();
+        terrainScan->bind();
 
-        holoScanShader->uniform("u_time", elapsedTime);
-        holoScanShader->uniform("u_eye", cam.get_eye_point());
+        terrainScan->uniform("u_time", elapsedTime);
+        terrainScan->uniform("u_eye", cam.get_eye_point());
 
-        holoScanShader->uniform("u_inverseProjection", inverse(projectionMatrix));
+        terrainScan->uniform("u_inverseProjection", inverse(projectionMatrix));
 
-        holoScanShader->uniform("u_scanDistance", scanDistance);
-        holoScanShader->uniform("u_scanWidth", scanWidth);
-        holoScanShader->uniform("u_leadSharp", leadSharp);
-        holoScanShader->uniform("u_leadColor", leadColor);
-        holoScanShader->uniform("u_midColor", midColor);
-        holoScanShader->uniform("u_trailColor", trailColor);
-        holoScanShader->uniform("u_hbarColor", hbarColor);
+        terrainScan->uniform("u_scanDistance", scanDistance);
+        terrainScan->uniform("u_scanWidth", scanWidth);
+        terrainScan->uniform("u_leadSharp", leadSharp);
+        terrainScan->uniform("u_leadColor", leadColor);
+        terrainScan->uniform("u_midColor", midColor);
+        terrainScan->uniform("u_trailColor", trailColor);
+        terrainScan->uniform("u_hbarColor", hbarColor);
 
-        holoScanShader->texture("s_colorTex", 0, sceneColorTexture, GL_TEXTURE_2D);
-        holoScanShader->texture("s_depthTex", 1, sceneDepthTexture, GL_TEXTURE_2D);
+        terrainScan->texture("s_colorTex", 0, sceneColorTexture, GL_TEXTURE_2D);
+        terrainScan->texture("s_depthTex", 1, sceneDepthTexture, GL_TEXTURE_2D);
 
         fullscreenQuad.draw_elements();
 
-        holoScanShader->unbind();
+        terrainScan->unbind();
     }    
     
     //glDisable(GL_BLEND);
@@ -207,6 +218,7 @@ void shader_workbench::on_draw()
 
     igm->begin_frame();
     ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
+    ImGui::SliderFloat3("Triplanar Scale", &scale.x, 0.0f, 1.f);
     ImGui::SliderFloat("Scan Distance", &scanDistance, 0.1f, 10.f);
     ImGui::SliderFloat("Scan Width", &scanWidth, 0.1f, 10.f);
     ImGui::SliderFloat("Lead Sharp", &leadSharp, 0.1f, 10.f);

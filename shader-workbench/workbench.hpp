@@ -15,6 +15,7 @@ struct shader_workbench : public GLFWApp
     std::unique_ptr<gui::ImGuiManager> igm;
     GlGpuTimer gpuTimer;
 
+    GlTexture2D rustyTexture, topTexture;
     GlTexture2D sceneColorTexture;
     GlTexture2D sceneDepthTexture;
     GlFramebuffer sceneFramebuffer;
@@ -29,7 +30,8 @@ struct shader_workbench : public GLFWApp
     float4 trailColor{ 1.f, 0.83f, 1, 0 };
     float4 hbarColor{ 0.05, 0.05, 0.05, 0 };
 
-    std::shared_ptr<GlShader> holoScanShader;
+    std::shared_ptr<GlShader> terrainScan;
+    std::shared_ptr<GlShader> triplanarTexture;
     std::shared_ptr<GlShader> normalDebug;
 
     GlMesh terrainMesh, fullscreenQuad;
