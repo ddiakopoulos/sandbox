@@ -31,8 +31,8 @@ out vec4 f_color;
 vec3 reconstruct_worldspace_position(in vec2 coord, in float rawDepth)
 {
     vec4 vec = vec4(coord.x, coord.y, rawDepth, 1.0);
-    vec = vec * 2.0 - 1.0; // linearize
-    vec4 r = u_inverseViewProjection * vec;
+    vec = vec * 2.0 - 1.0; // (0, 1) to screen coordinates (-1 to 1)
+    vec4 r = u_inverseViewProjection * vec; // deproject into world space
     return r.xyz / r.w; // homogenize coordinate
 }
 
@@ -47,16 +47,14 @@ void main()
     vec4 sceneColor = texture(s_colorTex, v_texcoord);
 
     float rawDepth = texture(s_depthTex, v_texcoord).r;
-    // float linearDepth = 2.0 * rawDepth - 1.0;
-    float linearDepth = (2.0 * zNear * zFar / (zFar + zNear - rawDepth * (zFar - zNear)));
-
-    vec3 wsDir = linearDepth * v_ray;
-    vec3 wsPos = u_eye + wsDir;
 
     vec4 scannerColor = vec4(0);
+
+    vec3 wsPos = vec4(reconstruct_worldspace_position(v_texcoord, rawDepth), 1).xyz;
+
     float dist = distance(wsPos, scannerPosition);
 
-    //if (dist < u_scanDistance && dist > u_scanDistance - u_scanWidth) // && linearDepth < 1
+    //if (dist < u_scanDistance && dist > u_scanDistance - u_scanWidth)
     {
         float diff = 1 - (u_scanDistance - dist) / (u_scanWidth);
         vec4 edge = u_leadColor * mix(u_midColor, u_leadColor, pow(diff, u_leadSharp));
@@ -66,7 +64,5 @@ void main()
 
     scannerColor = clamp(scannerColor, 0, 1);
 
-    //f_color = scannerColor + sceneColor;
-    //f_color = vec4(reconstruct_worldspace_position(v_texcoord, rawDepth), 1);
-    f_color = vec4(wsPos, 1);
+    f_color = scannerColor + sceneColor;
 }
