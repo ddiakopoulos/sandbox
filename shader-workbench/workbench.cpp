@@ -194,7 +194,9 @@ void shader_workbench::on_draw()
         terrainScan->uniform("u_time", elapsedTime);
         terrainScan->uniform("u_eye", cam.get_eye_point());
 
-        terrainScan->uniform("u_inverseProjection", inverse(projectionMatrix));
+        float4x4 terrainModelMatrix = make_translation_matrix({ -8, 0, -8 });
+
+        terrainScan->uniform("u_inverseViewProjection", inverse(viewProjectionMatrix));
 
         terrainScan->uniform("u_scanDistance", scanDistance);
         terrainScan->uniform("u_scanWidth", scanWidth);

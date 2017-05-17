@@ -19,10 +19,11 @@ uniform vec4 u_hbarColor;
 uniform sampler2D s_colorTex;
 uniform sampler2D s_depthTex;
 
-uniform mat4 u_inverseProjection;
+uniform mat4 u_inverseViewProjection;
 
 in vec2 v_texcoord;
 in vec3 v_ray;
+in vec3 v_world_position;
 
 out vec4 f_color;
 
@@ -31,8 +32,8 @@ vec3 reconstruct_worldspace_position(in vec2 coord, in float rawDepth)
 {
     vec4 vec = vec4(coord.x, coord.y, rawDepth, 1.0);
     vec = vec * 2.0 - 1.0; // linearize
-    vec4 r = u_inverseProjection * vec;
-    return r.xyz / r.w;
+    vec4 r = u_inverseViewProjection * vec;
+    return r.xyz / r.w; // homogenize coordinate
 }
 
 vec4 screenspace_bars(vec2 p)
@@ -65,5 +66,7 @@ void main()
 
     scannerColor = clamp(scannerColor, 0, 1);
 
-    f_color = scannerColor + sceneColor;
+    //f_color = scannerColor + sceneColor;
+    //f_color = vec4(reconstruct_worldspace_position(v_texcoord, rawDepth), 1);
+    f_color = vec4(wsPos, 1);
 }

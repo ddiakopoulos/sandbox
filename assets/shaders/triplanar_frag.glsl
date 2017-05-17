@@ -16,12 +16,13 @@ out vec4 f_color;
 const float yCapHeight = 1.0;
 const float yCapTransition = 0.3;
 const float blendSharpness = 2.0;
+const float occlusionStrength = 1.0;
 
 void main()
 {
     // calculate a blend factor for triplanar mapping. Sharpness should be obvious.
-    vec3 bf = pow(abs(v_normal), vec3(blendSharpness));
-    bf /= dot(bf, vec3(1));
+    vec3 blendFactor = pow(abs(v_normal), vec3(blendSharpness));
+    blendFactor /= dot(blendFactor, vec3(1));
 
     // compute texcoords for each axis based on world position of the fragment
     vec2 tx = v_world_position.yz * u_scale.x;
@@ -35,5 +36,17 @@ void main()
     float h = clamp(v_world_position.y - yCapHeight, 0, yCapTransition) / yCapTransition;
     vec3 yDiff = cy.rgb * h;
 
-    f_color = vec4((cx.rgb * bf.x) + (yDiff * bf.y) + (cz.rgb * bf.z), 1);
+    /*
+    vec3 nx = (texture(s_normalTexture, tx).xyz * 2 - 1) * blendFactor.x;
+    vec3 ny = (texture(s_normalTexture, ty).xyz * 2 - 1) * blendFactor.y;
+    vec3 nz = (texture(s_normalTexture, tz).xyz * 2 - 1) * blendFactor.z;
+    vec3 normal = nx + ny + nz;
+
+    float ox = texture(s_occlusionTexture, tx).g * blendFactor.x;
+    float oy = texture(s_occlusionTexture, ty).g * blendFactor.y;
+    float oz = texture(s_occlusionTexture, tz).g * blendFactor.z;
+    float occlusion = mix(1.0, ox + oy + oz, occlusionStrength);
+    */
+
+    f_color = vec4((cx.rgb * blendFactor.x) + (yDiff * blendFactor.y) + (cz.rgb * blendFactor.z), 1);
 }
