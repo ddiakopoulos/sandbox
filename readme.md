@@ -1,5 +1,13 @@
 # Experiments!
 
+
+[![Release is 0.1](http://img.shields.io/badge/release-0.1-blue.svg?style=flat)](https://github.com/ddiakopoulos/sandbox)
+[![License is Unlicense](http://img.shields.io/badge/license-Unlicense-blue.svg?style=flat)](http://unlicense.org/)
+
+Platform | Build Status |
+-------- | ------------ |
+Visual Studio 2015 | [![Build status](https://ci.appveyor.com/api/projects/status/t1v586iy881ptlql?svg=true)](https://ci.appveyor.com/project/ddiakopoulos/sandbox)
+
 A collection of C++11 classes and GLSL shaders united under the arbitrarily chosen namespace "avl" (short for Anvil). 
 
 ## Project Structure
