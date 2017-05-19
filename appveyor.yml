@@ -8,5 +8,4 @@ configuration: Debug
 
 build:
   verbosity: minimal
-
-project: incubator.vcxproj/incubator.sln
+  project: incubator.vcxproj/incubator.sln
