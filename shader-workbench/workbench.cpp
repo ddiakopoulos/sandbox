@@ -41,30 +41,6 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
     return terrain;
 }
 
-inline std::array<float3, 4> make_far_clip_coords(Pose pose, float nearClip, float farClip, float aspectRatio, const float vfov)
-{
-    const float3 viewDirection = safe_normalize(-pose.zdir());
-    const float3 eye = pose.position;
-    const float ratio = farClip / nearClip;
-
-    const auto leftDir = pose.xdir();
-    const auto upDir = pose.ydir();
-
-    const auto coords = make_frustum_coords(aspectRatio, nearClip, vfov);
-
-    float frustumTop = coords[0];
-    float frustumRight = coords[1];
-    float frustumBottom = coords[2];
-    float frustumLeft = coords[3];
-
-    float3 topLeft = eye + (farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumLeft * leftDir);
-    float3 topRight = eye + (farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumRight * leftDir);
-    float3 bottomLeft = eye + (farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumLeft * leftDir);
-    float3 bottomRight = eye + (farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumRight * leftDir);
-
-    return{ topLeft, topRight, bottomLeft, bottomRight };
-}
-
 inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const float4x4 & viewMatrix)
 {
     // Camera position is reconstructed in the shader, but we still need the correct orientation 
@@ -79,12 +55,7 @@ inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const flo
         { +1.f, -1.f, 1.f},
     };
 
-    for (unsigned int j = 0; j < 8; ++j)
-    {
-        frustumVerts[j] = transform_coord(inverse(mul(projectionMatrix, viewMatrixNoTranslation)), frustumVerts[j]);
-    }
-
-    GlMesh mesh;
+    for (unsigned int j = 0; j < 8; ++j) frustumVerts[j] = transform_coord(inverse(mul(projectionMatrix, viewMatrixNoTranslation)), frustumVerts[j]);
 
     struct Vertex { float3 position; float2 texcoord; float3 ray; };
     const float3 verts[6] = { { -1.0f, -1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } };
@@ -94,12 +65,12 @@ inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const flo
     std::vector<Vertex> vertices;
     for (int i = 0; i < 6; ++i) vertices.push_back({ verts[i], texcoords[i], rayCoords[i] });
 
+    GlMesh mesh;
     mesh.set_vertices(vertices, GL_STATIC_DRAW);
     mesh.set_attribute(0, &Vertex::position);
     mesh.set_attribute(1, &Vertex::texcoord);
     mesh.set_attribute(2, &Vertex::ray);
     mesh.set_elements(faces, GL_STATIC_DRAW);
-
     return mesh;
 }
 
