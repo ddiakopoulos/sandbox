@@ -1,7 +1,8 @@
 #version 330
 
-const float zNear = 0.01;
+const float zNear = 2.0;
 const float zFar = 64.0;
+
 const vec3 scannerPosition = vec3(0, 0, 0);
 
 uniform float u_time;
@@ -27,6 +28,15 @@ in vec3 v_world_position;
 
 out vec4 f_color;
 
+// From Unity CgInc: 
+// Used to linearize Z buffer values. x is (1-far/near), y is (far/near), z is (x/far) and w is (y/far).
+const vec4 zBufferParams = vec4(1.0 - zFar/zNear, zFar/zNear, 0, 0);
+
+float linear_01_depth(in float z) 
+{
+    return (1.00000 / ((zBufferParams.x * z) + zBufferParams.y ));
+}
+
 //usage: vec3 reconstructedPos = reconstruct_worldspace_position(v_texcoord, rawDepth);
 vec3 reconstruct_worldspace_position(in vec2 coord, in float rawDepth)
 {
@@ -46,13 +56,15 @@ void main()
 {
     vec4 sceneColor = texture(s_colorTex, v_texcoord);
 
-    float rawDepth = texture(s_depthTex, v_texcoord).r;
+    float rawDepth = texture(s_depthTex, v_texcoord).x;
+    float linearDepth = linear_01_depth(rawDepth);
 
-    vec4 scannerColor = vec4(0);
+    // Scale the view ray by the ratio of the linear z value to the projected view ray
+    vec3 worldspacePosition = u_eye + (v_ray * linearDepth);
 
-    vec3 wsPos = vec4(reconstruct_worldspace_position(v_texcoord, rawDepth), 1).xyz;
+    float dist = distance(worldspacePosition, scannerPosition);
 
-    float dist = distance(wsPos, scannerPosition);
+    vec4 scannerColor = vec4(0, 0, 0, 0);
 
     //if (dist < u_scanDistance && dist > u_scanDistance - u_scanWidth)
     {
@@ -62,7 +74,5 @@ void main()
         scannerColor *= diff;
     }
 
-    scannerColor = clamp(scannerColor, 0, 1);
-
-    f_color = scannerColor + sceneColor;
+    f_color = clamp(scannerColor, 0, 1) + sceneColor;
 }

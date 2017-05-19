@@ -8,12 +8,9 @@ uniform mat4 u_modelMatrix;
 
 out vec2 v_texcoord;
 out vec3 v_ray;
-out vec3 v_world_position;
 
 void main()
 {
-	vec4 worldPos = u_modelMatrix * vec4(inPosition, 1);
-    v_world_position = worldPos.xyz;
     gl_Position = vec4(inPosition, 1);
     v_texcoord = inTexcoord0; 
     v_ray = inTexcoord1;

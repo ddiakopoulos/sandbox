@@ -13,7 +13,7 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
         {
             float y = ((noise::noise(float2(x * 0.1f, z * 0.1f))) + 1.0f) / 2.0f;
             y = y * 3.0f;
-            terrain.vertices.push_back({ (float)x, (float) y, (float)z });
+            terrain.vertices.push_back({ (float)x, (float)y, (float)z });
         }
     }
 
@@ -41,19 +41,47 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
     return terrain;
 }
 
+inline std::array<float3, 4> make_far_clip_coords(Pose pose, float nearClip, float farClip, float aspectRatio, const float vfov)
+{
+    const float3 viewDirection = safe_normalize(-pose.zdir());
+    const float3 eye = pose.position;
+    const float ratio = farClip / nearClip;
+
+    const auto leftDir = pose.xdir();
+    const auto upDir = pose.ydir();
+
+    const auto coords = make_frustum_coords(aspectRatio, nearClip, vfov);
+
+    float frustumTop = coords[0];
+    float frustumRight = coords[1];
+    float frustumBottom = coords[2];
+    float frustumLeft = coords[3];
+
+    float3 topLeft = eye + (farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumLeft * leftDir);
+    float3 topRight = eye + (farClip * viewDirection) + (ratio * frustumTop * upDir) + (ratio * frustumRight * leftDir);
+    float3 bottomLeft = eye + (farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumLeft * leftDir);
+    float3 bottomRight = eye + (farClip * viewDirection) + (ratio * frustumBottom * upDir) + (ratio * frustumRight * leftDir);
+
+    return{ topLeft, topRight, bottomLeft, bottomRight };
+}
+
 inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const float4x4 & viewMatrix)
 {
-    // Extract the frustum coordinates of the far clip plane
-    float4 frustumVerts[4] = {
-        { -1.f, -1.f, 1.f, 1.f }, // bottom left
-        { -1.f, +1.f, 1.f, 1.f }, // bottom right
-        { +1.f, +1.f, 1.f, 1.f }, // top right
-        { +1.f, -1.f, 1.f, 1.f }  // top left
+    // Camera position is reconstructed in the shader, but we still need the correct orientation 
+    float4x4 viewMatrixNoTranslation = viewMatrix;
+    viewMatrixNoTranslation.w = float4(0, 0, 0, 1);
+
+    // Extract the frustum coordinates of the far clip plane in ndc space
+    float3 frustumVerts[8] = {
+        { -1.f, -1.f, 1.f},
+        { -1.f, +1.f, 1.f},
+        { +1.f, +1.f, 1.f},
+        { +1.f, -1.f, 1.f},
     };
 
-    for (unsigned int j = 0; j < 4; ++j)
+    for (unsigned int j = 0; j < 8; ++j)
     {
-        frustumVerts[j] = normalize(float4(transform_coord(inverse(mul(projectionMatrix, viewMatrix)), frustumVerts[j].xyz()), 1));
+        frustumVerts[j] = transform_coord(inverse(mul(projectionMatrix, viewMatrixNoTranslation)), frustumVerts[j]);
     }
 
     GlMesh mesh;
@@ -61,7 +89,7 @@ inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const flo
     struct Vertex { float3 position; float2 texcoord; float3 ray; };
     const float3 verts[6] = { { -1.0f, -1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } };
     const float2 texcoords[6] = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
-    const float3 rayCoords[6] = { frustumVerts[0].xyz(), frustumVerts[3].xyz(),frustumVerts[1].xyz(),frustumVerts[1].xyz(),frustumVerts[3].xyz(), frustumVerts[2].xyz() };
+    const float3 rayCoords[6] = { frustumVerts[0], frustumVerts[3], frustumVerts[1], frustumVerts[1], frustumVerts[3], frustumVerts[2] };
     const uint3 faces[2] = { { 0, 1, 2 },{ 3, 4, 5 } };
     std::vector<Vertex> vertices;
     for (int i = 0; i < 6; ++i) vertices.push_back({ verts[i], texcoords[i], rayCoords[i] });
@@ -91,7 +119,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     terrainMesh = make_mesh_from_geometry(make_perlin_mesh(16));
 
     sceneColorTexture.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    sceneDepthTexture.setup(width, height, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    sceneDepthTexture.setup(width, height, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
     glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sceneColorTexture, 0);
     glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, sceneDepthTexture, 0);
     sceneFramebuffer.check_complete();
@@ -112,12 +140,12 @@ shader_workbench::~shader_workbench()
 
 }
 
-void shader_workbench::on_window_resize(int2 size) 
+void shader_workbench::on_window_resize(int2 size)
 {
 
 }
 
-void shader_workbench::on_input(const InputEvent & event) 
+void shader_workbench::on_input(const InputEvent & event)
 {
     igm->update_input(event);
     flycam.handle_input(event);
@@ -128,7 +156,7 @@ void shader_workbench::on_input(const InputEvent & event)
     }
 }
 
-void shader_workbench::on_update(const UpdateEvent & e) 
+void shader_workbench::on_update(const UpdateEvent & e)
 {
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
@@ -137,7 +165,7 @@ void shader_workbench::on_update(const UpdateEvent & e)
 
 static float3 scale = float3(0.25);
 
-void shader_workbench::on_draw() 
+void shader_workbench::on_draw()
 {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -153,7 +181,7 @@ void shader_workbench::on_draw()
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //glBlendEquation(GL_FUNC_ADD);
 
-    const float4x4 projectionMatrix = cam.get_projection_matrix((float)width / (float)height);
+    const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height), 72.0f, 2.f, 64.0f);
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
@@ -175,7 +203,6 @@ void shader_workbench::on_draw()
         triplanarTexture->uniform("u_modelMatrix", terrainModelMatrix);
         triplanarTexture->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
         triplanarTexture->texture("s_diffuseTextureA", 0, rustyTexture, GL_TEXTURE_2D);
-        triplanarTexture->texture("s_diffuseTextureB", 1, topTexture, GL_TEXTURE_2D);
         triplanarTexture->texture("s_diffuseTextureB", 1, topTexture, GL_TEXTURE_2D);
         triplanarTexture->uniform("u_scale", scale);
         terrainMesh.draw_elements();
@@ -212,8 +239,8 @@ void shader_workbench::on_draw()
         fullscreenQuad.draw_elements();
 
         terrainScan->unbind();
-    }    
-    
+    }
+
     //glDisable(GL_BLEND);
 
     gpuTimer.stop();
