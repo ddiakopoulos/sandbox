@@ -1,7 +1,5 @@
 # Experiments!
 
-
-[![Release is 0.1](http://img.shields.io/badge/release-0.1-blue.svg?style=flat)](https://github.com/ddiakopoulos/sandbox)
 [![License is Unlicense](http://img.shields.io/badge/license-Unlicense-blue.svg?style=flat)](http://unlicense.org/)
 
 Platform | Build Status |

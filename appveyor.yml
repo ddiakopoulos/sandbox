@@ -1,4 +1,5 @@
 environment:
+  matrix:
   - os: Visual Studio 2015
     DIR: msvc140
 
