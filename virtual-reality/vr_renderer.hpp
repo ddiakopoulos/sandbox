@@ -3,6 +3,7 @@
 #ifndef vr_renderer_hpp
 #define vr_renderer_hpp
 
+#include "projection-math.hpp"
 #include "linalg_util.hpp"
 #include "geometric.hpp"
 #include "geometry.hpp"
