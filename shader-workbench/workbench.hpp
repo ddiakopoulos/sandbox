@@ -7,6 +7,39 @@
 #include "lab-teleportation-sphere.hpp"
 #include "triplanar-terrain.hpp"
 
+struct gl_material_projector
+{
+    std::shared_ptr<GlShader> projectorLightShader;
+    std::shared_ptr<GlShader> projectorMultiplyShader;
+
+    std::shared_ptr<GlTexture2D> cookieTexture;
+    std::shared_ptr<GlTexture2D> gradientTexture;
+
+    enum projector_material
+    {
+        LIGHT,
+        MULTIPLY
+    };
+
+    projector_material type{ projector_material::MULTIPLY };
+
+    bool isOrthographic{ false };
+
+    Pose pose;
+
+    float4x4 get_view_projection_matrix()
+    {
+        if (isOrthographic)
+        {
+            const float halfSize = 1.0 * 0.5f;
+            return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), make_view_matrix_from_pose(pose));
+        }
+        
+        return mul(make_perspective_matrix(to_radians(75.f), 1.0f, 0.1f, 1000.f), make_view_matrix_from_pose(pose));
+    }
+
+};
+
 struct shader_workbench : public GLFWApp
 {
     GlCamera cam;
