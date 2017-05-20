@@ -53,6 +53,8 @@ struct shader_workbench : public GLFWApp
     GlTexture2D sceneDepthTexture;
     GlFramebuffer sceneFramebuffer;
 
+    gl_material_projector projector;
+
     float elapsedTime{ 0 };
 
     float scanDistance{ 1.0f };

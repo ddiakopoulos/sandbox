@@ -86,6 +86,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     terrainScan = shaderMonitor.watch("../assets/shaders/terrainscan_vert.glsl", "../assets/shaders/terrainscan_frag.glsl");
     normalDebug = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
     triplanarTexture = shaderMonitor.watch("../assets/shaders/triplanar_vert.glsl", "../assets/shaders/triplanar_frag.glsl");
+    projector.projectorMultiplyShader = shaderMonitor.watch("../assets/shaders/projector_multiply_vert.glsl", "../assets/shaders/projector_multiply_frag.glsl");
 
     terrainMesh = make_mesh_from_geometry(make_perlin_mesh(16));
 
@@ -101,6 +102,8 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     glTextureParameteriEXT(rustyTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTextureParameteriEXT(topTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTextureParameteriEXT(topTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    projector.pose = look_at_pose_rh({ 0, 3.0, 0 }, { 0, 0, 0 });
 
     cam.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     flycam.set_camera(&cam);
@@ -147,6 +150,14 @@ void shader_workbench::on_draw()
 
     gpuTimer.start();
 
+    /*
+    Blend SrcAlpha OneMinusSrcAlpha     // Alpha blending
+    Blend One One                       // Additive
+    Blend OneMinusDstColor One          // Soft Additive
+    Blend DstColor Zero                 // Multiplicative
+    Blend DstColor SrcColor             // 2x Multiplicative
+    */
+
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -158,6 +169,9 @@ void shader_workbench::on_draw()
 
     fullscreenQuad = fullscreen_quad_extra(projectionMatrix, viewMatrix);
 
+
+    float4x4 terrainModelMatrix = make_translation_matrix({ -8, 0, -8 });
+
     // Main Scene
     {
         glEnable(GL_DEPTH_TEST);
@@ -166,20 +180,40 @@ void shader_workbench::on_draw()
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float4x4 terrainModelMatrix = make_translation_matrix({ -8, 0, -8 });
+        {
+            triplanarTexture->bind();
+            triplanarTexture->uniform("u_viewProj", viewProjectionMatrix);
+            triplanarTexture->uniform("u_modelMatrix", terrainModelMatrix);
+            triplanarTexture->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
+            triplanarTexture->texture("s_diffuseTextureA", 0, rustyTexture, GL_TEXTURE_2D);
+            triplanarTexture->texture("s_diffuseTextureB", 1, topTexture, GL_TEXTURE_2D);
+            triplanarTexture->uniform("u_scale", scale);
+            terrainMesh.draw_elements();
+            triplanarTexture->unbind();
+        }
 
-        triplanarTexture->bind();
+        glDisable(GL_DEPTH_TEST);
 
-        triplanarTexture->uniform("u_viewProj", viewProjectionMatrix);
-        triplanarTexture->uniform("u_modelMatrix", terrainModelMatrix);
-        triplanarTexture->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
-        triplanarTexture->texture("s_diffuseTextureA", 0, rustyTexture, GL_TEXTURE_2D);
-        triplanarTexture->texture("s_diffuseTextureB", 1, topTexture, GL_TEXTURE_2D);
-        triplanarTexture->uniform("u_scale", scale);
-        terrainMesh.draw_elements();
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_COLOR, GL_ZERO); // required state for projector
 
-        triplanarTexture->unbind();
+        {
+            projector.projectorMultiplyShader->bind();
 
+            float4x4 projectorViewProj = projector.get_view_projection_matrix();
+
+            projector.projectorMultiplyShader->uniform("u_time", elapsedTime);
+            projector.projectorMultiplyShader->uniform("u_eye", cam.get_eye_point());
+            projector.projectorMultiplyShader->uniform("u_viewProj", viewProjectionMatrix);
+            projector.projectorMultiplyShader->uniform("u_modelMatrix", terrainModelMatrix);
+            projector.projectorMultiplyShader->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
+
+            terrainMesh.draw_elements();
+
+            projector.projectorMultiplyShader->unbind();
+        }
+
+        glDisable(GL_BLEND);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
@@ -191,8 +225,6 @@ void shader_workbench::on_draw()
 
         terrainScan->uniform("u_time", elapsedTime);
         terrainScan->uniform("u_eye", cam.get_eye_point());
-
-        float4x4 terrainModelMatrix = make_translation_matrix({ -8, 0, -8 });
 
         terrainScan->uniform("u_inverseViewProjection", inverse(viewProjectionMatrix));
 
@@ -212,7 +244,7 @@ void shader_workbench::on_draw()
         terrainScan->unbind();
     }
 
-    //glDisable(GL_BLEND);
+    glDisable(GL_BLEND);
 
     gpuTimer.stop();
 
