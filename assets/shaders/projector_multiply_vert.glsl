@@ -28,6 +28,6 @@ void main()
     v_texcoord = inTexcoord;
     v_eyeDir = normalize(u_eye - worldPos.xyz);
     v_uv_shadow = (u_projector * vec4(worldPos.xyz, 1));
-    v_uv_gradient = (0.5 * vec4(worldPos.xyz, 1));
+    v_uv_gradient = (u_projector * vec4(worldPos.xyz, 1));
     gl_Position = u_viewProj * worldPos;
 }

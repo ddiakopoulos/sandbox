@@ -35,7 +35,7 @@ struct gl_material_projector
             return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), make_view_matrix_from_pose(pose));
         }
         
-        return mul(make_perspective_matrix(to_radians(100.f), 1.0f, 0.05f, 64.f), make_view_matrix_from_pose(pose));
+        return mul(make_perspective_matrix(to_radians(100.f), 1.0f, 1.0f, 32.f), make_view_matrix_from_pose(pose));
     }
 
 };
