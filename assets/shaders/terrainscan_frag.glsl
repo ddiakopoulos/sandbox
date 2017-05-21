@@ -74,5 +74,6 @@ void main()
         scannerColor *= diff;
     }
 
-    f_color = clamp(scannerColor, 0, 1) + sceneColor;
+    vec4 outColor = clamp(scannerColor, 0, 1) + sceneColor;
+    f_color = vec4(outColor.xyz, 1);
 }

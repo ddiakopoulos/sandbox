@@ -106,8 +106,14 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     projector.cookieTexture = std::make_shared<GlTexture2D>(load_image("../assets/textures/projector/light.png", true));
     glTextureParameteriEXT(*projector.cookieTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTextureParameteriEXT(*projector.cookieTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+    projector.gradientTexture = std::make_shared<GlTexture2D>(load_image("../assets/textures/projector/gradient.png", false));
+    glTextureParameteriEXT(*projector.gradientTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTextureParameteriEXT(*projector.gradientTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
     projector.pose = look_at_pose_rh({ 0.1f, 2.0, 0.1f }, { 0, 0.1f, 0 });
     std::cout << "Cookie: " << *projector.cookieTexture << std::endl;
+    std::cout << "Gradient: " << *projector.gradientTexture << std::endl;
 
     cam.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     flycam.set_camera(&cam);
@@ -173,12 +179,18 @@ void shader_workbench::on_draw()
 
     fullscreenQuad = fullscreen_quad_extra(projectionMatrix, viewMatrix);
 
-
     float4x4 terrainModelMatrix = make_translation_matrix({ -8, 0, -8 });
 
     // Main Scene
     {
         glEnable(GL_DEPTH_TEST);
+
+        glEnable(GL_BLEND);
+
+        glBlendEquation(GL_FUNC_ADD);
+        //glBlendFunc(GL_ONE, GL_ZERO); // required state for projector
+        //glBlendFunc(GL_DST_COLOR, GL_ZERO); // required state for projector
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glBindFramebuffer(GL_FRAMEBUFFER, sceneFramebuffer);
         glViewport(0, 0, width, height);
@@ -198,10 +210,18 @@ void shader_workbench::on_draw()
 
         glDisable(GL_DEPTH_TEST);
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_DST_COLOR, GL_ZERO); // required state for projector
+        //glBlendFunc(GL_DST_COLOR, GL_ZERO); // required state for projector
+
+        //glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+        glBlendFunc(GL_DST_COLOR, GL_ONE);
+        //glBlendFuncSeparate(GL_DST_COLOR, GL_ZERO, GL_DST_ALPHA, GL_ZERO);
+        //glBlendEquation(GL_FUNC_ADD);
+        //glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE); // required state for projector
+
         glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(-1.0, 1.0);
+        glPolygonOffset(-1.0, -1.0);
 
         {
             projector.projectorMultiplyShader->bind();
@@ -215,14 +235,17 @@ void shader_workbench::on_draw()
             projector.projectorMultiplyShader->uniform("u_modelMatrix", terrainModelMatrix);
             projector.projectorMultiplyShader->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
             projector.projectorMultiplyShader->texture("s_cookieTex", 0, *projector.cookieTexture, GL_TEXTURE_2D);
+            projector.projectorMultiplyShader->texture("s_gradientTex", 1, *projector.gradientTexture, GL_TEXTURE_2D);
 
             terrainMesh.draw_elements();
 
             projector.projectorMultiplyShader->unbind();
         }
+
         glDisable(GL_POLYGON_OFFSET_FILL);
         glDisable(GL_BLEND);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     }
 
     // Screenspace Effect
