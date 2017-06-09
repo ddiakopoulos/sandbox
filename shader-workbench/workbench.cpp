@@ -104,7 +104,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     glTextureParameteriEXT(topTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTextureParameteriEXT(topTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    projector.cookieTexture = std::make_shared<GlTexture2D>(load_image("../assets/textures/projector/shadow.png", false));
+    projector.cookieTexture = std::make_shared<GlTexture2D>(load_image("../assets/textures/projector/hexagon_select.png", false));
     glTextureParameteriEXT(*projector.cookieTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTextureParameteriEXT(*projector.cookieTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
@@ -151,6 +151,8 @@ void shader_workbench::on_update(const UpdateEvent & e)
 static float3 scale = float3(0.25);
 static bool renderColor = true;
 static bool renderProjective = true;
+static float3 projectorEye = float3(0, 0, 0);
+static float3 projectorTarget = float3(0, 0, 0);
 
 const char * listbox_items[] = { "GL_ZERO", "GL_ONE", "GL_SRC_COLOR", "GL_ONE_MINUS_SRC_COLOR", "GL_DST_COLOR", "GL_ONE_MINUS_DST_COLOR", "GL_SRC_ALPHA", "GL_DST_ALPHA", "GL_ONE_MINUS_DST_ALPHA" };
 std::vector<int> blendModes = { GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA };
@@ -272,11 +274,22 @@ void shader_workbench::on_draw()
     gpuTimer.stop();
 
     igm->begin_frame();
+
+    if (ImGui::SliderFloat3("Projector Eye", &projectorEye.x, -5.f, 5.f))
+    {
+        projector.pose = look_at_pose_rh(projectorEye, projectorTarget);
+    }
+    if (ImGui::SliderFloat3("Projector Target", &projectorTarget.x, -5.f, 5.f))
+    {
+        projector.pose = look_at_pose_rh(projectorEye, projectorTarget);
+    }
+
     ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
     ImGui::Checkbox("Render Color", &renderColor);
     ImGui::Checkbox("Render Projective", &renderProjective);
     ImGui::ListBox("Src Blendmode", &src_blendmode, listbox_items, IM_ARRAYSIZE(listbox_items), 9);
     ImGui::ListBox("DestBlendmode", &dst_blendmode, listbox_items, IM_ARRAYSIZE(listbox_items), 9);
+
     /*
     ImGui::SliderFloat3("Triplanar Scale", &scale.x, 0.0f, 1.f);
     ImGui::SliderFloat("Scan Distance", &scanDistance, 0.1f, 10.f);
@@ -287,6 +300,7 @@ void shader_workbench::on_draw()
     ImGui::SliderFloat4("Trail Color", &trailColor.x, 0.0f, 1.f);
     ImGui::SliderFloat4("hbarColor Color", &hbarColor.x, 0.0f, 1.f);
     */
+
     igm->end_frame();
 
     gl_check_error(__FILE__, __LINE__);

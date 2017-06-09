@@ -372,7 +372,7 @@ class GlMesh
     GLsizei vertexStride = 0, instanceStride = 0, indexCount = 0;
 
 public:
-
+     
     GlMesh() {}
     GlMesh(GlMesh && r) { *this = std::move(r); }
     GlMesh(const GlMesh & r) = delete;
@@ -394,7 +394,7 @@ public:
         indexType = 0;
         indexCount = 0;
     }
-
+     
     void draw_elements(int instances = 0) const
     {
         if (vertexBuffer.size)
