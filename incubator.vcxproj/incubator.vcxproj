@@ -29,6 +29,7 @@
     <ClInclude Include="..\gl\gl-async-gpu-timer.hpp" />
     <ClInclude Include="..\gl\gl-async-pbo.hpp" />
     <ClInclude Include="..\gl\gl-camera.hpp" />
+    <ClInclude Include="..\gl\gl-gizmo.hpp" />
     <ClInclude Include="..\gl\gl-imgui.hpp" />
     <ClInclude Include="..\gl\gl-mesh.hpp" />
     <ClInclude Include="..\gl\gl-nvg.hpp" />
@@ -74,8 +75,6 @@
     <ClInclude Include="..\spsc_queue.hpp" />
     <ClInclude Include="..\string_utils.hpp" />
     <ClInclude Include="..\third_party\fontstash.h" />
-    <ClInclude Include="..\third_party\im3d\im3d.h" />
-    <ClInclude Include="..\third_party\im3d\im3d_config.h" />
     <ClInclude Include="..\third_party\imgui\imconfig.h" />
     <ClInclude Include="..\third_party\imgui\imgui.h" />
     <ClInclude Include="..\third_party\imgui\imgui_internal.h" />
@@ -86,6 +85,7 @@
     <ClInclude Include="..\third_party\nanovg_gl_utils.h" />
     <ClInclude Include="..\third_party\oscpkt.hpp" />
     <ClInclude Include="..\third_party\oscpkt_udp.hpp" />
+    <ClInclude Include="..\third_party\tiny-gizmo.hpp" />
     <ClInclude Include="..\third_party\tinyply.h" />
     <ClInclude Include="..\third_party\tiny_obj_loader.h" />
     <ClInclude Include="..\simple_timer.hpp" />
@@ -99,12 +99,12 @@
     <ClCompile Include="..\gl\glfw-app.cpp" />
     <ClCompile Include="..\impl.cpp" />
     <ClCompile Include="..\third_party\efsw.cpp" />
-    <ClCompile Include="..\third_party\im3d\im3d.cpp" />
     <ClCompile Include="..\third_party\imgui\imgui.cpp" />
     <ClCompile Include="..\third_party\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\third_party\json.cpp" />
     <ClCompile Include="..\third_party\murmur_hash_3.cpp" />
     <ClCompile Include="..\third_party\nanovg.cpp" />
+    <ClCompile Include="..\third_party\tiny-gizmo.cpp" />
     <ClCompile Include="..\third_party\tinyply.cpp" />
     <ClCompile Include="..\third_party\tiny_obj_loader.cc" />
   </ItemGroup>

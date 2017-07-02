@@ -112,6 +112,8 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     glTextureParameteriEXT(*projector.gradientTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTextureParameteriEXT(*projector.gradientTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
+    gizmo.reset(new GlGizmo());
+
     projector.pose = look_at_pose_rh({ 0.1f, 4.0, 0.1f }, { 0, 0.1f, 0 });
     std::cout << "Cookie: " << *projector.cookieTexture << std::endl;
     std::cout << "Gradient: " << *projector.gradientTexture << std::endl;
@@ -139,6 +141,8 @@ void shader_workbench::on_input(const InputEvent & event)
     {
         if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE) exit();
     }
+
+    if (gizmo) gizmo->handle_input(event);
 }
 
 void shader_workbench::on_update(const UpdateEvent & e)
@@ -159,6 +163,8 @@ std::vector<int> blendModes = { GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_
 
 static int src_blendmode = 0;
 static int dst_blendmode = 6;
+
+tinygizmo::rigid_transform terrainTransform;
 
 void shader_workbench::on_draw()
 {
@@ -183,10 +189,13 @@ void shader_workbench::on_draw()
     const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
+    if (gizmo) gizmo->update(cam, float2(width, height));
 
     fullscreenQuad = fullscreen_quad_extra(projectionMatrix, viewMatrix);
 
-    float4x4 terrainModelMatrix = make_translation_matrix({ -8, 0, -8 });
+    tinygizmo::transform_gizmo("terrain", gizmo->gizmo_ctx, terrainTransform);
+    //float4x4 terrainModelMatrix = make_translation_matrix({ -8, 0, -8 });
+    float4x4 terrainModelMatrix = reinterpret_cast<const float4x4 &>(terrainTransform.matrix());
 
     // Main Scene
     {
@@ -302,6 +311,7 @@ void shader_workbench::on_draw()
     */
 
     igm->end_frame();
+    if (gizmo) gizmo->draw();
 
     gl_check_error(__FILE__, __LINE__);
 

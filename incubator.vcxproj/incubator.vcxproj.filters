@@ -28,9 +28,6 @@
     <Filter Include="source\gl-app\src">
       <UniqueIdentifier>{38363ae1-2d43-4362-a0f3-121895974a7f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="third_party\im3d">
-      <UniqueIdentifier>{bafc05e2-37af-4fe3-9427-2e7416779f11}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\third_party\fontstash.h">
@@ -180,12 +177,6 @@
     <ClInclude Include="..\asset_io.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\third_party\im3d\im3d_config.h">
-      <Filter>third_party\im3d</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\im3d\im3d.h">
-      <Filter>third_party\im3d</Filter>
-    </ClInclude>
     <ClInclude Include="..\gl\gl-api.hpp">
       <Filter>source\gl-app\include</Filter>
     </ClInclude>
@@ -252,6 +243,12 @@
     <ClInclude Include="..\util.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\third_party\tiny-gizmo.hpp">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gl\gl-gizmo.hpp">
+      <Filter>source\gl-app\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">
@@ -278,9 +275,6 @@
     <ClCompile Include="..\third_party\imgui\imgui_draw.cpp">
       <Filter>third_party\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\third_party\im3d\im3d.cpp">
-      <Filter>third_party\im3d</Filter>
-    </ClCompile>
     <ClCompile Include="..\gl\glfw-app.cpp">
       <Filter>source\gl-app\src</Filter>
     </ClCompile>
@@ -292,6 +286,9 @@
     </ClCompile>
     <ClCompile Include="..\impl.cpp">
       <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\third_party\tiny-gizmo.cpp">
+      <Filter>third_party</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

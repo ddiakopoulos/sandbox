@@ -1,4 +1,5 @@
 #include "index.hpp"
+#include "gl-gizmo.hpp"
 #include "holo-scan-effect.hpp"
 #include "terrain-scan-effect.hpp"
 #include "fade-to-skybox.hpp"
@@ -47,6 +48,7 @@ struct shader_workbench : public GLFWApp
     ShaderMonitor shaderMonitor{ "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
     GlGpuTimer gpuTimer;
+    std::unique_ptr<GlGizmo> gizmo;
 
     GlTexture2D rustyTexture, topTexture;
     GlTexture2D sceneColorTexture;

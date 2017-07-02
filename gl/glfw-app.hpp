@@ -48,8 +48,8 @@ namespace avl
         
         uint2 value; // button, key, codepoint, scrollX, scrollY
         
-        bool is_mouse_down() const { return action != GLFW_RELEASE; }
-        bool is_mouse_up() const { return action == GLFW_RELEASE; }
+        bool is_down() const { return action != GLFW_RELEASE; }
+        bool is_up() const { return action == GLFW_RELEASE; }
         
         bool using_shift_key() const { return mods & GLFW_MOD_SHIFT; };
         bool using_control_key() const { return mods & GLFW_MOD_CONTROL; };
