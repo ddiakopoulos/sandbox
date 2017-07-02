@@ -18,7 +18,9 @@ namespace avl
     class GlCamera
     {
         Pose pose;
-
+        float vfov{ 1.3f };
+        float nearclip{ 0.01f };
+        float farclip{ 64.f };
     public:
 
         float4x4 get_view_matrix() const 
@@ -26,10 +28,10 @@ namespace avl
             return make_view_matrix_from_pose(pose); 
         }
         
-        float4x4 get_projection_matrix(float aspectRatio, float vFov = 72.0f, float nearClip = 0.01f, float farClip = 64.0f) const
+        float4x4 get_projection_matrix(float aspectRatio) const
         {
-            const float4 f = make_frustum_coords(aspectRatio, nearClip, to_radians(vFov));
-            return make_projection_matrix(f[3], f[1], f[2], f[0], nearClip, farClip);
+            const float4 f = make_frustum_coords(aspectRatio, nearclip, vfov);
+            return make_projection_matrix(f[3], f[1], f[2], f[0], nearclip, farclip);
         }
 
         Pose get_pose() const { return pose; }
@@ -44,10 +46,10 @@ namespace avl
         void look_at(const float3 & eyePoint, const float3 target) { pose = look_at_pose_rh(eyePoint, target); }
         void look_at(const float3 & eyePoint, float3 const & target, float3 const & worldup) { pose = look_at_pose_rh(eyePoint, target, worldup); }
         
-        Ray get_world_ray(const float2 cursor, const float2 viewport, const float vFov = 72.0f, const float nearClip = 0.01f, const float farClip = 64.0f)
+        Ray get_world_ray(const float2 cursor, const float2 viewport)
         {
             const float aspect = viewport.x / viewport.y;
-            auto cameraRay = ray_from_viewport_pixel(cursor, viewport, get_projection_matrix(aspect, to_radians(vFov), nearClip, farClip));
+            auto cameraRay = ray_from_viewport_pixel(cursor, viewport, get_projection_matrix(aspect));
             return pose * cameraRay;
         }
     };

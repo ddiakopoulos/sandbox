@@ -180,7 +180,7 @@ void shader_workbench::on_draw()
     */
 
     // GL_ZERO, GL_SRC_ALPHA
-    const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height), 72.0f, 2.f, 64.0f);
+    const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
