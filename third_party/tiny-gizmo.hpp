@@ -13,6 +13,7 @@
 #include <functional>   // For std::function callbacks
 #include <memory>       // For std::unique_ptr
 #include <vector>       // For ... 
+#include <ostream>      // For overloads of operator<< to std::ostream& in the operator<< overloads provided by this library
 
 // Visual Studio versions prior to 2015 lack constexpr support
 #if defined(_MSC_VER) && _MSC_VER < 1900 && !defined(constexpr)
@@ -425,22 +426,21 @@ namespace tinygizmo
 
     struct rigid_transform
     {
-        minalg::float3  position{ 0,0,0 };
-        minalg::float4  orientation{ 0,0,0,1 };
-        minalg::float3  scale{ 1,1,1 };
-
         rigid_transform() {}
         rigid_transform(const minalg::float4 & orientation, const minalg::float3 & position, const minalg::float3 & scale) : orientation(orientation), position(position), scale(scale) {}
         rigid_transform(const minalg::float4 & orientation, const minalg::float3 & position, float scale) : orientation(orientation), position(position), scale(scale) {}
         rigid_transform(const minalg::float4 & orientation, const minalg::float3 & position) : orientation(orientation), position(position) {}
 
+        minalg::float3      position{ 0,0,0 };
+        minalg::float4      orientation{ 0,0,0,1 };
+        minalg::float3      scale{ 1,1,1 };
+
+        bool                uniform_scale() const { return scale.x == scale.y && scale.x == scale.z; }
         minalg::float4x4    matrix() const { return{ { qxdir(orientation)*scale.x,0 },{ qydir(orientation)*scale.y,0 },{ qzdir(orientation)*scale.z,0 },{ position,1 } }; }
         minalg::float3      transform_vector(const minalg::float3 & vec) const { return qrot(orientation, vec * scale); }
         minalg::float3      transform_point(const minalg::float3 & p) const { return position + transform_vector(p); }
         minalg::float3      detransform_point(const minalg::float3 & p) const { return detransform_vector(p - position); }
         minalg::float3      detransform_vector(const minalg::float3 & vec) const { return qrot(qinv(orientation), vec) / scale; }
-
-        bool        uniform_scale() const { return scale.x == scale.y && scale.x == scale.z; }
     };
 
     struct camera_parameters
@@ -450,7 +450,7 @@ namespace tinygizmo
         minalg::float4 orientation;
     };
 
-    struct geometry_vertex { minalg::float3 position, normal, color; };
+    struct geometry_vertex { minalg::float3 position, normal; minalg::float4 color; };
     struct geometry_mesh { std::vector<geometry_vertex> vertices; std::vector<minalg::uint3> triangles; };
 
     ///////////////
@@ -472,6 +472,7 @@ namespace tinygizmo
         bool hotkey_scale{ false };
         bool hotkey_local{ false };
         bool hotkey_ctrl{ false };
+        float screenspace_scale{ 0.f };     // If > 0.f, the gizmos are drawn scale-invariant with a screenspace value defined here
         float snap_translation{ 0.f };      // World-scale units used for snapping translation
         float snap_scale{ 0.f };            // World-scale units used for snapping scale
         float snap_rotation{ 0.f };         // Radians used for snapping rotation quaternions (i.e. PI/8 or PI/16)
@@ -488,10 +489,10 @@ namespace tinygizmo
         gizmo_context();
         ~gizmo_context();
 
-        void update(const gizmo_application_state & state);     // Clear geometry buffer and update internal `gizmo_application_state` data
-        void draw();                                            // Trigger a render callback per call to `update(...)`
-        transform_mode get_mode() const;                        // Return the active mode being used by `transform_gizmo(...)`
-        std::function<void(const geometry_mesh & r)> render;    // Callback to render the gizmo meshes
+        void update(const gizmo_application_state & state);         // Clear geometry buffer and update internal `gizmo_application_state` data
+        void draw();                                                // Trigger a render callback per call to `update(...)`
+        transform_mode get_mode() const;                            // Return the active mode being used by `transform_gizmo(...)`
+        std::function<void(const geometry_mesh & r)> render;        // Callback to render the gizmo meshes
     };
 
     void transform_gizmo(const std::string & name, gizmo_context & g, rigid_transform & t);
