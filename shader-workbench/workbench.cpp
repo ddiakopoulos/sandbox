@@ -1,6 +1,7 @@
 #include "index.hpp"
 #include "workbench.hpp"
 #include "imgui/imgui_internal.h"
+#include "skeleton.hpp"
 
 using namespace avl;
 
@@ -16,6 +17,8 @@ tinygizmo::rigid_transform joint_transform;
 tinygizmo::rigid_transform end_transform;
 tinygizmo::rigid_transform target_transform;
 
+HumanSkeleton skeleton;
+
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
     int width, height;
@@ -27,9 +30,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     normalDebug = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 
-    //terrainMesh = make_mesh_from_geometry(make_perlin_mesh(16));
-
-    sphere_mesh = make_sphere_mesh(0.25f);
+    sphere_mesh = make_sphere_mesh(0.1f);
 
     gizmo.reset(new GlGizmo());
 
@@ -124,13 +125,27 @@ void shader_workbench::on_draw()
         normalDebug->bind();
         normalDebug->uniform("u_viewProj", viewProjectionMatrix);
 
+        auto skeletonBones = skeleton.compute_pose();
+
         // Some debug models
+        /*
         for (const auto & model : { rootMatrix, jointMatrix, endMatrix, outJointMatrix, outEffectorMatrix })
         {
             normalDebug->uniform("u_modelMatrix", model);
             normalDebug->uniform("u_modelMatrixIT", inv(transpose(model)));
             sphere_mesh.draw_elements();
         }
+        */
+
+        for (const auto & bone : skeletonBones)
+        {
+            normalDebug->uniform("u_modelMatrix", bone);
+            normalDebug->uniform("u_modelMatrixIT", inv(transpose(bone)));
+            sphere_mesh.draw_elements();
+            std::cout << bone << std::endl;
+        }
+
+        std::cout << "---------------------------- \n";
 
         normalDebug->unbind();
     }

@@ -147,7 +147,7 @@
     <ClInclude Include="holo-scan-effect.hpp" />
     <ClInclude Include="lab-teleportation-sphere.hpp" />
     <ClInclude Include="terrain-scan-effect.hpp" />
-    <ClInclude Include="triplanar-terrain.hpp" />
+    <ClInclude Include="skeleton.hpp" />
     <ClInclude Include="workbench.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

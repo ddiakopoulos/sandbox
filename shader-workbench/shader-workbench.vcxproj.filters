@@ -24,8 +24,12 @@
     <ClInclude Include="lab-teleportation-sphere.hpp">
       <Filter>effects</Filter>
     </ClInclude>
-    <ClInclude Include="triplanar-terrain.hpp">
+    <ClInclude Include="workbench.hpp" />
+    <ClInclude Include="skeleton.hpp">
       <Filter>effects</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="workbench.cpp" />
   </ItemGroup>
 </Project>
