@@ -179,7 +179,7 @@ struct shader_workbench : public GLFWApp
 
     std::shared_ptr<GlShader> normalDebug;
 
-    GlMesh sphere_mesh;
+    GlMesh sphere_mesh, cylinder_mesh;
 
     shader_workbench();
     ~shader_workbench();

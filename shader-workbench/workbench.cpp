@@ -19,6 +19,53 @@ tinygizmo::rigid_transform target_transform;
 
 HumanSkeleton skeleton;
 
+/*
+// Make a cylinder with the bottom center at 0 and up on the +Y axis
+inline Geometry make_cylinder(const float height, const float radiusTop, const float radiusBottom, const glm::vec4& colorTop, const glm::vec4& colorBottom, const int segments)
+{
+    vertex_positions.empty();
+    vertex_colors.empty();
+    nbSegments = segments;
+
+    double angle = 0.0;
+    vertex_positions.push_back(glm::vec4(0, height, 0, 1));
+    vertex_colors.push_back(colorTop);
+    for (unsigned int i = 0; i<nbSegments; ++i)
+    {
+        angle = ((double)i) / ((double)nbSegments)*2.0*3.14;
+        vertex_positions.push_back(glm::vec4(radiusTop*std::cos(angle), height, radiusTop*std::sin(angle), 1.0));
+        vertex_colors.push_back(colorTop);
+        vertex_indexes.push_back(0);
+        vertex_indexes.push_back((i + 1) % nbSegments + 1);
+        vertex_indexes.push_back(i + 1);
+    }
+
+    vertex_positions.push_back(glm::vec4(0, 0, 0, 1));
+    vertex_colors.push_back(colorBottom);
+    for (unsigned int i = 0; i<nbSegments; ++i)
+    {
+        angle = ((double)i) / ((double)nbSegments)*2.0*3.14;
+        vertex_positions.push_back(glm::vec4(radiusBottom*std::cos(angle), 0.0, radiusBottom*std::sin(angle), 1.0));
+        vertex_colors.push_back(colorBottom);
+        vertex_indexes.push_back(nbSegments + 1);
+        vertex_indexes.push_back(nbSegments + 2 + (i + 1) % nbSegments);
+        vertex_indexes.push_back(nbSegments + i + 2);
+    }
+
+    for (unsigned int i = 0; i<nbSegments; ++i)
+    {
+        vertex_indexes.push_back(i + 1);
+        vertex_indexes.push_back((i + 1) % nbSegments + 1);
+        vertex_indexes.push_back(nbSegments + 2 + (i + 1) % nbSegments);
+
+        vertex_indexes.push_back(i + 1);
+        vertex_indexes.push_back(nbSegments + 2 + (i + 1) % nbSegments);
+        vertex_indexes.push_back(nbSegments + i + 2);
+    }
+
+}
+*/
+
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
     int width, height;
@@ -31,6 +78,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     normalDebug = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 
     sphere_mesh = make_sphere_mesh(0.1f);
+    cylinder_mesh = make_capsule_mesh(32, 0.1, 0.2);
 
     gizmo.reset(new GlGizmo());
 
@@ -39,8 +87,12 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     joint_transform.position.z = -0.15f;
     end_transform.position.y = 0.f;
 
+    target_transform.position = reinterpret_cast<const minalg::float3 &>(skeleton.bones[0].local_pose);
+
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
+
+    traverse_joint_chain(13, skeleton.bones);
 }
 
 shader_workbench::~shader_workbench()
@@ -125,8 +177,6 @@ void shader_workbench::on_draw()
         normalDebug->bind();
         normalDebug->uniform("u_viewProj", viewProjectionMatrix);
 
-        auto skeletonBones = skeleton.compute_pose();
-
         // Some debug models
         /*
         for (const auto & model : { rootMatrix, jointMatrix, endMatrix, outJointMatrix, outEffectorMatrix })
@@ -137,15 +187,16 @@ void shader_workbench::on_draw()
         }
         */
 
+        skeleton.bones[0].local_pose = reinterpret_cast<const float4x4 &>(target_transform.matrix());
+
+        auto skeletonBones = compute_static_pose(skeleton.bones);
+
         for (const auto & bone : skeletonBones)
         {
             normalDebug->uniform("u_modelMatrix", bone);
             normalDebug->uniform("u_modelMatrixIT", inv(transpose(bone)));
-            sphere_mesh.draw_elements();
-            std::cout << bone << std::endl;
+            cylinder_mesh.draw_elements();
         }
-
-        std::cout << "---------------------------- \n";
 
         normalDebug->unbind();
     }
