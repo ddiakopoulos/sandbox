@@ -72,6 +72,7 @@ namespace avl
         
     public:
         
+        bool precisionMode = false;
         bool enableSpring = true;
         float movementSpeed = 10.00f;
         float3 lastLook;
@@ -109,6 +110,7 @@ namespace avl
                     case GLFW_KEY_A: bl = e.is_down(); break;
                     case GLFW_KEY_S: bb = e.is_down(); break;
                     case GLFW_KEY_D: br = e.is_down(); break;
+                    case GLFW_KEY_LEFT_SHIFT: precisionMode = e.is_down(); break;
                 }
                 break;
             case InputEvent::MOUSE:
@@ -133,18 +135,27 @@ namespace avl
         
         void update(float delta)
         {
+            float speed = movementSpeed;
+            bool useSpring = enableSpring;
+
+            if (precisionMode)
+            {
+                speed = movementSpeed * 0.001f;
+                useSpring = false;
+            }
+
             float3 move;
             
-            if (bf || (ml && mr)) move.z -= 1 * movementSpeed;
+            if (bf || (ml && mr)) move.z -= 1 * speed;
             
-            if (bl) move.x -= 1 * movementSpeed;
-            if (bb) move.z += 1 * movementSpeed;
-            if (br) move.x += 1 * movementSpeed;
+            if (bl) move.x -= 1 * speed;
+            if (bb) move.z += 1 * speed;
+            if (br) move.x += 1 * speed;
             
             auto current = cam->get_pose().position;
             auto target = cam->get_pose().transform_coord(move);
             
-            if (enableSpring)
+            if (useSpring)
             {
                 float springyX = damped_spring(target.x, current.x, velocity.x, delta, 0.99f);
                 float springyY = damped_spring(target.y, current.y, velocity.y, delta, 0.99f);

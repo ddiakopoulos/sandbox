@@ -203,6 +203,8 @@ namespace avl
         Geometry s;
         s.vertices.insert(s.vertices.end(), a.vertices.begin(), a.vertices.end());
         s.vertices.insert(s.vertices.end(), b.vertices.begin(), b.vertices.end());
+        s.normals.insert(s.normals.end(), a.normals.begin(), a.normals.end());
+        s.normals.insert(s.normals.end(), b.normals.begin(), b.normals.end());
         s.faces.insert(s.faces.end(), a.faces.begin(), a.faces.end());
         for (auto & f : b.faces) s.faces.push_back({ (int)a.vertices.size() + f.x, (int)a.vertices.size() + f.y, (int)a.vertices.size() + f.z });
         return s;

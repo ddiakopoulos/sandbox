@@ -78,7 +78,10 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     normalDebug = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
 
     sphere_mesh = make_sphere_mesh(0.1f);
-    cylinder_mesh = make_capsule_mesh(32, 0.1, 0.2);
+    cylinder_mesh = make_mesh_from_geometry(make_tapered_capsule());
+
+    make_sphere_mesh(0.25f); //make_cylinder_mesh(0.1, 0.2, 0.2, 32, 32, false);
+    //cylinder_mesh.set_non_indexed(GL_LINES);
 
     gizmo.reset(new GlGizmo());
 
@@ -171,6 +174,7 @@ void shader_workbench::on_draw()
         glEnable(GL_BLEND);
 
         glViewport(0, 0, width, height);
+        glClearColor(1.f, 1.f, 1.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

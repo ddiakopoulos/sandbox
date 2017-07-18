@@ -8,10 +8,18 @@
 #include "geometry.hpp"
 #include "algo_misc.hpp"
 #include <assert.h>
+#include <map>
 
 namespace avl
 {
-    
+
+    inline void remove_seams(const std::vector<float3> & vertices, std::vector<float3> & attribute)
+    {
+        std::map<float3, float3> smooth;
+        for (size_t i = 0; i<vertices.size(); ++i) smooth[vertices[i]] += attribute[i];
+        for (size_t i = 0; i<vertices.size(); ++i) attribute[i] = normalize(smooth[vertices[i]]); 
+    }
+
     inline Geometry make_cube()
     {
         Geometry cube;
@@ -51,9 +59,9 @@ namespace avl
     inline Geometry make_sphere(float radius)
     {
         Geometry sphereGeom;
-        
+
         uint32_t U = 32, V = 32;
-        
+
         for (uint32_t ui = 0; ui < U; ++ui)
         {
             for (uint32_t vi = 0; vi < V; ++vi)
@@ -61,19 +69,19 @@ namespace avl
                 float u = float(ui) / (U - 1) * float(ANVIL_PI);
                 float v = float(vi) / (V - 1) * 2 * float(ANVIL_PI);
                 float3 normal = spherical_coords(u, v);
-                sphereGeom.vertices.push_back({normal * radius});
+                sphereGeom.vertices.push_back({ normal * radius });
                 sphereGeom.normals.push_back(normal);
             }
         }
-        
+
         for (uint32_t ui = 0; ui < U; ++ui)
         {
             uint32_t un = (ui + 1) % U;
             for (uint32_t vi = 0; vi < V; ++vi)
             {
                 uint32_t vn = (vi + 1) % V;
-                sphereGeom.faces.push_back({ui * V + vi, un * V + vi, un * V + vn});
-                sphereGeom.faces.push_back({ui * V + vi, un * V + vn, ui * V + vn});
+                sphereGeom.faces.push_back({ ui * V + vi, un * V + vi, un * V + vn });
+                sphereGeom.faces.push_back({ ui * V + vi, un * V + vn, ui * V + vn });
             }
         }
 
@@ -82,136 +90,179 @@ namespace avl
         return sphereGeom;
     }
 
+    inline Geometry make_hemisphere(const uint32_t num_rings = 33, const uint32_t num_sides = 32, float start_angle_rad = 0.f, const float end_angle_rad = ANVIL_PI / 2)
+    {
+        Geometry hemi;
+
+        const uint32_t vertex_count = (num_sides + 1) * (num_rings + 1);
+        hemi.vertices.resize(vertex_count);
+        hemi.normals.resize(vertex_count);
+        hemi.texCoords.resize(vertex_count);
+
+        struct ArcVertex { float3 position, normal; };
+        std::vector<ArcVertex> arcVerts(num_rings + 1);
+
+        const float range = (end_angle_rad - start_angle_rad);
+
+        for (uint32_t i = 0; i < arcVerts.size(); i++)
+        {
+            const float a = start_angle_rad + ((float)i / num_rings) * range;
+            const float b = ((float)i / num_rings) * range;
+            arcVerts[i].position = float3(0.f, std::sin(a), std::cos(b));
+            arcVerts[i].normal = normalize(arcVerts[i].position);
+        }
+
+        for (uint32_t s = 0; s < num_sides + 1; s++)
+        {
+            const auto transform = make_rotation_matrix(make_rotation_quat_around_y(to_radians(360.0f * (float) s / num_sides)));
+
+            for (uint32_t v = 0; v < arcVerts.size(); v++)
+            {
+                uint32_t idx = (num_rings + 1) * s + v;
+                hemi.vertices[idx] = transform_coord(transform, arcVerts[v].position);
+                hemi.normals[idx] = transform_vector(transform, arcVerts[v].normal);
+            }
+        }
+
+        for (uint32_t s = 0; s < num_sides; s++)
+        {
+            const uint32_t v0 = (s + 0) * (num_rings + 1);
+            const uint32_t v1 = (s + 1) * (num_rings + 1);
+
+            for (uint32_t r = 0; r < num_rings; r++)
+            {
+                hemi.faces.emplace_back(v0 + r, v1 + r + 0, v0 + r + 1);
+                hemi.faces.emplace_back(v1 + r, v1 + r + 1, v0 + r + 1);
+            }
+        }
+
+        hemi.compute_bounds();
+
+        return hemi;
+    }
+
     inline Geometry make_cylinder(float radiusTop, float radiusBottom, float height, int radialSegments, int heightSegments, bool openEnded = false)
     {
         Geometry cylinderGeom;
-        
-        float heightHalf = height / 2.f;
-        
+
+        const float heightHalf = height / 2.f;
+
         std::vector<std::vector<uint32_t>> vertexRowArray;
-        
+
+        // Build up
         for (int y = 0; y <= heightSegments; y++)
         {
             std::vector<uint32_t> newRow;
-            
-            float v = (float) y / heightSegments;
+
+            float v = (float)y / heightSegments;
             float radius = v * (radiusBottom - radiusTop) + radiusTop;
-            
-            for (int x = 0; x <= radialSegments; x++)
+
+            // Build Around
+            for (int x = 0; x <= radialSegments + 1; x++)
             {
-                float u = (float) x / (float) radialSegments;
-                
+                const float u = (float)x / (float)radialSegments;
+
                 float3 vertex;
-                
-                vertex.x = radius * sin(u * float(ANVIL_TAU));
+                vertex.x = radius * std::sin(u * ANVIL_TAU);
                 vertex.y = -v * height + heightHalf;
-                vertex.z = radius * cos(u * float(ANVIL_TAU));
-                
+                vertex.z = radius * std::cos(u * ANVIL_TAU);
+
                 cylinderGeom.vertices.push_back(vertex);
-                newRow.push_back((int) cylinderGeom.vertices.size() - 1);
+                //cylinderGeom.normals.push_back(normalize(cross(-float3(0, 1, 0), vertex)));
+                newRow.push_back((int)cylinderGeom.vertices.size() - 1);
+
+                if (x == 0) std::cout << "Cyl: " << cylinderGeom.vertices.back() << std::endl;
+
             }
-            
+
             vertexRowArray.push_back(newRow);
         }
-        
-        float tanTheta = (radiusBottom - radiusTop) / height;
-        
-        float3 na, nb;
-        
+
         for (int x = 0; x < radialSegments; x++)
         {
-            if (radiusTop != 0)
-            {
-                na = cylinderGeom.vertices[vertexRowArray[0][x]];
-                nb = cylinderGeom.vertices[vertexRowArray[0][x + 1]];
-            }
-            else
-            {
-                na = cylinderGeom.vertices[vertexRowArray[1][x]];
-                nb = cylinderGeom.vertices[vertexRowArray[1][x + 1]];
-            }
-            
-            na.y = sqrt(na.x * na.x + na.z * na.z) * tanTheta;
-            nb.y = sqrt(nb.x * nb.x + nb.z * nb.z) * tanTheta;
-            
-            na = safe_normalize(na);
-            nb = safe_normalize(nb);
-            
+
             for (int y = 0; y < heightSegments; y++)
             {
-                uint32_t v1 = vertexRowArray[y][x];
-                uint32_t v2 = vertexRowArray[y + 1][x];
+                uint32_t v1 = vertexRowArray[y + 0][x + 0];
+                uint32_t v2 = vertexRowArray[y + 1][x + 0];
                 uint32_t v3 = vertexRowArray[y + 1][x + 1];
-                uint32_t v4 = vertexRowArray[y][x + 1];
-                
-                float3 n1 = na;
-                float3 n2 = na;
-                float3 n3 = nb;
-                float3 n4 = nb;
-                
+                uint32_t v4 = vertexRowArray[y + 0][x + 1];
+
                 cylinderGeom.faces.emplace_back(v1, v2, v4);
-                cylinderGeom.normals.push_back(n1);
-                cylinderGeom.normals.push_back(n2);
-                cylinderGeom.normals.push_back(n3);
-                
-                
                 cylinderGeom.faces.emplace_back(v2, v3, v4);
-                cylinderGeom.normals.push_back(n2);
-                cylinderGeom.normals.push_back(n3);
-                cylinderGeom.normals.push_back(n4);
             }
         }
-        
+
         // Top
         if (!openEnded && radiusTop > 0)
         {
             cylinderGeom.vertices.push_back(float3(0, heightHalf, 0));
-            
+
             for (int x = 0; x < radialSegments; x++)
             {
-                
-                uint32_t v1 = vertexRowArray[0][x];
+
+                uint32_t v1 = vertexRowArray[0][x + 0];
                 uint32_t v2 = vertexRowArray[0][x + 1];
                 uint32_t v3 = (int) cylinderGeom.vertices.size() - 1;
-                
-                float3 n1 = float3(0, 1, 0);
-                float3 n2 = float3(0, 1, 0);
-                float3 n3 = float3(0, 1, 0);
-                
+
                 cylinderGeom.faces.emplace_back(uint3(v1, v2, v3));
-                cylinderGeom.normals.push_back(n1);
-                cylinderGeom.normals.push_back(n2);
-                cylinderGeom.normals.push_back(n3);
+                cylinderGeom.normals.push_back(float3(0, 1, 0));
+                cylinderGeom.normals.push_back(float3(0, 1, 0));
+                cylinderGeom.normals.push_back(float3(0, 1, 0));
             }
-            
+
         }
-        
+
         // Bottom
         if (!openEnded && radiusBottom > 0)
         {
             cylinderGeom.vertices.push_back(float3(0, -heightHalf, 0));
-            
+
             for (int x = 0; x < radialSegments; x++)
             {
                 uint32_t v1 = vertexRowArray[heightSegments][x + 1];
-                uint32_t v2 = vertexRowArray[heightSegments][x];
-                uint32_t v3 = (int) cylinderGeom.vertices.size() - 1;
-                
-                float3 n1 = float3(0, -1, 0);
-                float3 n2 = float3(0, -1, 0);
-                float3 n3 = float3(0, -1, 0);
-                
+                uint32_t v2 = vertexRowArray[heightSegments][x + 0];
+                uint32_t v3 = (int)cylinderGeom.vertices.size() - 1;
+
                 cylinderGeom.faces.emplace_back(uint3(v1, v2, v3));
-                cylinderGeom.normals.push_back(n1);
-                cylinderGeom.normals.push_back(n2);
-                cylinderGeom.normals.push_back(n3);
+                cylinderGeom.normals.push_back(float3(0, -1, 0));
+                cylinderGeom.normals.push_back(float3(0, -1, 0));
+                cylinderGeom.normals.push_back(float3(0, -1, 0));
             }
-            
+
         }
-        
-        //cylinderGeom.compute_normals();
-        
+
+        cylinderGeom.compute_normals();
+
         return cylinderGeom;
+    }
+
+    inline Geometry make_tapered_capsule()
+    {
+        const float height = 0.50f;
+        const float3 hemi_bottom = float3(0, -height / 2.f, 0);
+        const float3 hemi_top = float3(0, height / 2.f, 0);
+
+        Geometry cylinder = make_cylinder(0.1, 0.2, height, 32, 32, true);
+        Geometry top = make_hemisphere(32, 32, asin(0.25));
+        Geometry bottom = make_hemisphere(32, 32, asin(0.25));
+
+        auto top_xform = make_translation_matrix(hemi_top);
+        auto bottom_xform = make_translation_matrix(hemi_bottom);
+
+        top_xform = mul(top_xform, make_scaling_matrix(0.1));
+        bottom_xform = mul(bottom_xform, make_scaling_matrix(0.2));
+        bottom_xform = mul(bottom_xform, make_rotation_matrix({ 1, 0, 0 }, ANVIL_PI));
+
+        for (auto & v : top.vertices) v = transform_coord(top_xform, v);
+        for (auto & n : top.normals) n = transform_vector(top_xform, n);
+        for (auto & v : bottom.vertices) v = transform_coord(bottom_xform, v);
+        for (auto & n : bottom.normals) n = transform_vector(bottom_xform, n);
+
+        auto caps = concatenate_geometry(top, bottom);
+        auto r = concatenate_geometry(caps, cylinder);
+
+        return r;
     }
     
     inline Geometry make_ring(float innerRadius = 2.0f, float outerRadius = 2.5f)
@@ -477,7 +528,7 @@ namespace avl
         }
         return capsule;
     }
-    
+
     inline Geometry make_plane(float width, float height, uint32_t nw, uint32_t nh, bool withBackface = false)
     {
         Geometry plane;
