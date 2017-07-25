@@ -241,7 +241,7 @@ namespace avl
     {
         const float height = 0.50f;
         const float3 hemi_bottom = float3(0, -height / 2.f, 0);
-        const float3 hemi_top = float3(0, height / 2.f, 0);
+        const float3 hemi_top = float3(0, +height / 2.f, 0);
 
         Geometry cylinder = make_cylinder(0.1, 0.2, height, 32, 32, true);
         Geometry top = make_hemisphere(32, 32, asin(0.25));

@@ -5,6 +5,9 @@
 
 using namespace avl;
 
+#include <xmmintrin.h>
+#include <immintrin.h>
+
 struct IKChain
 {
     Pose root;
@@ -18,6 +21,150 @@ tinygizmo::rigid_transform end_transform;
 tinygizmo::rigid_transform target_transform;
 
 HumanSkeleton skeleton;
+
+static inline __m128 linearcombine_sse2(const __m128 & a, const float4x4 & B)
+{
+    __m128 result;
+    result = _mm_mul_ps(_mm_shuffle_ps(a, a, 0x00),                    *reinterpret_cast<const __m128*>(&B[0]));
+    result = _mm_add_ps(result, _mm_mul_ps(_mm_shuffle_ps(a, a, 0x55), *reinterpret_cast<const __m128*>(&B[1])));
+    result = _mm_add_ps(result, _mm_mul_ps(_mm_shuffle_ps(a, a, 0xaa), *reinterpret_cast<const __m128*>(&B[2])));
+    result = _mm_add_ps(result, _mm_mul_ps(_mm_shuffle_ps(a, a, 0xff), *reinterpret_cast<const __m128*>(&B[3])));
+    return result;
+}
+
+
+inline float4x4 multiply(const float4x4 & A, const float4x4 & B)
+{
+    // out_ij = sum_k a_ik b_kj => out_0j = a_00 * b_0j + a_01 * b_1j + a_02 * b_2j + a_03 * b_3j
+    const __m128 out0x = linearcombine_sse2(*reinterpret_cast<const __m128*>(&A[0]), B);
+    const __m128 out1x = linearcombine_sse2(*reinterpret_cast<const __m128*>(&A[1]), B);
+    const __m128 out2x = linearcombine_sse2(*reinterpret_cast<const __m128*>(&A[2]), B);
+    const __m128 out3x = linearcombine_sse2(*reinterpret_cast<const __m128*>(&A[3]), B);
+
+    float4x4 out;
+    out[0] = *reinterpret_cast<const float4*>(&out0x);
+    out[1] = *reinterpret_cast<const float4*>(&out1x);
+    out[2] = *reinterpret_cast<const float4*>(&out2x);
+    out[3] = *reinterpret_cast<const float4*>(&out3x);
+
+    return out;
+}
+
+inline void invert_sse(float4x4 & matrix)
+{
+    float * src = &(matrix[0][0]);
+
+    __m128 minor0{}, minor1{}, minor2{}, minor3{};
+    __m128 row0{}, row1{}, row2{}, row3{};
+    __m128 det{}, tmp1{};
+
+    tmp1 = _mm_loadh_pi(_mm_loadl_pi(tmp1, (__m64*)(src)), (__m64*)(src + 4));
+    row1 = _mm_loadh_pi(_mm_loadl_pi(row1, (__m64*)(src + 8)), (__m64*)(src + 12));
+
+    row0 = _mm_shuffle_ps(tmp1, row1, 0x88);
+    row1 = _mm_shuffle_ps(row1, tmp1, 0xDD);
+
+    tmp1 = _mm_loadh_pi(_mm_loadl_pi(tmp1, (__m64*)(src + 2)), (__m64*)(src + 6));
+    row3 = _mm_loadh_pi(_mm_loadl_pi(row3, (__m64*)(src + 10)), (__m64*)(src + 14));
+
+    row2 = _mm_shuffle_ps(tmp1, row3, 0x88);
+    row3 = _mm_shuffle_ps(row3, tmp1, 0xDD);
+
+    tmp1 = _mm_mul_ps(row2, row3);
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+
+    minor0 = _mm_mul_ps(row1, tmp1);
+    minor1 = _mm_mul_ps(row0, tmp1);
+
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+
+    minor0 = _mm_sub_ps(_mm_mul_ps(row1, tmp1), minor0);
+    minor1 = _mm_sub_ps(_mm_mul_ps(row0, tmp1), minor1);
+    minor1 = _mm_shuffle_ps(minor1, minor1, 0x4E);
+
+    tmp1 = _mm_mul_ps(row1, row2);
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+
+    minor0 = _mm_add_ps(_mm_mul_ps(row3, tmp1), minor0);
+    minor3 = _mm_mul_ps(row0, tmp1);
+
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+
+    minor0 = _mm_sub_ps(minor0, _mm_mul_ps(row3, tmp1));
+    minor3 = _mm_sub_ps(_mm_mul_ps(row0, tmp1), minor3);
+    minor3 = _mm_shuffle_ps(minor3, minor3, 0x4E);
+
+    tmp1 = _mm_mul_ps(_mm_shuffle_ps(row1, row1, 0x4E), row3);
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+    row2 = _mm_shuffle_ps(row2, row2, 0x4E);
+
+    minor0 = _mm_add_ps(_mm_mul_ps(row2, tmp1), minor0);
+    minor2 = _mm_mul_ps(row0, tmp1);
+
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+
+    minor0 = _mm_sub_ps(minor0, _mm_mul_ps(row2, tmp1));
+    minor2 = _mm_sub_ps(_mm_mul_ps(row0, tmp1), minor2);
+    minor2 = _mm_shuffle_ps(minor2, minor2, 0x4E);
+
+    tmp1 = _mm_mul_ps(row0, row1);
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+
+    minor2 = _mm_add_ps(_mm_mul_ps(row3, tmp1), minor2);
+    minor3 = _mm_sub_ps(_mm_mul_ps(row2, tmp1), minor3);
+
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+
+    minor2 = _mm_sub_ps(_mm_mul_ps(row3, tmp1), minor2);
+    minor3 = _mm_sub_ps(minor3, _mm_mul_ps(row2, tmp1));
+
+    tmp1 = _mm_mul_ps(row0, row3);
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+
+    minor1 = _mm_sub_ps(minor1, _mm_mul_ps(row2, tmp1));
+    minor2 = _mm_add_ps(_mm_mul_ps(row1, tmp1), minor2);
+
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+
+    minor1 = _mm_add_ps(_mm_mul_ps(row2, tmp1), minor1);
+    minor2 = _mm_sub_ps(minor2, _mm_mul_ps(row1, tmp1));
+
+    tmp1 = _mm_mul_ps(row0, row2);
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
+
+    minor1 = _mm_add_ps(_mm_mul_ps(row3, tmp1), minor1);
+    minor3 = _mm_sub_ps(minor3, _mm_mul_ps(row1, tmp1));
+
+    tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0x4E);
+
+    minor1 = _mm_sub_ps(minor1, _mm_mul_ps(row3, tmp1));
+    minor3 = _mm_add_ps(_mm_mul_ps(row1, tmp1), minor3);
+
+    det = _mm_mul_ps(row0, minor0);
+    det = _mm_add_ps(_mm_shuffle_ps(det, det, 0x4E), det);
+    det = _mm_add_ss(_mm_shuffle_ps(det, det, 0xB1), det);
+    tmp1 = _mm_rcp_ss(det);
+
+    det = _mm_sub_ss(_mm_add_ss(tmp1, tmp1), _mm_mul_ss(det, _mm_mul_ss(tmp1, tmp1)));
+    det = _mm_shuffle_ps(det, det, 0x00);
+
+    minor0 = _mm_mul_ps(det, minor0);
+    _mm_storel_pi((__m64*)(src), minor0);
+    _mm_storeh_pi((__m64*)(src + 2), minor0);
+
+    minor1 = _mm_mul_ps(det, minor1);
+    _mm_storel_pi((__m64*)(src + 4), minor1);
+    _mm_storeh_pi((__m64*)(src + 6), minor1);
+
+    minor2 = _mm_mul_ps(det, minor2);
+    _mm_storel_pi((__m64*)(src + 8), minor2);
+    _mm_storeh_pi((__m64*)(src + 10), minor2);
+
+    minor3 = _mm_mul_ps(det, minor3);
+    _mm_storel_pi((__m64*)(src + 12), minor3);
+    _mm_storeh_pi((__m64*)(src + 14), minor3);
+}
+
 
 /*
 // Make a cylinder with the bottom center at 0 and up on the +Y axis
@@ -96,6 +243,51 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     flycam.set_camera(&cam);
 
     traverse_joint_chain(13, skeleton.bones);
+
+    float angle = 0.1f;
+
+    UniformRandomGenerator gen;
+
+    Pose p;     
+
+    CircularBuffer<float> avg_normal(100000);
+    CircularBuffer<float> avg_optimized(100000);
+
+    manual_timer t;
+
+    auto what = Identity4x4;
+
+    int i = 0;
+    while (i < 100000)
+    {
+        p.position = { gen.random_float(), gen.random_float(), gen.random_float() };
+        angle += 0.1f;
+        p.orientation = make_rotation_quat_axis_angle({ 0, 1, 0 }, 0.5f);
+
+        auto mat = p.matrix();
+
+        {
+            t.start();
+            auto r = mul(mat, what);
+            t.stop();
+            avg_normal.put(t.get());
+            //std::cout << "Normal: " << r << std::endl;
+        }
+
+        {
+            t.start();
+            auto r = multiply(mat, what);
+            t.stop();
+            avg_optimized.put(t.get());
+            //std::cout << "Optim: " << r << std::endl;
+        }
+
+        //std::cout << "-------------------------- \n";
+        ++i;
+    }
+
+    std::cout << "Normal: " << compute_mean(avg_normal) * 1000 << std::endl;
+    std::cout << "Optimized: " << compute_mean(avg_optimized) * 1000 << std::endl;
 }
 
 shader_workbench::~shader_workbench()
