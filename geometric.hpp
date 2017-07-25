@@ -600,14 +600,14 @@ namespace avl
             float t;
             float3 diff = ray.origin - center;
             float a = dot(ray.direction, ray.direction);
-            float b = 2.0f * dot(diff, ray.direction);
+            float b = 2.f * dot(diff, ray.direction);
             float c = dot(diff, diff) - radius * radius;
-            float disc = b * b - 4.0f * a * c;
+            float disc = b * b - 4.f * a * c;
             
             if (disc > 0)
             {
                 float e = std::sqrt(disc);
-                float denom = 2 * a;
+                float denom = 2.f * a;
                 t = (-b - e) / denom;    // smaller root
                 
                 if (t > SPHERE_EPSILON) return ray.calculate_position(t);
@@ -617,63 +617,10 @@ namespace avl
             }
             
             // doesn't intersect; closest point on line
-            t = dot( -diff, safe_normalize(ray.direction) );
+            t = dot( -diff, safe_normalize(ray.direction));
             float3 onRay = ray.calculate_position(t);
-            return center + safe_normalize( onRay - center ) * radius;
+            return center + safe_normalize(onRay - center) * radius;
         }
-        
-        // Converts sphere to another coordinate system. Note that it will not return correct results if there are non-uniform scaling, shears, or other unusual transforms.
-        Sphere transformed(const float4x4 & transform)
-        {
-            float4 tCenter = mul(transform, float4(center, 1));
-            float4 tRadius = mul(transform, float4(radius, 0, 0, 0));
-            return Sphere(float3(tCenter.x, tCenter.y, tCenter.z), length(tRadius));
-        }
-        
-        void calculate_projection(float focalLength, float2 *outCenter, float2 *outAxisA, float2 *outAxisB) const
-        {
-            float3 o(-center.x, center.y, center.z);
-            
-            float r2 = radius * radius;
-            float z2 = o.z * o.z;
-            float l2 = dot(o, o);
-            
-            if (outCenter) *outCenter = focalLength * o.z * float2(o.x, o.y) / (z2-r2);
-            
-            if (fabs(z2 - l2) > 0.00001f)
-            {
-                if (outAxisA) *outAxisA = focalLength * sqrtf(-r2*(r2-l2)/((l2-z2)*(r2-z2)*(r2-z2))) * float2(o.x, o.y);
-                if (outAxisB) *outAxisB = focalLength * sqrtf(fabs(-r2*(r2-l2)/((l2-z2)*(r2-z2)*(r2-l2)))) * float2(-o.y, o.x);
-            }
-            
-            // approximate with circle
-            else
-            {
-                float newRadius = focalLength * radius / sqrtf(z2 - r2);
-                if (outAxisA) *outAxisA = float2(newRadius, 0);
-                if (outAxisB) *outAxisB = float2(0, newRadius);
-            }
-        }
-        
-        // Calculates the projection of the sphere (an oriented ellipse) given a focal length. Algorithm due to Iñigo Quilez.
-        void calculate_projection(float focalLength, float2 screenSizePixels, float2 * outCenter, float2 * outAxisA, float2 * outAxisB) const
-        {
-            auto toScreenPixels = [=] (float2 v, const float2 &winSizePx) {
-                float2 result = v;
-                result.x *= 1 / (winSizePx.x / winSizePx.y);
-                result += float2(0.5f);
-                result *= winSizePx;
-                return result;
-            };
-            
-            float2 center, axisA, axisB;
-            
-            calculate_projection(focalLength, &center, &axisA, &axisB);
-            if (outCenter) *outCenter = toScreenPixels(center, screenSizePixels);
-            if (outAxisA) *outAxisA = toScreenPixels(center + axisA * 0.5f, screenSizePixels) - toScreenPixels(center - axisA * 0.5f, screenSizePixels);
-            if (outAxisB) *outAxisB = toScreenPixels(center + axisB * 0.5f, screenSizePixels) - toScreenPixels(center - axisB * 0.5f, screenSizePixels);
-        }
-        
     };
 
     ///////////////
@@ -698,20 +645,16 @@ namespace avl
         bool contains(float3 point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
     };
 
-    /////////////////
-    //   Segment   //
-    /////////////////
+    ////////////////////////////
+    //   Lines and Segments   //
+    ////////////////////////////
     
     struct Segment
     {
-        float3 first, second;
-        Segment(float3 first, float3 second) : first(first), second(second) {}
-        float3 get_direction() const { return safe_normalize (second - first); };
+        float3 a, b;
+        Segment(const float3 & first, const float3 & second) : a(a), b(b) {}
+        float3 get_direction() const { return safe_normalize(b - a); };
     };
-    
-    //////////////
-    //   Line   //
-    //////////////
 
     struct Line
     {
@@ -883,15 +826,7 @@ namespace avl
         return true;
     }
 
-    enum FrustumPlane
-    {
-        RIGHT,
-        LEFT,
-        BOTTOM,
-        TOP,
-        NEAR,
-        FAR
-    };
+    enum FrustumPlane { RIGHT, LEFT, BOTTOM, TOP, NEAR, FAR };
 
     struct Frustum
     {
@@ -899,72 +834,53 @@ namespace avl
 
         Frustum()
         {
-            planes[FrustumPlane::RIGHT] = Plane({-1, 0, 0}, 1.f );
-            planes[FrustumPlane::LEFT] = Plane({1, 0, 0 }, 1.f);
-            planes[FrustumPlane::BOTTOM] = Plane({0, 0, 1 }, 1.f);
-            planes[FrustumPlane::TOP] = Plane({0, 0, -1}, 1.f );
-            planes[FrustumPlane::NEAR] = Plane({0, 1, 0 }, 1.f);
-            planes[FrustumPlane::FAR] = Plane({0, -1, 0}, 1.f );
+            planes[FrustumPlane::RIGHT] = Plane({ -1, 0, 0 }, 1.f);
+            planes[FrustumPlane::LEFT] = Plane({ 1, 0, 0 }, 1.f);
+            planes[FrustumPlane::BOTTOM] = Plane({ 0, 0, 1 }, 1.f);
+            planes[FrustumPlane::TOP] = Plane({ 0, 0, -1 }, 1.f);
+            planes[FrustumPlane::NEAR] = Plane({ 0, 1, 0 }, 1.f);
+            planes[FrustumPlane::FAR] = Plane({ 0, -1, 0 }, 1.f);
         }
 
         Frustum(const float4x4 & viewProj)
         {
-            planes[FrustumPlane::RIGHT].equation.x = viewProj[0][3] - viewProj[0][0];
-            planes[FrustumPlane::RIGHT].equation.y = viewProj[1][3] - viewProj[1][0];
-            planes[FrustumPlane::RIGHT].equation.z = viewProj[2][3] - viewProj[2][0];
-            planes[FrustumPlane::RIGHT].equation.w = viewProj[3][3] - viewProj[3][0];
-
-            planes[FrustumPlane::LEFT].equation.x = viewProj[0][3] + viewProj[0][0];
-            planes[FrustumPlane::LEFT].equation.y = viewProj[1][3] + viewProj[1][0];
-            planes[FrustumPlane::LEFT].equation.z = viewProj[2][3] + viewProj[2][0];
-            planes[FrustumPlane::LEFT].equation.w = viewProj[3][3] + viewProj[3][0];
-
-            planes[FrustumPlane::BOTTOM].equation.x = viewProj[0][3] + viewProj[0][1];
-            planes[FrustumPlane::BOTTOM].equation.y = viewProj[1][3] + viewProj[1][1];
-            planes[FrustumPlane::BOTTOM].equation.z = viewProj[2][3] + viewProj[2][1];
-            planes[FrustumPlane::BOTTOM].equation.w = viewProj[3][3] + viewProj[3][1];
-
-            planes[FrustumPlane::TOP].equation.x = viewProj[0][3] - viewProj[0][1];
-            planes[FrustumPlane::TOP].equation.y = viewProj[1][3] - viewProj[1][1];
-            planes[FrustumPlane::TOP].equation.z = viewProj[2][3] - viewProj[2][1];
-            planes[FrustumPlane::TOP].equation.w = viewProj[3][3] - viewProj[3][1];
-
-            planes[FrustumPlane::FAR].equation.x = viewProj[0][3] - viewProj[0][2];
-            planes[FrustumPlane::FAR].equation.y = viewProj[1][3] - viewProj[1][2];
-            planes[FrustumPlane::FAR].equation.z = viewProj[2][3] - viewProj[2][2];
-            planes[FrustumPlane::FAR].equation.w = viewProj[3][3] - viewProj[3][2];
-
-            planes[FrustumPlane::NEAR].equation.x = viewProj[0][3] + viewProj[0][2];
-            planes[FrustumPlane::NEAR].equation.y = viewProj[1][3] + viewProj[1][2];
-            planes[FrustumPlane::NEAR].equation.z = viewProj[2][3] + viewProj[2][2];
-            planes[FrustumPlane::NEAR].equation.w = viewProj[3][3] + viewProj[3][2];
-
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::RIGHT].equation[i] = viewProj[i][3] - viewProj[i][0];
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::LEFT].equation[i] = viewProj[i][3] - viewProj[i][0];
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::BOTTOM].equation[i] = viewProj[i][3] + viewProj[i][1];
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::TOP].equation[i] = viewProj[i][3] - viewProj[i][1];
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::FAR].equation[i] = viewProj[i][3] - viewProj[i][2];
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::NEAR].equation[i] = viewProj[i][3] + viewProj[i][2];
             for (auto p : planes) p.normalize();
         }
-        
-        // Returns F/N/T/B/L/R
-        std::array<float3, 8> get_corners() const
+
+        bool point_in_frustum(const float3 & v)
         {
-            std::array<float3, 8> corners;
-
-            Line farLeft = intersect_plane_plane(planes[FrustumPlane::LEFT], planes[FrustumPlane::FAR]);
-            Line farRight = intersect_plane_plane(planes[FrustumPlane::RIGHT], planes[FrustumPlane::FAR]);
-            Line nearLeft = intersect_plane_plane(planes[FrustumPlane::LEFT], planes[FrustumPlane::NEAR]);
-            Line nearRight = intersect_plane_plane(planes[FrustumPlane::RIGHT], planes[FrustumPlane::NEAR]);
-
-            corners[0] = intersect_line_plane(farLeft, planes[FrustumPlane::TOP]);
-            corners[1] = intersect_line_plane(farRight, planes[FrustumPlane::TOP]);
-            corners[2] = intersect_line_plane(farLeft, planes[FrustumPlane::BOTTOM]);
-            corners[3] = intersect_line_plane(farRight, planes[FrustumPlane::BOTTOM]);
-            corners[4] = intersect_line_plane(nearLeft, planes[FrustumPlane::TOP]);
-            corners[5] = intersect_line_plane(nearRight, planes[FrustumPlane::TOP]);
-            corners[6] = intersect_line_plane(nearLeft, planes[FrustumPlane::BOTTOM]);
-            corners[7] = intersect_line_plane(nearRight, planes[FrustumPlane::BOTTOM]);
-
-            return corners;
+            for (int p = 0; p < 6; p++) if (planes[p].contains(v)) return true;
+            return false;
         }
-
     };
+
+    inline std::array<float3, 8> make_frustum_corners(const Frustum & f)
+    {
+        std::array<float3, 8> corners;
+
+        Line farLeft = intersect_plane_plane(f.planes[FrustumPlane::LEFT], f.planes[FrustumPlane::FAR]);
+        Line farRight = intersect_plane_plane(f.planes[FrustumPlane::RIGHT], f.planes[FrustumPlane::FAR]);
+        Line nearLeft = intersect_plane_plane(f.planes[FrustumPlane::LEFT], f.planes[FrustumPlane::NEAR]);
+        Line nearRight = intersect_plane_plane(f.planes[FrustumPlane::RIGHT], f.planes[FrustumPlane::NEAR]);
+
+        corners[0] = intersect_line_plane(farLeft, f.planes[FrustumPlane::TOP]);
+        corners[1] = intersect_line_plane(farRight, f.planes[FrustumPlane::TOP]);
+        corners[2] = intersect_line_plane(farLeft, f.planes[FrustumPlane::BOTTOM]);
+        corners[3] = intersect_line_plane(farRight, f.planes[FrustumPlane::BOTTOM]);
+        corners[4] = intersect_line_plane(nearLeft, f.planes[FrustumPlane::TOP]);
+        corners[5] = intersect_line_plane(nearRight, f.planes[FrustumPlane::TOP]);
+        corners[6] = intersect_line_plane(nearLeft, f.planes[FrustumPlane::BOTTOM]);
+        corners[7] = intersect_line_plane(nearRight, f.planes[FrustumPlane::BOTTOM]);
+
+        return corners;
+    }
+
 
 }
 
