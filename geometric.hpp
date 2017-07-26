@@ -645,6 +645,33 @@ namespace avl
         bool contains(float3 point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
     };
 
+    inline float4x4 mult_by_transpose(const float3 & a, const float3 & b)
+    {
+        float4x4 r;
+        r[0][0] = a.x * b.x; r[1][0] = a.y * b.x; r[2][0] = a.z * b.x;
+        r[0][1] = a.x * b.y; r[1][1] = a.y * b.y; r[2][1] = a.z * b.y;
+        r[0][2] = a.x * b.z; r[1][2] = a.y * b.z; r[2][2] = a.z * b.z;
+        return r;
+    }
+
+    // http://math.stackexchange.com/questions/64430/find-extra-arbitrary-two-points-for-a-plane-given-the-normal-and-a-point-that-l
+    inline void make_basis_vectors(const float3 & normal, float3 & u, float3 & v)
+    {
+        const float3 N = normalize(normal);
+
+        // Compute mirror vector where w = (Nx + 1, Ny, Nz).
+        const float3 w = float3(N.x + 1.f, N.y, N.z);
+
+        // Compute the householder matrix where H = I - 2(wwT/wTw)
+        const float4x4  wwT = mult_by_transpose(w, w);
+        const float wTw = dot(w, w);
+        const float4x4 householder_mat = transpose(Identity4x4 - 2.f * (wwT / wTw));
+
+        // The first of row will be a unit vector parallel to N. The next rows will be unit vectors orthogonal to N and each other.
+        u = householder_mat[1].xyz();
+        v = householder_mat[2].xyz();
+    }
+
     ////////////////////////////
     //   Lines and Segments   //
     ////////////////////////////

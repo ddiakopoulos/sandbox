@@ -77,6 +77,10 @@ inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const flo
 
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
+    float3 u, v;
+    make_basis_vectors({ 0, 1, 0 }, u, v);
+    std::cout << "U: " << u << "V: " << v << std::endl;
+
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
