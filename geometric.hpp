@@ -170,7 +170,7 @@ namespace avl
     {
         const float latitude = polar.x;
         const float longitude = polar.y;
-        return { std::cos(latitude) *  std::sin(longitude),  std::sin(latitude),  std::cos(latitude) *  std::cos(longitude) };
+        return { std::cos(latitude) *  std::sin(longitude),  std::sin(latitude),  std::cos(latitude) * std::cos(longitude) };
     }
 
     ////////////////////////////////////
@@ -950,7 +950,6 @@ namespace avl
 
         return corners;
     }
-
 
 }
 

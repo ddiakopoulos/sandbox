@@ -45,9 +45,11 @@ namespace avl
         return outVal;
     }
     
-    inline float3 spherical_coords(float thetaRad, float phiRad)
+    // Bilinear interpolation F(u, v) = e + v(f - e)
+    template <typename T>
+    inline T bilerp(const T & a, const T & b, const T &c, const T & d, float u, float v)
     {
-        return safe_normalize(float3(cos(phiRad) * sin(thetaRad), sin(phiRad) * sin(thetaRad), cos(thetaRad)));
+        return a * ((1.0f - u) * (1.0f - v)) + b * (u * (1.0f - v)) + c * (v * (1.0f - u)) + d * (u * v);
     }
 
     inline float damped_spring(float target, float current, float & velocity, float delta, const float spring_constant)
