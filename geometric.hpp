@@ -533,28 +533,10 @@ namespace avl
     
     struct Ray
     {
-        float3 origin;
-        float3 direction;
-        
+        float3 origin, direction;
         Ray() {}
         Ray(const float3 & ori, const float3 & dir) : origin(ori), direction(dir) {}
-        
         float3 inverse_direction() const { return {1.f / direction.x, 1.f / direction.y, 1.f / direction.z }; }
-        
-        void transform(const float4x4 & matrix)
-        {
-            origin = transform_vector(matrix, origin);
-            direction = mul(get_rotation_submatrix(matrix), direction);
-        }
-        
-        Ray transformed(const float4x4 & matrix) const
-        {
-            Ray result;
-            result.origin = transform_vector(matrix, origin);
-            result.direction = mul(get_rotation_submatrix(matrix), direction);
-            return result;
-        }
-        
         float3 calculate_position(float t) const { return origin + direction * t; }
     };
     
@@ -663,7 +645,6 @@ namespace avl
 
         return s;
     }
-
 
     ///////////////
     //   Plane   //
