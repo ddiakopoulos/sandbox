@@ -268,7 +268,7 @@ namespace avl
         float3 ypr;
         const double q0 = q.w, q1 = q.x, q2 = q.y, q3 = q.z;
         ypr.x = float(atan2(-2.f*q1*q2 + 2 * q0*q3, q1*q1 + q0*q0 - q3*q3 - q2*q2));
-        ypr.y = float(asin(2.f*q1*q3 + 2.f*q0*q2));
+        ypr.y = float(asin(+2.f*q1*q3 + 2.f*q0*q2));
         ypr.z = float(atan2(-2.f*q2*q3 + 2.f*q0*q1, q3*q3 - q2*q2 - q1*q1 + q0*q0));
         return ypr;
     }
@@ -668,15 +668,6 @@ namespace avl
         bool contains(float3 point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
     };
 
-    inline float4x4 mult_by_transpose(const float3 & a, const float3 & b)
-    {
-        float4x4 r;
-        r[0][0] = a.x * b.x; r[1][0] = a.y * b.x; r[2][0] = a.z * b.x;
-        r[0][1] = a.x * b.y; r[1][1] = a.y * b.y; r[2][1] = a.z * b.y;
-        r[0][2] = a.x * b.z; r[1][2] = a.y * b.z; r[2][2] = a.z * b.z;
-        return r;
-    }
-
     // http://math.stackexchange.com/questions/64430/find-extra-arbitrary-two-points-for-a-plane-given-the-normal-and-a-point-that-l
     inline void make_basis_vectors(const float3 & normal, float3 & u, float3 & v)
     {
@@ -708,10 +699,23 @@ namespace avl
 
     struct Line
     {
-        float3 point, direction;
-        Line(const float3 & pt, const float3 & dir) : point(pt), direction(dir) {}
+        float3 a, b;
+        Line(const float3 & a, const float3 & b) : a(a), b(b) {}
     };
-    
+
+    float3 closest_point_on_line(const float3 & point, const Line & l)
+    {
+        const float length = distance(l.a, l.b);
+        const float3 v = point - l.a;
+        const float3 dir = (l.b - l.a) / length;
+
+        const float d = dot(v, dir);
+
+        if (d <= 0.f) return l.a;
+        if (d >= length) return l.b;
+        return l.a + dir * d;
+    }
+
     /////////////////////////////////
     // Object-Object intersections //
     /////////////////////////////////
@@ -728,9 +732,11 @@ namespace avl
 
     inline float3 intersect_line_plane(const Line & l, const Plane & p)
     {
-        const float d = dot(l.direction, p.get_normal());
-        const float dist = p.distance_to(l.point) / d;
-        return (l.point - (dist * l.direction));
+        const float3 u = l.b - l.a;
+        const float3 w = l.a - p.get_distance();
+        const float d = dot(p.get_normal(), u);
+        const float t = -dot(p.get_normal(), w) / d;
+        return l.a + u * t;
     }
     
     //////////////////////////////
