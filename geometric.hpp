@@ -159,6 +159,20 @@ namespace avl
         return dot(Nref, I) < 0.f ? N : -N;
     }
 
+    inline float3 to_polar(const float3 & euclidean)
+    {
+        const float3 tmp = euclidean / length(euclidean);
+        const float distance_xz = std::sqrt(tmp.x * tmp.x + tmp.z * tmp.z);
+        return{ std::asin(tmp.y), std::atan2(tmp.x, tmp.z), distance_xz };
+    }
+
+    inline float3 to_euclidean(const float2 & polar)
+    {
+        const float latitude = polar.x;
+        const float longitude = polar.y;
+        return { std::cos(latitude) *  std::sin(longitude),  std::sin(latitude),  std::cos(latitude) *  std::cos(longitude) };
+    }
+
     ////////////////////////////////////
     // Construct rotation quaternions //
     ////////////////////////////////////
@@ -703,7 +717,7 @@ namespace avl
         Line(const float3 & a, const float3 & b) : a(a), b(b) {}
     };
 
-    float3 closest_point_on_line(const float3 & point, const Line & l)
+    inline float3 closest_point_on_line(const float3 & point, const Line & l)
     {
         const float length = distance(l.a, l.b);
         const float3 v = point - l.a;
