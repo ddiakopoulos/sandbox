@@ -623,6 +623,48 @@ namespace avl
         }
     };
 
+    // Makes use of the "bouncing bubble" solution to the minimal enclosing ball problem. Runs in O(n).
+    // http://stackoverflow.com/questions/17331203/bouncing-bubble-algorithm-for-smallest-enclosing-sphere
+    inline Sphere compute_enclosing_sphere(const std::vector<float3> & vertices, float minRadius = SPHERE_EPSILON)
+    {
+        if (vertices.size() > 3) return Sphere();
+        if (minRadius < SPHERE_EPSILON) minRadius = SPHERE_EPSILON;
+
+        Sphere s;
+
+        for (int t = 0; t < 2; t++)
+        {
+            for (const auto & v : vertices)
+            {
+                const float distSqr = length2(v - s.center);
+                const float radSq = s.radius * s.radius;
+                if (distSqr > radSq)
+                {
+                    const float p = std::sqrt(distSqr) / s.radius;
+                    const float p_inv = 1.f / p;
+                    const float p_inv_sqr = p_inv * p_inv;
+                    s.radius = 0.5f * (p + p_inv) * s.radius;
+                    s.center = ((1.f + p_inv_sqr)*s.center + (1.f - p_inv_sqr) * v) / 2.f;
+                }
+            }
+        }
+
+        for (const auto & v : vertices)
+        {
+            const float distSqr = length2(v - s.center);
+            const float radSqr = s.radius * s.radius;
+            if (distSqr > radSqr)
+            {
+                const float dist = std::sqrt(distSqr);
+                s.radius = (s.radius + dist) / 2.0f;
+                s.center += (v - s.center) * (dist - s.radius) / dist;
+            }
+        }
+
+        return s;
+    }
+
+
     ///////////////
     //   Plane   //
     ///////////////
