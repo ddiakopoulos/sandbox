@@ -1,4 +1,4 @@
-// See COPYING file for attribution information
+﻿// See COPYING file for attribution information
 
 #ifndef geometric_h
 #define geometric_h
@@ -159,18 +159,31 @@ namespace avl
         return dot(Nref, I) < 0.f ? N : -N;
     }
 
-    inline float3 to_polar(const float3 & euclidean)
+    ///////////////////////////////////////
+    // Sphereical, Cartesian Coordinates //
+    ///////////////////////////////////////
+
+    // These functions adopt the physics convention (ISO):
+    // * (rho) r defined as the radial distance, 
+    // * (theta) θ defined as the the polar angle (inclination)
+    // * (phi) φ defined as the azimuthal angle
+
+    // These conversion routines assume the following: 
+    // * the systems have the same origin
+    // * the spherical reference plane is the cartesian xy-plane
+    // * θ is inclination from the z direction
+    // * φ is measured from the cartesian x-axis (so that the y-axis has φ = +90°)
+
+    // theta ∈ [0, π], phi ∈ [0, 2π), rho ∈ [0, ∞)
+    inline float3 cartsesian_coord(float thetaRad, float phiRad, float rhoRad = 1.f) 
     {
-        const float3 tmp = euclidean / length(euclidean);
-        const float distance_xz = std::sqrt(tmp.x * tmp.x + tmp.z * tmp.z);
-        return{ std::asin(tmp.y), std::atan2(tmp.x, tmp.z), distance_xz };
+        return safe_normalize(float3(rhoRad * sin(thetaRad) * cos(phiRad), rhoRad * sin(phiRad) * sin(thetaRad), rhoRad * cos(thetaRad)));
     }
 
-    inline float3 to_euclidean(const float2 & polar)
+    inline float3 spherical_coord(const float3 & coord)
     {
-        const float latitude = polar.x;
-        const float longitude = polar.y;
-        return { std::cos(latitude) *  std::sin(longitude),  std::sin(latitude),  std::cos(latitude) * std::cos(longitude) };
+        const float radius = length(coord);
+        return float3(radius, std::acos(coord.z / radius), std::atan(coord.y / coord.x));
     }
 
     ////////////////////////////////////
