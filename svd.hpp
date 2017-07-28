@@ -386,10 +386,11 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
     }
 
     if (sort) svd::sort(A, m, n, S, V);
+
     return convergence;
 };
 
-namespace svd_test
+namespace svd_tests
 {
     inline void check_orthonormal(const float3x3 & matrix)
     {
@@ -402,31 +403,27 @@ namespace svd_test
         }
     }
 
-    inline void run()
+    template<typename MatrixT, typename T>
+    inline void validate_matrix(MatrixT & A, int m, int n)
     {
-        float3x3 A;
         float3x3 U, V;
-        std::vector<float> S(3);
-
-        A = { { -0.46673855799602715f, 0.67466260360310948f, 0.97646986796448998f },
-              { -0.032460753747103721f, 0.046584527749418278f, 0.067431228641151142f }, 
-              { -0.088885055229687815f, 0.1280389179308779f, 0.18532617511453064f } };
+        std::vector<float> S(m);
 
         float3x3 A_Copy = A;
 
         float maxEntry = 0;
-        for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+        for (int i = 0; i < m; ++i)
+            for (int j = 0; j < n; ++j)
                 maxEntry = std::max(maxEntry, std::abs(A[j][i]));
 
         const float eps = std::numeric_limits<float>::epsilon();
         const float valueEps = maxEntry * 10.f * eps;
 
-        auto result = singular_value_decomposition<float3x3, float>(A, 3, 3, S, V);
+        auto result = singular_value_decomposition<float3x3, float>(A, m, n, S, V);
         U = A;
 
-        float3x3 S_times_Vt;
-        for (int j = 0; j < 3; ++j)
+        float3x3 S_times_Vt; // fixme for n
+        for (int j = 0; j < m; ++j)
         {
             S_times_Vt[j].x = S[j] * V[j].x;
             S_times_Vt[j].y = S[j] * V[j].y;
@@ -444,12 +441,53 @@ namespace svd_test
             assert(std::abs(P[i].z - A_Copy[i].z) <= valueEps);
         }
 
-        // Check that U and V are orthogonal
-        assert(determinant(U) < -0.9);
-        assert(determinant(V) < -0.9);
+        assert(std::abs(determinant(U)) > 0.99);
+        assert(std::abs(determinant(V)) > 0.99);
 
         check_orthonormal(U);
         check_orthonormal(V);
+    }
+
+    inline void execute()
+    {
+        float3x3 Identity = Identity3x3;
+        validate_matrix<float3x3, float>(Identity, 3, 3);
+
+        float3x3 TrickyMatrix1 = {
+            { -0.46673855799602715f, 0.67466260360310948f, 0.97646986796448998f },
+            { -0.032460753747103721f, 0.046584527749418278f, 0.067431228641151142f },
+            { -0.088885055229687815f, 0.1280389179308779f, 0.18532617511453064f }
+        };
+        validate_matrix<float3x3, float>(TrickyMatrix1, 3, 3);
+
+        float3x3 TrickyMatrix2 = {
+            { 0.0023588321752040036f, -0.0096558131480729038f, 0.0010959850449366493f },
+            { 0.0088671829608044754f, 0.0016771794267033666f, -0.0043081475729438235f},
+            { 0.003976050440932701f, 0.0019880497026345716f, 0.0089576046614601966f }
+        };
+        validate_matrix<float3x3, float>(TrickyMatrix2, 3, 3);
+
+        float3x3 TrickyMatrix3 = {
+            { 1.3f, 0, 0},
+            { 0, .0003f, 0},
+            { 1e-17f, 0, 0}
+        };
+        validate_matrix<float3x3, float>(TrickyMatrix3, 3, 3);
+
+        float3x3 TrickyMatrix4 = {
+            { 1e-8f, 0, 0 },
+            { 0, 1e-8f, 0 },
+            { 0, 0, 1e-8f }
+        };
+        validate_matrix<float3x3, float>(TrickyMatrix4, 3, 3);
+
+        float3x3 TrickyMatrix5 = {
+            { 3.24532f, 9.34234f, -42.0012f },
+            { 8.69382f, 42.4879f, 0.000001f },
+            { -12.3872f, -0.5000f, -0.22222f }
+        };
+        validate_matrix<float3x3, float>(TrickyMatrix5, 3, 3);
+
     }
 }
 

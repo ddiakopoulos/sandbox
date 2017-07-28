@@ -87,7 +87,7 @@ struct ExperimentalApp : public GLFWApp
 
     ExperimentalApp() : GLFWApp(1200, 1200, "Nearly Empty App")
     {
-        svd_test::run();
+        svd_tests::execute();
 
         int width, height;
         glfwGetWindowSize(window, &width, &height);
