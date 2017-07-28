@@ -195,6 +195,7 @@ void shader_workbench::on_draw()
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
     if (gizmo) gizmo->update(cam, float2(width, height));
 
+    /*
     fullscreenQuad = fullscreen_quad_extra(projectionMatrix, viewMatrix);
 
     tinygizmo::transform_gizmo("terrain", gizmo->gizmo_ctx, terrainTransform);
@@ -255,6 +256,8 @@ void shader_workbench::on_draw()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
+    */
+
     /*
     // Screenspace Effect
     {
@@ -297,11 +300,19 @@ void shader_workbench::on_draw()
         projector.pose = look_at_pose_rh(projectorEye, projectorTarget);
     }
 
-    ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
-    ImGui::Checkbox("Render Color", &renderColor);
-    ImGui::Checkbox("Render Projective", &renderProjective);
-    ImGui::ListBox("Src Blendmode", &src_blendmode, listbox_items, IM_ARRAYSIZE(listbox_items), 9);
-    ImGui::ListBox("DestBlendmode", &dst_blendmode, listbox_items, IM_ARRAYSIZE(listbox_items), 9);
+    //ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
+    //ImGui::Checkbox("Render Color", &renderColor);
+    //ImGui::Checkbox("Render Projective", &renderProjective);
+    //ImGui::ListBox("Src Blendmode", &src_blendmode, listbox_items, IM_ARRAYSIZE(listbox_items), 9);
+    //ImGui::ListBox("DestBlendmode", &dst_blendmode, listbox_items, IM_ARRAYSIZE(listbox_items), 9);
+
+    static float theta = 0.0f;
+    static float phi = 0.0f;
+
+    ImGui::SliderFloat("Theta", &theta, 0.0f, ANVIL_PI);
+    ImGui::SliderFloat("Phi", &phi, 0.f, ANVIL_TWO_PI);
+
+    std::cout << cartsesian_coord(theta, phi) << std::endl;
 
     /*
     ImGui::SliderFloat3("Triplanar Scale", &scale.x, 0.0f, 1.f);

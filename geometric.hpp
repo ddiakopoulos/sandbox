@@ -166,7 +166,7 @@ namespace avl
     // These functions adopt the physics convention (ISO):
     // * (rho) r defined as the radial distance, 
     // * (theta) θ defined as the the polar angle (inclination)
-    // * (phi) φ defined as the azimuthal angle
+    // * (phi) φ defined as the azimuthal angle (zenith)
 
     // These conversion routines assume the following: 
     // * the systems have the same origin
@@ -177,7 +177,7 @@ namespace avl
     // theta ∈ [0, π], phi ∈ [0, 2π), rho ∈ [0, ∞)
     inline float3 cartsesian_coord(float thetaRad, float phiRad, float rhoRad = 1.f) 
     {
-        return safe_normalize(float3(rhoRad * sin(thetaRad) * cos(phiRad), rhoRad * sin(phiRad) * sin(thetaRad), rhoRad * cos(thetaRad)));
+        return float3(rhoRad * sin(thetaRad) * cos(phiRad), rhoRad * sin(phiRad) * sin(thetaRad), rhoRad * cos(thetaRad));
     }
 
     inline float3 spherical_coord(const float3 & coord)
