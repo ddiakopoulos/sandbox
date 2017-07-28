@@ -26,10 +26,44 @@ namespace svd
         if (abs_a > abs_b) return abs_a*std::sqrt((T)1.0 + svd::sqr(abs_b / abs_a));
         else return (abs_b == (T)0.0 ? (T)0.0 : abs_b*std::sqrt((T)1.0 + svd::sqr(abs_a / abs_b)));
     };
+
+    template<typename MatrixT, typename T>
+    void sort(MatrixT & U, int m, int n, std::vector<T> & S, MatrixT & V)
+    {
+        int mu = m;
+        int mv = m;
+
+        for (int i = 0; i < n; i++)
+        {
+            int  k = i;
+            T p = S[i];
+
+            // Decending sort
+            for (int j = i + 1; j < n; j++)
+            {
+                if (S[j] > p)
+                {
+                    k = j;
+                    p = S[j];
+                }
+            }
+
+            if (k != i)
+            {
+                S[k] = S[i];
+                S[i] = p;
+
+                int j = mu;
+                for (int s = 0; j != 0; ++s, --j) std::swap(U[i][s], U[k][s]);
+                j = mv;
+                for (int s = 0; j != 0; ++s, --j) std::swap(V[i][s], V[k][s]);
+            }
+        }
+    }
 }
 
 template <typename MatrixT, typename T>
-inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<T> & S, MatrixT & V, const int max_iters = 32)
+inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<T> & S, MatrixT & V, const int max_iters = 32, bool sort = true)
 {
     int flag, i, its, j, jj, k, l, nm;
     T anorm, c, f, g, h, s, scale, x, y, z;
@@ -305,9 +339,7 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
         }
     }
 
-    //if (sorting != LeaveUnsorted)
-    //    Sort<T>(A, W, V, sorting);
-
+    if (sort) svd::sort(A, m, n, S, V);
     return convergence;
 };
 
@@ -356,7 +388,6 @@ namespace svd_test
             S_times_Vt[j].z = S[j] * V[j].z;
         }
         S_times_Vt = transpose(S_times_Vt);
-
 
         // Verify that the product of the matrices is A (Input)
         const float3x3 P = mul(U, S_times_Vt);
