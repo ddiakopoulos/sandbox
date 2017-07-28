@@ -1,5 +1,6 @@
 #include "index.hpp"
 #include <iterator>
+#include "svd.hpp"
 
 constexpr const char basic_wireframe_vert[] = R"(#version 330
     layout(location = 0) in vec3 vertex;
@@ -86,6 +87,8 @@ struct ExperimentalApp : public GLFWApp
 
     ExperimentalApp() : GLFWApp(1200, 1200, "Nearly Empty App")
     {
+        run_svd_test();
+
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -95,27 +98,6 @@ struct ExperimentalApp : public GLFWApp
 
         headMesh = make_coordinate_system_mesh();
         cameraMesh = make_frustum_mesh(1.0);
-        
-        /*
-        auto torusKnot = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply");
-
-        const size_t half = torusKnot.faces.size() / 2;
-        std::vector<uint3> leftHalf(torusKnot.faces.begin(), torusKnot.faces.begin() + half);
-        std::vector<uint3> rightHalf(torusKnot.faces.begin() + half, torusKnot.faces.end());
-
-        // Empty out faces
-        torusKnot.faces.clear();
-
-        GlMesh torusMeshFirstHalf = make_mesh_from_geometry(torusKnot);
-        torusMeshFirstHalf.set_elements(leftHalf, GL_STATIC_DRAW);
-        std::cout << "Half Mesh VAO: " << torusMeshFirstHalf.vertexArray << std::endl;
-        std::cout << "Half Mesh IBO: " << torusMeshFirstHalf.indexBuffer << std::endl;
-
-        GlMesh torusMeshSecondHalf = { torusMeshFirstHalf.vertexArray, torusMeshSecondHalf.vertexBuffer };
-        torusMeshSecondHalf.set_elements(rightHalf, GL_STATIC_DRAW);
-        std::cout << "Second Half Mesh VAO: " << torusMeshSecondHalf.vertexArray << std::endl;
-        std::cout << "Second Half Mesh IBO: " << torusMeshSecondHalf.indexBuffer << std::endl;
-        */
 
         camera.position = float3(0, 1.75, 0.5f);
 

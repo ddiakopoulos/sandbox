@@ -249,6 +249,9 @@
     <ClInclude Include="..\gl\gl-gizmo.hpp">
       <Filter>source\gl-app\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\svd.hpp">
+      <Filter>source\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\third_party\json.cpp">

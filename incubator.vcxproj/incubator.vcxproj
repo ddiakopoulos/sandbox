@@ -74,6 +74,7 @@
     <ClInclude Include="..\spsc_bounded_queue.hpp" />
     <ClInclude Include="..\spsc_queue.hpp" />
     <ClInclude Include="..\string_utils.hpp" />
+    <ClInclude Include="..\svd.hpp" />
     <ClInclude Include="..\third_party\fontstash.h" />
     <ClInclude Include="..\third_party\imgui\imconfig.h" />
     <ClInclude Include="..\third_party\imgui\imgui.h" />
