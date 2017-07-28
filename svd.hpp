@@ -1,5 +1,12 @@
 #pragma once
 
+#ifndef svd_decomposition_hpp
+#define svd_decomposition_hpp
+
+// The code in this file is based on Numerical Recipes: 
+// William H. Press , Saul A. Teukolsky , William T. Vetterling , Brian P. Flannery, "Numerical Recipes in C: The Art of Scientific Computing,"
+// Cambridge University Press, New York, NY, 1992, Section 2.6 "Singular Value Decomposition."
+
 #include "linalg_util.hpp"
 
 #include <algorithm>
@@ -62,6 +69,13 @@ namespace svd
     }
 }
 
+/*
+ * Given a matrix a[m][n], this routine computes its singular value decomposition, A = U*W*V^{T}.
+ * The matrix U destructively replaces A on output. The diagonal matrix of singular values S 
+ * is output as vector S[n]. The symmetric matrix V (not the transpose V^{T}) is output as V[n][n].
+ * m must be greater or equal to n; if it is smaller, then A should be filled up to square with zero rows.
+ * Returns true if the routine has converged before `max_iters` attempts.
+ */
 template <typename MatrixT, typename T>
 inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<T> & S, MatrixT & V, const int max_iters = 32, bool sort = true)
 {
@@ -349,7 +363,6 @@ namespace svd_test
     {
         const float EPSILON = 100.f * std::numeric_limits<float>::epsilon();
         const auto prod = mul(matrix, transpose(matrix));
-
         for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j)
         {
             if (i == j) assert(std::abs(prod[i][j] - 1) < EPSILON);
@@ -407,3 +420,5 @@ namespace svd_test
         check_orthonormal(V);
     }
 }
+
+#endif // end svd_decomposition_hpp
