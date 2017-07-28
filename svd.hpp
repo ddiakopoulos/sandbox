@@ -30,28 +30,27 @@ inline float3x3 to_linalg(Matrix<float> & m)
 
 namespace svd
 {
-    // Computes (a^2 + b^2)^(1/2) without destructive underflow or overflow.
-    template <typename TYPE>
-    inline static TYPE pythagora(TYPE a, TYPE b)
+    template <typename T>
+    inline T sqr(T a)
     {
-        TYPE abs_a = std::abs(a);
-        TYPE abs_b = std::abs(b);
-        if (abs_a > abs_b) return abs_a*std::sqrt((TYPE)1.0 + sqr(abs_b / abs_a));
-        else return (abs_b == (TYPE)0.0 ? (TYPE)0.0 : abs_b*std::sqrt((TYPE)1.0 + sqr(abs_a / abs_b)));
+        return (a == 0 ? 0 : a * a);
+    }
+
+    // Computes (a^2 + b^2)^(1/2) without destructive underflow or overflow.
+    template <typename T>
+    inline T pythagora(T a, T b)
+    {
+        T abs_a = std::abs(a);
+        T abs_b = std::abs(b);
+        if (abs_a > abs_b) return abs_a*std::sqrt((T)1.0 + svd::sqr(abs_b / abs_a));
+        else return (abs_b == (T)0.0 ? (T)0.0 : abs_b*std::sqrt((T)1.0 + svd::sqr(abs_a / abs_b)));
     };
 
-    template <typename TYPE>
-    inline static TYPE sign(TYPE a, TYPE b)
+    template <typename T>
+    inline T sign(T a, T b)
     {
         return (b >= 0.0 ? std::abs(a) : -std::abs(a));
     };
-
-    template <typename TYPE>
-    inline static TYPE sqr(TYPE a)
-    {
-        TYPE sqr_arg = a;
-        return (sqr_arg == 0 ? 0 : sqr_arg*sqr_arg);
-    }
 }
 
 template <typename T>
@@ -365,7 +364,7 @@ inline void run_svd_test()
     const float eps = std::numeric_limits<float>::epsilon();
     const float valueEps = maxEntry * 10.f * eps;
 
-   auto result = SingularValueDecomposition<float>(A, 3, 3, W, V);
+   auto result = singular_value_decomposition<float>(A, 3, 3, W, V);
 
    float3x3 L_U = to_linalg(A);
    float3x3 L_V = to_linalg(V);
