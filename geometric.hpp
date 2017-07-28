@@ -142,6 +142,38 @@ namespace avl
     // General 3D Math Helpers //
     /////////////////////////////
 
+    // A value type representing an abstract direction vector in 3D space, independent of any coordinate system
+    enum class coord_axis { forward, back, left, right, up, down };
+
+    inline float dot(coord_axis a, coord_axis b)
+    {
+        static float table[6][6]{ { +1,-1,0,0,0,0 },{ -1,+1,0,0,0,0 },{ 0,0,+1,-1,0,0 },{ 0,0,-1,+1,0,0 },{ 0,0,0,0,+1,-1 },{ 0,0,0,0,-1,+1 } };
+        return table[static_cast<int>(a)][static_cast<int>(b)];
+    }
+
+    // A concrete 3D coordinate system with defined x, y, and z axes
+    struct coord_system
+    {
+        coord_axis x_axis, y_axis, z_axis;
+        float3 get_axis(coord_axis a) const { return{ dot(x_axis, a), dot(y_axis, a), dot(z_axis, a) }; }
+        float3 get_left() const { return get_axis(coord_axis::left); }
+        float3 get_right() const { return get_axis(coord_axis::right); }
+        float3 get_up() const { return get_axis(coord_axis::up); }
+        float3 get_down() const { return get_axis(coord_axis::down); }
+        float3 get_forward() const { return get_axis(coord_axis::forward); }
+        float3 get_back() const { return get_axis(coord_axis::back); }
+    };
+
+    inline float4x4 coordinate_system_xform(const coord_system & from, const coord_system & to) 
+    { 
+        return { 
+            { to.get_axis(from.x_axis), 0 },
+            { to.get_axis(from.y_axis), 0 },
+            { to.get_axis(from.z_axis), 0 },
+            { 0,0,0,1 } 
+        }; 
+    }
+
     inline float3 reflect(const float3 & I, const float3 & N)
     {
         return I - (N * dot(N, I) * 2.f);
