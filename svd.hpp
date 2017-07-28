@@ -48,29 +48,29 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
         if (i < m)
         {
             for (k = i; k<m; k++)
-                scale += std::abs(A(k,i));
+                scale += std::abs(A[i][k]);
 
             if (scale)
             {
                 for (k = i; k<m; k++)
                 {
-                    A(k,i) /= scale;
-                    s += A(k,i) * A(k,i);
+                    A[i][k] /= scale;
+                    s += A[i][k] * A[i][k];
                 }
-                f = A(i,i);
+                f = A[i][i];
                 g = -svd::sign<T>(std::sqrt(s), f);
                 h = f*g - s;
-                A(i,i) = f - g;
+                A[i][i] = f - g;
                 for (j = l; j<n; j++)
                 {
                     for (s = 0.0, k = i; k<m; k++)
-                        s += A(k,i) * A(k,j);
+                        s += A[i][k] * A[j][k];
                     f = s / h;
                     for (k = i; k<m; k++)
-                        A(k,j) += f*A(k,i);
+                        A[j][k] += f*A[i][k];
                 }
                 for (k = i; k<m; k++)
-                    A(k,i) *= scale;
+                    A[i][k] *= scale;
             }
         }
         S[i] = scale *g;
@@ -78,33 +78,33 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
         if (i < m && i != (n - 1))
         {
             for (k = l; k<n; k++)
-                scale += std::abs(A(i,k));
+                scale += std::abs(A[k][i]);
             if (scale)
             {
                 for (k = l; k<n; k++)
                 {
-                    A(i,k) /= scale;
-                    s += A(i,k) * A(i,k);
+                    A[k][i] /= scale;
+                    s += A[k][i] * A[k][i];
                 }
 
-                f = A(i,l);
+                f = A[l][i];
                 g = -svd::sign<T>(std::sqrt(s), f);
                 h = f*g - s;
-                A(i,l) = f - g;
+                A[l][i] = f - g;
 
-                for (k = l; k<n; k++)
-                    rv1[k] = A(i,k) / h;
+                for (k = l; k < n; k++)
+                    rv1[k] = A[k][i] / h;
 
-                for (j = l; j<m; j++)
+                for (j = l; j < m; j++)
                 {
                     for (s = 0.0, k = l; k<n; k++)
-                        s += A(j,k) * A(i,k);
+                        s += A[k][j] * A[k][i];
                     for (k = l; k<n; k++)
-                        A(j,k) += s*rv1[k];
+                        A[k][j] += s*rv1[k];
                 }
 
-                for (k = l; k<n; k++)
-                    A(i,k) *= scale;
+                for (k = l; k < n; k++)
+                    A[k][i] *= scale;
             }
         }
         anorm = std::max(anorm, (std::abs(S[i]) + std::abs(rv1[i])));
@@ -120,23 +120,23 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
             {
                 // Double division to avoid possible underflow
                 for (j = l; j<n; j++)
-                    V(j,i) = (A(i,j) / A(i,l)) / g;
+                    V[i][j] = (A[j][i] / A[l][i]) / g;
 
                 for (j = l; j<n; j++)
                 {
                     for (s = 0.0, k = l; k<n; k++)
-                        s += A(i,k) * V(k,j);
+                        s += A[k][i] * V[j][k];
 
                     for (k = l; k<n; k++)
-                        V(k,j) += s*V(k,i);
+                        V[j][k] += s*V[i][k];
                 }
             }
 
             for (j = l; j<n; j++)
-                V(i,j) = V(j,i) = 0.0;
+                V[j][i] = V[i][j] = 0.0;
         }
 
-        V(i,i) = 1.0;
+        V[i][i] = 1.0;
 
         g = rv1[i];
         l = i;
@@ -149,7 +149,7 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
         g = S[i];
 
         for (j = l; j<n; j++)
-            A(i,j) = 0.0;
+            A[j][i] = 0.0;
 
         if (g)
         {
@@ -158,22 +158,22 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
             for (j = l; j<n; j++)
             {
                 for (s = 0.0, k = l; k<m; k++)
-                    s += A(k,i) * A(k,j);
+                    s += A[i][k] * A[j][k];
 
-                f = (s / A(i,i))*g;
+                f = (s / A[i][i])*g;
 
                 for (k = i; k<m; k++)
-                    A(k,j) += f*A(k,i);
+                    A[j][k] += f*A[i][k];
             }
             for (j = i; j<m; j++)
-                A(j,i) *= g;
+                A[i][j] *= g;
         }
         else
         {
             for (j = i; j < m; j++)
-                A(j, i) = 0.0;
+                A[i][j] = 0.0;
         }
-        ++A(i,i);
+        ++A[i][i];
     }
 
     // Diagonalization of the bidiagonal form: Loop over singular values, and over allowed iterations
@@ -205,8 +205,7 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
                 {
                     f = s*rv1[i];
                     rv1[i] = c*rv1[i];
-                    if ((T)(std::abs(f) + anorm) == anorm)
-                        break;
+                    if ((T)(std::abs(f) + anorm) == anorm) break;
 
                     g = S[i];
                     h = svd::pythagora<T>(f, g);
@@ -217,10 +216,10 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
 
                     for (j = 0; j<m; j++)
                     {
-                        y = A(j,nm);
-                        z = A(j,i);
-                        A(j,nm) = y*c + z*s;
-                        A(j,i) = z*c - y*s;
+                        y = A[nm][j];
+                        z = A[i][j];
+                        A[nm][j] = y*c + z*s;
+                        A[i][j] = z*c - y*s;
                     }
                 }
             }
@@ -233,8 +232,8 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
                 if (z < 0.0) 
                 {
                     S[k] = -z;
-                    for (j = 0; j<n; j++)
-                        V(j,k) = -V(j,k);
+                    for (j = 0; j < n; j++)
+                        V[k][j] = -V[k][j];
                 }
                 break;
             }
@@ -271,10 +270,10 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
 
                 for (jj = 0; jj<n; jj++)
                 {
-                    x = V(jj,j);
-                    z = V(jj,i);
-                    V(jj,j) = x*c + z*s;
-                    V(jj,i) = z*c - x*s;
+                    x = V[j][jj];
+                    z = V[i][jj];
+                    V[j][jj] = x*c + z*s;
+                    V[i][jj] = z*c - x*s;
                 }
 
                 z = svd::pythagora<T>(f, h);
@@ -293,10 +292,10 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
 
                 for (jj = 0; jj<m; jj++)
                 {
-                    y = A(jj,j);
-                    z = A(jj,i);
-                    A(jj,j) = y*c + z*s;
-                    A(jj,i) = z*c - y*s;
+                    y = A[j][jj];
+                    z = A[i][jj];
+                    A[j][jj] = y*c + z*s;
+                    A[i][jj] = z*c - y*s;
                 }
             }
 
