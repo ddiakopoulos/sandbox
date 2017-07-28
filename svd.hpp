@@ -1,9 +1,11 @@
 #pragma once
 
+#include "linalg_util.hpp"
+
 #include <algorithm>
 #include <assert.h>
-#include "linalg_util.hpp"
 #include <vector>
+#include <iostream>
 
 using namespace avl;
 
@@ -54,9 +56,9 @@ namespace svd
 }
 
 template <typename T>
-inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vector<T> & W, Matrix<T> & V, const int max_iters = 32)
+inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vector<T> & S, Matrix<T> & V, const int max_iters = 32)
 {
-    uint32_t flag, i, its, j, jj, k, l, nm;
+    int flag, i, its, j, jj, k, l, nm;
     T anorm, c, f, g, h, s, scale, x, y, z;
     bool convergence = true;
     g = scale = anorm = 0;
@@ -98,7 +100,7 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
                     A(k,i) *= scale;
             }
         }
-        W[i] = scale *g;
+        S[i] = scale *g;
         g = s = scale = 0.0;
         if (i < m && i != (n - 1))
         {
@@ -132,17 +134,18 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
                     A(i,k) *= scale;
             }
         }
-        anorm = std::max(anorm, (std::abs(W[i]) + std::abs(rv1[i])));
+        anorm = std::max(anorm, (std::abs(S[i]) + std::abs(rv1[i])));
     }
-    // Accumulation of right-hand transformations.
+
+    // Accumulation of right-hand transformations
     for (i = (n - 1); i >= 0; i--)
     {
-        //Accumulation of right-hand transformations.
+        // Accumulation of right-hand transformations
         if (i < (n - 1))
         {
             if (g)
             {
-                //Double division to avoid possible underflow.
+                // Double division to avoid possible underflow
                 for (j = l; j<n; j++)
                     V(j,i) = (A(i,j) / A(i,l)) / g;
 
@@ -150,6 +153,7 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
                 {
                     for (s = 0.0, k = l; k<n; k++)
                         s += A(i,k) * V(k,j);
+
                     for (k = l; k<n; k++)
                         V(k,j) += s*V(k,i);
                 }
@@ -164,11 +168,12 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
         g = rv1[i];
         l = i;
     }
-    // Accumulation of left-hand transformations.
+
+    // Accumulation of left-hand transformations
     for (i = std::min(m, n) - 1; i >= 0; i--)
     {
         l = i + 1;
-        g = W[i];
+        g = S[i];
 
         for (j = l; j<n; j++)
             A(i,j) = 0.0;
@@ -198,7 +203,7 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
         ++A(i,i);
     }
 
-    // Diagonalization of the bidiagonal form: Loop over singular values, and over allowed iterations.
+    // Diagonalization of the bidiagonal form: Loop over singular values, and over allowed iterations
     for (k = (n - 1); k >= 0; k--)
     {
         for (its = 1; its <= max_iters; its++)
@@ -206,21 +211,21 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
             flag = 1;
             for (l = k; l >= 0; l--)
             {
-                // Test for splitting.
+                // Test for splitting
                 nm = l - 1;
 
-                // Note that rv1[1] is always zero.
+                // Note that rv1[1] is always zero
                 if ((T)(std::abs(rv1[l]) + anorm) == anorm)
                 {
                     flag = 0;
                     break;
                 }
-                if ((T)(std::abs(W[nm]) + anorm) == anorm)
+                if ((T)(std::abs(S[nm]) + anorm) == anorm)
                     break;
             }
             if (flag)
             {
-                //Cancellation of rv1[l], if l > 1.
+                // Cancellation of rv1[l], if l > 1
                 c = 0.0; 
                 s = 1.0;
                 for (i = l; i <= k; i++)
@@ -230,9 +235,9 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
                     if ((T)(std::abs(f) + anorm) == anorm)
                         break;
 
-                    g = W[i];
+                    g = S[i];
                     h = svd::pythagora<T>(f, g);
-                    W[i] = h;
+                    S[i] = h;
                     h = (T)1.0 / h;
                     c = g*h;
                     s = -f*h;
@@ -246,7 +251,7 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
                     }
                 }
             }
-            z = W[k];
+            z = S[k];
 
             // Convergence
             if (l == k) 
@@ -254,7 +259,7 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
                 // Singular value is made nonnegative
                 if (z < 0.0) 
                 {
-                    W[k] = -z;
+                    S[k] = -z;
                     for (j = 0; j<n; j++)
                         V(j,k) = -V(j,k);
                 }
@@ -263,9 +268,10 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
 
             if (its == max_iters) convergence = false;
 
-            x = W[l]; // Shift from bottom 2-by-2 minor.
+            // Shift from bottom 2-by-2 minor
+            x = S[l];
             nm = k - 1;
-            y = W[nm];
+            y = S[nm];
             g = rv1[nm];
             h = rv1[k];
             f = ((y - z)*(y + z) + (g - h)*(g + h)) / ((T)2.0*h*y);
@@ -273,12 +279,12 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
             f = ((x - z)*(x + z) + h*((y / (f + sign(g, f))) - h)) / x;
             c = s = 1.0;
 
-            // Next QR transformation:
+            // QR transformation
             for (j = l; j <= nm; j++)
             {
                 i = j + 1;
                 g = rv1[i];
-                y = W[i];
+                y = S[i];
                 h = s*g;
                 g = c*g;
                 z = svd::pythagora<T>(f, h);
@@ -299,9 +305,9 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
                 }
 
                 z = svd::pythagora<T>(f, h);
-                W[j] = z;
+                S[j] = z;
 
-                // Rotation can be arbitrary if z = 0.
+                // Rotation can be arbitrary if z = 0
                 if (z)
                 {
                     z = (T)1.0 / z;
@@ -323,7 +329,7 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
 
             rv1[l] = 0.0;
             rv1[k] = f;
-            W[k] = x;
+            S[k] = x;
         }
     }
 
@@ -352,7 +358,7 @@ namespace svd_test
     {
         Matrix<float> A(3, 3);
         Matrix<float> V(3, 3);
-        std::vector<float> W(3);
+        std::vector<float> S(3);
 
         // Row, column
         A(0, 0) = -0.46673855799602715;
@@ -377,7 +383,7 @@ namespace svd_test
         const float eps = std::numeric_limits<float>::epsilon();
         const float valueEps = maxEntry * 10.f * eps;
 
-        auto result = singular_value_decomposition<float>(A, 3, 3, W, V);
+        auto result = singular_value_decomposition<float>(A, 3, 3, S, V);
 
         float3x3 L_U = to_linalg(A);
         float3x3 L_V = to_linalg(V);
@@ -386,7 +392,7 @@ namespace svd_test
         Matrix<float> S_times_Vt(3, 3);
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
-                S_times_Vt(i, j) = W[j] * V(i, j);
+                S_times_Vt(i, j) = S[j] * V(i, j);
 
         float3x3 L_S_times_Vt = transpose(to_linalg(S_times_Vt));
 
@@ -396,9 +402,9 @@ namespace svd_test
         float3x3 S_times_Vt_Wrong;
         for (int j = 0; j < 3; ++j)
         {
-            S_times_Vt_Wrong[j].x = W[j] * L_V[j].x;
-            S_times_Vt_Wrong[j].y = W[j] * L_V[j].y;
-            S_times_Vt_Wrong[j].z = W[j] * L_V[j].z;
+            S_times_Vt_Wrong[j].x = S[j] * L_V[j].x;
+            S_times_Vt_Wrong[j].y = S[j] * L_V[j].y;
+            S_times_Vt_Wrong[j].z = S[j] * L_V[j].z;
         }
 
         float3x3 L_S_times_Vt_wrong = transpose(S_times_Vt_Wrong);
@@ -418,15 +424,12 @@ namespace svd_test
             assert(std::abs(product[i].z - L_A_ORIGINAL[i].z) <= valueEps);
         }
 
-        std::cout << determinant(L_U) << std::endl;
-        std::cout << determinant(L_V) << std::endl;
+        // Check that U and V are orthogonal:
+        assert(determinant(L_U) < -0.9);
+        assert(determinant(L_V) < -0.9);
 
         check_orthonormal(L_U);
         check_orthonormal(L_V);
-
-        // Check that U and V are orthogonal:
-        //assert(determinant(L_U) > 0.9);
-        //assert(determinant(L_V) > 0.9);
 
         //std::cout << result << std::endl;
     }
