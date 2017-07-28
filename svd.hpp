@@ -13,8 +13,12 @@
 #include <assert.h>
 #include <vector>
 #include <iostream>
+#include <cmath>
 
 using namespace avl;
+
+template <typename T>
+inline void sanity_check(T value) { assert(!std::isinf(value)); assert(!std::isnan(value)); }
 
 namespace svd
 {
@@ -114,6 +118,7 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
                     for (s = 0.0, k = i; k<m; k++)
                         s += A[i][k] * A[j][k];
                     f = s / h;
+                    sanity_check(f);
                     for (k = i; k<m; k++)
                         A[j][k] += f*A[i][k];
                 }
@@ -141,7 +146,10 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
                 A[l][i] = f - g;
 
                 for (k = l; k < n; k++)
+                {
                     rv1[k] = A[k][i] / h;
+                    sanity_check(rv1[k]);
+                }
 
                 for (j = l; j < m; j++)
                 {
@@ -167,8 +175,11 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
             if (g)
             {
                 // Double division to avoid possible underflow
-                for (j = l; j<n; j++)
+                for (j = l; j < n; j++)
+                {
                     V[i][j] = (A[j][i] / A[l][i]) / g;
+                    sanity_check(V[i][j]);
+                }
 
                 for (j = l; j<n; j++)
                 {
@@ -209,6 +220,7 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
                     s += A[i][k] * A[j][k];
 
                 f = (s / A[i][i])*g;
+                sanity_check(f);
 
                 for (k = i; k<m; k++)
                     A[j][k] += f*A[i][k];
@@ -257,8 +269,12 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
 
                     g = S[i];
                     h = svd::pythagora<T>(f, g);
+                    sanity_check(h);
+
                     S[i] = h;
                     h = (T)1.0 / h;
+                    sanity_check(h);
+
                     c = g*h;
                     s = -f*h;
 
@@ -294,9 +310,16 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
             y = S[nm];
             g = rv1[nm];
             h = rv1[k];
+
             f = ((y - z)*(y + z) + (g - h)*(g + h)) / ((T)2.0*h*y);
+            sanity_check(f);
+
             g = svd::pythagora<T>(f, 1.0);
+            sanity_check(g);
+
             f = ((x - z)*(x + z) + h*((y / (f + sign(g, f))) - h)) / x;
+            sanity_check(f);
+
             c = s = 1.0;
 
             // QR transformation
@@ -308,9 +331,16 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
                 h = s*g;
                 g = c*g;
                 z = svd::pythagora<T>(f, h);
+                sanity_check(z);
+
                 rv1[j] = z;
+
                 c = f / z;
+                sanity_check(c);
+
                 s = h / z;
+                sanity_check(s);
+
                 f = x*c + g*s;
                 g = g*c - x*s;
                 h = y*s;
@@ -325,6 +355,8 @@ inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<
                 }
 
                 z = svd::pythagora<T>(f, h);
+                sanity_check(z);
+
                 S[j] = z;
 
                 // Rotation can be arbitrary if z = 0
