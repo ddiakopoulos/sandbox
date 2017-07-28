@@ -9,34 +9,13 @@
 
 using namespace avl;
 
-template <typename T>
-class Matrix
-{
-    std::vector<T> matrix; // Column Major
-    size_t columns;
-public:
-    Matrix(size_t row, size_t col) : columns(col), matrix(col * row) { }
-    T & operator()(size_t x, size_t y)
-    {
-        return matrix[y * columns + x];
-    }
-    T * data() { return matrix.data(); }
-};
-
-inline float3x3 to_linalg(Matrix<float> & m)
-{
-    float3x3 result;
-    std::memcpy(&result, m.data(), sizeof(float3x3));
-    return result;
-}
-
 namespace svd
 {
     template <typename T>
-    inline T sqr(T a)
-    {
-        return (a == 0 ? 0 : a * a);
-    }
+    inline T sqr(T a) { return (a == 0 ? 0 : a * a); }
+
+    template <typename T>
+    inline T sign(T a, T b) { return (b >= 0.0 ? std::abs(a) : -std::abs(a)); };
 
     // Computes (a^2 + b^2)^(1/2) without destructive underflow or overflow.
     template <typename T>
@@ -47,16 +26,10 @@ namespace svd
         if (abs_a > abs_b) return abs_a*std::sqrt((T)1.0 + svd::sqr(abs_b / abs_a));
         else return (abs_b == (T)0.0 ? (T)0.0 : abs_b*std::sqrt((T)1.0 + svd::sqr(abs_a / abs_b)));
     };
-
-    template <typename T>
-    inline T sign(T a, T b)
-    {
-        return (b >= 0.0 ? std::abs(a) : -std::abs(a));
-    };
 }
 
-template <typename T>
-inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vector<T> & S, Matrix<T> & V, const int max_iters = 32)
+template <typename MatrixT, typename T>
+inline bool singular_value_decomposition(MatrixT & A, int m, int n, std::vector<T> & S, MatrixT & V, const int max_iters = 32)
 {
     int flag, i, its, j, jj, k, l, nm;
     T anorm, c, f, g, h, s, scale, x, y, z;
@@ -341,7 +314,6 @@ inline bool singular_value_decomposition(Matrix<T> & A, int m, int n, std::vecto
 
 namespace svd_test
 {
-
     inline void check_orthonormal(const float3x3 & matrix)
     {
         const float EPSILON = 100.f * std::numeric_limits<float>::epsilon();
@@ -356,81 +328,52 @@ namespace svd_test
 
     inline void run()
     {
-        Matrix<float> A(3, 3);
-        Matrix<float> V(3, 3);
+        float3x3 A;
+        float3x3 U, V;
         std::vector<float> S(3);
 
-        // Row, column
-        A(0, 0) = -0.46673855799602715;
-        A(1, 0) = 0.67466260360310948;
-        A(2, 0) = 0.97646986796448998;
+        A = { { -0.46673855799602715f, 0.67466260360310948f, 0.97646986796448998f },
+              { -0.032460753747103721f, 0.046584527749418278f, 0.067431228641151142f }, 
+              { -0.088885055229687815f, 0.1280389179308779f, 0.18532617511453064f } };
 
-        A(0, 1) = -0.032460753747103721;
-        A(1, 1) = 0.046584527749418278;
-        A(2, 1) = 0.067431228641151142;
-
-        A(0, 2) = -0.088885055229687815;
-        A(1, 2) = 0.1280389179308779;
-        A(2, 2) = 0.18532617511453064;
-
-        float3x3 L_A_ORIGINAL = to_linalg(A);
+        float3x3 A_Copy = A;
 
         float maxEntry = 0;
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
-                maxEntry = std::max(maxEntry, std::abs(A(i, j)));
+                maxEntry = std::max(maxEntry, std::abs(A[j][i]));
 
         const float eps = std::numeric_limits<float>::epsilon();
         const float valueEps = maxEntry * 10.f * eps;
 
-        auto result = singular_value_decomposition<float>(A, 3, 3, S, V);
+        auto result = singular_value_decomposition<float3x3, float>(A, 3, 3, S, V);
+        U = A;
 
-        float3x3 L_U = to_linalg(A);
-        float3x3 L_V = to_linalg(V);
-
-        // --- 
-        Matrix<float> S_times_Vt(3, 3);
-        for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
-                S_times_Vt(i, j) = S[j] * V(i, j);
-
-        float3x3 L_S_times_Vt = transpose(to_linalg(S_times_Vt));
-
-        // --- 
-
-        // --- 
-        float3x3 S_times_Vt_Wrong;
+        float3x3 S_times_Vt;
         for (int j = 0; j < 3; ++j)
         {
-            S_times_Vt_Wrong[j].x = S[j] * L_V[j].x;
-            S_times_Vt_Wrong[j].y = S[j] * L_V[j].y;
-            S_times_Vt_Wrong[j].z = S[j] * L_V[j].z;
+            S_times_Vt[j].x = S[j] * V[j].x;
+            S_times_Vt[j].y = S[j] * V[j].y;
+            S_times_Vt[j].z = S[j] * V[j].z;
         }
+        S_times_Vt = transpose(S_times_Vt);
 
-        float3x3 L_S_times_Vt_wrong = transpose(S_times_Vt_Wrong);
 
-        std::cout << "Wrong: " << L_S_times_Vt_wrong << std::endl;
-        std::cout << "Passes: " << L_S_times_Vt << std::endl;
-
-        // --- 
-
-        // Verify that the product of the matrices is A:
-        const float3x3 product = mul(L_U, L_S_times_Vt);
+        // Verify that the product of the matrices is A (Input)
+        const float3x3 P = mul(U, S_times_Vt);
 
         for (int i = 0; i < 3; ++i)
         {
-            assert(std::abs(product[i].x - L_A_ORIGINAL[i].x) <= valueEps);
-            assert(std::abs(product[i].y - L_A_ORIGINAL[i].y) <= valueEps);
-            assert(std::abs(product[i].z - L_A_ORIGINAL[i].z) <= valueEps);
+            assert(std::abs(P[i].x - A_Copy[i].x) <= valueEps);
+            assert(std::abs(P[i].y - A_Copy[i].y) <= valueEps);
+            assert(std::abs(P[i].z - A_Copy[i].z) <= valueEps);
         }
 
-        // Check that U and V are orthogonal:
-        assert(determinant(L_U) < -0.9);
-        assert(determinant(L_V) < -0.9);
+        // Check that U and V are orthogonal
+        assert(determinant(U) < -0.9);
+        assert(determinant(V) < -0.9);
 
-        check_orthonormal(L_U);
-        check_orthonormal(L_V);
-
-        //std::cout << result << std::endl;
+        check_orthonormal(U);
+        check_orthonormal(V);
     }
 }
