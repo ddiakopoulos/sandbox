@@ -175,10 +175,10 @@ inline float3 hsv_to_rgb(const float3 & hsv)
     return rgb;
 }
 
-inline float3 interpolate_color(const float3 & a, const float3 & b, const float t)
+inline float3 interpolate_color(const float3 & rgb_a, const float3 & rgb_b, const float t)
 {
-    float3 aHSV = rgb_to_hsv(a);
-    float3 bHSV = rgb_to_hsv(b);
+    float3 aHSV = rgb_to_hsv(rgb_a);
+    float3 bHSV = rgb_to_hsv(rgb_b);
     float3 result = linalg::lerp(aHSV, bHSV, t);
     return hsv_to_rgb(result);
 }

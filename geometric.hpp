@@ -142,6 +142,19 @@ namespace avl
     // General 3D Math Helpers //
     /////////////////////////////
 
+    // http://dinodini.wordpress.com/2010/04/05/normalized-tunable-sigmoid-functions/
+    inline float normalized_sigmoid(float x, float k)
+    {
+        float y = 0.f;
+        if (x > 0.5f) 
+        {
+            x -= 0.5f;
+            k = -1.f - k;
+            y = 0.5f;
+        }
+        return y + (2.f * x * k) / (2.f * (1.f + k - 2.f * x));
+    }
+
     // A value type representing an abstract direction vector in 3D space, independent of any coordinate system
     enum class coord_axis { forward, back, left, right, up, down };
 
