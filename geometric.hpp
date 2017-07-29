@@ -142,6 +142,27 @@ namespace avl
     // General 3D Math Helpers //
     /////////////////////////////
 
+    inline float smoothstep(const float edge0, const float edge1, const float x)
+    {
+        const float S = std::min(std::max((x - edge0) / (edge1 - edge0), 0.f), 1.f); // clamp
+        return S * S * (3.f - 2.f * S);
+    }
+
+    inline float2 smoothstep(const float edge0, const float edge1, const float2 & x)
+    {
+        return { smoothstep(edge0, edge1, x.x), smoothstep(edge0, edge1, x.y) };
+    }
+
+    inline float3 smoothstep(const float edge0, const float edge1, const float3 & x)
+    {
+        return { smoothstep(edge0, edge1, x.x), smoothstep(edge0, edge1, x.y), smoothstep(edge0, edge1, x.z) };
+    }
+
+    inline float4 smoothstep(const float edge0, const float edge1, const float4 & x)
+    {
+        return { smoothstep(edge0, edge1, x.x), smoothstep(edge0, edge1, x.y), smoothstep(edge0, edge1, x.z), smoothstep(edge0, edge1, x.w) };
+    }
+
     // http://dinodini.wordpress.com/2010/04/05/normalized-tunable-sigmoid-functions/
     inline float normalized_sigmoid(float x, float k)
     {
