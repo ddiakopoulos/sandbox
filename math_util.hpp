@@ -7,7 +7,6 @@
 
 namespace avl
 {
-
     inline float to_radians(const float degrees) { return degrees * float(ANVIL_PI) / 180.0f; }
     inline float to_degrees(const float radians) { return radians * 180.0f / float(ANVIL_PI); }
     inline double to_radians(const double degrees) { return degrees * ANVIL_PI / 180.0; }
@@ -61,6 +60,33 @@ namespace avl
         velocity += force * delta;
         float displacement = velocity * delta;
         return current + displacement;
+    }
+
+    // Roughly based on https://graemepottsfolio.wordpress.com/tag/damped-spring/
+    inline void critically_damped_spring(const float delta, const float to, const float smooth, const float max_rate, float & x, float & dx)
+    {
+        if (smooth > 0.f)
+        {
+            const float omega = 2.f / smooth;
+            const float od = omega * delta;
+            const float inv_exp = 1.f / (1.f + od + 0.48f * od * od + 0.235f * od * od * od);
+            const float change_limit = max_rate * smooth;
+            const float clamped = clamp((x - to), -change_limit, change_limit);
+            const float t = ((dx + clamped * omega) * delta);
+            dx = (dx - t * omega) * inv_exp;
+            x = (x - clamped) + ((clamped + t) * inv_exp);
+        }
+        else if (delta > 0.f)
+        {
+            const float r = ((to - x) / delta);
+            dx = clamp(r, -max_rate, max_rate);
+            x += dx * delta;
+        }
+        else
+        {
+            x = to;
+            dx -= dx;
+        }
     }
 
 }

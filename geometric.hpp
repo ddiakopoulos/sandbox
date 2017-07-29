@@ -762,9 +762,9 @@ namespace avl
     };
 
     // http://math.stackexchange.com/questions/64430/find-extra-arbitrary-two-points-for-a-plane-given-the-normal-and-a-point-that-l
-    inline void make_basis_vectors(const float3 & normal, float3 & u, float3 & v)
+    inline void make_basis_vectors(const float3 & plane_normal, float3 & u, float3 & v)
     {
-        const float3 N = normalize(normal);
+        const float3 N = normalize(plane_normal);
 
         // Compute mirror vector where w = (Nx + 1, Ny, Nz).
         const float3 w = float3(N.x + 1.f, N.y, N.z);
