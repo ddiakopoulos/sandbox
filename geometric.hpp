@@ -779,6 +779,21 @@ namespace avl
         v = householder_mat[2].xyz();
     }
 
+    inline Plane transform_plane(const float4x4 & transform, const Plane & p)
+    {
+        const float3 normal = transform_vector(transform, p.get_normal());
+        const float3 point_on_plane = transform_coord(transform, p.get_distance() * p.get_normal());
+        return Plane(normal, point_on_plane);
+    }
+
+    inline float3 plane_intersection(const Plane & a, const Plane & b, const Plane & c)
+    {
+        return dot(a.get_normal(), cross(b.get_normal(), c.get_normal())) *
+            (a.get_distance() * cross(b.get_normal(), c.get_normal()) +
+             c.get_distance() * cross(a.get_normal(), b.get_normal()) +
+             b.get_distance() * cross(c.get_normal(), a.get_normal()));
+    }
+
     ////////////////////////////
     //   Lines and Segments   //
     ////////////////////////////
