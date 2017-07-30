@@ -48,16 +48,6 @@ struct ProjectorControl
 
         // invert view?
 
-        // Frustum Vertices in OpenGL Clip Space
-       //float3 ftl = float3(-1, +1, -1); 
-       //float3 fbr = float3(+1, -1, -1); 
-       //float3 fbl = float3(-1, -1, -1); 
-       //float3 ftr = float3(+1, +1, -1); 
-       //float3 ntl = float3(-1, +1, +1); 
-       //float3 nbr = float3(+1, -1, +1); 
-       //float3 nbl = float3(-1, -1, +1); 
-       //float3 ntr = float3(+1, +1, +1); 
-
         const float4x4 projectorViewProj = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 8.f), mul(view, model));
 
         //std::cout << "View Proj: " << projectorViewProj << std::endl;
@@ -76,7 +66,7 @@ struct ProjectorControl
 
         for (auto v : generated_frustum_corners)
         {
-            std::cout << "Corner Vert: " << v << std::endl; // visualize me using frustum_coords above...
+            std::cout << "Corner Vert: " << v << std::endl; 
         }
 
         std::vector<float3> frustum_coords =  {
@@ -94,7 +84,17 @@ struct ProjectorControl
                 ftr, ntl, ntr
             };
 
-        std::vector<float3> frustum_corners = { ftl, fbr, fbl, ftr, ntl, nbr, nbl, ntr };
+        // Frustum Vertices in OpenGL Clip Space
+        float3 ftl_clip = float3(-1, +1, -1); 
+        float3 fbr_clip = float3(+1, -1, -1); 
+        float3 fbl_clip = float3(-1, -1, -1); 
+        float3 ftr_clip = float3(+1, +1, -1); 
+        float3 ntl_clip = float3(-1, +1, +1); 
+        float3 nbr_clip = float3(+1, -1, +1); 
+        float3 nbl_clip = float3(-1, -1, +1); 
+        float3 ntr_clip = float3(+1, +1, +1); 
+
+        std::vector<float3> frustum_corners = { ftl_clip, fbr_clip, fbl_clip, ftr_clip, ntl_clip, nbr_clip, nbl_clip, ntr_clip };
 
        //auto projectorViewProj = projector.get_view_projection_matrix(); // this was inverted
 
