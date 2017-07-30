@@ -15,10 +15,28 @@ using namespace avl;
  * ==================================================================
  */
 
+constexpr const char basic_vert[] = R"(#version 330
+    layout(location = 0) in vec3 vertex;
+    uniform mat4 u_mvp;
+    void main()
+    {
+        gl_Position = u_mvp * vec4(vertex.xyz, 1);
+    }
+)";
+
+constexpr const char basic_frag[] = R"(#version 330
+    out vec4 f_color;
+    uniform vec3 u_color;
+    void main()
+    {
+        f_color = vec4(u_color, 1);
+    }
+)";
+
 struct ProjectorControl
 {
     tinygizmo::rigid_transform transform;
-    GlMesh mesh;// = make_frustum_mesh(1.f);
+    GlMesh mesh;
 
     ProjectorControl()
     {
@@ -44,11 +62,11 @@ struct ProjectorControl
         const float4x4 view = reinterpret_cast<const float4x4 &>(transform.matrix());
 
         // Set the projector's camera matrix
-        projector.viewMatrix = mul(view, model); // This transforms all of our vertex positions back to world space
+        projector.viewMatrix = mul(view, model); // This transforms all of our vertex positions into to world space
 
         // invert view?
 
-        const float4x4 projectorViewProj = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 8.f), mul(view, model));
+        const float4x4 projectorViewProj = projector.get_view_projection_matrix(false);
 
         //std::cout << "View Proj: " << projectorViewProj << std::endl;
 
@@ -63,11 +81,6 @@ struct ProjectorControl
         float3 nbr = generated_frustum_corners[5];
         float3 nbl = generated_frustum_corners[6];
         float3 ntr = generated_frustum_corners[7];
-
-        for (auto v : generated_frustum_corners)
-        {
-            std::cout << "Corner Vert: " << v << std::endl; 
-        }
 
         std::vector<float3> frustum_coords =  {
                 ntl, nbl, ntr,  // near
@@ -84,41 +97,15 @@ struct ProjectorControl
                 ftr, ntl, ntr
             };
 
-        // Frustum Vertices in OpenGL Clip Space
-        float3 ftl_clip = float3(-1, +1, -1); 
-        float3 fbr_clip = float3(+1, -1, -1); 
-        float3 fbl_clip = float3(-1, -1, -1); 
-        float3 ftr_clip = float3(+1, +1, -1); 
-        float3 ntl_clip = float3(-1, +1, +1); 
-        float3 nbr_clip = float3(+1, -1, +1); 
-        float3 nbl_clip = float3(-1, -1, +1); 
-        float3 ntr_clip = float3(+1, +1, +1); 
-
-        std::vector<float3> frustum_corners = { ftl_clip, fbr_clip, fbl_clip, ftr_clip, ntl_clip, nbr_clip, nbl_clip, ntr_clip };
-
-       //auto projectorViewProj = projector.get_view_projection_matrix(); // this was inverted
-
-        for (auto v : frustum_corners)
-        {
-            v = transform_coord(inverse(projectorViewProj), v);
-            std::cout << "Transformed Vert: " << v << std::endl;
-        }
-
         Geometry g;
-
-        for (auto & v : frustum_coords)
-        {
-            //v = transform_coord(inverse(projectorViewProj), v);
-            g.vertices.push_back(v);
-        }
-
+        for (auto & v : frustum_coords) g.vertices.push_back(v);
         mesh = make_mesh_from_geometry(g);
         mesh.set_non_indexed(GL_LINES);
 
         // Draw debug visualization 
         shader->bind();
         shader->uniform("u_viewProj", viewProj);
-        shader->uniform("u_modelMatrix", Identity4x4);
+        shader->uniform("u_modelMatrix", Identity4x4); // frustum is in world space already
         shader->uniform("u_modelMatrixIT", inv(transpose(Identity4x4)));
         mesh.draw_elements();
         shader->unbind();
@@ -165,24 +152,6 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
 
 std::unique_ptr<ProjectorControl> projectorController;
 
-constexpr const char basic_vert[] = R"(#version 330
-    layout(location = 0) in vec3 vertex;
-    uniform mat4 u_mvp;
-    void main()
-    {
-        gl_Position = u_mvp * vec4(vertex.xyz, 1);
-    }
-)";
-
-constexpr const char basic_frag[] = R"(#version 330
-    out vec4 f_color;
-    uniform vec3 u_color;
-    void main()
-    {
-        f_color = vec4(u_color, 1);
-    }
-)";
-
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
     int width, height;
@@ -196,7 +165,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     normalDebug = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
     triplanarTexture = std::make_shared<GlShader>(basic_vert, basic_frag); //shaderMonitor.watch("../assets/shaders/triplanar_vert.glsl", "../assets/shaders/triplanar_frag.glsl");
 
-    projector.projectorMultiplyShader = shaderMonitor.watch("../assets/shaders/projector_multiply_vert.glsl", "../assets/shaders/projector_multiply_frag.glsl");
+    projector.shader = shaderMonitor.watch("../assets/shaders/projector_multiply_vert.glsl", "../assets/shaders/projector_multiply_frag.glsl");
 
     auto cubeGeometry = make_cube();
     for (auto & v : cubeGeometry.vertices)
@@ -299,7 +268,7 @@ void shader_workbench::on_draw()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Draw a gizmo for the projector and visualize a frustum with it
-        projectorController->draw_debug(inverse(terrainModelMatrix), normalDebug.get(), viewProjectionMatrix, gizmo->gizmo_ctx, projector);
+        projectorController->draw_debug(terrainModelMatrix, normalDebug.get(), viewProjectionMatrix, gizmo->gizmo_ctx, projector);
 
         if (renderColor)
         {
@@ -326,22 +295,22 @@ void shader_workbench::on_draw()
             glPolygonOffset(-1.0, -1.0);
             glBlendFunc(blendModes[src_blendmode], blendModes[dst_blendmode]);
 
-            projector.projectorMultiplyShader->bind();
+            projector.shader->bind();
 
-            float4x4 projectorViewProj = projector.get_view_projection_matrix(false);
+            const float4x4 projectionMatrix = projector.get_projector_matrix(false);
 
-            projector.projectorMultiplyShader->uniform("u_time", elapsedTime);
-            projector.projectorMultiplyShader->uniform("u_eye", cam.get_eye_point());
-            projector.projectorMultiplyShader->uniform("u_viewProj", viewProjectionMatrix);
-            projector.projectorMultiplyShader->uniform("u_projector", projectorViewProj);
-            projector.projectorMultiplyShader->uniform("u_modelMatrix", terrainModelMatrix);
-            projector.projectorMultiplyShader->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
-            projector.projectorMultiplyShader->texture("s_cookieTex", 0, *projector.cookieTexture, GL_TEXTURE_2D);
-            projector.projectorMultiplyShader->texture("s_gradientTex", 1, *projector.gradientTexture, GL_TEXTURE_2D);
+            projector.shader->uniform("u_time", elapsedTime);
+            projector.shader->uniform("u_eye", cam.get_eye_point());
+            projector.shader->uniform("u_viewProj", viewProjectionMatrix);
+            projector.shader->uniform("u_projector", projectionMatrix);
+            projector.shader->uniform("u_modelMatrix", terrainModelMatrix);
+            projector.shader->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
+            projector.shader->texture("s_cookieTex", 0, *projector.cookieTexture, GL_TEXTURE_2D);
+            projector.shader->texture("s_gradientTex", 1, *projector.gradientTexture, GL_TEXTURE_2D);
 
             terrainMesh.draw_elements();
 
-            projector.projectorMultiplyShader->unbind();
+            projector.shader->unbind();
 
             glDisable(GL_POLYGON_OFFSET_FILL);
         }

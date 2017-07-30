@@ -5,47 +5,34 @@ struct gl_material_projector
 {
     float4x4 viewMatrix;
 
-    std::shared_ptr<GlShader> projectorLightShader;
-    std::shared_ptr<GlShader> projectorMultiplyShader;
-
+    std::shared_ptr<GlShader> shader;
     std::shared_ptr<GlTexture2D> cookieTexture;
     std::shared_ptr<GlTexture2D> gradientTexture;
-
-    enum projector_material
-    {
-        LIGHT,
-        MULTIPLY
-    };
-
-    projector_material type{ projector_material::MULTIPLY };
 
     // http://developer.download.nvidia.com/CgTutorial/cg_tutorial_chapter09.html
     float4x4 get_view_projection_matrix(bool isOrthographic = false)
     {
-        // Shader expects all positions in model space.
-
         if (isOrthographic)
         {
             const float halfSize = 1.0 * 0.5f;
             return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), viewMatrix);
         }
+        return mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 16.f), viewMatrix);
+    }
 
+    float4x4 get_projector_matrix(bool isOrthographic = false)
+    {
         // Bias matrix is a constant.
         // It performs a linear transformation to go from the [–1, 1]
         // range to the [0, 1] range. Having the coordinates in the [0, 1]
         // range is necessary for the values to be used as texture coordinates.
-        float4x4 bias_matrix = {
+        const float4x4 biasMatrix = {
             { 0.5f,  0.0f,  0.0f,  0.0f },
             { 0.0f,  0.5f,  0.0f,  0.0f },
             { 0.0f,  0.0f,  0.5f,  0.0f },
-            { 0.5f,  0.5f,  0.5f,  1.0f } 
+            { 0.5f,  0.5f,  0.5f,  1.0f }
         };
-
-        //bias_matrix = Identity4x4;
-
-        // p * v * b
-        auto perspectiveMatrix = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 8.f), viewMatrix);
-        return mul(perspectiveMatrix, bias_matrix);
+        return mul(get_view_projection_matrix(false), biasMatrix);
     }
 };
 
