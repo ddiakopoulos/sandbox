@@ -77,24 +77,6 @@ struct ProjectorControl
         float3 nbl = generated_frustum_corners[6];
         float3 ntr = generated_frustum_corners[7];
 
-        // As Triangles
-        /*
-        std::vector<float3> frustum_coords =  {
-                ntl, nbl, ntr,  // near
-                ntr, nbl, nbr,
-                nbr, ftr, ntr,  // right
-                ftr, nbr, fbr,
-                nbl, ftl, ntl,  // left
-                ftl, nbl, fbl,
-                ftl, fbl, fbr,  // far
-                fbr, ftr, ftl,
-                nbl, fbr, fbl,  // bottom
-                fbr, nbl, nbr,
-                ntl, ftr, ftl,  // top
-                ftr, ntl, ntr
-            };
-        */
-
         std::vector<float3> frustum_coords = {
             ntl, ntr, ntr, nbr, nbr, nbl, nbl, ntl, // near quad
             ntl, ftl, ntr, ftr, nbr, fbr, nbl, fbl, // between
