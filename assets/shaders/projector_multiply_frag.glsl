@@ -7,40 +7,34 @@ in vec3 v_world_position;
 in vec3 v_normal;
 in vec2 v_texcoord;
 in vec3 v_eyeDir;
-in vec4 v_uv_shadow;
-in vec4 v_uv_gradient;
+in vec4 v_projector_coords;
 
 uniform sampler2D s_cookieTex;
-uniform sampler2D s_gradientTex;
+uniform sampler2D s_gradientTex; // unused
 
 out vec4 f_color;
 
-vec4 tex1Dproj( sampler1D sampler, vec2 texcoord ) { return textureProj( sampler, texcoord ); }
-vec4 tex2Dproj( sampler2D sampler, vec3 texcoord ) { return textureProj( sampler, texcoord ); }
-vec4 tex3Dproj( sampler3D sampler, vec4 texcoord ) { return textureProj( sampler, texcoord ); }
+// Helpers to sample coordinates that have been projected
+vec4 tex1Dproj(sampler1D samp, vec2 texcoord) { return textureProj(samp, texcoord); }
+vec4 tex2Dproj(sampler2D samp, vec3 texcoord) { return textureProj(samp, texcoord); }
+vec4 tex3Dproj(sampler3D samp, vec4 texcoord) { return textureProj(samp, texcoord); }
 
 void main()
 {
+    vec4 sample = vec4(0, 0, 0, 1);
 
-	vec4 texS = vec4(0);
+    // Front-facing check
+    if (v_projector_coords.w > 0)
+    {
+        // v_projector_coords are uv coords in texture space, .xyw since textureProj will divide by 3rd component for us
+        sample = tex2Dproj(s_cookieTex, v_projector_coords.xyw);
 
-	// in front? 
-	//if (v_uv_shadow.w > 0)
-	{
+        // The above statement is equivalent to: 
+        // vec2 projected_texcoord = vec2(v_uv_shadow.xy / v_uv_shadow.w);
+        // sample = texture(s_cookieTex, projected_texcoord);
 
-	    //vec2 ttc = vec2(v_uv_shadow.xy / v_uv_shadow.w);
+        sample.a = 1.0 - sample.a;
+    }
 
-	    //vec4 texS = tex2Dproj(s_cookieTex, vec3(v_uv_shadow.xyz)); // v_uv_shadow.xyw
-	    texS = tex2Dproj(s_cookieTex, v_uv_shadow.xyw);
-
-	    //texS = texture(s_cookieTex, ttc);
-
-	    texS.a = 1.0 - texS.a;
-
-	}
-
-    //vec4 texF = tex2Dproj(s_gradientTex, vec3(v_uv_gradient.xyw));
-    //vec4 res = mix(vec4(1,1,1,0), texS, texF.a);
-
-    f_color = texS; //vec4(1, 0, 1, 1);
+    f_color = sample;
 }

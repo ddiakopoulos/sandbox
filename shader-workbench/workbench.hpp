@@ -19,6 +19,8 @@ struct gl_material_projector
         return mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 16.f), modelViewMatrix);
     }
 
+    // Transforms a position into projective texture space.
+    // This matrix combines the light view, projection and bias matrices.
     float4x4 get_projector_matrix(bool isOrthographic = false)
     {
         // Bias matrix is a constant.

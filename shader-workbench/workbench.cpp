@@ -169,7 +169,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     glTextureParameteriEXT(topTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTextureParameteriEXT(topTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    projector.cookieTexture = std::make_shared<GlTexture2D>(load_image("../assets/textures/projector/shadow.png", false));
+    projector.cookieTexture = std::make_shared<GlTexture2D>(load_image("../assets/textures/projector/hexagon_select.png", false));
     glTextureParameteriEXT(*projector.cookieTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTextureParameteriEXT(*projector.cookieTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
@@ -272,13 +272,11 @@ void shader_workbench::on_draw()
 
             const float4x4 projectorMatrix = projector.get_projector_matrix(false);
 
-            std::cout << "Projector Matrix: " << projectorMatrix << std::endl;
-
             projector.shader->bind();
             projector.shader->uniform("u_time", elapsedTime);
             projector.shader->uniform("u_eye", cam.get_eye_point());
             projector.shader->uniform("u_viewProj", viewProjectionMatrix);
-            projector.shader->uniform("u_projector", projectorMatrix);
+            projector.shader->uniform("u_projectorMatrix", projectorMatrix);
             projector.shader->uniform("u_modelMatrix", terrainModelMatrix);
             projector.shader->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
             projector.shader->texture("s_cookieTex", 0, *projector.cookieTexture, GL_TEXTURE_2D);
