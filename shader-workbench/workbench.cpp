@@ -18,11 +18,14 @@ using namespace avl;
 struct ProjectorControl
 {
     tinygizmo::rigid_transform transform;
-    GlMesh mesh = make_frustum_mesh(1.f);
+    GlMesh mesh;// = make_frustum_mesh(1.f);
 
     ProjectorControl()
     {
-        Pose lookat = look_at_pose_rh(float3(1, 4, 0), float3(0, 0, 0));
+        //Pose lookat = look_at_pose_rh(float3(0.001, 1, 0.001), float3(0, 0.001, 0));
+        Pose lookat;
+
+        std::cout << lookat << std::endl;
         transform.position.x = lookat.position.x;
         transform.position.y = lookat.position.y;
         transform.position.z = lookat.position.z;
@@ -43,18 +46,80 @@ struct ProjectorControl
         // Set the projector's camera matrix
         projector.viewMatrix = mul(view, model); // This transforms all of our vertex positions back to world space
 
-        //const auto lookAtModelPosition = transform_coord(inverseModelMatrix, float3(2.f, 0.1f, 2.f));
-        //const auto lightModelPosition = transform_coord(inverseModelMatrix, float3(-transform.position.x, -transform.position.y, -transform.position.z));
+        // invert view?
 
-        //auto PoseInModelSpace = look_at_pose_rh(lightModelPosition, lookAtModelPosition);
+        // Frustum Vertices in OpenGL Clip Space
+       //float3 ftl = float3(-1, +1, -1); 
+       //float3 fbr = float3(+1, -1, -1); 
+       //float3 fbl = float3(-1, -1, -1); 
+       //float3 ftr = float3(+1, +1, -1); 
+       //float3 ntl = float3(-1, +1, +1); 
+       //float3 nbr = float3(+1, -1, +1); 
+       //float3 nbl = float3(-1, -1, +1); 
+       //float3 ntr = float3(+1, +1, +1); 
 
-        //projector.viewMatrix = PoseInModelSpace.matrix();
+        const float4x4 projectorViewProj = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 8.f), mul(view, model));
+
+        //std::cout << "View Proj: " << projectorViewProj << std::endl;
+
+        Frustum f(projectorViewProj);
+        auto generated_frustum_corners = make_frustum_corners(f);
+
+        float3 ftl = generated_frustum_corners[0];
+        float3 fbr = generated_frustum_corners[1];
+        float3 fbl = generated_frustum_corners[2];
+        float3 ftr = generated_frustum_corners[3];
+        float3 ntl = generated_frustum_corners[4];
+        float3 nbr = generated_frustum_corners[5];
+        float3 nbl = generated_frustum_corners[6];
+        float3 ntr = generated_frustum_corners[7];
+
+        for (auto v : generated_frustum_corners)
+        {
+            std::cout << "Corner Vert: " << v << std::endl; // visualize me using frustum_coords above...
+        }
+
+        std::vector<float3> frustum_coords =  {
+                ntl, nbl, ntr,  // near
+                ntr, nbl, nbr,
+                nbr, ftr, ntr,  // right
+                ftr, nbr, fbr,
+                nbl, ftl, ntl,  // left
+                ftl, nbl, fbl,
+                ftl, fbl, fbr,  // far
+                fbr, ftr, ftl,
+                nbl, fbr, fbl,  // bottom
+                fbr, nbl, nbr,
+                ntl, ftr, ftl,  // top
+                ftr, ntl, ntr
+            };
+
+        std::vector<float3> frustum_corners = { ftl, fbr, fbl, ftr, ntl, nbr, nbl, ntr };
+
+       //auto projectorViewProj = projector.get_view_projection_matrix(); // this was inverted
+
+        for (auto v : frustum_corners)
+        {
+            v = transform_coord(inverse(projectorViewProj), v);
+            std::cout << "Transformed Vert: " << v << std::endl;
+        }
+
+        Geometry g;
+
+        for (auto & v : frustum_coords)
+        {
+            //v = transform_coord(inverse(projectorViewProj), v);
+            g.vertices.push_back(v);
+        }
+
+        mesh = make_mesh_from_geometry(g);
+        mesh.set_non_indexed(GL_LINES);
 
         // Draw debug visualization 
         shader->bind();
         shader->uniform("u_viewProj", viewProj);
-        shader->uniform("u_modelMatrix", view);
-        shader->uniform("u_modelMatrixIT", inv(transpose(view)));
+        shader->uniform("u_modelMatrix", Identity4x4);
+        shader->uniform("u_modelMatrixIT", inv(transpose(Identity4x4)));
         mesh.draw_elements();
         shader->unbind();
     }
@@ -100,6 +165,24 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
 
 std::unique_ptr<ProjectorControl> projectorController;
 
+constexpr const char basic_vert[] = R"(#version 330
+    layout(location = 0) in vec3 vertex;
+    uniform mat4 u_mvp;
+    void main()
+    {
+        gl_Position = u_mvp * vec4(vertex.xyz, 1);
+    }
+)";
+
+constexpr const char basic_frag[] = R"(#version 330
+    out vec4 f_color;
+    uniform vec3 u_color;
+    void main()
+    {
+        f_color = vec4(u_color, 1);
+    }
+)";
+
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
     int width, height;
@@ -111,10 +194,17 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     terrainScan = shaderMonitor.watch("../assets/shaders/terrainscan_vert.glsl", "../assets/shaders/terrainscan_frag.glsl");
     normalDebug = shaderMonitor.watch("../assets/shaders/normal_debug_vert.glsl", "../assets/shaders/normal_debug_frag.glsl");
-    triplanarTexture = shaderMonitor.watch("../assets/shaders/triplanar_vert.glsl", "../assets/shaders/triplanar_frag.glsl");
+    triplanarTexture = std::make_shared<GlShader>(basic_vert, basic_frag); //shaderMonitor.watch("../assets/shaders/triplanar_vert.glsl", "../assets/shaders/triplanar_frag.glsl");
+
     projector.projectorMultiplyShader = shaderMonitor.watch("../assets/shaders/projector_multiply_vert.glsl", "../assets/shaders/projector_multiply_frag.glsl");
 
-    terrainMesh = make_mesh_from_geometry(make_perlin_mesh(32));
+    auto cubeGeometry = make_cube();
+    for (auto & v : cubeGeometry.vertices)
+    {
+        v *= 10.0f;
+    }
+
+    terrainMesh = make_mesh_from_geometry(cubeGeometry); // make_mesh_from_geometry(make_perlin_mesh(32));
 
     rustyTexture = load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true);
     topTexture = load_image("../assets/nonfree/diffuse.png", true);
@@ -123,7 +213,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     glTextureParameteriEXT(topTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTextureParameteriEXT(topTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    projector.cookieTexture = std::make_shared<GlTexture2D>(load_image("../assets/textures/projector/hexagon_select.png", false));
+    projector.cookieTexture = std::make_shared<GlTexture2D>(load_image("../assets/textures/projector/shadow.png", false));
     glTextureParameteriEXT(*projector.cookieTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTextureParameteriEXT(*projector.cookieTexture, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
@@ -198,7 +288,7 @@ void shader_workbench::on_draw()
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
     if (gizmo) gizmo->update(cam, float2(width, height));
 
-    float4x4 terrainModelMatrix = make_translation_matrix({ -16, 0, -16 });
+    float4x4 terrainModelMatrix = make_translation_matrix({ 0, 0, 0 });
 
     // Main Scene
     {
@@ -208,23 +298,26 @@ void shader_workbench::on_draw()
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Draw a gizmo for the projector and visualize a frustum with it
+        projectorController->draw_debug(inverse(terrainModelMatrix), normalDebug.get(), viewProjectionMatrix, gizmo->gizmo_ctx, projector);
+
         if (renderColor)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             triplanarTexture->bind();
-            triplanarTexture->uniform("u_viewProj", viewProjectionMatrix);
-            triplanarTexture->uniform("u_modelMatrix", terrainModelMatrix);
-            triplanarTexture->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
-            triplanarTexture->texture("s_diffuseTextureA", 0, rustyTexture, GL_TEXTURE_2D);
-            triplanarTexture->texture("s_diffuseTextureB", 1, topTexture, GL_TEXTURE_2D);
-            triplanarTexture->uniform("u_scale", scale);
+            triplanarTexture->uniform("u_mvp", mul(viewProjectionMatrix, terrainModelMatrix));
+            triplanarTexture->uniform("u_color", float3(1, 1, 1));
+
+            //triplanarTexture->uniform("u_viewProj", viewProjectionMatrix);
+            //triplanarTexture->uniform("u_modelMatrix", terrainModelMatrix);
+            //triplanarTexture->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
+            //triplanarTexture->texture("s_diffuseTextureA", 0, rustyTexture, GL_TEXTURE_2D);
+            //triplanarTexture->texture("s_diffuseTextureB", 1, topTexture, GL_TEXTURE_2D);
+            //triplanarTexture->uniform("u_scale", scale);
             terrainMesh.draw_elements();
             triplanarTexture->unbind();
         }
-
-        // Draw a gizmo for the projector and visualize a frustum with it
-        projectorController->draw_debug(terrainModelMatrix, normalDebug.get(), viewProjectionMatrix, gizmo->gizmo_ctx, projector);
 
         if (renderProjective)
         {

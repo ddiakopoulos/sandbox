@@ -30,8 +30,8 @@ void main()
 
     // Transform vertex position into projective texture space.
 	// This matrix combines the light view, projection and bias matrices.
-    v_uv_shadow = (u_projector * vec4(worldPos.xyz, 1)); // not projected, in model space
-    v_uv_gradient = (u_projector * vec4(worldPos.xyz, 1));
+    v_uv_shadow = (u_projector * vec4(inPosition.xyz, 1)); // not projected, in model space
+    v_uv_gradient = (u_projector * vec4(inPosition.xyz, 1));
 
     gl_Position = u_viewProj * worldPos;
 }

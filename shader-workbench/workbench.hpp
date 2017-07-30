@@ -19,6 +19,7 @@ struct gl_material_projector
 
     projector_material type{ projector_material::MULTIPLY };
 
+    // http://developer.download.nvidia.com/CgTutorial/cg_tutorial_chapter09.html
     float4x4 get_view_projection_matrix(bool isOrthographic = false)
     {
         // Shader expects all positions in model space.
@@ -35,13 +36,15 @@ struct gl_material_projector
         // range is necessary for the values to be used as texture coordinates.
         float4x4 bias_matrix = {
             { 0.5f,  0.0f,  0.0f,  0.0f },
-            { 0.0f, -0.5f,  0.0f,  0.0f },
-            { 0.5f,  0.5f,  1.0f,  0.0f },
-            { 0.0f,  0.0f,  0.0f,  1.0f } 
+            { 0.0f,  0.5f,  0.0f,  0.0f },
+            { 0.0f,  0.0f,  0.5f,  0.0f },
+            { 0.5f,  0.5f,  0.5f,  1.0f } 
         };
 
+        //bias_matrix = Identity4x4;
+
         // p * v * b
-        auto perspectiveMatrix = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.05f, 32.f), viewMatrix);
+        auto perspectiveMatrix = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 8.f), viewMatrix);
         return mul(perspectiveMatrix, bias_matrix);
     }
 };

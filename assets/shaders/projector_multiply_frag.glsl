@@ -21,10 +21,23 @@ vec4 tex3Dproj( sampler3D sampler, vec4 texcoord ) { return textureProj( sampler
 
 void main()
 {
-    //vec4 texS = tex2Dproj(s_cookieTex, vec3(v_uv_shadow.xyz)); // v_uv_shadow.xyw
-    vec4 texS = tex2Dproj(s_cookieTex, v_uv_shadow.xyw);
 
-    texS.a = 1.0 - texS.a;
+	vec4 texS = vec4(0);
+
+	// in front? 
+	//if (v_uv_shadow.w > 0)
+	{
+
+	    //vec2 ttc = vec2(v_uv_shadow.xy / v_uv_shadow.w);
+
+	    //vec4 texS = tex2Dproj(s_cookieTex, vec3(v_uv_shadow.xyz)); // v_uv_shadow.xyw
+	    texS = tex2Dproj(s_cookieTex, v_uv_shadow.xyw);
+
+	    //texS = texture(s_cookieTex, ttc);
+
+	    texS.a = 1.0 - texS.a;
+
+	}
 
     //vec4 texF = tex2Dproj(s_gradientTex, vec3(v_uv_gradient.xyw));
     //vec4 res = mix(vec4(1,1,1,0), texS, texF.a);
