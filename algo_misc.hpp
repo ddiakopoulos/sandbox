@@ -42,8 +42,8 @@ struct CantorSet
 
     std::vector<Line> next(const Line & line) const
     {
-        const float3 p0 = line.a;
-        const float3 pn = line.b;
+        const float3 p0 = line.origin;
+        const float3 pn = line.direction;
         float3 p1 = (pn - p0) / 3.0f + p0;
         float3 p2 = ((pn - p0) * 2.f) / 3.f + p0;
 

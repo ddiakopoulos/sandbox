@@ -786,12 +786,24 @@ namespace avl
         return Plane(normal, point_on_plane);
     }
 
+    inline float3 get_plane_point(const Plane & p)
+    {
+        return -1.0f * p.get_distance() * p.get_normal();
+    }
+
     inline float3 plane_intersection(const Plane & a, const Plane & b, const Plane & c)
     {
-        return dot(a.get_normal(), cross(b.get_normal(), c.get_normal())) *
-            (a.get_distance() * cross(b.get_normal(), c.get_normal()) +
-             c.get_distance() * cross(a.get_normal(), b.get_normal()) +
-             b.get_distance() * cross(c.get_normal(), a.get_normal()));
+        const float3 p1 = get_plane_point(a);
+        const float3 p2 = get_plane_point(b);
+        const float3 p3 = get_plane_point(c);
+
+        const float3 n1 = a.get_normal();
+        const float3 n2 = b.get_normal();
+        const float3 n3 = c.get_normal();
+
+        const float det = dot(n1, cross(n2, n3));
+
+        return (dot(p1, n1) * cross(n2, n3) + dot(p2, n2) * cross(n3, n1) + dot(p3, n3) * cross(n1, n2)) / det;
     }
 
     ////////////////////////////
@@ -807,29 +819,21 @@ namespace avl
 
     struct Line
     {
-        float3 a, b;
-        Line(const float3 & a, const float3 & b) : a(a), b(b) {}
+        float3 origin, direction;
+        Line(const float3 & origin, const float3 & direction) : origin(origin), direction(direction) {}
     };
 
-    inline float3 closest_point_on_line(const float3 & point, const Line & l)
+    inline float3 closest_point_on_segment(const float3 & point, const Segment & s)
     {
-        const float length = distance(l.a, l.b);
-        const float3 v = point - l.a;
-        const float3 dir = (l.b - l.a) / length;
-
-        const float d = dot(v, dir);
-
-        if (d <= 0.f) return l.a;
-        if (d >= length) return l.b;
-        return l.a + dir * d;
+        const float length = distance(s.a, s.b);
+        const float3 dir = (s.b - s.a) / length;
+        const float d = dot(point - s.a, dir);
+        if (d <= 0.f) return s.a;
+        if (d >= length) return s.b;
+        return s.a + dir * d;
     }
 
-    /////////////////////////////////
-    // Object-Object intersections //
-    /////////////////////////////////
-    
-    // http://paulbourke.net/geometry/pointlineplane/
-    inline Line intersect_plane_plane(const Plane & p1, const Plane & p2)
+    inline Line plane_intersection(const Plane & p1, const Plane & p2)
     {
         const float ndn = dot(p1.get_normal(), p2.get_normal());
         const float recDeterminant = 1.f / (1.f - (ndn * ndn));
@@ -838,13 +842,15 @@ namespace avl
         return Line((c1 * p1.get_normal()) + (c2 * p2.get_normal()), normalize(cross(p1.get_normal(), p2.get_normal())));
     }
 
+    /////////////////////////////////
+    // Object-Object intersections //
+    /////////////////////////////////
+    
     inline float3 intersect_line_plane(const Line & l, const Plane & p)
     {
-        const float3 u = l.b - l.a;
-        const float3 w = l.a - p.get_distance();
-        const float d = dot(p.get_normal(), u);
-        const float t = -dot(p.get_normal(), w) / d;
-        return l.a + u * t;
+        const float d = dot(l.direction, p.get_normal());
+        const float distance = p.distance_to(l.origin) / d;
+        return (l.origin - (distance * l.direction));
     }
     
     //////////////////////////////
@@ -998,23 +1004,23 @@ namespace avl
 
         Frustum()
         {
-            planes[FrustumPlane::RIGHT] = Plane({ -1, 0, 0 }, 1.f);
-            planes[FrustumPlane::LEFT] = Plane({ 1, 0, 0 }, 1.f);
-            planes[FrustumPlane::BOTTOM] = Plane({ 0, 0, 1 }, 1.f);
-            planes[FrustumPlane::TOP] = Plane({ 0, 0, -1 }, 1.f);
-            planes[FrustumPlane::NEAR] = Plane({ 0, 1, 0 }, 1.f);
-            planes[FrustumPlane::FAR] = Plane({ 0, -1, 0 }, 1.f);
+            planes[FrustumPlane::RIGHT] =   Plane({ +1, 0, 0 }, 1.f);
+            planes[FrustumPlane::LEFT] =    Plane({ -1, 0, 0 }, 1.f);
+            planes[FrustumPlane::BOTTOM] =  Plane({ 0, -1, 0 }, 1.f);
+            planes[FrustumPlane::TOP] =     Plane({ 0, +1, 0 }, 1.f);
+            planes[FrustumPlane::NEAR] =    Plane({ 0, 0,  1 }, 1.f);
+            planes[FrustumPlane::FAR] =     Plane({ 0, 0, -1 }, 1.f);
         }
 
         Frustum(const float4x4 & viewProj)
         {
-            for (int i = 0; i < 4; ++i) planes[FrustumPlane::RIGHT].equation[i] = viewProj[i][3] - viewProj[i][0];
-            for (int i = 0; i < 4; ++i) planes[FrustumPlane::LEFT].equation[i] = viewProj[i][3] - viewProj[i][0];
-            for (int i = 0; i < 4; ++i) planes[FrustumPlane::BOTTOM].equation[i] = viewProj[i][3] + viewProj[i][1];
-            for (int i = 0; i < 4; ++i) planes[FrustumPlane::TOP].equation[i] = viewProj[i][3] - viewProj[i][1];
-            for (int i = 0; i < 4; ++i) planes[FrustumPlane::FAR].equation[i] = viewProj[i][3] - viewProj[i][2];
-            for (int i = 0; i < 4; ++i) planes[FrustumPlane::NEAR].equation[i] = viewProj[i][3] + viewProj[i][2];
-            for (auto p : planes) p.normalize();
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::RIGHT].equation[i] =   viewProj[i][3] - viewProj[i][0];
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::LEFT].equation[i] =    viewProj[i][3] + viewProj[i][0];
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::BOTTOM].equation[i] =  viewProj[i][3] + viewProj[i][1];
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::TOP].equation[i] =     viewProj[i][3] - viewProj[i][1];
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::NEAR].equation[i] =    viewProj[i][3] + viewProj[i][2];
+            for (int i = 0; i < 4; ++i) planes[FrustumPlane::FAR].equation[i] =     viewProj[i][3] - viewProj[i][2];
+            for (auto & p : planes) p.normalize();
         }
 
         bool point_in_frustum(const float3 & v)
@@ -1028,19 +1034,14 @@ namespace avl
     {
         std::array<float3, 8> corners;
 
-        Line farLeft = intersect_plane_plane(f.planes[FrustumPlane::LEFT], f.planes[FrustumPlane::FAR]);
-        Line farRight = intersect_plane_plane(f.planes[FrustumPlane::RIGHT], f.planes[FrustumPlane::FAR]);
-        Line nearLeft = intersect_plane_plane(f.planes[FrustumPlane::LEFT], f.planes[FrustumPlane::NEAR]);
-        Line nearRight = intersect_plane_plane(f.planes[FrustumPlane::RIGHT], f.planes[FrustumPlane::NEAR]);
-
-        corners[0] = intersect_line_plane(farLeft, f.planes[FrustumPlane::TOP]);
-        corners[1] = intersect_line_plane(farRight, f.planes[FrustumPlane::TOP]);
-        corners[2] = intersect_line_plane(farLeft, f.planes[FrustumPlane::BOTTOM]);
-        corners[3] = intersect_line_plane(farRight, f.planes[FrustumPlane::BOTTOM]);
-        corners[4] = intersect_line_plane(nearLeft, f.planes[FrustumPlane::TOP]);
-        corners[5] = intersect_line_plane(nearRight, f.planes[FrustumPlane::TOP]);
-        corners[6] = intersect_line_plane(nearLeft, f.planes[FrustumPlane::BOTTOM]);
-        corners[7] = intersect_line_plane(nearRight, f.planes[FrustumPlane::BOTTOM]);
+        corners[0] = plane_intersection(f.planes[FrustumPlane::FAR], f.planes[FrustumPlane::TOP], f.planes[FrustumPlane::LEFT]);
+        corners[1] = plane_intersection(f.planes[FrustumPlane::FAR], f.planes[FrustumPlane::BOTTOM], f.planes[FrustumPlane::RIGHT]);
+        corners[2] = plane_intersection(f.planes[FrustumPlane::FAR], f.planes[FrustumPlane::BOTTOM], f.planes[FrustumPlane::LEFT]);
+        corners[3] = plane_intersection(f.planes[FrustumPlane::FAR], f.planes[FrustumPlane::TOP], f.planes[FrustumPlane::RIGHT]);
+        corners[4] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::TOP], f.planes[FrustumPlane::LEFT]);
+        corners[5] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::BOTTOM], f.planes[FrustumPlane::RIGHT]);
+        corners[6] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::BOTTOM], f.planes[FrustumPlane::LEFT]);
+        corners[7] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::TOP], f.planes[FrustumPlane::RIGHT]);
 
         return corners;
     }
