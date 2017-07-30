@@ -1,15 +1,10 @@
 #include "index.hpp"
 #include "gl-gizmo.hpp"
-#include "holo-scan-effect.hpp"
-#include "terrain-scan-effect.hpp"
-#include "fade-to-skybox.hpp"
-#include "cheap-subsurface-scattering.hpp"
-#include "area-light-ltc.hpp"
-#include "lab-teleportation-sphere.hpp"
-#include "triplanar-terrain.hpp"
 
 struct gl_material_projector
 {
+    float4x4 viewMatrix;
+
     std::shared_ptr<GlShader> projectorLightShader;
     std::shared_ptr<GlShader> projectorMultiplyShader;
 
@@ -24,21 +19,31 @@ struct gl_material_projector
 
     projector_material type{ projector_material::MULTIPLY };
 
-    bool isOrthographic{ false };
-
-    Pose pose;
-
-    float4x4 get_view_projection_matrix()
+    float4x4 get_view_projection_matrix(bool isOrthographic = false)
     {
+        // Shader expects all positions in model space.
+
         if (isOrthographic)
         {
             const float halfSize = 1.0 * 0.5f;
-            return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), make_view_matrix_from_pose(pose));
+            return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), viewMatrix);
         }
-        
-        return mul(make_perspective_matrix(to_radians(75.f), 1.0f, 0.05f, 32.f), make_view_matrix_from_pose(pose));
-    }
 
+        // Bias matrix is a constant.
+        // It performs a linear transformation to go from the [–1, 1]
+        // range to the [0, 1] range. Having the coordinates in the [0, 1]
+        // range is necessary for the values to be used as texture coordinates.
+        float4x4 bias_matrix = {
+            { 0.5f,  0.0f,  0.0f,  0.0f },
+            { 0.0f, -0.5f,  0.0f,  0.0f },
+            { 0.5f,  0.5f,  1.0f,  0.0f },
+            { 0.0f,  0.0f,  0.0f,  1.0f } 
+        };
+
+        // p * v * b
+        auto perspectiveMatrix = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.05f, 32.f), viewMatrix);
+        return mul(perspectiveMatrix, bias_matrix);
+    }
 };
 
 struct shader_workbench : public GLFWApp
@@ -51,27 +56,16 @@ struct shader_workbench : public GLFWApp
     std::unique_ptr<GlGizmo> gizmo;
 
     GlTexture2D rustyTexture, topTexture;
-    GlTexture2D sceneColorTexture;
-    GlTexture2D sceneDepthTexture;
-    GlFramebuffer sceneFramebuffer;
 
     gl_material_projector projector;
 
     float elapsedTime{ 0 };
 
-    float scanDistance{ 1.0f };
-    float scanWidth{ 5.0f };
-    float leadSharp{ 8.0f };
-    float4 leadColor{ 0.8f, 0.6f, 0.3f, 0};
-    float4 midColor{ 0.975f, 0.78f, 0.366f, 0 };
-    float4 trailColor{ 1.f, 0.83f, 1, 0 };
-    float4 hbarColor{ 0.05, 0.05, 0.05, 0 };
-
     std::shared_ptr<GlShader> terrainScan;
     std::shared_ptr<GlShader> triplanarTexture;
     std::shared_ptr<GlShader> normalDebug;
 
-    GlMesh terrainMesh, fullscreenQuad;
+    GlMesh terrainMesh;
 
     shader_workbench();
     ~shader_workbench();

@@ -27,7 +27,11 @@ void main()
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal,0)).xyz);
     v_texcoord = inTexcoord;
     v_eyeDir = normalize(u_eye - worldPos.xyz);
-    v_uv_shadow = (u_projector * vec4(worldPos.xyz, 1));
+
+    // Transform vertex position into projective texture space.
+	// This matrix combines the light view, projection and bias matrices.
+    v_uv_shadow = (u_projector * vec4(worldPos.xyz, 1)); // not projected, in model space
     v_uv_gradient = (u_projector * vec4(worldPos.xyz, 1));
+
     gl_Position = u_viewProj * worldPos;
 }

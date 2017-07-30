@@ -141,13 +141,6 @@
     <ClCompile Include="workbench.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="area-light-ltc.hpp" />
-    <ClInclude Include="cheap-subsurface-scattering.hpp" />
-    <ClInclude Include="fade-to-skybox.hpp" />
-    <ClInclude Include="holo-scan-effect.hpp" />
-    <ClInclude Include="lab-teleportation-sphere.hpp" />
-    <ClInclude Include="terrain-scan-effect.hpp" />
-    <ClInclude Include="triplanar-terrain.hpp" />
     <ClInclude Include="workbench.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

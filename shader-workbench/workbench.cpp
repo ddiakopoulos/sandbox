@@ -4,6 +4,62 @@
 
 using namespace avl;
 
+/*
+ * Blend Mode Reference
+ * ==================================================================
+ * glBlendFunc: SrcAlpha, OneMinusSrcAlpha     // Alpha blending
+ * glBlendFunc: One, One                       // Additive
+ * glBlendFunc: OneMinusDstColor, One          // Soft Additive
+ * glBlendFunc: DstColor, Zero                 // Multiplicative
+ * glBlendFunc: DstColor, SrcColor             // 2x Multiplicative
+ * ==================================================================
+ */
+
+struct ProjectorControl
+{
+    tinygizmo::rigid_transform transform;
+    GlMesh mesh = make_frustum_mesh(1.f);
+
+    ProjectorControl()
+    {
+        Pose lookat = look_at_pose_rh(float3(1, 4, 0), float3(0, 0, 0));
+        transform.position.x = lookat.position.x;
+        transform.position.y = lookat.position.y;
+        transform.position.z = lookat.position.z;
+        transform.orientation.x = lookat.orientation.x;
+        transform.orientation.y = lookat.orientation.y;
+        transform.orientation.z = lookat.orientation.z;
+        transform.orientation.w = lookat.orientation.w;
+    }
+
+    void draw_debug(const float4x4 & model, GlShader * shader, const float4x4 & viewProj, tinygizmo::gizmo_context & ctx, gl_material_projector & projector)
+    {
+        // Draw the Gizmo
+        tinygizmo::transform_gizmo("projector", ctx, transform);
+
+        // Extract native linalg float4x4 from tinygizmo
+        const float4x4 view = reinterpret_cast<const float4x4 &>(transform.matrix());
+
+        // Set the projector's camera matrix
+        projector.viewMatrix = mul(view, model); // This transforms all of our vertex positions back to world space
+
+        //const auto lookAtModelPosition = transform_coord(inverseModelMatrix, float3(2.f, 0.1f, 2.f));
+        //const auto lightModelPosition = transform_coord(inverseModelMatrix, float3(-transform.position.x, -transform.position.y, -transform.position.z));
+
+        //auto PoseInModelSpace = look_at_pose_rh(lightModelPosition, lookAtModelPosition);
+
+        //projector.viewMatrix = PoseInModelSpace.matrix();
+
+        // Draw debug visualization 
+        shader->bind();
+        shader->uniform("u_viewProj", viewProj);
+        shader->uniform("u_modelMatrix", view);
+        shader->uniform("u_modelMatrixIT", inv(transpose(view)));
+        mesh.draw_elements();
+        shader->unbind();
+    }
+};
+
 Geometry make_perlin_mesh(int gridSize = 32.f)
 {
     Geometry terrain;
@@ -13,7 +69,7 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
         for (int z = 0; z <= gridSize; z++)
         {
             float y = ((noise::noise(float2(x * 0.1f, z * 0.1f))) + 1.0f) / 2.0f;
-            y = y * 3.0f;
+            y = y * 2.0f;
             terrain.vertices.push_back({ (float)x, (float)y, (float)z });
         }
     }
@@ -42,45 +98,10 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
     return terrain;
 }
 
-inline GlMesh fullscreen_quad_extra(const float4x4 & projectionMatrix, const float4x4 & viewMatrix)
-{
-    // Camera position is reconstructed in the shader, but we still need the correct orientation 
-    float4x4 viewMatrixNoTranslation = viewMatrix;
-    viewMatrixNoTranslation.w = float4(0, 0, 0, 1);
-
-    // Extract the frustum coordinates of the far clip plane in ndc space
-    float3 frustumVerts[8] = {
-        { -1.f, -1.f, 1.f},
-        { -1.f, +1.f, 1.f},
-        { +1.f, +1.f, 1.f},
-        { +1.f, -1.f, 1.f},
-    };
-
-    for (unsigned int j = 0; j < 8; ++j) frustumVerts[j] = transform_coord(inverse(mul(projectionMatrix, viewMatrixNoTranslation)), frustumVerts[j]);
-
-    struct Vertex { float3 position; float2 texcoord; float3 ray; };
-    const float3 verts[6] = { { -1.0f, -1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } };
-    const float2 texcoords[6] = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
-    const float3 rayCoords[6] = { frustumVerts[0], frustumVerts[3], frustumVerts[1], frustumVerts[1], frustumVerts[3], frustumVerts[2] };
-    const uint3 faces[2] = { { 0, 1, 2 },{ 3, 4, 5 } };
-    std::vector<Vertex> vertices;
-    for (int i = 0; i < 6; ++i) vertices.push_back({ verts[i], texcoords[i], rayCoords[i] });
-
-    GlMesh mesh;
-    mesh.set_vertices(vertices, GL_STATIC_DRAW);
-    mesh.set_attribute(0, &Vertex::position);
-    mesh.set_attribute(1, &Vertex::texcoord);
-    mesh.set_attribute(2, &Vertex::ray);
-    mesh.set_elements(faces, GL_STATIC_DRAW);
-    return mesh;
-}
+std::unique_ptr<ProjectorControl> projectorController;
 
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
-    float3 u, v;
-    make_basis_vectors({ 0, 1, 0 }, u, v);
-    std::cout << "U: " << u << "V: " << v << std::endl;
-
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
@@ -93,13 +114,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     triplanarTexture = shaderMonitor.watch("../assets/shaders/triplanar_vert.glsl", "../assets/shaders/triplanar_frag.glsl");
     projector.projectorMultiplyShader = shaderMonitor.watch("../assets/shaders/projector_multiply_vert.glsl", "../assets/shaders/projector_multiply_frag.glsl");
 
-    terrainMesh = make_mesh_from_geometry(make_perlin_mesh(16));
-
-    sceneColorTexture.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    sceneDepthTexture.setup(width, height, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-    glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sceneColorTexture, 0);
-    glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, sceneDepthTexture, 0);
-    sceneFramebuffer.check_complete();
+    terrainMesh = make_mesh_from_geometry(make_perlin_mesh(32));
 
     rustyTexture = load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true);
     topTexture = load_image("../assets/nonfree/diffuse.png", true);
@@ -118,7 +133,9 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     gizmo.reset(new GlGizmo());
 
-    projector.pose = look_at_pose_rh({ 0.1f, 4.0, 0.1f }, { 0, 0.1f, 0 });
+    projectorController.reset(new ProjectorControl());
+
+    //projector.pose = look_at_pose_rh({ 0.1f, 4.0, 0.1f }, { 0, 0.1f, 0 });
     std::cout << "Cookie: " << *projector.cookieTexture << std::endl;
     std::cout << "Gradient: " << *projector.gradientTexture << std::endl;
 
@@ -156,19 +173,14 @@ void shader_workbench::on_update(const UpdateEvent & e)
     elapsedTime += e.timestep_ms;
 }
 
-static float3 scale = float3(0.25);
-static bool renderColor = true;
-static bool renderProjective = true;
-static float3 projectorEye = float3(0, 0, 0);
-static float3 projectorTarget = float3(0, 0, 0);
-
 const char * listbox_items[] = { "GL_ZERO", "GL_ONE", "GL_SRC_COLOR", "GL_ONE_MINUS_SRC_COLOR", "GL_DST_COLOR", "GL_ONE_MINUS_DST_COLOR", "GL_SRC_ALPHA", "GL_DST_ALPHA", "GL_ONE_MINUS_DST_ALPHA" };
 std::vector<int> blendModes = { GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA };
 
 static int src_blendmode = 0;
 static int dst_blendmode = 6;
-
-tinygizmo::rigid_transform terrainTransform;
+static bool renderColor = true;
+static bool renderProjective = true;
+static float3 scale = float3(0.25);
 
 void shader_workbench::on_draw()
 {
@@ -181,26 +193,12 @@ void shader_workbench::on_draw()
 
     gpuTimer.start();
 
-    /*
-    Blend SrcAlpha OneMinusSrcAlpha     // Alpha blending
-    Blend One One                       // Additive
-    Blend OneMinusDstColor One          // Soft Additive
-    Blend DstColor Zero                 // Multiplicative
-    Blend DstColor SrcColor             // 2x Multiplicative
-    */
-
-    // GL_ZERO, GL_SRC_ALPHA
     const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
     if (gizmo) gizmo->update(cam, float2(width, height));
 
-    /*
-    fullscreenQuad = fullscreen_quad_extra(projectionMatrix, viewMatrix);
-
-    tinygizmo::transform_gizmo("terrain", gizmo->gizmo_ctx, terrainTransform);
-    //float4x4 terrainModelMatrix = make_translation_matrix({ -8, 0, -8 });
-    float4x4 terrainModelMatrix = reinterpret_cast<const float4x4 &>(terrainTransform.matrix());
+    float4x4 terrainModelMatrix = make_translation_matrix({ -16, 0, -16 });
 
     // Main Scene
     {
@@ -225,6 +223,9 @@ void shader_workbench::on_draw()
             triplanarTexture->unbind();
         }
 
+        // Draw a gizmo for the projector and visualize a frustum with it
+        projectorController->draw_debug(terrainModelMatrix, normalDebug.get(), viewProjectionMatrix, gizmo->gizmo_ctx, projector);
+
         if (renderProjective)
         {
             //glDisable(GL_DEPTH_TEST);
@@ -234,7 +235,7 @@ void shader_workbench::on_draw()
 
             projector.projectorMultiplyShader->bind();
 
-            float4x4 projectorViewProj = projector.get_view_projection_matrix();
+            float4x4 projectorViewProj = projector.get_view_projection_matrix(false);
 
             projector.projectorMultiplyShader->uniform("u_time", elapsedTime);
             projector.projectorMultiplyShader->uniform("u_eye", cam.get_eye_point());
@@ -256,74 +257,15 @@ void shader_workbench::on_draw()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    */
-
-    /*
-    // Screenspace Effect
-    {
-        glDisable(GL_DEPTH_TEST);
-
-        terrainScan->bind();
-
-        terrainScan->uniform("u_time", elapsedTime);
-        terrainScan->uniform("u_eye", cam.get_eye_point());
-
-        terrainScan->uniform("u_inverseViewProjection", inverse(viewProjectionMatrix));
-
-        terrainScan->uniform("u_scanDistance", scanDistance);
-        terrainScan->uniform("u_scanWidth", scanWidth);
-        terrainScan->uniform("u_leadSharp", leadSharp);
-        terrainScan->uniform("u_leadColor", leadColor);
-        terrainScan->uniform("u_midColor", midColor);
-        terrainScan->uniform("u_trailColor", trailColor);
-        terrainScan->uniform("u_hbarColor", hbarColor);
-
-        terrainScan->texture("s_colorTex", 0, sceneColorTexture, GL_TEXTURE_2D);
-        terrainScan->texture("s_depthTex", 1, sceneDepthTexture, GL_TEXTURE_2D);
-
-        fullscreenQuad.draw_elements();
-
-        terrainScan->unbind();
-    }
-    */
-
     gpuTimer.stop();
 
     igm->begin_frame();
 
-    if (ImGui::SliderFloat3("Projector Eye", &projectorEye.x, -5.f, 5.f))
-    {
-        projector.pose = look_at_pose_rh(projectorEye, projectorTarget);
-    }
-    if (ImGui::SliderFloat3("Projector Target", &projectorTarget.x, -5.f, 5.f))
-    {
-        projector.pose = look_at_pose_rh(projectorEye, projectorTarget);
-    }
-
-    //ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
-    //ImGui::Checkbox("Render Color", &renderColor);
-    //ImGui::Checkbox("Render Projective", &renderProjective);
-    //ImGui::ListBox("Src Blendmode", &src_blendmode, listbox_items, IM_ARRAYSIZE(listbox_items), 9);
-    //ImGui::ListBox("DestBlendmode", &dst_blendmode, listbox_items, IM_ARRAYSIZE(listbox_items), 9);
-
-    static float theta = 0.0f;
-    static float phi = 0.0f;
-
-    ImGui::SliderFloat("Theta", &theta, 0.0f, ANVIL_PI);
-    ImGui::SliderFloat("Phi", &phi, 0.f, ANVIL_TWO_PI);
-
-    std::cout << cartsesian_coord(theta, phi) << std::endl;
-
-    /*
-    ImGui::SliderFloat3("Triplanar Scale", &scale.x, 0.0f, 1.f);
-    ImGui::SliderFloat("Scan Distance", &scanDistance, 0.1f, 10.f);
-    ImGui::SliderFloat("Scan Width", &scanWidth, 0.1f, 10.f);
-    ImGui::SliderFloat("Lead Sharp", &leadSharp, 0.1f, 10.f);
-    ImGui::SliderFloat4("Lead Color", &leadColor.x, 0.0f, 1.f);
-    ImGui::SliderFloat4("Mid Color", &midColor.x, 0.0f, 1.f);
-    ImGui::SliderFloat4("Trail Color", &trailColor.x, 0.0f, 1.f);
-    ImGui::SliderFloat4("hbarColor Color", &hbarColor.x, 0.0f, 1.f);
-    */
+    ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
+    ImGui::Checkbox("Render Color", &renderColor);
+    ImGui::Checkbox("Render Projective", &renderProjective);
+    ImGui::ListBox("Src Blendmode", &src_blendmode, listbox_items, IM_ARRAYSIZE(listbox_items), 9);
+    ImGui::ListBox("DestBlendmode", &dst_blendmode, listbox_items, IM_ARRAYSIZE(listbox_items), 9);
 
     igm->end_frame();
     if (gizmo) gizmo->draw();
