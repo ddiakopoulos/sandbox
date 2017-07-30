@@ -61,7 +61,7 @@ struct ProjectorControl
         // Extract native linalg float4x4 from tinygizmo
         const float4x4 view = reinterpret_cast<const float4x4 &>(transform.matrix());
 
-        projector.modelViewMatrix = mul(view, model); // This transforms all of our vertex positions into to world space
+        projector.modelViewMatrix = mul(inverse(view), model); // This transforms all of our vertex positions into to world space
 
         const float4x4 projectorViewProj = projector.get_view_projection_matrix(false);
 
@@ -189,15 +189,9 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     flycam.set_camera(&cam);
 }
 
-shader_workbench::~shader_workbench()
-{
+shader_workbench::~shader_workbench() { }
 
-}
-
-void shader_workbench::on_window_resize(int2 size)
-{
-
-}
+void shader_workbench::on_window_resize(int2 size) { }
 
 void shader_workbench::on_input(const InputEvent & event)
 {
@@ -265,13 +259,6 @@ void shader_workbench::on_draw()
             basicShader->bind();
             basicShader->uniform("u_mvp", mul(viewProjectionMatrix, terrainModelMatrix));
             basicShader->uniform("u_color", float3(1, 1, 0.75f));
-
-            //triplanarTexture->uniform("u_viewProj", viewProjectionMatrix);
-            //triplanarTexture->uniform("u_modelMatrix", terrainModelMatrix);
-            //triplanarTexture->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
-            //triplanarTexture->texture("s_diffuseTextureA", 0, rustyTexture, GL_TEXTURE_2D);
-            //triplanarTexture->texture("s_diffuseTextureB", 1, topTexture, GL_TEXTURE_2D);
-            //triplanarTexture->uniform("u_scale", scale);
             terrainMesh.draw_elements();
             basicShader->unbind();
         }
@@ -283,21 +270,20 @@ void shader_workbench::on_draw()
             glPolygonOffset(-1.0, -1.0);
             glBlendFunc(blendModes[src_blendmode], blendModes[dst_blendmode]);
 
+            const float4x4 projectorMatrix = projector.get_projector_matrix(false);
+
+            std::cout << "Projector Matrix: " << projectorMatrix << std::endl;
+
             projector.shader->bind();
-
-            const float4x4 projectionMatrix = projector.get_projector_matrix(false);
-
             projector.shader->uniform("u_time", elapsedTime);
             projector.shader->uniform("u_eye", cam.get_eye_point());
             projector.shader->uniform("u_viewProj", viewProjectionMatrix);
-            projector.shader->uniform("u_projector", projectionMatrix);
+            projector.shader->uniform("u_projector", projectorMatrix);
             projector.shader->uniform("u_modelMatrix", terrainModelMatrix);
             projector.shader->uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
             projector.shader->texture("s_cookieTex", 0, *projector.cookieTexture, GL_TEXTURE_2D);
             projector.shader->texture("s_gradientTex", 1, *projector.gradientTexture, GL_TEXTURE_2D);
-
             terrainMesh.draw_elements();
-
             projector.shader->unbind();
 
             glDisable(GL_POLYGON_OFFSET_FILL);

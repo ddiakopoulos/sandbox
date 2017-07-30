@@ -9,7 +9,6 @@ struct gl_material_projector
     std::shared_ptr<GlTexture2D> cookieTexture;
     std::shared_ptr<GlTexture2D> gradientTexture;
 
-    // http://developer.download.nvidia.com/CgTutorial/cg_tutorial_chapter09.html
     float4x4 get_view_projection_matrix(bool isOrthographic = false)
     {
         if (isOrthographic)
@@ -32,7 +31,8 @@ struct gl_material_projector
             { 0.0f,  0.0f,  0.5f,  0.0f },
             { 0.5f,  0.5f,  0.5f,  1.0f }
         };
-        return mul(get_view_projection_matrix(false), biasMatrix);
+
+        return mul(biasMatrix, get_view_projection_matrix(false));
     }
 };
 
