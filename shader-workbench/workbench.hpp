@@ -3,7 +3,7 @@
 
 struct gl_material_projector
 {
-    float4x4 viewMatrix;
+    float4x4 modelViewMatrix;
 
     std::shared_ptr<GlShader> shader;
     std::shared_ptr<GlTexture2D> cookieTexture;
@@ -15,9 +15,9 @@ struct gl_material_projector
         if (isOrthographic)
         {
             const float halfSize = 1.0 * 0.5f;
-            return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), viewMatrix);
+            return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), modelViewMatrix);
         }
-        return mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 16.f), viewMatrix);
+        return mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 16.f), modelViewMatrix);
     }
 
     float4x4 get_projector_matrix(bool isOrthographic = false)
