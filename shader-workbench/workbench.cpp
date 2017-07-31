@@ -26,7 +26,7 @@ std::shared_ptr<GlShader> litShader;
 std::shared_ptr<GlShader> basicShader;
 std::unique_ptr<RenderableGrid> grid;
 
-GlMesh fullscreen_quad, capsuleMesh;
+GlMesh fullscreen_quad, capsuleMesh, portalMesh, frustumMesh;
 
 struct PointLight
 {
@@ -36,6 +36,7 @@ struct PointLight
 
 std::vector<PointLight> lights;
 std::vector<Pose> objects;
+Pose portalCameraView;
 
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
@@ -46,12 +47,13 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
+    basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
     litShader = shaderMonitor.watch("../assets/shaders/simple_vert.glsl", "../assets/shaders/simple_frag.glsl");
 
     fullscreen_quad = make_fullscreen_quad_ndc();
     capsuleMesh = make_capsule_mesh(32, 0.5f, 2.f);
-
-    basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
+    portalMesh = make_plane_mesh(4, 4, 64, 64);
+    frustumMesh = make_frustum_mesh();
 
     portalCameraRGB.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     portalCameraDepth.setup(width, height, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
@@ -72,6 +74,8 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     gizmo.reset(new GlGizmo());
     grid.reset(new RenderableGrid());
+
+    portalCameraView = look_at_pose_rh({ -9, 3, 0 }, { 0, 0.5, 0 });
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -138,7 +142,22 @@ void shader_workbench::on_draw()
             capsuleMesh.draw_elements();
         }
 
+        {
+            float4x4 portalMatrix = make_translation_matrix({ 0, 2, -12 });
+            litShader->uniform("u_modelMatrix", portalMatrix);
+            litShader->uniform("u_modelMatrixIT", inv(transpose(portalMatrix)));
+            portalMesh.draw_elements();
+        }
+
         litShader->unbind();
+
+        {
+            basicShader->bind();
+            basicShader->uniform("u_mvp", mul(viewProjectionMatrix, portalCameraView.matrix()));
+            basicShader->uniform("u_color", float3(1, 0, 0));
+            frustumMesh.draw_elements();
+            basicShader->unbind();
+        }
 
         grid->draw(viewProjectionMatrix);
 
