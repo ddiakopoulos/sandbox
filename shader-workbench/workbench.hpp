@@ -10,6 +10,10 @@ struct shader_workbench : public GLFWApp
     GlGpuTimer gpuTimer;
     std::unique_ptr<GlGizmo> gizmo;
 
+    GlTexture2D portalCameraRGB;
+    GlTexture2D portalCameraDepth;
+    GlFramebuffer portalFramebuffer;
+
     float elapsedTime{ 0 };
 
     shader_workbench();

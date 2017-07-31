@@ -79,7 +79,6 @@ namespace avl
         return result;
     }
 
-
 }
 
 #endif // end projection_math_util_hpp
