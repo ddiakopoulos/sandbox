@@ -73,9 +73,9 @@ namespace avl
     public:
         
         bool enableSpring = true;
-        float movementSpeed = 10.00f;
-        float3 lastLook;
-        
+        float movementSpeed = 14.0f;
+        float3 velocity;
+
         FlyCameraController() {}
         
         FlyCameraController(GlCamera * cam) : cam(cam)
@@ -128,30 +128,42 @@ namespace avl
             }
             lastCursor = e.cursor;
         }
-        
-        float3 velocity = float3(0, 0, 0);
-        
+
         void update(float delta)
         {
             float3 move;
             
-            if (bf || (ml && mr)) move.z -= 1 * movementSpeed;
+            float instantaneousSpeed = movementSpeed;
+
+            if (bf || (ml && mr))
+            {
+                move.z -= 1 * instantaneousSpeed;
+                instantaneousSpeed *= 0.75f;
+            }
+            if (bl)
+            {
+                move.x -= 1 * instantaneousSpeed;
+                instantaneousSpeed *= 0.75f;
+            }
+            if (bb)
+            {
+                move.z += 1 * instantaneousSpeed;
+                instantaneousSpeed *= 0.75f;
+            }
+            if (br)
+            {
+                move.x += 1 * instantaneousSpeed;
+                instantaneousSpeed *= 0.75f;
+            }
             
-            if (bl) move.x -= 1 * movementSpeed;
-            if (bb) move.z += 1 * movementSpeed;
-            if (br) move.x += 1 * movementSpeed;
-            
-            auto current = cam->get_pose().position;
-            auto target = cam->get_pose().transform_coord(move);
+            float3 & current = cam->get_pose().position;
+            const float3 target = cam->get_pose().transform_coord(move);
             
             if (enableSpring)
             {
-                float springyX = damped_spring(target.x, current.x, velocity.x, delta, 0.99f);
-                float springyY = damped_spring(target.y, current.y, velocity.y, delta, 0.99f);
-                float springyZ = damped_spring(target.z, current.z, velocity.z, delta, 0.99f);
-                float3 dampedLocation = { springyX, springyY, springyZ };
-                Pose & camPose = cam->get_pose();
-                camPose.position = dampedLocation;
+                critically_damped_spring(delta, target.x, 1.f, instantaneousSpeed, current.x, velocity.x);
+                critically_damped_spring(delta, target.y, 1.f, instantaneousSpeed, current.y, velocity.y);
+                critically_damped_spring(delta, target.z, 1.f, instantaneousSpeed, current.z, velocity.z);
             }
             else
             {
@@ -162,8 +174,7 @@ namespace avl
             float3 lookVec;
             lookVec.x = cam->get_eye_point().x - 1.f * cosf(camPitch) * sinf(camYaw);
             lookVec.y = cam->get_eye_point().y + 1.f * sinf(camPitch);
-            lookVec.z = cam->get_eye_point().z + -1.f * cosf(camPitch) * cosf(camYaw);
-            lastLook = lookVec;
+            lookVec.z = cam->get_eye_point().z - 1.f * cosf(camPitch) * cosf(camYaw);
             cam->look_at(lookVec);
         }
     };
