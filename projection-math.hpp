@@ -64,19 +64,14 @@ namespace avl
 
     // Based on http://aras-p.info/texts/obliqueortho.html (http://www.terathon.com/lengyel/Lengyel-Oblique.pdf)
     // This is valid for both perspective and orthographic projections. `clip_plane` is defined in camera space.
-    inline float4x4 calculate_oblique_matrix(const float4x4 & projection, const float4 & clip_plane)
+    inline void calculate_oblique_matrix(float4x4 & projection, const float4 & clip_plane)
     {
-        float4x4 result = projection;
-
-        const float4 q = mul(inverse(result), float4(sign(clip_plane.x), sign(clip_plane.y), 1.f, 1.f));
+        const float4 q = mul(inverse(projection), float4(sign(clip_plane.x), sign(clip_plane.y), 1.f, 1.f));
         const float4 c = clip_plane * (2.f / (dot(clip_plane, q)));
-
-        result[2][0] = c.x - result[3][0];
-        result[2][1] = c.y - result[3][1];
-        result[2][2] = c.z - result[3][2];
-        result[2][3] = c.w - result[3][3];
-
-        return result;
+        projection[0][2] = c.x - projection[0][3];
+        projection[1][2] = c.y - projection[1][3];
+        projection[2][2] = c.z - projection[2][3];
+        projection[3][2] = c.w - projection[3][3];
     }
 
 }
