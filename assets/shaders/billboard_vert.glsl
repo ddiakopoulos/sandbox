@@ -10,11 +10,13 @@ layout(location = 3) in vec2 inTexcoord;
 
 out vec3 v_position, v_normal;
 out vec2 v_texcoord;
+out vec4 v_clipspace;
 
 void main()
 {
     v_position = (u_modelMatrix * vec4(inPosition, 1)).xyz;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal,0)).xyz);
-    v_texcoord = inTexcoord;
+    v_texcoord = vec2(inTexcoord.x, inTexcoord.y);
     gl_Position = u_viewProj * vec4(v_position,1);
+    v_clipspace = u_viewProj * vec4(v_position,1);
 }
