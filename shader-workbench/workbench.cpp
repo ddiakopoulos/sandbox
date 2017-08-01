@@ -22,12 +22,9 @@ constexpr const char basic_frag[] = R"(#version 330
     }
 )";
 
-std::shared_ptr<GlShader> litShader;
-std::shared_ptr<GlShader> billboardShader;
-std::shared_ptr<GlShader> basicShader;
-std::unique_ptr<RenderableGrid> grid;
-
 GlMesh fullscreen_quad, capsuleMesh, portalMesh, frustumMesh;
+std::shared_ptr<GlShader> litShader, billboardShader, basicShader;
+std::unique_ptr<RenderableGrid> grid;
 
 struct PointLight
 {
@@ -38,6 +35,7 @@ struct PointLight
 std::vector<PointLight> lights;
 std::vector<Pose> objects;
 
+Pose sourcePose;
 Pose destinationPose;
 Pose portalCameraPose;
 tinygizmo::rigid_transform destination;
@@ -57,7 +55,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     fullscreen_quad = make_fullscreen_quad_ndc();
     capsuleMesh = make_capsule_mesh(32, 0.5f, 2.f);
-    portalMesh = make_plane_mesh(4, 4, 64, 64);
+    portalMesh = make_plane_mesh(4, 4, 64, 64, false);
     frustumMesh = make_frustum_mesh();
 
     portalCameraRGB.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
@@ -79,6 +77,9 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     gizmo.reset(new GlGizmo());
     grid.reset(new RenderableGrid());
+
+    // Position and rotation of the billboard we draw on, i.e. "source" perspective
+    sourcePose = Pose(make_rotation_quat_axis_angle({ 0, 1, 0 }, 0.f), { 0, 2, -12 });
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -131,11 +132,7 @@ void shader_workbench::on_draw()
     destinationPose.orientation.z = destination.orientation.z;
     destinationPose.orientation.w = destination.orientation.w;
 
-    // This is the "source"
-    float4x4 portalMatrix = make_translation_matrix({ 0, 2, -12 });
-    portalMatrix = mul(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), portalMatrix);
-
-    auto draw_scene = [this, portalMatrix](const float3 & eye, const float4x4 & viewProjectionMatrix)
+    auto draw_scene = [this](const float3 & eye, const float4x4 & viewProjectionMatrix)
     {
         litShader->bind();
 
@@ -162,8 +159,8 @@ void shader_workbench::on_draw()
         litShader->unbind();
 
         billboardShader->bind();
-        billboardShader->uniform("u_modelMatrix", portalMatrix);
-        billboardShader->uniform("u_modelMatrixIT", inv(transpose(portalMatrix)));
+        billboardShader->uniform("u_modelMatrix", sourcePose.matrix());
+        billboardShader->uniform("u_modelMatrixIT", inv(transpose(sourcePose.matrix())));
         billboardShader->uniform("u_viewProj", viewProjectionMatrix);
         billboardShader->texture("s_billboard", 0, portalCameraRGB, GL_TEXTURE_2D);
         portalMesh.draw_elements();
@@ -200,23 +197,20 @@ void shader_workbench::on_draw()
         glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        const float4x4 source_inv = inverse(portalMatrix); 
+        Pose camera_to_source = sourcePose.inverse() * cam.get_pose(); 
 
-        const float3 cameraPositionInSourceSpace = transform_coord(source_inv, cam.get_pose().position);
-        const float4 cameraOrientationInSourceSpace = qmul(make_rotation_quat_from_pose_matrix(source_inv), cam.get_pose().orientation);
-
-        portalCameraPose.position = destinationPose.transform_coord(cameraPositionInSourceSpace);
-        portalCameraPose.orientation = qmul(destinationPose.orientation, cameraOrientationInSourceSpace);
+        portalCameraPose = camera_to_source * destinationPose;
 
         const float3 dest_fwd = -destinationPose.zdir();
         const float4 clip_worldspace = float4(dest_fwd.x, dest_fwd.y, dest_fwd.z, dot(destinationPose.position, -dest_fwd));
         const float4 clip_cameraspace = mul(transpose(portalCameraPose.matrix()), clip_worldspace);
 
-        float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
-        calculate_oblique_matrix(projectionMatrix, clip_cameraspace);
+        float4x4 projectionMatrixOblique = cam.get_projection_matrix(float(width) / float(height));
+        calculate_oblique_matrix(projectionMatrixOblique, clip_cameraspace);
 
-        const float4x4 viewProjectionMatrix_portal = mul(projectionMatrix, inverse(portalCameraPose.matrix()));
-        draw_scene(cam.get_eye_point(), viewProjectionMatrix_portal);
+        const float4x4 viewMatrix = inverse(portalCameraPose.matrix());
+        const float4x4 viewProjectionMatrix = mul(projectionMatrixOblique, viewMatrix);
+        draw_scene(cam.get_eye_point(), viewProjectionMatrix);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
