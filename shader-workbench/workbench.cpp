@@ -23,6 +23,7 @@ constexpr const char basic_frag[] = R"(#version 330
 )";
 
 std::shared_ptr<GlShader> litShader;
+std::shared_ptr<GlShader> billboardShader;
 std::shared_ptr<GlShader> basicShader;
 std::unique_ptr<RenderableGrid> grid;
 
@@ -36,7 +37,10 @@ struct PointLight
 
 std::vector<PointLight> lights;
 std::vector<Pose> objects;
-Pose portalCameraView;
+
+Pose destinationPose;
+Pose portalCameraPose;
+tinygizmo::rigid_transform destination;
 
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 {
@@ -49,6 +53,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
     litShader = shaderMonitor.watch("../assets/shaders/simple_vert.glsl", "../assets/shaders/simple_frag.glsl");
+    billboardShader = shaderMonitor.watch("../assets/shaders/billboard_vert.glsl", "../assets/shaders/billboard_frag.glsl");
 
     fullscreen_quad = make_fullscreen_quad_ndc();
     capsuleMesh = make_capsule_mesh(32, 0.5f, 2.f);
@@ -74,8 +79,6 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     gizmo.reset(new GlGizmo());
     grid.reset(new RenderableGrid());
-
-    portalCameraView = look_at_pose_rh({ -9, 3, 0 }, { 0, 0.5, 0 });
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -118,7 +121,21 @@ void shader_workbench::on_draw()
 
     if (gizmo) gizmo->update(cam, float2(width, height));
 
-    auto draw_scene = [](const float3 & eye, const float4x4 & viewProjectionMatrix)
+    tinygizmo::transform_gizmo("destination", gizmo->gizmo_ctx, destination);
+
+    destinationPose.position.x = destination.position.x;
+    destinationPose.position.y = destination.position.y;
+    destinationPose.position.z = destination.position.z;
+    destinationPose.orientation.x = destination.orientation.x;
+    destinationPose.orientation.y = destination.orientation.y;
+    destinationPose.orientation.z = destination.orientation.z;
+    destinationPose.orientation.w = destination.orientation.w;
+
+    // This is the "source"
+    float4x4 portalMatrix = make_translation_matrix({ 0, 2, -12 });
+    portalMatrix = mul(make_rotation_matrix({ 0, 1, 0 }, ANVIL_PI), portalMatrix);
+
+    auto draw_scene = [this, portalMatrix](const float3 & eye, const float4x4 & viewProjectionMatrix)
     {
         litShader->bind();
 
@@ -142,20 +159,29 @@ void shader_workbench::on_draw()
             capsuleMesh.draw_elements();
         }
 
-        {
-            float4x4 portalMatrix = make_translation_matrix({ 0, 2, -12 });
-            litShader->uniform("u_modelMatrix", portalMatrix);
-            litShader->uniform("u_modelMatrixIT", inv(transpose(portalMatrix)));
-            portalMesh.draw_elements();
-        }
-
         litShader->unbind();
+
+        billboardShader->bind();
+        billboardShader->uniform("u_modelMatrix", portalMatrix);
+        billboardShader->uniform("u_modelMatrixIT", inv(transpose(portalMatrix)));
+        billboardShader->uniform("u_viewProj", viewProjectionMatrix);
+        billboardShader->texture("s_billboard", 0, portalCameraRGB, GL_TEXTURE_2D);
+        portalMesh.draw_elements();
+        billboardShader->unbind();
 
         {
             basicShader->bind();
-            basicShader->uniform("u_mvp", mul(viewProjectionMatrix, portalCameraView.matrix()));
-            basicShader->uniform("u_color", float3(1, 0, 0));
+
+            // Visualize where the destination is
+            basicShader->uniform("u_mvp", mul(viewProjectionMatrix, destinationPose.matrix()));
+            basicShader->uniform("u_color", float3(0, 0, 1));
             frustumMesh.draw_elements();
+
+            // Visualize the point where we actually render the second view from
+            basicShader->uniform("u_mvp", mul(viewProjectionMatrix, portalCameraPose.matrix()));
+            basicShader->uniform("u_color", float3(0, 1, 0));
+            frustumMesh.draw_elements();
+
             basicShader->unbind();
         }
 
@@ -167,24 +193,34 @@ void shader_workbench::on_draw()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
-    /*
     // Render to Framebuffer (second portal camera)
     {
-        // todo - portal camera
-        const float4x4 projectionMatrix_portal = cam.get_projection_matrix(float(width) / float(height));
-        const float4x4 viewMatrix_portal = cam.get_view_matrix();
-        const float4x4 viewProjectionMatrix_portal = mul(projectionMatrix_portal, viewMatrix_portal);
-
         glBindFramebuffer(GL_FRAMEBUFFER, portalFramebuffer);
         glViewport(0, 0, width, height);
         glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        const float4x4 source_inv = inverse(portalMatrix); 
+
+        const float3 cameraPositionInSourceSpace = transform_coord(source_inv, cam.get_pose().position);
+        const float4 cameraOrientationInSourceSpace = qmul(make_rotation_quat_from_pose_matrix(source_inv), cam.get_pose().orientation);
+
+        portalCameraPose.position = destinationPose.transform_coord(cameraPositionInSourceSpace);
+        portalCameraPose.orientation = qmul(destinationPose.orientation, cameraOrientationInSourceSpace);
+
+        const float3 dest_fwd = -destinationPose.zdir();
+        const float4 clip_worldspace = float4(dest_fwd.x, dest_fwd.y, dest_fwd.z, dot(destinationPose.position, -dest_fwd));
+        const float4 clip_cameraspace = mul(transpose(portalCameraPose.matrix()), clip_worldspace);
+
+        float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
+        calculate_oblique_matrix(projectionMatrix, clip_cameraspace);
+
+        const float4x4 viewProjectionMatrix_portal = mul(projectionMatrix, inverse(portalCameraPose.matrix()));
         draw_scene(cam.get_eye_point(), viewProjectionMatrix_portal);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-    */
+
     // User's Controllable View
     {
         const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
