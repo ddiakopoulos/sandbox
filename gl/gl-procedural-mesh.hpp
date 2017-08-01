@@ -49,9 +49,9 @@ namespace avl
         return make_mesh_from_geometry(make_capsule(segments, radius, length));
     }
     
-    inline GlMesh make_plane_mesh(float width, float height, uint32_t nw, uint32_t nh)
+    inline GlMesh make_plane_mesh(float width, float height, uint32_t nw, uint32_t nh, bool backfaces = true)
     {
-        return make_mesh_from_geometry(make_plane(width, height, nw, nh));
+        return make_mesh_from_geometry(make_plane(width, height, nw, nh, backfaces));
     }
     
     inline GlMesh make_curved_plane_mesh()
