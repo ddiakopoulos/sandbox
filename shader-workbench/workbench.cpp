@@ -197,9 +197,9 @@ void shader_workbench::on_draw()
         glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        Pose camera_to_source = sourcePose.inverse() * cam.get_pose(); 
+        Pose camera_to_source = sourcePose.inverse() * cam.get_pose();
 
-        portalCameraPose = camera_to_source * destinationPose;
+        portalCameraPose = destinationPose * camera_to_source;
 
         const float3 dest_fwd = -destinationPose.zdir();
         const float4 clip_worldspace = float4(dest_fwd.x, dest_fwd.y, dest_fwd.z, dot(destinationPose.position, -dest_fwd));
