@@ -12,6 +12,8 @@ in vec3 v_normal;
 in vec2 v_texcoord;
 in vec3 v_eyeDir;
 
+uniform vec3 u_lightColor;
+
 out vec4 f_color;
 
 float r(float n) { return fract(abs(sin(n*55.753) * 367.34)); }
@@ -56,7 +58,7 @@ vec3 largest_triangles_color(vec3 worldPosition)
 
 vec3 holo_scan_effect(in vec3 pos, in vec3 centerPosition)
 {
-    float border = mod(u_time * speed, 5.0);
+    float border = 3.15f; //mod(speed * u_time, 5.0);
 
     float d = length(pos.xz - centerPosition.xz) + pos.y - centerPosition.y;
     d /= effectRadius;
@@ -64,9 +66,9 @@ vec3 holo_scan_effect(in vec3 pos, in vec3 centerPosition)
     vec3 c1 = largest_triangles_color(pos);
     vec3 c2 = small_triangles_color(pos);
 
-    vec3 c = vec3(1.0, 1.0, 1.0) * smoothstep(border - 0.2, border, d); // rim
+    vec3 c = vec3(1.0, 1.0, 1.0) * smoothstep(border - 0.45, border, d); // rim
     c += c1;
-    c += c2 * smoothstep(border - 0.4, border - 0.66, d); // Small triangle after front
+    //c += c2 * smoothstep(border - 0.4, border - 0.66, d); // Small triangle after front
     c *= smoothstep(border, border - 0.05, d); // front cut
     c *= smoothstep(border - 3.0, border - 0.5, d); // cut back
     c *= smoothstep(5.0, 4.0, border); // fade 
@@ -77,5 +79,14 @@ vec3 holo_scan_effect(in vec3 pos, in vec3 centerPosition)
 void main()
 {
     vec3 light = holo_scan_effect(v_world_position, vec3(0, 0, 0));
-    f_color = vec4(light, 1.0);
+
+    vec3 eyeDir = normalize(u_eye - v_world_position);
+
+    vec3 lightDir = normalize(vec3(-3, 3, -2) - v_world_position);
+    light += u_lightColor * max(dot(v_normal, lightDir), 0);
+
+    vec3 halfDir = normalize(lightDir + eyeDir);
+    //light += vec3(1, 1, 1) * pow(max(dot(v_normal, halfDir), 0), 128);
+
+    f_color = vec4(light + vec3(0.25, 0.1, 0.55), 1.0);
 }

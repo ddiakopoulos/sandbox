@@ -17,8 +17,9 @@ struct shader_workbench : public GLFWApp
     float elapsedTime{ 0 };
     float triangleScale{ 0.1f };
 
-    std::shared_ptr<GlShader> holoScanShader;
+    std::shared_ptr<GlShader> holoScanShader, wireframeShader, basicShader;
     GlMesh terrainMesh;
+    GlMesh sofaMesh, headsetMesh, frustumMesh;
 
     shader_workbench();
     ~shader_workbench();
