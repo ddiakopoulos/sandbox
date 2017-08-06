@@ -111,12 +111,6 @@ public:
         }
     }
 
-    void draw_frustum(const float4x4 & view, const float3 color = float3(1, 1, 1))
-    {
-        Frustum f(view);
-        for (auto p : f.get_corners()) vertices.push_back({ p, color });
-    }
-
 };
 
 #endif // end debug_renderer_hpp
