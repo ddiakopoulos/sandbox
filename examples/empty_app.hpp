@@ -259,38 +259,21 @@ struct SceneOctree
         if ((child = node->arr[{1, 1, 1}]) != nullptr) debug_draw(shader, mesh, sphereMesh, viewProj, child, { 1, 1, 1 });
     }
 
-    // Debugging Only
-    void cull(Bounds3D & camera, GlShader * shader, GlMesh * mesh, GlMesh * sphereMesh, const float4x4 & viewProj, Node * node, float3 coordinate, bool alreadyVisible)
+    void cull(Bounds3D & camera, std::vector<Node *> & visibleNodeList, Node * node, bool alreadyVisible)
     {
-        static int counter = 0;
-
-        if (!node)
-        {
-            node = root;
-            counter = 0;
-        }
-
-        /*
-        // Don't traverse empty parts
-        if (node->occupancy == 0)
-        {
-            if (node != root)
-            {
-                //std::cout << "Returning..." << std::endl;
-                return;
-            }
-        }
-        */
-        
-        //std::cout << "Node: " << node << std::endl;
-        //std::cout << "occupancy..." << node->occupancy << std::endl;
-
+        if (!node) node = root;
         if (node->occupancy == 0) return;
 
         CullStatus status = OUTSIDE;
 
-        if (alreadyVisible) status = INSIDE;
-        else if (node == root) status = INTERSECT;
+        if (alreadyVisible)
+        {
+            status = INSIDE;
+        }
+        else if (node == root)
+        {
+            status = INTERSECT;
+        }
         else
         {
             if (node->box.contains(camera.center()))
@@ -303,34 +286,19 @@ struct SceneOctree
 
         if (alreadyVisible)
         {
-            float4x4 boxModel = mul(make_translation_matrix(node->box.center()), make_scaling_matrix(node->box.size() / 2.f));
-            shader->bind();
-            shader->uniform("u_color", coordinate);
-            shader->uniform("u_mvp", mul(viewProj, boxModel));
-            mesh->draw_elements();
-
-            for (auto s : node->spheres)
-            {
-                const auto sphereModel = mul(s->p.matrix(), make_scaling_matrix(s->radius));
-                shader->uniform("u_color", coordinate);
-                shader->uniform("u_mvp", mul(viewProj, sphereModel));
-                sphereMesh->draw_elements();
-            }
-
-            shader->unbind();
+            visibleNodeList.push_back(node);
         }
 
-        //std::cout << "Counter: " << counter++ << std::endl;
         // Recurse into children
         Node * child;
-        if ((child = node->arr[{0, 0, 0}]) != nullptr) cull(camera, shader, mesh, sphereMesh, viewProj, child, { 0, 0, 0 }, alreadyVisible);
-        if ((child = node->arr[{0, 0, 1}]) != nullptr) cull(camera, shader, mesh, sphereMesh, viewProj, child, { 0, 0, 1 }, alreadyVisible);
-        if ((child = node->arr[{0, 1, 0}]) != nullptr) cull(camera, shader, mesh, sphereMesh, viewProj, child, { 0, 1, 0 }, alreadyVisible);
-        if ((child = node->arr[{0, 1, 1}]) != nullptr) cull(camera, shader, mesh, sphereMesh, viewProj, child, { 0, 1, 1 }, alreadyVisible);
-        if ((child = node->arr[{1, 0, 0}]) != nullptr) cull(camera, shader, mesh, sphereMesh, viewProj, child, { 1, 0, 0 }, alreadyVisible);
-        if ((child = node->arr[{1, 0, 1}]) != nullptr) cull(camera, shader, mesh, sphereMesh, viewProj, child, { 1, 0, 1 }, alreadyVisible);
-        if ((child = node->arr[{1, 1, 0}]) != nullptr) cull(camera, shader, mesh, sphereMesh, viewProj, child, { 1, 1, 0 }, alreadyVisible);
-        if ((child = node->arr[{1, 1, 1}]) != nullptr) cull(camera, shader, mesh, sphereMesh, viewProj, child, { 1, 1, 1 }, alreadyVisible);
+        if ((child = node->arr[{0, 0, 0}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{0, 0, 1}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{0, 1, 0}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{0, 1, 1}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{1, 0, 0}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{1, 0, 1}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{1, 1, 0}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{1, 1, 1}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
     }
 };
 
@@ -460,7 +428,27 @@ struct ExperimentalApp : public GLFWApp
         box.draw_elements();
         wireframeShader->unbind();
 
-        octree.cull(worldspaceCameraVolume, wireframeShader.get(), &box, &sphere, viewProj, nullptr, float3(), false);
+        std::vector<SceneOctree::Node *> visibleNodes;
+
+        octree.cull(worldspaceCameraVolume, visibleNodes, nullptr, false);
+
+        for (auto node : visibleNodes)
+        {
+            float4x4 boxModel = mul(make_translation_matrix(node->box.center()), make_scaling_matrix(node->box.size() / 2.f));
+            wireframeShader->bind();
+            wireframeShader->uniform("u_mvp", mul(viewProj, boxModel));
+            box.draw_elements();
+
+            for (auto s : node->spheres)
+            {
+                const auto sphereModel = mul(s->p.matrix(), make_scaling_matrix(s->radius));
+                wireframeShader->uniform("u_mvp", mul(viewProj, sphereModel));
+                sphere.draw_elements();
+            }
+
+            wireframeShader->unbind();
+        }
+ 
 
         if (gizmo) gizmo->draw();
 
