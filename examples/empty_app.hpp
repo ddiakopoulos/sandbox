@@ -79,7 +79,10 @@ struct SceneOctree
         std::list<DebugSphere *> spheres;
 
         std::unique_ptr<Node> parent;
-        Node(Node * parent) : parent(parent) {}
+        Node(Node * parent) : parent(parent) 
+        {
+
+        }
         Bounds3D box;
         VoxelArray<Node *> arr = { { 2, 2, 2 } };
         uint32_t occupancy{ 0 };
@@ -95,16 +98,17 @@ struct SceneOctree
             return index;
         }
 
-        void increase_occupancy()
+        void increase_occupancy(Node * n) const
         {
-            occupancy++;
-            if (parent) parent->occupancy++;
+            if (n != nullptr)
+            {
+                n->occupancy++;
+                increase_occupancy(n->parent.get());
+            }
         }
 
-        void decrease_occupancy()
+        void decrease_occupancy(Node * n)
         {
-            occupancy--;
-            if (parent) parent->occupancy--;
         }
 
         // Returns true if the other is less than half the size of myself
@@ -117,13 +121,21 @@ struct SceneOctree
 
     /////////////////////////////
 
+    enum CullStatus
+    {
+        INSIDE,
+        INTERSECT,
+        OUTSIDE
+    };
+
     Node * root;
-    uint32_t maxDepth = { 8 };
+    uint32_t maxDepth { 4 };
 
     SceneOctree()
     {
         root = new Node(nullptr);
         root->box = Bounds3D({ -4, -4, -4 }, { +4, +4, +4 });
+        std::cout << "Creating Root : " << root << std::endl;
     }
 
     ~SceneOctree() { }
@@ -137,23 +149,15 @@ struct SceneOctree
     {
         if (!child) child = root;
 
-        //std::cout << "Current Depth: " << depth << std::endl;
-
         const Bounds3D bounds = sphere->get_bounds();
-        //std::cout << "Sphere bounds: " << sphere->get_bounds() << std::endl;
 
         if (depth < maxDepth && child->check_fit(bounds))
         {
             int3 lookup = child->get_indices(bounds);
 
-            // Bounds here is always [0 to something] or [something to 0]
-            //std::cout << "lookup: " << bounds << ", " << lookup << std::endl;
-
             // No child for this octant
             if (child->arr[lookup] == nullptr)
             {
-                //std::cout << "Creating Child For: " << lookup << std::endl;
-
                 child->arr[lookup] = new Node(child);
 
                 const float3 octantMin = child->box.min();
@@ -176,19 +180,14 @@ struct SceneOctree
                 }
 
                 child->arr[lookup]->box = Bounds3D(min, max);
-               // std::cout << "... child has bounds: " << child->arr[lookup]->box << std::endl;
             }
-
-            //std::cout << "Calling Add Recursively..." << std::endl;
 
             // Recurse into a new depth
             add(sphere, child->arr[lookup], ++depth);
         }
         else
         {
-            std::cout << "Else increase_occupancy(-------------------)" << std::endl;
-
-            child->increase_occupancy();
+            child->increase_occupancy(child);
             child->spheres.push_back(sphere);
         }
     }
@@ -207,7 +206,6 @@ struct SceneOctree
         }
         else
         {
-            std::cout << "+++++++++++ Adding Node: " << sphere << std::endl;
             add(sphere, root); // start at depth 0 again
         }
     }
@@ -261,17 +259,16 @@ struct SceneOctree
         if ((child = node->arr[{1, 1, 1}]) != nullptr) debug_draw(shader, mesh, sphereMesh, viewProj, child, { 1, 1, 1 });
     }
 
-    enum Position
-    {
-        INSIDE,
-        INTERSECT,
-        OUTSIDE
-    };
-
     // Debugging Only
     void cull(Bounds3D & camera, GlShader * shader, GlMesh * mesh, GlMesh * sphereMesh, const float4x4 & viewProj, Node * node, float3 coordinate, bool alreadyVisible)
     {
-        if (!node) node = root;
+        static int counter = 0;
+
+        if (!node)
+        {
+            node = root;
+            counter = 0;
+        }
 
         /*
         // Don't traverse empty parts
@@ -284,31 +281,25 @@ struct SceneOctree
             }
         }
         */
+        
+        //std::cout << "Node: " << node << std::endl;
+        //std::cout << "occupancy..." << node->occupancy << std::endl;
 
-        std::cout << "occupancy..." << node->occupancy << std::endl;
+        if (node->occupancy == 0) return;
 
-        const Bounds3D box = node->box;
+        CullStatus status = OUTSIDE;
 
-        Position position = OUTSIDE;
-
-        if (alreadyVisible)
-        {
-            position = INSIDE;
-        }
-        else if (node == root)
-        {
-            position = INTERSECT;
-        }
+        if (alreadyVisible) status = INSIDE;
+        else if (node == root) status = INTERSECT;
         else
         {
-            // Then we can assume all children of this node also intersect 
-            if (box.contains(camera.center())) // full intersection
+            if (node->box.contains(camera.center()))
             {
-                position = INSIDE; 
+                status = INSIDE;
             }
         }
 
-        alreadyVisible = (position == INSIDE);
+        alreadyVisible = (status == INSIDE);
 
         if (alreadyVisible)
         {
@@ -329,6 +320,7 @@ struct SceneOctree
             shader->unbind();
         }
 
+        //std::cout << "Counter: " << counter++ << std::endl;
         // Recurse into children
         Node * child;
         if ((child = node->arr[{0, 0, 0}]) != nullptr) cull(camera, shader, mesh, sphereMesh, viewProj, child, { 0, 0, 0 }, alreadyVisible);
@@ -341,32 +333,6 @@ struct SceneOctree
         if ((child = node->arr[{1, 1, 1}]) != nullptr) cull(camera, shader, mesh, sphereMesh, viewProj, child, { 1, 1, 1 }, alreadyVisible);
     }
 };
-
-
-inline Geometry coordinate_system_geometry()
-{
-    coord_system opengl_coords { coord_axis::right, coord_axis::up, coord_axis::back }; // traditional rh opengl
-
-    Geometry axis;
-
-    for (auto a : { opengl_coords.get_right(), opengl_coords.get_up(), opengl_coords.get_forward() })
-    {
-        axis.vertices.emplace_back(0.f, 0.f, 0.f);
-        axis.vertices.emplace_back(a);
-
-        axis.colors.emplace_back(abs(a), 1.f);
-        axis.colors.emplace_back(abs(a), 1.f);
-    }
-
-    return axis;
-}
-
-inline GlMesh make_coordinate_system_mesh()
-{
-    auto m = make_mesh_from_geometry(coordinate_system_geometry());
-    m.set_non_indexed(GL_LINES);
-    return m;
-}
 
 bool toggleDebug = false;
 
@@ -390,14 +356,13 @@ struct ExperimentalApp : public GLFWApp
 
     ExperimentalApp() : GLFWApp(1280, 800, "Nearly Empty App")
     {
-        svd_tests::execute();
-
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         gl_check_error(__FILE__, __LINE__);
 
         gizmo.reset(new GlGizmo());
+        xform.position = { 0.1f, 0.1f, 0.1f };
 
         wireframeShader.reset(new GlShader(basic_wireframe_vert, basic_wireframe_frag));
 
@@ -408,26 +373,22 @@ struct ExperimentalApp : public GLFWApp
         box = make_cube_mesh();
         box.set_non_indexed(GL_LINES);
 
-        for (int i = 0; i < 16; ++i)
+        for (int i = 0; i < 512; ++i)
         {
-            // Generate a random position between [-3, 3]
-            float3 position = { rand.random_float(8.f) - 4.f, rand.random_float(8.f) - 4.f, rand.random_float(8.f) - 4.f };
-
-            float radius = 0.05f; // rand.random_float(0.1);
-
-            std::cout << "Position: " << position << ", radius: " << radius << std::endl;
-
+            const float3 position = { rand.random_float(8.f) - 4.f, rand.random_float(8.f) - 4.f, rand.random_float(8.f) - 4.f };
+            const float radius = rand.random_float(0.25f);
             DebugSphere s;
             s.p = Pose(float4(0, 0, 0, 1), position);
             s.radius = radius;
-
-            meshes.push_back(s);
+            meshes.push_back(std::move(s));
         }
 
-        for (auto & sph : meshes)
         {
-            std::cout << "Create: " << &sph << std::endl;
-            octree.create(&sph);
+            scoped_timer create("octree create");
+            for (auto & sph : meshes)
+            {
+                octree.create(&sph);
+            }
         }
 
     }
