@@ -33,35 +33,27 @@ struct DebugSphere
     Bounds3D get_bounds() const
     {
         const float3 rad3 = float3(radius, radius, radius);
-        Bounds3D b(p.transform_coord(-rad3), p.transform_coord(rad3)), result;
-
-        for (auto x : { b.min().x,b.max().x })
-        {
-            for (auto y : { b.min().y,b.max().y })
-            {
-                for (auto z : { b.min().z,b.max().z })
-                {
-                    result.surround(p.transform_coord({ x,y,z }));
-                }
-            }
-        }
-        return b;
+        return { p.transform_coord(-rad3), p.transform_coord(rad3) };
     }
 
 };
 
 
 /*
-* An octree is a tree data structure in which each internal node has exactly
-* eight children. Octrees are most often used to partition a three
-* dimensional space by recursively subdividing it into eight octants.
-*/
+ * An octree is a tree data structure in which each internal node has exactly
+ * eight children. Octrees are most often used to partition a three
+ * dimensional space by recursively subdividing it into eight octants. 
+ * This implementation stores 8 pointers per node, instead of the other common
+ * approach, which is to use a flat array with an offset. The `inside` method
+ * defines the comparison function.
+ */
 
-// http://thomasdiewald.com/blog/?p=1488
 // https://www.gamedev.net/resources/_/technical/game-programming/introduction-to-octrees-r3529
 // https://cs.brown.edu/courses/csci1230/lectures/CS123_17_Acceleration_Data_Structures_11.3.16.pptx.
 // http://www.piko3d.net/tutorials/space-partitioning-tutorial-piko3ds-dynamic-octree/
 
+// Instead of a strict bounds check which might force an object into a parent cell, this function
+// checks centers, aka a "loose" octree. 
 inline bool inside(const Bounds3D & node, const Bounds3D & other)
 {
     // Compare centers
@@ -79,10 +71,8 @@ struct SceneOctree
         std::list<DebugSphere *> spheres;
 
         std::unique_ptr<Node> parent;
-        Node(Node * parent) : parent(parent) 
-        {
+        Node(Node * parent) : parent(parent) {}
 
-        }
         Bounds3D box;
         VoxelArray<Node *> arr = { { 2, 2, 2 } };
         uint32_t occupancy{ 0 };
@@ -107,8 +97,13 @@ struct SceneOctree
             }
         }
 
-        void decrease_occupancy(Node * n)
+        void decrease_occupancy(Node * n) const
         {
+            if (n != nullptr)
+            {
+                n->occupancy--;
+                decrease_occupancy(n->parent.get());
+            }
         }
 
         // Returns true if the other is less than half the size of myself
@@ -119,8 +114,6 @@ struct SceneOctree
 
     };
 
-    /////////////////////////////
-
     enum CullStatus
     {
         INSIDE,
@@ -129,7 +122,7 @@ struct SceneOctree
     };
 
     Node * root;
-    uint32_t maxDepth { 4 };
+    uint32_t maxDepth { 8 };
 
     SceneOctree()
     {
@@ -185,6 +178,7 @@ struct SceneOctree
             // Recurse into a new depth
             add(sphere, child->arr[lookup], ++depth);
         }
+        // The current octant fits this 
         else
         {
             child->increase_occupancy(child);
@@ -194,15 +188,11 @@ struct SceneOctree
 
     void create(DebugSphere * sphere)
     {
-        // todo: valid box / root check
-        //if (!node) return;
-
         const Bounds3D bounds = sphere->get_bounds();
 
         if (!inside(bounds, root->box))
         {
-            std::cout << "Node: " << bounds << " not inside " << root->box << std::endl;
-            //root->increase_occupancy();
+            throw std::invalid_argument("object is not in the bounding volume of the root node");
         }
         else
         {
@@ -429,7 +419,6 @@ struct ExperimentalApp : public GLFWApp
         wireframeShader->unbind();
 
         std::vector<SceneOctree::Node *> visibleNodes;
-
         octree.cull(worldspaceCameraVolume, visibleNodes, nullptr, false);
 
         for (auto node : visibleNodes)
