@@ -74,7 +74,7 @@ struct SceneOctree
         Node(Node * parent) : parent(parent) {}
 
         Bounds3D box;
-        VoxelArray<Node *> arr = { { 2, 2, 2 } };
+        VoxelArray<std::unique_ptr<Node>> arr = { { 2, 2, 2 } };
         uint32_t occupancy{ 0 };
 
         int3 get_indices(const Bounds3D & other) const
@@ -121,26 +121,25 @@ struct SceneOctree
         OUTSIDE
     };
 
-    Node * root;
+    std::unique_ptr<Node> root;
     uint32_t maxDepth { 8 };
 
-    SceneOctree()
+    SceneOctree(const uint32_t maxDepth = 8, const Bounds3D rootBounds = { { -4, -4, -4 }, { +4, +4, +4 } })
     {
-        root = new Node(nullptr);
-        root->box = Bounds3D({ -4, -4, -4 }, { +4, +4, +4 });
-        std::cout << "Creating Root : " << root << std::endl;
+        root.reset(new Node(nullptr));
+        root->box = rootBounds;
     }
 
     ~SceneOctree() { }
 
     float3 get_resolution()
     {
-        return root->box.size() / (float)maxDepth;
+        return root->box.size() / (float) maxDepth;
     }
 
     void add(DebugSphere * sphere, Node * child, int depth = 0)
     {
-        if (!child) child = root;
+        if (!child) child = root.get();
 
         const Bounds3D bounds = sphere->get_bounds();
 
@@ -151,7 +150,7 @@ struct SceneOctree
             // No child for this octant
             if (child->arr[lookup] == nullptr)
             {
-                child->arr[lookup] = new Node(child);
+                child->arr[lookup].reset(new Node(child));
 
                 const float3 octantMin = child->box.min();
                 const float3 octantMax = child->box.max();
@@ -176,7 +175,7 @@ struct SceneOctree
             }
 
             // Recurse into a new depth
-            add(sphere, child->arr[lookup], ++depth);
+            add(sphere, child->arr[lookup].get(), ++depth);
         }
         // The current octant fits this 
         else
@@ -196,7 +195,7 @@ struct SceneOctree
         }
         else
         {
-            add(sphere, root); // start at depth 0 again
+            add(sphere, root.get()); 
         }
     }
 
@@ -205,53 +204,9 @@ struct SceneOctree
 
     }
 
-    // Debugging Only
-    void debug_draw(GlShader * shader, GlMesh * mesh, GlMesh * sphereMesh, const float4x4 & viewProj, Node * node, float3 coordinate)
-    {
-        if (!node) node = root;
-
-        //if (node->occupancy == 0)
-        //{
-            //std::cout << "RETURNING ON NODE " << node << std::endl;
-        //    return;
-        //}
-
-        //debugRenderer.draw_box(node->box, coordinate);
-
-        float4x4 model = mul(make_translation_matrix(node->box.center()), make_scaling_matrix(node->box.size() / 2.f));
-        shader->bind();
-        shader->uniform("u_color", coordinate);
-        shader->uniform("u_mvp", mul(viewProj, model));
-        mesh->draw_elements();
-
-        for (auto s : node->spheres)
-        {
-            const auto sphereModel = mul(s->p.matrix(), make_scaling_matrix(s->radius));
-            shader->uniform("u_color", coordinate);
-            shader->uniform("u_mvp", mul(viewProj, sphereModel));
-            sphereMesh->draw_elements();
-        }
-
-        shader->unbind();
-   
-        //std::cout << "Drawing: " << node->box << std::endl;
-        //std::cout << "Occupancy: " << node->occupancy << std::endl;
-
-        // Recurse into children
-        Node * child;
-        if ((child = node->arr[{0, 0, 0}]) != nullptr) debug_draw(shader, mesh, sphereMesh, viewProj, child, { 0, 0, 0 });
-        if ((child = node->arr[{0, 0, 1}]) != nullptr) debug_draw(shader, mesh, sphereMesh, viewProj, child, { 0, 0, 1 });
-        if ((child = node->arr[{0, 1, 0}]) != nullptr) debug_draw(shader, mesh, sphereMesh, viewProj, child, { 0, 1, 0 });
-        if ((child = node->arr[{0, 1, 1}]) != nullptr) debug_draw(shader, mesh, sphereMesh, viewProj, child, { 0, 1, 1 });
-        if ((child = node->arr[{1, 0, 0}]) != nullptr) debug_draw(shader, mesh, sphereMesh, viewProj, child, { 1, 0, 0 });
-        if ((child = node->arr[{1, 0, 1}]) != nullptr) debug_draw(shader, mesh, sphereMesh, viewProj, child, { 1, 0, 1 });
-        if ((child = node->arr[{1, 1, 0}]) != nullptr) debug_draw(shader, mesh, sphereMesh, viewProj, child, { 1, 1, 0 });
-        if ((child = node->arr[{1, 1, 1}]) != nullptr) debug_draw(shader, mesh, sphereMesh, viewProj, child, { 1, 1, 1 });
-    }
-
     void cull(Bounds3D & camera, std::vector<Node *> & visibleNodeList, Node * node, bool alreadyVisible)
     {
-        if (!node) node = root;
+        if (!node) node = root.get();
         if (node->occupancy == 0) return;
 
         CullStatus status = OUTSIDE;
@@ -260,7 +215,7 @@ struct SceneOctree
         {
             status = INSIDE;
         }
-        else if (node == root)
+        else if (node == root.get())
         {
             status = INTERSECT;
         }
@@ -281,16 +236,50 @@ struct SceneOctree
 
         // Recurse into children
         Node * child;
-        if ((child = node->arr[{0, 0, 0}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
-        if ((child = node->arr[{0, 0, 1}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
-        if ((child = node->arr[{0, 1, 0}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
-        if ((child = node->arr[{0, 1, 1}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
-        if ((child = node->arr[{1, 0, 0}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
-        if ((child = node->arr[{1, 0, 1}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
-        if ((child = node->arr[{1, 1, 0}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
-        if ((child = node->arr[{1, 1, 1}]) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{0, 0, 0}].get()) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{0, 0, 1}].get()) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{0, 1, 0}].get()) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{0, 1, 1}].get()) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{1, 0, 0}].get()) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{1, 0, 1}].get()) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{1, 1, 0}].get()) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
+        if ((child = node->arr[{1, 1, 1}].get()) != nullptr) cull(camera, visibleNodeList, child, alreadyVisible);
     }
 };
+
+// Debugging Only
+inline void octree_debug_draw(SceneOctree & octree, GlShader * shader, GlMesh * boxMesh, GlMesh * sphereMesh, const float4x4 & viewProj, SceneOctree::Node * node, float3 coordinate)
+{
+    if (!node) node = octree.root.get();
+
+    shader->bind();
+
+    const auto boxModel = mul(make_translation_matrix(node->box.center()), make_scaling_matrix(node->box.size() / 2.f));
+    shader->uniform("u_color", coordinate);
+    shader->uniform("u_mvp", mul(viewProj, boxModel));
+    boxMesh->draw_elements();
+
+    for (auto s : node->spheres)
+    {
+        const auto sphereModel = mul(s->p.matrix(), make_scaling_matrix(s->radius));
+        shader->uniform("u_color", coordinate);
+        shader->uniform("u_mvp", mul(viewProj, sphereModel));
+        sphereMesh->draw_elements();
+    }
+
+    shader->unbind();
+
+    // Recurse into children
+    SceneOctree::Node * child;
+    if ((child = node->arr[{0, 0, 0}].get()) != nullptr) octree_debug_draw(octree, shader, boxMesh, sphereMesh, viewProj, child, { 0, 0, 0 });
+    if ((child = node->arr[{0, 0, 1}].get()) != nullptr) octree_debug_draw(octree, shader, boxMesh, sphereMesh, viewProj, child, { 0, 0, 1 });
+    if ((child = node->arr[{0, 1, 0}].get()) != nullptr) octree_debug_draw(octree, shader, boxMesh, sphereMesh, viewProj, child, { 0, 1, 0 });
+    if ((child = node->arr[{0, 1, 1}].get()) != nullptr) octree_debug_draw(octree, shader, boxMesh, sphereMesh, viewProj, child, { 0, 1, 1 });
+    if ((child = node->arr[{1, 0, 0}].get()) != nullptr) octree_debug_draw(octree, shader, boxMesh, sphereMesh, viewProj, child, { 1, 0, 0 });
+    if ((child = node->arr[{1, 0, 1}].get()) != nullptr) octree_debug_draw(octree, shader, boxMesh, sphereMesh, viewProj, child, { 1, 0, 1 });
+    if ((child = node->arr[{1, 1, 0}].get()) != nullptr) octree_debug_draw(octree, shader, boxMesh, sphereMesh, viewProj, child, { 1, 1, 0 });
+    if ((child = node->arr[{1, 1, 1}].get()) != nullptr) octree_debug_draw(octree, shader, boxMesh, sphereMesh, viewProj, child, { 1, 1, 1 });
+}
 
 bool toggleDebug = false;
 
@@ -406,7 +395,10 @@ struct ExperimentalApp : public GLFWApp
         }
         */
 
-        if (toggleDebug) octree.debug_draw(wireframeShader.get(), &box, &sphere, viewProj, nullptr, float3());
+        if (toggleDebug)
+        {
+            octree_debug_draw(octree, wireframeShader.get(), &box, &sphere, viewProj, nullptr, float3());
+        }
 
         float3 xformPosition = { xform.position.x, xform.position.y, xform.position.z };
         Bounds3D worldspaceCameraVolume = { xformPosition - float3(0.5f), xformPosition + float3(0.5f) };
