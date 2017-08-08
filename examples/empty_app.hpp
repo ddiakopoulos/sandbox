@@ -289,7 +289,6 @@ inline void octree_debug_draw(
 }
 
 bool toggleDebug = false;
-bool useExternal = false;
 
 struct ExperimentalApp : public GLFWApp
 {
@@ -302,7 +301,7 @@ struct ExperimentalApp : public GLFWApp
 
     std::vector<DebugSphere> meshes;
 
-    GlMesh sphere, box, frustum, normals;
+    GlMesh sphere, box, frustum;
 
     SceneOctree<DebugSphere> octree;
 
@@ -337,11 +336,12 @@ struct ExperimentalApp : public GLFWApp
         for (int i = 0; i < 32; ++i)
         {
             const float3 position = { rand.random_float(8.f) - 4.f, rand.random_float(8.f) - 4.f, rand.random_float(8.f) - 4.f };
-            //const float3 position = { 0, 1.5f, -2.5f };
             const float radius = rand.random_float(0.25f);
+
             DebugSphere s; 
             s.p = Pose(float4(0, 0, 0, 1), position);
             s.radius = radius;
+
             meshes.push_back(std::move(s));
         }
 
@@ -369,11 +369,6 @@ struct ExperimentalApp : public GLFWApp
         {
             toggleDebug = !toggleDebug;
         }
-
-        if (event.type == InputEvent::KEY && event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
-        {
-            useExternal = !useExternal;
-        }
     }
     
     void on_update(const UpdateEvent & e) override
@@ -400,7 +395,7 @@ struct ExperimentalApp : public GLFWApp
         tinygizmo::transform_gizmo("destination", gizmo->gizmo_ctx, xform);
 
         const float4x4 proj = debugCamera.get_projection_matrix((float) width / (float) height);
-        const float4x4 view = useExternal ? inverse(externalCam.matrix()) : debugCamera.get_view_matrix();
+        const float4x4 view = debugCamera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
 
         if (toggleDebug)
@@ -420,8 +415,7 @@ struct ExperimentalApp : public GLFWApp
         wireframeShader->unbind();
         */
 
-        std::vector<SceneOctree<DebugSphere>::Octant<DebugSphere> *> visibleNodes;
-
+        /*
         const float4x4 visualizeViewProj = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 10.f), inverse(externalCam.matrix()));
 
         Frustum f(visualizeViewProj);
@@ -444,44 +438,31 @@ struct ExperimentalApp : public GLFWApp
         glLineWidth(2.f);
         frustum.set_non_indexed(GL_LINES);
 
-
-        /*
-        std::vector<float3> nrm_lines = {
-            f.planes[0].get_normal(), f.planes[0].get_normal() + f.planes[0].get_distance(),
-            f.planes[1].get_normal(), f.planes[1].get_normal() + f.planes[1].get_distance(),
-            f.planes[2].get_normal(), f.planes[2].get_normal() + f.planes[2].get_distance(),
-            f.planes[3].get_normal(), f.planes[3].get_normal() + f.planes[3].get_distance(),
-            f.planes[4].get_normal(), f.planes[4].get_normal() + f.planes[4].get_distance(),
-            f.planes[5].get_normal(), f.planes[5].get_normal() + f.planes[5].get_distance()
-        };
-
-        Geometry nrm;
-        for (auto & v : nrm_lines) nrm.vertices.push_back(v);
-        normals = make_mesh_from_geometry(nrm);
-        normals.set_non_indexed(GL_LINES);
-        */
-
-        // Visualize the frustum + normals
+        // Visualize the frustum
         wireframeShader->bind();
         wireframeShader->uniform("u_color", float3(1, 0, 0));
         wireframeShader->uniform("u_mvp", mul(viewProj, Identity4x4));
         frustum.draw_elements();
-        //normals.draw_elements();
+
+        */
+
+
+        std::vector<SceneOctree<DebugSphere>::Octant<DebugSphere> *> visibleNodes;
+        Frustum camFrustum(viewProj);
+
+        wireframeShader->bind();
 
         for (auto & sph : meshes)
         {
             const auto model = mul(sph.p.matrix(), make_scaling_matrix(sph.radius));
-            wireframeShader->uniform("u_color", f.point_in_frustum(sph.p.position) ? float3(1, 1, 1) : float3(0, 0, 0));
+            wireframeShader->uniform("u_color", camFrustum.point_in_frustum(sph.p.position) ? float3(1, 1, 1) : float3(0, 0, 0));
             wireframeShader->uniform("u_mvp", mul(viewProj, model));
             sphere.draw_elements();
         }
 
         wireframeShader->unbind();
 
-        std::cout << "--------------------------- \n";
-
-        /*
-        octree.cull(f, visibleNodes, nullptr, false);
+        octree.cull(camFrustum, visibleNodes, nullptr, false);
         uint32_t visibleObjects = 0;
         for (auto node : visibleNodes)
         {
@@ -504,7 +485,8 @@ struct ExperimentalApp : public GLFWApp
         }
  
         std::cout << "Visible Objects: " << visibleObjects << std::endl;
-        */
+
+
         if (gizmo) gizmo->draw();
 
         gl_check_error(__FILE__, __LINE__);
