@@ -165,6 +165,7 @@
     <ClInclude Include="camera_app.hpp" />
     <ClInclude Include="decal_app.hpp" />
     <ClInclude Include="empty_app.hpp" />
+    <ClInclude Include="octree_test_app.hpp" />
     <ClInclude Include="geometric_algo_dev.hpp" />
     <ClInclude Include="hdr_skydome.hpp" />
     <ClInclude Include="instance_app.hpp" />

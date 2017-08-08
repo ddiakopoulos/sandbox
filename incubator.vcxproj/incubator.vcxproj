@@ -54,6 +54,7 @@
     <ClInclude Include="..\movement_tracker.hpp" />
     <ClInclude Include="..\mpmc_bounded_queue.hpp" />
     <ClInclude Include="..\mpsc_queue.hpp" />
+    <ClInclude Include="..\octree.hpp" />
     <ClInclude Include="..\one_euro.hpp" />
     <ClInclude Include="..\oriented_bounding_box.hpp" />
     <ClInclude Include="..\parabolic_pointer.hpp" />

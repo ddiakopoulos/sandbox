@@ -21,9 +21,6 @@
     <ClInclude Include="decal_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
-    <ClInclude Include="empty_app.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
     <ClInclude Include="geometric_algo_dev.hpp">
       <Filter>applications</Filter>
     </ClInclude>
@@ -55,6 +52,12 @@
       <Filter>applications</Filter>
     </ClInclude>
     <ClInclude Include="asset_test.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="octree_test_app.hpp">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="empty_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
   </ItemGroup>
