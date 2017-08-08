@@ -88,7 +88,7 @@ namespace avl
         float3 get_negative(const float3 & normal) const
         {
             float3 result = min();
-            float3 s = size();
+            const float3 s = size();
             if (normal.x < 0) result.x += s.x;
             if (normal.y < 0) result.y += s.y;
             if (normal.z < 0) result.z += s.z;
@@ -690,35 +690,35 @@ namespace avl
         
         Sphere() {}
         Sphere(const float3 & center, float radius) : center(center), radius(radius) {}
-        
-        // Returns the closest point on the ray to the Sphere. If ray intersects then returns the point of nearest intersection.
-        float3 closest_point(const Ray & ray) const
-        {
-            float t;
-            float3 diff = ray.origin - center;
-            float a = dot(ray.direction, ray.direction);
-            float b = 2.f * dot(diff, ray.direction);
-            float c = dot(diff, diff) - radius * radius;
-            float disc = b * b - 4.f * a * c;
-            
-            if (disc > 0)
-            {
-                float e = std::sqrt(disc);
-                float denom = 2.f * a;
-                t = (-b - e) / denom;    // smaller root
-                
-                if (t > SPHERE_EPSILON) return ray.calculate_position(t);
-                
-                t = (-b + e) / denom;    // larger root
-                if (t > SPHERE_EPSILON) return ray.calculate_position(t);
-            }
-            
-            // doesn't intersect; closest point on line
-            t = dot( -diff, safe_normalize(ray.direction));
-            float3 onRay = ray.calculate_position(t);
-            return center + safe_normalize(onRay - center) * radius;
-        }
     };
+
+    // Returns the closest point on the ray to the Sphere. If ray intersects then returns the point of nearest intersection.
+    inline float3 closest_point_on_sphere(const Sphere & s, const Ray & ray) 
+    {
+        float t;
+        float3 diff = ray.origin - s.center;
+        float a = dot(ray.direction, ray.direction);
+        float b = 2.f * dot(diff, ray.direction);
+        float c = dot(diff, diff) - s.radius * s.radius;
+        float disc = b * b - 4.f * a * c;
+
+        if (disc > 0)
+        {
+            float e = std::sqrt(disc);
+            float denom = 2.f * a;
+            t = (-b - e) / denom; // smaller root
+
+            if (t > SPHERE_EPSILON) return ray.calculate_position(t);
+
+            t = (-b + e) / denom; // larger root
+            if (t > SPHERE_EPSILON) return ray.calculate_position(t);
+        }
+
+        // doesn't intersect; closest point on line
+        t = dot(-diff, safe_normalize(ray.direction));
+        float3 onRay = ray.calculate_position(t);
+        return s.center + safe_normalize(onRay - s.center) * s.radius;
+    }
 
     // Makes use of the "bouncing bubble" solution to the minimal enclosing ball problem. Runs in O(n).
     // http://stackoverflow.com/questions/17331203/bouncing-bubble-algorithm-for-smallest-enclosing-sphere

@@ -352,7 +352,6 @@ struct ExperimentalApp : public GLFWApp
                 octree.create(std::move(SceneNodeContainer<DebugSphere>(sph, sph.get_bounds())));
             }
         }
-
     }
     
     void on_window_resize(int2 size) override
@@ -406,6 +405,7 @@ struct ExperimentalApp : public GLFWApp
         float3 xformPosition = { xform.position.x, xform.position.y, xform.position.z };
         //Bounds3D worldspaceCameraVolume = { xformPosition - float3(0.5f), xformPosition + float3(0.5f) };
 
+        /*
         const float4x4 visualizeViewProj = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 10.f), inverse(externalCam.matrix()));
 
         Frustum f(visualizeViewProj);
@@ -434,7 +434,6 @@ struct ExperimentalApp : public GLFWApp
         wireframeShader->uniform("u_mvp", mul(viewProj, Identity4x4));
         frustum.draw_elements();
 
-        Frustum camFrustum(visualizeViewProj);
 
         wireframeShader->bind();
         const auto model = mul(make_translation_matrix(xformPosition), make_scaling_matrix(0.5f));
@@ -444,9 +443,9 @@ struct ExperimentalApp : public GLFWApp
         wireframeShader->unbind();
 
 
-        /*
+        */
 
-
+        Frustum camFrustum(viewProj);
 
         wireframeShader->bind();
 
@@ -483,8 +482,7 @@ struct ExperimentalApp : public GLFWApp
             wireframeShader->unbind();
         }
  
-        std::cout << "Visible Objects: " << visibleObjects << std::endl;
-        */
+        std::cout << "Visible Objects: " << visibleObjects << std::endl; 
 
         if (gizmo) gizmo->draw();
 
