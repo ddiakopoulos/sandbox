@@ -3,13 +3,12 @@
 #include <string>
 #include <vector>
 
-NvgFont::NvgFont(NVGcontext * nvg, const std::string & name, std::vector<uint8_t> buffer)
+NvgFont::NvgFont(NVGcontext * nvg, const std::string & name, std::vector<uint8_t> & buffer)
 {
     this->buffer = std::move(buffer);
     this->nvg = nvg;
     id = nvgCreateFontMem(nvg, name.c_str(), this->buffer.data(), (int) this->buffer.size(), 0);
-    if (id < 0)
-        throw std::runtime_error("Failed to load font: " + name);
+    if (id < 0) throw std::runtime_error("Failed to load font: " + name);
 }
 
 size_t NvgFont::get_cursor_location(const std::string & text, float fontSize, int xCoord) const
@@ -21,8 +20,7 @@ size_t NvgFont::get_cursor_location(const std::string & text, float fontSize, in
     positions.resize(nvgTextGlyphPositions(nvg, 0, 0, text.data(), text.data() + (int) text.size(), positions.data(), (int) positions.size()));
     for (size_t i = 0; i<positions.size(); ++i)
     {
-        if(xCoord < positions[i].maxx)
-            return i;
+        if (xCoord < positions[i].maxx) return i;
     }
     return positions.size();
 }
