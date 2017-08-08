@@ -786,6 +786,11 @@ namespace avl
         float3 reflect_vector(const float3 & v) const { return get_normal() * dot(get_normal(), v) * 2.f - v; }
     };
 
+    inline float3 project_on_plane(const float3 & n, const float3 & v)
+    {
+        return v - n * dot(n, v);
+    }
+
     // http://math.stackexchange.com/questions/64430/find-extra-arbitrary-two-points-for-a-plane-given-the-normal-and-a-point-that-l
     inline void make_basis_vectors(const float3 & plane_normal, float3 & u, float3 & v)
     {
