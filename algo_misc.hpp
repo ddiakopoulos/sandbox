@@ -116,7 +116,7 @@ inline std::vector<bool> make_euclidean_pattern(int steps, int pulses)
     return pattern;
 }
 
-float3 rgb_to_hsv(const float3 & rgb)
+inline float3 rgb_to_hsv(const float3 & rgb)
 {
     float rd = rgb.x / 255;
     float gd = rgb.y / 255;

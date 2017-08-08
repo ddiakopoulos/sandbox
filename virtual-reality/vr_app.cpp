@@ -22,7 +22,7 @@ inline bool take_screenshot(int2 size)
     return false;
 }
 
-VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
+VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR Sandbox")
 {
     scoped_timer t("constructor");
 
@@ -50,12 +50,13 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
         renderer.reset(new VR_Renderer({ (float)windowWidth * 0.5f, (float)windowHeight })); // per eye resolution
     }
 
-    octree.reset(new SceneOctree(renderer->sceneDebugRenderer));
-    std::cout << "Octree Spatial Resolution:" << octree->get_resolution() << std::endl;
+    // Initialize Bullet physics
     setup_physics();
 
+    // Setup scene including materials, geometry, physics interactions, etc
     setup_scene();
 
+    // Setup Debug visualizations
     uiSurface.bounds = { 0, 0, (float)windowWidth, (float)windowHeight };
     uiSurface.add_child({ { 0.0000f, +20 },{ 0, +20 },{ 0.1667f, -10 },{ 0.133f, +10 } });
     uiSurface.add_child({ { 0.1667f, +20 },{ 0, +20 },{ 0.3334f, -10 },{ 0.133f, +10 } });
@@ -63,10 +64,7 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR")
     uiSurface.add_child({ { 0.5000f, +20 },{ 0, +20 },{ 0.6668f, -10 },{ 0.133f, +10 } });
     uiSurface.layout();
 
-    for (int i = 0; i < 4; ++i)
-    {
-        csmViews.push_back(std::make_shared<GLTextureView3D>());
-    }
+    for (int i = 0; i < 4; ++i) csmViews.push_back(std::make_shared<GLTextureView3D>());
 
     gl_check_error(__FILE__, __LINE__);
 }
@@ -318,16 +316,6 @@ void VirtualRealityApp::setup_scene()
         scene.params.navMeshBounds = scene.navMesh.compute_bounds();
     }
 
-    std::vector<Renderable *> sceneObjects;
-    LightCollection lightCollection;
-    scene.gather(sceneObjects, lightCollection);
-
-   for (auto r : sceneObjects)
-   {    
-       std::cout << "========= Adding Object: " << r->get_bounds() << std::endl;
-       octree->create(r);
-   }
-
 }
 
 void VirtualRealityApp::on_window_resize(int2 size)
@@ -452,20 +440,13 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
         if (state.released)
         {
-            octree.reset(new SceneOctree(renderer->sceneDebugRenderer));
-
             float3 spherePos = hmd->get_controller(vr::ETrackedControllerRole(i + 1)).get_pose(hmd->get_world_pose()).position;
-            std::cout << "Position: " << spherePos << std::endl;
+            std::cout << "New Sphere @ Position: " << spherePos << std::endl;
             StaticMesh sphere;
             sphere.set_static_mesh(make_sphere(0.125));
             sphere.set_pose(Pose(float4(0, 0, 0, 1), spherePos));
             sphere.set_material(scene.namedMaterialList["material-rusted-iron"].get());
             scene.models.push_back(std::move(sphere));
-
-            std::vector<Renderable *> sceneObjects;
-            LightCollection lightCollection;
-            scene.gather(sceneObjects, lightCollection);
-            for (auto r : sceneObjects) octree->create(r);
         }
     }
 
@@ -511,8 +492,6 @@ void VirtualRealityApp::on_draw()
 
     ImGui::SliderFloat3("Directional Light", &scene.directionalLight.direction.x, -1.f, 1.f);
     renderer->sceneDebugRenderer.draw_line({ 0, 1, 0 }, normalize(scene.directionalLight.direction), { 1, 0, 0 });
-
-    octree->debug_draw(octree->root, float3(1, 1, 1));
 
     if (hmd)
     {

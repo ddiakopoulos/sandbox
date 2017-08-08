@@ -5,6 +5,7 @@
 
 #include "linalg_util.hpp"
 #include <ostream>
+#include <vector>
 
 namespace avl
 {
