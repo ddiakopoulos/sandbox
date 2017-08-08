@@ -406,16 +406,6 @@ struct ExperimentalApp : public GLFWApp
         float3 xformPosition = { xform.position.x, xform.position.y, xform.position.z };
         //Bounds3D worldspaceCameraVolume = { xformPosition - float3(0.5f), xformPosition + float3(0.5f) };
 
-        /*
-        wireframeShader->bind();
-        const auto model = mul(make_translation_matrix(xformPosition), make_scaling_matrix(0.5f));
-        wireframeShader->uniform("u_color", float3(1, 1, 1));
-        wireframeShader->uniform("u_mvp", mul(viewProj, model));
-        box.draw_elements();
-        wireframeShader->unbind();
-        */
-
-        /*
         const float4x4 visualizeViewProj = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 10.f), inverse(externalCam.matrix()));
 
         Frustum f(visualizeViewProj);
@@ -444,11 +434,19 @@ struct ExperimentalApp : public GLFWApp
         wireframeShader->uniform("u_mvp", mul(viewProj, Identity4x4));
         frustum.draw_elements();
 
-        */
+        Frustum camFrustum(visualizeViewProj);
+
+        wireframeShader->bind();
+        const auto model = mul(make_translation_matrix(xformPosition), make_scaling_matrix(0.5f));
+        wireframeShader->uniform("u_color", camFrustum.intersects(xformPosition, float3(0.5f)) ? float3(1, 1, 1) : float3(0, 0, 0));
+        wireframeShader->uniform("u_mvp", mul(viewProj, model));
+        box.draw_elements();
+        wireframeShader->unbind();
 
 
-        std::vector<SceneOctree<DebugSphere>::Octant<DebugSphere> *> visibleNodes;
-        Frustum camFrustum(viewProj);
+        /*
+
+
 
         wireframeShader->bind();
 
@@ -462,6 +460,7 @@ struct ExperimentalApp : public GLFWApp
 
         wireframeShader->unbind();
 
+        std::vector<SceneOctree<DebugSphere>::Octant<DebugSphere> *> visibleNodes;
         octree.cull(camFrustum, visibleNodes, nullptr, false);
         uint32_t visibleObjects = 0;
         for (auto node : visibleNodes)
@@ -485,7 +484,7 @@ struct ExperimentalApp : public GLFWApp
         }
  
         std::cout << "Visible Objects: " << visibleObjects << std::endl;
-
+        */
 
         if (gizmo) gizmo->draw();
 
