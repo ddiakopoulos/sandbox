@@ -84,6 +84,28 @@ namespace avl
             return false;
         }
 
+        // Given a plane through the origin with a normal, returns the corner closest to the plane.
+        float3 get_negative(const float3 & normal) const
+        {
+            float3 result = min();
+            float3 s = size();
+            if (normal.x < 0) result.x += s.x;
+            if (normal.y < 0) result.y += s.y;
+            if (normal.z < 0) result.z += s.z;
+            return result;
+        }
+
+        // Given a plane through the origin with a normal, returns the corner farthest from the plane.
+        float3 get_positive(const float3 & normal) const
+        {
+            float3 result = min();
+            const float3 s = size();
+            if (normal.x > 0) result.x += s.x;
+            if (normal.y > 0) result.y += s.y;
+            if (normal.z > 0) result.z += s.z;
+            return result;
+        }
+
         void surround(const float3 & p) 
         { 
             _min = linalg::min(_min, p); 
@@ -759,6 +781,8 @@ namespace avl
         float get_distance() const { return equation.w; }
         float distance_to(const float3 & point) const { return dot(get_normal(), point) + equation.w; };
         bool contains(const float3 & point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
+        float3 reflect_coord(const float3 & c) const { return get_normal() * distance_to(c) * -2.f + c; }
+        float3 reflect_vector(const float3 & v) const { return get_normal() * dot(get_normal(), v) * 2.f - v; }
     };
 
     // http://math.stackexchange.com/questions/64430/find-extra-arbitrary-two-points-for-a-plane-given-the-normal-and-a-point-that-l
@@ -1000,6 +1024,7 @@ namespace avl
 
     struct Frustum
     {
+        // frustum normals point inward
         Plane planes[6];
 
         Frustum()
@@ -1014,6 +1039,7 @@ namespace avl
 
         Frustum(float4x4 viewProj)
         {
+            // See "Fast Extraction of Viewing Frustum Planes from the WorldView-Projection Matrix" by Gil Gribb and Klaus Hartmann
             for (int i = 0; i < 4; ++i) planes[FrustumPlane::RIGHT].equation[i] =   viewProj[i][3] - viewProj[i][0];
             for (int i = 0; i < 4; ++i) planes[FrustumPlane::LEFT].equation[i] =    viewProj[i][3] + viewProj[i][0];
             for (int i = 0; i < 4; ++i) planes[FrustumPlane::BOTTOM].equation[i] =  viewProj[i][3] + viewProj[i][1];
@@ -1023,15 +1049,62 @@ namespace avl
             for (auto & p : planes) p.normalize();
         }
 
-        // A point is within the frustum if it is in front of all six planes simultaneously. Frustums point inward.
-        bool point_in_frustum(const float3 & v)
+        // A point is within the frustum if it is in front of all six planes simultaneously.
+        // Returns true if point is within the frustum.
+        bool contains(const float3 & point) const
         {
             for (int p = 0; p < 6; p++)
             {
-                if (planes[p].distance_to(v) <= PLANE_EPSILON) return false;
+                if (planes[p].distance_to(point) <= PLANE_EPSILON) return false;
             }
             return true;
         }
+
+        // Returns true if the sphere is fully contained within the frustum. 
+        bool contains(const float3 & center, const float radius) const
+        {
+            for (int p = 0; p < 6; p++)
+            {
+                if (planes[p].distance_to(center) < radius) return false;
+            }
+            return true;
+        }
+
+        // Returns true if the box is fully contained within the frustum.
+        bool contains(const float3 & center, const float3 & size) const
+        {
+            const float3 half = size * 0.5f;
+            const Bounds3D box(float3(center - half), float3(center + half));
+            for (int p = 0; p < 6; p++)
+            {
+                if (planes[p].distance_to(box.get_positive(planes[p].get_normal())) < 0.f) return false;
+                else if (planes[p].distance_to(box.get_negative(planes[p].get_normal())) < 0.f) return false;
+            }
+            return true;
+        }
+
+        // Returns true if a sphere is fully or partially contained within the frustum.
+        bool intersects(const float3 & center, const float radius) const
+        {
+            for (int p = 0; p < 6; p++)
+            {
+                if (planes[p].distance_to(center) <= -radius) return false;
+            }
+            return true;
+        }
+
+        // Returns true if the box is fully or partially contained within the frustum.
+        bool intersects(const float3 & center, const float3 & size) const
+        {
+            const float3 half = size * 0.5f;
+            const Bounds3D box(float3(center - half), float3(center + half));
+            for (int p = 0; p < 6; p++)
+            {
+                if (planes[p].distance_to(box.get_positive(planes[p].get_normal())) < 0.f) return false;
+            }
+            return true;
+        }
+
     };
 
     inline std::array<float3, 8> make_frustum_corners(const Frustum & f)
