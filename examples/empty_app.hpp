@@ -220,7 +220,7 @@ struct SceneOctree
         }
         else
         {
-            if (camera.point_in_frustum(node->box.center()))
+            if (camera.contains(node->box.center()))
             {
                 status = INSIDE;
             }
@@ -455,7 +455,7 @@ struct ExperimentalApp : public GLFWApp
         for (auto & sph : meshes)
         {
             const auto model = mul(sph.p.matrix(), make_scaling_matrix(sph.radius));
-            wireframeShader->uniform("u_color", camFrustum.point_in_frustum(sph.p.position) ? float3(1, 1, 1) : float3(0, 0, 0));
+            wireframeShader->uniform("u_color", camFrustum.contains(sph.p.position) ? float3(1, 1, 1) : float3(0, 0, 0));
             wireframeShader->uniform("u_mvp", mul(viewProj, model));
             sphere.draw_elements();
         }
