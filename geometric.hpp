@@ -753,12 +753,12 @@ namespace avl
         Plane(const float3 & normal, const float & distance) { equation = float4(normal.x, normal.y, normal.z, distance); }
         Plane(const float3 & normal, const float3 & point) { equation = float4(normal.x, normal.y, normal.z, -dot(normal, point)); }
         float3 get_normal() const { return equation.xyz(); }
-        bool is_negative_half_space(const float3 & point) const { return (dot(get_normal(), point) < -equation.w); }; // +eq.w?
-        bool is_positive_half_space(const float3 & point) const { return (dot(get_normal(), point) > -equation.w); };
+        bool is_negative_half_space(const float3 & point) const { return (dot(get_normal(), point) < equation.w); }; // +eq.w?
+        bool is_positive_half_space(const float3 & point) const { return (dot(get_normal(), point) > equation.w); };
         void normalize() { float n = 1.0f / length(get_normal()); equation *= n; };
         float get_distance() const { return equation.w; }
-        float distance_to(float3 point) const { return dot(get_normal(), point) + equation.w; };
-        bool contains(float3 point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
+        float distance_to(const float3 & point) const { return dot(get_normal(), point) + equation.w; };
+        bool contains(const float3 & point) const { return std::abs(distance_to(point)) < PLANE_EPSILON; };
     };
 
     // http://math.stackexchange.com/questions/64430/find-extra-arbitrary-two-points-for-a-plane-given-the-normal-and-a-point-that-l
@@ -1004,15 +1004,15 @@ namespace avl
 
         Frustum()
         {
-            planes[FrustumPlane::RIGHT] =   Plane({ +1, 0, 0 }, 1.f);
-            planes[FrustumPlane::LEFT] =    Plane({ -1, 0, 0 }, 1.f);
-            planes[FrustumPlane::BOTTOM] =  Plane({ 0, -1, 0 }, 1.f);
-            planes[FrustumPlane::TOP] =     Plane({ 0, +1, 0 }, 1.f);
-            planes[FrustumPlane::NEAR] =    Plane({ 0, 0,  1 }, 1.f);
+            planes[FrustumPlane::RIGHT] =   Plane({ -1, 0, 0 }, 1.f);
+            planes[FrustumPlane::LEFT] =    Plane({ +1, 0, 0 }, 1.f);
+            planes[FrustumPlane::BOTTOM] =  Plane({ 0, +1, 0 }, 1.f);
+            planes[FrustumPlane::TOP] =     Plane({ 0, -1, 0 }, 1.f);
+            planes[FrustumPlane::NEAR] =    Plane({ 0, 0, +1 }, 1.f);
             planes[FrustumPlane::FAR] =     Plane({ 0, 0, -1 }, 1.f);
         }
 
-        Frustum(const float4x4 & viewProj)
+        Frustum(float4x4 viewProj)
         {
             for (int i = 0; i < 4; ++i) planes[FrustumPlane::RIGHT].equation[i] =   viewProj[i][3] - viewProj[i][0];
             for (int i = 0; i < 4; ++i) planes[FrustumPlane::LEFT].equation[i] =    viewProj[i][3] + viewProj[i][0];
@@ -1023,10 +1023,14 @@ namespace avl
             for (auto & p : planes) p.normalize();
         }
 
+        // A point is within the frustum if it is in front of all six planes simultaneously. Frustums point inward.
         bool point_in_frustum(const float3 & v)
         {
-            for (int p = 0; p < 6; p++) if (planes[p].contains(v)) return true;
-            return false;
+            for (int p = 0; p < 6; p++)
+            {
+                if (planes[p].distance_to(v) <= PLANE_EPSILON) return false;
+            }
+            return true;
         }
     };
 

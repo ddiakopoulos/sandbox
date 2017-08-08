@@ -203,7 +203,7 @@ struct SceneOctree
         }
     }
 
-    void cull(Bounds3D & camera, std::vector<Octant<T> *> & visibleNodeList, Octant<T> * node, bool alreadyVisible)
+    void cull(Frustum & camera, std::vector<Octant<T> *> & visibleNodeList, Octant<T> * node, bool alreadyVisible)
     {
         if (!node) node = root.get();
         if (node->occupancy == 0) return;
@@ -220,7 +220,7 @@ struct SceneOctree
         }
         else
         {
-            if (node->box.contains(camera.center()))
+            if (camera.point_in_frustum(node->box.center()))
             {
                 status = INSIDE;
             }
@@ -289,6 +289,7 @@ inline void octree_debug_draw(
 }
 
 bool toggleDebug = false;
+bool useExternal = false;
 
 struct ExperimentalApp : public GLFWApp
 {
@@ -301,12 +302,14 @@ struct ExperimentalApp : public GLFWApp
 
     std::vector<DebugSphere> meshes;
 
-    GlMesh sphere, box;
+    GlMesh sphere, box, frustum, normals;
 
     SceneOctree<DebugSphere> octree;
 
     std::unique_ptr<GlGizmo> gizmo;
     tinygizmo::rigid_transform xform;
+
+    Pose externalCam;
 
     ExperimentalApp() : GLFWApp(1280, 800, "Nearly Empty App")
     {
@@ -323,15 +326,20 @@ struct ExperimentalApp : public GLFWApp
         debugCamera.look_at({0, 3.0, -3.5}, {0, 2.0, 0});
         cameraController.set_camera(&debugCamera);
 
+        externalCam = look_at_pose_rh({ 0, 3.0, 5.0f }, { 0, 2.0, -0.001f });
+
+        frustum = {};
+
         sphere = make_sphere_mesh(1.f);
         box = make_cube_mesh();
         box.set_non_indexed(GL_LINES);
 
-        for (int i = 0; i < 512; ++i)
+        for (int i = 0; i < 32; ++i)
         {
             const float3 position = { rand.random_float(8.f) - 4.f, rand.random_float(8.f) - 4.f, rand.random_float(8.f) - 4.f };
+            //const float3 position = { 0, 1.5f, -2.5f };
             const float radius = rand.random_float(0.25f);
-            DebugSphere s;
+            DebugSphere s; 
             s.p = Pose(float4(0, 0, 0, 1), position);
             s.radius = radius;
             meshes.push_back(std::move(s));
@@ -361,6 +369,11 @@ struct ExperimentalApp : public GLFWApp
         {
             toggleDebug = !toggleDebug;
         }
+
+        if (event.type == InputEvent::KEY && event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
+        {
+            useExternal = !useExternal;
+        }
     }
     
     void on_update(const UpdateEvent & e) override
@@ -386,21 +399,9 @@ struct ExperimentalApp : public GLFWApp
         if (gizmo) gizmo->update(debugCamera, float2(width, height));
         tinygizmo::transform_gizmo("destination", gizmo->gizmo_ctx, xform);
 
-        const auto proj = debugCamera.get_projection_matrix((float) width / (float) height);
-        const float4x4 view = debugCamera.get_view_matrix();
+        const float4x4 proj = debugCamera.get_projection_matrix((float) width / (float) height);
+        const float4x4 view = useExternal ? inverse(externalCam.matrix()) : debugCamera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
-
-        wireframeShader->bind();
-
-        /*
-        for (auto & sph : meshes)
-        {
-            const auto model = mul(sph.p.matrix(), make_scaling_matrix(sph.radius));
-            wireframeShader->uniform("u_color", float3(0, 0, 0));
-            wireframeShader->uniform("u_mvp", mul(viewProj, model));
-            sphere.draw_elements();
-        }
-        */
 
         if (toggleDebug)
         {
@@ -408,19 +409,80 @@ struct ExperimentalApp : public GLFWApp
         }
 
         float3 xformPosition = { xform.position.x, xform.position.y, xform.position.z };
-        Bounds3D worldspaceCameraVolume = { xformPosition - float3(0.5f), xformPosition + float3(0.5f) };
+        //Bounds3D worldspaceCameraVolume = { xformPosition - float3(0.5f), xformPosition + float3(0.5f) };
 
+        /*
         wireframeShader->bind();
         const auto model = mul(make_translation_matrix(xformPosition), make_scaling_matrix(0.5f));
         wireframeShader->uniform("u_color", float3(1, 1, 1));
         wireframeShader->uniform("u_mvp", mul(viewProj, model));
         box.draw_elements();
         wireframeShader->unbind();
+        */
 
         std::vector<SceneOctree<DebugSphere>::Octant<DebugSphere> *> visibleNodes;
 
-        octree.cull(worldspaceCameraVolume, visibleNodes, nullptr, false);
+        const float4x4 visualizeViewProj = mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 10.f), inverse(externalCam.matrix()));
 
+        Frustum f(visualizeViewProj);
+        auto generated_frustum_corners = make_frustum_corners(f);
+
+        float3 ftl = generated_frustum_corners[0]; float3 fbr = generated_frustum_corners[1];
+        float3 fbl = generated_frustum_corners[2]; float3 ftr = generated_frustum_corners[3];
+        float3 ntl = generated_frustum_corners[4]; float3 nbr = generated_frustum_corners[5];
+        float3 nbl = generated_frustum_corners[6]; float3 ntr = generated_frustum_corners[7];
+
+        std::vector<float3> frustum_coords = {
+            ntl, ntr, ntr, nbr, nbr, nbl, nbl, ntl, // near quad
+            ntl, ftl, ntr, ftr, nbr, fbr, nbl, fbl, // between
+            ftl, ftr, ftr, fbr, fbr, fbl, fbl, ftl, // far quad
+        };
+
+        Geometry g;
+        for (auto & v : frustum_coords) g.vertices.push_back(v);
+        frustum = make_mesh_from_geometry(g);
+        glLineWidth(2.f);
+        frustum.set_non_indexed(GL_LINES);
+
+
+        /*
+        std::vector<float3> nrm_lines = {
+            f.planes[0].get_normal(), f.planes[0].get_normal() + f.planes[0].get_distance(),
+            f.planes[1].get_normal(), f.planes[1].get_normal() + f.planes[1].get_distance(),
+            f.planes[2].get_normal(), f.planes[2].get_normal() + f.planes[2].get_distance(),
+            f.planes[3].get_normal(), f.planes[3].get_normal() + f.planes[3].get_distance(),
+            f.planes[4].get_normal(), f.planes[4].get_normal() + f.planes[4].get_distance(),
+            f.planes[5].get_normal(), f.planes[5].get_normal() + f.planes[5].get_distance()
+        };
+
+        Geometry nrm;
+        for (auto & v : nrm_lines) nrm.vertices.push_back(v);
+        normals = make_mesh_from_geometry(nrm);
+        normals.set_non_indexed(GL_LINES);
+        */
+
+        // Visualize the frustum + normals
+        wireframeShader->bind();
+        wireframeShader->uniform("u_color", float3(1, 0, 0));
+        wireframeShader->uniform("u_mvp", mul(viewProj, Identity4x4));
+        frustum.draw_elements();
+        //normals.draw_elements();
+
+        for (auto & sph : meshes)
+        {
+            const auto model = mul(sph.p.matrix(), make_scaling_matrix(sph.radius));
+            wireframeShader->uniform("u_color", f.point_in_frustum(sph.p.position) ? float3(1, 1, 1) : float3(0, 0, 0));
+            wireframeShader->uniform("u_mvp", mul(viewProj, model));
+            sphere.draw_elements();
+        }
+
+        wireframeShader->unbind();
+
+        std::cout << "--------------------------- \n";
+
+        /*
+        octree.cull(f, visibleNodes, nullptr, false);
+        uint32_t visibleObjects = 0;
         for (auto node : visibleNodes)
         {
             float4x4 boxModel = mul(make_translation_matrix(node->box.center()), make_scaling_matrix(node->box.size() / 2.f));
@@ -436,10 +498,13 @@ struct ExperimentalApp : public GLFWApp
                 sphere.draw_elements();
             }
 
+            visibleObjects += node->objects.size();
+
             wireframeShader->unbind();
         }
  
-
+        std::cout << "Visible Objects: " << visibleObjects << std::endl;
+        */
         if (gizmo) gizmo->draw();
 
         gl_check_error(__FILE__, __LINE__);
