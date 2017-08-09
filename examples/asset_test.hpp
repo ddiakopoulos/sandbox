@@ -13,16 +13,26 @@ using namespace avl;
 struct BaseClass
 {
     virtual void t() = 0;
+    Pose pose{ { -1, -1, -1 } };
+    std::string id = "base";
+    float scale = -1;
 };
 
-
-struct DerivedClass : public BaseClass
+struct DerivedClassA : public BaseClass
 {
     virtual void t() override {}
-    Pose pose{ {0, 10, 0} };
+
 };
-CEREAL_REGISTER_TYPE(DerivedClass);
-CEREAL_REGISTER_POLYMORPHIC_RELATION(BaseClass, DerivedClass)
+
+struct DerivedClassB : public BaseClass
+{
+    virtual void t() override {}
+};
+
+CEREAL_REGISTER_TYPE(DerivedClassA);
+CEREAL_REGISTER_TYPE(DerivedClassB);
+CEREAL_REGISTER_POLYMORPHIC_RELATION(BaseClass, DerivedClassA)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(BaseClass, DerivedClassB)
 
 namespace cereal
 {
@@ -44,7 +54,12 @@ namespace cereal
     template<class Archive> void serialize(Archive & archive, Segment & m) { archive(cereal::make_nvp("a", m.a), cereal::make_nvp("b", m.b)); }
     template<class Archive> void serialize(Archive & archive, Sphere & m) { archive(cereal::make_nvp("center", m.center), cereal::make_nvp("radius", m.radius)); }
 
-    template<class Archive> void serialize(Archive & archive, DerivedClass & m) { archive(cereal::make_nvp("game_object", m.pose)); }
+    template<class Archive> void serialize(Archive & archive, BaseClass & m)
+    { 
+        archive(cereal::make_nvp("pose", m.pose));
+        archive(cereal::make_nvp("scale", m.scale));
+        archive(cereal::make_nvp("id", m.id));
+    }
 }
 
 template <typename T>
@@ -84,7 +99,9 @@ struct ExperimentalApp : public GLFWApp
         //std::cout << ToJson(Pose()) << std::endl;
         //std::cout << ToJson(Ray()) << std::endl;
         //std::cout << ToJson(Frustum()) << std::endl;
-        auto w = std::make_shared<DerivedClass>();
+
+        /*
+        auto w = std::make_shared<DerivedClassA>();
         w->pose.position = float3(10, 20, 30);
 
         std::string derived = ToJson(w);
@@ -92,9 +109,45 @@ struct ExperimentalApp : public GLFWApp
         std::istringstream instr(derived); 
 
         cereal::JSONInputArchive inJson(instr);
-        std::shared_ptr<DerivedClass> derivedPtr;
+        std::shared_ptr<DerivedClassA> derivedPtr;
         inJson(derivedPtr);
         std::cout << derivedPtr->pose << std::endl;
+        */
+
+        std::string jsonObjects;
+            
+        {
+            std::vector<std::shared_ptr<BaseClass>> sceneObjects;
+            for (int i = 0; i < 6; ++i)
+            {
+                auto someNewObjectA = std::make_shared<DerivedClassA>();
+                someNewObjectA->id = "class a";
+
+                auto someNewObjectB = std::make_shared<DerivedClassB>();
+                someNewObjectB->id = "class b";
+
+                sceneObjects.push_back(someNewObjectA);
+                sceneObjects.push_back(someNewObjectB);
+            }
+
+            jsonObjects = ToJson(sceneObjects);
+            std::cout << jsonObjects << std::endl;
+        }
+
+        {
+            std::vector<std::shared_ptr<BaseClass>> sceneObjects;
+
+            std::istringstream inStringStream(jsonObjects);
+            cereal::JSONInputArchive inJson(inStringStream);
+
+            inJson(sceneObjects);
+            
+            for (auto & obj : sceneObjects)
+            {
+                std::cout << obj->id << std::endl;
+            }
+        }
+
 
 
         {
