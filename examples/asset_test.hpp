@@ -65,13 +65,13 @@ namespace cereal
 
     template<class Archive> void serialize(Archive & archive, DerivedClassA & m)
     {
-        archive(cereal::base_class<BaseClass>(&m)); // also virtual_base_class
+        archive(cereal::make_nvp("abse", cereal::base_class<BaseClass>(&m))); // also virtual_base_class
         archive(cereal::make_nvp("override", m.field));
     }
 
     template<class Archive> void serialize(Archive & archive, DerivedClassB & m)
     {
-        archive(cereal::make_nvp("override", m.id));
+        archive(cereal::make_nvp("id", m.id));
     }
 }
 
