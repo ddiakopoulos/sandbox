@@ -82,6 +82,15 @@ void scene_editor_app::on_draw()
     {
         menu.begin("File");
         if (menu.item("Exit", GLFW_MOD_ALT, GLFW_KEY_F4)) exit();
+        if (menu.item("Open Scene", GLFW_MOD_CONTROL, GLFW_KEY_O)) {}
+        if (menu.item("Save Scene", GLFW_MOD_CONTROL, GLFW_KEY_S)) {}
+        if (menu.item("New Scene", GLFW_MOD_CONTROL, GLFW_KEY_N)) {}
+        menu.end();
+
+        menu.begin("Edit");
+        if (menu.item("Clone", GLFW_MOD_CONTROL, GLFW_KEY_D)) {}
+        if (menu.item("Delete", 0, GLFW_KEY_DELETE)) {}
+        if (menu.item("Select All", GLFW_MOD_CONTROL, GLFW_KEY_A)) {}
         menu.end();
     }
     menu.app_menu_end();
