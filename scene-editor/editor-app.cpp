@@ -77,6 +77,20 @@ void scene_editor_app::on_draw()
 
     ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
 
+    gui::imgui_menu_stack menu(*this, igm->capturedKeys);
+    menu.app_menu_begin();
+    {
+        menu.begin("File");
+        if (menu.item("Exit", GLFW_MOD_ALT, GLFW_KEY_F4)) exit();
+        menu.end();
+    }
+    menu.app_menu_end();
+
+    gui::imgui_fixed_window_begin("Objects", { { width - 320, 17 }, { width, height } });
+
+    gui::imgui_fixed_window_end();
+
+
     igm->end_frame();
     if (gizmo) gizmo->draw();
 
