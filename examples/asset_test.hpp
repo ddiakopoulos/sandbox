@@ -6,6 +6,7 @@
 #include "cereal/types/memory.hpp"
 #include "cereal/types/vector.hpp"
 #include "cereal/types/polymorphic.hpp"
+#include <cereal/types/base_class.hpp>
 #include "cereal/archives/json.hpp"
 
 using namespace avl;
@@ -21,6 +22,7 @@ struct BaseClass
 struct DerivedClassA : public BaseClass
 {
     virtual void t() override {}
+    bool field = true;
 
 };
 
@@ -59,6 +61,17 @@ namespace cereal
         archive(cereal::make_nvp("pose", m.pose));
         archive(cereal::make_nvp("scale", m.scale));
         archive(cereal::make_nvp("id", m.id));
+    }
+
+    template<class Archive> void serialize(Archive & archive, DerivedClassA & m)
+    {
+        archive(cereal::base_class<BaseClass>(&m)); // also virtual_base_class
+        archive(cereal::make_nvp("override", m.field));
+    }
+
+    template<class Archive> void serialize(Archive & archive, DerivedClassB & m)
+    {
+        archive(cereal::make_nvp("override", m.id));
     }
 }
 
