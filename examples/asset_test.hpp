@@ -4,7 +4,7 @@
 struct ExperimentalApp : public GLFWApp
 {
 
-    ExperimentalApp() : GLFWApp(600, 600, "Lens Dev")
+    ExperimentalApp() : GLFWApp(600, 600, "Asset Test")
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);

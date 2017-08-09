@@ -35,6 +35,8 @@ struct ExperimentalApp : public GLFWApp
 
     UniformRandomGenerator rand;
 
+    GlMesh flattenedMesh;
+
     std::unique_ptr<GlGizmo> gizmo;
     tinygizmo::rigid_transform xform;
 
@@ -44,6 +46,15 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         gl_check_error(__FILE__, __LINE__);
+
+        Geometry g = make_octohedron();
+
+        for (auto & v : g.vertices)
+        {
+            v = project_on_plane(float3(1, 1, -1), v);
+        }
+
+        flattenedMesh = make_mesh_from_geometry(g);
 
         gizmo.reset(new GlGizmo());
         xform.position = { 0.1f, 0.1f, 0.1f };
@@ -92,13 +103,11 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 view = debugCamera.get_view_matrix();
         const float4x4 viewProj = mul(proj, view);
 
-        /*
         wireframeShader->bind();
-        wireframeShader->uniform("u_color", ... );
-        wireframeShader->uniform("u_mvp", mul(viewProj, ...));
-        (...).draw_elements();
+        wireframeShader->uniform("u_color", float3(0, 0, 1));
+        wireframeShader->uniform("u_mvp", mul(viewProj, Identity4x4));
+        flattenedMesh.draw_elements();
         wireframeShader->unbind();
-        */
 
         if (gizmo) gizmo->draw();
 

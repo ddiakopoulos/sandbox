@@ -54,6 +54,7 @@ struct ExperimentalApp : public GLFWApp
     GlMesh sphere, box;
 
     SceneOctree<DebugSphere> octree{ 8,{ { -24, -24, -24 },{ +24, +24, +24 } } };
+    std::vector<SceneNodeContainer<DebugSphere>> nodes;
 
     std::unique_ptr<GlGizmo> gizmo;
     tinygizmo::rigid_transform xform;
@@ -93,7 +94,9 @@ struct ExperimentalApp : public GLFWApp
             scoped_timer create("octree create");
             for (auto & sph : meshes)
             {
-                octree.create(std::move(SceneNodeContainer<DebugSphere>(sph, sph.get_bounds())));
+                SceneNodeContainer<DebugSphere> container = { sph, sph.get_bounds() };
+                octree.create(container);
+                nodes.push_back(std::move(container));
             }
         }
     }
@@ -123,21 +126,21 @@ struct ExperimentalApp : public GLFWApp
     {
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
-        
+
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
 
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
-     
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
         if (gizmo) gizmo->update(debugCamera, float2(width, height));
         tinygizmo::transform_gizmo("destination", gizmo->gizmo_ctx, xform);
 
-        const float4x4 projectionMatrix = debugCamera.get_projection_matrix((float) width / (float) height);
+        const float4x4 projectionMatrix = debugCamera.get_projection_matrix((float)width / (float)height);
         const float4x4 viewMatrix = debugCamera.get_view_matrix();
         const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
@@ -146,7 +149,13 @@ struct ExperimentalApp : public GLFWApp
             octree_debug_draw<DebugSphere>(octree, wireframeShader.get(), &box, &sphere, viewProjectionMatrix, nullptr, float3());
         }
 
-        float3 xformPosition = { xform.position.x, xform.position.y, xform.position.z };
+        {
+            float3 xformPosition = { xform.position.x, xform.position.y, xform.position.z };
+            auto & n = nodes[0];
+            n.object.p.position = xformPosition;
+            n.worldspaceBounds = n.object.get_bounds();
+            octree.update(n);
+        }
 
         Frustum camFrustum(viewProjectionMatrix);
 
@@ -162,9 +171,9 @@ struct ExperimentalApp : public GLFWApp
 
         wireframeShader->unbind();
 
-        std::vector<SceneOctree<DebugSphere>::Octant<DebugSphere> *> visibleNodes;
+        std::vector<Octant<DebugSphere> *> visibleNodes;
         {
-            scoped_timer t("octree cull");
+            //scoped_timer t("octree cull");
             octree.cull(camFrustum, visibleNodes, nullptr, false);
         }
 
@@ -190,7 +199,7 @@ struct ExperimentalApp : public GLFWApp
             wireframeShader->unbind();
         }
  
-        std::cout << "Visible Objects: " << visibleObjects << std::endl; 
+        //std::cout << "Visible Objects: " << visibleObjects << std::endl; 
 
         if (gizmo) gizmo->draw();
 

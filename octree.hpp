@@ -35,66 +35,72 @@ inline bool inside(const Bounds3D & node, const Bounds3D & other)
     return linalg::all(less(node.size(), other.size()));
 }
 
+// Forward declare
+template<typename T>
+struct Octant;
+
 template<typename T>
 struct SceneNodeContainer
 {
     T & object;
+    Octant<T> * octant{ nullptr };
     Bounds3D worldspaceBounds;
     SceneNodeContainer(T & obj, const Bounds3D & bounds) : object(obj), worldspaceBounds(bounds) {}
+    bool operator== (const SceneNodeContainer<T> & other) { return &object == &other.object; }
+};
+
+template<typename T>
+struct Octant
+{
+    std::list<SceneNodeContainer<T>> objects;
+
+    Octant<T> * parent;
+    Octant(Octant<T> * parent) : parent(parent) {}
+
+    Bounds3D box;
+    VoxelArray<std::unique_ptr<Octant<T>>> arr = { { 2, 2, 2 } };
+    uint32_t occupancy{ 0 };
+
+    int3 get_indices(const Bounds3D & other) const
+    {
+        const float3 a = other.center();
+        const float3 b = box.center();
+        int3 index;
+        index.x = (a.x > b.x) ? 1 : 0;
+        index.y = (a.y > b.y) ? 1 : 0;
+        index.z = (a.z > b.z) ? 1 : 0;
+        return index;
+    }
+
+    void increase_occupancy(Octant<T> * n) const
+    {
+        if (n != nullptr)
+        {
+            n->occupancy++;
+            increase_occupancy(n->parent);
+        }
+    }
+
+    void decrease_occupancy(Octant<T> * n) const
+    {
+        if (n != nullptr)
+        {
+            n->occupancy--;
+            decrease_occupancy(n->parent);
+        }
+    }
+
+    // Returns true if the other is less than half the size of myself
+    bool check_fit(const Bounds3D & other) const
+    {
+        return all(lequal(other.size(), box.size() * 0.5f));
+    }
+
 };
 
 template<typename T>
 struct SceneOctree
 {
-    template<typename T>
-    struct Octant
-    {
-        std::list<SceneNodeContainer<T>> objects;
-
-        Octant<T> * parent;
-        Octant(Octant<T> * parent) : parent(parent) {}
-
-        Bounds3D box;
-        VoxelArray<std::unique_ptr<Octant<T>>> arr = { { 2, 2, 2 } };
-        uint32_t occupancy{ 0 };
-
-        int3 get_indices(const Bounds3D & other) const
-        {
-            const float3 a = other.center();
-            const float3 b = box.center();
-            int3 index;
-            index.x = (a.x > b.x) ? 1 : 0;
-            index.y = (a.y > b.y) ? 1 : 0;
-            index.z = (a.z > b.z) ? 1 : 0;
-            return index;
-        }
-
-        void increase_occupancy(Octant<T> * n) const
-        {
-            if (n != nullptr)
-            {
-                n->occupancy++;
-                increase_occupancy(n->parent);
-            }
-        }
-
-        void decrease_occupancy(Octant<T> * n) const
-        {
-            if (n != nullptr)
-            {
-                n->occupancy--;
-                decrease_occupancy(n->parent);
-            }
-        }
-
-        // Returns true if the other is less than half the size of myself
-        bool check_fit(const Bounds3D & other) const
-        {
-            return all(lequal(other.size(), box.size() * 0.5f));
-        }
-
-    };
-
     enum CullStatus
     {
         INSIDE,
@@ -105,7 +111,7 @@ struct SceneOctree
     std::unique_ptr<Octant<T>> root;
     uint32_t maxDepth{ 8 };
 
-    SceneOctree(const uint32_t maxDepth = 8, const Bounds3D rootBounds = { { -4, -4, -4 },{ +4, +4, +4 } })
+    SceneOctree(const uint32_t maxDepth = 8, const Bounds3D rootBounds = { { -1, -1, -1 },{ +1, +1, +1 } })
     {
         root.reset(new Octant<T>(nullptr));
         root->box = rootBounds;
@@ -163,10 +169,11 @@ struct SceneOctree
         {
             child->increase_occupancy(child);
             child->objects.push_back(sceneNode);
+            sceneNode.octant = child;
         }
     }
 
-    void create(SceneNodeContainer<T> && sceneNode)
+    void create(SceneNodeContainer<T> & sceneNode)
     {
         if (!inside(sceneNode.worldspaceBounds, root->box))
         {
@@ -176,6 +183,37 @@ struct SceneOctree
         {
             add(sceneNode, root.get());
         }
+    }
+
+    void update(SceneNodeContainer<T> & sceneNode)
+    {
+        if (sceneNode.octant == nullptr)
+        {
+            throw std::runtime_error("cannot update a scene node that is not present in the tree");
+        }
+
+        const Bounds3D box = sceneNode.worldspaceBounds;
+
+        // Check if this scene node has bounds that are not consistent with its assigned octant
+        if (!(inside(box, sceneNode.octant->box)))
+        {
+            remove(sceneNode);
+            create(sceneNode);
+        }
+
+    }
+
+    void remove(SceneNodeContainer<T> & sceneNode)
+    {
+        if (sceneNode.octant == nullptr)
+        {
+            throw std::runtime_error("cannot remove a scene node that is not present in the tree");
+        }
+
+        Octant<T> * oct = sceneNode.octant;
+        oct->decrease_occupancy(oct);
+        oct->objects.erase(std::find(oct->objects.begin(), oct->objects.end(), sceneNode));
+        sceneNode.octant = nullptr;
     }
 
     void cull(Frustum & camera, std::vector<Octant<T> *> & visibleNodeList, Octant<T> * node, bool alreadyVisible)
@@ -228,7 +266,7 @@ inline void octree_debug_draw(
     GlMesh * boxMesh,
     GlMesh * sphereMesh,
     const float4x4 & viewProj,
-    typename SceneOctree<T>::Octant<T> * node, // rumble rumble something about dependent types
+    typename Octant<T> * node, // rumble rumble something about dependent types
     float3 octantColor)
 {
     if (!node) node = octree.root.get();
@@ -252,7 +290,7 @@ inline void octree_debug_draw(
     shader->unbind();
 
     // Recurse into children
-    SceneOctree<T>::Octant<T> * child;
+    Octant<T> * child;
     if ((child = node->arr[{0, 0, 0}].get()) != nullptr) octree_debug_draw<T>(octree, shader, boxMesh, sphereMesh, viewProj, child, { 0, 0, 0 });
     if ((child = node->arr[{0, 0, 1}].get()) != nullptr) octree_debug_draw<T>(octree, shader, boxMesh, sphereMesh, viewProj, child, { 0, 0, 1 });
     if ((child = node->arr[{0, 1, 0}].get()) != nullptr) octree_debug_draw<T>(octree, shader, boxMesh, sphereMesh, viewProj, child, { 0, 1, 0 });
