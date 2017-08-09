@@ -211,8 +211,8 @@ struct GlTexture2D : public GlTextureObject
         glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, createMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
         glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        this->width = width;
-        this->height = height;
+        this->width = static_cast<float>(width);
+        this->height = static_cast<float>(height);
     }
 };
 
@@ -235,9 +235,9 @@ struct GlTexture3D : public GlTextureObject
         glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-        this->width = width;
-        this->height = height;
-        this->depth = depth;
+        this->width = static_cast<float>(width);
+        this->height = static_cast<float>(height);
+        this->depth = static_cast<float>(depth);
     }
 };
 

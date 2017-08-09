@@ -9,6 +9,12 @@
 #include "algo_misc.hpp"
 #include <assert.h>
 
+#if defined(ANVIL_PLATFORM_WINDOWS)
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4305)
+#endif
+
 namespace avl
 {
     
@@ -730,5 +736,7 @@ namespace avl
     }
     
 }
+
+#pragma warning(pop)
 
 #endif // procedural_mesh_h

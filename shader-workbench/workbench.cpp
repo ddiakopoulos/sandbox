@@ -251,7 +251,7 @@ IMPLEMENT_MAIN(int argc, char * argv[])
         shader_workbench app;
         app.main_loop();
     }
-    catch (const std::exception & e)
+    catch (...)
     {
         return EXIT_FAILURE;
     }

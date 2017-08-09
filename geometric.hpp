@@ -682,7 +682,7 @@ namespace avl
     //   Sphere   //
     ////////////////
 
-    static const double SPHERE_EPSILON = 0.0001;
+    static const float SPHERE_EPSILON = 0.0001f;
     
     struct Sphere
     {
@@ -766,7 +766,7 @@ namespace avl
     //   Plane   //
     ///////////////
     
-    static const double PLANE_EPSILON = 0.0001;
+    static const float PLANE_EPSILON = 0.0001f;
     
     struct Plane
     {

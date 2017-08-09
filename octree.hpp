@@ -124,7 +124,7 @@ struct SceneOctree
         return root->box.size() / (float)maxDepth;
     }
 
-    void add(SceneNodeContainer<T> & sceneNode, Octant<T> * child, int depth = 0)
+    void add(SceneNodeContainer<T> & sceneNode, Octant<T> * child, uint32_t depth = 0)
     {
         if (!child) child = root.get();
 

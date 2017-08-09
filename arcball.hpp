@@ -24,7 +24,7 @@ namespace avl
 		}
 
 		if (dot(axis, float3(0, 0, 1)) < 0.0001f) onPlane = float3(1, 0, 0);
-		else onPlane = normalize(float3(-axis.y, axis.x, 0));
+		else onPlane = safe_normalize(float3(-axis.y, axis.x, 0));
 
 		return onPlane;
 	}
@@ -71,11 +71,11 @@ namespace avl
 
 			float mag = length2(result);
 
-			if (mag > 1.0f) result = normalize(result);
+			if (mag > 1.0f) result = safe_normalize(result);
 			else
 			{
-				result.z = sqrtf(1.0 - mag);
-				result = normalize(result);
+				result.z = std::sqrt(1.f - mag);
+				result = safe_normalize(result);
 			}
 
 			return result;

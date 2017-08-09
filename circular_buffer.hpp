@@ -188,7 +188,7 @@ inline T compute_mean(const CircularBuffer<T> & b)
 {
     T sum = T();
     for (size_t i = 0; i < b.get_current_size(); i++) sum += b[i];
-    return sum / (T) b.get_current_size();
+    return sum / static_cast<T>(b.get_current_size());
 }
 
 template<typename T>

@@ -195,11 +195,18 @@ namespace avl
         void save_pngs()
         {
             const std::vector<std::string> faceNames = {{"positive_x"}, {"negative_x"}, {"positive_y"}, {"negative_y"}, {"positive_z"}, {"negative_z"}};
-            std::vector<uint8_t> data(resolution.x * resolution.y * 3);
+            std::vector<uint8_t> data(static_cast<int>(resolution.x) * static_cast<int>(resolution.y) * 3);
             for (int i = 0; i < 6; ++i)
             {
                 glGetTexImage(faces[i].first, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
-                stbi_write_png(std::string(faceNames[i] + ".png").c_str(), resolution.x, resolution.y, 3, data.data(), resolution.x * 3);
+                stbi_write_png(
+                    std::string(faceNames[i] + ".png").c_str(), 
+                    static_cast<int>(resolution.x), 
+                    static_cast<int>(resolution.y), 
+                    3, 
+                    data.data(), 
+                    static_cast<int>(resolution.x) * 3
+                );
                 data.clear();
             }
             shouldCapture = false;
@@ -213,7 +220,7 @@ namespace avl
         {
             this->resolution = resolution;
 
-            colorBuffer.setup(resolution.x, resolution.y, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+            colorBuffer.setup(static_cast<int>(resolution.x), static_cast<int>(resolution.y), GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
             glNamedFramebufferTexture2DEXT(framebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0); // attach
             framebuffer.check_complete();
@@ -232,7 +239,7 @@ namespace avl
         
             for (int i = 0; i < 6; ++i) 
             {
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, resolution.x, resolution.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, static_cast<int>(resolution.x), static_cast<int>(resolution.y), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
             }
         
             glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
@@ -256,7 +263,7 @@ namespace avl
          {
              // Todo: DSA
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
-            glViewport(0, 0, resolution.x , resolution.y);
+            glViewport(0, 0, static_cast<int>(resolution.x) , static_cast<int>(resolution.y));
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

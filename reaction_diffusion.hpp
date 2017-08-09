@@ -1,6 +1,13 @@
 #ifndef reaction_diffusion_h
 #define reaction_diffusion_h
 
+#include "util.hpp"
+
+#if defined(ANVIL_PLATFORM_WINDOWS)
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#endif
+
 #include "math_util.hpp"
 
 // http://mrob.com/pub/comp/xmorphia/
@@ -200,5 +207,7 @@ public:
 };
     
 }
+
+#pragma warning(pop) 
 
 #endif // reaction_diffusion_h

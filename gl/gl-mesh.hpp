@@ -17,6 +17,12 @@
 #include <fstream>
 #include <algorithm>
 
+#if defined(ANVIL_PLATFORM_WINDOWS)
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4267)
+#endif
+
 namespace avl
 {
     struct TexturedMeshChunk
@@ -354,5 +360,7 @@ namespace avl
     }
 
 }
+
+#pragma warning(pop)
 
 #endif // gl_mesh_hpp

@@ -10,6 +10,11 @@
 #include <functional>
 #include <vector>
 
+#if defined(ANVIL_PLATFORM_WINDOWS)
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#endif
+
 namespace poisson
 {
     using namespace avl;
@@ -259,5 +264,7 @@ namespace poisson
         return gen.build(bounds, initialSet, k, separation);
     } 
 }
+
+#pragma warning(pop)
 
 #endif

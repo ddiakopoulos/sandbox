@@ -57,7 +57,7 @@ struct FogShaderParams
         float s = 0.0f;
         for (int i = 0; i < textureWidth; i++)
         {
-            const auto g = gradientFunc(s) * 255;
+            const uint8_t g = gradientFunc(s) * 255;
             gradient[i] = uint4(255, g, g, 255);
             //std::cout << gradient[i] << std::endl;
             s += ds;

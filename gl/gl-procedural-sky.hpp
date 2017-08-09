@@ -7,6 +7,11 @@
 #include "gl-api.hpp"
 #include "gl-procedural-mesh.hpp"
 
+#if defined(ANVIL_PLATFORM_WINDOWS)
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#endif
+
 namespace
 {
     #include "hosek_data_rgb.inl"
@@ -290,5 +295,7 @@ public:
 };
 
 }
+
+#pragma warning(pop)
 
 #endif // end procedural_sky_h

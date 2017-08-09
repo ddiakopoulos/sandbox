@@ -6,8 +6,15 @@
 #ifndef simplex_noise_h
 #define simplex_noise_h
 
+#include "util.hpp"
+
 #include "linalg_util.hpp"
 #include <random>
+
+#if defined(ANVIL_PLATFORM_WINDOWS)
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#endif
 
 // This brings back the returned noise of the dnoise functions into -1,1 range. For some reason this is not the case in Stefan Gustavson implementation
 //#define SIMPLEX_DERIVATIVES_RESCALE
@@ -2061,5 +2068,7 @@ float noise_iq_fb(const float2 & v, uint8_t octaves, const float2x2 & mat, float
 }
 
 } // end namespace noise
+
+#pragma warning(pop)
 
 #endif // end simplex_noise_h
