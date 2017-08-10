@@ -78,7 +78,7 @@ struct GlGizmo : public Noncopyable
         if (e.type == InputEvent::CURSOR) gizmo_state.cursor = minalg::float2(e.cursor.x, e.cursor.y);
     }
 
-    void update(GlCamera & cam, avl::float2 windowSize)
+    void update(const GlCamera & cam, const avl::float2 windowSize)
     {
         const Pose p = cam.get_pose();
         viewProjectionMatrix = mul(cam.get_projection_matrix(windowSize.x / windowSize.y), cam.get_view_matrix());

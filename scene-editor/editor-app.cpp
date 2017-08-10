@@ -3,6 +3,43 @@
 
 using namespace avl;
 
+struct object
+{
+    Pose p;
+};
+
+class editor_controller
+{
+    GlGizmo gizmo;
+
+    std::vector<object *> selected_objects;     // Array of selected objects
+    std::vector<Pose> relative_transforms;      // Pose of the objects relative to the selection
+    tinygizmo::rigid_transform selection;       // Center of mass of multiple objects or the pose of a single object
+
+public:
+
+    editor_controller()
+    {
+
+    }
+
+    void on_input(const InputEvent & event)
+    {
+        gizmo.handle_input(event);
+    }
+
+    void on_update(const GlCamera & camera, const float2 viewport_size)
+    {
+        gizmo.update(camera, viewport_size);
+        tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, selection);
+    }
+
+    void on_draw()
+    {
+        gizmo.draw();
+    }
+};
+
 scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
 {
     int width, height;
@@ -11,8 +48,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
 
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
-
-    gizmo.reset(new GlGizmo());
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -38,7 +73,6 @@ void scene_editor_app::on_input(const InputEvent & event)
         if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE) exit();
     }
 
-    if (gizmo) gizmo->handle_input(event);
 }
 
 void scene_editor_app::on_update(const UpdateEvent & e)
@@ -48,7 +82,6 @@ void scene_editor_app::on_update(const UpdateEvent & e)
 
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
-    if (gizmo) gizmo->update(cam, float2(width, height));
 }
 
 void scene_editor_app::on_draw()
@@ -114,7 +147,6 @@ void scene_editor_app::on_draw()
     gui::imgui_fixed_window_end();
 
     igm->end_frame();
-    if (gizmo) gizmo->draw();
 
     gl_check_error(__FILE__, __LINE__);
 
