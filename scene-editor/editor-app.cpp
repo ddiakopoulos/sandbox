@@ -81,10 +81,10 @@ void scene_editor_app::on_draw()
     menu.app_menu_begin();
     {
         menu.begin("File");
-        if (menu.item("Exit", GLFW_MOD_ALT, GLFW_KEY_F4)) exit();
         if (menu.item("Open Scene", GLFW_MOD_CONTROL, GLFW_KEY_O)) {}
         if (menu.item("Save Scene", GLFW_MOD_CONTROL, GLFW_KEY_S)) {}
         if (menu.item("New Scene", GLFW_MOD_CONTROL, GLFW_KEY_N)) {}
+        if (menu.item("Exit", GLFW_MOD_ALT, GLFW_KEY_F4)) exit();
         menu.end();
 
         menu.begin("Edit");
@@ -95,10 +95,23 @@ void scene_editor_app::on_draw()
     }
     menu.app_menu_end();
 
+    std::vector<std::string> fakeObjects = { "mesh", "floor", "skybox", "debug-camera", "cinematic-camera", "point-light", "point-light", "directional-light" };
+
     gui::imgui_fixed_window_begin("Objects", { { width - 320, 17 }, { width, height } });
 
-    gui::imgui_fixed_window_end();
+    for (size_t i = 0; i < fakeObjects.size(); ++i)
+    {
+        ImGui::PushID(static_cast<int>(i));
+        bool selected = false;
+        std::string name = fakeObjects[i];
+        if (ImGui::Selectable(name.c_str(), &selected))
+        {
 
+        }
+        ImGui::PopID();
+    }
+
+    gui::imgui_fixed_window_end();
 
     igm->end_frame();
     if (gizmo) gizmo->draw();
