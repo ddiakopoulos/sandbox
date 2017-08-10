@@ -16,11 +16,36 @@ class editor_controller
     std::vector<Pose> relative_transforms;      // Pose of the objects relative to the selection
     tinygizmo::rigid_transform selection;       // Center of mass of multiple objects or the pose of a single object
 
+    void compute_selection()
+    {
+
+    }
+
 public:
 
     editor_controller()
     {
 
+    }
+
+    bool selected(object & object) const 
+    { 
+        return std::find(selected_objects.begin(), selected_objects.end(), &object) != selected_objects.end(); 
+    }
+
+    void clear() 
+    { 
+        selected_objects.clear();
+    }
+
+    const std::vector<object *> & get_objects() const 
+    { 
+        return selected_objects;
+    }
+
+    void set_selection(const std::vector<object *> & new_selection) 
+    { 
+        selected_objects = new_selection;
     }
 
     void on_input(const InputEvent & event)
