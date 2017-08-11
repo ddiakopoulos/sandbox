@@ -5,20 +5,48 @@ using namespace avl;
 
 struct object
 {
-    Pose p;
+    Pose pose;
 };
+
+inline Pose to_linalg(tinygizmo::rigid_transform & t)
+{
+    return {reinterpret_cast<float4 &>(t.orientation), reinterpret_cast<float3 &>(t.position) };
+}
 
 class editor_controller
 {
     GlGizmo gizmo;
+    tinygizmo::rigid_transform gizmo_selection;     // Center of mass of multiple objects or the pose of a single object
 
-    std::vector<object *> selected_objects;     // Array of selected objects
-    std::vector<Pose> relative_transforms;      // Pose of the objects relative to the selection
-    tinygizmo::rigid_transform selection;       // Center of mass of multiple objects or the pose of a single object
+    Pose selection;
+    std::vector<object *> selected_objects;         // Array of selected objects
+    std::vector<Pose> relative_transforms;          // Pose of the objects relative to the selection
 
     void compute_selection()
     {
+        if (selected_objects.size() == 0) selection = {};
+        else if (selected_objects.size() == 1) selection = (*selected_objects.begin())->pose;
+        else
+        {
+            // todo: orientation... bounding boxes?
+            float3 center_of_mass = {};
+            for (auto obj : selected_objects) center_of_mass += obj->pose.position;
+            center_of_mass /= selected_objects.size();
+            selection.position = center_of_mass;
+        }
 
+        compute_relative_transforms();
+    }
+
+    void compute_relative_transforms()
+    {
+        relative_transforms.clear(); 
+
+        for (auto s : selected_objects)
+        {
+            auto t = s->pose;
+            relative_transforms.push_back(selection.inverse() * s->pose);
+        }
     }
 
 public:
@@ -51,12 +79,13 @@ public:
     void on_input(const InputEvent & event)
     {
         gizmo.handle_input(event);
+        selection = to_linalg(gizmo_selection);
     }
 
     void on_update(const GlCamera & camera, const float2 viewport_size)
     {
         gizmo.update(camera, viewport_size);
-        tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, selection);
+        tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
     }
 
     void on_draw()
