@@ -24,9 +24,6 @@
     <ClInclude Include="geometric_algo_dev.hpp">
       <Filter>applications</Filter>
     </ClInclude>
-    <ClInclude Include="hdr_skydome.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
     <ClInclude Include="instance_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
