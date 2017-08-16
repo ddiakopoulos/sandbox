@@ -6,9 +6,9 @@ using namespace noise;
 
 struct ExperimentalApp : public GLFWApp
 {
-    Space uiSurface;
+    ScreenSpaceAutoLayout uiSurface;
     
-    std::vector<std::shared_ptr<GlTexture>> textures;
+    std::vector<std::shared_ptr<GlTexture2D>> textures;
     std::vector<std::shared_ptr<GLTextureView>> textureViews;
 
     const int texResolution = 128;
@@ -34,17 +34,17 @@ struct ExperimentalApp : public GLFWApp
         {
             for (int j = 0; j < 4; ++j)
             {
-                uiSurface.add_child( {{j * sz,0},{i * sz,0},{(j + 1) * sz, 0}, {(i + 1) * sz, 0}}, std::make_shared<Space>());
+                uiSurface.add_child( {{j * sz,0},{i * sz,0},{(j + 1) * sz, 0}, {(i + 1) * sz, 0}}, std::make_shared<ScreenSpaceAutoLayout>());
             }
         }
         uiSurface.layout();
         
         for (int i = 0; i < 16; i++)
         {
-            auto t = std::make_shared<GlTexture>();
-            t->load_data(texResolution, texResolution, GL_RED, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+            auto t = std::make_shared<GlTexture2D>();
+            t->setup(texResolution, texResolution, GL_RED, GL_RED, GL_UNSIGNED_BYTE, nullptr);
             
-            auto tv = std::make_shared<GLTextureView>(t->get_gl_handle());
+            auto tv = std::make_shared<GLTextureView>(t->id());
             
             textures.push_back(t);
             textureViews.push_back(tv);
@@ -115,7 +115,7 @@ struct ExperimentalApp : public GLFWApp
                 }
             }
             
-            textures[i]->load_data(texResolution, texResolution, GL_RED, GL_RED, GL_UNSIGNED_BYTE, data.data());
+            textures[i]->setup(texResolution, texResolution, GL_RED, GL_RED, GL_UNSIGNED_BYTE, data.data());
         }
         
     }
@@ -136,7 +136,7 @@ struct ExperimentalApp : public GLFWApp
 
         for (int i = 0; i < 16; i++)
         {
-           textureViews[i]->draw(uiSurface.children[i]->bounds, int2(width, height));
+           textureViews[i]->draw(uiSurface.children[i]->bounds, float2(width, height), textures[i]->id());
         }
         
         gl_check_error(__FILE__, __LINE__);
