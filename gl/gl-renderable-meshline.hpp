@@ -10,7 +10,7 @@
 namespace avl
 {
 
-class MeshlineRenderer
+class GlRenderableMeshline
 {
     GlShader shader;
     GlMesh mesh;
@@ -59,9 +59,9 @@ class MeshlineRenderer
 
 public:
 
-    MeshlineRenderer()
+    GlRenderableMeshline()
     {
-        shader = GlShader(read_file_text("assets/shaders/meshline_vert.glsl"), read_file_text("assets/shaders/meshline_frag.glsl"));
+        shader = GlShader(read_file_text("../assets/shaders/meshline_vert.glsl"), read_file_text("../assets/shaders/meshline_frag.glsl"));
     }
     
     void set_vertices(const std::vector<float3> & vertices)
@@ -128,7 +128,7 @@ public:
         mesh = make_line_mesh(vertices);
     }
     
-    void render(const GlCamera & camera, const float4x4 model, const float2 screenDims, const float4 color, const float lineWidth = 24.f)
+    void render(const GlCamera & camera, const float4x4 model, const float2 screenDims, const float3 color, const float lineWidth = 24.f)
     {
         shader.bind();
 
@@ -156,4 +156,4 @@ public:
     
 }
 
-#endif // meshline_h
+#endif // GlRenderableMeshline

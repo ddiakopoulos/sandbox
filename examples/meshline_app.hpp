@@ -14,7 +14,7 @@ struct ExperimentalApp : public GLFWApp
     std::mt19937 gen;
     
     std::vector<float3> colors;
-    std::vector<std::shared_ptr<MeshLine>> lines;
+    std::vector<std::shared_ptr<GlRenderableMeshline>> lines;
     
     float rotationAngle = 0.0f;
     
@@ -48,14 +48,13 @@ struct ExperimentalApp : public GLFWApp
         
         for (int i = 0; i < 12; i++)
         {
-            auto randomColor = colors[i];
-            auto line = std::make_shared<MeshLine>(camera, float2(width, height), 1.0f, randomColor);
+            auto line = std::make_shared<GlRenderableMeshline>();
             auto newSpline = create_curve();
             line->set_vertices(newSpline);
             lines.push_back(line);
         }
 
-        vignetteShader.reset(new GlShader(read_file_text("assets/shaders/vignette_vert.glsl"), read_file_text("assets/shaders/vignette_frag.glsl")));
+        vignetteShader.reset(new GlShader(read_file_text("../assets/shaders/vignette_vert.glsl"), read_file_text("../assets/shaders/vignette_frag.glsl")));
         
         gl_check_error(__FILE__, __LINE__);
     }
@@ -140,9 +139,10 @@ struct ExperimentalApp : public GLFWApp
         
         auto model = make_rotation_matrix({0, 1, 0}, 0.99 * rotationAngle);
         
-        for (const auto & l : lines)
+        for (int l = 0; l < lines.size(); l++)
         {
-            l->draw(model);
+            auto line = lines[l];
+            line->render(camera, model, float2(width, height), colors[l]);
         }
 
         gl_check_error(__FILE__, __LINE__);
