@@ -8,7 +8,7 @@
 using namespace avl;
 
 //#include "examples/empty_app.hpp"
-//#include "examples/textured_model_app.hpp"
+#include "examples/textured_model_app.hpp"
 //#include "examples/ssao_app.hpp"
 //#include "examples/camera_app.hpp"
 //#include "examples/meshline_app.hpp"
@@ -24,7 +24,7 @@ using namespace avl;
 //#include "examples/glass_material_app.hpp"
 //#include "examples/geometric_algo_dev.hpp"
 //#include "examples/lens_dev.hpp"
-#include "examples/asset_test.hpp"
+//#include "examples/asset_test.hpp"
 //#include "examples/octree_test_app.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION

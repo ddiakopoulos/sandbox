@@ -48,18 +48,12 @@ uniform int u_enableSpecularTex = 0;
 uniform int u_enableGlossTex = 0;
 uniform int u_enableEmissiveTex = 0;
 
-layout(binding = 0, std140) uniform PerScene
-{
-    float u_time;
-};
+uniform mat4 u_viewMatrix;
+uniform mat4 u_viewProjMatrix;
+uniform vec3 u_eyePos; // world space
 
-layout(binding = 1, std140) uniform PerView
-{
-    mat4 u_viewMatrix;
-    mat4 u_viewProjMatrix;
-    vec3 u_eyePos; // world space
-};
-
+uniform mat4 u_modelMatrix;
+uniform mat4 u_modelMatrixIT;
 
 //uniform int u_enableGlossTex = 0;
 //uniform int u_enableAmbientOcclusionTex = 0;

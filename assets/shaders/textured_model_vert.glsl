@@ -7,18 +7,9 @@ layout(location = 3) in vec2 inTexCoord;
 layout(location = 4) in vec3 inTangent;
 layout(location = 5) in vec3 inBitangent;
 
-layout(binding = 0, std140) uniform PerScene
-{
-    float u_time;
-};
-
-layout(binding = 1, std140) uniform PerView
-{
-    mat4 u_viewMatrix;
-    mat4 u_viewProjMatrix;
-    vec3 u_eyePos; // world space
-};
-
+uniform mat4 u_viewMatrix;
+uniform mat4 u_viewProjMatrix;
+uniform vec3 u_eyePos; // world space
 
 uniform mat4 u_modelMatrix;
 uniform mat4 u_modelMatrixIT;

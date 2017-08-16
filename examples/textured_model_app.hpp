@@ -1,13 +1,74 @@
 #include "index.hpp"
 
+class SimpleStaticMesh
+{
+    Pose pose;
+    float3 scale{ 1, 1, 1 };
+    GlMesh mesh;
+    Geometry geom;
+    Bounds3D bounds;
+
+public:
+
+    SimpleStaticMesh() {}
+
+    Pose get_pose() const { return pose; }
+    void set_pose(const Pose & p) { pose = p; }
+    float3 get_scale() const { return scale; }
+    void set_scale(const float3 & s) { scale = s; }
+    Bounds3D get_bounds() const { return bounds; }
+    void draw() const { mesh.draw_elements(); }
+    void update(const float & dt) { }
+
+    Bounds3D get_world_bounds() const
+    {
+        const Bounds3D local = get_bounds();
+        const float3 scale = get_scale();
+        return{ pose.transform_coord(local.min()) * scale, pose.transform_coord(local.max()) * scale };
+    }
+
+    RaycastResult raycast(const Ray & worldRay) const
+    {
+        auto localRay = pose.inverse() * worldRay;
+        localRay.origin /= scale;
+        localRay.direction /= scale;
+        float outT = 0.0f;
+        float3 outNormal = { 0, 0, 0 };
+        bool hit = intersect_ray_mesh(localRay, geom, &outT, &outNormal);
+        return{ hit, outT, outNormal };
+    }
+
+    void set_static_mesh(const Geometry & g, const float scale = 1.f, const GLenum usage = GL_STATIC_DRAW)
+    {
+        geom = g;
+        if (scale != 1.f) rescale_geometry(geom, scale);
+        bounds = geom.compute_bounds();
+        mesh = make_mesh_from_geometry(geom, usage);
+    }
+
+    void set_mesh_render_mode(GLenum renderMode)
+    {
+        if (renderMode != GL_TRIANGLE_STRIP) mesh.set_non_indexed(renderMode);
+    }
+};
+
+enum class ShadingMode
+{
+    TEXTURED,
+    MATCAP,
+    WORLDSPACE_NORMAL
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     std::unique_ptr<gui::ImGuiManager> igm;
-    
-    Renderable object;
+
+    SimpleStaticMesh mesh;
     
     GlMesh fullscreen_vignette_quad;
     
+    ShadingMode mode = { ShadingMode::TEXTURED };
+
     GlTexture2D modelDiffuseTexture;
 	GlTexture2D modelNormalTexture;
 	GlTexture2D modelSpecularTexture;
@@ -35,18 +96,8 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         
         igm.reset(new gui::ImGuiManager(window));
-        gui::make_dark_theme();
-        
-        auto cube = load_geometry_from_ply("../assets/models/geometry/CubeUniform.ply");
-        for (auto & v : cube.vertices) v *= 0.20f;
-        cube.compute_bounds();
-        cube.compute_tangents();
-        
-        object = Renderable(make_cube());
-        object.pose.position = {0, 0, 0};
-        
-        rescale_geometry(object.geom);
-        object.rebuild_mesh();
+
+        mesh.set_static_mesh(make_cube());
 
         texturedModelShader = shaderMonitor.watch("../assets/shaders/textured_model_vert.glsl", "../assets/shaders/textured_model_frag.glsl");
         vignetteShader = shaderMonitor.watch("../assets/shaders/vignette_vert.glsl", "../assets/shaders/vignette_frag.glsl");
@@ -58,7 +109,8 @@ struct ExperimentalApp : public GLFWApp
 
         //modelSpecularTexture = load_image("assets/textures/modular_panel/specular.png");
         //modelGlossTexture = load_image("assets/textures/modular_panel/gloss.png");
-        //matcapTex = load_image("../assets/textures/matcap/metal_heated.png");
+
+        matcapTex = load_image("../assets/textures/matcap/metal_heated.png");
 
         fullscreen_vignette_quad = make_fullscreen_quad();
         
@@ -78,14 +130,16 @@ struct ExperimentalApp : public GLFWApp
     {
         if (igm) igm->update_input(event);
         
-        if (event.type == InputEvent::MOUSE && event.is_mouse_down())
+        if (event.type == InputEvent::MOUSE && event.is_down())
         {
             myArcball->mouse_down(event.cursor);
         }
         else if (event.type == InputEvent::CURSOR && event.drag)
         {
             myArcball->mouse_drag(event.cursor);
-			object.pose.orientation = normalize(qmul(myArcball->currentQuat, object.pose.orientation));
+            auto currentPose = mesh.get_pose();
+            currentPose.orientation = normalize(qmul(myArcball->currentQuat, currentPose.orientation));
+            mesh.set_pose(currentPose);
         }
     }
     
@@ -107,9 +161,9 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         
-        const auto proj = camera.get_projection_matrix((float) width / (float) height);
-        const float4x4 view = camera.get_view_matrix();
-        const float4x4 viewProj = mul(proj, view);
+        const float4x4 projectionMatrix = camera.get_projection_matrix((float) width / (float) height);
+        const float4x4 viewMatrix = camera.get_view_matrix();
+        const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
         
         vignetteShader->bind();
         vignetteShader->uniform("u_noiseAmount", 0.1f);
@@ -118,12 +172,15 @@ struct ExperimentalApp : public GLFWApp
         fullscreen_vignette_quad.draw_elements();
         vignetteShader->unbind();
         
-        if (useMatcap == false)
+        const float4x4 model = mesh.get_pose().matrix();
+
+        if (mode == ShadingMode::TEXTURED)
         {
             texturedModelShader->bind();
             
-            texturedModelShader->uniform("u_viewProj", viewProj);
-            texturedModelShader->uniform("u_eye", camera.get_eye_point());
+            texturedModelShader->uniform("u_viewMatrix", viewMatrix);
+            texturedModelShader->uniform("u_viewProjMatrix", viewProjectionMatrix);
+            texturedModelShader->uniform("u_eyePos", camera.get_eye_point());
             
             texturedModelShader->uniform("u_ambientLight", float3(1.0f, 1.0f, 1.0f));
             
@@ -155,48 +212,39 @@ struct ExperimentalApp : public GLFWApp
             //texturedModelShader->texture("u_specularTex", 2, modelSpecularTexture, GL_TEXTURE_2D);
             //texturedModelShader->texture("u_glossTex", 3, modelGlossTexture, GL_TEXTURE_2D);
             
-            auto model = object.get_model();
             texturedModelShader->uniform("u_modelMatrix", model);
             texturedModelShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-            object.draw();
+            mesh.draw();
             
             texturedModelShader->unbind();
         }
-        else
+        else if (mode == ShadingMode::WORLDSPACE_NORMAL)
         {
-
 			normalDebugShader->bind();
-
-			auto model = object.get_model();
-			normalDebugShader->uniform("u_viewProj", viewProj);
+			normalDebugShader->uniform("u_viewProj", viewProjectionMatrix);
 			normalDebugShader->uniform("u_modelMatrix", model);
 			normalDebugShader->uniform("u_modelMatrixIT", inv(transpose(model)));
+			mesh.draw();
+            normalDebugShader->unbind();
+        }
 
-			object.draw();
-
-			matcapShader->unbind();
-
-			/*
+        else if (mode == ShadingMode::MATCAP)
+        {
             matcapShader->bind();
-            
-            auto model = object.get_model();
-            matcapShader->uniform("u_viewProj", viewProj);
+            matcapShader->uniform("u_viewProj", viewProjectionMatrix);
             matcapShader->uniform("u_modelMatrix", model);
-            matcapShader->uniform("u_modelViewMatrix", mul(view, model));
+            matcapShader->uniform("u_modelViewMatrix", mul(viewMatrix, model));
             matcapShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(model))));
             matcapShader->texture("u_matcapTexture", 0, matcapTex, GL_TEXTURE_2D);
-            
-            object.draw();
-            
+            mesh.draw();
             matcapShader->unbind();
-			*/
-
         }
         
         if (igm) igm->begin_frame();
-        ImGui::Checkbox("Use Normal Texture", &useNormal);
-        ImGui::Checkbox("Use Matcap Shading", &useMatcap);
         ImGui::Checkbox("Apply Rimlight", &useRimlight);
+        if (ImGui::Button("Textured")) { mode = ShadingMode::TEXTURED; }
+        if (ImGui::Button("Matcap")) { mode = ShadingMode::MATCAP; }
+        if (ImGui::Button("Normal")) { mode = ShadingMode::WORLDSPACE_NORMAL; }
         if (igm) igm->end_frame();
         
         gl_check_error(__FILE__, __LINE__);
