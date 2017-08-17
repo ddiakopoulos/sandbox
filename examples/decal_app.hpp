@@ -1,16 +1,21 @@
 #include "index.hpp"
 
+// http://blog.wolfire.com/2009/06/how-to-project-decals/
+
+enum DecalProjectionType
+{
+    PROJECTION_TYPE_CAMERA,
+    PROJECTION_TYPE_NORMAL
+};
+
 struct DecalVertex
 {
-    float3 v;
-    float3 n;
+    float3 v, n;
     DecalVertex(float3 v, float3 n) : v(v), n(n) {}
     DecalVertex() {}
 };
 
-// http://blog.wolfire.com/2009/06/how-to-project-decals/
-
-std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, float3 dimensions, float3 plane)
+inline std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, float3 dimensions, float3 plane)
 {
     std::vector<DecalVertex> outVertices;
     
@@ -163,12 +168,14 @@ std::vector<DecalVertex> clip_face(const std::vector<DecalVertex> & inVertices, 
     return outVertices;
 }
 
-Geometry make_decal_geometry(const Renderable & r, Pose cubePose, float3 dimensions)
+inline Geometry make_decal_geometry(SimpleStaticMesh & r, const Pose & cubePose, const float3 & dimensions)
 {
     Geometry decal;
     std::vector<DecalVertex> finalVertices;
     
-    auto & mesh = r.geom;
+    auto & mesh = r.get_geometry();
+    auto & pose = r.get_pose();
+
     assert(mesh.normals.size() > 0);
     
     for (int i = 0; i < mesh.faces.size(); i++)
@@ -180,7 +187,7 @@ Geometry make_decal_geometry(const Renderable & r, Pose cubePose, float3 dimensi
         {
             float3 v = mesh.vertices[f[j]];
             float3 n = mesh.normals[f[j]];
-            v = transform_coord(r.pose.matrix(), v); // local into world
+            v = transform_coord(pose.matrix(), v); // local into world
             v = transform_coord(cubePose.inverse().matrix(), v); // with the box
             clippedVertices.emplace_back(v, n);
         }
@@ -197,7 +204,7 @@ Geometry make_decal_geometry(const Renderable & r, Pose cubePose, float3 dimensi
         clippedVertices = clip_face(clippedVertices, dimensions, float3(0, 0, 1));
         clippedVertices = clip_face(clippedVertices, dimensions, float3(0, 0, -1));
         
-        // Projected coordinates are also our texCoords
+        // Projected coordinates are the texture coordinates
         for (int v = 0; v < clippedVertices.size(); v++)
         {
             auto & a = clippedVertices[v];
@@ -233,24 +240,15 @@ struct ExperimentalApp : public GLFWApp
 
     GlCamera camera;
     HosekProceduralSky skydome;
-    RenderableGrid grid;
     FlyCameraController cameraController;
     
-    std::vector<Renderable> proceduralModels;
-    std::vector<Renderable> decalModels;
-    
-    std::vector<LightObject> lights;
-    
+    std::vector<SimpleStaticMesh> proceduralModels;
+    std::vector<SimpleStaticMesh> decalModels;
+   
     std::unique_ptr<GlShader> simpleShader;
     
-    GlTexture anvilTex;
-    GlTexture emptyTex;
-    
-    enum DecalProjectionType
-    {
-        PROJECTION_TYPE_CAMERA,
-        PROJECTION_TYPE_NORMAL
-    };
+    GlTexture2D anvilTex;
+    GlTexture2D emptyTex;
     
     DecalProjectionType projType = PROJECTION_TYPE_CAMERA;
     
@@ -262,39 +260,25 @@ struct ExperimentalApp : public GLFWApp
         
         cameraController.set_camera(&camera);
         
-        camera.look_at({0, 8, 24}, {0, 0, 0});
+        camera.look_at({0, 8, 15}, {0, 0.1f, 0});
 
-        simpleShader.reset(new GlShader(read_file_text("assets/shaders/textured_model_vert.glsl"), read_file_text("assets/shaders/textured_model_frag.glsl")));
+        simpleShader.reset(new GlShader(read_file_text("../assets/shaders/textured_model_vert.glsl"), read_file_text("../assets/shaders/textured_model_frag.glsl")));
         
-        anvilTex = load_image("assets/images/polygon_heart.png");
+        anvilTex = load_image("../assets/images/polygon_heart.png");
         
         std::vector<uint8_t> pixel = {255, 255, 255, 255};
-        emptyTex.load_data(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
-        
+        emptyTex.setup(1, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
+
         {
-            lights.resize(2);
-            lights[0].color = float3(249.f / 255.f, 228.f / 255.f, 157.f / 255.f);
-            lights[0].pose.position = float3(25, 15, 0);
-            lights[1].color = float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f);
-            lights[1].pose.position = float3(-25, 15, 0);
-        }
-        
-        {
-            proceduralModels.resize(4);
-            
-            proceduralModels[0] = Renderable(make_torus());
-            proceduralModels[0].pose.position = float3(0, 2, +8);
-            
-            proceduralModels[1] = Renderable(make_cube());
-            proceduralModels[1].pose.position = float3(0, 2, -8);
-            
-            auto hollowCube = load_geometry_from_ply("assets/models/geometry/CubeHollowOpen.ply");
-            for (auto & v : hollowCube.vertices) v *= 0.0125f;
-            
-            proceduralModels[2] = Renderable(hollowCube);
-            proceduralModels[2].pose.position = float3(8, 2, 0);
-            
-            auto leePerryHeadModel = load_geometry_from_obj_no_texture("assets/models/leeperrysmith/lps.obj");
+            proceduralModels.resize(3);
+
+            proceduralModels[0].set_static_mesh(make_torus());
+            proceduralModels[0].set_pose(Pose(float3(0, 2, +8)));
+
+            proceduralModels[1].set_static_mesh(make_cube());
+            proceduralModels[1].set_pose(Pose(float3(0, 2, -8)));
+
+            auto leePerryHeadModel = load_geometry_from_obj_no_texture("../assets/models/leeperrysmith/lps.obj");
             Geometry combined;
             for (int i = 0; i < leePerryHeadModel.size(); ++i)
             {
@@ -303,12 +287,11 @@ struct ExperimentalApp : public GLFWApp
                 combined = concatenate_geometry(combined, m);
             }
             combined.compute_normals(false);
-            proceduralModels[3] = Renderable(combined);
-            proceduralModels[3].pose.position = float3(-8, 2, 0);
+
+            proceduralModels[2].set_static_mesh(combined);
+            proceduralModels[2].set_pose(Pose(float3(-8, 2, 0)));
         }
         
-        grid = RenderableGrid(1, 64, 64);
-
         gl_check_error(__FILE__, __LINE__);
     }
     
@@ -323,14 +306,9 @@ struct ExperimentalApp : public GLFWApp
         
         if (event.type == InputEvent::KEY)
         {
-            if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE)
-                decalModels.clear();
-            
-            if (event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE)
-                projType = PROJECTION_TYPE_CAMERA;
-            
-            if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE)
-                projType = PROJECTION_TYPE_NORMAL;
+            if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE) decalModels.clear();
+            if (event.value[0] == GLFW_KEY_1 && event.action == GLFW_RELEASE) projType = PROJECTION_TYPE_CAMERA;
+            if (event.value[0] == GLFW_KEY_2 && event.action == GLFW_RELEASE) projType = PROJECTION_TYPE_NORMAL;
         }
         
         if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS)
@@ -341,7 +319,7 @@ struct ExperimentalApp : public GLFWApp
                 {
                     auto worldRay = camera.get_world_ray(event.cursor, float2(event.windowSize));
                     
-                    RaycastResult rc = model.check_hit(worldRay);
+                    RaycastResult rc = model.raycast(worldRay);
                     
                     if (rc.hit)
                     {
@@ -353,16 +331,20 @@ struct ExperimentalApp : public GLFWApp
                         // Option A: Camera to mesh (orientation artifacts, better uv projection across hard surfaces)
                         if (projType == PROJECTION_TYPE_CAMERA)
                         {
-                            box = Pose(camera.pose.orientation, position);
+                            box = Pose(camera.get_pose().orientation, position);
                         }
 
                         // Option B: Normal to mesh (uv issues)
                         else if (projType == PROJECTION_TYPE_NORMAL)
                         {
-                            box = look_at_pose(position, target);
+                            box = look_at_pose_rh(position, target);
                         }
 
-                        decalModels.push_back(Renderable(make_decal_geometry(model, box, float3(0.5f))));
+                        SimpleStaticMesh m;
+                        Geometry newDecalGeometry = make_decal_geometry(model, box, float3(0.5f));
+                        m.set_static_mesh(newDecalGeometry);
+
+                        decalModels.push_back(std::move(m));
                     }
                 }
 
@@ -392,63 +374,58 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.80f, 0.80f, 0.80f, 1.0f);
 
-        const auto proj = camera.get_projection_matrix((float) width / (float) height);
-        const float4x4 view = camera.get_view_matrix();
-        const float4x4 viewProj = mul(proj, view);
-        
-        //skydome.render(viewProj, camera.get_eye_point(), camera.farClip);
+        const float4x4 projectionMatrix = camera.get_projection_matrix((float)width / (float)height);
+        const float4x4 viewMatrix = camera.get_view_matrix();
+        const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
         
         // Simple Shader
         {
             simpleShader->bind();
             
-            simpleShader->uniform("u_eye", camera.get_eye_point());
-            simpleShader->uniform("u_viewProj", viewProj);
-            
-            simpleShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
-            simpleShader->uniform("u_diffuse", float3(0.4f, 0.425f, 0.415f));
-            simpleShader->uniform("useNormal", 0);
-            
-            for (int i = 0; i < lights.size(); i++)
-            {
-                auto light = lights[i];
-                
-                simpleShader->uniform("u_lights[" + std::to_string(i) + "].position", light.pose.position);
-                simpleShader->uniform("u_lights[" + std::to_string(i) + "].color", light.color);
-            }
-            
+            simpleShader->uniform("u_eyePos", camera.get_eye_point());
+            simpleShader->uniform("u_viewProjMatrix", viewProjectionMatrix);
+            simpleShader->uniform("u_viewMatrix", viewMatrix);
+
+            simpleShader->uniform("u_ambientLight", float3(0.5f));
+
+            simpleShader->uniform("u_rimLight.enable", 0);
+
+            simpleShader->uniform("u_material.diffuseIntensity", float3(1.0f, 1.0f, 1.0f));
+            simpleShader->uniform("u_material.ambientIntensity", float3(1.0f, 1.0f, 1.0f));
+            simpleShader->uniform("u_material.specularIntensity", float3(1.0f, 1.0f, 1.0f));
+            simpleShader->uniform("u_material.specularPower", 8.0f);
+
+            simpleShader->uniform("u_lights[0].position", float3(10, 12, 0));
+            simpleShader->uniform("u_lights[0].color", float3(249.f / 255.f, 228.f / 255.f, 157.f / 255.f));
+            simpleShader->uniform("u_lights[1].position", float3(0, 0, 0));
+            simpleShader->uniform("u_lights[1].color", float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f));
+
             for (const auto & model : proceduralModels)
             {
-                simpleShader->uniform("u_modelMatrix", model.get_model());
-                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                simpleShader->texture("u_diffuseTex", 0, emptyTex);
+                simpleShader->uniform("u_modelMatrix", model.get_pose().matrix());
+                simpleShader->uniform("u_modelMatrixIT", inv(transpose(model.get_pose().matrix())));
+                simpleShader->texture("u_diffuseTex", 0, emptyTex, GL_TEXTURE_2D);
                 model.draw();
             }
 
             {
-                glEnable (GL_POLYGON_OFFSET_FILL);
+                glEnable(GL_POLYGON_OFFSET_FILL);
                 glPolygonOffset (-1.0, 1.0);
                 
                 for (const auto & decal : decalModels)
                 {
-                    simpleShader->uniform("u_modelMatrix", decal.get_model());
-                    simpleShader->uniform("u_modelMatrixIT", inv(transpose(decal.get_model())));
-                    simpleShader->texture("u_diffuseTex", 0, anvilTex);
+                    simpleShader->uniform("u_modelMatrix", decal.get_pose().matrix());
+                    simpleShader->uniform("u_modelMatrixIT", inv(transpose(decal.get_pose().matrix())));
+                    simpleShader->texture("u_diffuseTex", 0, anvilTex, GL_TEXTURE_2D);
                     decal.draw();
                 }
                 
                 glDisable(GL_POLYGON_OFFSET_FILL);
             }
-
-            gl_check_error(__FILE__, __LINE__);
             
             simpleShader->unbind();
         }
-        
-        //grid.render(proj, view);
 
-        gl_check_error(__FILE__, __LINE__);
-        
         glfwSwapBuffers(window);
         
         frameCount++;

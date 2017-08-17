@@ -86,29 +86,23 @@ struct ExperimentalApp : public GLFWApp
         glEnable(GL_CULL_FACE);
         glDepthMask(GL_TRUE);
         
-        float windowAspectRatio = (float) width / (float) height;
-        
-        const auto proj = camera.get_projection_matrix(windowAspectRatio);
-        const float4x4 view = camera.get_view_matrix();
-        const float4x4 viewProj = mul(proj, view);
-        
+        const float windowAspectRatio = (float) width / (float) height;
+        const float4x4 projectionMatrix = camera.get_projection_matrix(windowAspectRatio);
+        const float4x4 viewMatrix = camera.get_view_matrix();
+        const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
+
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        
+        // Update instance data
+        //sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceColors.size(), instanceColors.data(), GL_DYNAMIC_DRAW);
+
         {
             sceneShader->bind();
-            
-            sceneShader->uniform("u_viewProj", viewProj);
-
-            // Update instance data
-			//sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceColors.size(), instanceColors.data(), GL_DYNAMIC_DRAW);
-
-
+            sceneShader->uniform("u_viewProj", viewProjectionMatrix);
             sceneShader->uniform("u_modelMatrix", Identity4x4);
             sceneShader->uniform("u_modelMatrixIT", inv(transpose(Identity4x4)));
             sphere.draw_elements(numInstances); // instanced draw     
-            
             sceneShader->unbind();
         }
         
