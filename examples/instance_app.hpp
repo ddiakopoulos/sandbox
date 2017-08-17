@@ -1,12 +1,5 @@
 #include "index.hpp"
 
-std::shared_ptr<GlShader> make_watched_shader(ShaderMonitor & mon, const std::string vertexPath, const std::string fragPath, const std::string geomPath = "")
-{
-    std::shared_ptr<GlShader> shader = std::make_shared<GlShader>(read_file_text(vertexPath), read_file_text(fragPath), read_file_text(geomPath));
-    mon.add_shader(shader, vertexPath, fragPath);
-    return shader;
-}
-
 struct ExperimentalApp : public GLFWApp
 {
     std::random_device rd;
@@ -19,8 +12,8 @@ struct ExperimentalApp : public GLFWApp
     
     std::shared_ptr<GlShader> sceneShader;
     
-    std::vector<Renderable> sceneObjects;
-    Renderable floor;
+    GlMesh sphere;
+    GlMesh floor;
         
     std::vector<float3> instanceData;
     int numInstances = 100;
@@ -36,17 +29,18 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         
         cameraController.set_camera(&camera);
-        camera.farClip = 55.f;
+        camera.farclip = 55.f;
+        camera.vfov = to_radians(62.f);
         camera.look_at({0, 0, +15}, {0, 0, 0});
         
-        sceneShader = make_watched_shader(shaderMonitor, "../assets/shaders/instance_vert.glsl", "../assets/shaders/instance_frag.glsl");
+        sceneShader.reset(new GlShader(read_file_text("../assets/shaders/instance_vert.glsl"), read_file_text("../assets/shaders/instance_frag.glsl")));
 
         std::vector<float3> initialSet = {};
         auto b = Bounds3D(float3(-10, -10, -10), float3(10, 10, 10));
-        auto pd_dist = poisson::make_poisson_disk_distribution(b, initialSet, 2, 1.0f);
+        auto pd_dist = poisson::make_poisson_disk_distribution(b, initialSet, 4, 2.f);
         
         // Single sphere
-        sceneObjects.push_back(Renderable(make_sphere(0.25)));
+        sphere = make_sphere_mesh(0.25f);
 
         for (auto pt : pd_dist)
         {
@@ -57,9 +51,9 @@ struct ExperimentalApp : public GLFWApp
         
         numInstances = (int) pd_dist.size();
         
-		sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceData.size(), instanceData.data(), GL_DYNAMIC_DRAW);
-		sceneObjects[0].mesh.set_instance_attribute(4, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), ((float*) 0) + 0); // color
-        sceneObjects[0].mesh.set_instance_attribute(5, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), ((float*) 0) + 3); // location
+        sphere.set_instance_data(sizeof(float3) * instanceData.size(), instanceData.data(), GL_DYNAMIC_DRAW);
+        sphere.set_instance_attribute(4, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), ((float*) 0) + 0); // color
+        sphere.set_instance_attribute(5, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), ((float*) 0) + 3); // location
         
         gl_check_error(__FILE__, __LINE__);
     }
@@ -109,14 +103,11 @@ struct ExperimentalApp : public GLFWApp
 
             // Update instance data
 			//sceneObjects[0].mesh.set_instance_data(sizeof(float3) * instanceColors.size(), instanceColors.data(), GL_DYNAMIC_DRAW);
-            
-            for (auto & object : sceneObjects)
-            {
-                auto model = object.get_model();
-                sceneShader->uniform("u_modelMatrix", model);
-                sceneShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-                object.mesh.draw_elements(numInstances); // instanced draw
-            }
+
+
+            sceneShader->uniform("u_modelMatrix", Identity4x4);
+            sceneShader->uniform("u_modelMatrixIT", inv(transpose(Identity4x4)));
+            sphere.draw_elements(numInstances); // instanced draw     
             
             sceneShader->unbind();
         }
