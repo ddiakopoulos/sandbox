@@ -14,6 +14,7 @@ struct ExperimentalApp : public GLFWApp
     std::mt19937 gen;
     
     std::vector<float3> colors;
+    std::vector<float> sizes;
     std::vector<std::shared_ptr<GlRenderableMeshline>> lines;
     
     float rotationAngle = 0.0f;
@@ -26,9 +27,9 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        cameraController.set_camera(&camera);
-        
+        camera.farclip = 128.f;
         camera.look_at({0, 8, 24}, {0, 0, 0});
+        cameraController.set_camera(&camera);
         
         fullscreen_vignette_quad = make_fullscreen_quad();
         
@@ -46,12 +47,18 @@ struct ExperimentalApp : public GLFWApp
         colors.emplace_back(112.0f / 255.f, 193.0f / 255.f, 179.0f / 255.f);
         colors.emplace_back(60.0f / 255.f, 60.0f / 255.f, 60.0f / 255.f);
         
-        for (int i = 0; i < 12; i++)
+        for (int i = 0; i < 48; i++)
         {
             auto line = std::make_shared<GlRenderableMeshline>();
-            auto newSpline = create_curve();
+            auto newSpline = create_curve(12.f, 48.f);
             line->set_vertices(newSpline);
             lines.push_back(line);
+        }
+
+        for (int i = 0; i < 48; ++i)
+        {
+            auto r = std::uniform_real_distribution<float>(2, 16.0);
+            sizes.push_back(r(gen));
         }
 
         vignetteShader.reset(new GlShader(read_file_text("../assets/shaders/vignette_vert.glsl"), read_file_text("../assets/shaders/vignette_frag.glsl")));
@@ -78,9 +85,9 @@ struct ExperimentalApp : public GLFWApp
         s.p2 *= rMin + r(gen) * rMax;
         s.p3 *= rMin + r(gen) * rMax;
         
-        s.calculate(.001f);
+        s.calculate(0.05f);
         s.calculate_distances();
-        s.reticulate(256);
+        s.reticulate(128);
         
         auto sPoints = s.get_spline();
         
@@ -123,9 +130,9 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-        const auto proj = camera.get_projection_matrix((float) width / (float) height);
-        const float4x4 view = camera.get_view_matrix();
-        const float4x4 viewProj = mul(proj, view);
+        const float4x4 projectionMatrix = camera.get_projection_matrix((float)width / (float)height);
+        const float4x4 viewMatrix = camera.get_view_matrix();
+        const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
         
         auto r = std::uniform_real_distribution<float>(0.001, .5);
         
@@ -142,7 +149,7 @@ struct ExperimentalApp : public GLFWApp
         for (int l = 0; l < lines.size(); l++)
         {
             auto line = lines[l];
-            line->render(camera, model, float2(width, height), colors[l]);
+            line->render(camera, model, float2(width, height), colors[l % colors.size()], sizes[l]);
         }
 
         gl_check_error(__FILE__, __LINE__);
