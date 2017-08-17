@@ -386,19 +386,22 @@ struct ExperimentalApp : public GLFWApp
             simpleShader->uniform("u_viewProjMatrix", viewProjectionMatrix);
             simpleShader->uniform("u_viewMatrix", viewMatrix);
 
-            simpleShader->uniform("u_ambientLight", float3(0.5f));
+            simpleShader->uniform("u_ambientLight", float3(0.25f));
 
-            simpleShader->uniform("u_rimLight.enable", 0);
+            simpleShader->uniform("u_rimLight.enable", 1);
 
             simpleShader->uniform("u_material.diffuseIntensity", float3(1.0f, 1.0f, 1.0f));
             simpleShader->uniform("u_material.ambientIntensity", float3(1.0f, 1.0f, 1.0f));
             simpleShader->uniform("u_material.specularIntensity", float3(1.0f, 1.0f, 1.0f));
             simpleShader->uniform("u_material.specularPower", 8.0f);
 
-            simpleShader->uniform("u_lights[0].position", float3(10, 12, 0));
-            simpleShader->uniform("u_lights[0].color", float3(249.f / 255.f, 228.f / 255.f, 157.f / 255.f));
-            simpleShader->uniform("u_lights[1].position", float3(0, 0, 0));
-            simpleShader->uniform("u_lights[1].color", float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f));
+            simpleShader->uniform("u_pointLights[0].position", float3(15, 15, 0));
+            simpleShader->uniform("u_pointLights[0].diffuseColor", float3(249.f / 255.f, 228.f / 255.f, 157.f / 255.f));
+            simpleShader->uniform("u_pointLights[0].specularColor", float3(249.f / 255.f, 228.f / 255.f, 157.f / 255.f));
+
+            simpleShader->uniform("u_pointLights[1].position", float3(-15, 15, 0));
+            simpleShader->uniform("u_pointLights[1].diffuseColor", float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f));
+            simpleShader->uniform("u_pointLights[1].specularColor", float3(255.f / 255.f, 242.f / 255.f, 254.f / 255.f));
 
             for (const auto & model : proceduralModels)
             {
