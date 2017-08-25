@@ -4,9 +4,8 @@
 #include "gl-gizmo.hpp"
 #include "octree.hpp"
 
-constexpr const char basic_wireframe_vert[] = R"(#version 330
+constexpr const char default_color_vert[] = R"(#version 330
     layout(location = 0) in vec3 vertex;
-    layout(location = 2) in vec3 inColor;
     uniform mat4 u_mvp;
     out vec3 color;
     void main()
@@ -16,7 +15,7 @@ constexpr const char basic_wireframe_vert[] = R"(#version 330
     }
 )";
 
-constexpr const char basic_wireframe_frag[] = R"(#version 330
+constexpr const char default_color_frag[] = R"(#version 330
     in vec3 color;
     out vec4 f_color;
     uniform vec3 u_color;
@@ -28,14 +27,13 @@ constexpr const char basic_wireframe_frag[] = R"(#version 330
 
 struct ExperimentalApp : public GLFWApp
 {
-    std::unique_ptr<GlShader> wireframeShader;
+    ShaderMonitor shaderMonitor = { "../assets/" };
+    std::shared_ptr<GlShader> wireframeShader;
 
     GlCamera debugCamera;
     FlyCameraController cameraController;
 
     UniformRandomGenerator rand;
-
-    GlMesh flattenedMesh;
 
     std::unique_ptr<GlGizmo> gizmo;
     tinygizmo::rigid_transform xform;
@@ -47,19 +45,10 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         gl_check_error(__FILE__, __LINE__);
 
-        Geometry g = make_octohedron();
-
-        for (auto & v : g.vertices)
-        {
-            v = project_on_plane(float3(1, 1, -1), v);
-        }
-
-        flattenedMesh = make_mesh_from_geometry(g);
-
         gizmo.reset(new GlGizmo());
         xform.position = { 0.1f, 0.1f, 0.1f };
 
-        wireframeShader.reset(new GlShader(basic_wireframe_vert, basic_wireframe_frag));
+        wireframeShader = shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl");
 
         debugCamera.look_at({0, 3.0, -3.5}, {0, 2.0, 0});
         cameraController.set_camera(&debugCamera);
@@ -99,14 +88,16 @@ struct ExperimentalApp : public GLFWApp
         if (gizmo) gizmo->update(debugCamera, float2(width, height));
         tinygizmo::transform_gizmo("destination", gizmo->gizmo_ctx, xform);
 
-        const float4x4 proj = debugCamera.get_projection_matrix((float) width / (float) height);
-        const float4x4 view = debugCamera.get_view_matrix();
-        const float4x4 viewProj = mul(proj, view);
+        const float windowAspectRatio = (float)width / (float)height;
+        const float4x4 projectionMatrix = debugCamera.get_projection_matrix(windowAspectRatio);
+        const float4x4 viewMatrix = debugCamera.get_view_matrix();
+        const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
         wireframeShader->bind();
-        wireframeShader->uniform("u_color", float3(0, 0, 1));
-        wireframeShader->uniform("u_mvp", mul(viewProj, Identity4x4));
-        flattenedMesh.draw_elements();
+        wireframeShader->uniform("u_eyePos", debugCamera.get_eye_point());
+        wireframeShader->uniform("u_viewProjMatrix", viewProjectionMatrix);
+        wireframeShader->uniform("u_modelMatrix", Identity4x4);
+        // ... 
         wireframeShader->unbind();
 
         if (gizmo) gizmo->draw();
