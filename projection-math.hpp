@@ -6,6 +6,34 @@
 namespace avl
 {
 
+    // http://vrguy.blogspot.com/2013/05/what-is-binocular-overlap-and-why.html
+    // http://sensics.com/how-binocular-overlap-impacts-horizontal-field-of-view/
+    // https://www.reddit.com/r/oculus/comments/4at20n/field_of_view_for_vr_headsets_explained/
+    void debug_compute_binocular_overlap()
+    {
+        const float target_dfov = to_radians(100.f);
+        const float overlap_percent = 1.f;
+
+        const int horizontalAspect = std::ratio<1200, 1080>::num;
+        const int verticalAspect = std::ratio<1080, 1200>::num;
+
+        float diagonal_aspect = std::sqrt(pow(horizontalAspect, 2) + pow(verticalAspect, 2));
+        float hfov_original = 2.f * atan(tan(target_dfov / 2.f) * (horizontalAspect / diagonal_aspect));
+        float vfov = 2.f * atan(tan(target_dfov / 2.f) * (verticalAspect / diagonal_aspect));
+        float hfov_overlap = hfov_original * (2.f - overlap_percent);
+        float aspect_overlap = tan(hfov_overlap / 2.f) / tan(vfov / 2);
+        float diagonal_aspect_overlap = sqrt(pow(tan(hfov_overlap / 2.f), 2) + pow(verticalAspect, 2));
+        float dfov_overlap = 2.f * atan(tan(vfov / 2.f) * (diagonal_aspect_overlap / verticalAspect));
+
+        std::cout << "Target Field of View (Diagonal) : " << to_degrees(target_dfov) << std::endl;
+        std::cout << "Aspect Ratio (Diagonal)         : " << diagonal_aspect << std::endl;
+        std::cout << "Original Field of View (Horiz)  : " << to_degrees(hfov_original) << std::endl;
+        std::cout << "Field of View Overlap (Horiz)   : " << to_degrees(hfov_overlap) << std::endl;
+        std::cout << "Aspect Ratio Overlap            : " << aspect_overlap << std::endl;
+        std::cout << "Overlap Ratio (Diagonal)        : " << diagonal_aspect_overlap << std::endl;
+        std::cout << "Overlapping FoV (Diagonal)      : " << to_degrees(dfov_overlap) << std::endl;
+    }
+
     inline float get_focal_length(float vFoV)
     {
         return (1.f / (tan(vFoV * 0.5f) * 2.0f));

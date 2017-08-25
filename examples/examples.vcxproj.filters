@@ -36,9 +36,6 @@
     <ClInclude Include="reaction_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
-    <ClInclude Include="shadow_app.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
     <ClInclude Include="simplex_noise_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>

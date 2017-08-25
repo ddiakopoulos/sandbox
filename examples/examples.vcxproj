@@ -171,7 +171,6 @@
     <ClInclude Include="lens_dev.hpp" />
     <ClInclude Include="meshline_app.hpp" />
     <ClInclude Include="reaction_app.hpp" />
-    <ClInclude Include="shadow_app.hpp" />
     <ClInclude Include="simplex_noise_app.hpp" />
     <ClInclude Include="terrain_app.hpp" />
     <ClInclude Include="textured_model_app.hpp" />
