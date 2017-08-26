@@ -9,7 +9,7 @@ namespace avl
     // http://vrguy.blogspot.com/2013/05/what-is-binocular-overlap-and-why.html
     // http://sensics.com/how-binocular-overlap-impacts-horizontal-field-of-view/
     // https://www.reddit.com/r/oculus/comments/4at20n/field_of_view_for_vr_headsets_explained/
-    void debug_compute_binocular_overlap()
+    inline void debug_compute_binocular_overlap()
     {
         const float target_dfov = to_radians(100.f);
         const float overlap_percent = 1.f;

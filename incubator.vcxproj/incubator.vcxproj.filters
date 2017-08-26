@@ -48,12 +48,6 @@
     <ClInclude Include="..\third_party\nanovg_gl_utils.h">
       <Filter>third_party</Filter>
     </ClInclude>
-    <ClInclude Include="..\third_party\oscpkt.hpp">
-      <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\oscpkt_udp.hpp">
-      <Filter>third_party</Filter>
-    </ClInclude>
     <ClInclude Include="..\third_party\tiny_obj_loader.h">
       <Filter>third_party</Filter>
     </ClInclude>

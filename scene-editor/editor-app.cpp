@@ -31,7 +31,7 @@ class editor_controller
             // todo: orientation... bounding boxes?
             float3 center_of_mass = {};
             for (auto obj : selected_objects) center_of_mass += obj->pose.position;
-            center_of_mass /= selected_objects.size();
+            center_of_mass /= float3(selected_objects.size());
             selection.position = center_of_mass;
         }
 

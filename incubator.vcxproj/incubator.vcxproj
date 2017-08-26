@@ -85,8 +85,6 @@
     <ClInclude Include="..\third_party\nanovg.h" />
     <ClInclude Include="..\third_party\nanovg_gl.h" />
     <ClInclude Include="..\third_party\nanovg_gl_utils.h" />
-    <ClInclude Include="..\third_party\oscpkt.hpp" />
-    <ClInclude Include="..\third_party\oscpkt_udp.hpp" />
     <ClInclude Include="..\third_party\tiny-gizmo.hpp" />
     <ClInclude Include="..\third_party\tinyply.h" />
     <ClInclude Include="..\third_party\tiny_obj_loader.h" />
