@@ -7,12 +7,13 @@ out vec4 f_color;
 vec4 edge_factor(float lineWidth) 
 {
     vec3 d = fwidth(triangleDist) * 10;
-    //vec3 w = 1 - (abs(d - 0.5) * 0.5);
-    //vec3 a3 = smoothstep(vec3(0), vec3(1), d * triangleDist);
+
+    vec3 a3 = smoothstep(vec3(0), vec3(0), d * triangleDist);
+
     vec2 dist = (gl_FragCoord.xy) / 1280.0; //distance(gl_FragCoord.xy / 2.0, triangleDist.xy);
-    //return min(min(w.x, w.y), w.z);
-    //return min(min(a3.x, a3.y), a3.z);
-    return vec4(dist.x * d.x, dist.y * d.y, 0.5, 1);
+    float m = min(min(d.x, d.y), d.z);
+    return vec4(m * dist.x, m * dist.x, 1, 1);
+    //return vec4(dist.x * d.x, dist.y * d.y, dist.y, 1);
 }
 
 /*
