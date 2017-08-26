@@ -74,16 +74,25 @@ void scene_editor_app::on_input(const InputEvent & event)
                 for (auto & obj : objects)
                 {
                     RaycastResult result = obj.raycast(r);
-                    if (result.hit)
-                    {
-                        selectedObjects.push_back(&obj);
-                    }
+                    if (result.hit) selectedObjects.push_back(&obj); 
                 }
 
                 // New object was selected
                 if (selectedObjects.size() > 0)
                 {
-                    controller->set_selection(selectedObjects);
+                    // Multi-selection
+                    if (event.mods & GLFW_MOD_CONTROL)
+                    {
+                        auto existingSelection = controller->get_selection();
+                        for (auto s : selectedObjects) existingSelection.push_back(s);
+                        controller->set_selection(existingSelection);
+                    }
+                    // Single Selection
+                    else
+                    {
+                        controller->set_selection(selectedObjects);
+                    }
+
                 }
             }
         }

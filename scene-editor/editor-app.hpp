@@ -71,7 +71,7 @@ public:
         return std::find(selected_objects.begin(), selected_objects.end(), &object) != selected_objects.end();
     }
 
-    const std::vector<ObjectType *> & get_objects() const
+    std::vector<ObjectType *> & get_selection()
     {
         return selected_objects;
     }
@@ -101,10 +101,12 @@ public:
             tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
         }
 
-        // Perform editing updates on selected objects
-        for (auto s : selected_objects)
+        // Perform editing updates on selected objects ... relative transforms as well
+        for (int i = 0; i < selected_objects.size(); ++i)
         {
-            s->set_pose(to_linalg(gizmo_selection));
+            ObjectType * object = selected_objects[i];
+            auto newPose = to_linalg(gizmo_selection) * relative_transforms[i];
+            object->set_pose(newPose);
         }
 
     }
