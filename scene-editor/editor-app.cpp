@@ -3,97 +3,6 @@
 
 using namespace avl;
 
-struct object
-{
-    Pose pose;
-};
-
-inline Pose to_linalg(tinygizmo::rigid_transform & t)
-{
-    return {reinterpret_cast<float4 &>(t.orientation), reinterpret_cast<float3 &>(t.position) };
-}
-
-class editor_controller
-{
-    GlGizmo gizmo;
-    tinygizmo::rigid_transform gizmo_selection;     // Center of mass of multiple objects or the pose of a single object
-
-    Pose selection;
-    std::vector<object *> selected_objects;         // Array of selected objects
-    std::vector<Pose> relative_transforms;          // Pose of the objects relative to the selection
-
-    void compute_selection()
-    {
-        if (selected_objects.size() == 0) selection = {};
-        else if (selected_objects.size() == 1) selection = (*selected_objects.begin())->pose;
-        else
-        {
-            // todo: orientation... bounding boxes?
-            float3 center_of_mass = {};
-            for (auto obj : selected_objects) center_of_mass += obj->pose.position;
-            center_of_mass /= float3(selected_objects.size());
-            selection.position = center_of_mass;
-        }
-
-        compute_relative_transforms();
-    }
-
-    void compute_relative_transforms()
-    {
-        relative_transforms.clear(); 
-
-        for (auto s : selected_objects)
-        {
-            auto t = s->pose;
-            relative_transforms.push_back(selection.inverse() * s->pose);
-        }
-    }
-
-public:
-
-    editor_controller()
-    {
-
-    }
-
-    bool selected(object & object) const 
-    { 
-        return std::find(selected_objects.begin(), selected_objects.end(), &object) != selected_objects.end(); 
-    }
-
-    void clear() 
-    { 
-        selected_objects.clear();
-    }
-
-    const std::vector<object *> & get_objects() const 
-    { 
-        return selected_objects;
-    }
-
-    void set_selection(const std::vector<object *> & new_selection) 
-    { 
-        selected_objects = new_selection;
-    }
-
-    void on_input(const InputEvent & event)
-    {
-        gizmo.handle_input(event);
-        selection = to_linalg(gizmo_selection);
-    }
-
-    void on_update(const GlCamera & camera, const float2 viewport_size)
-    {
-        gizmo.update(camera, viewport_size);
-        tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
-    }
-
-    void on_draw()
-    {
-        gizmo.draw();
-    }
-};
-
 scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
 {
     int width, height;
@@ -102,6 +11,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
 
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
+
+    controller.reset(new editor_controller<SimpleStaticMesh>());
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -137,6 +48,7 @@ void scene_editor_app::on_input(const InputEvent & event)
 {
     igm->update_input(event);
     flycam.handle_input(event);
+    controller->on_input(event);
 
     // Prevent scene editor from responding to input destined for ImGui
     if (!ImGui::GetIO().WantCaptureMouse && !ImGui::GetIO().WantCaptureKeyboard)
@@ -146,6 +58,33 @@ void scene_editor_app::on_input(const InputEvent & event)
             if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE)
             {
                 exit();
+            }
+        }
+
+        if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS && event.value[0] == GLFW_MOUSE_BUTTON_LEFT)
+        {
+            int width, height;
+            glfwGetWindowSize(window, &width, &height);
+
+            Ray r = cam.get_world_ray(event.cursor, float2(width, height));
+
+            if (length(r.direction) > 0)
+            {
+                std::vector<SimpleStaticMesh *> selectedObjects;
+                for (auto & obj : objects)
+                {
+                    RaycastResult result = obj.raycast(r);
+                    std::cout << result.distance << std::endl;
+                    if (result.hit)
+                    {
+                        selectedObjects.push_back(&obj);
+                    }
+                }
+                controller->set_selection(selectedObjects);
+            }
+            else
+            {
+                controller->clear();
             }
         }
     }
@@ -159,6 +98,7 @@ void scene_editor_app::on_update(const UpdateEvent & e)
 
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
+    controller->on_update(cam, float2(width, height));
 }
 
 void scene_editor_app::on_draw()
@@ -173,8 +113,6 @@ void scene_editor_app::on_draw()
     glfwGetWindowSize(window, &width, &height);
 
     gpuTimer.start();
-
-    // tinygizmo::transform_gizmo("destination", gizmo->gizmo_ctx, destination);
 
     glViewport(0, 0, width, height);
     glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
@@ -200,6 +138,9 @@ void scene_editor_app::on_draw()
 
         wireframeShader->unbind();
     }
+
+    // Scene editor gizmo
+    controller->on_draw();
 
     igm->begin_frame();
 
