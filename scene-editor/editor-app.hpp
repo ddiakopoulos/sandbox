@@ -20,6 +20,8 @@ class editor_controller
     Pose selection;
     std::vector<ObjectType *> selected_objects;     // Array of selected objects
     std::vector<Pose> relative_transforms;          // Pose of the objects relative to the selection
+    
+    bool hasEdited = false;
 
     void compute_selection()
     {
@@ -65,9 +67,9 @@ public:
 
     }
 
-    bool selected(ObjectType & object) const
+    bool selected(ObjectType * object) const
     {
-        return std::find(selected_objects.begin(), selected_objects.end(), &object) != selected_objects.end();
+        return std::find(selected_objects.begin(), selected_objects.end(), object) != selected_objects.end();
     }
 
     std::vector<ObjectType *> & get_selection()
@@ -87,6 +89,11 @@ public:
         compute_selection();
     }
 
+    bool has_edited() const
+    {
+        return hasEdited;
+    }
+
     void on_input(const InputEvent & event)
     {
         gizmo.handle_input(event);
@@ -97,17 +104,16 @@ public:
         if (selected_objects.size())
         {
             gizmo.update(camera, viewport_size);
-            tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
+            hasEdited = tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
         }
 
-        // Perform editing updates on selected objects ... relative transforms as well
+        // Perform editing updates on selected objects
         for (int i = 0; i < selected_objects.size(); ++i)
         {
             ObjectType * object = selected_objects[i];
             auto newPose = to_linalg(gizmo_selection) * relative_transforms[i];
             object->set_pose(newPose);
         }
-
     }
 
     void on_draw()

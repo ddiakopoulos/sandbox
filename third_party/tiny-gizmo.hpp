@@ -443,6 +443,8 @@ namespace tinygizmo
         minalg::float3      detransform_vector(const minalg::float3 & vec) const { return qrot(qinv(orientation), vec) / scale; }
     };
 
+    inline bool operator != (const rigid_transform & a, const rigid_transform & b) { return (a.position != b.position) || (a.orientation != b.orientation); }
+
     struct camera_parameters
     {
         float yfov, near_clip, far_clip;
@@ -495,7 +497,7 @@ namespace tinygizmo
         std::function<void(const geometry_mesh & r)> render;        // Callback to render the gizmo meshes
     };
 
-    void transform_gizmo(const std::string & name, gizmo_context & g, rigid_transform & t);
+    bool transform_gizmo(const std::string & name, gizmo_context & g, rigid_transform & t);
 
 } // end namespace tinygizmo;
 

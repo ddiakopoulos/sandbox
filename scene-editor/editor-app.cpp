@@ -67,9 +67,10 @@ void scene_editor_app::on_input(const InputEvent & event)
             int width, height;
             glfwGetWindowSize(window, &width, &height);
 
+            std::cout << "selectable: " << controller->has_edited() << std::endl;
             const Ray r = cam.get_world_ray(event.cursor, float2(width, height));
 
-            if (length(r.direction) > 0)
+            if (length(r.direction) > 0 && !controller->has_edited())
             {
                 std::vector<SimpleStaticMesh *> selectedObjects;
                 for (auto & obj : objects)
@@ -87,7 +88,7 @@ void scene_editor_app::on_input(const InputEvent & event)
                         auto existingSelection = controller->get_selection();
                         for (auto s : selectedObjects)
                         {
-                            if (!controller->selected(*s)) existingSelection.push_back(s);
+                            if (!controller->selected(s)) existingSelection.push_back(s);
                         }
                         controller->set_selection(existingSelection);
                     }
@@ -96,7 +97,6 @@ void scene_editor_app::on_input(const InputEvent & event)
                     {
                         controller->set_selection(selectedObjects);
                     }
-
                 }
             }
         }
