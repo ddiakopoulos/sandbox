@@ -66,7 +66,7 @@ void scene_editor_app::on_input(const InputEvent & event)
             int width, height;
             glfwGetWindowSize(window, &width, &height);
 
-            Ray r = cam.get_world_ray(event.cursor, float2(width, height));
+            const Ray r = cam.get_world_ray(event.cursor, float2(width, height));
 
             if (length(r.direction) > 0)
             {
@@ -79,11 +79,12 @@ void scene_editor_app::on_input(const InputEvent & event)
                         selectedObjects.push_back(&obj);
                     }
                 }
-                controller->set_selection(selectedObjects);
-            }
-            else
-            {
-                controller->clear();
+
+                // New object was selected
+                if (selectedObjects.size() > 0)
+                {
+                    controller->set_selection(selectedObjects);
+                }
             }
         }
     }
@@ -138,9 +139,6 @@ void scene_editor_app::on_draw()
         wireframeShader->unbind();
     }
 
-    // Scene editor gizmo
-    controller->on_draw();
-
     igm->begin_frame();
 
     ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
@@ -182,6 +180,10 @@ void scene_editor_app::on_draw()
     gui::imgui_fixed_window_end();
 
     igm->end_frame();
+
+    // Scene editor gizmo
+    glClear(GL_DEPTH_BUFFER_BIT);
+    controller->on_draw();
 
     gl_check_error(__FILE__, __LINE__);
 

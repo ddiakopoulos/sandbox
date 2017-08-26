@@ -91,17 +91,17 @@ public:
     void on_input(const InputEvent & event)
     {
         gizmo.handle_input(event);
-        //selection = to_linalg(gizmo_selection);
     }
 
     void on_update(const GlCamera & camera, const float2 viewport_size)
     {
-        //if (selected_objects.size())
-       // {
+        if (selected_objects.size())
+        {
             gizmo.update(camera, viewport_size);
             tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
-       // }
+        }
 
+        // Perform editing updates on selected objects
         for (auto s : selected_objects)
         {
             s->set_pose(to_linalg(gizmo_selection));
@@ -111,10 +111,10 @@ public:
 
     void on_draw()
     {
-        //if (selected_objects.size())
-        //{
+        if (selected_objects.size())
+        {
             gizmo.draw();
-        //}
+        }
     }
 };
 
