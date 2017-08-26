@@ -20,9 +20,10 @@ class ShaderMonitor
         GlShader & program;
         std::string vertexPath;
         std::string fragmentPath;
+        std::string geomPath;
         bool shouldRecompile = false;
         std::string errorStr;
-        ShaderAsset(GlShader & program, const std::string & v, const std::string & f) : program(program), vertexPath(v), fragmentPath(f) {};
+        ShaderAsset(GlShader & program, const std::string & v, const std::string & f, const std::string & g = "") : program(program), vertexPath(v), fragmentPath(f), geomPath(g) {};
     };
     
     struct UpdateListener : public efsw::FileWatchListener
@@ -67,7 +68,7 @@ public:
     std::shared_ptr<GlShader> watch(const std::string & vertexShader, const std::string & fragmentShader, const std::string geomPath = "")
     {
         std::shared_ptr<GlShader> watchedShader = std::make_shared<GlShader>(read_file_text(vertexShader), read_file_text(fragmentShader), read_file_text(geomPath));
-        shaders.emplace_back(new ShaderAsset(*watchedShader.get(), vertexShader, fragmentShader));
+        shaders.emplace_back(new ShaderAsset(*watchedShader.get(), vertexShader, fragmentShader, geomPath));
         return watchedShader;
     }
     
@@ -81,7 +82,7 @@ public:
                 try
                 {
                     shader->shouldRecompile = false;
-                    shader->program = GlShader(read_file_text(shader->vertexPath), read_file_text(shader->fragmentPath));
+                    shader->program = GlShader(read_file_text(shader->vertexPath), read_file_text(shader->fragmentPath), read_file_text(shader->geomPath));
                     if (shader->errorStr.length() > 0)
                     {
                         shader->errorStr = "";
