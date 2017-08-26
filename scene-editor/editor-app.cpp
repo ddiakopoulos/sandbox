@@ -74,7 +74,6 @@ void scene_editor_app::on_input(const InputEvent & event)
                 for (auto & obj : objects)
                 {
                     RaycastResult result = obj.raycast(r);
-                    std::cout << result.distance << std::endl;
                     if (result.hit)
                     {
                         selectedObjects.push_back(&obj);
