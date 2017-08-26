@@ -582,26 +582,33 @@ void orientation_gizmo(const std::string & name, gizmo_context::gizmo_context_im
     const float draw_scale = (g.active_state.screenspace_scale > 0.f) ? scale_screenspace(g, p.position, g.active_state.screenspace_scale) : 1.f;
     const uint32_t id = hash_fnv1a(name);
 
-    if (g.has_clicked)
+    // interaction_mode will only change on clicked
+    if (g.has_clicked) g.gizmos[id].interaction_mode = interact::none;
+
     {
-        g.gizmos[id].interaction_mode = interact::none;
+        interact updated_state = interact::none;
+
         auto ray = detransform(p, g.get_ray_from_cursor(g.active_state.cam));
         detransform(draw_scale, ray);
         float best_t = std::numeric_limits<float>::infinity(), t;
 
-        if (intersect(g, ray, interact::rotate_x, t, best_t)) { g.gizmos[id].interaction_mode = interact::rotate_x; best_t = t; }
-        if (intersect(g, ray, interact::rotate_y, t, best_t)) { g.gizmos[id].interaction_mode = interact::rotate_y; best_t = t; }
-        if (intersect(g, ray, interact::rotate_z, t, best_t)) { g.gizmos[id].interaction_mode = interact::rotate_z; best_t = t; }
+        if (intersect(g, ray, interact::rotate_x, t, best_t)) { updated_state = interact::rotate_x; best_t = t; }
+        if (intersect(g, ray, interact::rotate_y, t, best_t)) { updated_state = interact::rotate_y; best_t = t; }
+        if (intersect(g, ray, interact::rotate_z, t, best_t)) { updated_state = interact::rotate_z; best_t = t; }
 
-        if (g.gizmos[id].interaction_mode != interact::none)
+        if (g.has_clicked)
         {
-            transform(draw_scale, ray);
-            g.gizmos[id].original_position = center;
-            g.gizmos[id].original_orientation = orientation;
-            g.gizmos[id].click_offset = p.transform_point(ray.origin + ray.direction * t);
-            g.gizmos[id].active = true;
+            g.gizmos[id].interaction_mode = updated_state;
+            if (g.gizmos[id].interaction_mode != interact::none)
+            {
+                transform(draw_scale, ray);
+                g.gizmos[id].original_position = center;
+                g.gizmos[id].original_orientation = orientation;
+                g.gizmos[id].click_offset = p.transform_point(ray.origin + ray.direction * t);
+                g.gizmos[id].active = true;
+            }
+            else g.gizmos[id].active = false;
         }
-        else g.gizmos[id].active = false;
     }
 
     float3 activeAxis;
@@ -712,24 +719,29 @@ void scale_gizmo(const std::string & name, gizmo_context::gizmo_context_impl & g
     const float draw_scale = (g.active_state.screenspace_scale > 0.f) ? scale_screenspace(g, p.position, g.active_state.screenspace_scale) : 1.f;
     const uint32_t id = hash_fnv1a(name);
 
-    if (g.has_clicked)
+    if (g.has_clicked) g.gizmos[id].interaction_mode = interact::none;
+
     {
-        g.gizmos[id].interaction_mode = interact::none;
+        interact updated_state = interact::none;
         auto ray = detransform(p, g.get_ray_from_cursor(g.active_state.cam));
         detransform(draw_scale, ray);
         float best_t = std::numeric_limits<float>::infinity(), t;
-        if (intersect(g, ray, interact::scale_x, t, best_t)) { g.gizmos[id].interaction_mode = interact::scale_x; best_t = t; }
-        if (intersect(g, ray, interact::scale_y, t, best_t)) { g.gizmos[id].interaction_mode = interact::scale_y; best_t = t; }
-        if (intersect(g, ray, interact::scale_z, t, best_t)) { g.gizmos[id].interaction_mode = interact::scale_z; best_t = t; }
+        if (intersect(g, ray, interact::scale_x, t, best_t)) { updated_state = interact::scale_x; best_t = t; }
+        if (intersect(g, ray, interact::scale_y, t, best_t)) { updated_state = interact::scale_y; best_t = t; }
+        if (intersect(g, ray, interact::scale_z, t, best_t)) { updated_state = interact::scale_z; best_t = t; }
 
-        if (g.gizmos[id].interaction_mode != interact::none)
+        if (g.has_clicked)
         {
-            transform(draw_scale, ray);
-            g.gizmos[id].original_scale = scale;
-            g.gizmos[id].click_offset = p.transform_point(ray.origin + ray.direction*t);
-            g.gizmos[id].active = true;
+            g.gizmos[id].interaction_mode = updated_state;
+            if (g.gizmos[id].interaction_mode != interact::none)
+            {
+                transform(draw_scale, ray);
+                g.gizmos[id].original_scale = scale;
+                g.gizmos[id].click_offset = p.transform_point(ray.origin + ray.direction*t);
+                g.gizmos[id].active = true;
+            }
+            else g.gizmos[id].active = false;
         }
-        else g.gizmos[id].active = false;
     }
 
     if (g.has_released) g.gizmos[id].interaction_mode = interact::none;
@@ -789,10 +801,7 @@ bool tinygizmo::transform_gizmo(const std::string & name, gizmo_context & g, rig
     else if (g.impl->mode == transform_mode::rotate) orientation_gizmo(name, *g.impl, t.position, t.orientation);
     else if (g.impl->mode == transform_mode::scale) scale_gizmo(name, *g.impl, t.orientation, t.position, t.scale);
 
-    for (auto & giz : g.impl->gizmos)
-    {
-        if (giz.second.hover == true || g.impl->active_state.mouse_left == true) activated = true;
-    }
+    for (auto & giz : g.impl->gizmos) if (giz.second.hover == true || g.impl->active_state.mouse_left == true) activated = true;
 
     return activated;
 }
