@@ -162,13 +162,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="asset_test.hpp" />
-    <ClInclude Include="camera_app.hpp" />
     <ClInclude Include="decal_app.hpp" />
     <ClInclude Include="empty_app.hpp" />
     <ClInclude Include="octree_test_app.hpp" />
     <ClInclude Include="geometric_algo_dev.hpp" />
     <ClInclude Include="instance_app.hpp" />
-    <ClInclude Include="lens_dev.hpp" />
     <ClInclude Include="meshline_app.hpp" />
     <ClInclude Include="reaction_app.hpp" />
     <ClInclude Include="simplex_noise_app.hpp" />

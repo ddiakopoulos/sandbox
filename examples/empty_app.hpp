@@ -38,6 +38,8 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GlGizmo> gizmo;
     tinygizmo::rigid_transform xform;
 
+    GlMesh mesh;
+
     ExperimentalApp() : GLFWApp(1280, 800, "Nearly Empty App")
     {
         int width, height;
@@ -49,6 +51,8 @@ struct ExperimentalApp : public GLFWApp
         xform.position = { 0.1f, 0.1f, 0.1f };
 
         wireframeShader = shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl");
+
+        mesh = make_mesh_from_geometry(make_icosasphere(3));
 
         debugCamera.look_at({0, 3.0, -3.5}, {0, 2.0, 0});
         cameraController.set_camera(&debugCamera);
@@ -97,7 +101,9 @@ struct ExperimentalApp : public GLFWApp
         wireframeShader->uniform("u_eyePos", debugCamera.get_eye_point());
         wireframeShader->uniform("u_viewProjMatrix", viewProjectionMatrix);
         wireframeShader->uniform("u_modelMatrix", Identity4x4);
-        // ... 
+
+        mesh.draw_elements();
+ 
         wireframeShader->unbind();
 
         if (gizmo) gizmo->draw();

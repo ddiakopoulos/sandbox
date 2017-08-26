@@ -734,6 +734,86 @@ namespace avl
         shape.compute_normals(true);
         return shape;
     }
+
+    inline Geometry make_icosasphere(uint32_t subdivisions = 1)
+    {
+        Geometry ico = make_icosahedron();
+
+        for (int j = 0; j < subdivisions; ++j)
+        {
+            ico.vertices.reserve(ico.vertices.size() + ico.faces.size());
+            ico.normals.reserve(ico.normals.size() + ico.faces.size());
+            ico.faces.reserve(ico.faces.size() * 3);
+
+            // For each triangle
+            const size_t numTriangles = ico.faces.size();
+            for (uint32_t i = 0; i < numTriangles; ++i)
+            {
+                uint32_t index0 = ico.faces[i].x;
+                uint32_t index1 = ico.faces[i].y;
+                uint32_t index2 = ico.faces[i].z;
+
+                uint32_t index3 = (uint32_t) ico.vertices.size();
+                uint32_t index4 = index3 + 1;
+                uint32_t index5 = index4 + 1;
+
+                ico.faces[i].y = index3;
+                ico.faces[i].z = index5;
+
+                ico.faces.push_back({ index3, index1, index4 });
+                ico.faces.push_back({ index5, index3, index4 });
+                ico.faces.push_back({ index5, index4, index2 });
+
+                ico.vertices.push_back(0.5f * (ico.vertices[index0] + ico.vertices[index1]));
+                ico.vertices.push_back(0.5f * (ico.vertices[index1] + ico.vertices[index2]));
+                ico.vertices.push_back(0.5f * (ico.vertices[index2] + ico.vertices[index0]));
+
+                ico.normals.push_back(0.5f * (ico.normals[index0] + ico.normals[index1]));
+                ico.normals.push_back(0.5f * (ico.normals[index1] + ico.normals[index2]));
+                ico.normals.push_back(0.5f * (ico.normals[index2] + ico.normals[index0]));
+            }
+        }
+
+        for (auto & v : ico.vertices) v = normalize(v);
+        for (auto & n : ico.normals) n = normalize(n);
+
+        ico.texCoords.resize(ico.normals.size(), float2());
+        for (size_t i = 0; i < ico.normals.size(); ++i)
+        {
+            const float3 & normal = ico.normals[i];
+            ico.texCoords[i].x = 0.5f - 0.5f * std::atan2(normal.x, -normal.z) / float(ANVIL_PI);
+            ico.texCoords[i].y = 1.0f - std::acos(normal.y) / float(ANVIL_PI);
+        }
+
+        auto add_unique_vertex = [&](size_t i, uint32_t component, const float2 & uv) 
+        {
+            uint3 & face = ico.faces[i];
+            const uint32_t index = face[component];
+
+            face[component] = (uint32_t)ico.vertices.size();
+
+            ico.vertices.push_back(ico.vertices[index]);
+            ico.normals.push_back(ico.normals[index]);
+            ico.texCoords.push_back(uv);
+        };
+
+        const size_t numTriangles = ico.faces.size();
+        for (size_t i = 0; i < numTriangles; ++i)
+        {
+            const float2 & uv0 = ico.texCoords[ico.faces[i].x];
+            const float2 & uv1 = ico.texCoords[ico.faces[i].y];
+            const float2 & uv2 = ico.texCoords[ico.faces[i].z];
+
+            const float d1 = uv1.x - uv0.x;
+            const float d2 = uv2.x - uv0.x;
+
+            if (std::abs(d1) > 0.5f && std::abs(d2) > 0.5f)  add_unique_vertex(i, 0, uv0 + float2((d1 > 0.0f) ? 1.0f : -1.0f, 0.0f));
+            else if (std::abs(d1) > 0.5f) add_unique_vertex(i, 1, uv1 + float2((d1 < 0.0f) ? 1.0f : -1.0f, 0.0f));
+            else if (std::abs(d2) > 0.5f) add_unique_vertex(i, 2, uv2 + float2((d2 < 0.0f) ? 1.0f : -1.0f, 0.0f));
+        }
+
+        return ico;
+    }
     
 }
 
