@@ -57,7 +57,8 @@ void scene_editor_app::on_input(const InputEvent & event)
         {
             if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE)
             {
-                exit();
+                // De-select all objects
+                controller->clear();
             }
         }
 
@@ -84,7 +85,10 @@ void scene_editor_app::on_input(const InputEvent & event)
                     if (event.mods & GLFW_MOD_CONTROL)
                     {
                         auto existingSelection = controller->get_selection();
-                        for (auto s : selectedObjects) existingSelection.push_back(s);
+                        for (auto s : selectedObjects)
+                        {
+                            if (!controller->selected(*s)) existingSelection.push_back(s);
+                        }
                         controller->set_selection(existingSelection);
                     }
                     // Single Selection

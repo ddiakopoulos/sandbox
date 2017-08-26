@@ -54,7 +54,6 @@ class editor_controller
 
         for (auto s : selected_objects)
         {
-            //auto t = s->pose;
             relative_transforms.push_back(selection.inverse() * s->get_pose());
         }
     }
