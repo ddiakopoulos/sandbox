@@ -8,6 +8,9 @@ struct scene_editor_app : public GLFWApp
     ShaderMonitor shaderMonitor{ "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
     GlGpuTimer gpuTimer;
+    std::shared_ptr<GlShader> wireframeShader;
+
+    std::vector<SimpleStaticMesh> objects;
 
     scene_editor_app();
     ~scene_editor_app();

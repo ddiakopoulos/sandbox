@@ -105,6 +105,22 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
+
+    wireframeShader = shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl");
+   
+    Geometry icosphere = make_icosasphere(3);
+    float step = ANVIL_TAU / 8;
+    for (int i = 0; i < 8; ++i)
+    {
+        SimpleStaticMesh mesh;
+        mesh.set_static_mesh(icosphere);
+
+        Pose p;
+        p.position = float3(std::sin(step * i) * 5.0f, 0, std::cos(step * i) * 5.0f);
+        mesh.set_pose(p);
+        objects.push_back(std::move(mesh));
+    }
+
 }
 
 scene_editor_app::~scene_editor_app()
@@ -122,9 +138,16 @@ void scene_editor_app::on_input(const InputEvent & event)
     igm->update_input(event);
     flycam.handle_input(event);
 
-    if (event.type == InputEvent::KEY)
+    // Prevent scene editor from responding to input destined for ImGui
+    if (!ImGui::GetIO().WantCaptureMouse && !ImGui::GetIO().WantCaptureKeyboard)
     {
-        if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE) exit();
+        if (event.type == InputEvent::KEY)
+        {
+            if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE)
+            {
+                exit();
+            }
+        }
     }
 
 }
@@ -143,6 +166,9 @@ void scene_editor_app::on_draw()
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
@@ -159,6 +185,21 @@ void scene_editor_app::on_draw()
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
     gpuTimer.stop();
+
+    // Render the scene
+    {
+        wireframeShader->bind();
+        wireframeShader->uniform("u_eyePos", cam.get_eye_point());
+        wireframeShader->uniform("u_viewProjMatrix", viewProjectionMatrix);
+
+        for (auto & obj : objects)
+        {
+            wireframeShader->uniform("u_modelMatrix", obj.get_pose().matrix());
+            obj.draw();
+        }
+
+        wireframeShader->unbind();
+    }
 
     igm->begin_frame();
 
