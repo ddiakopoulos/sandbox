@@ -155,7 +155,20 @@ void scene_editor_app::on_draw()
     }
 
     {
+        //renderer->add_objects();
+        //renderer->add_lights();
 
+        CameraData data;
+        data.pose = cam.get_pose();
+        data.projectionMatrix = projectionMatrix;
+        data.viewMatrix = viewMatrix;
+        data.viewProjMatrix = viewProjectionMatrix;
+        renderer->add_camera(0, data);
+
+        RenderLightingData lighting;
+        renderer->add_lights(lighting);
+
+        renderer->render_frame();
     }
 
     igm->begin_frame();

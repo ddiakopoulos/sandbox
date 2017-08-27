@@ -135,7 +135,6 @@ struct scene_editor_app : public GLFWApp
     FlyCameraController flycam;
     ShaderMonitor shaderMonitor { "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
-    GlGpuTimer gpuTimer;
 
     std::shared_ptr<GlShader> wireframeShader;
     std::shared_ptr<GlShader> pbrShader;

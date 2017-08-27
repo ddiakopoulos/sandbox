@@ -32,14 +32,7 @@ struct SkyboxPass
     }
 };
 
-enum class Eye : int
-{
-    LeftEye = 0, 
-    RightEye = 1,
-    CenterEye = 2
-};
-
-struct EyeData
+struct CameraData
 {
     Pose pose;
     float4x4 viewMatrix;
@@ -53,7 +46,7 @@ struct ShadowData
     float3 directionalLight;
 };
 
-struct LightCollection
+struct RenderLightingData
 {
     uniforms::directional_light * directionalLight;
     std::vector<uniforms::point_light *> pointLights;
@@ -62,17 +55,17 @@ struct LightCollection
 
 struct RenderPassData
 {
-    const int & eye;
-    const EyeData & data;
+    const uint32_t & eye;
+    const CameraData & data;
     const ShadowData & shadow;
-    RenderPassData(const int & eye, const EyeData & data, const ShadowData & shadowData) : eye(eye), data(data), shadow(shadowData) {}
+    RenderPassData(const uint32_t & eye, const CameraData & data, const ShadowData & shadowData) : eye(eye), data(data), shadow(shadowData) {}
 };
 
 template<uint32_t NumEyes>
 class PhysicallyBasedRenderer
 {
     std::vector<Renderable *> renderSet;
-    LightCollection lights;
+    RenderLightingData lights;
 
     float2 renderSizePerEye;
     GlGpuTimer renderTimer;
@@ -81,7 +74,7 @@ class PhysicallyBasedRenderer
     GlBuffer perScene;
     GlBuffer perView;
 
-    EyeData eyes[NumEyes];
+    CameraData cameras[NumEyes];
 
     GlFramebuffer eyeFramebuffers[NumEyes];
     GlTexture2D eyeTextures[NumEyes];
@@ -123,9 +116,6 @@ class PhysicallyBasedRenderer
 
     void run_forward_pass(const RenderPassData & d)
     {
-        sceneDebugRenderer.draw(d.data.viewProjMatrix);
-        for (auto obj : debugSet) { obj->draw(d.data.viewProjMatrix); }
-
         // This is done per-eye but should be done per frame instead...
         auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
         {
@@ -241,7 +231,7 @@ public:
 
         // Fixme: center eye
         const ShadowData d{ shadow->get_output_texture(), lights.directionalLight->direction };
-        const RenderPassData shadowPassData(0, eyes[0], d);
+        const RenderPassData shadowPassData(0, cameras[0], d);
         if (renderShadows)
         {
             for (int c = 0; c < 4; c++)
@@ -261,16 +251,16 @@ public:
         {
             // Update per-view uniform buffer
             uniforms::per_view v = {};
-            v.view = eyes[eyeIdx].pose.inverse().matrix();
-            v.viewProj = mul(eyes[eyeIdx].projectionMatrix, eyes[eyeIdx].pose.inverse().matrix());
-            v.eyePos = float4(eyes[eyeIdx].pose.position, 1);
+            v.view = cameras[eyeIdx].pose.inverse().matrix();
+            v.viewProj = mul(cameras[eyeIdx].projectionMatrix, cameras[eyeIdx].pose.inverse().matrix());
+            v.eyePos = float4(cameras[eyeIdx].pose.position, 1);
             perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
 
             // Update render pass data. 
-            eyes[eyeIdx].viewMatrix = v.view;
-            eyes[eyeIdx].viewProjMatrix = v.viewProj;
+            cameras[eyeIdx].viewMatrix = v.view;
+            cameras[eyeIdx].viewProjMatrix = v.viewProj;
 
-            const RenderPassData renderPassData(eyeIdx, eyes[eyeIdx], d);
+            const RenderPassData renderPassData(eyeIdx, cameras[eyeIdx], d);
 
             // Render into 4x multisampled fbo
             glEnable(GL_MULTISAMPLE);
@@ -308,19 +298,23 @@ public:
         bloom->gather_imgui(renderBloom);
     }
 
-    void set_eye_data(const EyeData left, const EyeData right)
+    void add_camera(const uint32_t idx, const CameraData data)
     {
-        eyes[0] = left;
-        eyes[1] = right;
+        assert(idx <= NumEyes);
+        cameras[idx] = data;
     }
 
-    GLuint get_eye_texture(const Eye e) { return outputTextureHandles[(int)e]; }
+    GLuint get_output_texture(const uint32_t idx)
+    { 
+        assert(idx <= NumEyes);
+        return outputTextureHandles[idx]; 
+    }
 
     // A `Renderable` is a generic interface for this engine, appropriate for use with
     // the material system and all customizations (frustum culling, etc)
-    void add_renderables(const std::vector<Renderable *> & set) { renderSet = set; }
+    void add_objects(const std::vector<Renderable *> & set) { renderSet = set; }
 
-    void set_lights(const LightCollection & collection) { lights = collection; }
+    void add_lights(const RenderLightingData & collection) { lights = collection; }
 };
 
 #endif // end vr_renderer_hpp
