@@ -219,7 +219,7 @@ void scene_editor_app::on_draw()
 
     renderer->gather_imgui();
 
-    gui::imgui_menu_stack menu(*this, igm->capturedKeys);
+    gui::imgui_menu_stack menu(*this, ImGui::GetIO().KeysDown);
     menu.app_menu_begin();
     {
         menu.begin("File");
@@ -234,9 +234,10 @@ void scene_editor_app::on_draw()
         if (menu.item("Delete", 0, GLFW_KEY_DELETE)) {}
         if (menu.item("Select All", GLFW_MOD_CONTROL, GLFW_KEY_A)) 
         {
-            //std::vector<StaticMesh *> selectedObjects;
-            //for (auto & obj : objects) selectedObjects.push_back(&obj);
-            //controller->set_selection(selectedObjects);
+            std::cout << "Select All" << std::endl;
+            std::vector<StaticMesh *> selectedObjects;
+            for (auto & obj : objects) selectedObjects.push_back(&obj);
+            controller->set_selection(selectedObjects);
         }
         menu.end();
     }

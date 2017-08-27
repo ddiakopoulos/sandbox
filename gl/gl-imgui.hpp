@@ -71,8 +71,6 @@ namespace gui
 
         void begin_frame();
         void end_frame();
-
-        bool capturedKeys[1024];
     };
     
     inline void make_dark_theme()
@@ -83,7 +81,7 @@ namespace gui
         s.FramePadding                           = ImVec2(4, 2);
         s.ItemSpacing                            = ImVec2(6, 2);
         s.ItemInnerSpacing                       = ImVec2(6, 4);
-        s.Alpha                                  = 0.95f;
+        s.Alpha                                  = 0.90f;
         s.WindowFillAlphaDefault                 = 1.0f;
         s.WindowRounding                         = 4.0f;
         s.FrameRounding                          = 2.0f;

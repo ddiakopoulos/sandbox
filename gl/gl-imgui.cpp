@@ -184,27 +184,17 @@ namespace gui
         
         if (e.type == InputEvent::Type::KEY)
         {
-            if (io.WantCaptureKeyboard)
-            {
-                if (e.action == GLFW_PRESS) io.KeysDown[e.value[0]] = true;
-                if (e.action == GLFW_RELEASE) io.KeysDown[e.value[0]] = false;
-                io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-                io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-                io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-            }
-            else
-            {
-                for (auto & k : capturedKeys) { ImGui::GetIO().KeysDown[e.value[0]] = false; }
-            }
+            io.KeysDown[e.value[0]] = (e.action == GLFW_PRESS);
+            io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+            io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+            io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
         }
         
         if (e.type == InputEvent::Type::CHAR)
         {
-            ImGuiIO & io = ImGui::GetIO();
-            
             if (e.value[0] > 0 && e.value[0] < 0x10000)
             {
-                io.AddInputCharacter((unsigned short)e.value[0]);
+                io.AddInputCharacter((unsigned short) e.value[0]);
             }
         }
 
