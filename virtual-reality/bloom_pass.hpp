@@ -34,6 +34,8 @@ struct BloomPass
     float middleGrey = 1.0f;
     float whitePoint = 1.5f;
     float threshold = 0.66f;
+    float blurSigma = 4.0f;
+    int blurPixelsPerSide = 2;
 
     GlShader hdr_post;
     GlShader hdr_lumShader;
@@ -45,7 +47,7 @@ struct BloomPass
     GlFramebuffer brightFramebuffer, blurFramebuffer, outputFramebuffer;
     GlFramebuffer luminance[5];
 
-    GlTexture2D brightTex, blurTex, outputTex;
+    GlTexture2D brightTex, blurPasses[2], outputTex; 
     GlTexture2D luminanceTex[5];
 
     GlMesh fsQuad;
@@ -65,7 +67,8 @@ struct BloomPass
         luminanceTex[3].setup(4, 4, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         luminanceTex[4].setup(1, 1, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         brightTex.setup(perEyeSize.x / 2, perEyeSize.y / 2, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        blurTex.setup(perEyeSize.x / 8, perEyeSize.y / 8, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        blurPasses[0].setup(perEyeSize.x / 8, perEyeSize.y / 8, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        blurPasses[1].setup(perEyeSize.x / 8, perEyeSize.y / 8, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         outputTex.setup(perEyeSize.x, perEyeSize.y, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
 
         glNamedFramebufferTexture2DEXT(luminance[0], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex[0], 0);
@@ -74,7 +77,8 @@ struct BloomPass
         glNamedFramebufferTexture2DEXT(luminance[3], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex[3], 0);
         glNamedFramebufferTexture2DEXT(luminance[4], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex[4], 0);
         glNamedFramebufferTexture2DEXT(brightFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brightTex, 0);
-        glNamedFramebufferTexture2DEXT(blurFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blurTex, 0);
+        glNamedFramebufferTexture2DEXT(blurFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blurPasses[0], 0);
+        glNamedFramebufferTexture2DEXT(blurFramebuffer, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, blurPasses[1], 0);
         glNamedFramebufferTexture2DEXT(outputFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outputTex, 0);
 
         for (auto & l : luminance) l.check_complete();
@@ -86,7 +90,7 @@ struct BloomPass
         hdr_avgLumShader = GlShader(GL_FRAGMENT_SHADER, read_file_text("../assets/shaders/hdr/hdr_lumavg_frag.glsl"));
 
         hdr_lumShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_lum_frag.glsl"));
-        hdr_blurShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_blur_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_blur_frag.glsl"));
+        hdr_blurShader = GlShader(read_file_text("../assets/shaders/gaussian_blur_vert.glsl"), read_file_text("../assets/shaders/gaussian_blur_frag.glsl"));
         hdr_brightShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_bright_frag.glsl"));
         hdr_tonemapShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_tonemap_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_tonemap_frag.glsl"));
 
@@ -162,19 +166,52 @@ struct BloomPass
         hdr_brightShader.uniform("u_modelViewProj", Identity4x4);
         fsQuad.draw_elements();
 
-        glBindFramebuffer(GL_FRAMEBUFFER, blurFramebuffer);
-        glViewport(0, 0, perEyeSize.x / 8, perEyeSize.y / 8);
-        hdr_blurShader.bind();
-        hdr_blurShader.texture("s_texColor", 0, brightTex, GL_TEXTURE_2D);
-        hdr_blurShader.uniform("u_viewTexel", float2(1.f / (perEyeSize.x / 8.f), 1.f / (perEyeSize.y / 8.f)));
-        hdr_blurShader.uniform("u_modelViewProj", Identity4x4);
-        fsQuad.draw_elements();
+        static int dx = 0;
+
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, blurFramebuffer);
+
+            if (dx == 0)
+            {
+                glDrawBuffer(GL_COLOR_ATTACHMENT1);
+                glReadBuffer(GL_COLOR_ATTACHMENT0);
+            }
+            else
+            {
+                glDrawBuffer(GL_COLOR_ATTACHMENT0);
+                glReadBuffer(GL_COLOR_ATTACHMENT1);
+            }
+
+            glViewport(0, 0, perEyeSize.x / 8, perEyeSize.y / 8);
+
+            hdr_blurShader.bind();
+
+            hdr_blurShader.uniform("u_modelViewProj", Identity4x4);
+            hdr_blurShader.uniform("sigma", blurSigma);
+            hdr_blurShader.uniform("numBlurPixelsPerSide", float(blurPixelsPerSide));
+
+            // Horizontal pass
+            hdr_blurShader.uniform("blurSize", 1.f / (perEyeSize.x / 8.f));
+            hdr_blurShader.uniform("blurMultiplyVec", float2(1.0f, 0.0f));
+            hdr_blurShader.texture("s_blurTexure", 0, brightTex, GL_TEXTURE_2D);
+            fsQuad.draw_elements();
+
+            // Vertical pass
+            hdr_blurShader.uniform("blurSize", 1.f / (perEyeSize.y / 8.f));
+            hdr_blurShader.uniform("blurMultiplyVec", float2(0.0f, 1.0f));
+            hdr_blurShader.texture("s_blurTexure", 0, blurPasses[1 - dx], GL_TEXTURE_2D);
+            fsQuad.draw_elements();
+
+            dx = 1 - dx; // swap
+
+            hdr_blurShader.unbind();
+        }
 
         glBindFramebuffer(GL_FRAMEBUFFER, outputFramebuffer);
         glViewport(0, 0, perEyeSize.x, perEyeSize.y);
         hdr_tonemapShader.bind();
         hdr_tonemapShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
-        hdr_tonemapShader.texture("s_texBright", 1, blurTex, GL_TEXTURE_2D);
+        hdr_tonemapShader.texture("s_texBright", 1, blurPasses[dx], GL_TEXTURE_2D);
         hdr_tonemapShader.uniform("u_exposure", exposure);
         hdr_tonemapShader.uniform("u_tonemap", tonemap);
         fsQuad.draw_elements();
@@ -191,6 +228,8 @@ struct BloomPass
         ImGui::SliderFloat("WhitePoint", &whitePoint, 0.1f, 2.0f);
         ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
         ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
+        ImGui::SliderFloat("Blur Sigma", &blurSigma, 2.0f, 6.0f);
+        ImGui::SliderInt("Blur Pixels Per Size", &blurPixelsPerSide, 2, 6);
     }
 
     GLuint get_output_texture() const { return outputFramebuffer.id(); }
@@ -199,7 +238,7 @@ struct BloomPass
 
     GLuint get_bright_tex() const { return brightTex.id(); }
 
-    GLuint get_blur_tex() const { return blurTex.id(); }
+    GLuint get_blur_tex() const { return blurPasses[0].id(); }
 };
 
 #endif // end bloom_pass_hpp
