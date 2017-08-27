@@ -185,9 +185,9 @@ namespace gui
         if (e.type == InputEvent::Type::KEY)
         {
             io.KeysDown[e.value[0]] = (e.action == GLFW_PRESS);
-            io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-            io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-            io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+            io.KeyCtrl = (e.mods & GLFW_MOD_CONTROL) != 0;
+            io.KeyShift = (e.mods & GLFW_MOD_SHIFT) != 0;
+            io.KeyAlt = (e.mods & GLFW_MOD_ALT) != 0;
         }
         
         if (e.type == InputEvent::Type::CHAR)

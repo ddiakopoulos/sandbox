@@ -86,6 +86,14 @@ public:
         compute_selection();
     }
 
+    void update_selection(ObjectType * object)
+    { 
+        auto it = std::find(std::begin(selected_objects), std::end(selected_objects), object);
+        if (it == std::end(selected_objects)) selected_objects.push_back(object);
+        else selected_objects.erase(it);
+        compute_selection();
+    }
+
     void clear()
     {
         selected_objects.clear();

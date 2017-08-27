@@ -255,11 +255,18 @@ void scene_editor_app::on_draw()
     for (size_t i = 0; i < objects.size(); ++i)
     {
         ImGui::PushID(static_cast<int>(i));
-        bool selected = false;
+        bool selected = controller->selected(&objects[i]);
         std::string name = std::string(typeid(objects[i]).name());
+        std::vector<StaticMesh *> selectedObjects;
+
         if (ImGui::Selectable(name.c_str(), &selected))
         {
-
+            if (!ImGui::GetIO().KeyCtrl)
+            {
+                std::cout << "clear" << std::endl;
+                controller->clear();
+            }
+            controller->update_selection(&objects[i]);
         }
         ImGui::PopID();
     }
