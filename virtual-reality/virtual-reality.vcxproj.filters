@@ -538,9 +538,6 @@
     <ClCompile Include="vr_hmd.cpp">
       <Filter>Source Files\openvr</Filter>
     </ClCompile>
-    <ClCompile Include="vr_renderer.cpp">
-      <Filter>Source Files\renderer</Filter>
-    </ClCompile>
     <ClCompile Include="vr_app.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

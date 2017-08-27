@@ -1,5 +1,6 @@
 #include "index.hpp"
 #include "editor-app.hpp"
+#include "../virtual-reality/material.cpp" // HACK HACK
 
 using namespace avl;
 
@@ -8,8 +9,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
-
-    timer.start();
 
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
@@ -23,6 +22,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
 
     pbrMaterial.reset(new MetallicRoughnessMaterial(pbrShader));
+
+    renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
 
     Geometry icosphere = make_icosasphere(3);
     float step = ANVIL_TAU / 8;
@@ -130,8 +131,6 @@ void scene_editor_app::on_draw()
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
-    gpuTimer.start();
-
     glViewport(0, 0, width, height);
     glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -139,40 +138,6 @@ void scene_editor_app::on_draw()
     const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
-
-    glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, per_scene);
-    glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, per_view);
-
-    // per-scene uniform buffer
-    {
-        uniforms::per_scene b = {};
-        b.time = timer.milliseconds().count();
-        b.resolution = float2(width, height);
-        b.invResolution = 1.f / b.resolution;
-
-        //b.directional_light.color = lights.directionalLight->color;
-        //b.directional_light.direction = lights.directionalLight->direction;
-        //b.directional_light.amount = lights.directionalLight->amount;
-        //b.activePointLights = 0;
-        //for (int i = 0; i < (int)std::min(lights.pointLights.size(), size_t(4)); ++i) b.point_lights[i] = *lights.pointLights[i];
-
-        per_scene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
-    }
-
-    // per-scene uniform buffer
-    {
-        uniforms::per_view v = {};
-        v.view = cam.get_pose().inverse().matrix();
-        v.viewProj = viewProjectionMatrix;
-        v.eyePos = float4(cam.get_pose().position, 1);
-
-        //v.cascadesPlane[c] = float4(shadow->splitPlanes[c].x, shadow->splitPlanes[c].y, 0, 0);
-        //v.cascadesMatrix[c] = shadow->shadowMatrices[c];
-        //v.cascadesNear[c] = shadow->nearPlanes[c];
-        //v.cascadesFar[c] = shadow->farPlanes[c];
-
-        per_view.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
-    }
 
     // Selected objects as wireframe
     {
@@ -190,32 +155,10 @@ void scene_editor_app::on_draw()
     }
 
     {
-        EyeData eye;
-        eye.pose = cam.get_pose();
-        eye.viewMatrix = cam.get_pose().inverse().matrix();
-        eye.projectionMatrix = projectionMatrix;
-        eye.viewProjMatrix = viewProjectionMatrix;
-           
-        ShadowData shadow;
-        shadow.csmArrayHandle = -1;
-        shadow.directionalLight = float3(0, -1, 0);
 
-        RenderPassData pd(0, eye, shadow);
-
-        pbrMaterial->update_uniforms(&pd);
-
-        for (auto & obj : objects)
-        {
-            pbrMaterial->use(obj.get_pose().matrix(), eye.viewMatrix);
-            obj.draw();
-        }
     }
 
-    gpuTimer.stop();
-
     igm->begin_frame();
-
-    ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
 
     gui::imgui_menu_stack menu(*this, igm->capturedKeys);
     menu.app_menu_begin();

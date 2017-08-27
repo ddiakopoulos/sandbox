@@ -141,11 +141,8 @@ struct scene_editor_app : public GLFWApp
     std::shared_ptr<GlShader> pbrShader;
     std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
 
+    std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
     std::unique_ptr<editor_controller<SimpleStaticMesh>> controller;
-
-    SimpleTimer timer;
-    GlBuffer per_scene;
-    GlBuffer per_view;
 
     std::vector<SimpleStaticMesh> objects;
 
