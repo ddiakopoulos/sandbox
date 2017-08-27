@@ -215,6 +215,8 @@ public:
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
 
+        glEnable(GL_FRAMEBUFFER_SRGB);
+
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, perView);
 

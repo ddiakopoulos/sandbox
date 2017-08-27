@@ -2,7 +2,6 @@
 
 #define DEFAULT_GAMMA 2.2
 
-
 uniform sampler2D s_texColor;
 uniform sampler2D s_texBright;
 
@@ -90,7 +89,8 @@ void main()
     float lum = clamp(u_exposure, 0.05, 0.9);
     float middleGrey = u_tonemap.x;
     float whiteSqr = u_tonemap.y;
-    rgb = reinhard_tonemap(rgb, lum, whiteSqr, middleGrey);
+    //rgb = reinhard_tonemap(rgb, lum, whiteSqr, middleGrey);
     rgb += texture(s_texBright, v_texcoord0).rgb; // bright sample
-    f_color = vec4(linearTosRGB(rgb, DEFAULT_GAMMA), 1.0);
+    //f_color = vec4(linearTosRGB(rgb, DEFAULT_GAMMA), 1.0);
+    f_color = vec4(rgb, 1.0);
 }

@@ -55,6 +55,8 @@ struct BloomPass
     float2 perEyeSize;
     float exposure = 0.5f;
 
+    float blurDownsampleFactor = 2.0f;
+
     AsyncRead1 avgLuminance;
 
     BloomPass(float2 size) : perEyeSize(size)
@@ -67,8 +69,8 @@ struct BloomPass
         luminanceTex[3].setup(4, 4, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         luminanceTex[4].setup(1, 1, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         brightTex.setup(perEyeSize.x / 2, perEyeSize.y / 2, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        blurPasses[0].setup(perEyeSize.x / 8, perEyeSize.y / 8, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
-        blurPasses[1].setup(perEyeSize.x / 8, perEyeSize.y / 8, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        blurPasses[0].setup(perEyeSize.x / blurDownsampleFactor, perEyeSize.y / blurDownsampleFactor, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
+        blurPasses[1].setup(perEyeSize.x / blurDownsampleFactor, perEyeSize.y / blurDownsampleFactor, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
         outputTex.setup(perEyeSize.x, perEyeSize.y, GL_RGBA, GL_RGBA, GL_FLOAT, nullptr);
 
         glNamedFramebufferTexture2DEXT(luminance[0], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, luminanceTex[0], 0);
@@ -182,7 +184,7 @@ struct BloomPass
                 glReadBuffer(GL_COLOR_ATTACHMENT1);
             }
 
-            glViewport(0, 0, perEyeSize.x / 8, perEyeSize.y / 8);
+            glViewport(0, 0, perEyeSize.x / blurDownsampleFactor, perEyeSize.y / blurDownsampleFactor);
 
             hdr_blurShader.bind();
 
@@ -191,13 +193,13 @@ struct BloomPass
             hdr_blurShader.uniform("numBlurPixelsPerSide", float(blurPixelsPerSide));
 
             // Horizontal pass
-            hdr_blurShader.uniform("blurSize", 1.f / (perEyeSize.x / 8.f));
+            hdr_blurShader.uniform("blurSize", 1.f / (perEyeSize.x / blurDownsampleFactor));
             hdr_blurShader.uniform("blurMultiplyVec", float2(1.0f, 0.0f));
             hdr_blurShader.texture("s_blurTexure", 0, brightTex, GL_TEXTURE_2D);
             fsQuad.draw_elements();
 
             // Vertical pass
-            hdr_blurShader.uniform("blurSize", 1.f / (perEyeSize.y / 8.f));
+            hdr_blurShader.uniform("blurSize", 1.f / (perEyeSize.y / blurDownsampleFactor));
             hdr_blurShader.uniform("blurMultiplyVec", float2(0.0f, 1.0f));
             hdr_blurShader.texture("s_blurTexure", 0, blurPasses[1 - dx], GL_TEXTURE_2D);
             fsQuad.draw_elements();
@@ -224,10 +226,12 @@ struct BloomPass
     void gather_imgui(const bool enabled)
     {   
         if (!enabled) return;
+
         ImGui::SliderFloat("MiddleGrey", &middleGrey, 0.1f, 1.0f);
         ImGui::SliderFloat("WhitePoint", &whitePoint, 0.1f, 2.0f);
         ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
         ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
+
         ImGui::SliderFloat("Blur Sigma", &blurSigma, 2.0f, 6.0f);
         ImGui::SliderInt("Blur Pixels Per Size", &blurPixelsPerSide, 2, 6);
     }
