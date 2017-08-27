@@ -217,7 +217,7 @@ void scene_editor_app::on_draw()
 
     gl_check_error(__FILE__, __LINE__);
 
-    glfwSwapBuffers(window);
+    glfwSwapBuffers(window); 
 }
 
 IMPLEMENT_MAIN(int argc, char * argv[])

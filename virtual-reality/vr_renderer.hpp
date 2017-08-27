@@ -116,7 +116,7 @@ class PhysicallyBasedRenderer
 
     void run_forward_pass(const RenderPassData & d)
     {
-        // This is done per-eye but should be done per frame instead...
+        // fixme - this is done per-eye but should be done per frame instead
         auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
         {
             auto lid = lhs->get_material()->id();
@@ -144,9 +144,10 @@ class PhysicallyBasedRenderer
             renderQueue.pop();
         }
 
-        // Refactor this
-        outputTextureHandles[0] = eyeTextures[0];
-        outputTextureHandles[1] = eyeTextures[1];
+        for (int eyeIndex = 0; eyeIndex < NumEyes; ++eyeIndex)
+        {
+            outputTextureHandles[eyeIndex] = eyeTextures[eyeIndex];
+        }
     }
 
     void run_post_pass(const RenderPassData & d)
@@ -159,6 +160,15 @@ class PhysicallyBasedRenderer
     {
         bloom->execute(eyeTextures[d.eye]);
         glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    }
+
+    void gather_imgui()
+    {
+        ImGui::Text("Render %f", renderTimer.elapsed_ms());
+        ImGui::Checkbox("Render Shadows", &renderShadows);
+        ImGui::Checkbox("Render Post", &renderPost);
+        ImGui::Checkbox("Render Bloom", &renderBloom);
+        bloom->gather_imgui(renderBloom);
     }
 
     bool renderPost{ true };
@@ -284,18 +294,11 @@ public:
             gl_check_error(__FILE__, __LINE__);
         }
 
+        gather_imgui();
+
         renderTimer.stop();
 
         renderSet.clear();
-    }
-
-    void gather_imgui()
-    {
-        ImGui::Text("Render %f", renderTimer.elapsed_ms());
-        ImGui::Checkbox("Render Shadows", &renderShadows);
-        ImGui::Checkbox("Render Post", &renderPost);
-        ImGui::Checkbox("Render Bloom", &renderBloom);
-        bloom->gather_imgui(renderBloom);
     }
 
     void add_camera(const uint32_t idx, const CameraData data)
