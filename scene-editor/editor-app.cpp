@@ -4,6 +4,9 @@
 
 using namespace avl;
 
+// Hookup object inspector to list
+// clone/delete/new
+
 scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
 {
     int width, height;
@@ -229,20 +232,23 @@ void scene_editor_app::on_draw()
         menu.begin("Edit");
         if (menu.item("Clone", GLFW_MOD_CONTROL, GLFW_KEY_D)) {}
         if (menu.item("Delete", 0, GLFW_KEY_DELETE)) {}
-        if (menu.item("Select All", GLFW_MOD_CONTROL, GLFW_KEY_A)) {}
+        if (menu.item("Select All", GLFW_MOD_CONTROL, GLFW_KEY_A)) 
+        {
+            //std::vector<StaticMesh *> selectedObjects;
+            //for (auto & obj : objects) selectedObjects.push_back(&obj);
+            //controller->set_selection(selectedObjects);
+        }
         menu.end();
     }
     menu.app_menu_end();
 
-    std::vector<std::string> fakeObjects = { "mesh", "floor", "skybox", "debug-camera", "cinematic-camera", "point-light", "point-light", "directional-light" };
-
     gui::imgui_fixed_window_begin("Objects", { { width - 320, 17 }, { width, height } });
 
-    for (size_t i = 0; i < fakeObjects.size(); ++i)
+    for (size_t i = 0; i < objects.size(); ++i)
     {
         ImGui::PushID(static_cast<int>(i));
         bool selected = false;
-        std::string name = fakeObjects[i];
+        std::string name = std::string(typeid(objects[i]).name());
         if (ImGui::Selectable(name.c_str(), &selected))
         {
 

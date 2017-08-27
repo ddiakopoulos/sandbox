@@ -172,8 +172,11 @@ public:
     std::unique_ptr<BloomPass> bloom;
     std::unique_ptr<ShadowPass> shadow;
 
-    PhysicallyBasedRenderer(float2 renderSizePerEye)
+    PhysicallyBasedRenderer(const float2 render_target_size) : renderSizePerEye(render_target_size)
     {
+        assert(renderSizePerEye.x >= 0 && renderSizePerEye.y >= 0);
+        assert(NumEyes >= 1);
+
         // Generate multisample render buffers for color and depth, attach to multi-sampled framebuffer target
         glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderSizePerEye.x, renderSizePerEye.y);
         glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, renderSizePerEye.x, renderSizePerEye.y);

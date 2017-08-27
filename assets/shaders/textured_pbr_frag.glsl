@@ -364,8 +364,8 @@ void main()
     float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
     vec3 cubemapLookup = fix_cube_lookup(reflect(-V, N), 512, mipLevel);
 
-    irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
-    radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
+    //irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
+    //radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
 
     vec3 baseSpecular = mix(vec3(0.04), albedo, metallic);
     float NoV = saturate(dot(N, V));
@@ -375,6 +375,5 @@ void main()
     vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * (shadowVisibility);
     //f_color = vec4(vec3(shadowVisibility), 1.0);
 
-    //f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
-    f_color = vec4(0, 0, 1, 1);
+    f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
 }
