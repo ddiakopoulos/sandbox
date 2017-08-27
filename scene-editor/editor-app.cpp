@@ -231,10 +231,17 @@ void scene_editor_app::on_draw()
 
         menu.begin("Edit");
         if (menu.item("Clone", GLFW_MOD_CONTROL, GLFW_KEY_D)) {}
-        if (menu.item("Delete", 0, GLFW_KEY_DELETE)) {}
+        if (menu.item("Delete", 0, GLFW_KEY_DELETE)) 
+        {
+            auto it = std::remove_if(begin(objects), end(objects), [this](StaticMesh & obj) 
+            { 
+                return controller->selected(&obj); 
+            });
+            objects.erase(it, end(objects));
+            controller->clear();
+        }
         if (menu.item("Select All", GLFW_MOD_CONTROL, GLFW_KEY_A)) 
         {
-            std::cout << "Select All" << std::endl;
             std::vector<StaticMesh *> selectedObjects;
             for (auto & obj : objects) selectedObjects.push_back(&obj);
             controller->set_selection(selectedObjects);
