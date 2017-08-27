@@ -155,6 +155,9 @@ void scene_editor_app::on_draw()
     glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
@@ -261,11 +264,7 @@ void scene_editor_app::on_draw()
 
         if (ImGui::Selectable(name.c_str(), &selected))
         {
-            if (!ImGui::GetIO().KeyCtrl)
-            {
-                std::cout << "clear" << std::endl;
-                controller->clear();
-            }
+            if (!ImGui::GetIO().KeyCtrl) controller->clear();
             controller->update_selection(&objects[i]);
         }
         ImGui::PopID();
