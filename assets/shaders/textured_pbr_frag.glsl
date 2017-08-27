@@ -375,5 +375,6 @@ void main()
     vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * (shadowVisibility);
     //f_color = vec4(vec3(shadowVisibility), 1.0);
 
-    f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
+    //f_color = linearTosRGB(vec4(Lo, 1), DEFAULT_GAMMA);
+    f_color = vec4(0, 0, 1, 1);
 }

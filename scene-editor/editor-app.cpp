@@ -13,7 +13,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
-    controller.reset(new editor_controller<SimpleStaticMesh>());
+    controller.reset(new editor_controller<StaticMesh>());
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -27,8 +27,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     directionalLight.color = float3(1.f, 0.5f, 0.5f);
     directionalLight.amount = 0.5f;
 
-    pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-1, 1, 0), 4.f });
-    pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.f, 0.85f), float3(+1, 1, 0), 4.f });
+    pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-1, 1, 0), 12.f });
+    pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.00f, 0.859f), float3(+1, 1, 0), 12.f });
 
     texDatabase.register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
     texDatabase.register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
@@ -45,12 +45,15 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     float step = ANVIL_TAU / 8;
     for (int i = 0; i < 8; ++i)
     {
-        SimpleStaticMesh mesh;
+        StaticMesh mesh;
         mesh.set_static_mesh(icosphere);
 
         Pose p;
         p.position = float3(std::sin(step * i) * 5.0f, 0, std::cos(step * i) * 5.0f);
         mesh.set_pose(p);
+
+        mesh.set_material(pbrMaterial.get()); // todo - assign default material
+
         objects.push_back(std::move(mesh));
     }
 }
@@ -92,7 +95,7 @@ void scene_editor_app::on_input(const InputEvent & event)
 
             if (length(r.direction) > 0 && !controller->has_edited())
             {
-                std::vector<SimpleStaticMesh *> selectedObjects;
+                std::vector<StaticMesh *> selectedObjects;
                 for (auto & obj : objects)
                 {
                     RaycastResult result = obj.raycast(r);
@@ -146,12 +149,53 @@ void scene_editor_app::on_draw()
     glfwGetWindowSize(window, &width, &height);
 
     glViewport(0, 0, width, height);
-    glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
+    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
+
+    {
+        // Single-viewport camera
+        CameraData data;
+        data.pose = cam.get_pose();
+        data.projectionMatrix = projectionMatrix;
+        data.viewMatrix = viewMatrix;
+        data.viewProjMatrix = viewProjectionMatrix;
+        renderer->add_camera(0, data);
+
+        // Lighting
+        RenderLightingData sceneLighting;
+        sceneLighting.directionalLight = &directionalLight;
+        for (auto & ptLight : pointLights) sceneLighting.pointLights.push_back(&ptLight);
+        renderer->add_lights(sceneLighting);
+
+        // Objects
+        std::vector<Renderable *> sceneObjects;
+        for (auto & obj : objects) sceneObjects.push_back(&obj);
+        renderer->add_objects(sceneObjects);
+
+        renderer->render_frame();
+
+        glUseProgram(0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, width, height);
+
+        //glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glActiveTexture(GL_TEXTURE0);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, renderer->get_output_texture(0));
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0); glVertex2f(-1, -1);
+        glTexCoord2f(1, 0); glVertex2f(+1, -1);
+        glTexCoord2f(1, 1); glVertex2f(+1, +1);
+        glTexCoord2f(0, 1); glVertex2f(-1, +1);
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+    }
 
     // Selected objects as wireframe
     {
@@ -168,28 +212,9 @@ void scene_editor_app::on_draw()
         wireframeShader->unbind();
     }
 
-    {
-        // Single-viewport camera
-        CameraData data;
-        data.pose = cam.get_pose();
-        data.projectionMatrix = projectionMatrix;
-        data.viewMatrix = viewMatrix;
-        data.viewProjMatrix = viewProjectionMatrix;
-        renderer->add_camera(0, data);
-
-        // Lighting
-        RenderLightingData lighting;
-        lighting.directionalLight = &directionalLight;
-        for (auto & ptLight : pointLights) lighting.pointLights.push_back(&ptLight);
-        renderer->add_lights(lighting);
-
-        // Objects
-        renderer->add_objects();
-
-        renderer->render_frame();
-    }
-
     igm->begin_frame();
+
+    renderer->gather_imgui();
 
     gui::imgui_menu_stack menu(*this, igm->capturedKeys);
     menu.app_menu_begin();

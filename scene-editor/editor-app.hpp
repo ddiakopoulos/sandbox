@@ -5,6 +5,7 @@
 #include "../virtual-reality/vr_renderer.hpp"
 #include "../virtual-reality/uniforms.hpp"
 #include "../virtual-reality/assets.hpp"
+#include "../virtual-reality/static_mesh.hpp"
 
 inline Pose to_linalg(tinygizmo::rigid_transform & t)
 {
@@ -141,11 +142,11 @@ struct scene_editor_app : public GLFWApp
     std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
 
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
-    std::unique_ptr<editor_controller<SimpleStaticMesh>> controller;
+    std::unique_ptr<editor_controller<StaticMesh>> controller; // fixme - only needs renderable interface
 
     uniforms::directional_light directionalLight;
     std::vector<uniforms::point_light> pointLights;
-    std::vector<SimpleStaticMesh> objects;
+    std::vector<StaticMesh> objects;
 
     scene_editor_app();
     ~scene_editor_app();

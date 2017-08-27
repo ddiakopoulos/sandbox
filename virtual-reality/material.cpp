@@ -37,8 +37,8 @@ void MetallicRoughnessMaterial::update_uniforms(const RenderPassData * data)
     program->texture("s_roughness", 2, roughness->asset, GL_TEXTURE_2D);
     program->texture("s_metallic", 3, metallic->asset, GL_TEXTURE_2D);
             
-    program->texture("sc_radiance", 4, radianceCubemap->asset, GL_TEXTURE_CUBE_MAP);
-    program->texture("sc_irradiance", 5, irradianceCubemap->asset, GL_TEXTURE_CUBE_MAP);
+    //program->texture("sc_radiance", 4, radianceCubemap->asset, GL_TEXTURE_CUBE_MAP);
+    //program->texture("sc_irradiance", 5, irradianceCubemap->asset, GL_TEXTURE_CUBE_MAP);
 
     if (data->shadow.csmArrayHandle)
     {

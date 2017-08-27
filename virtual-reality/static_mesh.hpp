@@ -4,8 +4,8 @@
 #define vr_static_mesh_hpp
 
 #include "material.hpp"
-#include "bullet_engine.hpp"
-#include "bullet_object.hpp"
+//#include "bullet_engine.hpp"
+//#include "bullet_object.hpp"
 
 class StaticMesh : public Renderable
 {
@@ -18,7 +18,7 @@ class StaticMesh : public Renderable
 
     Material * material;
 
-    BulletObjectVR * physicsComponent{ nullptr };
+    //BulletObjectVR * physicsComponent{ nullptr };
 
 public:
 
@@ -65,6 +65,7 @@ public:
         if (renderMode != GL_TRIANGLE_STRIP) mesh.set_non_indexed(renderMode);
     }
 
+    /*
     void set_physics_component(BulletObjectVR * obj)
     {
         physicsComponent = obj;
@@ -74,6 +75,7 @@ public:
     {
         return physicsComponent;
     }
+    */
 };
 
 #endif // end vr_static_mesh_hpp

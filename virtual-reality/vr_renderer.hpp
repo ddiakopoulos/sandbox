@@ -83,6 +83,10 @@ class PhysicallyBasedRenderer
 
     GLuint outputTextureHandles[NumEyes];
 
+    bool renderPost{ false };
+    bool renderShadows{ true };
+    bool renderBloom{ true };
+
     void run_skybox_pass(const RenderPassData & d)
     {
         glDisable(GL_DEPTH_TEST);
@@ -162,19 +166,6 @@ class PhysicallyBasedRenderer
         glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
     }
 
-    void gather_imgui()
-    {
-        ImGui::Text("Render %f", renderTimer.elapsed_ms());
-        ImGui::Checkbox("Render Shadows", &renderShadows);
-        ImGui::Checkbox("Render Post", &renderPost);
-        ImGui::Checkbox("Render Bloom", &renderBloom);
-        bloom->gather_imgui(renderBloom);
-    }
-
-    bool renderPost{ true };
-    bool renderShadows { true };
-    bool renderBloom { false };
-
 public:
 
     std::unique_ptr<SkyboxPass> skybox;
@@ -234,7 +225,7 @@ public:
         b.directional_light.color = lights.directionalLight->color;
         b.directional_light.direction = lights.directionalLight->direction;
         b.directional_light.amount = lights.directionalLight->amount;
-        for (int i = 0; i < (int)std::min(lights.pointLights.size(), size_t(4)); ++i) b.point_lights[i] = *lights.pointLights[i];
+        for (int i = 0; i < (int)std::min(lights.pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = *lights.pointLights[i];
 
         GLfloat defaultColor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
         GLfloat defaultDepth = 1.f;
@@ -244,6 +235,8 @@ public:
         const RenderPassData shadowPassData(0, cameras[0], d);
         if (renderShadows)
         {
+            run_shadow_pass(shadowPassData);
+
             for (int c = 0; c < 4; c++)
             {
                 b.cascadesPlane[c] = float4(shadow->splitPlanes[c].x, shadow->splitPlanes[c].y, 0, 0);
@@ -251,7 +244,6 @@ public:
                 b.cascadesNear[c] = shadow->nearPlanes[c];
                 b.cascadesFar[c] = shadow->farPlanes[c];
             }
-            run_shadow_pass(shadowPassData);
         }
 
         perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
@@ -294,11 +286,18 @@ public:
             gl_check_error(__FILE__, __LINE__);
         }
 
-        gather_imgui();
-
         renderTimer.stop();
 
         renderSet.clear();
+    }
+
+    void gather_imgui()
+    {
+        ImGui::Text("Render %f", renderTimer.elapsed_ms());
+        ImGui::Checkbox("Render Shadows", &renderShadows);
+        ImGui::Checkbox("Render Post", &renderPost);
+        ImGui::Checkbox("Render Bloom", &renderBloom);
+        bloom->gather_imgui(renderBloom);
     }
 
     void add_camera(const uint32_t idx, const CameraData data)
