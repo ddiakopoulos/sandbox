@@ -1,6 +1,7 @@
 #include "index.hpp"
 #include "gl-gizmo.hpp"
 
+#include "../virtual-reality/material.hpp"
 #include "../virtual-reality/vr_renderer.hpp"
 #include "../virtual-reality/uniforms.hpp"
 
@@ -132,10 +133,14 @@ struct scene_editor_app : public GLFWApp
 {
     GlCamera cam;
     FlyCameraController flycam;
-    ShaderMonitor shaderMonitor{ "../assets/" };
+    ShaderMonitor shaderMonitor { "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
     GlGpuTimer gpuTimer;
+
     std::shared_ptr<GlShader> wireframeShader;
+    std::shared_ptr<GlShader> pbrShader;
+    std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
+
     std::unique_ptr<editor_controller<SimpleStaticMesh>> controller;
 
     SimpleTimer timer;

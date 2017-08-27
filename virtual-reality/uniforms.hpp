@@ -15,6 +15,7 @@ using namespace avl;
 #endif
 
 // https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)#Memory_layout
+
 namespace uniforms
 {
     static const int MAX_POINT_LIGHTS = 4;

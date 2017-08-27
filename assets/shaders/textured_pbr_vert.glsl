@@ -18,7 +18,7 @@ struct PointLight
 
 layout(binding = 0, std140) uniform PerScene
 {
-	DirectionalLight u_directionalLight;
+    DirectionalLight u_directionalLight;
     PointLight u_pointLights[MAX_POINT_LIGHTS];
     float u_time;
     int u_activePointLights;
@@ -62,7 +62,7 @@ void main()
     v_view_space_position = (u_modelViewMatrix * vec4(inPosition, 1.0)).xyz;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal, 1.0)).xyz);
     v_world_position = worldPosition.xyz;
-    v_texcoord = inTexCoord.st; //vec2(1, -1);
+    v_texcoord = inTexCoord.st;
     v_tangent = inTangent;
     v_bitangent = inBitangent;
 }

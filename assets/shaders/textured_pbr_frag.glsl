@@ -270,7 +270,7 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
     mat4 lightViewProj = get_cascade_viewproj(weights, viewProjArray);
     vec4 vertexLightPostion = lightViewProj * vec4(worldPos, 1.0);
 
-    // Compute erspective divide and transform to 0-1 range
+    // Compute perspective divide and transform to 0-1 range
     vec3 coords = (vertexLightPostion.xyz / vertexLightPostion.w) / 2.0 + 0.5;
 
     if (!(coords.z > 0.0 && coords.x > 0.0 && coords.y > 0.0 && coords.x <= 1.0 && coords.y <= 1.0)) return 0;

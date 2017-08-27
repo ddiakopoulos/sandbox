@@ -20,7 +20,10 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     flycam.set_camera(&cam);
 
     wireframeShader = shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl");
-   
+    pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
+
+    pbrMaterial.reset(new MetallicRoughnessMaterial(pbrShader));
+
     Geometry icosphere = make_icosasphere(3);
     float step = ANVIL_TAU / 8;
     for (int i = 0; i < 8; ++i)
@@ -171,19 +174,41 @@ void scene_editor_app::on_draw()
         per_view.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
     }
 
-    // Render the scene
+    // Selected objects as wireframe
     {
         wireframeShader->bind();
         wireframeShader->uniform("u_eyePos", cam.get_eye_point());
         wireframeShader->uniform("u_viewProjMatrix", viewProjectionMatrix);
 
-        for (auto & obj : objects)
+        for (auto obj : controller->get_selection())
         {
-            wireframeShader->uniform("u_modelMatrix", obj.get_pose().matrix());
-            obj.draw();
+            wireframeShader->uniform("u_modelMatrix", obj->get_pose().matrix());
+            obj->draw();
         }
 
         wireframeShader->unbind();
+    }
+
+    {
+        EyeData eye;
+        eye.pose = cam.get_pose();
+        eye.viewMatrix = cam.get_pose().inverse().matrix();
+        eye.projectionMatrix = projectionMatrix;
+        eye.viewProjMatrix = viewProjectionMatrix;
+           
+        ShadowData shadow;
+        shadow.csmArrayHandle = -1;
+        shadow.directionalLight = float3(0, -1, 0);
+
+        RenderPassData pd(0, eye, shadow);
+
+        pbrMaterial->update_uniforms(&pd);
+
+        for (auto & obj : objects)
+        {
+            pbrMaterial->use(obj.get_pose().matrix(), eye.viewMatrix);
+            obj.draw();
+        }
     }
 
     gpuTimer.stop();

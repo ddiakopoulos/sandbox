@@ -28,23 +28,6 @@ namespace avl
         virtual void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) override;
     };
 
-    class WireframeMaterial : public Material
-    {
-    public:
-        WireframeMaterial(std::shared_ptr<GlShader> shader);
-        virtual void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) override;
-    };
-
-    class TexturedMaterial : public Material
-    {
-        GlTexture2D diffuseTexture;
-    public:
-        TexturedMaterial(std::shared_ptr<GlShader> shader);
-        virtual void update_uniforms(const RenderPassData * data) override;
-        virtual void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) override;
-        void set_diffuse_texture(GlTexture2D & tex);
-    };
-
     class MetallicRoughnessMaterial : public Material
     {
         texture_handle albedo;
