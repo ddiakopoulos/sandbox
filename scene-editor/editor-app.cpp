@@ -21,9 +21,25 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     wireframeShader = shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl");
     pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl");
 
-    pbrMaterial.reset(new MetallicRoughnessMaterial(pbrShader));
-
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
+
+    directionalLight.direction = float3(1.f, -1.f, 1.f);
+    directionalLight.color = float3(1.f, 0.5f, 0.5f);
+    directionalLight.amount = 0.5f;
+
+    pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-1, 1, 0), 4.f });
+    pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.f, 0.85f), float3(+1, 1, 0), 4.f });
+
+    texDatabase.register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
+    texDatabase.register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
+    texDatabase.register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
+    texDatabase.register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
+
+    pbrMaterial.reset(new MetallicRoughnessMaterial(pbrShader));
+    pbrMaterial->set_albedo_texture(texDatabase["rusted-iron-albedo"]);
+    pbrMaterial->set_normal_texture(texDatabase["rusted-iron-normal"]);
+    pbrMaterial->set_metallic_texture(texDatabase["rusted-iron-metallic"]);
+    pbrMaterial->set_roughness_texture(texDatabase["rusted-iron-roughness"]);
 
     Geometry icosphere = make_icosasphere(3);
     float step = ANVIL_TAU / 8;
@@ -37,7 +53,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
         mesh.set_pose(p);
         objects.push_back(std::move(mesh));
     }
-
 }
 
 scene_editor_app::~scene_editor_app()
@@ -73,7 +88,6 @@ void scene_editor_app::on_input(const InputEvent & event)
             int width, height;
             glfwGetWindowSize(window, &width, &height);
 
-            std::cout << "selectable: " << controller->has_edited() << std::endl;
             const Ray r = cam.get_world_ray(event.cursor, float2(width, height));
 
             if (length(r.direction) > 0 && !controller->has_edited())
@@ -155,9 +169,7 @@ void scene_editor_app::on_draw()
     }
 
     {
-        //renderer->add_objects();
-        //renderer->add_lights();
-
+        // Single-viewport camera
         CameraData data;
         data.pose = cam.get_pose();
         data.projectionMatrix = projectionMatrix;
@@ -165,8 +177,14 @@ void scene_editor_app::on_draw()
         data.viewProjMatrix = viewProjectionMatrix;
         renderer->add_camera(0, data);
 
+        // Lighting
         RenderLightingData lighting;
+        lighting.directionalLight = &directionalLight;
+        for (auto & ptLight : pointLights) lighting.pointLights.push_back(&ptLight);
         renderer->add_lights(lighting);
+
+        // Objects
+        renderer->add_objects();
 
         renderer->render_frame();
     }

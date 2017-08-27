@@ -4,6 +4,7 @@
 #include "../virtual-reality/material.hpp"
 #include "../virtual-reality/vr_renderer.hpp"
 #include "../virtual-reality/uniforms.hpp"
+#include "../virtual-reality/assets.hpp"
 
 inline Pose to_linalg(tinygizmo::rigid_transform & t)
 {
@@ -66,10 +67,7 @@ class editor_controller
 
 public:
 
-    editor_controller()
-    {
-
-    }
+    editor_controller() { }
 
     bool selected(ObjectType * object) const
     {
@@ -136,6 +134,8 @@ struct scene_editor_app : public GLFWApp
     ShaderMonitor shaderMonitor { "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
 
+    AssetDatabase<GlTexture2D> texDatabase;
+
     std::shared_ptr<GlShader> wireframeShader;
     std::shared_ptr<GlShader> pbrShader;
     std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
@@ -143,6 +143,8 @@ struct scene_editor_app : public GLFWApp
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
     std::unique_ptr<editor_controller<SimpleStaticMesh>> controller;
 
+    uniforms::directional_light directionalLight;
+    std::vector<uniforms::point_light> pointLights;
     std::vector<SimpleStaticMesh> objects;
 
     scene_editor_app();
