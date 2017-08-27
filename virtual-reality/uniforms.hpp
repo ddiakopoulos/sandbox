@@ -44,13 +44,17 @@ namespace uniforms
 
     struct per_scene
     {
-        static const int     binding = 0;
-        directional_light    directional_light;
-        point_light          point_lights[MAX_POINT_LIGHTS];
-        float                time;
-        int                  activePointLights;
-        ALIGNED(8) float2    resolution;
-        ALIGNED(8) float2    invResolution;
+        static const int      binding = 0;
+        directional_light     directional_light;
+        point_light           point_lights[MAX_POINT_LIGHTS];
+        float                 time;
+        int                   activePointLights;
+        ALIGNED(8)  float2    resolution;
+        ALIGNED(8)  float2    invResolution;
+        ALIGNED(16) float4    cascadesPlane[4];
+        ALIGNED(16) float4x4  cascadesMatrix[4];
+        float                 cascadesNear[4];
+        float                 cascadesFar[4];
     };
 
     struct per_view
@@ -59,10 +63,6 @@ namespace uniforms
         ALIGNED(16) float4x4  view;
         ALIGNED(16) float4x4  viewProj;
         ALIGNED(16) float4    eyePos;
-        ALIGNED(16) float4    cascadesPlane[4];
-        ALIGNED(16) float4x4  cascadesMatrix[4];
-        float                 cascadesNear[4];
-        float                 cascadesFar[4];
     };
 }
 

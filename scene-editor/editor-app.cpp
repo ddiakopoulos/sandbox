@@ -9,6 +9,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
+    timer.start();
+
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
@@ -135,7 +137,39 @@ void scene_editor_app::on_draw()
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
-    gpuTimer.stop();
+    glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, per_scene);
+    glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, per_view);
+
+    // per-scene uniform buffer
+    {
+        uniforms::per_scene b = {};
+        b.time = timer.milliseconds().count();
+        b.resolution = float2(width, height);
+        b.invResolution = 1.f / b.resolution;
+
+        //b.directional_light.color = lights.directionalLight->color;
+        //b.directional_light.direction = lights.directionalLight->direction;
+        //b.directional_light.amount = lights.directionalLight->amount;
+        //b.activePointLights = 0;
+        //for (int i = 0; i < (int)std::min(lights.pointLights.size(), size_t(4)); ++i) b.point_lights[i] = *lights.pointLights[i];
+
+        per_scene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
+    }
+
+    // per-scene uniform buffer
+    {
+        uniforms::per_view v = {};
+        v.view = cam.get_pose().inverse().matrix();
+        v.viewProj = viewProjectionMatrix;
+        v.eyePos = float4(cam.get_pose().position, 1);
+
+        //v.cascadesPlane[c] = float4(shadow->splitPlanes[c].x, shadow->splitPlanes[c].y, 0, 0);
+        //v.cascadesMatrix[c] = shadow->shadowMatrices[c];
+        //v.cascadesNear[c] = shadow->nearPlanes[c];
+        //v.cascadesFar[c] = shadow->farPlanes[c];
+
+        per_view.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
+    }
 
     // Render the scene
     {
@@ -151,6 +185,8 @@ void scene_editor_app::on_draw()
 
         wireframeShader->unbind();
     }
+
+    gpuTimer.stop();
 
     igm->begin_frame();
 

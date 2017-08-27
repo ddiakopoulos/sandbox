@@ -113,6 +113,10 @@ void MetallicRoughnessMaterial::update_uniforms(const RenderPassData * data)
         program->texture("s_csmArray", 6, data->shadow.csmArrayHandle, GL_TEXTURE_2D_ARRAY);
     }
 
+    program->uniform("u_roughness", roughnessFactor);
+    program->uniform("u_metallic", metallicFactor);
+    program->uniform("u_ambientIntensity", ambientIntensity);
+
     //program->texture("s_emissive", 6, emissive, GL_TEXTURE_2D);
     //program->texture("s_occlusion", 7, occlusion, GL_TEXTURE_2D);
 }
@@ -123,7 +127,4 @@ void MetallicRoughnessMaterial::use(const float4x4 & modelMatrix, const float4x4
     program->uniform("u_modelMatrix", modelMatrix);
     program->uniform("u_modelMatrixIT", inv(transpose(modelMatrix)));
     program->uniform("u_modelViewMatrix", mul(viewMatrix, modelMatrix));
-    program->uniform("u_roughness", roughnessFactor);
-    program->uniform("u_metallic", metallicFactor);
-    program->uniform("u_ambientIntensity", ambientIntensity);
 }

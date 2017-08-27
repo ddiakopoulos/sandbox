@@ -1,4 +1,4 @@
-#version 420
+#version 450
 
 const int MAX_POINT_LIGHTS = 4;
 
@@ -24,6 +24,10 @@ layout(binding = 0, std140) uniform PerScene
     int u_activePointLights;
     vec2 resolution;
     vec2 invResolution;
+    vec4 u_cascadesPlane[4];
+    mat4 u_cascadesMatrix[4];
+    float u_cascadesNear[4];
+    float u_cascadesFar[4];
 };
 
 layout(binding = 1, std140) uniform PerView
@@ -31,10 +35,6 @@ layout(binding = 1, std140) uniform PerView
     mat4 u_viewMatrix;
     mat4 u_viewProjMatrix;
     vec4 u_eyePos;
-    vec4 u_cascadesPlane[4];
-    mat4 u_cascadesMatrix[4];
-    float u_cascadesNear[4];
-    float u_cascadesFar[4];
 };
 
 layout(location = 0) in vec3 inPosition;
@@ -49,7 +49,6 @@ uniform mat4 u_modelMatrixIT;
 uniform mat4 u_modelViewMatrix;
 
 out vec3 v_normal;
-out vec3 v_position;
 out vec3 v_world_position;
 out vec3 v_view_space_position;
 out vec2 v_texcoord;
@@ -60,7 +59,6 @@ void main()
 {
     vec4 worldPosition = u_modelMatrix * vec4(inPosition, 1.0);
     gl_Position = u_viewProjMatrix * worldPosition;
-    v_position = inPosition;
     v_view_space_position = (u_modelViewMatrix * vec4(inPosition, 1.0)).xyz;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal, 1.0)).xyz);
     v_world_position = worldPosition.xyz;

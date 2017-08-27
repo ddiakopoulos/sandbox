@@ -1,4 +1,4 @@
-#version 420
+#version 450
 
 // http://gamedev.stackexchange.com/questions/63832/normals-vs-normal-maps/63833
 // http://blog.selfshadow.com/publications/blending-in-detail/
@@ -103,6 +103,10 @@ layout(binding = 0, std140) uniform PerScene
     int u_activePointLights;
     vec2 resolution;
     vec2 invResolution;
+    vec4 u_cascadesPlane[4];
+    mat4 u_cascadesMatrix[4];
+    float u_cascadesNear[4];
+    float u_cascadesFar[4];
 };
 
 layout(binding = 1, std140) uniform PerView
@@ -110,13 +114,8 @@ layout(binding = 1, std140) uniform PerView
     mat4 u_viewMatrix;
     mat4 u_viewProjMatrix;
     vec4 u_eyePos;
-    vec4 u_cascadesPlane[4];
-    mat4 u_cascadesMatrix[4];
-    float u_cascadesNear[4];
-    float u_cascadesFar[4];
 };
 
-in vec3 v_position;
 in vec3 v_world_position;
 in vec3 v_view_space_position;
 in vec3 v_normal;

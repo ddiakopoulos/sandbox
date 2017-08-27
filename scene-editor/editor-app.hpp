@@ -1,6 +1,9 @@
 #include "index.hpp"
 #include "gl-gizmo.hpp"
 
+#include "../virtual-reality/vr_renderer.hpp"
+#include "../virtual-reality/uniforms.hpp"
+
 inline Pose to_linalg(tinygizmo::rigid_transform & t)
 {
     return{ reinterpret_cast<float4 &>(t.orientation), reinterpret_cast<float3 &>(t.position) };
@@ -134,6 +137,10 @@ struct scene_editor_app : public GLFWApp
     GlGpuTimer gpuTimer;
     std::shared_ptr<GlShader> wireframeShader;
     std::unique_ptr<editor_controller<SimpleStaticMesh>> controller;
+
+    SimpleTimer timer;
+    GlBuffer per_scene;
+    GlBuffer per_view;
 
     std::vector<SimpleStaticMesh> objects;
 
