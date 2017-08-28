@@ -44,7 +44,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     pbrMaterial->set_metallic_texture(texDatabase["rusted-iron-metallic"]);
     pbrMaterial->set_roughness_texture(texDatabase["rusted-iron-roughness"]);
 
-    Geometry icosphere = make_icosasphere(3);
+    Geometry icosphere = make_icosasphere(5);
     float step = ANVIL_TAU / 8;
     for (int i = 0; i < 8; ++i)
     {
