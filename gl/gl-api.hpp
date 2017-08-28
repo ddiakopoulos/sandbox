@@ -28,7 +28,6 @@ namespace
             glGetShaderInfoLog(shader, (GLsizei)buffer.size(), nullptr, buffer.data());
             glDeleteShader(shader);
             std::cerr << "GL Compile Error: " << buffer.data() << std::endl;
-            std::cerr << "Source: " << source << std::endl;
             throw std::runtime_error("GLSL Compile Failure");
         }
 

@@ -1,21 +1,12 @@
-#version 450
-
 // http://gamedev.stackexchange.com/questions/63832/normals-vs-normal-maps/63833
 // http://blog.selfshadow.com/publications/blending-in-detail/
 // http://www.trentreed.net/blog/physically-based-shading-and-image-based-lighting/
 // http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 // http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
 
-#define saturate(x) clamp(x, 0.0, 1.0)
-#define PI 3.1415926535897932384626433832795
-#define INV_PI 1.0/PI
-#define RCP_4PI 1.0 / (4 * PI)
+#include "renderer_common.glsl"
 
-const int MAX_POINT_LIGHTS = 4;
-
-#define DEFAULT_GAMMA 2.2
-
-float linearrgb_to_srgb1(const in float c, const in float gamma)
+float linearrgb_to_srgb1(const in float c, const in float gamma) 
 {
     float v = 0.0;
     if(c < 0.0031308) 
@@ -80,41 +71,6 @@ vec3 sRGBToLinear(const in vec3 from, const in float gamma)
     to.b = sRGBToLinear(from.b, gamma);
     return to;
 }
-
-struct DirectionalLight
-{
-    vec3 color;
-    vec3 direction;
-    float amount;
-};
-
-struct PointLight
-{
-    vec3 color;
-    vec3 position;
-    float radius;
-};
-
-layout(binding = 0, std140) uniform PerScene
-{
-    DirectionalLight u_directionalLight;
-    PointLight u_pointLights[MAX_POINT_LIGHTS];
-    float u_time;
-    int u_activePointLights;
-    vec2 resolution;
-    vec2 invResolution;
-    vec4 u_cascadesPlane[4];
-    mat4 u_cascadesMatrix[4];
-    float u_cascadesNear[4];
-    float u_cascadesFar[4];
-};
-
-layout(binding = 1, std140) uniform PerView
-{
-    mat4 u_viewMatrix;
-    mat4 u_viewProjMatrix;
-    vec4 u_eyePos;
-};
 
 in vec3 v_world_position;
 in vec3 v_view_space_position;
