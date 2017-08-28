@@ -111,11 +111,6 @@ struct BloomPass
 
     void execute(const GlTexture2D & sceneColorTex)
     {
-        // Disable culling and depth testing for post processing
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_FRAMEBUFFER_SRGB);
-
         glBindFramebuffer(GL_FRAMEBUFFER, luminance[0]); // 128x128 surface area - calculate luminance 
         glViewport(0, 0, 128, 128);
         hdr_lumShader.bind();
@@ -217,10 +212,6 @@ struct BloomPass
         hdr_tonemapShader.uniform("u_exposure", exposure);
         hdr_tonemapShader.uniform("u_tonemap", tonemap);
         fsQuad.draw_elements();
-
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-        glDisable(GL_FRAMEBUFFER_SRGB);
     }
 
     void gather_imgui(const bool enabled)

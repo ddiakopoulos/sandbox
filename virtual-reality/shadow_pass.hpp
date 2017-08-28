@@ -10,6 +10,8 @@
 #include "file_io.hpp"
 #include "procedural_mesh.hpp"
 
+// http://developer.download.nvidia.com/SDK/10.5/opengl/src/cascaded_shadow_maps/doc/cascaded_shadow_maps.pdf
+
 /*
  * To Do - 3.25.2017
  * [ ] Set shadow map resolution at runtime (default 1024^2)
@@ -23,7 +25,6 @@
 
 using namespace avl;
 
-// http://developer.download.nvidia.com/SDK/10.5/opengl/src/cascaded_shadow_maps/doc/cascaded_shadow_maps.pdf
 struct ShadowPass
 {
     GlTexture3D shadowArrayDepth;

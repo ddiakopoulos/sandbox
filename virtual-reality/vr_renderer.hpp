@@ -83,7 +83,7 @@ class PhysicallyBasedRenderer
 
     GLuint outputTextureHandles[NumEyes];
 
-    bool renderPost{ false };
+    bool renderPost{ true };
     bool renderShadows{ true };
     bool renderBloom{ true };
 
@@ -157,7 +157,18 @@ class PhysicallyBasedRenderer
     void run_post_pass(const RenderPassData & d)
     {
         if (!renderPost) return;
+
+        GLboolean wasCullingEnabled = glIsEnabled(GL_CULL_FACE);
+        GLboolean wasDepthTestingEnabled = glIsEnabled(GL_DEPTH_TEST);
+
+        // Disable culling and depth testing for post processing
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+
         if (renderBloom) run_bloom_pass(d);
+
+        if (wasCullingEnabled) glEnable(GL_CULL_FACE);
+        if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
     }
 
     void run_bloom_pass(const RenderPassData & d)
@@ -290,6 +301,8 @@ public:
 
             gl_check_error(__FILE__, __LINE__);
         }
+
+        glDisable(GL_FRAMEBUFFER_SRGB);
 
         renderTimer.stop();
 
