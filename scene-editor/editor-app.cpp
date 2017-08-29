@@ -22,7 +22,10 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     flycam.set_camera(&cam);
 
     wireframeShader = shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl");
-    
+
+    std::cout << "What the fuck: " << wireframeShader->handle() << std::endl;
+
+     // USE_IMAGE_BASED_LIGHTING
     pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl", "../assets/shaders", {});
 
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
@@ -202,21 +205,35 @@ void scene_editor_app::on_draw()
         glTexCoord2f(0, 1); glVertex2f(-1, +1);
         glEnd();
         glDisable(GL_TEXTURE_2D);
+
+        gl_check_error(__FILE__, __LINE__);
     }
 
     // Selected objects as wireframe
     {
         wireframeShader->bind();
+
+        std::cout << "FUCK YOU: " << wireframeShader->handle() << std::endl;
+
+        gl_check_error(__FILE__, __LINE__);
+
         wireframeShader->uniform("u_eyePos", cam.get_eye_point());
+
+        gl_check_error(__FILE__, __LINE__);
         wireframeShader->uniform("u_viewProjMatrix", viewProjectionMatrix);
+        gl_check_error(__FILE__, __LINE__);
 
         for (auto obj : controller->get_selection())
         {
             wireframeShader->uniform("u_modelMatrix", obj->get_pose().matrix());
+            gl_check_error(__FILE__, __LINE__);
             obj->draw();
+            gl_check_error(__FILE__, __LINE__);
         }
 
         wireframeShader->unbind();
+
+        gl_check_error(__FILE__, __LINE__);
     }
 
     igm->begin_frame();
