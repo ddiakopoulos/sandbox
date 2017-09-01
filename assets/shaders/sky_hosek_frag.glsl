@@ -18,7 +18,7 @@ void main()
 {
 	vec3 V = normalize(direction);
 	float cos_theta = clamp(V.y, 0, 1);
-	float cos_gamma = dot(V, SunDirection);
+	float cos_gamma = clamp(dot(V, SunDirection), 0, 1);
 	float gamma_ = acos(cos_gamma);
 
 	vec3 R = Z * HosekWilkie(cos_theta, gamma_, cos_gamma);
