@@ -27,7 +27,7 @@ class editor_controller
     std::vector<ObjectType *> selected_objects;     // Array of selected objects
     std::vector<Pose> relative_transforms;          // Pose of the objects relative to the selection
     
-    bool hasEdited = false;
+    bool gizmo_active = false;
 
     void compute_selection()
     {
@@ -100,9 +100,9 @@ public:
         compute_selection();
     }
 
-    bool has_edited() const
+    bool active() const
     {
-        return hasEdited;
+        return gizmo_active;
     }
 
     void on_input(const InputEvent & event)
@@ -112,11 +112,8 @@ public:
 
     void on_update(const GlCamera & camera, const float2 viewport_size)
     {
-        if (selected_objects.size())
-        {
-            gizmo.update(camera, viewport_size);
-            hasEdited = tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
-        }
+        gizmo.update(camera, viewport_size);
+        gizmo_active = tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
 
         // Perform editing updates on selected objects
         for (int i = 0; i < selected_objects.size(); ++i)
@@ -146,7 +143,7 @@ struct scene_editor_app : public GLFWApp
     std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
 
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
-    std::unique_ptr<editor_controller<StaticMesh>> controller; // fixme - only needs renderable interface
+    std::unique_ptr<editor_controller<StaticMesh>> editor; // fixme - only needs renderable interface
 
     uniforms::directional_light directionalLight;
     std::vector<uniforms::point_light> pointLights;

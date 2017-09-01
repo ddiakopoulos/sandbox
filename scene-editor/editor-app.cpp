@@ -18,7 +18,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
-    controller.reset(new editor_controller<StaticMesh>());
+    editor.reset(new editor_controller<StaticMesh>());
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -94,7 +94,7 @@ void scene_editor_app::on_input(const InputEvent & event)
 {
     igm->update_input(event);
     flycam.handle_input(event);
-    controller->on_input(event);
+    editor->on_input(event);
 
     // Prevent scene editor from responding to input destined for ImGui
     if (!ImGui::GetIO().WantCaptureMouse && !ImGui::GetIO().WantCaptureKeyboard)
@@ -104,7 +104,7 @@ void scene_editor_app::on_input(const InputEvent & event)
             if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE)
             {
                 // De-select all objects
-                controller->clear();
+                editor->clear();
             }
         }
 
@@ -115,13 +115,17 @@ void scene_editor_app::on_input(const InputEvent & event)
 
             const Ray r = cam.get_world_ray(event.cursor, float2(width, height));
 
-            if (length(r.direction) > 0 && !controller->has_edited())
+            if (length(r.direction) > 0 && !editor->active())
             {
                 std::vector<StaticMesh *> selectedObjects;
                 for (auto & obj : objects)
                 {
                     RaycastResult result = obj.raycast(r);
-                    if (result.hit) selectedObjects.push_back(&obj); 
+                    if (result.hit)
+                    {
+                        selectedObjects.push_back(&obj);
+                        break;
+                    }
                 }
 
                 // New object was selected
@@ -130,17 +134,17 @@ void scene_editor_app::on_input(const InputEvent & event)
                     // Multi-selection
                     if (event.mods & GLFW_MOD_CONTROL)
                     {
-                        auto existingSelection = controller->get_selection();
+                        auto existingSelection = editor->get_selection();
                         for (auto s : selectedObjects)
                         {
-                            if (!controller->selected(s)) existingSelection.push_back(s);
+                            if (!editor->selected(s)) existingSelection.push_back(s);
                         }
-                        controller->set_selection(existingSelection);
+                        editor->set_selection(existingSelection);
                     }
                     // Single Selection
                     else
                     {
-                        controller->set_selection(selectedObjects);
+                        editor->set_selection(selectedObjects);
                     }
                 }
             }
@@ -156,7 +160,7 @@ void scene_editor_app::on_update(const UpdateEvent & e)
 
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
-    controller->on_update(cam, float2(width, height));
+    editor->on_update(cam, float2(width, height));
 }
 
 void scene_editor_app::on_draw()
@@ -230,7 +234,7 @@ void scene_editor_app::on_draw()
         program.uniform("u_eyePos", cam.get_eye_point());
         program.uniform("u_viewProjMatrix", viewProjectionMatrix);
 
-        for (auto obj : controller->get_selection())
+        for (auto obj : editor->get_selection())
         {
             program.uniform("u_modelMatrix", obj->get_pose().matrix());
             obj->draw();
@@ -259,16 +263,16 @@ void scene_editor_app::on_draw()
         {
             auto it = std::remove_if(begin(objects), end(objects), [this](StaticMesh & obj) 
             { 
-                return controller->selected(&obj); 
+                return editor->selected(&obj);
             });
             objects.erase(it, end(objects));
-            controller->clear();
+            editor->clear();
         }
         if (menu.item("Select All", GLFW_MOD_CONTROL, GLFW_KEY_A)) 
         {
             std::vector<StaticMesh *> selectedObjects;
             for (auto & obj : objects) selectedObjects.push_back(&obj);
-            controller->set_selection(selectedObjects);
+            editor->set_selection(selectedObjects);
         }
         menu.end();
     }
@@ -279,14 +283,14 @@ void scene_editor_app::on_draw()
     for (size_t i = 0; i < objects.size(); ++i)
     {
         ImGui::PushID(static_cast<int>(i));
-        bool selected = controller->selected(&objects[i]);
+        bool selected = editor->selected(&objects[i]);
         std::string name = std::string(typeid(objects[i]).name());
         std::vector<StaticMesh *> selectedObjects;
 
         if (ImGui::Selectable(name.c_str(), &selected))
         {
-            if (!ImGui::GetIO().KeyCtrl) controller->clear();
-            controller->update_selection(&objects[i]);
+            if (!ImGui::GetIO().KeyCtrl) editor->clear();
+            editor->update_selection(&objects[i]);
         }
         ImGui::PopID();
     }
@@ -297,7 +301,7 @@ void scene_editor_app::on_draw()
 
     // Scene editor gizmo
     glClear(GL_DEPTH_BUFFER_BIT);
-    controller->on_draw();
+    editor->on_draw();
 
     gl_check_error(__FILE__, __LINE__);
 
