@@ -4,12 +4,10 @@
 
 using namespace avl;
 
-// Hookup object inspector to list
-// clone/delete/new
-
 scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
 {
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
 
     int width, height;
     glfwGetWindowSize(window, &width, &height);
@@ -167,7 +165,6 @@ void scene_editor_app::on_update(const UpdateEvent & e)
 void scene_editor_app::on_draw()
 {
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);

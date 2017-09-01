@@ -6,6 +6,7 @@
 
 #include "renderer_common.glsl"
 #include "colorspace_conversions.glsl"
+#include "cascaded_shadows.glsl"
 
 in vec3 v_world_position;
 in vec3 v_view_space_position;
@@ -30,26 +31,6 @@ uniform float u_overshadowConstant = 100.0;
 uniform sampler2DArray s_csmArray;
 
 out vec4 f_color;
-
-vec4 get_cascade_weights(float depth, vec4 splitNear, vec4 splitFar)
-{
-    return (step(splitNear, vec4(depth))) * (step(depth, splitFar)); // near * far
-}
-
-mat4 get_cascade_viewproj(vec4 weights, mat4 viewProj[4])
-{
-    return viewProj[0] * weights.x + viewProj[1] * weights.y + viewProj[2] * weights.z + viewProj[3] * weights.w;
-}
-
-float get_cascade_layer(vec4 weights) 
-{
-    return 0.0 * weights.x + 1.0 * weights.y + 2.0 * weights.z + 3.0 * weights.w;   
-}
-
-vec3 get_cascade_weighted_color(vec4 weights) 
-{
-    return vec3(1,0,0) * weights.x + vec3(0,1,0) * weights.y + vec3(0,0,1) * weights.z + vec3(1,0,1) * weights.w;
-}
 
 // http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
 vec3 fix_cube_lookup(vec3 v, float cubeSize, float lod) 
@@ -150,55 +131,6 @@ float point_light_attenuation(vec3 lightPosition, vec3 vertexPosition, float lig
     return attenuation;
 }
 
-float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos, mat4 viewProjArray[4], vec4 splitPlanes[4])
-{
-    vec4 weights = get_cascade_weights(-viewPos.z,
-        vec4(splitPlanes[0].x, splitPlanes[1].x, splitPlanes[2].x, splitPlanes[3].x),
-        vec4(splitPlanes[0].y, splitPlanes[1].y, splitPlanes[2].y, splitPlanes[3].y)
-    );
-
-    // Get vertex position in light space
-    mat4 lightViewProj = get_cascade_viewproj(weights, viewProjArray);
-    vec4 vertexLightPostion = lightViewProj * vec4(worldPos, 1.0);
-
-    // Compute perspective divide and transform to 0-1 range
-    vec3 coords = (vertexLightPostion.xyz / vertexLightPostion.w) / 2.0 + 0.5;
-
-    if (!(coords.z > 0.0 && coords.x > 0.0 && coords.y > 0.0 && coords.x <= 1.0 && coords.y <= 1.0)) return 0;
-
-    float bias = 0.01;
-    float currentDepth = coords.z;
-
-    float shadowTerm = 0.0;
-
-    // Non-PCF path, hard shadows
-    float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
-    shadowTerm = currentDepth - bias > closestDepth ? 1.0 : 0.0;
-
-    // Percentage-closer filtering
-    vec2 texelSize = 1.0 / textureSize(map, 0).xy;
-    for (int x = -1; x <= 1; ++x)
-    {
-        for (int y = -1; y <= 1; ++y)
-        {
-            float pcfDepth = texture(map, vec3(coords.xy + vec2(x, y) * texelSize, get_cascade_layer(weights))).r;
-            shadowTerm += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;
-        }
-    }
-    shadowTerm /= 9.0;
-
-    /*
-    // Exponential Shadow Filtering
-    float depth = (coords.z + bias);
-    float occluderDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
-    float occluder = exp(u_overshadowConstant * occluderDepth);
-    float receiver = exp(-u_overshadowConstant * depth);
-    shadowTerm = 1.0 - clamp(occluder * receiver, 0.0, 1.0);
-    */
-
-    return shadowTerm;
-}
-
 void main()
 {   
     // Surface properties
@@ -208,7 +140,7 @@ void main()
 
     vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
     vec3 viewDir = normalize(u_eyePos.xyz - v_world_position);
-    vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2 - 1);
+    vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
 
     vec3 N = normalWorld;
     vec3 V = viewDir;
@@ -246,7 +178,7 @@ void main()
 
         float attenuation = point_light_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
 
-        diffuseContrib += NoL * (u_pointLights[i].color * attenuation) * albedo;
+        diffuseContrib += NoL * u_pointLights[i].color * albedo;
         specularContrib += (specularColor * attenuation);
     }
 
