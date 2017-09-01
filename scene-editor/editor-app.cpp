@@ -9,6 +9,8 @@ using namespace avl;
 
 scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
 {
+    glfwMakeContextCurrent(window);
+
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
@@ -21,12 +23,18 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
 
-    wireframeShader = shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl");
-
-    std::cout << "What the fuck: " << wireframeShader->handle() << std::endl;
+    auto wireframeProgram = GlShader(
+        read_file_text("../assets/shaders/wireframe_vert.glsl"), 
+        read_file_text("../assets/shaders/wireframe_frag.glsl"),
+        read_file_text("../assets/shaders/wireframe_geom.glsl"));
+    global_register_asset("wireframe", std::move(wireframeProgram));
 
      // USE_IMAGE_BASED_LIGHTING
-    pbrShader = shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl", "../assets/shaders", {});
+    shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl", "../assets/shaders", {}, [](GlShader shader)
+    {
+        AssetHandle<GlShader>("pbr-ubershader").assign(std::move(shader));
+    });
+   // global_register_asset("pbr-ubershader", std::move(wireframeProgram));
 
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
 
@@ -37,16 +45,16 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-1, 1, 0), 12.f });
     pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.00f, 0.859f), float3(+1, 1, 0), 12.f });
 
-    texDatabase.register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
-    texDatabase.register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
-    texDatabase.register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
-    texDatabase.register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
+    global_register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
+    global_register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
+    global_register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
+    global_register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
 
-    pbrMaterial.reset(new MetallicRoughnessMaterial(pbrShader));
-    pbrMaterial->set_albedo_texture(texDatabase["rusted-iron-albedo"]);
-    pbrMaterial->set_normal_texture(texDatabase["rusted-iron-normal"]);
-    pbrMaterial->set_metallic_texture(texDatabase["rusted-iron-metallic"]);
-    pbrMaterial->set_roughness_texture(texDatabase["rusted-iron-roughness"]);
+    pbrMaterial.reset(new MetallicRoughnessMaterial("pbr-ubershader"));
+    pbrMaterial->set_albedo_texture("rusted-iron-albedo");
+    pbrMaterial->set_normal_texture("rusted-iron-normal");
+    pbrMaterial->set_metallic_texture("rusted-iron-metallic");
+    pbrMaterial->set_roughness_texture("rusted-iron-roughness");
 
     Geometry icosphere = make_icosasphere(5);
     float step = ANVIL_TAU / 8;
@@ -63,6 +71,13 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
 
         objects.push_back(std::move(mesh));
     }
+
+    StaticMesh floorMesh;
+    floorMesh.set_static_mesh(make_cube(), 1.0f);
+    floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
+    floorMesh.set_scale(float3(12, 0.1f, 12));
+    floorMesh.set_material(pbrMaterial.get());
+    objects.push_back(std::move(floorMesh));
 }
 
 scene_editor_app::~scene_editor_app()
@@ -192,9 +207,6 @@ void scene_editor_app::on_draw()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
 
-        //glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
-        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         glActiveTexture(GL_TEXTURE0);
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, renderer->get_output_texture(0));
@@ -211,29 +223,20 @@ void scene_editor_app::on_draw()
 
     // Selected objects as wireframe
     {
-        wireframeShader->bind();
+        auto & program = AssetHandle<GlShader>("wireframe").get();
 
-        std::cout << "FUCK YOU: " << wireframeShader->handle() << std::endl;
+        program.bind();
 
-        gl_check_error(__FILE__, __LINE__);
-
-        wireframeShader->uniform("u_eyePos", cam.get_eye_point());
-
-        gl_check_error(__FILE__, __LINE__);
-        wireframeShader->uniform("u_viewProjMatrix", viewProjectionMatrix);
-        gl_check_error(__FILE__, __LINE__);
+        program.uniform("u_eyePos", cam.get_eye_point());
+        program.uniform("u_viewProjMatrix", viewProjectionMatrix);
 
         for (auto obj : controller->get_selection())
         {
-            wireframeShader->uniform("u_modelMatrix", obj->get_pose().matrix());
-            gl_check_error(__FILE__, __LINE__);
+            program.uniform("u_modelMatrix", obj->get_pose().matrix());
             obj->draw();
-            gl_check_error(__FILE__, __LINE__);
         }
 
-        wireframeShader->unbind();
-
-        gl_check_error(__FILE__, __LINE__);
+        program.unbind();
     }
 
     igm->begin_frame();

@@ -6,6 +6,8 @@
 #include "util.hpp"
 #include "linalg_util.hpp"
 #include "gl-api.hpp"
+#include "geometry.hpp"
+
 #include <memory>
 #include <vector>
 #include <map>
@@ -28,6 +30,7 @@ class AssetHandle
 
 public:
 
+    AssetHandle() : AssetHandle("") {}
     AssetHandle(const std::string & asset_id) : AssetHandle(asset_id.c_str()) {}
     AssetHandle(const char * asset_id)
     {
@@ -65,8 +68,9 @@ template<class T> void global_register_asset(const char * asset_id, T && asset)
     assetHandle.assign(std::move(asset));
 }
 
-typedef AssetHandle<GlTexture2D> texture_handle;
-typedef AssetHandle<GlShader> shader_handle;
-typedef AssetHandle<GlMesh> mesh_handle;
+typedef AssetHandle<GlTexture2D> GlTextureHandle;
+typedef AssetHandle<GlShader> GlShaderHandle;
+typedef AssetHandle<GlMesh> GlMeshHandle;
+typedef AssetHandle<Geometry> GeometryHandle;
 
 #endif // end vr_assets_hpp

@@ -50,7 +50,6 @@ struct RenderLightingData
 {
     uniforms::directional_light * directionalLight;
     std::vector<uniforms::point_light *> pointLights;
-    //std::vector<uniforms::spot_light *> spotLights;
 };
 
 struct RenderPassData
@@ -120,6 +119,8 @@ class PhysicallyBasedRenderer
 
     void run_forward_pass(const RenderPassData & d)
     {
+        glEnable(GL_DEPTH_TEST);
+
         // fixme - this is done per-eye but should be done per frame instead
         auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
         {
@@ -328,6 +329,12 @@ public:
     { 
         assert(idx <= NumEyes);
         return outputTextureHandles[idx]; 
+    }
+
+    ProceduralSky * get_procedural_sky() const
+    {
+        if (skybox) return static_cast<ProceduralSky *>(&skybox->skybox)
+        else return nullptr;
     }
 
     // A `Renderable` is a generic interface for this engine, appropriate for use with

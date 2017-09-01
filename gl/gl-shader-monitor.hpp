@@ -103,8 +103,8 @@ namespace avl
 
         struct ShaderAsset
         {
-            GlShader program;
-            std::shared_ptr<GlShader> sharedPtr = { nullptr };
+            std::function<void(GlShader)> onModified;
+
             std::string vertexPath;
             std::string fragmentPath;
             std::string geomPath;
@@ -121,22 +121,24 @@ namespace avl
                 const std::string & inc = "", 
                 const std::vector<std::string> & defines = {}) : vertexPath(v), fragmentPath(f), geomPath(g), includePath(inc), defines(defines)
             { 
-                recompile();
+
             };
 
             void recompile()
             {
                 shouldRecompile = false;
 
+                GlShader result;
+
                 try
                 {
                     if (defines.size() > 0 || includePath.size() > 0)
                     {
-                        program = preprocess(read_file_text(vertexPath), read_file_text(fragmentPath), includePath, defines, includes);
+                        result = preprocess(read_file_text(vertexPath), read_file_text(fragmentPath), includePath, defines, includes);
                     }
                     else
                     {
-                        program = GlShader(read_file_text(vertexPath), read_file_text(fragmentPath), read_file_text(geomPath));
+                        result = GlShader(read_file_text(vertexPath), read_file_text(fragmentPath), read_file_text(geomPath));
                     }
                 }
                 catch (const std::exception & e)
@@ -144,17 +146,7 @@ namespace avl
                     std::cout << "Shader recompilation error: " << e.what() << std::endl;
                 }
 
-                const GlShader * FuckingPtr = &program;
-
-                sharedPtr = std::make_shared<GlShader>(FuckingPtr);
-
-                std::cout << "GLSL program compiled successfully" << std::endl;
-            }
-
-            std::shared_ptr<GlShader> get_shared()
-            {
-                std::cout << "Shared Fucker is: " << sharedPtr->handle() << std::endl;
-                return sharedPtr;
+                if (onModified) onModified(std::move(result));
             }
         };
 
@@ -225,27 +217,29 @@ namespace avl
         */
 
         // Watch vertex, fragment, and geometry
-        std::shared_ptr<GlShader> watch(
+        void watch(
             const std::string & vertexShader,
             const std::string & fragmentShader,
-            const std::string & geometryShader)
+            const std::string & geometryShader, 
+            std::function<void(GlShader)> callback)
         {
             ShaderAsset asset(vertexShader, fragmentShader, geometryShader);
+            asset.onModified = callback;
+            asset.recompile();
             assets.push_back(std::move(asset));
-            return assets.back().get_shared();
         }
-
-
         // Watch vertex and fragment with includes and defines
-        std::shared_ptr<GlShader> watch(
+        void watch(
             const std::string & vertexShader, 
             const std::string & fragmentShader,
             const std::string & includePath,
-            const std::vector<std::string> & defines)
+            const std::vector<std::string> & defines,
+            std::function<void(GlShader)> callback)
         {
             ShaderAsset asset(vertexShader, fragmentShader, "", includePath, defines);
+            asset.onModified = callback;
+            asset.recompile();
             assets.push_back(std::move(asset));
-            return assets.back().get_shared();
         }
 
         /*
@@ -266,7 +260,10 @@ namespace avl
         {
             for (auto & shader : assets)
             {
-                if (shader.shouldRecompile) shader.recompile(); 
+                if (shader.shouldRecompile)
+                {
+                    shader.recompile();
+                }
             }
         }
 

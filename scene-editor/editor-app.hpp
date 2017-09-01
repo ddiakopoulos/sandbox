@@ -143,10 +143,6 @@ struct scene_editor_app : public GLFWApp
     ShaderMonitor shaderMonitor { "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
 
-    AssetDatabase<GlTexture2D> texDatabase;
-
-    std::shared_ptr<GlShader> wireframeShader;
-    std::shared_ptr<GlShader> pbrShader;
     std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
 
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;

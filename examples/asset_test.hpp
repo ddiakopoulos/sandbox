@@ -88,7 +88,6 @@ std::string ToJson(T e)
 
         //serialize(json, e);
         json(e);
-
     }
 
 
@@ -104,8 +103,6 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
-        //AssetDatabase<GlShader> shaderDatabase;
-
         GlShader wireframe = GlShader(
             read_file_text("../assets/shaders/wireframe_vert.glsl"), 
             read_file_text("../assets/shaders/wireframe_frag.glsl"),
@@ -114,9 +111,6 @@ struct ExperimentalApp : public GLFWApp
         std::cout << "Created: " << wireframe.handle() << std::endl;
 
         global_register_asset("wireframe-shader", std::move(wireframe));
-
-
-        //shaderDatabase.register_asset("wireframe", std::move(wireframe));
 
         {
             AssetHandle<GlShader> shader("wireframe-shader");
@@ -137,9 +131,9 @@ struct ExperimentalApp : public GLFWApp
             shader.assign(std::move(wireframe));
         }
 
-        for (auto tex : AssetHandle<GlShader>::list())
+        for (auto a : AssetHandle<GlShader>::list())
         {
-            std::cout << "List (After): " << tex.get().handle() << std::endl;
+            std::cout << "List (After): " << a.get().handle() << std::endl;
         }
 
         {

@@ -23,7 +23,7 @@ uniform samplerCube sc_radiance;
 uniform samplerCube sc_irradiance;
 
 uniform float u_roughness = 1.0;
-uniform float u_metallic = 1.0;
+uniform float u_metallic = 1;
 uniform float u_ambientIntensity = 1.0;
 
 uniform float u_overshadowConstant = 100.0;
