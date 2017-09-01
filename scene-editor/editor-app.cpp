@@ -16,7 +16,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
-    editor.reset(new editor_controller<StaticMesh>());
+    editor.reset(new editor_controller<GameObject>());
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -116,7 +116,7 @@ void scene_editor_app::on_input(const InputEvent & event)
 
             if (length(r.direction) > 0 && !editor->active())
             {
-                std::vector<StaticMesh *> selectedObjects;
+                std::vector<GameObject *> selectedObjects;
                 for (auto & obj : objects)
                 {
                     RaycastResult result = obj.raycast(r);
@@ -199,7 +199,7 @@ void scene_editor_app::on_draw()
         renderer->add_lights(sceneLighting);
 
         // Objects
-        std::vector<Renderable *> sceneObjects;
+        std::vector<GameObject *> sceneObjects;
         for (auto & obj : objects) sceneObjects.push_back(&obj);
         renderer->add_objects(sceneObjects);
 
@@ -268,7 +268,7 @@ void scene_editor_app::on_draw()
         }
         if (menu.item("Select All", GLFW_MOD_CONTROL, GLFW_KEY_A)) 
         {
-            std::vector<StaticMesh *> selectedObjects;
+            std::vector<GameObject *> selectedObjects;
             for (auto & obj : objects) selectedObjects.push_back(&obj);
             editor->set_selection(selectedObjects);
         }

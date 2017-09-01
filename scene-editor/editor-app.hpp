@@ -143,7 +143,7 @@ struct scene_editor_app : public GLFWApp
     std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
 
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
-    std::unique_ptr<editor_controller<StaticMesh>> editor; // fixme - only needs renderable interface
+    std::unique_ptr<editor_controller<GameObject>> editor;
 
     uniforms::directional_light directionalLight;
     std::vector<uniforms::point_light> pointLights;

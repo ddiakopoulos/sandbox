@@ -82,9 +82,9 @@ struct RaycastResult
     RaycastResult(bool h, float t, float3 n) : hit(h), distance(t), normal(n) {}
 };
 
-struct Material;
-struct Renderable
+struct GameObject
 {
+    virtual ~GameObject() {}
     virtual void update(const float & dt) {}
     virtual void draw() const {};
     virtual Bounds3D get_world_bounds() const = 0;
@@ -94,8 +94,6 @@ struct Renderable
     virtual Pose get_pose() const = 0;
     virtual void set_pose(const Pose & p) = 0;
     virtual RaycastResult raycast(const Ray & worldRay) const = 0;
-    virtual Material * get_material() const = 0;
-    virtual void set_material(Material * const m) = 0;
 };
 
 struct DebugRenderable

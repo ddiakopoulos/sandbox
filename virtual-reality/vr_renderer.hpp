@@ -63,7 +63,7 @@ struct RenderPassData
 template<uint32_t NumEyes>
 class PhysicallyBasedRenderer
 {
-    std::vector<Renderable *> renderSet;
+    std::vector<GameObject *> renderSet;
     RenderLightingData lights;
 
     float2 renderSizePerEye;
@@ -106,7 +106,7 @@ class PhysicallyBasedRenderer
 
         shadow->pre_draw();
 
-        for (Renderable * obj : renderSet)
+        for (GameObject * obj : renderSet)
         {
             // Fixme - check if should cast shadow
             const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
@@ -122,7 +122,7 @@ class PhysicallyBasedRenderer
         glEnable(GL_DEPTH_TEST);
 
         // fixme - this is done per-eye but should be done per frame instead
-        auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
+        auto renderSortFunc = [&d](GameObject * lhs, GameObject * rhs)
         {
             auto lid = lhs->get_material()->id();
             auto rid = rhs->get_material()->id();
@@ -135,7 +135,7 @@ class PhysicallyBasedRenderer
             else return lDist < rDist;
         };
 
-        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(renderSortFunc)> renderQueue(renderSortFunc);
+        std::priority_queue<GameObject *, std::vector<GameObject*>, decltype(renderSortFunc)> renderQueue(renderSortFunc);
 
         for (auto obj : renderSet) { renderQueue.push(obj); }
 
@@ -337,9 +337,7 @@ public:
         else return nullptr;
     }
 
-    // A `Renderable` is a generic interface for this engine, appropriate for use with
-    // the material system and all customizations (frustum culling, etc)
-    void add_objects(const std::vector<Renderable *> & set) { renderSet = set; }
+    void add_objects(const std::vector<GameObject *> & set) { renderSet = set; }
 
     void add_lights(const RenderLightingData & collection) { lights = collection; }
 };
