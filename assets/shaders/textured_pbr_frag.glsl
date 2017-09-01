@@ -23,11 +23,12 @@ uniform sampler2D s_metallic;
 uniform samplerCube sc_radiance;
 uniform samplerCube sc_irradiance;
 
-uniform float u_roughness = 1.0;
+uniform float u_roughness = 1;
 uniform float u_metallic = 1;
-uniform float u_ambientIntensity = 1.0;
-
+uniform float u_ambientIntensity = 1;
 uniform float u_overshadowConstant = 100.0;
+uniform float u_pointLightAttenuation = 0.0052;
+
 uniform sampler2DArray s_csmArray;
 
 out vec4 f_color;
@@ -61,8 +62,8 @@ float NDF_Beckmann(float NoH, float alphaSqr)
 // A popular model with a long tail. 
 float NDF_GGX(float NoH, float alphaSqr)
 {
-    return alphaSqr / (PI * pow(NoH * NoH * (alphaSqr - 1.0) + 1.0, 2.0));
-}
+    return alphaSqr / (PI * pow(NoH * NoH * (alphaSqr - 1.0) + 1.0, 2.0)); 
+} 
 
 // Geometric attenuation/shadowing
 float schlick_smith_visibility(float NoL, float NoV, float alpha)
@@ -99,7 +100,6 @@ float shade_pbr(vec3 N, vec3 V, vec3 L, float roughness, float F0)
     float NoL = saturate(dot(N, L));
     float NoV = saturate(dot(N, V));
     float NoH = saturate(dot(N, H));
-    float LoH = saturate(dot(L, H));
 
     // Normal distribution
     float Di = NDF_GGX(NoH, alphaSqr);
@@ -114,20 +114,21 @@ float shade_pbr(vec3 N, vec3 V, vec3 L, float roughness, float F0)
 }
 
 // http://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
-float point_light_attenuation(vec3 lightPosition, vec3 vertexPosition, float lightRadius)
+float point_light_attenuation(vec3 L, float lightRadius)
 {
-    const float cutoff = 0.0052f;
-
-    float r = lightRadius;
-    vec3 L = lightPosition - vertexPosition;
     float dist = length(L);
-    float d = max(dist - r, 0);
+    float d = max(dist - lightRadius, 0);
     L /= dist;
-    float denom = d / r + 1.0f;
+    float denom = d / lightRadius + 1.0f;
 
     float attenuation = 1.0f / (denom * denom);
-    attenuation = (attenuation - cutoff) / (1.0 - cutoff);
+
+    // scale and bias attenuation such that:
+    //   attenuation == 0 at extent of max influence
+    //   attenuation == 1 when d == 0
+    attenuation = (attenuation - u_pointLightAttenuation) / (1.0 - u_pointLightAttenuation);
     attenuation = max(attenuation, 0.0);
+
     return attenuation;
 }
 
@@ -176,9 +177,9 @@ void main()
         vec3 F0 = mix(vec3(0.04), u_pointLights[i].color, metallic);
         vec3 specularColor = u_pointLights[i].color * shade_pbr(N, V, L, roughness, F0.r);
 
-        float attenuation = point_light_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
+        float attenuation = point_light_attenuation(L, u_pointLights[i].radius);
 
-        diffuseContrib += NoL * u_pointLights[i].color * albedo;
+        diffuseContrib += NoL * attenuation * u_pointLights[i].color * albedo;
         specularContrib += (specularColor * attenuation);
     }
 
@@ -189,11 +190,11 @@ void main()
     vec3 cubemapLookup = fix_cube_lookup(reflect(-V, N), 512, mipLevel);
     irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
     radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
-#endif
 
     vec3 baseSpecular = mix(vec3(0.04), albedo, metallic);
     float NoV = saturate(dot(N, V));
     specularContrib += env_brdf_approx(baseSpecular, roughness4, NoV);
+#endif
 
     // Combine direct lighting, IBL, and shadow visbility
     vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * (shadowVisibility);

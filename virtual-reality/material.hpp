@@ -46,6 +46,7 @@ namespace avl
 
         float3 emissiveColor{ float3(1, 1, 1) };
         float emissiveStrength{ 1.f };
+        float overshadowConstant{ 64.f };
 
     public:
 
@@ -54,11 +55,13 @@ namespace avl
         void update_uniforms(const RenderPassData * data) override;
         void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) override;
 
-        void set_emissive_strength(const float & strength) { emissiveStrength = strength; }
-        void set_emissive_color(const float3 & color) { emissiveColor = color; }
-        void set_roughness(const float & value) { roughnessFactor = value; }
-        void set_metallic(const float & value) { metallicFactor = value; }
-        void set_ambientIntensity(const float & value) { ambientIntensity = value; }
+        //void set_emissive_strength(const float strength) { emissiveStrength = strength; }
+        //void set_emissive_color(const float3 & color) { emissiveColor = color; }
+        //void set_roughness(const float value) { roughnessFactor = value; }
+        //void set_metallic(const float value) { metallicFactor = value; }
+        //void set_ambientIntensity(const float value) { ambientIntensity = value; }
+        //void setOvershadowConstant(const float value) { overshadowConstant = value; }
+
         void set_albedo_texture(GlTextureHandle asset) { albedo = asset; }
         void set_normal_texture(GlTextureHandle asset) { normal = asset; }
         void set_metallic_texture(GlTextureHandle asset) { metallic = asset; }

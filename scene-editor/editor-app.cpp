@@ -41,8 +41,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     directionalLight.color = float3(1.f, 0.0f, 0.0f);
     directionalLight.amount = 0.1f;
 
-    pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-1, 1, 0), 12.f });
-    pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.00f, 0.859f), float3(+1, 1, 0), 12.f });
+    pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-6, 4, 0), 12.f });
+    pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.00f, 0.859f), float3(+6, 4, 0), 12.f });
 
     global_register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
     global_register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
