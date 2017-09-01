@@ -104,6 +104,52 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
 
+        //AssetDatabase<GlShader> shaderDatabase;
+
+        GlShader wireframe = GlShader(
+            read_file_text("../assets/shaders/wireframe_vert.glsl"), 
+            read_file_text("../assets/shaders/wireframe_frag.glsl"),
+            read_file_text("../assets/shaders/wireframe_geom.glsl"));
+
+        std::cout << "Created: " << wireframe.handle() << std::endl;
+
+        global_register_asset("wireframe-shader", std::move(wireframe));
+
+
+        //shaderDatabase.register_asset("wireframe", std::move(wireframe));
+
+        {
+            AssetHandle<GlShader> shader("wireframe-shader");
+            std::cout << "Got: " << shader.get().handle() << std::endl;
+        }
+
+        for (auto & shader : AssetHandle<GlShader>::list())
+        {
+            std::cout << "List (Before): " << shader.get().handle() << std::endl;
+
+            GlShader wireframe = GlShader(
+                read_file_text("../assets/shaders/wireframe_vert.glsl"),
+                read_file_text("../assets/shaders/wireframe_frag.glsl"),
+                read_file_text("../assets/shaders/wireframe_geom.glsl"));
+
+            std::cout << "A new asset: " << wireframe.handle() << std::endl;
+
+            shader.assign(std::move(wireframe));
+        }
+
+        for (auto tex : AssetHandle<GlShader>::list())
+        {
+            std::cout << "List (After): " << tex.get().handle() << std::endl;
+        }
+
+        {
+            AssetHandle<GlShader> shader("wireframe-shader");
+            std::cout << "Got: " << shader.get().handle() << std::endl;
+        }
+
+
+        std::cout << "Exiting..." << std::endl;
+
         //std::cout << ToJson(float2(1, 2)) << std::endl;
         //std::cout << ToJson(float3(1, 2, 3)) << std::endl;
         //std::cout << ToJson(float4(1, 2, 3, 4)) << std::endl;
@@ -127,6 +173,7 @@ struct ExperimentalApp : public GLFWApp
         std::cout << derivedPtr->pose << std::endl;
         */
 
+        /*
         std::string jsonObjects;
             
         {
@@ -161,8 +208,9 @@ struct ExperimentalApp : public GLFWApp
             }
         }
 
+        */
 
-
+        /*
         {
             AssetDatabase<GlTexture2D> textures;
 
@@ -191,8 +239,9 @@ struct ExperimentalApp : public GLFWApp
                 tex->asset = std::move(someNewHandle);
             }
 
-            std::cout << "Exiting..." << std::endl;
         }
+        */
+
     }
     
     void on_window_resize(int2 size) override {}

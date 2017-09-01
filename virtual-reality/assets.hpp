@@ -13,32 +13,60 @@
 template<typename T>
 struct UniqueAsset : public Noncopyable
 {
-    std::string name;
     T asset;
-    UniqueAsset(const std::string name, T && asset) : name(name), asset(std::move(asset)) {}
+    bool assigned = false;
+    const std::string name;
+    UniqueAsset(const std::string & name) : name(name) {}
 };
 
 template<typename T>
-class AssetDatabase : public Noncopyable
+class AssetHandle
 {
-    std::map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
+    static std::map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
+    std::shared_ptr<UniqueAsset<T>> handle;
+    AssetHandle(std::shared_ptr<UniqueAsset<T>> h) : handle(h) {} // private constructor for the static list() method below
+
 public:
-    void register_asset(const std::string & name, T && asset) { table[name] = std::make_shared<UniqueAsset<T>>(name, std::move(asset)); }
-    std::shared_ptr<UniqueAsset<T>> get_asset(const std::string & name) 
-    { 
-        auto r = table[name]; 
-        if (r) return r; 
-        else throw std::invalid_argument("no asset for this name");
-    }
-    std::shared_ptr<UniqueAsset<T>> operator[](const std::string & name) { return get_asset(name); }
-    std::vector<std::shared_ptr<UniqueAsset<T>>> list()
+
+    AssetHandle(const std::string & asset_id) : AssetHandle(asset_id.c_str()) {}
+    AssetHandle(const char * asset_id)
     {
-        std::vector<std::shared_ptr<UniqueAsset<T>>> l;
-        for (auto & item : table) l.push_back(item.second);
-        return l;
+        auto & a = table[asset_id];
+        if (!a) a = std::make_shared<UniqueAsset<T>>(asset_id);
+        handle = a;
+    }
+
+    T & get() const
+    { 
+        if (handle->assigned) return handle->asset;
+        else throw std::runtime_error("no assignment has been made to this asset");
+    }
+
+    void assign(T && asset)
+    {
+        handle->asset = std::move(asset);
+        handle->assigned = true;
+    }
+
+    static std::vector<AssetHandle> list()
+    {
+        std::vector<AssetHandle> results;
+        for (const auto & a : table) results.push_back(a.second);
+        return results;
     }
 };
 
-typedef std::shared_ptr<UniqueAsset<GlTexture2D>> texture_handle;
+template<class T> 
+std::map<std::string, std::shared_ptr<UniqueAsset<T>>> AssetHandle<T>::table;
+
+template<class T> void global_register_asset(const char * asset_id, T && asset)
+{
+    AssetHandle<T> assetHandle(asset_id);
+    assetHandle.assign(std::move(asset));
+}
+
+typedef AssetHandle<GlTexture2D> texture_handle;
+typedef AssetHandle<GlShader> shader_handle;
+typedef AssetHandle<GlMesh> mesh_handle;
 
 #endif // end vr_assets_hpp
