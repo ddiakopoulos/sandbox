@@ -96,6 +96,15 @@ struct GameObject
     virtual RaycastResult raycast(const Ray & worldRay) const = 0;
 };
 
+class Material;
+struct Renderable : public GameObject
+{
+    Material * material;
+    Material * get_material() const { return material; }
+    void set_material(Material * const m) { material = m; }
+    // shadowcasting stuff 
+};
+
 struct DebugRenderable
 {
     virtual void draw(const float4x4 & viewProj) = 0;

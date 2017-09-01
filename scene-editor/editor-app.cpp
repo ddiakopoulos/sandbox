@@ -199,7 +199,7 @@ void scene_editor_app::on_draw()
         renderer->add_lights(sceneLighting);
 
         // Objects
-        std::vector<GameObject *> sceneObjects;
+        std::vector<Renderable *> sceneObjects;
         for (auto & obj : objects) sceneObjects.push_back(&obj);
         renderer->add_objects(sceneObjects);
 

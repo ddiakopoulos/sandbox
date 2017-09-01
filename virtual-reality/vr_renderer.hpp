@@ -63,7 +63,7 @@ struct RenderPassData
 template<uint32_t NumEyes>
 class PhysicallyBasedRenderer
 {
-    std::vector<GameObject *> renderSet;
+    std::vector<Renderable *> renderSet;
     RenderLightingData lights;
 
     float2 renderSizePerEye;
@@ -106,7 +106,7 @@ class PhysicallyBasedRenderer
 
         shadow->pre_draw();
 
-        for (GameObject * obj : renderSet)
+        for (Renderable * obj : renderSet)
         {
             // Fixme - check if should cast shadow
             const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
@@ -122,20 +122,20 @@ class PhysicallyBasedRenderer
         glEnable(GL_DEPTH_TEST);
 
         // fixme - this is done per-eye but should be done per frame instead
-        auto renderSortFunc = [&d](GameObject * lhs, GameObject * rhs)
+        auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
         {
             auto lid = lhs->get_material()->id();
             auto rid = rhs->get_material()->id();
 
-            auto cameraPositionWS = d.data.pose.position;
-            auto lDist = distance(cameraPositionWS, lhs->get_pose().position);
-            auto rDist = distance(cameraPositionWS, rhs->get_pose().position);
+            float3 cameraWorldspace = d.data.pose.position;
+            float lDist = distance(cameraWorldspace, lhs->get_pose().position);
+            float rDist = distance(cameraWorldspace, rhs->get_pose().position);
 
             if (lid != rid) return lid > rid;
             else return lDist < rDist;
         };
 
-        std::priority_queue<GameObject *, std::vector<GameObject*>, decltype(renderSortFunc)> renderQueue(renderSortFunc);
+        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(renderSortFunc)> renderQueue(renderSortFunc);
 
         for (auto obj : renderSet) { renderQueue.push(obj); }
 
@@ -337,7 +337,7 @@ public:
         else return nullptr;
     }
 
-    void add_objects(const std::vector<GameObject *> & set) { renderSet = set; }
+    void add_objects(const std::vector<Renderable *> & set) { renderSet = set; }
 
     void add_lights(const RenderLightingData & collection) { lights = collection; }
 };

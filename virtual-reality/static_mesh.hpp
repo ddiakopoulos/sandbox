@@ -22,7 +22,7 @@ BulletObjectVR * get_physics_component() const
 }
 */
 
-class StaticMesh final : public GameObject
+class StaticMesh final : public Renderable
 {
     Pose pose;
     float3 scale{ 1, 1, 1 };
@@ -30,8 +30,6 @@ class StaticMesh final : public GameObject
     GlMesh mesh;
     Geometry geom;
     Bounds3D bounds;
-
-    Material * material;
 
 public:
 
@@ -63,11 +61,6 @@ public:
         bool hit = intersect_ray_mesh(localRay, geom, &outT, &outNormal);
         return{ hit, outT, outNormal };
     }
-
-
-    Material * get_material() const { return material; }
-    void set_material(Material * const m) { material = m; }
-
 
     void set_static_mesh(const Geometry & g, const float scale = 1.f, const GLenum usage = GL_STATIC_DRAW)
     {
