@@ -34,13 +34,14 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
     {
         AssetHandle<GlShader>("pbr-ubershader").assign(std::move(shader));
     });
-   // global_register_asset("pbr-ubershader", std::move(wireframeProgram));
 
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
 
-    directionalLight.direction = float3(1.f, -1.f, 1.f);
-    directionalLight.color = float3(1.f, 0.5f, 0.5f);
-    directionalLight.amount = 0.5f;
+    auto sky = renderer->get_procedural_sky();
+    std::cout << sky->get_sun_direction() << std::endl;
+    directionalLight.direction = sky->get_sun_direction();
+    directionalLight.color = float3(1.f, 0.0f, 0.0f);
+    directionalLight.amount = 0.1f;
 
     pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-1, 1, 0), 12.f });
     pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.00f, 0.859f), float3(+1, 1, 0), 12.f });

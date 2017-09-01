@@ -166,17 +166,16 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
 
     if (!(coords.z > 0.0 && coords.x > 0.0 && coords.y > 0.0 && coords.x <= 1.0 && coords.y <= 1.0)) return 0;
 
-    float bias = 0.0010;
+    float bias = 0.01;
     float currentDepth = coords.z;
 
     float shadowTerm = 0.0;
 
     // Non-PCF path, hard shadows
-    // float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
-    // shadowTerm = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
+    shadowTerm = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
     // Percentage-closer filtering
-    /*
     vec2 texelSize = 1.0 / textureSize(map, 0).xy;
     for (int x = -1; x <= 1; ++x)
     {
@@ -187,14 +186,15 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
         }
     }
     shadowTerm /= 9.0;
-    */
 
+    /*
     // Exponential Shadow Filtering
     float depth = (coords.z + bias);
     float occluderDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
     float occluder = exp(u_overshadowConstant * occluderDepth);
     float receiver = exp(-u_overshadowConstant * depth);
     shadowTerm = 1.0 - clamp(occluder * receiver, 0.0, 1.0);
+    */
 
     return shadowTerm;
 }
@@ -229,7 +229,7 @@ void main()
         vec3 F0 = mix(vec3(0.04), u_directionalLight.color, metallic);
         vec3 specularColor = u_directionalLight.color * shade_pbr(N, V, L, roughness, F0.r);
 
-        diffuseContrib += NoL * u_directionalLight.color * albedo;
+        diffuseContrib += NoL * (u_directionalLight.color * u_directionalLight.amount) * albedo;
         specularContrib += (specularColor * u_directionalLight.amount);
     }
 
@@ -246,7 +246,7 @@ void main()
 
         float attenuation = point_light_attenuation(u_pointLights[i].position, v_world_position, u_pointLights[i].radius);
 
-        diffuseContrib += NoL * u_pointLights[i].color * albedo;
+        diffuseContrib += NoL * (u_pointLights[i].color * attenuation) * albedo;
         specularContrib += (specularColor * attenuation);
     }
 

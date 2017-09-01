@@ -106,7 +106,7 @@ struct ShadowPass
             frustumCentroid /= 8.0f;
 
             const float dist = std::max(splitFar - splitNear, distance(splitFrustumVerts[5], splitFrustumVerts[6]));
-            const Pose cascadePose = look_at_pose_lh(frustumCentroid + (lightDir * dist), frustumCentroid);
+            const Pose cascadePose = look_at_pose_lh(frustumCentroid + (-lightDir * dist), frustumCentroid); // note the flip on the light dir here
             const float4x4 splitViewMatrix = make_view_matrix_from_pose(cascadePose);
 
             // Transform split vertices to the light view space

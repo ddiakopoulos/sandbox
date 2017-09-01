@@ -333,7 +333,7 @@ public:
 
     ProceduralSky * get_procedural_sky() const
     {
-        if (skybox) return static_cast<ProceduralSky *>(&skybox->skybox)
+        if (skybox) return static_cast<ProceduralSky *>(&skybox->skybox);
         else return nullptr;
     }
 
