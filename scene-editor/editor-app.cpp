@@ -37,7 +37,25 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         */
     });
 
+    shaderMonitor.watch(
+        "../assets/shaders/renderer/forward_lighting_vert.glsl", 
+        "../assets/shaders/renderer/forward_lighting_frag.glsl", 
+        "../assets/shaders/renderer", { "TWO_CASCADES" },
+        [](GlShader shader) {
+        auto & asset = AssetHandle<GlShader>("pbr-forward-lighting").assign(std::move(shader));
+    });
+
+    shaderMonitor.watch(
+        "../assets/shaders/renderer/shadowcascade_vert.glsl", 
+        "../assets/shaders/renderer/shadowcascade_frag.glsl", 
+        "../assets/shaders/renderer/shadowcascade_geom.glsl", 
+        "../assets/shaders/renderer", {}, 
+        [](GlShader shader) {
+        auto & asset = AssetHandle<GlShader>("cascaded-shadows").assign(std::move(shader));
+    });
+
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
+    renderer->get_shadow_pass()->program = GlShaderHandle("cascaded-shadows");
 
     auto sky = renderer->get_procedural_sky();
     directionalLight.direction = sky->get_sun_direction();

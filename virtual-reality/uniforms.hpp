@@ -19,6 +19,7 @@ using namespace avl;
 namespace uniforms
 {
     static const int MAX_POINT_LIGHTS = 4;
+    static const int NUM_CASCADES = 2;
 
     struct point_light
     {
@@ -52,10 +53,10 @@ namespace uniforms
         int                   activePointLights;
         ALIGNED(8)  float2    resolution;
         ALIGNED(8)  float2    invResolution;
-        ALIGNED(16) float4    cascadesPlane[4];
-        ALIGNED(16) float4x4  cascadesMatrix[4];
-        float                 cascadesNear[4];
-        float                 cascadesFar[4];
+        ALIGNED(16) float4    cascadesPlane[NUM_CASCADES];
+        ALIGNED(16) float4x4  cascadesMatrix[NUM_CASCADES];
+        float                 cascadesNear[NUM_CASCADES];
+        float                 cascadesFar[NUM_CASCADES];
     };
 
     struct per_view

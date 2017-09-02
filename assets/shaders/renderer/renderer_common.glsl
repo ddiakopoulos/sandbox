@@ -7,6 +7,7 @@
 #define DEFAULT_GAMMA 2.2
 
 const int MAX_POINT_LIGHTS = 4;
+const int NUM_CASCADES = 2;
 
 struct DirectionalLight
 {
@@ -30,10 +31,10 @@ layout(binding = 0, std140) uniform PerScene
     int u_activePointLights;
     vec2 resolution;
     vec2 invResolution;
-    vec4 u_cascadesPlane[4];
-    mat4 u_cascadesMatrix[4];
-    float u_cascadesNear[4];
-    float u_cascadesFar[4];
+    vec4 u_cascadesPlane[NUM_CASCADES];
+    mat4 u_cascadesMatrix[NUM_CASCADES];
+    float u_cascadesNear[NUM_CASCADES];
+    float u_cascadesFar[NUM_CASCADES];
 };
 
 layout(binding = 1, std140) uniform PerView

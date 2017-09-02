@@ -231,11 +231,6 @@ void main()
             diffuseColor, specularColor
         );
 
-        // Calculate the shading terms for the microfacet specular shading model
-        vec3 F = specular_reflection(data);
-        float G = geometric_occlusion(data);
-        float D = microfacet_distribution(data);
-
         float attenuation = point_light_attenuation(L, 1.0);
 
         vec3 diffuseContrib, specContrib;
@@ -245,22 +240,22 @@ void main()
     }
 
 //#ifdef USE_IMAGE_BASED_LIGHTING
-    float roughness4 = pow(roughness, 4.0);
+    {
+        // Compute image-based lighting
+        const int NUM_MIP_LEVELS = 6;
+        float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
+        vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
 
-    // Compute image-based lighting
-    const int NUM_MIP_LEVELS = 6;
-    float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
-    vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
+        vec3 irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
+        vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
 
-    vec3 irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
-    vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
+        vec3 environment_reflectance = env_brdf_approx(specularColor, pow(roughness, 4.0), NdotV);
 
-    vec3 environment_reflectance = env_brdf_approx(specularColor, roughness4, NdotV);
+        vec3 iblDiffuse = (diffuseColor * irradiance);
+        vec3 iblSpecular = (environment_reflectance * radiance);
 
-    vec3 iblDiffuse = (diffuseColor * irradiance);
-    vec3 iblSpecular = (environment_reflectance * radiance);
-
-    Lo += (iblDiffuse + iblSpecular);
+        Lo += (iblDiffuse + iblSpecular);
+    }
 //#endif
 
     // Combine direct lighting, IBL, and shadow visbility

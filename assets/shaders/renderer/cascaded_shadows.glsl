@@ -1,8 +1,9 @@
-#version 450
+#define TWO_CASCADES // include system doesn't handle defines in one include being used in another. hmm. 
 
+#ifdef FOUR_CASCADES
 vec4 get_cascade_weights(float depth, vec4 splitNear, vec4 splitFar)
 {
-    return (step(splitNear, vec4(depth))) * (step(depth, splitFar)); // near * far
+    return (step(splitNear, vec4(depth))) * (step(depth, splitFar));
 }
 
 mat4 get_cascade_viewproj(vec4 weights, mat4 viewProj[4])
@@ -14,18 +15,49 @@ float get_cascade_layer(vec4 weights)
 {
     return 0.0 * weights.x + 1.0 * weights.y + 2.0 * weights.z + 3.0 * weights.w;   
 }
+#endif
 
-vec3 get_cascade_weighted_color(vec4 weights) 
+#ifdef TWO_CASCADES
+vec2 get_cascade_weights(float depth, vec2 splitNear, vec2 splitFar)
 {
-    return vec3(1,0,0) * weights.x + vec3(0,1,0) * weights.y + vec3(0,0,1) * weights.z + vec3(1,0,1) * weights.w;
+    return (step(splitNear, vec2(depth))) * (step(depth, splitFar)); 
 }
 
-float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos, mat4 viewProjArray[4], vec4 splitPlanes[4])
+mat4 get_cascade_viewproj(vec2 weights, mat4 viewProj[2])
 {
+    return viewProj[0] * weights.x + viewProj[1] * weights.y;
+}
+
+float get_cascade_layer(vec2 weights) 
+{
+    return 0.0 * weights.x +  1.0 * weights.y; 
+}
+#endif
+
+/*
+vec3 get_cascade_weighted_color(vec4 weights) 
+{
+    return vec3(1,0,0) * weights.x + 
+           vec3(0,1,0) * weights.y + 
+           vec3(0,0,1) * weights.z + 
+           vec3(1,0,1) * weights.w;
+}
+*/
+
+float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos, mat4 viewProjArray[NUM_CASCADES], vec4 splitPlanes[NUM_CASCADES])
+{
+    #ifdef FOUR_CASCADES
     vec4 weights = get_cascade_weights(-viewPos.z,
         vec4(splitPlanes[0].x, splitPlanes[1].x, splitPlanes[2].x, splitPlanes[3].x),
         vec4(splitPlanes[0].y, splitPlanes[1].y, splitPlanes[2].y, splitPlanes[3].y)
     );
+    #endif
+
+    #ifdef TWO_CASCADES
+    vec2 weights = get_cascade_weights(-viewPos.z,
+        vec2(splitPlanes[0].x, splitPlanes[1].x),
+        vec2(splitPlanes[0].y, splitPlanes[1].y));
+    #endif
 
     // Get vertex position in light space
     mat4 lightViewProj = get_cascade_viewproj(weights, viewProjArray);

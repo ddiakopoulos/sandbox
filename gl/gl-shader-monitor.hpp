@@ -76,25 +76,40 @@ namespace avl
     inline GlShader preprocess(
         const std::string & vertexShader, 
         const std::string & fragmentShader, 
+        const std::string & geomShader,
         const std::string & includeSearchPath, 
         const std::vector<std::string> & defines, 
         std::vector<std::string> & includes)
     {
         std::stringstream vertex;
         std::stringstream fragment;
+        std::stringstream geom;
 
         for (const auto define : defines)
         {
+            std::cout << "Defining: " << define << std::endl;
             if (vertexShader.size()) vertex << "#define " << define << std::endl;
             if (fragmentShader.size()) fragment << "#define " << define << std::endl;
+            if (geomShader.size()) geom << "#define " << define << std::endl;
         }
 
         if (vertexShader.size()) vertex << vertexShader;
         if (fragmentShader.size()) fragment << fragmentShader;
+        if (geomShader.size()) geom << geomShader;
 
-        return GlShader(
-            preprocess_version(preprocess_includes(vertex.str(), includeSearchPath, includes, 0)),
-            preprocess_version(preprocess_includes(fragment.str(), includeSearchPath, includes, 0)));
+        if (geomShader.size())
+        {
+            return GlShader(
+                preprocess_version(preprocess_includes(vertex.str(), includeSearchPath, includes, 0)),
+                preprocess_version(preprocess_includes(fragment.str(), includeSearchPath, includes, 0)),
+                preprocess_version(preprocess_includes(geom.str(), includeSearchPath, includes, 0)));
+        }
+        else
+        {
+            return GlShader(
+                preprocess_version(preprocess_includes(vertex.str(), includeSearchPath, includes, 0)),
+                preprocess_version(preprocess_includes(fragment.str(), includeSearchPath, includes, 0)));
+        }
     }
 
     class ShaderMonitor
@@ -134,7 +149,7 @@ namespace avl
                 {
                     if (defines.size() > 0 || includePath.size() > 0)
                     {
-                        result = preprocess(read_file_text(vertexPath), read_file_text(fragmentPath), includePath, defines, includes);
+                        result = preprocess(read_file_text(vertexPath), read_file_text(fragmentPath), read_file_text(geomPath), includePath, defines, includes);
                     }
                     else
                     {
@@ -203,18 +218,17 @@ namespace avl
             fileWatcher->watch();
         }
 
-        /*
-        // Watch vertex and fragment
-        std::shared_ptr<GlShader> watch(
-            const std::string & vertexShader, 
-            const std::string & fragmentShader)
+        // Watch vertex, fragment, and geometry
+        void watch(
+            const std::string & vertexShader,
+            const std::string & fragmentShader,
+            std::function<void(GlShader)> callback)
         {
             ShaderAsset asset(vertexShader, fragmentShader);
-
+            asset.onModified = callback;
+            asset.recompile();
             assets.push_back(std::move(asset));
-            return assets.back().get_shared();
         }
-        */
 
         // Watch vertex, fragment, and geometry
         void watch(
@@ -228,6 +242,7 @@ namespace avl
             asset.recompile();
             assets.push_back(std::move(asset));
         }
+
         // Watch vertex and fragment with includes and defines
         void watch(
             const std::string & vertexShader, 
@@ -242,18 +257,20 @@ namespace avl
             assets.push_back(std::move(asset));
         }
 
-        /*
-        // Watch vertex, fragment, and geometry with includes and defines
-        std::shared_ptr<GlShader> watch(
-            const std::string & vertexShader, 
-            const std::string & fragmentShader, 
+        // Watch vertex and fragment and geometry with includes and defines
+        void watch(
+            const std::string & vertexShader,
+            const std::string & fragmentShader,
             const std::string & geometryShader,
             const std::string & includePath,
-            const std::vector<std::string> & defines)
+            const std::vector<std::string> & defines,
+            std::function<void(GlShader)> callback)
         {
-
+            ShaderAsset asset(vertexShader, fragmentShader, geometryShader, includePath, defines);
+            asset.onModified = callback;
+            asset.recompile();
+            assets.push_back(std::move(asset));
         }
-        */
 
         // Call this regularly on the gl thread
         void handle_recompile()

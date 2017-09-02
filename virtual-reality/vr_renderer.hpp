@@ -110,7 +110,7 @@ class PhysicallyBasedRenderer
         {
             // Fixme - check if should cast shadow
             const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
-            shadow->cascadeShader.uniform("u_modelMatrix", modelMatrix);
+            shadow->program.get().uniform("u_modelMatrix", modelMatrix);
             obj->draw();
         }
 
@@ -254,7 +254,7 @@ public:
         {
             run_shadow_pass(shadowPassData);
 
-            for (int c = 0; c < 4; c++)
+            for (int c = 0; c < uniforms::NUM_CASCADES; c++)
             {
                 b.cascadesPlane[c] = float4(shadow->splitPlanes[c].x, shadow->splitPlanes[c].y, 0, 0);
                 b.cascadesMatrix[c] = shadow->shadowMatrices[c];
@@ -325,7 +325,7 @@ public:
         cameras[idx] = data;
     }
 
-    GLuint get_output_texture(const uint32_t idx)
+    GLuint get_output_texture(const uint32_t idx) const
     { 
         assert(idx <= NumEyes);
         return outputTextureHandles[idx]; 
@@ -335,6 +335,11 @@ public:
     {
         if (skybox) return static_cast<ProceduralSky *>(&skybox->skybox);
         else return nullptr;
+    }
+
+    ShadowPass * get_shadow_pass() const
+    {
+        if (shadow) return shadow.get();
     }
 
     void add_objects(const std::vector<Renderable *> & set) { renderSet = set; }

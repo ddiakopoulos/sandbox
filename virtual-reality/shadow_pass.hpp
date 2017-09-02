@@ -44,16 +44,11 @@ struct ShadowPass
 
     GlMesh fsQuad;
 
-    GlShader cascadeShader;
+    GlShaderHandle program;
 
     ShadowPass()
     {
         fsQuad = make_fullscreen_quad();
-
-        cascadeShader = GlShader(
-            read_file_text("../assets/shaders/renderer/shadowcascade_vert.glsl"),
-            read_file_text("../assets/shaders/renderer/shadowcascade_frag.glsl"),
-            read_file_text("../assets/shaders/renderer/shadowcascade_geom.glsl"));
 
         shadowArrayDepth.setup(GL_TEXTURE_2D_ARRAY, resolution, resolution, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         glNamedFramebufferTextureEXT(shadowArrayFramebuffer, GL_DEPTH_ATTACHMENT, shadowArrayDepth, 0);
@@ -71,7 +66,7 @@ struct ShadowPass
         projMatrices.clear();
         shadowMatrices.clear();
 
-        for (size_t C = 0; C < 4; ++C)
+        for (size_t C = 0; C < uniforms::NUM_CASCADES; ++C)
         {
             // Find the split planes using GPU Gem 3. Chap 10 "Practical Split Scheme".
             // http://http.developer.nvidia.com/GPUGems3/gpugems3_ch10.html
@@ -127,7 +122,7 @@ struct ShadowPass
 
             // Create an orthogonal projection matrix with the corners
             const float nearOffset = 10.0f;
-            const float farOffset = 20.0f;
+            const float farOffset = 32.0f;
             const float4x4 shadowProjectionMatrix = make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset);
 
             viewMatrices.push_back(splitViewMatrix);
@@ -150,18 +145,21 @@ struct ShadowPass
         glViewport(0, 0, resolution, resolution);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        cascadeShader.bind();
-        cascadeShader.uniform("u_cascadeNear", (int)nearPlanes.size(), nearPlanes);
-        cascadeShader.uniform("u_cascadeFar", (int)farPlanes.size(), farPlanes);
-        cascadeShader.uniform("u_cascadeViewMatrixArray", (int)viewMatrices.size(), viewMatrices);
-        cascadeShader.uniform("u_cascadeProjMatrixArray", (int)projMatrices.size(), projMatrices);
+        auto & shader = program.get();
+
+        shader.bind();
+        shader.uniform("u_cascadeNear", uniforms::NUM_CASCADES, nearPlanes);
+        shader.uniform("u_cascadeFar", uniforms::NUM_CASCADES, farPlanes);
+        shader.uniform("u_cascadeViewMatrixArray", uniforms::NUM_CASCADES, viewMatrices);
+        shader.uniform("u_cascadeProjMatrixArray", uniforms::NUM_CASCADES, projMatrices);
     }
 
     void post_draw()
     {
+        auto & shader = program.get();
         glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        cascadeShader.unbind();
+        shader.unbind();
     }
 
     GLuint get_output_texture() const { return shadowArrayDepth.id(); }

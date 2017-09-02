@@ -1,7 +1,7 @@
-#version 420
+#include "renderer_common.glsl"
 
-uniform float u_cascadeNear[4];
-uniform float u_cascadeFar[4];
+uniform float u_cascadeNear[NUM_CASCADES];
+uniform float u_cascadeFar[NUM_CASCADES];
 
 in float g_layer;
 in vec3 vs_position;

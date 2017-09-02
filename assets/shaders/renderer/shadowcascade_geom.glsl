@@ -1,10 +1,10 @@
-#version 420
+#include "renderer_common.glsl"
 
 layout(triangles, invocations = 4) in; // one for each cascade
 layout(triangle_strip, max_vertices = 3) out;
 
-uniform mat4 u_cascadeViewMatrixArray[4];
-uniform mat4 u_cascadeProjMatrixArray[4];
+uniform mat4 u_cascadeViewMatrixArray[NUM_CASCADES];
+uniform mat4 u_cascadeProjMatrixArray[NUM_CASCADES];
 
 out float g_layer;
 out vec3 vs_position;
