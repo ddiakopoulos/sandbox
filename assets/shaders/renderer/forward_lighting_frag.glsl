@@ -86,7 +86,7 @@ vec3 blend_normals(vec3 geometric, vec3 detail)
 
 // The following equation models the Fresnel reflectance term of the spec equation (aka F())
 // Implementation of fresnel from [4], Equation 15
-vec3 specularReflection(MaterialInfo data)
+vec3 specular_reflection(MaterialInfo data)
 {
     return data.reflectance0 + (data.reflectance90 - data.reflectance0) * pow(clamp(1.0 - data.VdotH, 0.0, 1.0), 5.0);
 }
@@ -95,7 +95,7 @@ vec3 specularReflection(MaterialInfo data)
 // where rougher material will reflect less light back to the viewer.
 // This implementation is based on [1] Equation 4, and we adopt their modifications to
 // alphaRoughness as input as originally proposed in [2].
-float geometricOcclusion(MaterialInfo data)
+float geometric_occlusion(MaterialInfo data)
 {
     float NdotL = data.NdotL;
     float NdotV = data.NdotV;
@@ -109,7 +109,7 @@ float geometricOcclusion(MaterialInfo data)
 // The following equation(s) model the distribution of microfacet normals across the area being drawn (aka D())
 // Implementation from "Average Irregularity Representation of a Roughened Surface for Ray Reflection" by T. S. Trowbridge, and K. P. Reitz
 // Follows the distribution function recommended in the SIGGRAPH 2013 course notes from EPIC Games [1], Equation 3.
-float microfacetDistribution(MaterialInfo data)
+float microfacet_distribution(MaterialInfo data)
 {
     float roughnessSq = data.alphaRoughness * data.alphaRoughness;
     float f = (data.NdotH * roughnessSq - data.NdotH) * data.NdotH + 1.0;
@@ -195,9 +195,9 @@ void main()
         );
 
         // Calculate the shading terms for the microfacet specular shading model
-        vec3 F = specularReflection(data);
-        float G = geometricOcclusion(data);
-        float D = microfacetDistribution(data);
+        vec3 F = specular_reflection(data);
+        float G = geometric_occlusion(data);
+        float D = microfacet_distribution(data);
 
         // Calculation of analytical lighting contribution
         vec3 diffuseContrib = ((1.0 - F) * (diffuseColor / PI)) * u_directionalLight.amount;
@@ -225,9 +225,9 @@ void main()
         );
 
         // Calculate the shading terms for the microfacet specular shading model
-        vec3 F = specularReflection(data);
-        float G = geometricOcclusion(data);
-        float D = microfacetDistribution(data);
+        vec3 F = specular_reflection(data);
+        float G = geometric_occlusion(data);
+        float D = microfacet_distribution(data);
 
         float attenuation = point_light_attenuation(L, 1.0);
 

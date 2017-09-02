@@ -28,9 +28,9 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("wireframe", std::move(wireframeProgram));
 
      // USE_IMAGE_BASED_LIGHTING
-    shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl", "../assets/shaders", {}, [](GlShader shader)
+    shaderMonitor.watch("../assets/shaders/renderer/forward_lighting_vert.glsl", "../assets/shaders/renderer/forward_lighting_frag.glsl", "../assets/shaders/renderer", {}, [](GlShader shader)
     {
-        auto & asset = AssetHandle<GlShader>("pbr-ubershader").assign(std::move(shader));
+        auto & asset = AssetHandle<GlShader>("pbr-forward-lighting").assign(std::move(shader));
         /*
         auto reflectedUniforms = asset.reflect();
         for (auto & u : reflectedUniforms) std::cout << u.first << " - " << u.second << std::endl;
@@ -70,7 +70,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         {
             std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
 
-            pbrMaterial.reset(new MetallicRoughnessMaterial("pbr-ubershader"));
+            pbrMaterial.reset(new MetallicRoughnessMaterial("pbr-forward-lighting"));
             pbrMaterial->set_albedo_texture("rusted-iron-albedo");
             pbrMaterial->set_normal_texture("rusted-iron-normal");
             pbrMaterial->set_metallic_texture("rusted-iron-metallic");

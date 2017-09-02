@@ -88,13 +88,13 @@ struct BloomPass
         blurFramebuffer.check_complete();
         outputFramebuffer.check_complete();
 
-        hdr_post = GlShader(GL_VERTEX_SHADER, read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"));
-        hdr_avgLumShader = GlShader(GL_FRAGMENT_SHADER, read_file_text("../assets/shaders/hdr/hdr_lumavg_frag.glsl"));
+        hdr_post = GlShader(GL_VERTEX_SHADER, read_file_text("../assets/shaders/renderer/post_vert.glsl"));
+        hdr_avgLumShader = GlShader(GL_FRAGMENT_SHADER, read_file_text("../assets/shaders/renderer/post_lumavg_frag.glsl"));
 
-        hdr_lumShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_lum_frag.glsl"));
-        hdr_blurShader = GlShader(read_file_text("../assets/shaders/gaussian_blur_vert.glsl"), read_file_text("../assets/shaders/gaussian_blur_frag.glsl"));
-        hdr_brightShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_post_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_bright_frag.glsl"));
-        hdr_tonemapShader = GlShader(read_file_text("../assets/shaders/hdr/hdr_tonemap_vert.glsl"), read_file_text("../assets/shaders/hdr/hdr_tonemap_frag.glsl"));
+        hdr_lumShader = GlShader(read_file_text("../assets/shaders/renderer/post_vert.glsl"), read_file_text("../assets/shaders/renderer/post_lum_frag.glsl"));
+        hdr_blurShader = GlShader(read_file_text("../assets/shaders/renderer/gaussian_blur_vert.glsl"), read_file_text("../assets/shaders/renderer/gaussian_blur_frag.glsl"));
+        hdr_brightShader = GlShader(read_file_text("../assets/shaders/renderer/post_vert.glsl"), read_file_text("../assets/shaders/renderer/post_bright_frag.glsl"));
+        hdr_tonemapShader = GlShader(read_file_text("../assets/shaders/renderer/post_tonemap_vert.glsl"), read_file_text("../assets/shaders/renderer/post_tonemap_frag.glsl"));
 
         glCreateProgramPipelines(GLsizei(1), pipelines);
         glBindProgramPipeline(downsample_pipeline);

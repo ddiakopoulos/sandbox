@@ -51,9 +51,9 @@ struct ShadowPass
         fsQuad = make_fullscreen_quad();
 
         cascadeShader = GlShader(
-            read_file_text("../assets/shaders/shadow/shadowcascade_vert.glsl"),
-            read_file_text("../assets/shaders/shadow/shadowcascade_frag.glsl"),
-            read_file_text("../assets/shaders/shadow/shadowcascade_geom.glsl"));
+            read_file_text("../assets/shaders/renderer/shadowcascade_vert.glsl"),
+            read_file_text("../assets/shaders/renderer/shadowcascade_frag.glsl"),
+            read_file_text("../assets/shaders/renderer/shadowcascade_geom.glsl"));
 
         shadowArrayDepth.setup(GL_TEXTURE_2D_ARRAY, resolution, resolution, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         glNamedFramebufferTextureEXT(shadowArrayFramebuffer, GL_DEPTH_ATTACHMENT, shadowArrayDepth, 0);
