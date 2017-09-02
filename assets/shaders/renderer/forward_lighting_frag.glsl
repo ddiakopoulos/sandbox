@@ -187,7 +187,8 @@ void main()
 
     vec3 Lo = vec3(0);
 
-    float shadowTerm = calculate_csm_coefficient(s_csmArray, v_world_position, v_view_space_position, u_cascadesMatrix, u_cascadesPlane);
+    vec3 weightedColor;
+    float shadowTerm = calculate_csm_coefficient(s_csmArray, v_world_position, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, weightedColor);
     float shadowVisibility = 1.0 - shadowTerm;
 
     // Compute directional light
@@ -260,7 +261,7 @@ void main()
 
     // Combine direct lighting, IBL, and shadow visbility
     // vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * (shadowVisibility);
-    //f_color = vec4(vec3(shadowVisibility), 1.0);
+    //f_color = vec4(vec3(weightedColor), 1.0);
 
     f_color = vec4(Lo * shadowVisibility, u_opacity); 
 }

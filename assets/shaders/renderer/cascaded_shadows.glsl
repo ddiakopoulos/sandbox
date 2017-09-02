@@ -15,6 +15,11 @@ float get_cascade_layer(vec4 weights)
 {
     return 0.0 * weights.x + 1.0 * weights.y + 2.0 * weights.z + 3.0 * weights.w;   
 }
+
+vec3 get_cascade_weighted_color(vec4 weights) 
+{
+    return vec3(1,0,0) * weights.x +  vec3(0,1,0) * weights.y +  ec3(0,0,1) * weights.z + vec3(1,0,1) * weights.w;
+}
 #endif
 
 #ifdef TWO_CASCADES
@@ -32,19 +37,15 @@ float get_cascade_layer(vec2 weights)
 {
     return 0.0 * weights.x +  1.0 * weights.y; 
 }
+
+vec3 get_cascade_weighted_color(vec2 weights) 
+{
+    return vec3(1,0,0) * weights.x +  vec3(0,1,0) * weights.y;
+}
 #endif
 
-/*
-vec3 get_cascade_weighted_color(vec4 weights) 
-{
-    return vec3(1,0,0) * weights.x + 
-           vec3(0,1,0) * weights.y + 
-           vec3(0,0,1) * weights.z + 
-           vec3(1,0,1) * weights.w;
-}
-*/
 
-float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos, mat4 viewProjArray[NUM_CASCADES], vec4 splitPlanes[NUM_CASCADES])
+float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos, mat4 viewProjArray[NUM_CASCADES], vec4 splitPlanes[NUM_CASCADES], out vec3 weightedColor)
 {
     #ifdef FOUR_CASCADES
     vec4 weights = get_cascade_weights(-viewPos.z,
@@ -68,7 +69,7 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
 
     if (!(coords.z > 0.0 && coords.x > 0.0 && coords.y > 0.0 && coords.x <= 1.0 && coords.y <= 1.0)) return 0;
 
-    float bias = 0.01;
+    float bias = 0.005;
     float currentDepth = coords.z;
 
     float shadowTerm = 0.0;
@@ -89,6 +90,7 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
     }
     shadowTerm /= 9.0;
 
+    weightedColor = get_cascade_weighted_color(weights);
     /*
     // Exponential Shadow Filtering
     float depth = (coords.z + bias);

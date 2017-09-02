@@ -71,11 +71,13 @@ struct ShadowPass
             // Find the split planes using GPU Gem 3. Chap 10 "Practical Split Scheme".
             // http://http.developer.nvidia.com/GPUGems3/gpugems3_ch10.html
 
-            const float splitNear = C > 0 ? mix(near + (static_cast<float>(C) / 4.0f) * (far - near),
-                near * pow(far / near, static_cast<float>(C) / 4.0f), splitLambda) : near;
+            float splitIdx = uniforms::NUM_CASCADES;
 
-            const float splitFar = C < 4 - 1 ? mix(near + (static_cast<float>(C + 1) / 4.0f) * (far - near),
-                near * pow(far / near, static_cast<float>(C + 1) / 4.0f), splitLambda) : far;
+            const float splitNear = C > 0 ? mix(near + (static_cast<float>(C) / splitIdx) * (far - near),
+                near * pow(far / near, static_cast<float>(C) / splitIdx), splitLambda) : near;
+
+            const float splitFar = C < splitIdx - 1 ? mix(near + (static_cast<float>(C + 1) / splitIdx) * (far - near),
+                near * pow(far / near, static_cast<float>(C + 1) / splitIdx), splitLambda) : far;
 
             const float4x4 splitProjectionMatrix = make_perspective_matrix(vfov, aspectRatio, splitNear, splitFar);
 
