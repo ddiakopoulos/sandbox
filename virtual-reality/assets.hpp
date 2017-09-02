@@ -45,10 +45,11 @@ public:
         else throw std::runtime_error("no assignment has been made to this asset");
     }
 
-    void assign(T && asset)
+    T & assign(T && asset)
     {
         handle->asset = std::move(asset);
         handle->assigned = true;
+        return handle->asset;
     }
 
     static std::vector<AssetHandle> list()

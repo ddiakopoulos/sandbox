@@ -15,20 +15,23 @@ in vec2 v_texcoord;
 in vec3 v_tangent;
 in vec3 v_bitangent;
 
+// Material Uniforms
+uniform float u_roughness = 1.0;
+uniform float u_metallic = 1.0;
+uniform float u_opacity = 1.0;
 uniform sampler2D s_albedo;
 uniform sampler2D s_normal;
 uniform sampler2D s_roughness;
 uniform sampler2D s_metallic;
 
+// Image-Based-Lighting Uniforms
+uniform float u_ambientIntensity = 1.0;
 uniform samplerCube sc_radiance;
 uniform samplerCube sc_irradiance;
 
-uniform float u_roughness = 1;
-uniform float u_metallic = 1;
-uniform float u_ambientIntensity = 1;
+// Lighting & Shadowing Uniforms
 uniform float u_overshadowConstant = 100.0;
 uniform float u_pointLightAttenuation = 0.0052;
-
 uniform sampler2DArray s_csmArray;
 
 out vec4 f_color;
@@ -200,5 +203,5 @@ void main()
     vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * (shadowVisibility);
     //f_color = vec4(vec3(shadowVisibility), 1.0);
 
-    f_color = vec4(Lo, 1); 
+    f_color = vec4(Lo, u_opacity); 
 }

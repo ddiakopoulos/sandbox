@@ -50,7 +50,9 @@ void MetallicRoughnessMaterial::update_uniforms(const RenderPassData * data)
 
     shader.uniform("u_roughness", roughnessFactor);
     shader.uniform("u_metallic", metallicFactor);
-    shader.uniform("u_ambientIntensity", ambientIntensity);
+
+    // IBL 
+    //shader.uniform("u_ambientIntensity", ambientIntensity);
 
     //program->texture("s_emissive", 6, emissive, GL_TEXTURE_2D);
     //program->texture("s_occlusion", 7, occlusion, GL_TEXTURE_2D);

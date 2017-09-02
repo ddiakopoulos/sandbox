@@ -46,4 +46,3 @@ layout(binding = 1, std140) uniform PerView
 uniform mat4 u_modelMatrix;
 uniform mat4 u_modelMatrixIT;
 uniform mat4 u_modelViewMatrix;
-uniform vec3 u_eye;

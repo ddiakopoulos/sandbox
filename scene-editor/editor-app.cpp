@@ -4,7 +4,7 @@
 
 using namespace avl;
 
-scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
+scene_editor_app::scene_editor_app() : GLFWApp(1440, 940, "Scene Editor")
 {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -30,13 +30,22 @@ scene_editor_app::scene_editor_app() : GLFWApp(1280, 800, "Scene Editor")
      // USE_IMAGE_BASED_LIGHTING
     shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl", "../assets/shaders", {}, [](GlShader shader)
     {
-        AssetHandle<GlShader>("pbr-ubershader").assign(std::move(shader));
+
+        auto & asset = AssetHandle<GlShader>("pbr-ubershader").assign(std::move(shader));
+
+        auto reflectedUniforms = asset.reflect();
+
+        for (auto & u : reflectedUniforms)
+        {
+            std::cout << u.first << " - " << u.second << std::endl;
+        }
+
+
     });
 
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
 
     auto sky = renderer->get_procedural_sky();
-    std::cout << sky->get_sun_direction() << std::endl;
     directionalLight.direction = sky->get_sun_direction();
     directionalLight.color = float3(1.f, 0.0f, 0.0f);
     directionalLight.amount = 0.1f;
