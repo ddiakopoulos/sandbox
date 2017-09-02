@@ -4,7 +4,7 @@
 
 using namespace avl;
 
-scene_editor_app::scene_editor_app() : GLFWApp(1440, 940, "Scene Editor")
+scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
 {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -85,14 +85,12 @@ scene_editor_app::scene_editor_app() : GLFWApp(1440, 940, "Scene Editor")
         }
     }
 
-    /*
     StaticMesh floorMesh;
     floorMesh.set_static_mesh(make_cube(), 1.0f);
     floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
-    floorMesh.set_scale(float3(12, 0.1f, 12));
-    floorMesh.set_material(pbrMaterial.get());
+    floorMesh.set_scale(float3(16, 0.1f, 16));
+    floorMesh.set_material(materials.back().get());
     objects.push_back(std::move(floorMesh));
-    */
 }
 
 scene_editor_app::~scene_editor_app()

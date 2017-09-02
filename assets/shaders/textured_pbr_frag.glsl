@@ -41,6 +41,25 @@ uniform sampler2DArray s_csmArray;
 
 out vec4 f_color;
 
+// https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
+// https://imdoingitwrong.wordpress.com/2011/02/10/improved-light-attenuation/
+float point_light_attenuation(vec3 L, float lightRadius)
+{
+    // Calculate distance from light source to point on plane.
+    float dist = length(L);
+    float d = max(dist - lightRadius, 0.0);
+    L /= dist;
+
+    // Transform distance for smoother cutoff.
+    // Formula: d' = d / (1 - (d / dmax)^2)
+    float f = d / u_pointLightAttenuation;
+
+    // Calculate attenuation.
+    // Formula: att = 1 / (d' / r + 1)^2
+    f = d / lightRadius + 1.0;
+    return 1.0 / (f * f);
+}
+
 // http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
 vec3 fix_cube_lookup(vec3 v, float cubeSize, float lod) 
 {
@@ -133,25 +152,6 @@ float calculate_cook_torrance(vec3 N, vec3 V, vec3 L, float metalness, float rou
     return (Di * kD * Vs);
 }
 
-// https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
-// https://imdoingitwrong.wordpress.com/2011/02/10/improved-light-attenuation/
-float point_light_attenuation(vec3 L, float lightRadius)
-{
-    // Calculate distance from light source to point on plane.
-    float dist = length(L);
-    float d = max(dist - lightRadius, 0.0);
-    L /= dist;
-
-    // Transform distance for smoother cutoff.
-    // Formula: d' = d / (1 - (d / dmax)^2)
-    float f = d / u_pointLightAttenuation;
-
-    // Calculate attenuation.
-    // Formula: att = 1 / (d' / r + 1)^2
-    f = d / lightRadius + 1.0;
-    return 1.0 / (f * f);
-}
-
 void main()
 {   
     // Surface properties
@@ -193,6 +193,7 @@ void main()
     }
 
     // Compute point lights
+    // https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
     for (int i = 0; i < u_activePointLights; ++i)
     {
         vec3 L = normalize(u_pointLights[i].position - v_world_position); 
