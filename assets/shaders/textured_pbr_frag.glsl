@@ -16,8 +16,8 @@ in vec3 v_tangent;
 in vec3 v_bitangent;
 
 // Material Uniforms
-uniform float u_roughness = 1.0;
-uniform float u_metallic = 1.0;
+uniform float u_roughness = 1;
+uniform float u_metallic = 1;
 uniform float u_opacity = 1.0;
 uniform sampler2D s_albedo;
 uniform sampler2D s_normal;
@@ -28,6 +28,9 @@ uniform sampler2D s_metallic;
 uniform float u_ambientIntensity = 1.0;
 uniform samplerCube sc_radiance;
 uniform samplerCube sc_irradiance;
+
+// Dielectrics have an F0 between 0.2 - 0.5, often exposed as the "specular level" parameter
+uniform float u_specularLevel = 0.04;
 
 // Lighting & Shadowing Uniforms
 uniform float u_overshadowConstant = 100.0;
@@ -93,7 +96,7 @@ vec3 env_brdf_approx(vec3 specularColor, float roughness, float NoV)
     return specularColor * AB.x + AB.y;
 }
 
-float shade_pbr(vec3 N, vec3 V, vec3 L, float roughness, float F0) 
+float shade_pbr(vec3 N, vec3 V, vec3 L, float metalness, float roughness, float F0) 
 {
     float alpha = roughness * roughness;
     float alphaSqr = alpha * alpha;
@@ -109,6 +112,10 @@ float shade_pbr(vec3 N, vec3 V, vec3 L, float roughness, float F0)
 
     // Fresnel term
     float Fs = fresnel_schlick(NoV, F0);
+
+    // multiply Fs by the inverse metalness such that only non-metals 
+    // have diffuse lighting, or a linear blend if partly metal (pure metals have no diffuse light).
+    //Fs *= 1.0 - metalness; 
 
     // Geometry term is used for describing how much the microfacet is blocked by another microfacet
     float Vs = schlick_smith_visibility(NoL, NoV, alpha);
@@ -138,16 +145,16 @@ float point_light_attenuation(vec3 L, float lightRadius)
 void main()
 {   
     // Surface properties
-    float roughness = sRGBToLinear(texture(s_roughness, v_texcoord), DEFAULT_GAMMA).r * u_roughness;
-    float roughness4 = pow(roughness, 4.0);
+    float roughness = sRGBToLinear(texture(s_roughness, v_texcoord), DEFAULT_GAMMA).r * clamp(u_roughness, u_specularLevel, 1.0);
     float metallic = sRGBToLinear(texture(s_metallic, v_texcoord), DEFAULT_GAMMA).r * u_metallic;
 
-    vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA);
-    vec3 viewDir = normalize(u_eyePos.xyz - v_world_position);
-    vec3 normalWorld = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
+    // View direction
+    vec3 V = normalize(u_eyePos.xyz - v_world_position);
 
-    vec3 N = normalWorld;
-    vec3 V = viewDir;
+    // Normal vector in worldspace
+    vec3 N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
+
+    vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA) * (1 - metallic);
 
     vec3 diffuseContrib = vec3(0);
     vec3 specularContrib = vec3(0);
@@ -157,28 +164,27 @@ void main()
     float shadowTerm = calculate_csm_coefficient(s_csmArray, v_world_position, v_view_space_position, u_cascadesMatrix, u_cascadesPlane);
     float shadowVisibility = 1.0 - shadowTerm;
 
+/*
     // Compute directional light
     {
         vec3 L = normalize(u_directionalLight.direction);
         float NoL = saturate(dot(N, L));
 
-        vec3 F0 = mix(vec3(0.04), u_directionalLight.color, metallic);
-        vec3 specularColor = u_directionalLight.color * shade_pbr(N, V, L, roughness, F0.r);
+        vec3 F0 = mix(vec3(u_specularLevel), u_directionalLight.color, metallic);
+        vec3 specularColor = u_directionalLight.color * shade_pbr(N, V, L, metallic, roughness, F0.r);
 
         diffuseContrib += NoL * (u_directionalLight.color * u_directionalLight.amount) * albedo;
         specularContrib += (specularColor * u_directionalLight.amount);
     }
-
+*/
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
         vec3 L = normalize(u_pointLights[i].position - v_world_position); 
         float NoL = saturate(dot(N, L));
 
-        // F0 (Fresnel reflection coefficient), otherwise known as specular reflectance. 
-        // 0.04 is the default for non-metals in UE4
-        vec3 F0 = mix(vec3(0.04), u_pointLights[i].color, metallic);
-        vec3 specularColor = u_pointLights[i].color * shade_pbr(N, V, L, roughness, F0.r);
+        vec3 F0 = mix(vec3(u_specularLevel), u_pointLights[i].color, metallic);
+        vec3 specularColor = u_pointLights[i].color * shade_pbr(N, V, L, metallic, roughness, F0.r);
 
         float attenuation = point_light_attenuation(L, u_pointLights[i].radius);
 
@@ -187,16 +193,24 @@ void main()
     }
 
 #ifdef USE_IMAGE_BASED_LIGHTING
+    // F0 (Fresnel reflection coefficient), otherwise known as specular reflectance. 
+    // 0.04 is the default for non-metals in UE.
+    // Calculate reflectance at normal incidence; if dialectric, use F0. 
+    // If metal, use albedo as F0 (metallic workflow) 
+    vec3 F0 = mix(vec3(u_specularLevel), albedo, u_metallic);
+
+    float roughness4 = pow(roughness, 4.0);
+
     // Compute image-based lighting
     const int NUM_MIP_LEVELS = 7;
     float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
     vec3 cubemapLookup = fix_cube_lookup(reflect(-V, N), 512, mipLevel);
+
     irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
     radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
 
-    vec3 baseSpecular = mix(vec3(0.04), albedo, metallic);
     float NoV = saturate(dot(N, V));
-    specularContrib += env_brdf_approx(baseSpecular, roughness4, NoV);
+    specularContrib += env_brdf_approx(F0, roughness4, NoV);
 #endif
 
     // Combine direct lighting, IBL, and shadow visbility

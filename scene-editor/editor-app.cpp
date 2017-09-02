@@ -53,10 +53,10 @@ scene_editor_app::scene_editor_app() : GLFWApp(1440, 940, "Scene Editor")
     pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-6, 4, 0), 12.f });
     pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.00f, 0.859f), float3(+6, 4, 0), 12.f });
 
-    global_register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", true));
-    global_register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", true));
-    global_register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", true));
-    global_register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", true));
+    global_register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", false));
+    global_register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", false));
+    global_register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", false));
+    global_register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", false));
 
     pbrMaterial.reset(new MetallicRoughnessMaterial("pbr-ubershader"));
     pbrMaterial->set_albedo_texture("rusted-iron-albedo");

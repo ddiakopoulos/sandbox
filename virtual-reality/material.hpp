@@ -40,7 +40,7 @@ namespace avl
         GlTextureHandle radianceCubemap;
         GlTextureHandle irradianceCubemap;
 
-        float roughnessFactor{ 1.f };
+        float roughnessFactor{ 0.5f };
         float metallicFactor{ 1.f };
         float ambientIntensity{ 1.f };
 
@@ -57,8 +57,8 @@ namespace avl
 
         //void set_emissive_strength(const float strength) { emissiveStrength = strength; }
         //void set_emissive_color(const float3 & color) { emissiveColor = color; }
-        //void set_roughness(const float value) { roughnessFactor = value; }
-        //void set_metallic(const float value) { metallicFactor = value; }
+        void set_roughness(const float value) { roughnessFactor = value; }
+        void set_metallic(const float value) { metallicFactor = value; }
         //void set_ambientIntensity(const float value) { ambientIntensity = value; }
         //void setOvershadowConstant(const float value) { overshadowConstant = value; }
 
