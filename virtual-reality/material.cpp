@@ -40,8 +40,8 @@ void MetallicRoughnessMaterial::update_uniforms(const RenderPassData * data)
     shader.texture("s_roughness", 2, roughness.get(), GL_TEXTURE_2D);
     shader.texture("s_metallic", 3, metallic.get(), GL_TEXTURE_2D);
             
-    //program->texture("sc_radiance", 4, radianceCubemap->asset, GL_TEXTURE_CUBE_MAP);
-    //program->texture("sc_irradiance", 5, irradianceCubemap->asset, GL_TEXTURE_CUBE_MAP);
+    shader.texture("sc_radiance", 4, radianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
+    shader.texture("sc_irradiance", 5, irradianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
 
     if (data->shadow.csmArrayHandle)
     {

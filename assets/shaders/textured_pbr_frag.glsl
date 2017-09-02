@@ -116,6 +116,28 @@ float microfacetDistribution(MaterialInfo data)
     return roughnessSq / (PI * f * f);
 }
 
+// http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
+vec3 fix_cube_lookup(vec3 v, float cubeSize, float lod)
+{
+    float M = max(max(abs(v.x), abs(v.y)), abs(v.z));
+    float scale = 1 - exp2(lod) / cubeSize;
+    if (abs(v.x) != M) v.x *= scale;
+    if (abs(v.y) != M) v.y *= scale;
+    if (abs(v.z) != M) v.z *= scale;
+    return v;
+}
+
+// https://www.unrealengine.com/blog/physically-based-shading-on-mobile
+vec3 env_brdf_approx(vec3 specularColor, float roughness, float NoV)
+{
+    const vec4 c0 = vec4(-1, -0.0275, -0.572, 0.022);
+    const vec4 c1 = vec4(1, 0.0425, 1.04, -0.04);
+    vec4 r = roughness * c0 + c1;
+    float a004 = min(r.x * r.x, exp2(-9.28 * NoV)) * r.x + r.y;
+    vec2 AB = vec2(-1.04, 1.04) * a004 + r.zw;
+    return specularColor * AB.x + AB.y;
+}
+
 void main()
 {   
     // Surface properties
@@ -132,11 +154,14 @@ void main()
     // Normal vector in worldspace
     vec3 N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
 
+    float NdotV = abs(dot(N, V)) + 0.001;
+
     vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA); // * baseColor
 
     vec3 F0 = vec3(u_specularLevel);
     vec3 diffuseColor = albedo * (vec3(1.0) - F0);
-    //diffuseColor *= 1.0 - metallic;
+    diffuseColor *= 1.0 - metallic;
+
     vec3 specularColor = mix(F0, albedo, metallic);
 
     // Compute reflectance.
@@ -150,6 +175,36 @@ void main()
 
     vec3 Lo = vec3(0);
 
+    float shadowTerm = calculate_csm_coefficient(s_csmArray, v_world_position, v_view_space_position, u_cascadesMatrix, u_cascadesPlane);
+    float shadowVisibility = 1.0 - shadowTerm;
+
+    // Compute directional light
+    {
+        vec3 L = normalize(u_directionalLight.direction); 
+        vec3 H = normalize(L + V);  
+
+        float NdotL = clamp(dot(N, L), 0.001, 1.0);
+        float NdotH = clamp(dot(N, H), 0.0, 1.0);
+        float LdotH = clamp(dot(L, H), 0.0, 1.0);
+        float VdotH = clamp(dot(V, H), 0.0, 1.0);
+
+        MaterialInfo data = MaterialInfo(
+            NdotL, NdotV, NdotH, LdotH, VdotH,
+            roughness, metallic, specularEnvironmentR0, specularEnvironmentR90, alphaRoughness,
+            diffuseColor, specularColor
+        );
+
+        // Calculate the shading terms for the microfacet specular shading model
+        vec3 F = specularReflection(data);
+        float G = geometricOcclusion(data);
+        float D = microfacetDistribution(data);
+
+        // Calculation of analytical lighting contribution
+        vec3 diffuseContrib = ((1.0 - F) * (diffuseColor / PI)) * u_directionalLight.amount;
+        vec3 specContrib = ((F * G * D) / ((4.0 * NdotL * NdotV) + 0.001)) * u_directionalLight.amount;
+        Lo += NdotL * (diffuseContrib + specContrib);
+    }
+
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
@@ -157,7 +212,6 @@ void main()
         vec3 H = normalize(L + V);  
 
         float NdotL = clamp(dot(N, L), 0.001, 1.0);
-        float NdotV = abs(dot(N, V)) + 0.001;
         float NdotH = clamp(dot(N, H), 0.0, 1.0);
         float LdotH = clamp(dot(L, H), 0.0, 1.0);
         float VdotH = clamp(dot(V, H), 0.0, 1.0);
@@ -175,15 +229,36 @@ void main()
         float G = geometricOcclusion(data);
         float D = microfacetDistribution(data);
 
+        float attenuation = point_light_attenuation(L, 1.0);
+
         // Calculation of analytical lighting contribution
-        vec3 diffuseContrib = ((1.0 - F) * (diffuseColor / PI));
-        vec3 specContrib = ((F * G * D) / ((4.0 * NdotL * NdotV) + 0.001));
+        vec3 diffuseContrib = ((1.0 - F) * (diffuseColor / PI)) * attenuation;
+        vec3 specContrib = ((F * G * D) / ((4.0 * NdotL * NdotV) + 0.001)) * attenuation;
         Lo += NdotL * u_pointLights[i].color * (diffuseContrib + specContrib);
     }
+
+//#ifdef USE_IMAGE_BASED_LIGHTING
+    float roughness4 = pow(roughness, 4.0);
+
+    // Compute image-based lighting
+    const int NUM_MIP_LEVELS = 6;
+    float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
+    vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
+
+    vec3 irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
+    vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
+
+    vec3 environment_reflectance = env_brdf_approx(specularColor, roughness4, NdotV);
+
+    vec3 iblDiffuse = (diffuseColor * irradiance);
+    vec3 iblSpecular = (environment_reflectance * radiance);
+
+    Lo += (iblDiffuse + iblSpecular);
+//#endif
 
     // Combine direct lighting, IBL, and shadow visbility
     // vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * (shadowVisibility);
     //f_color = vec4(vec3(shadowVisibility), 1.0);
 
-    f_color = vec4(Lo, u_opacity); 
+    f_color = vec4(Lo * shadowVisibility, u_opacity); 
 }

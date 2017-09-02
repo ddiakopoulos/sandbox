@@ -52,6 +52,12 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", false));
     global_register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", false));
 
+    auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
+    auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
+    gli::texture_cube radianceHandle(gli::load_dds((char *)radianceBinary.data(), radianceBinary.size()));
+    gli::texture_cube irradianceHandle(gli::load_dds((char *)irradianceBinary.data(), irradianceBinary.size()));
+    global_register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
+    global_register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
 
     //Geometry icosphere = load_geometry_from_obj_no_texture("../assets/models/geometry/SphereUniform.obj")[0];
     //for (auto & v : icosphere.vertices) v *= 0.01f;
@@ -69,6 +75,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             pbrMaterial->set_normal_texture("rusted-iron-normal");
             pbrMaterial->set_metallic_texture("rusted-iron-metallic");
             pbrMaterial->set_roughness_texture("rusted-iron-roughness");
+            pbrMaterial->set_radiance_cubemap("wells-radiance-cubemap");
+            pbrMaterial->set_irrradiance_cubemap("wells-irradiance-cubemap");
 
             pbrMaterial->set_roughness(remap<float>(i, 0.0f, 9.0f, 0.0f, 1.f));
             pbrMaterial->set_metallic(remap<float>(j, 0.0f, 9.0f, 0.0f, 1.f));
