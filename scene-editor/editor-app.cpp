@@ -30,17 +30,11 @@ scene_editor_app::scene_editor_app() : GLFWApp(1440, 940, "Scene Editor")
      // USE_IMAGE_BASED_LIGHTING
     shaderMonitor.watch("../assets/shaders/textured_pbr_vert.glsl", "../assets/shaders/textured_pbr_frag.glsl", "../assets/shaders", {}, [](GlShader shader)
     {
-
         auto & asset = AssetHandle<GlShader>("pbr-ubershader").assign(std::move(shader));
-
+        /*
         auto reflectedUniforms = asset.reflect();
-
-        for (auto & u : reflectedUniforms)
-        {
-            std::cout << u.first << " - " << u.second << std::endl;
-        }
-
-
+        for (auto & u : reflectedUniforms) std::cout << u.first << " - " << u.second << std::endl;
+        */
     });
 
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
@@ -48,44 +42,57 @@ scene_editor_app::scene_editor_app() : GLFWApp(1440, 940, "Scene Editor")
     auto sky = renderer->get_procedural_sky();
     directionalLight.direction = sky->get_sun_direction();
     directionalLight.color = float3(1.f, 0.0f, 0.0f);
-    directionalLight.amount = 0.1f;
+    directionalLight.amount = 1.0f;
 
-    pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.975f), float3(-6, 4, 0), 12.f });
-    pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.00f, 0.859f), float3(+6, 4, 0), 12.f });
+    pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.97f), float3(-5, 5, 0), 12.f });
+    pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.00f, 0.85f), float3(+5, 5, 0), 12.f });
 
     global_register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", false));
     global_register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", false));
     global_register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", false));
     global_register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", false));
 
-    pbrMaterial.reset(new MetallicRoughnessMaterial("pbr-ubershader"));
-    pbrMaterial->set_albedo_texture("rusted-iron-albedo");
-    pbrMaterial->set_normal_texture("rusted-iron-normal");
-    pbrMaterial->set_metallic_texture("rusted-iron-metallic");
-    pbrMaterial->set_roughness_texture("rusted-iron-roughness");
+
+    //Geometry icosphere = load_geometry_from_obj_no_texture("../assets/models/geometry/SphereUniform.obj")[0];
+    //for (auto & v : icosphere.vertices) v *= 0.01f;
 
     Geometry icosphere = make_icosasphere(5);
-    float step = ANVIL_TAU / 8;
-    for (int i = 0; i < 8; ++i)
+
+    for (int i = 0; i < 10; ++i)
     {
-        StaticMesh mesh;
-        mesh.set_static_mesh(icosphere);
+        for (int j = 0; j < 10; ++j)
+        {
+            std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
 
-        Pose p;
-        p.position = float3(std::sin(step * i) * 5.0f, 0, std::cos(step * i) * 5.0f);
-        mesh.set_pose(p);
+            pbrMaterial.reset(new MetallicRoughnessMaterial("pbr-ubershader"));
+            pbrMaterial->set_albedo_texture("rusted-iron-albedo");
+            pbrMaterial->set_normal_texture("rusted-iron-normal");
+            pbrMaterial->set_metallic_texture("rusted-iron-metallic");
+            pbrMaterial->set_roughness_texture("rusted-iron-roughness");
 
-        mesh.set_material(pbrMaterial.get()); // todo - assign default material
+            pbrMaterial->set_roughness(remap<float>(i, 0.0f, 9.0f, 0.0f, 1.f));
+            pbrMaterial->set_metallic(remap<float>(j, 0.0f, 9.0f, 0.0f, 1.f));
 
-        objects.push_back(std::move(mesh));
+            StaticMesh mesh;
+            mesh.set_static_mesh(icosphere);
+            Pose p;
+            p.position = float3((i * 2) - 10, 0, (j * 2) - 10);
+            mesh.set_pose(p);
+            mesh.set_material(pbrMaterial.get()); // todo - assign default material
+            objects.push_back(std::move(mesh));
+
+            materials.push_back(pbrMaterial);
+        }
     }
 
+    /*
     StaticMesh floorMesh;
     floorMesh.set_static_mesh(make_cube(), 1.0f);
     floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
     floorMesh.set_scale(float3(12, 0.1f, 12));
     floorMesh.set_material(pbrMaterial.get());
     objects.push_back(std::move(floorMesh));
+    */
 }
 
 scene_editor_app::~scene_editor_app()

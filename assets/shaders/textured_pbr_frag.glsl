@@ -3,6 +3,8 @@
 // http://www.trentreed.net/blog/physically-based-shading-and-image-based-lighting/
 // http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 // http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+// https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
+// http://www.frostbite.com/wp-content/uploads/2014/11/course_notes_moving_frostbite_to_pbr_v2.pdf
 
 #include "renderer_common.glsl"
 #include "colorspace_conversions.glsl"
@@ -34,7 +36,7 @@ uniform float u_specularLevel = 0.04;
 
 // Lighting & Shadowing Uniforms
 uniform float u_overshadowConstant = 100.0;
-uniform float u_pointLightAttenuation = 0.0052;
+uniform float u_pointLightAttenuation = 1.0;
 uniform sampler2DArray s_csmArray;
 
 out vec4 f_color;
@@ -96,9 +98,9 @@ vec3 env_brdf_approx(vec3 specularColor, float roughness, float NoV)
     return specularColor * AB.x + AB.y;
 }
 
-float shade_pbr(vec3 N, vec3 V, vec3 L, float metalness, float roughness, float F0) 
+float calculate_cook_torrance(vec3 N, vec3 V, vec3 L, float metalness, float roughness, float F0) 
 {
-    float alpha = roughness * roughness;
+    float alpha = max(u_specularLevel, roughness * roughness);
     float alphaSqr = alpha * alpha;
 
     vec3 H = normalize(V + L);
@@ -113,40 +115,48 @@ float shade_pbr(vec3 N, vec3 V, vec3 L, float metalness, float roughness, float 
     // Fresnel term
     float Fs = fresnel_schlick(NoV, F0);
 
-    // multiply Fs by the inverse metalness such that only non-metals 
+    // kS is equal to Fresnel
+    float kS = F0;
+
+    // for energy conservation, the diffuse and specular light can't
+    // be above 1.0 (unless the surface emits light); to preserve this
+    // relationship the diffuse component (kD) should equal 1.0 - kS.
+    float kD = 1.0 - kS;
+
+    // multiply kD by the inverse metalness such that only non-metals
     // have diffuse lighting, or a linear blend if partly metal (pure metals have no diffuse light).
-    //Fs *= 1.0 - metalness; 
+    kD *= 1.0 - metalness;
 
     // Geometry term is used for describing how much the microfacet is blocked by another microfacet
     float Vs = schlick_smith_visibility(NoL, NoV, alpha);
 
-    return Di * Fs * Vs;
+    return (Di * kD * Vs);
 }
 
-// http://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
+// https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
+// https://imdoingitwrong.wordpress.com/2011/02/10/improved-light-attenuation/
 float point_light_attenuation(vec3 L, float lightRadius)
 {
+    // Calculate distance from light source to point on plane.
     float dist = length(L);
-    float d = max(dist - lightRadius, 0);
+    float d = max(dist - lightRadius, 0.0);
     L /= dist;
-    float denom = d / lightRadius + 1.0f;
 
-    float attenuation = 1.0f / (denom * denom);
+    // Transform distance for smoother cutoff.
+    // Formula: d' = d / (1 - (d / dmax)^2)
+    float f = d / u_pointLightAttenuation;
 
-    // scale and bias attenuation such that:
-    //   attenuation == 0 at extent of max influence
-    //   attenuation == 1 when d == 0
-    attenuation = (attenuation - u_pointLightAttenuation) / (1.0 - u_pointLightAttenuation);
-    attenuation = max(attenuation, 0.0);
-
-    return attenuation;
+    // Calculate attenuation.
+    // Formula: att = 1 / (d' / r + 1)^2
+    f = d / lightRadius + 1.0;
+    return 1.0 / (f * f);
 }
 
 void main()
 {   
     // Surface properties
-    float roughness = sRGBToLinear(texture(s_roughness, v_texcoord), DEFAULT_GAMMA).r * clamp(u_roughness, u_specularLevel, 1.0);
-    float metallic = sRGBToLinear(texture(s_metallic, v_texcoord), DEFAULT_GAMMA).r * u_metallic;
+    float roughness = texture(s_roughness, v_texcoord).r * clamp(u_roughness, u_specularLevel, 1.0);
+    float metallic = texture(s_metallic, v_texcoord).r * u_metallic;
 
     // View direction
     vec3 V = normalize(u_eyePos.xyz - v_world_position);
@@ -154,7 +164,13 @@ void main()
     // Normal vector in worldspace
     vec3 N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
 
-    vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA) * (1 - metallic);
+    vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA); //* (1 - metallic);
+
+    // F0 (Fresnel reflection coefficient), otherwise known as specular reflectance. 
+    // 0.04 is the default for non-metals in UE.
+    // Calculate reflectance at normal incidence; if dialectric, use F0. 
+    // If metal, use albedo as F0 (metallic workflow) 
+    vec3 F0 = mix(vec3(u_specularLevel), albedo, u_metallic);
 
     vec3 diffuseContrib = vec3(0);
     vec3 specularContrib = vec3(0);
@@ -164,41 +180,37 @@ void main()
     float shadowTerm = calculate_csm_coefficient(s_csmArray, v_world_position, v_view_space_position, u_cascadesMatrix, u_cascadesPlane);
     float shadowVisibility = 1.0 - shadowTerm;
 
-/*
     // Compute directional light
     {
         vec3 L = normalize(u_directionalLight.direction);
         float NoL = saturate(dot(N, L));
 
-        vec3 F0 = mix(vec3(u_specularLevel), u_directionalLight.color, metallic);
-        vec3 specularColor = u_directionalLight.color * shade_pbr(N, V, L, metallic, roughness, F0.r);
+        vec3 Ks = u_directionalLight.color * calculate_cook_torrance(N, V, L, metallic, roughness, F0.r);
+        vec3 Kd = (NoL * (albedo / PI));
 
-        diffuseContrib += NoL * (u_directionalLight.color * u_directionalLight.amount) * albedo;
-        specularContrib += (specularColor * u_directionalLight.amount);
+        diffuseContrib +=  Kd * u_directionalLight.amount;
+        specularContrib += (Ks / PI) * u_directionalLight.amount;
     }
-*/
+
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
         vec3 L = normalize(u_pointLights[i].position - v_world_position); 
         float NoL = saturate(dot(N, L));
 
-        vec3 F0 = mix(vec3(u_specularLevel), u_pointLights[i].color, metallic);
-        vec3 specularColor = u_pointLights[i].color * shade_pbr(N, V, L, metallic, roughness, F0.r);
+        vec3 Ks = u_pointLights[i].color * calculate_cook_torrance(N, V, L, metallic, roughness, F0.r);
+        vec3 Kd = (NoL * (albedo / PI));
 
-        float attenuation = point_light_attenuation(L, u_pointLights[i].radius);
+        //float dist = length(u_pointLights[i].position - v_world_position);
+        //float attenuation = 1.0 / (dist * dist);
 
-        diffuseContrib += NoL * attenuation * u_pointLights[i].color * albedo;
-        specularContrib += (specularColor * attenuation);
+        float attenuation = point_light_attenuation(L, 1.0); // radius is [0, 1]
+
+        diffuseContrib += Kd * attenuation;
+        specularContrib += (Ks / PI) * attenuation;
     }
 
 #ifdef USE_IMAGE_BASED_LIGHTING
-    // F0 (Fresnel reflection coefficient), otherwise known as specular reflectance. 
-    // 0.04 is the default for non-metals in UE.
-    // Calculate reflectance at normal incidence; if dialectric, use F0. 
-    // If metal, use albedo as F0 (metallic workflow) 
-    vec3 F0 = mix(vec3(u_specularLevel), albedo, u_metallic);
-
     float roughness4 = pow(roughness, 4.0);
 
     // Compute image-based lighting

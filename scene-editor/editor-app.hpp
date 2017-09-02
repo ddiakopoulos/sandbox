@@ -140,7 +140,7 @@ struct scene_editor_app : public GLFWApp
     ShaderMonitor shaderMonitor { "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
 
-    std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
+    std::vector<std::shared_ptr<MetallicRoughnessMaterial>> materials;
 
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
     std::unique_ptr<editor_controller<GameObject>> editor;
