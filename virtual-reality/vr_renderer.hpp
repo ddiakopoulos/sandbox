@@ -313,10 +313,17 @@ public:
     void gather_imgui()
     {
         ImGui::Text("Render %f", renderTimer.elapsed_ms());
+
         ImGui::Checkbox("Render Shadows", &renderShadows);
+        if (renderShadows) shadow->gather_imgui(renderShadows);
+
         ImGui::Checkbox("Render Post", &renderPost);
-        ImGui::Checkbox("Render Bloom", &renderBloom);
-        bloom->gather_imgui(renderBloom);
+        if (renderPost)
+        {
+            ImGui::Checkbox("Render Bloom", &renderBloom);
+            if (renderBloom) bloom->gather_imgui(renderBloom);
+        }
+
     }
 
     void add_camera(const uint32_t idx, const CameraData data)

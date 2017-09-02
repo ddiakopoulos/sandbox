@@ -11,11 +11,12 @@
 #include "procedural_mesh.hpp"
 
 // http://developer.download.nvidia.com/SDK/10.5/opengl/src/cascaded_shadow_maps/doc/cascaded_shadow_maps.pdf
+// https://www.gamedev.net/forums/topic/497259-stable-cascaded-shadow-maps/
 
 /*
  * To Do - 3.25.2017
  * [ ] Set shadow map resolution at runtime (default 1024^2)
- * [ ] Set number of cascades used at compile time (default 4)
+ * [X] Set number of cascades used at compile time (default 4)
  * [ ] Configurable filtering modes (ESM, PCF, PCSS + PCF)
  * [ ] Experiment with Moment Shadow Maps
  * [ ] Frustum depth-split is a good candidate for compute shader experimentation (default far-near/4)
@@ -38,9 +39,13 @@ struct ShadowPass
     std::vector<float> nearPlanes;
     std::vector<float> farPlanes;
 
-    float resolution = 1024.0; // shadowmap resolution
-    float expCascade = 150.f;  // overshadowing constant
+    float resolution = 1024.f; // shadowmap resolution
     float splitLambda = 0.5f;  // frustum split constant
+    float nearOffset = 12.0f;
+    float farOffset = 24.0f;
+    bool stabilize = true;
+
+    // float expCascade = 150.f;  // overshadowing constant
 
     GlMesh fsQuad;
 
@@ -50,7 +55,7 @@ struct ShadowPass
     {
         fsQuad = make_fullscreen_quad();
 
-        shadowArrayDepth.setup(GL_TEXTURE_2D_ARRAY, resolution, resolution, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        shadowArrayDepth.setup(GL_TEXTURE_2D_ARRAY, resolution, resolution, uniforms::NUM_CASCADES, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         glNamedFramebufferTextureEXT(shadowArrayFramebuffer, GL_DEPTH_ATTACHMENT, shadowArrayDepth, 0);
         shadowArrayFramebuffer.check_complete();
 
@@ -71,7 +76,7 @@ struct ShadowPass
             // Find the split planes using GPU Gem 3. Chap 10 "Practical Split Scheme".
             // http://http.developer.nvidia.com/GPUGems3/gpugems3_ch10.html
 
-            float splitIdx = uniforms::NUM_CASCADES;
+            const float splitIdx = uniforms::NUM_CASCADES;
 
             const float splitNear = C > 0 ? mix(near + (static_cast<float>(C) / splitIdx) * (far - near),
                 near * pow(far / near, static_cast<float>(C) / splitIdx), splitLambda) : near;
@@ -122,10 +127,22 @@ struct ShadowPass
                 max = linalg::max(max, splitVerticesLightspace[j]);
             }
 
-            // Create an orthogonal projection matrix with the corners
-            const float nearOffset = 10.0f;
-            const float farOffset = 32.0f;
-            const float4x4 shadowProjectionMatrix = make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset);
+            float4x4 shadowProjectionMatrix = make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset);
+
+            if (stabilize)
+            {
+                // Create a rounding matrix by projecting the light-space origin and determining the fractional offset in texel space
+                float3 shadowOrigin = transform_coord(mul(shadowProjectionMatrix, splitViewMatrix), float3(0, 0, 0));
+                shadowOrigin *= (resolution * 0.5f);
+
+                float4 roundedOrigin = round(float4(shadowOrigin, 1));
+                float4 roundOffset = roundedOrigin - float4(shadowOrigin, 1);
+                roundOffset *= 2.0f / resolution;
+                roundOffset.z = 0;
+                roundOffset.w = 0;
+
+                shadowProjectionMatrix[3] += roundOffset;
+            }
 
             viewMatrices.push_back(splitViewMatrix);
             projMatrices.push_back(shadowProjectionMatrix);
@@ -135,6 +152,14 @@ struct ShadowPass
             farPlanes.push_back(-min.z + farOffset);
         }
 
+    }
+
+    void gather_imgui(const bool enabled)
+    {
+        if (!enabled) return;
+        ImGui::Checkbox("Stabilize", &stabilize);
+        ImGui::SliderFloat("Near Offset", &nearOffset, 0.0f, 128.0f);
+        ImGui::SliderFloat("Far Offset", &farOffset, 0.0f, 128.0f);
     }
 
     void pre_draw()

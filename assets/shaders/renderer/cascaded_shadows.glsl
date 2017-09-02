@@ -1,4 +1,4 @@
-#define TWO_CASCADES // include system doesn't handle defines in one include being used in another. hmm. 
+#define TWO_CASCADES // HACK HACK include system doesn't handle defines in one include being used in another. hmm. 
 
 #ifdef FOUR_CASCADES
 vec4 get_cascade_weights(float depth, vec4 splitNear, vec4 splitFar)
@@ -18,7 +18,7 @@ float get_cascade_layer(vec4 weights)
 
 vec3 get_cascade_weighted_color(vec4 weights) 
 {
-    return vec3(1,0,0) * weights.x +  vec3(0,1,0) * weights.y +  ec3(0,0,1) * weights.z + vec3(1,0,1) * weights.w;
+    return vec3(1,0,0) * weights.x + vec3(0,1,0) * weights.y + vec3(0,0,1) * weights.z + vec3(1,0,1) * weights.w;
 }
 #endif
 
@@ -40,7 +40,7 @@ float get_cascade_layer(vec2 weights)
 
 vec3 get_cascade_weighted_color(vec2 weights) 
 {
-    return vec3(1,0,0) * weights.x +  vec3(0,1,0) * weights.y;
+    return vec3(1,0,0) * weights.x + vec3(0,1,0) * weights.y;
 }
 #endif
 
@@ -78,6 +78,7 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
     float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
     shadowTerm = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
+    /*
     // Percentage-closer filtering
     vec2 texelSize = 1.0 / textureSize(map, 0).xy;
     for (int x = -1; x <= 1; ++x)
@@ -89,14 +90,17 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
         }
     }
     shadowTerm /= 9.0;
+    */
 
     weightedColor = get_cascade_weighted_color(weights);
+
     /*
     // Exponential Shadow Filtering
+    const float overshadowConstant = 140;
     float depth = (coords.z + bias);
     float occluderDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
-    float occluder = exp(u_overshadowConstant * occluderDepth);
-    float receiver = exp(-u_overshadowConstant * depth);
+    float occluder = exp(overshadowConstant * occluderDepth);
+    float receiver = exp(-overshadowConstant * depth);
     shadowTerm = 1.0 - clamp(occluder * receiver, 0.0, 1.0);
     */
 

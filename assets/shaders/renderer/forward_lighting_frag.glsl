@@ -34,9 +34,9 @@ uniform samplerCube sc_irradiance;
 
 // Dielectrics have an F0 between 0.2 - 0.5, often exposed as the "specular level" parameter
 uniform float u_specularLevel = 0.04;
+uniform vec3 u_albedo = vec3(1);
 
 // Lighting & Shadowing Uniforms
-uniform float u_overshadowConstant = 100.0;
 uniform float u_pointLightAttenuation = 1.0;
 uniform sampler2DArray s_csmArray;
 
@@ -153,8 +153,27 @@ vec3 env_brdf_approx(vec3 specularColor, float roughness, float NoV)
 void main()
 {   
     // Surface properties
-    float roughness = texture(s_roughness, v_texcoord).r * clamp(u_roughness, u_specularLevel, 1.0);
-    float metallic = clamp(texture(s_metallic, v_texcoord).r * u_metallic,  0.0, 1.0);
+    vec3 albedo = u_albedo;
+    vec3 N = v_normal;
+
+    float roughness = clamp(u_roughness, u_specularLevel, 1.0);
+    float metallic = u_metallic;
+
+    #ifdef HAS_ROUGHNESS_MAP
+    roughness *= sRGBToLineartexture(s_roughness, v_texcoord).r, DEFAULT_GAMMA);
+    #endif
+
+    #ifdef HAS_METALNESS_MAP
+    metallic *= sRGBToLinear(texture(s_metallic, v_texcoord).r, DEFAULT_GAMMA);
+    #endif
+
+    #ifdef HAS_ALBEDO_MAP
+    albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA) * u_albedo; 
+    #endif
+
+    #ifdef HAS_NORMAL_MAP
+    N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
+    #endif
 
     // Roughness is authored as perceptual roughness; as is convention,
     // convert to material roughness by squaring the perceptual roughness [2].
@@ -162,13 +181,9 @@ void main()
 
     // View direction
     vec3 V = normalize(u_eyePos.xyz - v_world_position);
-
-    // Normal vector in worldspace
-    vec3 N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
-
     float NdotV = abs(dot(N, V)) + 0.001;
 
-    vec3 albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA); // * baseColor
+    // vec3 reflection = -normalize(reflect(V, N));
 
     vec3 F0 = vec3(u_specularLevel);
     vec3 diffuseColor = albedo * (vec3(1.0) - F0);
@@ -223,8 +238,6 @@ void main()
         float NdotH = clamp(dot(N, H), 0.0, 1.0);
         float LdotH = clamp(dot(L, H), 0.0, 1.0);
         float VdotH = clamp(dot(V, H), 0.0, 1.0);
-
-        // vec3 reflection = -normalize(reflect(V, N));
 
         LightingInfo data = LightingInfo(
             NdotL, NdotV, NdotH, LdotH, VdotH,
