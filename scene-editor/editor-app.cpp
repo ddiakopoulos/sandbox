@@ -59,9 +59,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
     global_register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
 
-    //Geometry icosphere = load_geometry_from_obj_no_texture("../assets/models/geometry/SphereUniform.obj")[0];
-    //for (auto & v : icosphere.vertices) v *= 0.01f;
-
     Geometry icosphere = make_icosasphere(5);
 
     for (int i = 0; i < 10; ++i)

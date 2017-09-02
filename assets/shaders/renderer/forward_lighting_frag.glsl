@@ -5,6 +5,7 @@
 // http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
 // https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
 // http://www.frostbite.com/wp-content/uploads/2014/11/course_notes_moving_frostbite_to_pbr_v2.pdf
+// https://github.com/KhronosGroup/glTF-WebGL-PBR/blob/master/shaders/pbr-frag.glsl
 
 #include "renderer_common.glsl"
 #include "colorspace_conversions.glsl"
@@ -41,7 +42,7 @@ uniform sampler2DArray s_csmArray;
 
 out vec4 f_color;
 
-struct MaterialInfo
+struct LightingInfo
 {
     float NdotL;                  // cos angle between normal and light direction
     float NdotV;                  // cos angle between normal and view direction
@@ -86,7 +87,7 @@ vec3 blend_normals(vec3 geometric, vec3 detail)
 
 // The following equation models the Fresnel reflectance term of the spec equation (aka F())
 // Implementation of fresnel from [4], Equation 15
-vec3 specular_reflection(MaterialInfo data)
+vec3 specular_reflection(LightingInfo data)
 {
     return data.reflectance0 + (data.reflectance90 - data.reflectance0) * pow(clamp(1.0 - data.VdotH, 0.0, 1.0), 5.0);
 }
@@ -95,7 +96,7 @@ vec3 specular_reflection(MaterialInfo data)
 // where rougher material will reflect less light back to the viewer.
 // This implementation is based on [1] Equation 4, and we adopt their modifications to
 // alphaRoughness as input as originally proposed in [2].
-float geometric_occlusion(MaterialInfo data)
+float geometric_occlusion(LightingInfo data)
 {
     float NdotL = data.NdotL;
     float NdotV = data.NdotV;
@@ -106,14 +107,25 @@ float geometric_occlusion(MaterialInfo data)
     return attenuationL * attenuationV;
 }
 
-// The following equation(s) model the distribution of microfacet normals across the area being drawn (aka D())
 // Implementation from "Average Irregularity Representation of a Roughened Surface for Ray Reflection" by T. S. Trowbridge, and K. P. Reitz
-// Follows the distribution function recommended in the SIGGRAPH 2013 course notes from EPIC Games [1], Equation 3.
-float microfacet_distribution(MaterialInfo data)
+// Follows the distribution function recommended in the SIGGRAPH 2013 course notes from Epic
+// http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+float microfacet_distribution(LightingInfo data)
 {
     float roughnessSq = data.alphaRoughness * data.alphaRoughness;
     float f = (data.NdotH * roughnessSq - data.NdotH) * data.NdotH + 1.0;
     return roughnessSq / (PI * f * f);
+}
+
+void compute_cook_torrance(LightingInfo data, float attenuation, out vec3 diffuseContribution, out vec3 specularContribution)
+{
+    const vec3 F = specular_reflection(data);
+    const float G = geometric_occlusion(data);
+    const float D = microfacet_distribution(data);
+
+    // Calculation of analytical lighting contribution
+    diffuseContribution = ((1.0 - F) * (data.diffuseColor / PI)) * attenuation; 
+    specularContribution = ((F * G * D) / ((4.0 * data.NdotL * data.NdotV) + 0.001)) * attenuation;
 }
 
 // http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
@@ -188,20 +200,15 @@ void main()
         float LdotH = clamp(dot(L, H), 0.0, 1.0);
         float VdotH = clamp(dot(V, H), 0.0, 1.0);
 
-        MaterialInfo data = MaterialInfo(
+        LightingInfo data = LightingInfo(
             NdotL, NdotV, NdotH, LdotH, VdotH,
             roughness, metallic, specularEnvironmentR0, specularEnvironmentR90, alphaRoughness,
             diffuseColor, specularColor
         );
 
-        // Calculate the shading terms for the microfacet specular shading model
-        vec3 F = specular_reflection(data);
-        float G = geometric_occlusion(data);
-        float D = microfacet_distribution(data);
+        vec3 diffuseContrib, specContrib;
+        compute_cook_torrance(data,  u_directionalLight.amount, diffuseContrib, specContrib);
 
-        // Calculation of analytical lighting contribution
-        vec3 diffuseContrib = ((1.0 - F) * (diffuseColor / PI)) * u_directionalLight.amount;
-        vec3 specContrib = ((F * G * D) / ((4.0 * NdotL * NdotV) + 0.001)) * u_directionalLight.amount;
         Lo += NdotL * (diffuseContrib + specContrib);
     }
 
@@ -218,7 +225,7 @@ void main()
 
         // vec3 reflection = -normalize(reflect(V, N));
 
-        MaterialInfo data = MaterialInfo(
+        LightingInfo data = LightingInfo(
             NdotL, NdotV, NdotH, LdotH, VdotH,
             roughness, metallic, specularEnvironmentR0, specularEnvironmentR90, alphaRoughness,
             diffuseColor, specularColor
@@ -231,9 +238,9 @@ void main()
 
         float attenuation = point_light_attenuation(L, 1.0);
 
-        // Calculation of analytical lighting contribution
-        vec3 diffuseContrib = ((1.0 - F) * (diffuseColor / PI)) * attenuation;
-        vec3 specContrib = ((F * G * D) / ((4.0 * NdotL * NdotV) + 0.001)) * attenuation;
+        vec3 diffuseContrib, specContrib;
+        compute_cook_torrance(data, attenuation, diffuseContrib, specContrib);
+
         Lo += NdotL * u_pointLights[i].color * (diffuseContrib + specContrib);
     }
 
