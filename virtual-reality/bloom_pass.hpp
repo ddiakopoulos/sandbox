@@ -108,7 +108,7 @@ struct BloomPass
         glDeleteProgramPipelines(GLsizei(1), pipelines);
     }
 
-    void execute(const GlTexture2D & sceneColorTex)
+    void execute(GlTexture2D & sceneColorTex)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, luminance[0]); // 128x128 surface area - calculate luminance 
         glViewport(0, 0, 128, 128);
@@ -133,7 +133,11 @@ struct BloomPass
             for (auto target : downsampleTargets) downsample(target.x, float2(target.y, target.z));
 
             glBindProgramPipeline(0);
+
+            hdr_avgLumShader.unbind();
         }
+
+        hdr_lumShader.unbind();
 
         // Readback luminance value
         glActiveTexture(GL_TEXTURE0);
@@ -161,6 +165,7 @@ struct BloomPass
         hdr_brightShader.uniform("u_tonemap", tonemap);
         hdr_brightShader.uniform("u_modelViewProj", Identity4x4);
         fsQuad.draw_elements();
+        hdr_brightShader.unbind();
 
         static int dx = 0;
 

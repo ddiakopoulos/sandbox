@@ -133,7 +133,7 @@ namespace avl
                 const std::string & f, 
                 const std::string & g = "", 
                 const std::string & inc = "", 
-                const std::vector<std::string> & defines = {}) : vertexPath(v), fragmentPath(f), geomPath(g), includePath(inc), defines(defines)
+                const std::vector<std::string> def = {}) : vertexPath(v), fragmentPath(f), geomPath(g), includePath(inc), defines(def)
             { 
 
             };
@@ -217,6 +217,15 @@ namespace avl
             fileWatcher->watch();
         }
 
+        // Call this regularly on the gl thread
+        void handle_recompile()
+        {
+            for (auto & shader : assets)
+            {
+                if (shader.shouldRecompile) shader.recompile();
+            }
+        }
+
         // Watch vertex, fragment, and geometry
         void watch(
             const std::string & vertexShader,
@@ -269,18 +278,6 @@ namespace avl
             asset.onModified = callback;
             asset.recompile();
             assets.push_back(std::move(asset));
-        }
-
-        // Call this regularly on the gl thread
-        void handle_recompile()
-        {
-            for (auto & shader : assets)
-            {
-                if (shader.shouldRecompile)
-                {
-                    shader.recompile();
-                }
-            }
         }
 
     };

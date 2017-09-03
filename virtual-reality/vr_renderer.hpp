@@ -54,10 +54,10 @@ struct RenderLightingData
 
 struct RenderPassData
 {
-    const uint32_t & eye;
+    const uint32_t eye;
     const CameraData & data;
     const ShadowData & shadow;
-    RenderPassData(const uint32_t & eye, const CameraData & data, const ShadowData & shadowData) : eye(eye), data(data), shadow(shadowData) {}
+    RenderPassData(const uint32_t eye, const CameraData & data, const ShadowData & shadowData) : eye(eye), data(data), shadow(shadowData) {}
 };
 
 template<uint32_t NumEyes>
@@ -166,7 +166,10 @@ class PhysicallyBasedRenderer
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
 
-        if (renderBloom) run_bloom_pass(d);
+        if (renderBloom)
+        {
+            run_bloom_pass(d);
+        }
 
         if (wasCullingEnabled) glEnable(GL_CULL_FACE);
         if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
@@ -182,7 +185,7 @@ public:
 
     std::unique_ptr<SkyboxPass> skybox;
     std::unique_ptr<BloomPass> bloom;
-    std::unique_ptr<ShadowPass> shadow;
+    std::unique_ptr<StableCascadedShadowPass> shadow;
 
     PhysicallyBasedRenderer(const float2 render_target_size) : renderSizePerEye(render_target_size)
     {
@@ -210,7 +213,7 @@ public:
         }
 
         skybox.reset(new SkyboxPass());
-        shadow.reset(new ShadowPass());
+        shadow.reset(new StableCascadedShadowPass());
         bloom.reset(new BloomPass(renderSizePerEye));
 
         timer.start();
@@ -306,7 +309,6 @@ public:
         glDisable(GL_FRAMEBUFFER_SRGB);
 
         renderTimer.stop();
-
         renderSet.clear();
     }
 
@@ -344,7 +346,7 @@ public:
         else return nullptr;
     }
 
-    ShadowPass * get_shadow_pass() const
+    StableCascadedShadowPass * get_shadow_pass() const
     {
         if (shadow) return shadow.get();
     }

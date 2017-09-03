@@ -35,7 +35,7 @@ uniform samplerCube sc_irradiance;
 // Dielectrics have an F0 between 0.2 - 0.5, often exposed as the "specular level" parameter
 uniform float u_specularLevel = 0.04;
 uniform vec3 u_albedo = vec3(1);
-uniform float u_shadowOpacity = 0.66;
+uniform float u_shadowOpacity = 0.88;
 
 // Lighting & Shadowing Uniforms
 uniform float u_pointLightAttenuation = 1.0;
@@ -160,21 +160,21 @@ void main()
     float roughness = clamp(u_roughness, u_specularLevel, 1.0);
     float metallic = u_metallic;
 
-    #ifdef HAS_ROUGHNESS_MAP
-    roughness *= sRGBToLineartexture(s_roughness, v_texcoord).r, DEFAULT_GAMMA);
-    #endif
+#ifdef HAS_ROUGHNESS_MAP
+    roughness *= texture(s_roughness, v_texcoord).r;
+#endif
 
-    #ifdef HAS_METALNESS_MAP
-    metallic *= sRGBToLinear(texture(s_metallic, v_texcoord).r, DEFAULT_GAMMA);
-    #endif
+ #ifdef HAS_METALNESS_MAP
+    metallic *= texture(s_metallic, v_texcoord).r;
+#endif
 
-    #ifdef HAS_ALBEDO_MAP
+#ifdef HAS_ALBEDO_MAP
     albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA) * u_albedo; 
-    #endif
+#endif
 
-    #ifdef HAS_NORMAL_MAP
+#ifdef HAS_NORMAL_MAP
     N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
-    #endif
+#endif
 
     // Roughness is authored as perceptual roughness; as is convention,
     // convert to material roughness by squaring the perceptual roughness [2].
@@ -254,7 +254,7 @@ void main()
         Lo += NdotL * u_pointLights[i].color * (diffuseContrib + specContrib);
     }
 
-//#ifdef USE_IMAGE_BASED_LIGHTING
+    #ifdef USE_IMAGE_BASED_LIGHTING
     {
         // Compute image-based lighting
         const int NUM_MIP_LEVELS = 6;
@@ -271,7 +271,7 @@ void main()
 
         Lo += (iblDiffuse + iblSpecular);
     }
-//#endif
+    #endif
 
     // Combine direct lighting, IBL, and shadow visbility
     // vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * (shadowVisibility);

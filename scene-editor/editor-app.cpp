@@ -28,21 +28,17 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("wireframe", std::move(wireframeProgram));
 
      // USE_IMAGE_BASED_LIGHTING
-    shaderMonitor.watch("../assets/shaders/renderer/forward_lighting_vert.glsl", "../assets/shaders/renderer/forward_lighting_frag.glsl", "../assets/shaders/renderer", {}, [](GlShader shader)
+    shaderMonitor.watch(
+        "../assets/shaders/renderer/forward_lighting_vert.glsl", 
+        "../assets/shaders/renderer/forward_lighting_frag.glsl", 
+        "../assets/shaders/renderer", 
+        {"TWO_CASCADES", "USE_IMAGE_BASED_LIGHTING", "HAS_ROUGHNESS_MAP", "HAS_METALNESS_MAP", "HAS_ALBEDO_MAP", "HAS_NORMAL_MAP"}, [](GlShader shader)
     {
         auto & asset = AssetHandle<GlShader>("pbr-forward-lighting").assign(std::move(shader));
         /*
         auto reflectedUniforms = asset.reflect();
         for (auto & u : reflectedUniforms) std::cout << u.first << " - " << u.second << std::endl;
         */
-    });
-
-    shaderMonitor.watch(
-        "../assets/shaders/renderer/forward_lighting_vert.glsl", 
-        "../assets/shaders/renderer/forward_lighting_frag.glsl", 
-        "../assets/shaders/renderer", { "TWO_CASCADES" },
-        [](GlShader shader) {
-        auto & asset = AssetHandle<GlShader>("pbr-forward-lighting").assign(std::move(shader));
     });
 
     shaderMonitor.watch(

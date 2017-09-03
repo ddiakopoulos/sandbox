@@ -7,6 +7,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <fstream>
 
 namespace
 {
@@ -280,7 +281,15 @@ public:
 
     GlShader(const std::string & vert, const std::string & frag, const std::string & geom = "")
     {
+
+
         program = glCreateProgram();
+
+        std::cout << "program: " << int(program) << std::endl;
+        std::ofstream out("FRAGMENT-OUT" + std::to_string((int) program) + ".txt");
+        out << frag;
+        out.close();
+        std::cout << frag << std::endl;
 
         glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_FALSE);
 

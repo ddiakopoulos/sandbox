@@ -30,7 +30,7 @@
 
 using namespace avl;
 
-struct ShadowPass
+struct StableCascadedShadowPass
 {
     GlTexture3D shadowArrayDepth;
     GlFramebuffer shadowArrayFramebuffer;
@@ -55,7 +55,7 @@ struct ShadowPass
 
     GlShaderHandle program;
 
-    ShadowPass()
+    StableCascadedShadowPass()
     {
         fsQuad = make_fullscreen_quad();
 
