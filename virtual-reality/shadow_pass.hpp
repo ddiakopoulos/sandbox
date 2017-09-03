@@ -12,6 +12,9 @@
 
 // http://developer.download.nvidia.com/SDK/10.5/opengl/src/cascaded_shadow_maps/doc/cascaded_shadow_maps.pdf
 // https://www.gamedev.net/forums/topic/497259-stable-cascaded-shadow-maps/
+// https://github.com/jklarowicz/dx11_samples/blob/master/VarianceShadows11/VarianceShadowsManager.cpp
+// https://github.com/TheRealMJP/Shadows/blob/master/Shadows/MeshRenderer.cpp
+// http://the-witness.net/news/2010/03/graphics-tech-shadow-maps-part-1/
 
 /*
  * To Do - 3.25.2017
@@ -108,8 +111,8 @@ struct ShadowPass
             frustumCentroid /= 8.0f;
 
             const float dist = std::max(splitFar - splitNear, distance(splitFrustumVerts[5], splitFrustumVerts[6]));
-            const Pose cascadePose = look_at_pose_lh(frustumCentroid + (-lightDir * dist), frustumCentroid); // note the flip on the light dir here
-            const float4x4 splitViewMatrix = make_view_matrix_from_pose(cascadePose);
+            Pose cascadePose = look_at_pose_lh(frustumCentroid + (-lightDir * dist), frustumCentroid); // note the flip on the light dir here
+            float4x4 splitViewMatrix = make_view_matrix_from_pose(cascadePose);
 
             // Transform split vertices to the light view space
             float4 splitVerticesLightspace[8];
@@ -127,8 +130,44 @@ struct ShadowPass
                 max = linalg::max(max, splitVerticesLightspace[j]);
             }
 
-            float4x4 shadowProjectionMatrix = make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset);
+            float3 minExtents;
+            float3 maxExtents;
 
+            if (stabilize)
+            {
+                // Calculate the radius of a bounding sphere surrounding the frustum corners in worldspace
+                float sphereRadius = 0.0f;
+                for (int i = 0; i < 8; ++i)
+                {
+                    float dist = length(splitFrustumVerts[i].xyz() - frustumCentroid);
+                    sphereRadius = std::max(sphereRadius, dist);
+                }
+
+                sphereRadius = std::ceil(sphereRadius * 16.0f) / 16.0f;
+
+                maxExtents = float3(sphereRadius, sphereRadius, sphereRadius);
+                minExtents = -maxExtents;
+            }
+
+            cascadePose = look_at_pose_lh(frustumCentroid + (-lightDir) * minExtents.z, frustumCentroid); // note the flip on the light dir here. LH?
+            splitViewMatrix = make_view_matrix_from_pose(cascadePose); 
+
+            float3 cascadeExtents = maxExtents - minExtents;
+
+            minExtents = transform_coord(splitViewMatrix, minExtents);
+            maxExtents = transform_coord(splitViewMatrix, maxExtents);
+            cascadeExtents = transform_coord(splitViewMatrix, cascadeExtents);
+
+            std::cout << "Min Real:    " << make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset) << std::endl;
+            std::cout << "Min Extents: " << make_orthographic_matrix(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0, cascadeExtents.z) << std::endl;
+            float4x4 shadowProjectionMatrix;
+            
+            if (stabilize)
+                shadowProjectionMatrix = make_orthographic_matrix(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0, cascadeExtents.z);
+            else
+                shadowProjectionMatrix = make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset);
+
+            // Because of the tight-fit, the shimmering shadow edges will still exist when the camera rotates
             if (stabilize)
             {
                 // Create a rounding matrix by projecting the light-space origin and determining the fractional offset in texel space
@@ -148,8 +187,8 @@ struct ShadowPass
             projMatrices.push_back(shadowProjectionMatrix);
             shadowMatrices.push_back(mul(shadowProjectionMatrix, splitViewMatrix));
             splitPlanes.push_back(float2(splitNear, splitFar));
-            nearPlanes.push_back(-max.z - nearOffset);
-            farPlanes.push_back(-min.z + farOffset);
+            nearPlanes.push_back(-maxExtents.z);
+            farPlanes.push_back(-minExtents.z);
         }
 
     }
