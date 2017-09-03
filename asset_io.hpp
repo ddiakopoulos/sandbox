@@ -34,6 +34,7 @@ inline GlTexture2D load_image(const std::string & path, bool flip = false)
     GlTexture2D tex;
     switch (nBytes)
     {
+        case 1: tex.setup(width, height, GL_RED, GL_RED, GL_UNSIGNED_BYTE, data, true); break;
         case 3: tex.setup(width, height, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, data, true); break;
         case 4: tex.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, data, true); break;
         default: throw std::runtime_error("unsupported number of channels");

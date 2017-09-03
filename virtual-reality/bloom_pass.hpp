@@ -222,13 +222,20 @@ struct BloomPass
     {   
         if (!enabled) return;
 
-        ImGui::SliderFloat("MiddleGrey", &middleGrey, 0.1f, 1.0f);
-        ImGui::SliderFloat("WhitePoint", &whitePoint, 0.1f, 2.0f);
-        ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
-        ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
+        if (ImGui::TreeNode("Tonemapping"))
+        {
+            ImGui::SliderFloat("MiddleGrey", &middleGrey, 0.1f, 1.0f);
+            ImGui::SliderFloat("WhitePoint", &whitePoint, 0.1f, 2.0f);
+            ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
+            ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
+        }
 
-        ImGui::SliderFloat("Blur Sigma", &blurSigma, 2.0f, 6.0f);
-        ImGui::SliderInt("Blur Pixels Per Size", &blurPixelsPerSide, 2, 6);
+        if (ImGui::TreeNode("Blur")) 
+        {
+            ImGui::SliderFloat("Blur Sigma", &blurSigma, 2.0f, 6.0f);
+            ImGui::SliderInt("Blur Size", &blurPixelsPerSide, 2, 6);
+        }
+
     }
 
     GLuint get_output_texture() const { return outputFramebuffer.id(); }

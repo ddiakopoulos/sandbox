@@ -443,7 +443,7 @@ namespace tinygizmo
         minalg::float3      detransform_vector(const minalg::float3 & vec) const { return qrot(qinv(orientation), vec) / scale; }
     };
 
-    inline bool operator != (const rigid_transform & a, const rigid_transform & b) { return (a.position != b.position) || (a.orientation != b.orientation); }
+    inline bool operator != (const rigid_transform & a, const rigid_transform & b) { return (a.position != b.position) || (a.orientation != b.orientation) || a.scale != b.scale; }
 
     struct camera_parameters
     {

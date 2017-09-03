@@ -10,6 +10,7 @@
 #include "procedural_mesh.hpp"
 #include "simple_timer.hpp"
 #include "uniforms.hpp"
+#include "circular_buffer.hpp"
 #include "debug_line_renderer.hpp" 
 
 #include "gl-scene.hpp"
@@ -23,27 +24,12 @@
 
 using namespace avl;
 
-struct SkyboxPass
-{
-    HosekProceduralSky skybox;
-    void execute(const float3 & eye, const float4x4 & viewProj, const float farClip)
-    {
-        skybox.render(viewProj, eye, farClip);
-    }
-};
-
 struct CameraData
 {
     Pose pose;
     float4x4 viewMatrix;
     float4x4 projectionMatrix;
     float4x4 viewProjMatrix;
-};
-
-struct ShadowData
-{
-    GLuint csmArrayHandle;
-    float3 directionalLight;
 };
 
 struct RenderLightingData
@@ -55,9 +41,8 @@ struct RenderLightingData
 struct RenderPassData
 {
     const uint32_t eye;
-    const CameraData & data;
-    const ShadowData & shadow;
-    RenderPassData(const uint32_t eye, const CameraData & data, const ShadowData & shadowData) : eye(eye), data(data), shadow(shadowData) {}
+    const CameraData data;
+    RenderPassData(const uint32_t eye, const CameraData & data) : eye(eye), data(data) {}
 };
 
 template<uint32_t NumEyes>
@@ -67,7 +52,16 @@ class PhysicallyBasedRenderer
     RenderLightingData lights;
 
     float2 renderSizePerEye;
-    GlGpuTimer renderTimer;
+
+    GlGpuTimer forwardTimer;
+    GlGpuTimer shadowTimer;
+    GlGpuTimer postTimer;
+
+    CircularBuffer<float> forwardAverage = { 3 };
+    CircularBuffer<float> shadowAverage = { 3 };
+    CircularBuffer<float> postAverage = { 3 };
+    CircularBuffer<float> frameAverage = { 3 };
+
     SimpleTimer timer;
 
     GlBuffer perScene;
@@ -87,10 +81,13 @@ class PhysicallyBasedRenderer
     bool renderShadows{ true };
     bool renderBloom{ true };
 
+    ProceduralSky * skybox{ nullptr };
+
     void run_skybox_pass(const RenderPassData & d)
-    {
+    {   
+        if (!skybox) return;
         glDisable(GL_DEPTH_TEST);
-        skybox->execute(d.data.pose.position, d.data.viewProjMatrix, near_far_clip_from_projection(d.data.projectionMatrix).y);
+        skybox->render(d.data.viewProjMatrix, d.data.pose.position, near_far_clip_from_projection(d.data.projectionMatrix).y);
         glDisable(GL_DEPTH_TEST);
     }
 
@@ -103,7 +100,7 @@ class PhysicallyBasedRenderer
             nearFarClip.y,
             aspect_from_projection(d.data.projectionMatrix),
             vfov_from_projection(d.data.projectionMatrix),
-            d.shadow.directionalLight);
+            lights.directionalLight->direction);
 
         shadow->pre_draw();
 
@@ -111,7 +108,7 @@ class PhysicallyBasedRenderer
         {
             if (obj->get_cast_shadow())
             {
-                const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
+                float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
                 shadow->program.get().uniform("u_modelShadowMatrix", modelMatrix);
                 obj->draw();
             }
@@ -124,7 +121,7 @@ class PhysicallyBasedRenderer
     {
         glEnable(GL_DEPTH_TEST);
 
-        // fixme - this is done per-eye but should be done per frame instead
+        // todo - this is done per-eye but should be done per frame instead
         auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
         {
             auto lid = lhs->get_material()->id();
@@ -156,6 +153,11 @@ class PhysicallyBasedRenderer
             object.modelViewMatrix = mul(d.data.viewMatrix, object.modelMatrix);
             object.receiveShadow = top->get_receive_shadow();
             perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
+
+            if (auto * mr = dynamic_cast<MetallicRoughnessMaterial*>(mat))
+            {
+                mr->update_cascaded_shadow_array_handle(shadow->get_output_texture());
+            }
 
             mat->use();
             top->draw();
@@ -197,7 +199,6 @@ class PhysicallyBasedRenderer
 
 public:
 
-    std::unique_ptr<SkyboxPass> skybox;
     std::unique_ptr<BloomPass> bloom;
     std::unique_ptr<StableCascadedShadowPass> shadow;
 
@@ -226,7 +227,6 @@ public:
             eyeFramebuffers[eyeIndex].check_complete();
         }
 
-        skybox.reset(new SkyboxPass());
         shadow.reset(new StableCascadedShadowPass());
         bloom.reset(new BloomPass(renderSizePerEye));
 
@@ -264,13 +264,25 @@ public:
 
         GLfloat defaultColor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
         GLfloat defaultDepth = 1.f;
+    
+        shadowTimer.start();
 
-        // Fixme: center eye
-        const ShadowData d{ shadow->get_output_texture(), lights.directionalLight->direction };
-        const RenderPassData shadowPassData(0, cameras[0], d);
         if (renderShadows)
         {
-            run_shadow_pass(shadowPassData);
+            // Default to the first camera
+            CameraData shadowCamera = cameras[0];
+
+            // In VR, we create a virtual camera in between both eyes.
+            if (NumEyes == 2)
+            {
+                // Average the positions and re-generate the relevant matrices
+                const float3 centerPosition = (cameras[0].pose.position + cameras[1].pose.position) * 0.5f;
+                shadowCamera.pose.position = centerPosition;
+                shadowCamera.viewMatrix = make_view_matrix_from_pose(shadowCamera.pose);
+                shadowCamera.viewProjMatrix = mul(shadowCamera.projectionMatrix, shadowCamera.viewMatrix);
+            }
+
+            run_shadow_pass({ 0, shadowCamera });
 
             for (int c = 0; c < uniforms::NUM_CASCADES; c++)
             {
@@ -281,9 +293,13 @@ public:
             }
         }
 
+        shadowTimer.stop();
+
+        forwardTimer.start();
+
+        // Per-scene can be uploaded now that the shadow pass has completed
         perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
 
-        renderTimer.start();
         for (int eyeIdx = 0; eyeIdx < NumEyes; ++eyeIdx)
         {
             // Update per-view uniform buffer
@@ -297,7 +313,7 @@ public:
             cameras[eyeIdx].viewMatrix = v.view;
             cameras[eyeIdx].viewProjMatrix = v.viewProj;
 
-            const RenderPassData renderPassData(eyeIdx, cameras[eyeIdx], d);
+            const RenderPassData renderPassData(eyeIdx, cameras[eyeIdx]);
 
             // Render into 4x multisampled fbo
             glEnable(GL_MULTISAMPLE);
@@ -315,32 +331,61 @@ public:
             // Resolve multisample into per-eye textures
             glBlitNamedFramebuffer(multisampleFramebuffer, eyeTextures[eyeIdx], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
-            // Execute the post passes after having resolved the multisample framebuffers
-            run_post_pass(renderPassData);
-
             gl_check_error(__FILE__, __LINE__);
         }
 
+        forwardTimer.stop();
+
+        postTimer.start();
+
+        // Execute the post passes after having resolved the multisample framebuffers
+        for (int eyeIdx = 0; eyeIdx < NumEyes; ++eyeIdx)
+        {
+            const RenderPassData renderPassData(eyeIdx, cameras[eyeIdx]);
+            run_post_pass(renderPassData);
+        }
+
+        postTimer.stop();
+
         glDisable(GL_FRAMEBUFFER_SRGB);
 
-        renderTimer.stop();
         renderSet.clear();
     }
 
     void gather_imgui()
     {
-        ImGui::Text("Render %f", renderTimer.elapsed_ms());
+        float shadowMs = shadowTimer.elapsed_ms();
+        float forwardMs = forwardTimer.elapsed_ms();
+        float postMs = postTimer.elapsed_ms();
 
-        ImGui::Checkbox("Render Shadows", &renderShadows);
-        if (renderShadows) shadow->gather_imgui(renderShadows);
+        forwardAverage.put(forwardMs);
+        shadowAverage.put(shadowMs);
+        postAverage.put(postMs);
+        frameAverage.put(shadowMs + forwardMs + postMs);
 
-        ImGui::Checkbox("Render Post", &renderPost);
-        if (renderPost)
+        ImGui::Text("Shadow  %f ms", compute_mean(shadowAverage));
+        ImGui::Text("Forward %f ms", compute_mean(forwardAverage));
+        ImGui::Text("Post    %f ms", compute_mean(postAverage));
+        ImGui::Text("Frame   %f ms", compute_mean(frameAverage));
+
+        if (ImGui::CollapsingHeader("Cascaded Shadow Mapping"))
         {
-            ImGui::Checkbox("Render Bloom", &renderBloom);
-            if (renderBloom) bloom->gather_imgui(renderBloom);
+            ImGui::Checkbox("Render Shadows", &renderShadows);
+            if (renderShadows) shadow->gather_imgui(renderShadows);
         }
 
+        if (ImGui::CollapsingHeader("Post Processing"))
+        {
+            ImGui::Checkbox("Render Post", &renderPost);
+            if (renderPost)
+            {
+                if (ImGui::CollapsingHeader("Bloom"))
+                {
+                    ImGui::Checkbox("Render Bloom", &renderBloom);
+                    if (renderBloom) bloom->gather_imgui(renderBloom);
+                }
+            }
+        }
     }
 
     void add_camera(const uint32_t idx, const CameraData data)
@@ -355,9 +400,14 @@ public:
         return outputTextureHandles[idx]; 
     }
 
+    void set_procedural_sky(ProceduralSky * sky)
+    {
+        skybox = sky;
+    }
+
     ProceduralSky * get_procedural_sky() const
     {
-        if (skybox) return static_cast<ProceduralSky *>(&skybox->skybox);
+        if (skybox) return skybox;
         else return nullptr;
     }
 

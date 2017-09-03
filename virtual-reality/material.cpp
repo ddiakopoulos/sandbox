@@ -40,11 +40,6 @@ void MetallicRoughnessMaterial::update_uniforms(const RenderPassData * data)
     shader.texture("sc_radiance", 4, radianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
     shader.texture("sc_irradiance", 5, irradianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
 
-    if (data->shadow.csmArrayHandle)
-    {
-        shader.texture("s_csmArray", 6, data->shadow.csmArrayHandle, GL_TEXTURE_2D_ARRAY);
-    }
-
     shader.uniform("u_roughness", roughnessFactor);
     shader.uniform("u_metallic", metallicFactor);
 
@@ -52,6 +47,13 @@ void MetallicRoughnessMaterial::update_uniforms(const RenderPassData * data)
     //shader.uniform("u_ambientIntensity", ambientIntensity);
     //program->texture("s_emissive", 6, emissive, GL_TEXTURE_2D);
     //program->texture("s_occlusion", 7, occlusion, GL_TEXTURE_2D);
+}
+
+void MetallicRoughnessMaterial::update_cascaded_shadow_array_handle(GLuint handle)
+{
+    auto & shader = program.get();
+    shader.bind();
+    shader.texture("s_csmArray", 6, handle, GL_TEXTURE_2D_ARRAY);
 }
 
 void MetallicRoughnessMaterial::use()

@@ -22,6 +22,7 @@ class editor_controller
 {
     GlGizmo gizmo;
     tinygizmo::rigid_transform gizmo_selection;     // Center of mass of multiple objects or the pose of a single object
+    tinygizmo::rigid_transform last_gizmo_selection; 
 
     Pose selection;
     std::vector<ObjectType *> selected_objects;     // Array of selected objects
@@ -116,12 +117,17 @@ public:
         gizmo_active = tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
 
         // Perform editing updates on selected objects
-        for (int i = 0; i < selected_objects.size(); ++i)
+        if (gizmo_selection != last_gizmo_selection)
         {
-            ObjectType * object = selected_objects[i];
-            auto newPose = to_linalg(gizmo_selection) * relative_transforms[i];
-            object->set_pose(newPose);
+            for (int i = 0; i < selected_objects.size(); ++i)
+            {
+                ObjectType * object = selected_objects[i];
+                auto newPose = to_linalg(gizmo_selection) * relative_transforms[i];
+                object->set_pose(newPose);
+            }
         }
+
+        last_gizmo_selection = gizmo_selection;
     }
 
     void on_draw()
@@ -139,6 +145,7 @@ struct scene_editor_app : public GLFWApp
     FlyCameraController flycam;
     ShaderMonitor shaderMonitor { "../assets/" };
     std::unique_ptr<gui::ImGuiManager> igm;
+    std::unique_ptr<HosekProceduralSky> skybox;
 
     std::vector<std::shared_ptr<MetallicRoughnessMaterial>> materials;
 

@@ -78,11 +78,15 @@ float point_light_attenuation(vec3 L, float lightRadius)
     return 1.0 / (f * f);
 }
 
-vec3 blend_normals(vec3 geometric, vec3 detail)
+// http://blog.selfshadow.com/publications/blending-in-detail/
+vec3 blend_normals_unity(vec3 geometric, vec3 detail)
 {
     vec3 n1 = geometric;
     vec3 n2 = detail;
-    mat3 nBasis = mat3(vec3(n1.z, n1.y, -n1.x), vec3(n1.x, n1.z, -n1.y), vec3(n1.x, n1.y,  n1.z));
+    mat3 nBasis = mat3(
+        vec3(n1.z, n1.y, -n1.x), 
+        vec3(n1.x, n1.z, -n1.y),
+        vec3(n1.x, n1.y,  n1.z));
     return normalize(n2.x*nBasis[0] + n2.y*nBasis[1] + n2.z*nBasis[2]);
 }
 
@@ -173,7 +177,7 @@ void main()
 #endif
 
 #ifdef HAS_NORMAL_MAP
-    N = blend_normals(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
+    N = blend_normals_unity(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
 #endif
 
     // Roughness is authored as perceptual roughness; as is convention,
@@ -224,7 +228,7 @@ void main()
         );
 
         vec3 diffuseContrib, specContrib;
-        compute_cook_torrance(data,  u_directionalLight.amount, diffuseContrib, specContrib);
+        compute_cook_torrance(data, u_directionalLight.amount, diffuseContrib, specContrib);
 
         Lo += NdotL * (diffuseContrib + specContrib);
     }
@@ -273,10 +277,10 @@ void main()
     }
     #endif
 
-    // Combine direct lighting, IBL, and shadow visbility
-    // vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * (shadowVisibility);
+    // Debugging
     //f_color = vec4(vec3(weightedColor), 1.0);
     //f_color = vec4(mix(vec3(shadowVisibility), vec3(weightedColor), 0.5), 1.0);
 
+    // Combine direct lighting, IBL, and shadow visbility
     f_color = vec4(Lo * shadowVisibility, u_opacity); 
 }

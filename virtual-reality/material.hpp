@@ -52,6 +52,7 @@ namespace avl
 
         MetallicRoughnessMaterial(GlShaderHandle shader);
 
+        void update_cascaded_shadow_array_handle(GLuint handle);
         void update_uniforms(const RenderPassData * data) override;
         void use() override;
 

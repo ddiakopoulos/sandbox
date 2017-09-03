@@ -21,6 +21,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
 
+    skybox.reset(new HosekProceduralSky());
+
     auto wireframeProgram = GlShader(
         read_file_text("../assets/shaders/wireframe_vert.glsl"), 
         read_file_text("../assets/shaders/wireframe_frag.glsl"),
@@ -51,7 +53,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     });
 
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
-    renderer->get_shadow_pass()->program = GlShaderHandle("cascaded-shadows");
+    renderer->get_shadow_pass()->program = GlShaderHandle("cascaded-shadows"); // fixme -- this is not ideal
+    renderer->set_procedural_sky(skybox.get());
 
     auto sky = renderer->get_procedural_sky();
     directionalLight.direction = sky->get_sun_direction();
@@ -61,10 +64,10 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.97f), float3(-5, 5, 0), 12.f });
     pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.00f, 0.85f), float3(+5, 5, 0), 12.f });
 
-    global_register_asset("rusted-iron-albedo", load_image("../assets/textures/pbr/rusted_iron_2048/albedo.png", false));
-    global_register_asset("rusted-iron-normal", load_image("../assets/textures/pbr/rusted_iron_2048/normal.png", false));
-    global_register_asset("rusted-iron-metallic", load_image("../assets/textures/pbr/rusted_iron_2048/metallic.png", false));
-    global_register_asset("rusted-iron-roughness", load_image("../assets/textures/pbr/rusted_iron_2048/roughness.png", false));
+    global_register_asset("rusted-iron-albedo", load_image("../assets/nonfree/Metal_OldBlueSteel_2k_basecolor.tga", false));
+    global_register_asset("rusted-iron-normal", load_image("../assets/nonfree/Metal_OldBlueSteel_2k_n.tga", false));
+    global_register_asset("rusted-iron-metallic", load_image("../assets/nonfree/Metal_OldBlueSteel_2k_metallic.tga", false));
+    global_register_asset("rusted-iron-roughness", load_image("../assets/nonfree/Metal_OldBlueSteel_2k_roughness.tga", false));
 
     auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
     auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
@@ -288,8 +291,6 @@ void scene_editor_app::on_draw()
 
     igm->begin_frame();
 
-    renderer->gather_imgui();
-
     gui::imgui_menu_stack menu(*this, ImGui::GetIO().KeysDown);
     menu.app_menu_begin();
     {
@@ -340,6 +341,10 @@ void scene_editor_app::on_draw()
 
     gui::imgui_fixed_window_end();
 
+    gui::imgui_fixed_window_begin("Renderer Settings", { { 0, 17 }, { 320, height } });
+    renderer->gather_imgui();
+    gui::imgui_fixed_window_end();
+
     igm->end_frame();
 
     // Scene editor gizmo
@@ -358,8 +363,9 @@ IMPLEMENT_MAIN(int argc, char * argv[])
         scene_editor_app app;
         app.main_loop();
     }
-    catch (...)
+    catch (const std::exception & e)
     {
+        std::cerr << "Application Fatal: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
