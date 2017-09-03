@@ -46,6 +46,7 @@ struct ShadowPass
     float splitLambda = 0.5f;  // frustum split constant
     float nearOffset = 12.0f;
     float farOffset = 24.0f;
+    float offset = 0.0f;
     bool stabilize = true;
 
     // float expCascade = 150.f;  // overshadowing constant
@@ -110,26 +111,6 @@ struct ShadowPass
             for (size_t i = 0; i < 8; ++i) frustumCentroid += splitFrustumVerts[i].xyz();
             frustumCentroid /= 8.0f;
 
-            const float dist = std::max(splitFar - splitNear, distance(splitFrustumVerts[5], splitFrustumVerts[6]));
-            Pose cascadePose = look_at_pose_lh(frustumCentroid + (-lightDir * dist), frustumCentroid); // note the flip on the light dir here
-            float4x4 splitViewMatrix = make_view_matrix_from_pose(cascadePose);
-
-            // Transform split vertices to the light view space
-            float4 splitVerticesLightspace[8];
-            for (int j = 0; j < 8; ++j)
-            {
-                splitVerticesLightspace[j] = float4(transform_coord(splitViewMatrix, splitFrustumVerts[j].xyz()), 1);
-            }
-
-            // Find the frustum bounding box in view space
-            float4 min = splitVerticesLightspace[0];
-            float4 max = splitVerticesLightspace[0];
-            for (int j = 0; j < 8; ++j)
-            {
-                min = linalg::min(min, splitVerticesLightspace[j]);
-                max = linalg::max(max, splitVerticesLightspace[j]);
-            }
-
             float3 minExtents;
             float3 maxExtents;
 
@@ -142,50 +123,36 @@ struct ShadowPass
                     float dist = length(splitFrustumVerts[i].xyz() - frustumCentroid);
                     sphereRadius = std::max(sphereRadius, dist);
                 }
-
-                sphereRadius = std::ceil(sphereRadius * 16.0f) / 16.0f;
+                
+                sphereRadius = (std::ceil(sphereRadius * 16.0f) / 16.0f);
 
                 maxExtents = float3(sphereRadius, sphereRadius, sphereRadius);
                 minExtents = -maxExtents;
             }
 
-            cascadePose = look_at_pose_lh(frustumCentroid + (-lightDir) * minExtents.z, frustumCentroid); // note the flip on the light dir here. LH?
-            splitViewMatrix = make_view_matrix_from_pose(cascadePose); 
+            const float3 cascadeExtents = maxExtents - minExtents;
 
-            float3 cascadeExtents = maxExtents - minExtents;
+            const Pose cascadePose = look_at_pose_rh(frustumCentroid + lightDir * -minExtents.z, frustumCentroid); // note the flip on the light dir here. LH?
+            const float4x4 splitViewMatrix = make_view_matrix_from_pose(cascadePose); 
 
-            minExtents = transform_coord(splitViewMatrix, minExtents);
-            maxExtents = transform_coord(splitViewMatrix, maxExtents);
-            cascadeExtents = transform_coord(splitViewMatrix, cascadeExtents);
+            float4x4 shadowProjectionMatrix = make_orthographic_matrix(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, cascadeExtents.z);
 
-            std::cout << "Min Real:    " << make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset) << std::endl;
-            std::cout << "Min Extents: " << make_orthographic_matrix(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0, cascadeExtents.z) << std::endl;
-            float4x4 shadowProjectionMatrix;
-            
-            if (stabilize)
-                shadowProjectionMatrix = make_orthographic_matrix(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0, cascadeExtents.z);
-            else
-                shadowProjectionMatrix = make_orthographic_matrix(min.x, max.x, min.y, max.y, -max.z - nearOffset, -min.z + farOffset);
+            // Create a rounding matrix by projecting the world-space origin and determining the fractional offset in texel space
+            float3 shadowOrigin = transform_coord(mul(shadowProjectionMatrix, splitViewMatrix), float3(0, 0, 0));
+            shadowOrigin *= (resolution * 0.5f);
 
-            // Because of the tight-fit, the shimmering shadow edges will still exist when the camera rotates
-            if (stabilize)
-            {
-                // Create a rounding matrix by projecting the light-space origin and determining the fractional offset in texel space
-                float3 shadowOrigin = transform_coord(mul(shadowProjectionMatrix, splitViewMatrix), float3(0, 0, 0));
-                shadowOrigin *= (resolution * 0.5f);
-
-                float4 roundedOrigin = round(float4(shadowOrigin, 1));
-                float4 roundOffset = roundedOrigin - float4(shadowOrigin, 1);
-                roundOffset *= 2.0f / resolution;
-                roundOffset.z = 0;
-                roundOffset.w = 0;
-
-                shadowProjectionMatrix[3] += roundOffset;
-            }
+            const float4 roundedOrigin = round(float4(shadowOrigin, 1));
+            float4 roundOffset = roundedOrigin - float4(shadowOrigin, 1);
+            roundOffset *= 2.0f / resolution;
+            roundOffset.z = 0;
+            roundOffset.w = 0;
+            shadowProjectionMatrix[3] += roundOffset;
+  
+            const float4x4 theShadowMatrix = mul(shadowProjectionMatrix, splitViewMatrix);
 
             viewMatrices.push_back(splitViewMatrix);
             projMatrices.push_back(shadowProjectionMatrix);
-            shadowMatrices.push_back(mul(shadowProjectionMatrix, splitViewMatrix));
+            shadowMatrices.push_back(theShadowMatrix);
             splitPlanes.push_back(float2(splitNear, splitFar));
             nearPlanes.push_back(-maxExtents.z);
             farPlanes.push_back(-minExtents.z);
@@ -199,6 +166,7 @@ struct ShadowPass
         ImGui::Checkbox("Stabilize", &stabilize);
         ImGui::SliderFloat("Near Offset", &nearOffset, 0.0f, 128.0f);
         ImGui::SliderFloat("Far Offset", &farOffset, 0.0f, 128.0f);
+        ImGui::SliderFloat("Offset", &offset, -100.f, 100.0f);
     }
 
     void pre_draw()

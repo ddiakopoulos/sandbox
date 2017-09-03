@@ -35,6 +35,7 @@ uniform samplerCube sc_irradiance;
 // Dielectrics have an F0 between 0.2 - 0.5, often exposed as the "specular level" parameter
 uniform float u_specularLevel = 0.04;
 uniform vec3 u_albedo = vec3(1);
+uniform float u_shadowOpacity = 0.66;
 
 // Lighting & Shadowing Uniforms
 uniform float u_pointLightAttenuation = 1.0;
@@ -203,8 +204,8 @@ void main()
     vec3 Lo = vec3(0);
 
     vec3 weightedColor;
-    float shadowTerm = calculate_csm_coefficient(s_csmArray, v_world_position, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, weightedColor);
-    float shadowVisibility = 1.0 - shadowTerm;
+    const float shadowTerm = calculate_csm_coefficient(s_csmArray, v_world_position, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, weightedColor);
+    const float shadowVisibility = (1.0 - (shadowTerm * u_shadowOpacity));
 
     // Compute directional light
     {
@@ -275,6 +276,7 @@ void main()
     // Combine direct lighting, IBL, and shadow visbility
     // vec3 Lo = ((diffuseContrib * irradiance) + (specularContrib * radiance)) * (shadowVisibility);
     //f_color = vec4(vec3(weightedColor), 1.0);
+    //f_color = vec4(mix(vec3(shadowVisibility), vec3(weightedColor), 0.5), 1.0);
 
     f_color = vec4(Lo * shadowVisibility, u_opacity); 
 }

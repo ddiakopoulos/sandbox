@@ -69,7 +69,7 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
 
     if (!(coords.z > 0.0 && coords.x > 0.0 && coords.y > 0.0 && coords.x <= 1.0 && coords.y <= 1.0)) return 0;
 
-    float bias = 0.005;
+    float bias = 0.004;
     float currentDepth = coords.z;
 
     float shadowTerm = 0.0;
@@ -78,7 +78,6 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
     float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
     shadowTerm = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
-    /*
     // Percentage-closer filtering
     vec2 texelSize = 1.0 / textureSize(map, 0).xy;
     for (int x = -1; x <= 1; ++x)
@@ -90,7 +89,6 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
         }
     }
     shadowTerm /= 9.0;
-    */
 
     weightedColor = get_cascade_weighted_color(weights);
 
