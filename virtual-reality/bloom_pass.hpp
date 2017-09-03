@@ -235,7 +235,6 @@ struct BloomPass
             ImGui::SliderFloat("Blur Sigma", &blurSigma, 2.0f, 6.0f);
             ImGui::SliderInt("Blur Size", &blurPixelsPerSide, 2, 6);
         }
-
     }
 
     GLuint get_output_texture() const { return outputFramebuffer.id(); }

@@ -370,19 +370,19 @@ public:
 
         if (ImGui::CollapsingHeader("Cascaded Shadow Mapping"))
         {
-            ImGui::Checkbox("Render Shadows", &renderShadows);
-            if (renderShadows) shadow->gather_imgui(renderShadows);
+            ImGui::Checkbox("Enable Shadows", &renderShadows);
+            shadow->gather_imgui(renderShadows);
         }
 
         if (ImGui::CollapsingHeader("Post Processing"))
         {
-            ImGui::Checkbox("Render Post", &renderPost);
+            ImGui::Checkbox("Enable Post", &renderPost);
             if (renderPost)
             {
                 if (ImGui::CollapsingHeader("Bloom"))
                 {
-                    ImGui::Checkbox("Render Bloom", &renderBloom);
-                    if (renderBloom) bloom->gather_imgui(renderBloom);
+                    ImGui::Checkbox("Enable Bloom", &renderBloom);
+                    bloom->gather_imgui(renderBloom);
                 }
             }
         }
