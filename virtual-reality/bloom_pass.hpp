@@ -14,7 +14,6 @@
 /*
  * To Do - 3.25.2017
  * [ ] Break out tonemapping into a separate pass (does not strictly belong to bloom)
- * [ ] Blur should be two passes, instead of the (simple) 3x3 single-pass kernel
  * [ ] Possibility to add upsampling pass nicer for visual quality
  * [ ] Downsampling for average scene luminance not used currently; auto-exposure experimentation
  * [ ] Downsampling is an ideal candidate for compute shader experimentation

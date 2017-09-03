@@ -77,7 +77,9 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
     global_register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
 
-    Geometry icosphere = make_icosasphere(5);
+    auto ico = make_icosasphere(5);
+    global_register_asset("icosphere", make_mesh_from_geometry(ico));
+    global_register_asset("icosphere", std::move(ico));
 
     for (int i = 0; i < 10; ++i)
     {
@@ -96,8 +98,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             pbrMaterial->set_roughness(remap<float>(i, 0.0f, 9.0f, 0.0f, 1.f));
             pbrMaterial->set_metallic(remap<float>(j, 0.0f, 9.0f, 0.0f, 1.f));
 
-            StaticMesh mesh;
-            mesh.set_static_mesh(icosphere);
+            StaticMesh mesh(GlMeshHandle("icosphere"), GeometryHandle("icosphere"));
             Pose p;
             p.position = float3((i * 2) - 10, 0, (j * 2) - 10);
             mesh.set_pose(p);
@@ -108,8 +109,11 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         }
     }
 
-    StaticMesh floorMesh;
-    floorMesh.set_static_mesh(make_cube(), 1.0f);
+    auto cube = make_cube();
+    global_register_asset("cube", make_mesh_from_geometry(cube));
+    global_register_asset("cube", std::move(cube));
+
+    StaticMesh floorMesh(GlMeshHandle("cube"), GeometryHandle("cube"));
     floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
     floorMesh.set_scale(float3(16, 0.1f, 16));
     floorMesh.set_material(materials.back().get());
@@ -154,15 +158,23 @@ void scene_editor_app::on_input(const InputEvent & event)
             if (length(r.direction) > 0 && !editor->active())
             {
                 std::vector<GameObject *> selectedObjects;
+                float best_t = std::numeric_limits<float>::max();
+                GameObject * hitObject = nullptr;
+
                 for (auto & obj : objects)
                 {
                     RaycastResult result = obj.raycast(r);
                     if (result.hit)
                     {
-                        selectedObjects.push_back(&obj);
-                        break;
+                        if (result.distance < best_t)
+                        {
+                            best_t = result.distance;
+                            hitObject = &obj;
+                        }
                     }
                 }
+
+                if (hitObject) selectedObjects.push_back(hitObject);
 
                 // New object was selected
                 if (selectedObjects.size() > 0)

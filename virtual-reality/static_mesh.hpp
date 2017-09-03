@@ -27,13 +27,16 @@ class StaticMesh final : public Renderable
     Pose pose;
     float3 scale{ 1, 1, 1 };
 
-    GlMesh mesh;
-    Geometry geom;
+    GlMeshHandle mesh;
+    GeometryHandle geom;
     Bounds3D bounds;
 
 public:
 
-    StaticMesh() {}
+    StaticMesh(GlMeshHandle m, GeometryHandle g) : mesh(m), geom(g)
+    {
+
+    }
 
     Pose get_pose() const override { return pose; }
     void set_pose(const Pose & p) override { pose = p; }
@@ -41,7 +44,11 @@ public:
     float3 get_scale() const override { return scale; }
     void set_scale(const float3 & s) override { scale = s; }
 
-    void draw() const override { mesh.draw_elements(); }
+    void draw() const override 
+    {
+        mesh.get().draw_elements(); 
+    }
+
     void update(const float & dt) override { }
 
     Bounds3D get_world_bounds() const override
@@ -58,21 +65,13 @@ public:
         localRay.direction /= scale;
         float outT = 0.0f;
         float3 outNormal = { 0, 0, 0 };
-        bool hit = intersect_ray_mesh(localRay, geom, &outT, &outNormal);
+        bool hit = intersect_ray_mesh(localRay, geom.get(), &outT, &outNormal);
         return{ hit, outT, outNormal };
-    }
-
-    void set_static_mesh(const Geometry & g, const float scale = 1.f, const GLenum usage = GL_STATIC_DRAW)
-    {
-        geom = g;
-        if (scale != 1.f) rescale_geometry(geom, scale);
-        bounds = geom.compute_bounds();
-        mesh = make_mesh_from_geometry(geom, usage);
     }
 
     void set_mesh_render_mode(GLenum renderMode)
     {
-        if (renderMode != GL_TRIANGLE_STRIP) mesh.set_non_indexed(renderMode);
+        if (renderMode != GL_TRIANGLE_STRIP) mesh.get().set_non_indexed(renderMode);
     }
 };
 

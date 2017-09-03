@@ -87,7 +87,6 @@ namespace avl
 
         for (const auto define : defines)
         {
-            std::cout << "Defining: " << define << std::endl;
             if (vertexShader.size()) vertex << "#define " << define << std::endl;
             if (fragmentShader.size()) fragment << "#define " << define << std::endl;
             if (geomShader.size()) geom << "#define " << define << std::endl;

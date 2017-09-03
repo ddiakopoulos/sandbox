@@ -15,6 +15,7 @@
 // https://github.com/jklarowicz/dx11_samples/blob/master/VarianceShadows11/VarianceShadowsManager.cpp
 // https://github.com/TheRealMJP/Shadows/blob/master/Shadows/MeshRenderer.cpp
 // http://the-witness.net/news/2010/03/graphics-tech-shadow-maps-part-1/
+// https://chetanjags.wordpress.com/2015/02/05/real-time-shadows-cascaded-shadow-maps/
 
 /*
  * To Do - 3.25.2017
@@ -42,12 +43,11 @@ struct ShadowPass
     std::vector<float> nearPlanes;
     std::vector<float> farPlanes;
 
-    float resolution = 1024.f; // shadowmap resolution
-    float splitLambda = 0.5f;  // frustum split constant
+    float resolution = 2048; // shadowmap resolution
+    float splitLambda = 0.25f;  // frustum split constant
     float nearOffset = 12.0f;
     float farOffset = 24.0f;
     float offset = 0.0f;
-    bool stabilize = true;
 
     // float expCascade = 150.f;  // overshadowing constant
 
@@ -111,30 +111,23 @@ struct ShadowPass
             for (size_t i = 0; i < 8; ++i) frustumCentroid += splitFrustumVerts[i].xyz();
             frustumCentroid /= 8.0f;
 
-            float3 minExtents;
-            float3 maxExtents;
-
-            if (stabilize)
+            // Calculate the radius of a bounding sphere surrounding the frustum corners in worldspace
+            float sphereRadius = 0.0f;
+            for (int i = 0; i < 8; ++i)
             {
-                // Calculate the radius of a bounding sphere surrounding the frustum corners in worldspace
-                float sphereRadius = 0.0f;
-                for (int i = 0; i < 8; ++i)
-                {
-                    float dist = length(splitFrustumVerts[i].xyz() - frustumCentroid);
-                    sphereRadius = std::max(sphereRadius, dist);
-                }
-                
-                sphereRadius = (std::ceil(sphereRadius * 16.0f) / 16.0f);
-
-                maxExtents = float3(sphereRadius, sphereRadius, sphereRadius);
-                minExtents = -maxExtents;
+                float dist = length(splitFrustumVerts[i].xyz() - frustumCentroid);
+                sphereRadius = std::max(sphereRadius, dist);
             }
+                
+            sphereRadius = (std::ceil(sphereRadius * 16.0f) / 16.0f);
 
-            const float3 cascadeExtents = maxExtents - minExtents;
+            const float3 maxExtents = float3(sphereRadius, sphereRadius, sphereRadius);
+            const float3 minExtents = -maxExtents;
 
-            const Pose cascadePose = look_at_pose_rh(frustumCentroid + lightDir * -minExtents.z, frustumCentroid); // note the flip on the light dir here. LH?
+            const Pose cascadePose = look_at_pose_rh(frustumCentroid + lightDir * -minExtents.z, frustumCentroid);
             const float4x4 splitViewMatrix = make_view_matrix_from_pose(cascadePose); 
 
+            const float3 cascadeExtents = maxExtents - minExtents;
             float4x4 shadowProjectionMatrix = make_orthographic_matrix(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, cascadeExtents.z);
 
             // Create a rounding matrix by projecting the world-space origin and determining the fractional offset in texel space
@@ -163,7 +156,6 @@ struct ShadowPass
     void gather_imgui(const bool enabled)
     {
         if (!enabled) return;
-        ImGui::Checkbox("Stabilize", &stabilize);
         ImGui::SliderFloat("Near Offset", &nearOffset, 0.0f, 128.0f);
         ImGui::SliderFloat("Far Offset", &farOffset, 0.0f, 128.0f);
         ImGui::SliderFloat("Offset", &offset, -100.f, 100.0f);

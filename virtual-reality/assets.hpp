@@ -18,7 +18,7 @@ struct UniqueAsset : public Noncopyable
     T asset;
     bool assigned = false;
     const std::string name;
-    UniqueAsset(const std::string & name) : name(name) {}
+    UniqueAsset(const std::string name) : name(name) {}
 };
 
 template<typename T>

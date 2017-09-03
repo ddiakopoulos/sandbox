@@ -75,8 +75,8 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
     float shadowTerm = 0.0;
 
     // Non-PCF path, hard shadows
-    float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
-    shadowTerm = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    //float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
+    //shadowTerm = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
     // Percentage-closer filtering
     vec2 texelSize = 1.0 / textureSize(map, 0).xy;
