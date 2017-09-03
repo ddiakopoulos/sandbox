@@ -17,7 +17,7 @@ namespace avl
     {
         GlShaderHandle program;
         virtual void update_uniforms(const RenderPassData * data) {}
-        virtual void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) {}
+        virtual void use() {}
         uint32_t id() const { return program.get().handle(); }
         virtual ~Material() {}
     };
@@ -26,7 +26,7 @@ namespace avl
     {
     public:
         DebugMaterial(GlShaderHandle shader);
-        void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) override;
+        void use() override;
     };
 
     class MetallicRoughnessMaterial final : public Material
@@ -53,7 +53,7 @@ namespace avl
         MetallicRoughnessMaterial(GlShaderHandle shader);
 
         void update_uniforms(const RenderPassData * data) override;
-        void use(const float4x4 & modelMatrix, const float4x4 & viewMatrix) override;
+        void use() override;
 
         //void set_emissive_strength(const float strength) { emissiveStrength = strength; }
         //void set_emissive_color(const float3 & color) { emissiveColor = color; }

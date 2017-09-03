@@ -99,10 +99,18 @@ struct GameObject
 class Material;
 struct Renderable : public GameObject
 {
+    bool receive_shadow = true;
+    bool cast_shadow = true;
+
     Material * material;
     Material * get_material() const { return material; }
     void set_material(Material * const m) { material = m; }
-    // shadowcasting stuff 
+
+    void set_receive_shadow(const bool value) { receive_shadow = value; }
+    bool get_receive_shadow() const { return receive_shadow; }
+
+    void set_cast_shadow(const bool value) { cast_shadow = value; }
+    bool get_cast_shadow() const { return cast_shadow; }
 };
 
 struct DebugRenderable

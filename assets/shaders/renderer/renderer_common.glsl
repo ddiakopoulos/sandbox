@@ -44,6 +44,10 @@ layout(binding = 1, std140) uniform PerView
     vec4 u_eyePos;
 };
 
-uniform mat4 u_modelMatrix;
-uniform mat4 u_modelMatrixIT;
-uniform mat4 u_modelViewMatrix;
+layout(binding = 2, std140) uniform PerObject
+{
+    mat4 u_modelMatrix;
+    mat4 u_modelMatrixIT;
+    mat4 u_modelViewMatrix;
+    float u_receiveShadow;
+};

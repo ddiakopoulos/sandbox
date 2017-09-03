@@ -66,6 +66,16 @@ namespace uniforms
         ALIGNED(16) float4x4  viewProj;
         ALIGNED(16) float4    eyePos;
     };
+
+    struct per_object
+    {
+        static const int      binding = 2;
+        ALIGNED(16) float4x4  modelMatrix;
+        ALIGNED(16) float4x4  modelMatrixIT;
+        ALIGNED(16) float4x4  modelViewMatrix;
+        float                 receiveShadow;
+    };
+
 }
 
 #endif // end vr_uniforms_hpp

@@ -72,6 +72,7 @@ class PhysicallyBasedRenderer
 
     GlBuffer perScene;
     GlBuffer perView;
+    GlBuffer perObject;
 
     CameraData cameras[NumEyes];
 
@@ -108,10 +109,12 @@ class PhysicallyBasedRenderer
 
         for (Renderable * obj : renderSet)
         {
-            // Fixme - check if should cast shadow
-            const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
-            shadow->program.get().uniform("u_modelMatrix", modelMatrix);
-            obj->draw();
+            if (obj->get_cast_shadow())
+            {
+                const float4x4 modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
+                shadow->program.get().uniform("u_modelShadowMatrix", modelMatrix);
+                obj->draw();
+            }
         }
 
         shadow->post_draw();
@@ -143,9 +146,20 @@ class PhysicallyBasedRenderer
         {
             auto top = renderQueue.top();
             Material * mat = top->get_material();
+
             mat->update_uniforms(&d);
-            mat->use(mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale())), d.data.viewMatrix);
+
+            // Update per-object uniform buffer
+            uniforms::per_object object = {};
+            object.modelMatrix = mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale()));
+            object.modelMatrixIT = inverse(transpose(object.modelMatrix));
+            object.modelViewMatrix = mul(d.data.viewMatrix, object.modelMatrix);
+            object.receiveShadow = top->get_receive_shadow();
+            perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
+
+            mat->use();
             top->draw();
+
             renderQueue.pop();
         }
 
@@ -234,6 +248,7 @@ public:
 
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_view::binding, perView);
+        glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_object::binding, perObject);
 
         // Update per-scene uniform buffer
         uniforms::per_scene b = {};

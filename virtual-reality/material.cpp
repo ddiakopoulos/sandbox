@@ -12,12 +12,10 @@ DebugMaterial::DebugMaterial(GlShaderHandle shader)
     program = shader;
 }
 
-void DebugMaterial::use(const float4x4 & modelMatrix, const float4x4 & viewMatrix)
+void DebugMaterial::use()
 {
     auto & shader = program.get();
     shader.bind();
-    shader.uniform("u_modelMatrix", modelMatrix);
-    shader.uniform("u_modelMatrixIT", inv(transpose(modelMatrix)));
 }
 
 //////////////////////////////////////////////////////
@@ -32,7 +30,6 @@ MetallicRoughnessMaterial::MetallicRoughnessMaterial(GlShaderHandle shader)
 void MetallicRoughnessMaterial::update_uniforms(const RenderPassData * data)
 {
     auto & shader = program.get();
-
     shader.bind();
 
     shader.texture("s_albedo", 0, albedo.get(), GL_TEXTURE_2D);
@@ -57,12 +54,8 @@ void MetallicRoughnessMaterial::update_uniforms(const RenderPassData * data)
     //program->texture("s_occlusion", 7, occlusion, GL_TEXTURE_2D);
 }
 
-void MetallicRoughnessMaterial::use(const float4x4 & modelMatrix, const float4x4 & viewMatrix)
+void MetallicRoughnessMaterial::use()
 {
     auto & shader = program.get();
-
     shader.bind();
-    shader.uniform("u_modelMatrix", modelMatrix);
-    shader.uniform("u_modelMatrixIT", inv(transpose(modelMatrix)));
-    shader.uniform("u_modelViewMatrix", mul(viewMatrix, modelMatrix));
 }

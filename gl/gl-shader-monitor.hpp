@@ -133,10 +133,7 @@ namespace avl
                 const std::string & f, 
                 const std::string & g = "", 
                 const std::string & inc = "", 
-                const std::vector<std::string> def = {}) : vertexPath(v), fragmentPath(f), geomPath(g), includePath(inc), defines(def)
-            { 
-
-            };
+                const std::vector<std::string> & def = {}) : vertexPath(v), fragmentPath(f), geomPath(g), includePath(inc), defines(def) { };
 
             void recompile()
             {

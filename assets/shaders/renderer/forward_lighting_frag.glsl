@@ -205,7 +205,7 @@ void main()
 
     vec3 weightedColor;
     const float shadowTerm = calculate_csm_coefficient(s_csmArray, v_world_position, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, weightedColor);
-    const float shadowVisibility = (1.0 - (shadowTerm * u_shadowOpacity));
+    const float shadowVisibility = (1.0 - (shadowTerm * u_shadowOpacity * u_receiveShadow));
 
     // Compute directional light
     {

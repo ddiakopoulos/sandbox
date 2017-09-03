@@ -1,5 +1,3 @@
-#define TWO_CASCADES // HACK HACK include system doesn't handle defines in one include being used in another. hmm. 
-
 #ifdef FOUR_CASCADES
 vec4 get_cascade_weights(float depth, vec4 splitNear, vec4 splitFar)
 {
