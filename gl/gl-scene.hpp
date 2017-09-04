@@ -17,6 +17,7 @@
 #include "cereal/types/polymorphic.hpp"
 #include "cereal/types/base_class.hpp"
 #include "cereal/archives/json.hpp"
+#include "cereal/access.hpp"
 
 namespace avl
 {
@@ -58,14 +59,17 @@ namespace avl
     class Material;
     struct Renderable : public GameObject
     {
-        MaterialHandle mat;
+        Material * mat{ nullptr };
 
         bool receive_shadow{ true };
         bool cast_shadow{ true };
 
-        bool has_material() { return mat.assigned(); }
-        MaterialHandle get_material() { return mat; }
-        void set_material(MaterialHandle m) { mat = m; }
+        Material * get_material() const { return mat; }
+        void set_material(Material * m) 
+        {
+            std::cout << "Setting Material: " << m << std::endl;
+            mat = m; 
+        }
 
         void set_receive_shadow(const bool value) { receive_shadow = value; }
         bool get_receive_shadow() const { return receive_shadow; }
@@ -159,16 +163,30 @@ namespace avl
     {
         Pose pose;
         float3 scale{ 1, 1, 1 };
-
-        GlMeshHandle mesh;
-        GeometryHandle geom;
         Bounds3D bounds;
 
     public:
 
-        StaticMesh() {} // for cereal
+        GlMeshHandle mesh;
+        GeometryHandle geom;
 
         StaticMesh(GlMeshHandle m, GeometryHandle g) : mesh(m), geom(g) { }
+
+        StaticMesh(StaticMesh && r)
+        {
+            *this = std::move(r);
+        }
+
+        StaticMesh & operator = (StaticMesh && r)
+        {
+            std::swap(pose, r.pose);
+            std::swap(scale, r.scale);
+            std::swap(bounds, r.bounds);
+            std::swap(mesh, r.mesh);
+            std::swap(geom, r.geom);
+            std::swap(mat, r.mat);
+            return *this;
+        }
 
         Pose get_pose() const override { return pose; }
         void set_pose(const Pose & p) override { pose = p; }
@@ -259,14 +277,27 @@ namespace cereal
         //archive(cereal::make_nvp("material", m.material.asset_id()));
     }
 
+    template <> 
+    struct LoadAndConstruct<StaticMesh>
+    {
+        template <class Archive>
+        static void load_and_construct(Archive & archive, cereal::construct<StaticMesh> & construct)
+        {
+            std::string mesh_handle;
+            std::string geometry_handle;
+            archive(cereal::make_nvp("mesh_handle", mesh_handle), cereal::make_nvp("geometry_handle", geometry_handle));
+            construct(mesh_handle, geometry_handle);
+        }
+    };
+
     template<class Archive> void serialize(Archive & archive, StaticMesh & m)
     {
         archive(cereal::make_nvp("renderable", cereal::base_class<Renderable>(&m)));
         archive(cereal::make_nvp("pose", m.get_pose()));
         archive(cereal::make_nvp("scale", m.get_scale()));
         archive(cereal::make_nvp("bounds", m.get_bounds()));
-        //archive(cereal::make_nvp("mesh_handle", m.mesh.asset_id()));
-        //archive(cereal::make_nvp("geometry_handle", m.geom.asset_id()));
+        archive(cereal::make_nvp("mesh_handle", m.mesh.asset_id()));
+        archive(cereal::make_nvp("geometry_handle", m.geom.asset_id()));
     }
 
     template <typename T>

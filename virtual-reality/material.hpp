@@ -17,7 +17,6 @@ namespace avl
         virtual void update_uniforms() {}
         virtual void use() {}
         uint32_t id() const { return program.get().handle(); }
-        virtual ~Material() {}
     };
 
     class DebugMaterial final : public Material
@@ -51,7 +50,7 @@ namespace avl
 
     public:
 
-        MetallicRoughnessMaterial() {}
+        MetallicRoughnessMaterial() {} // Why does this need a default constructor? 
 
         MetallicRoughnessMaterial(GlShaderHandle shader);
 
@@ -80,6 +79,7 @@ namespace avl
 }
 
 typedef AssetHandle<avl::Material> MaterialHandle;
+typedef AssetHandle<avl::MetallicRoughnessMaterial> MetallicRoughnessMaterialHandle;
 
 /*
 #include "cereal/cereal.hpp"

@@ -21,6 +21,15 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
 
+    {
+        // MetallicRoughnessMaterial and Material are two distinct types to the asset handle system. Hmm. 
+
+        //MetallicRoughnessMaterial mat("material-move-test");
+        //global_register_asset("material-move-test", std::move(mat));
+        //Material & handle = MaterialHandle("material-move-test").get();
+        //std::cout << "Handle: " << handle.id() << std::endl;
+    }
+
     skybox.reset(new HosekProceduralSky());
 
     auto wireframeProgram = GlShader(
@@ -90,32 +99,31 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("icosphere", make_mesh_from_geometry(ico));
     global_register_asset("icosphere", std::move(ico));
 
+    MetallicRoughnessMaterial pbrMaterialInstance("pbr-forward-lighting");
+    std::cout << "Setting: " << pbrMaterialInstance.id() << std::endl;
+
+    pbrMaterialInstance.set_albedo_texture("rusted-iron-albedo");
+    pbrMaterialInstance.set_normal_texture("rusted-iron-normal");
+    pbrMaterialInstance.set_metallic_texture("rusted-iron-metallic");
+    pbrMaterialInstance.set_roughness_texture("rusted-iron-roughness");
+    pbrMaterialInstance.set_height_texture("rusted-iron-height");
+    pbrMaterialInstance.set_occulusion_texture("rusted-iron-occlusion");
+    pbrMaterialInstance.set_radiance_cubemap("wells-radiance-cubemap");
+    pbrMaterialInstance.set_irrradiance_cubemap("wells-irradiance-cubemap");
+    //pbrMaterialInstance.set_roughness(remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f));
+    //pbrMaterialInstance.set_metallic(remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f));
+    global_register_asset("some-material-instance", std::move(pbrMaterialInstance));
+
     for (int i = 0; i < 6; ++i)
     {
         for (int j = 0; j < 6; ++j)
         {
-            MetallicRoughnessMaterial pbrMaterialInstance("pbr-forward-lighting");
-
-            pbrMaterialInstance.set_albedo_texture("rusted-iron-albedo");
-            pbrMaterialInstance.set_normal_texture("rusted-iron-normal");
-            pbrMaterialInstance.set_metallic_texture("rusted-iron-metallic");
-            pbrMaterialInstance.set_roughness_texture("rusted-iron-roughness");
-            pbrMaterialInstance.set_height_texture("rusted-iron-height");
-            pbrMaterialInstance.set_occulusion_texture("rusted-iron-occlusion");
-            pbrMaterialInstance.set_radiance_cubemap("wells-radiance-cubemap");
-            pbrMaterialInstance.set_irrradiance_cubemap("wells-irradiance-cubemap");
-            pbrMaterialInstance.set_roughness(remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f));
-            pbrMaterialInstance.set_metallic(remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f));
-            global_register_asset("some-material-instance", std::move(pbrMaterialInstance));
-
             StaticMesh mesh(GlMeshHandle("icosphere"), GeometryHandle("icosphere"));
             Pose p;
             p.position = float3((i * 2) - 5, 0, (j * 2) - 5);
             mesh.set_pose(p);
-            mesh.set_material("some-material-instance");
-
-            std::shared_ptr<StaticMesh> object = std::make_shared<StaticMesh>(std::move(mesh));
-            objects.push_back(object);
+            mesh.set_material(&MetallicRoughnessMaterialHandle("some-material-instance").get());
+            objects.push_back(std::make_shared<StaticMesh>(std::move(mesh)));
         }
     }
 
@@ -126,7 +134,9 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     StaticMesh floorMesh(GlMeshHandle("cube"), GeometryHandle("cube"));
     floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
     floorMesh.set_scale(float3(16, 0.1f, 16));
-    floorMesh.set_material("some-material-instance");
+    floorMesh.set_material(&MetallicRoughnessMaterialHandle("some-material-instance").get()); // ptr
+
+    std::cout << "Getting: " << MetallicRoughnessMaterialHandle("some-material-instance").get().id() << std::endl;
 
     std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
     objects.push_back(floor);
