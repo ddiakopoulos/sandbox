@@ -27,7 +27,7 @@ MetallicRoughnessMaterial::MetallicRoughnessMaterial(GlShaderHandle shader)
     program = shader;
 }
 
-void MetallicRoughnessMaterial::update_uniforms(const RenderPassData * data)
+void MetallicRoughnessMaterial::update_uniforms()
 {
     auto & shader = program.get();
     shader.bind();
@@ -36,14 +36,14 @@ void MetallicRoughnessMaterial::update_uniforms(const RenderPassData * data)
     shader.texture("s_normal", 1, normal.get(), GL_TEXTURE_2D);
     shader.texture("s_roughness", 2, roughness.get(), GL_TEXTURE_2D);
     shader.texture("s_metallic", 3, metallic.get(), GL_TEXTURE_2D);
-            
+    
+    // IBL 
     shader.texture("sc_radiance", 4, radianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
     shader.texture("sc_irradiance", 5, irradianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
 
     shader.uniform("u_roughness", roughnessFactor);
     shader.uniform("u_metallic", metallicFactor);
 
-    // IBL 
     //shader.uniform("u_ambientIntensity", ambientIntensity);
     //program->texture("s_emissive", 6, emissive, GL_TEXTURE_2D);
     //program->texture("s_occlusion", 7, occlusion, GL_TEXTURE_2D);

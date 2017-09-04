@@ -8,15 +8,13 @@
 #include "geometric.hpp"
 #include "assets.hpp"
 
-struct RenderPassData;
-
 namespace avl
 {
 
     struct Material
     {
         GlShaderHandle program;
-        virtual void update_uniforms(const RenderPassData * data) {}
+        virtual void update_uniforms() {}
         virtual void use() {}
         uint32_t id() const { return program.get().handle(); }
         virtual ~Material() {}
@@ -53,7 +51,7 @@ namespace avl
         MetallicRoughnessMaterial(GlShaderHandle shader);
 
         void update_cascaded_shadow_array_handle(GLuint handle);
-        void update_uniforms(const RenderPassData * data) override;
+        void update_uniforms() override;
         void use() override;
 
         //void set_emissive_strength(const float strength) { emissiveStrength = strength; }

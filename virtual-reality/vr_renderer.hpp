@@ -26,6 +26,7 @@ using namespace avl;
 
 struct CameraData
 {
+    uint32_t index;
     Pose pose;
     float4x4 viewMatrix;
     float4x4 projectionMatrix;
@@ -36,13 +37,6 @@ struct RenderLightingData
 {
     uniforms::directional_light * directionalLight;
     std::vector<uniforms::point_light *> pointLights;
-};
-
-struct RenderPassData
-{
-    const uint32_t eye;
-    const CameraData data;
-    RenderPassData(const uint32_t eye, const CameraData & data) : eye(eye), data(data) {}
 };
 
 template<uint32_t NumEyes>
@@ -83,23 +77,23 @@ class PhysicallyBasedRenderer
 
     ProceduralSky * skybox{ nullptr };
 
-    void run_skybox_pass(const RenderPassData & d)
+    void run_skybox_pass(const CameraData & d)
     {   
         if (!skybox) return;
         glDisable(GL_DEPTH_TEST);
-        skybox->render(d.data.viewProjMatrix, d.data.pose.position, near_far_clip_from_projection(d.data.projectionMatrix).y);
+        skybox->render(d.viewProjMatrix, d.pose.position, near_far_clip_from_projection(d.projectionMatrix).y);
         glDisable(GL_DEPTH_TEST);
     }
 
-    void run_shadow_pass(const RenderPassData & d)
+    void run_shadow_pass(const CameraData & d)
     {
-        const float2 nearFarClip = near_far_clip_from_projection(d.data.projectionMatrix);
+        const float2 nearFarClip = near_far_clip_from_projection(d.projectionMatrix);
 
-        shadow->update_cascades(make_view_matrix_from_pose(d.data.pose),
+        shadow->update_cascades(make_view_matrix_from_pose(d.pose),
             nearFarClip.x,
             nearFarClip.y,
-            aspect_from_projection(d.data.projectionMatrix),
-            vfov_from_projection(d.data.projectionMatrix),
+            aspect_from_projection(d.projectionMatrix),
+            vfov_from_projection(d.projectionMatrix),
             lights.directionalLight->direction);
 
         shadow->pre_draw();
@@ -117,7 +111,7 @@ class PhysicallyBasedRenderer
         shadow->post_draw();
     }
 
-    void run_forward_pass(const RenderPassData & d)
+    void run_forward_pass(const CameraData & d)
     {
         glEnable(GL_DEPTH_TEST);
 
@@ -127,7 +121,7 @@ class PhysicallyBasedRenderer
             auto lid = lhs->get_material()->id();
             auto rid = rhs->get_material()->id();
 
-            float3 cameraWorldspace = d.data.pose.position;
+            float3 cameraWorldspace = d.pose.position;
             float lDist = distance(cameraWorldspace, lhs->get_pose().position);
             float rDist = distance(cameraWorldspace, rhs->get_pose().position);
 
@@ -144,13 +138,13 @@ class PhysicallyBasedRenderer
             auto top = renderQueue.top();
             Material * mat = top->get_material();
 
-            mat->update_uniforms(&d);
+            mat->update_uniforms();
 
             // Update per-object uniform buffer
             uniforms::per_object object = {};
             object.modelMatrix = mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale()));
             object.modelMatrixIT = inverse(transpose(object.modelMatrix));
-            object.modelViewMatrix = mul(d.data.viewMatrix, object.modelMatrix);
+            object.modelViewMatrix = mul(d.viewMatrix, object.modelMatrix);
             object.receiveShadow = top->get_receive_shadow();
             perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
 
@@ -171,7 +165,7 @@ class PhysicallyBasedRenderer
         }
     }
 
-    void run_post_pass(const RenderPassData & d)
+    void run_post_pass(const CameraData & d)
     {
         if (!renderPost) return;
 
@@ -191,10 +185,10 @@ class PhysicallyBasedRenderer
         if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
     }
 
-    void run_bloom_pass(const RenderPassData & d)
+    void run_bloom_pass(const CameraData & d)
     {
-        bloom->execute(eyeTextures[d.eye]);
-        glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.eye], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+        bloom->execute(eyeTextures[d.index]);
+        glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.index], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
     }
 
 public:
@@ -282,7 +276,7 @@ public:
                 shadowCamera.viewProjMatrix = mul(shadowCamera.projectionMatrix, shadowCamera.viewMatrix);
             }
 
-            run_shadow_pass({ 0, shadowCamera });
+            run_shadow_pass(shadowCamera);
 
             for (int c = 0; c < uniforms::NUM_CASCADES; c++)
             {
@@ -309,11 +303,9 @@ public:
             v.eyePos = float4(cameras[eyeIdx].pose.position, 1);
             perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
 
-            // Update render pass data. 
+            // Update render pass data
             cameras[eyeIdx].viewMatrix = v.view;
             cameras[eyeIdx].viewProjMatrix = v.viewProj;
-
-            const RenderPassData renderPassData(eyeIdx, cameras[eyeIdx]);
 
             // Render into 4x multisampled fbo
             glEnable(GL_MULTISAMPLE);
@@ -323,8 +315,8 @@ public:
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
             // Execute the forward passes
-            run_skybox_pass(renderPassData);
-            run_forward_pass(renderPassData);
+            run_skybox_pass(cameras[eyeIdx]);
+            run_forward_pass(cameras[eyeIdx]);
 
             glDisable(GL_MULTISAMPLE);
 
@@ -341,8 +333,7 @@ public:
         // Execute the post passes after having resolved the multisample framebuffers
         for (int eyeIdx = 0; eyeIdx < NumEyes; ++eyeIdx)
         {
-            const RenderPassData renderPassData(eyeIdx, cameras[eyeIdx]);
-            run_post_pass(renderPassData);
+            run_post_pass(cameras[eyeIdx]);
         }
 
         postTimer.stop();
@@ -392,6 +383,7 @@ public:
     {
         assert(idx <= NumEyes);
         cameras[idx] = data;
+        cameras[idx].index = idx;
     }
 
     GLuint get_output_texture(const uint32_t idx) const
