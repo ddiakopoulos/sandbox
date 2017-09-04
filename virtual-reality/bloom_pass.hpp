@@ -41,7 +41,8 @@ struct BloomPass
     GlShader hdr_avgLumShader;
     GlShader hdr_blurShader;
     GlShader hdr_brightShader;
-    GlShader hdr_tonemapShader;
+
+    GlShaderHandle hdr_tonemapShader = { "post-tonemap" };
 
     GlFramebuffer brightFramebuffer, blurFramebuffer, outputFramebuffer;
     GlFramebuffer luminance[5];
@@ -93,7 +94,6 @@ struct BloomPass
         hdr_lumShader = GlShader(read_file_text("../assets/shaders/renderer/post_vert.glsl"), read_file_text("../assets/shaders/renderer/post_lum_frag.glsl"));
         hdr_blurShader = GlShader(read_file_text("../assets/shaders/renderer/gaussian_blur_vert.glsl"), read_file_text("../assets/shaders/renderer/gaussian_blur_frag.glsl"));
         hdr_brightShader = GlShader(read_file_text("../assets/shaders/renderer/post_vert.glsl"), read_file_text("../assets/shaders/renderer/post_bright_frag.glsl"));
-        hdr_tonemapShader = GlShader(read_file_text("../assets/shaders/renderer/post_tonemap_vert.glsl"), read_file_text("../assets/shaders/renderer/post_tonemap_frag.glsl"));
 
         glCreateProgramPipelines(GLsizei(1), pipelines);
         glBindProgramPipeline(downsample_pipeline);
@@ -210,12 +210,14 @@ struct BloomPass
 
         glBindFramebuffer(GL_FRAMEBUFFER, outputFramebuffer);
         glViewport(0, 0, perEyeSize.x, perEyeSize.y);
-        hdr_tonemapShader.bind();
-        hdr_tonemapShader.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
-        hdr_tonemapShader.texture("s_texBright", 1, blurPasses[dx], GL_TEXTURE_2D);
-        hdr_tonemapShader.uniform("u_exposure", exposure);
-        hdr_tonemapShader.uniform("u_tonemap", tonemap);
+        auto & tonemapProgram = hdr_tonemapShader.get();
+        tonemapProgram.bind();
+        tonemapProgram.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
+        tonemapProgram.texture("s_texBright", 1, blurPasses[dx], GL_TEXTURE_2D);
+        tonemapProgram.uniform("u_exposure", exposure);
+        tonemapProgram.uniform("u_tonemap", tonemap);
         fsQuad.draw_elements();
+        tonemapProgram.unbind();
     }
 
     void gather_imgui(const bool enabled)

@@ -48,6 +48,13 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         auto & asset = AssetHandle<GlShader>("cascaded-shadows").assign(std::move(shader));
     });
 
+    shaderMonitor.watch(
+        "../assets/shaders/renderer/post_tonemap_vert.glsl",
+        "../assets/shaders/renderer/post_tonemap_frag.glsl",
+        [](GlShader shader) {
+        auto & asset = AssetHandle<GlShader>("post-tonemap").assign(std::move(shader));
+    });
+
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
     renderer->set_procedural_sky(skybox.get());
 
