@@ -37,10 +37,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         {"TWO_CASCADES", "USE_IMAGE_BASED_LIGHTING", "HAS_ROUGHNESS_MAP", "HAS_METALNESS_MAP", "HAS_ALBEDO_MAP", "HAS_NORMAL_MAP"}, [](GlShader shader)
     {
         auto & asset = AssetHandle<GlShader>("pbr-forward-lighting").assign(std::move(shader));
-        /*
-        auto reflectedUniforms = asset.reflect();
-        for (auto & u : reflectedUniforms) std::cout << u.first << " - " << u.second << std::endl;
-        */
     });
 
     shaderMonitor.watch(
@@ -56,17 +52,24 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     renderer->set_procedural_sky(skybox.get());
 
     auto sky = renderer->get_procedural_sky();
-    sun.data.direction = sky->get_sun_direction();
-    sun.data.color = float3(1.f, 1.0f, 1.0f);
-    sun.data.amount = 1.0f;
 
-    lightA.data.color = float3(0.88f, 0.85f, 0.97f);
-    lightA.data.position = float3(-5, 5, 0);
-    lightA.data.radius = 12.f;
+    sun.reset(new DirectionalLight());
+    sun->data.direction = sky->get_sun_direction();
+    sun->data.color = float3(1.f, 1.0f, 1.0f);
+    sun->data.amount = 1.0f;
+    objects.push_back(sun);
 
-    lightA.data.color = float3(0.67f, 1.00f, 0.85f);
-    lightA.data.position = float3(+5, 5, 0);
-    lightA.data.radius = 12.f;
+    lightA.reset(new PointLight());
+    lightA->data.color = float3(0.88f, 0.85f, 0.97f);
+    lightA->data.position = float3(-5, 5, 0);
+    lightA->data.radius = 12.f;
+    objects.push_back(lightA);
+
+    lightB.reset(new PointLight());
+    lightB->data.color = float3(0.67f, 1.00f, 0.85f);
+    lightB->data.position = float3(+5, 5, 0);
+    lightB->data.radius = 12.f;
+    objects.push_back(lightB);
 
     global_register_asset("rusted-iron-albedo", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_basecolor.tga", false));
     global_register_asset("rusted-iron-normal", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_n.tga", false));
@@ -250,12 +253,12 @@ void scene_editor_app::on_draw()
 
         // Lighting
         RenderLightingData sceneLighting;
-        sceneLighting.directionalLight = &sun.data;
-        sceneLighting.pointLights.push_back(&lightA.data);
-        sceneLighting.pointLights.push_back(&lightB.data);
+        sceneLighting.directionalLight = &sun->data;
+        sceneLighting.pointLights.push_back(&lightA->data);
+        sceneLighting.pointLights.push_back(&lightB->data);
         renderer->add_lights(sceneLighting);
 
-        // Objects
+        // Gather Objects
         std::vector<Renderable *> sceneObjects;
         for (auto & obj : objects)
         {

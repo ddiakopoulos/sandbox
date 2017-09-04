@@ -7,6 +7,7 @@
 #include "gl-mesh.hpp"
 #include "gl-camera.hpp"
 #include "../virtual-reality/uniforms.hpp"
+#include "../virtual-reality/assets.hpp"
 
 namespace avl
 {
@@ -57,16 +58,18 @@ namespace avl
         bool get_cast_shadow() const { return cast_shadow; }
     };
     
-    template<typename LightType>
-    class Light final : public Renderable
+    struct PointLight final : public Renderable
     {
-        Pose pose;
-    public:
+        uniforms::point_light data;
 
-        LightType data;
+        PointLight()
+        {
+            receive_shadow = false;
+            cast_shadow = false;
+        }
 
-        Pose get_pose() const override { return pose; }
-        void set_pose(const Pose & p) override { pose = p; }
+        Pose get_pose() const override { return Pose(float4(0, 0, 0, 1), data.position); }
+        void set_pose(const Pose & p) override { data.position = p.position; }
         Bounds3D get_bounds() const override { return Bounds3D(float3(-0.5f), float3(0.5f)); }
         float3 get_scale() const override { return float3(1, 1, 1); }
         void set_scale(const float3 & s) override { /* no-op */ }
@@ -77,22 +80,60 @@ namespace avl
             GlMeshHandle("icosphere").get().draw_elements();
         }
 
-        void update(const float & dt) override { }
-
         Bounds3D get_world_bounds() const override
         {
             const Bounds3D local = get_bounds();
-            const float3 scale = get_scale();
-            return{ pose.transform_coord(local.min()), pose.transform_coord(local.max()) };
+            return{ get_pose().transform_coord(local.min()), get_pose().transform_coord(local.max()) };
         }
 
         RaycastResult raycast(const Ray & worldRay) const override
         {
-            auto localRay = pose.inverse() * worldRay;
+            auto localRay = get_pose().inverse() * worldRay;
             float outT = 0.0f;
             float3 outNormal = { 0, 0, 0 };
-            bool hit = intersect_ray_sphere(localRay, Sphere(pose.position, 1.0f), &outT, &outNormal);
+            bool hit = intersect_ray_sphere(localRay, Sphere(data.position, 1.0f), &outT, &outNormal);
             return{ hit, outT, outNormal };
+        }
+    };
+
+    struct DirectionalLight final : public Renderable
+    {
+        uniforms::directional_light data;
+
+        DirectionalLight()
+        {
+            receive_shadow = false;
+            cast_shadow = false;
+        }
+
+        Pose get_pose() const override 
+        { 
+            auto directionQuat = make_quat_from_to({ 0, 1, 0 }, data.direction);
+            return Pose(directionQuat);
+        }
+        void set_pose(const Pose & p) override 
+        { 
+            data.direction = qydir(p.orientation);
+        }
+        Bounds3D get_bounds() const override { return Bounds3D(float3(-0.5f), float3(0.5f)); }
+        float3 get_scale() const override { return float3(1, 1, 1); }
+        void set_scale(const float3 & s) override { /* no-op */ }
+
+        void draw() const override
+        {
+            GlShaderHandle("wireframe").get().bind();
+            GlMeshHandle("icosphere").get().draw_elements();
+        }
+
+        Bounds3D get_world_bounds() const override
+        {
+            const Bounds3D local = get_bounds();
+            return{ get_pose().transform_coord(local.min()), get_pose().transform_coord(local.max()) };
+        }
+
+        RaycastResult raycast(const Ray & worldRay) const override
+        {
+            return{ false, -FLT_MAX, {0,0,0} };
         }
     };
 

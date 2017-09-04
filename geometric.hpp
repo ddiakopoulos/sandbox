@@ -445,6 +445,35 @@ namespace avl
     {
         return std::acos((2.f * pow(dot(a, b), 2.f))  - 1.f);
     }
+
+    inline float3 orth(const float3 & v)
+    {
+        // returns index
+        auto argmax = [](const float * a, int count)
+        {
+            if (count == 0)  return static_cast<int>(-1);
+            return static_cast<int>(std::max_element(a, a + count) - a);
+        };
+
+        float3 absv = abs(v);
+        float3 u(1, 1, 1);
+        u[argmax(&absv[0], 3)] = 0.0f;
+        return normalize(cross(u, v));
+    }
+
+    // Shortest arc quat from Game Programming Gems 1 (Section 2.10)
+    inline float4 make_quat_from_to(const float3 & v0, const float3 & v1)
+    {
+        auto  c = cross(v0, v1);
+        auto  d = dot(v0, v1);
+        if (d <= -1.0f) 
+        { 
+            float3 a = orth(v0);
+            return float4(a.x, a.y, a.z, 0.0f); 
+        }
+        auto s = std::sqrtf((1 + d) * 2.0f);
+        return{ c.x / s, c.y / s, c.z / s, s / 2.0f };
+    }
     
     //////////////////////////////////////////////
     // Construct affine transformation matrices //

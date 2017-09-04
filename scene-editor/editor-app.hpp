@@ -7,12 +7,12 @@
 #include "../virtual-reality/assets.hpp"
 #include "../virtual-reality/static_mesh.hpp"
 
-inline Pose to_linalg(tinygizmo::rigid_transform & t)
+static inline Pose to_linalg(tinygizmo::rigid_transform & t)
 {
     return{ reinterpret_cast<float4 &>(t.orientation), reinterpret_cast<float3 &>(t.position) };
 }
 
-inline tinygizmo::rigid_transform from_linalg(Pose & p)
+static inline tinygizmo::rigid_transform from_linalg(Pose & p)
 {
     return{ reinterpret_cast<minalg::float4 &>(p.orientation), reinterpret_cast<minalg::float3 &>(p.position) };
 }
@@ -152,9 +152,9 @@ struct scene_editor_app : public GLFWApp
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
     std::unique_ptr<editor_controller<GameObject>> editor;
 
-    Light<uniforms::point_light> lightA;
-    Light<uniforms::point_light> lightB;
-    Light<uniforms::directional_light> sun;
+    std::shared_ptr<PointLight> lightA;
+    std::shared_ptr<PointLight> lightB;
+    std::shared_ptr<DirectionalLight> sun;
     std::vector<std::shared_ptr<GameObject>> objects;
 
     scene_editor_app();

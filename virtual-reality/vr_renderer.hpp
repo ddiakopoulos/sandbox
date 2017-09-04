@@ -121,12 +121,18 @@ class PhysicallyBasedRenderer
         // todo - this is done per-eye but should be done per frame instead
         auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
         {
-            auto lid = lhs->get_material()->id();
-            auto rid = rhs->get_material()->id();
-
             float3 cameraWorldspace = d.pose.position;
             float lDist = distance(cameraWorldspace, lhs->get_pose().position);
             float rDist = distance(cameraWorldspace, rhs->get_pose().position);
+
+            // Can't sort by material if the renderable doesn't have a material
+            if (!lhs->get_material() || !rhs->get_material())
+            {
+                return lDist < rDist;
+            }
+
+            auto lid = lhs->get_material()->id();
+            auto rid = rhs->get_material()->id();
 
             if (lid != rid) return lid > rid;
             else return lDist < rDist;
