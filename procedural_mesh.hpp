@@ -812,6 +812,8 @@ namespace avl
             else if (std::abs(d2) > 0.5f) add_unique_vertex(i, 2, uv2 + float2((d2 < 0.0f) ? 1.0f : -1.0f, 0.0f));
         }
 
+        ico.compute_tangents();
+
         return ico;
     }
     

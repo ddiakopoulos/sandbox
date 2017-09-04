@@ -64,63 +64,17 @@ struct LightingInfo
     vec3 specularColor;           // color contribution from specular lighting
 };
 
-const float minSamples = 4.;
-const float maxSamples = 15.;
-const int iMaxSamples = 15;
-
-// http://www.gamedev.net/page/resources/_/technical/graphics-programming-and-theory/a-closer-look-at-parallax-occlusion-mapping-r3262
-vec2 parallaxOcclusion(vec3 vViewDirCoT, vec3 vNormalCoT, vec2 texCoord, float parallaxScale) 
+vec3 get_normal(vec2 p) 
 {
+    float s01 = textureOffset(s_height, p, ivec2(-1, 0)).x;
+    float s21 = textureOffset(s_height, p, ivec2(1, 0)).x;
+    float s10 = textureOffset(s_height, p, ivec2(0, -1)).x;
+    float s12 = textureOffset(s_height, p, ivec2(0, 1)).x;
 
-    float parallaxLimit = length(vViewDirCoT.xy) / vViewDirCoT.z;
-    parallaxLimit *= parallaxScale;
-    vec2 vOffsetDir = normalize(vViewDirCoT.xy);
-    vec2 vMaxOffset = vOffsetDir * parallaxLimit;
-    float numSamples = maxSamples + (dot(vViewDirCoT, vNormalCoT) * (minSamples - maxSamples));
-    float stepSize = 1.0 / numSamples;
-
-    // Initialize the starting view ray height and the texture offsets.
-    float currRayHeight = 1.0;
-    vec2 vCurrOffset = vec2(0, 0);
-    vec2 vLastOffset = vec2(0, 0);
-
-    float lastSampledHeight = 1.0;
-    float currSampledHeight = 1.0;
-
-    for (int i = 0; i < iMaxSamples; i++)
-    {
-        currSampledHeight = texture(s_height, v_texcoord + vCurrOffset).w;
-
-        // Test if the view ray has intersected the surface.
-        if (currSampledHeight > currRayHeight)
-        {
-            float delta1 = currSampledHeight - currRayHeight;
-            float delta2 = (currRayHeight + stepSize) - lastSampledHeight;
-            float ratio = delta1 / (delta1 + delta2);
-            vCurrOffset = (ratio)* vLastOffset + (1.0 - ratio) * vCurrOffset;
-
-            // Force the exit of the loop
-            break;
-        }
-        else
-        {
-            currRayHeight -= stepSize;
-            vLastOffset = vCurrOffset;
-            vCurrOffset += stepSize * vMaxOffset;
-
-            lastSampledHeight = currSampledHeight;
-        }
-    }
-
-    return vCurrOffset;
-}
-
-vec2 parallaxOffset(vec3 viewDir, float heightScale)
-{
-    // calculate amount of offset for Parallax Mapping With Offset Limiting
-    float height = texture(s_height, v_texcoord).w;
-    vec2 texCoordOffset = heightScale * viewDir.xy * height;
-    return -texCoordOffset;
+    // Central Difference Method from:
+    // http://www.iquilezles.org/www/articles/terrainmarching/terrainmarching.htm
+    vec3 n = vec3(s01 - s21, s10 - s12, 1.0);
+    return normalize(n);
 }
 
 // https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
@@ -228,11 +182,11 @@ void main()
     float roughness = clamp(u_roughness, u_specularLevel, 1.0);
     float metallic = u_metallic;
 
-    // use parallax mapping
-    //float height = texture(s_height, gl_TexCoord[0].st).r; 
-    //height = height * 0.04 - 0.02;
-    //vec3 eye = normalize (u_eyePos);
-    //vec3 texcoord = texCoords = (height * eye.xy) + gl_TexCoord[0].st;
+#ifdef HAS_NORMAL_MAP
+    vec3 nSample = texture(s_normal, v_texcoord).xyz * 2 - 1;
+    N = normalize(normalize(v_tangent) * nSample.x + normalize(v_bitangent) * nSample.y + normalize(v_normal) * nSample.z);
+    //N = blend_normals_unity(v_normal, texture(s_normal, v_texcoord).xyz * 2 - 1);
+#endif
 
 #ifdef HAS_ROUGHNESS_MAP
     roughness *= texture(s_roughness, v_texcoord).r;
@@ -246,9 +200,6 @@ void main()
     albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA) * u_albedo; 
 #endif
 
-#ifdef HAS_NORMAL_MAP
-    N = blend_normals_unity(v_normal, texture(s_normal, v_texcoord).xyz * 2.0 - 1.0);
-#endif
 
     // Roughness is authored as perceptual roughness; as is convention,
     // convert to material roughness by squaring the perceptual roughness [2].
@@ -347,14 +298,8 @@ void main()
     }
     #endif
 
-    // ao is empty
-
     #ifdef HAS_EMISSIVE_MAP
         Lo += texture(s_emissive, v_texcoord).rgb; 
-    #endif
-
-    #ifdef HAS_HEIGHT_MAP
-        //Lo *= texture(s_height, v_texcoord).r; 
     #endif
 
     #ifdef HAS_OCCLUSION_MAP

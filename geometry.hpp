@@ -113,8 +113,6 @@ namespace avl
                 const float2 & w1 = texCoords[face.y];
                 const float2 & w2 = texCoords[face.z];
 
-                //std::cout << "x: " << face.x << " y: " <<  face.y << " z: " << face.z << std::endl;
-
                 float x1 = v1.x - v0.x;
                 float x2 = v2.x - v0.x;
                 float y1 = v1.y - v0.y;

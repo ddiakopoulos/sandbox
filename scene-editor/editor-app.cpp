@@ -36,7 +36,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         "../assets/shaders/renderer", 
         {"TWO_CASCADES", 
          "USE_IMAGE_BASED_LIGHTING", 
-         "HAS_ROUGHNESS_MAP", "HAS_METALNESS_MAP", "HAS_ALBEDO_MAP", "HAS_NORMAL_MAP", "HAS_HEIGHT_MAP", "HAS_OCCLUSION_MAP"}, [](GlShader shader)
+         "HAS_ROUGHNESS_MAP", "HAS_METALNESS_MAP", "HAS_ALBEDO_MAP", "HAS_NORMAL_MAP", "HAS_OCCLUSION_MAP"}, [](GlShader shader)
     {
         auto & asset = AssetHandle<GlShader>("pbr-forward-lighting").assign(std::move(shader));
     });
@@ -80,12 +80,12 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     lightB->data.radius = 12.f;
     objects.push_back(lightB);
 
-    global_register_asset("rusted-iron-albedo", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_basecolor.tga", false));
-    global_register_asset("rusted-iron-normal", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_n.tga", false));
-    global_register_asset("rusted-iron-metallic", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_metallic.tga", false));
-    global_register_asset("rusted-iron-roughness", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_roughness.tga", false));
-    global_register_asset("rusted-iron-height", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_h.tga", false));
-    global_register_asset("rusted-iron-occlusion", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_ao.tga", false));
+    global_register_asset("rusted-iron-albedo", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_basecolor.tga", false));
+    global_register_asset("rusted-iron-normal", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_n.tga", false));
+    global_register_asset("rusted-iron-metallic", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_metallic.tga", false));
+    global_register_asset("rusted-iron-roughness", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_roughness.tga", false));
+    //global_register_asset("rusted-iron-height", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_h.tga", false));
+    global_register_asset("rusted-iron-occlusion", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_ao.tga", false));
 
     auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
     auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
