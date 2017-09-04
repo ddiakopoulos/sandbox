@@ -34,9 +34,12 @@ namespace avl
         GlTextureHandle metallic;
         GlTextureHandle roughness;
         GlTextureHandle emissive;
+        GlTextureHandle height;
         GlTextureHandle occlusion;
         GlTextureHandle radianceCubemap;
         GlTextureHandle irradianceCubemap;
+
+        int bindpoint = 0;
 
         float roughnessFactor{ 0.5f };
         float metallicFactor{ 1.f };
@@ -66,6 +69,7 @@ namespace avl
         void set_metallic_texture(GlTextureHandle asset) { metallic = asset; }
         void set_roughness_texture(GlTextureHandle asset) { roughness = asset; }
         void set_emissive_texture(GlTextureHandle asset) { emissive = asset; }
+        void set_height_texture(GlTextureHandle asset) { height = asset; }
         void set_occulusion_texture(GlTextureHandle asset) { occlusion = asset; }
         void set_radiance_cubemap(GlTextureHandle asset) { radianceCubemap = asset; }
         void set_irrradiance_cubemap(GlTextureHandle asset) { irradianceCubemap = asset; }

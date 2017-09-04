@@ -29,31 +29,40 @@ MetallicRoughnessMaterial::MetallicRoughnessMaterial(GlShaderHandle shader)
 
 void MetallicRoughnessMaterial::update_uniforms()
 {
+
+    bindpoint = 0;
+
+    //"TWO_CASCADES",
+    //"USE_IMAGE_BASED_LIGHTING",
+    //"HAS_ROUGHNESS_MAP", "HAS_METALNESS_MAP", "HAS_ALBEDO_MAP", "HAS_NORMAL_MAP", "HAS_HEIGHT_MAP", "HAS_OCCLUSION_MAP"
+
     auto & shader = program.get();
     shader.bind();
-
-    shader.texture("s_albedo", 0, albedo.get(), GL_TEXTURE_2D);
-    shader.texture("s_normal", 1, normal.get(), GL_TEXTURE_2D);
-    shader.texture("s_roughness", 2, roughness.get(), GL_TEXTURE_2D);
-    shader.texture("s_metallic", 3, metallic.get(), GL_TEXTURE_2D);
-    
-    // IBL 
-    shader.texture("sc_radiance", 4, radianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
-    shader.texture("sc_irradiance", 5, irradianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
 
     shader.uniform("u_roughness", roughnessFactor);
     shader.uniform("u_metallic", metallicFactor);
 
+    shader.texture("s_albedo", bindpoint++, albedo.get(), GL_TEXTURE_2D);
+    shader.texture("s_normal", bindpoint++, normal.get(), GL_TEXTURE_2D);
+    shader.texture("s_roughness", bindpoint++, roughness.get(), GL_TEXTURE_2D);
+    shader.texture("s_metallic", bindpoint++, metallic.get(), GL_TEXTURE_2D);
+    
+    // IBL 
+    shader.texture("sc_radiance", bindpoint++, radianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
+    shader.texture("sc_irradiance", bindpoint++, irradianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
+
+    if (shader.has_define("HAS_EMISSIVE_MAP")) shader.texture("s_emissive", bindpoint++, emissive.get(), GL_TEXTURE_2D);
+    if (shader.has_define("HAS_HEIGHT_MAP")) shader.texture("s_height", bindpoint++, height.get(), GL_TEXTURE_2D);
+    if (shader.has_define("HAS_OCCLUSION_MAP")) shader.texture("s_occlusion", bindpoint++, occlusion.get(), GL_TEXTURE_2D);
+
     //shader.uniform("u_ambientIntensity", ambientIntensity);
-    //program->texture("s_emissive", 6, emissive, GL_TEXTURE_2D);
-    //program->texture("s_occlusion", 7, occlusion, GL_TEXTURE_2D);
 }
 
 void MetallicRoughnessMaterial::update_cascaded_shadow_array_handle(GLuint handle)
 {
     auto & shader = program.get();
     shader.bind();
-    shader.texture("s_csmArray", 6, handle, GL_TEXTURE_2D_ARRAY);
+    shader.texture("s_csmArray", bindpoint++, handle, GL_TEXTURE_2D_ARRAY); // 12? 
 }
 
 void MetallicRoughnessMaterial::use()

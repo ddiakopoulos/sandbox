@@ -146,6 +146,7 @@ namespace avl
                     if (defines.size() > 0 || includePath.size() > 0)
                     {
                         result = preprocess(read_file_text(vertexPath), read_file_text(fragmentPath), read_file_text(geomPath), includePath, defines, includes);
+                        result.set_defines(defines);
                     }
                     else
                     {

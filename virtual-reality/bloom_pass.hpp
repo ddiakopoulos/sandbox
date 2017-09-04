@@ -213,9 +213,7 @@ struct BloomPass
         auto & tonemapProgram = hdr_tonemapShader.get();
         tonemapProgram.bind();
         tonemapProgram.texture("s_texColor", 0, sceneColorTex, GL_TEXTURE_2D);
-        tonemapProgram.texture("s_texBright", 1, blurPasses[dx], GL_TEXTURE_2D);
-        tonemapProgram.uniform("u_exposure", exposure);
-        tonemapProgram.uniform("u_tonemap", tonemap);
+        tonemapProgram.texture("s_bloom", 1, blurPasses[dx], GL_TEXTURE_2D);
         fsQuad.draw_elements();
         tonemapProgram.unbind();
     }

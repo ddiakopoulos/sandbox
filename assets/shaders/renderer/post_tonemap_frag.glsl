@@ -1,10 +1,7 @@
 #version 330
 
 uniform sampler2D s_texColor;
-uniform sampler2D s_texBright;
-
-uniform float u_exposure;
-uniform vec4 u_tonemap;
+uniform sampler2D s_bloom;
 
 in vec2 v_texcoord0;
 
@@ -23,7 +20,7 @@ vec3 aces_film_tonemap(vec3 x)
 void main()
 {
     vec3 rgb = texture(s_texColor, v_texcoord0).rgb;
-    rgb += texture(s_texBright, v_texcoord0).rgb; // bright sample
+    rgb += texture(s_bloom, v_texcoord0).rgb; // bright sample
     rgb = aces_film_tonemap(rgb);
     f_color = vec4(rgb, 1.0);
 }

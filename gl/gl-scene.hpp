@@ -78,6 +78,7 @@ namespace avl
         {
             GlShaderHandle("wireframe").get().bind();
             GlMeshHandle("icosphere").get().draw_elements();
+            GlShaderHandle("wireframe").get().unbind();
         }
 
         Bounds3D get_world_bounds() const override
@@ -123,6 +124,7 @@ namespace avl
         {
             GlShaderHandle("wireframe").get().bind();
             GlMeshHandle("icosphere").get().draw_elements();
+            GlShaderHandle("wireframe").get().unbind();
         }
 
         Bounds3D get_world_bounds() const override

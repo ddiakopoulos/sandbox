@@ -249,10 +249,12 @@ class GlShader
 {
     GLuint program;
     bool enabled = false;
+    std::vector<std::string> defines;
 
 protected:
     GlShader(const GlShader & r) = delete;
     GlShader & operator = (const GlShader & r) = delete;
+
 public:
 
     GlShader() : program() {}
@@ -307,12 +309,28 @@ public:
 
     ~GlShader() { if (program) glDeleteProgram(program); }
 
-    GlShader(GlShader && r) : GlShader() { *this = std::move(r); }
+    GlShader(GlShader && r) : GlShader()
+    { 
+        *this = std::move(r); 
+    }
+
+    GlShader & operator = (GlShader && r)
+    {
+        std::swap(program, r.program);
+        std::swap(defines, r.defines);
+        std::swap(enabled, r.enabled);
+        return *this;
+    }
+
+    void set_defines(const std::vector<std::string> & d)  { defines = d; }
+    bool has_define(const std::string & d) const
+    { 
+        for (auto & def : defines) if (d == def) return true; 
+        return false;
+    }
 
     GLuint handle() const { return program; }
     GLint get_uniform_location(const std::string & name) const { return glGetUniformLocation(program, name.c_str()); }
-
-    GlShader & operator = (GlShader && r) { std::swap(program, r.program); return *this; }
 
     std::map<uint32_t, std::string> reflect()
     {

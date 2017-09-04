@@ -42,7 +42,7 @@ public:
     T & get() const
     { 
         if (handle->assigned) return handle->asset;
-        else throw std::runtime_error("no assignment has been made to this asset");
+        else throw std::runtime_error("no assignment has been made to this asset - " + handle->name);
     }
 
     T & assign(T && asset)
