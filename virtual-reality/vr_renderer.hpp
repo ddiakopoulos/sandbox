@@ -33,17 +33,10 @@ struct CameraData
     float4x4 viewProjMatrix;
 };
 
-struct RenderLightingData
-{
-    uniforms::directional_light * directionalLight;
-    std::vector<uniforms::point_light *> pointLights;
-};
-
 template<uint32_t NumEyes>
 class PhysicallyBasedRenderer
 {
     std::vector<Renderable *> renderSet;
-    RenderLightingData lights;
 
     float2 renderSizePerEye;
 
@@ -75,6 +68,9 @@ class PhysicallyBasedRenderer
     bool renderShadows{ true };
     bool renderBloom{ true };
 
+    std::vector<uniforms::point_light *> pointLights;
+
+    uniforms::directional_light sunlight;
     ProceduralSky * skybox{ nullptr };
 
     std::unique_ptr<BloomPass> bloom;
@@ -97,7 +93,7 @@ class PhysicallyBasedRenderer
             nearFarClip.y,
             aspect_from_projection(d.projectionMatrix),
             vfov_from_projection(d.projectionMatrix),
-            lights.directionalLight->direction);
+            sunlight.direction);
 
         shadow->pre_draw();
 
@@ -260,12 +256,12 @@ public:
         b.time = timer.milliseconds().count();
         b.resolution = renderSizePerEye;
         b.invResolution = 1.f / b.resolution;
-        b.activePointLights = lights.pointLights.size();
+        b.activePointLights = pointLights.size();
 
-        b.directional_light.color = lights.directionalLight->color;
-        b.directional_light.direction = lights.directionalLight->direction;
-        b.directional_light.amount = lights.directionalLight->amount;
-        for (int i = 0; i < (int)std::min(lights.pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = *lights.pointLights[i];
+        b.directional_light.color = sunlight.color;
+        b.directional_light.direction = sunlight.direction;
+        b.directional_light.amount = sunlight.amount;
+        for (int i = 0; i < (int)std::min(pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = *pointLights[i];
 
         GLfloat defaultColor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
         GLfloat defaultDepth = 1.f;
@@ -352,6 +348,7 @@ public:
         glDisable(GL_FRAMEBUFFER_SRGB);
 
         renderSet.clear();
+        pointLights.clear();
     }
 
     void gather_imgui()
@@ -390,11 +387,10 @@ public:
         }
     }
 
-    void add_camera(const uint32_t idx, const CameraData data)
+    void add_camera(const CameraData & data)
     {
-        assert(idx <= NumEyes);
-        cameras[idx] = data;
-        cameras[idx].index = idx;
+        assert(data.index <= NumEyes);
+        cameras[data.index] = data;
     }
 
     GLuint get_output_texture(const uint32_t idx) const
@@ -406,6 +402,10 @@ public:
     void set_procedural_sky(ProceduralSky * sky)
     {
         skybox = sky;
+
+        sunlight.direction = sky->get_sun_direction();
+        sunlight.color = float3(1.f, 1.0f, 1.0f);
+        sunlight.amount = 1.0f;
     }
 
     ProceduralSky * get_procedural_sky() const
@@ -424,9 +424,9 @@ public:
         renderSet = set; 
     }
 
-    void add_lights(const RenderLightingData & collection) 
+    void add_light(uniforms::point_light * light) 
     { 
-        lights = collection; 
+        pointLights.push_back(light);
     }
 };
 

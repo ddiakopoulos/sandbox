@@ -60,14 +60,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
     renderer->set_procedural_sky(skybox.get());
 
-    auto sky = renderer->get_procedural_sky();
-
-    sun.reset(new DirectionalLight());
-    sun->data.direction = sky->get_sun_direction();
-    sun->data.color = float3(1.f, 1.0f, 1.0f);
-    sun->data.amount = 1.0f;
-    objects.push_back(sun);
-
     lightA.reset(new PointLight());
     lightA->data.color = float3(0.88f, 0.85f, 0.97f);
     lightA->data.position = float3(-5, 5, 0);
@@ -257,19 +249,17 @@ void scene_editor_app::on_draw()
 
     {
         // Single-viewport camera
-        CameraData data;
-        data.pose = cam.get_pose();
-        data.projectionMatrix = projectionMatrix;
-        data.viewMatrix = viewMatrix;
-        data.viewProjMatrix = viewProjectionMatrix;
-        renderer->add_camera(0, data);
+        CameraData renderCam;
+        renderCam.index = 0;
+        renderCam.pose = cam.get_pose();
+        renderCam.projectionMatrix = projectionMatrix;
+        renderCam.viewMatrix = viewMatrix;
+        renderCam.viewProjMatrix = viewProjectionMatrix;
+        renderer->add_camera(renderCam);
 
         // Lighting
-        RenderLightingData sceneLighting;
-        sceneLighting.directionalLight = &sun->data;
-        sceneLighting.pointLights.push_back(&lightA->data);
-        sceneLighting.pointLights.push_back(&lightB->data);
-        renderer->add_lights(sceneLighting);
+        renderer->add_light(&lightA->data);
+        renderer->add_light(&lightB->data);
 
         // Gather Objects
         std::vector<Renderable *> sceneObjects;
@@ -304,7 +294,7 @@ void scene_editor_app::on_draw()
 
     // Selected objects as wireframe
     {
-        glDisable(GL_DEPTH_TEST);
+        //glDisable(GL_DEPTH_TEST);
 
         auto & program = AssetHandle<GlShader>("wireframe").get();
 
@@ -322,7 +312,7 @@ void scene_editor_app::on_draw()
 
         program.unbind();
 
-        glEnable(GL_DEPTH_TEST);
+        //glEnable(GL_DEPTH_TEST);
     }
 
     igm->begin_frame();

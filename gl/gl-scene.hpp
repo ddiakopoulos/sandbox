@@ -76,9 +76,9 @@ namespace avl
 
         void draw() const override
         {
-            GlShaderHandle("wireframe").get().bind();
-            GlMeshHandle("icosphere").get().draw_elements();
-            GlShaderHandle("wireframe").get().unbind();
+            //GlShaderHandle("wireframe").get().bind();
+            //GlMeshHandle("icosphere").get().draw_elements();
+            //GlShaderHandle("wireframe").get().unbind();
         }
 
         Bounds3D get_world_bounds() const override
@@ -122,9 +122,9 @@ namespace avl
 
         void draw() const override
         {
-            GlShaderHandle("wireframe").get().bind();
-            GlMeshHandle("icosphere").get().draw_elements();
-            GlShaderHandle("wireframe").get().unbind();
+            //GlShaderHandle("wireframe").get().bind();
+            //GlMeshHandle("icosphere").get().draw_elements();
+            //GlShaderHandle("wireframe").get().unbind();
         }
 
         Bounds3D get_world_bounds() const override

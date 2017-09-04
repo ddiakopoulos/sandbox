@@ -2,10 +2,14 @@
 // http://blog.selfshadow.com/publications/blending-in-detail/
 // http://www.trentreed.net/blog/physically-based-shading-and-image-based-lighting/
 // http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
-// http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
 // https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
 // http://www.frostbite.com/wp-content/uploads/2014/11/course_notes_moving_frostbite_to_pbr_v2.pdf
 // https://github.com/KhronosGroup/glTF-WebGL-PBR/blob/master/shaders/pbr-frag.glsl
+
+// [1] http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+// [2] http://blog.selfshadow.com/publications/s2012-shading-course/burley/s2012_pbs_disney_brdf_notes_v3.pdf
+// [3] https://github.com/KhronosGroup/glTF-WebGL-PBR/#environment-maps
+// [4] https://www.cs.virginia.edu/~jdl/bib/appearance/analytic%20models/schlick94b.pdf
 
 #include "renderer_common.glsl"
 #include "colorspace_conversions.glsl"
@@ -188,7 +192,6 @@ void main()
     albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA) * u_albedo; 
 #endif
 
-
     // Roughness is authored as perceptual roughness; as is convention,
     // convert to material roughness by squaring the perceptual roughness [2].
     float alphaRoughness = roughness * roughness;
@@ -269,7 +272,6 @@ void main()
 
     #ifdef USE_IMAGE_BASED_LIGHTING
     {
-        // Compute image-based lighting
         const int NUM_MIP_LEVELS = 6;
         float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
         vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
