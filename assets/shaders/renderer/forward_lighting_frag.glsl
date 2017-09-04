@@ -36,14 +36,15 @@ uniform float u_ambientIntensity = 1.0;
 uniform samplerCube sc_radiance;
 uniform samplerCube sc_irradiance;
 
+// Lighting & Shadowing Uniforms
+
 // Dielectrics have an F0 between 0.2 - 0.5, often exposed as the "specular level" parameter
 uniform float u_specularLevel = 0.04;
 uniform vec3 u_albedo = vec3(1);
-uniform float u_shadowOpacity = 0.88;
 uniform float u_occlusionStrength = 1.0;
-
-// Lighting & Shadowing Uniforms
 uniform float u_pointLightAttenuation = 1.0;
+
+uniform float u_shadowOpacity = 0.88;
 uniform sampler2DArray s_csmArray;
 
 out vec4 f_color;
@@ -63,19 +64,6 @@ struct LightingInfo
     vec3 diffuseColor;            // color contribution from diffuse lighting
     vec3 specularColor;           // color contribution from specular lighting
 };
-
-vec3 get_normal(vec2 p) 
-{
-    float s01 = textureOffset(s_height, p, ivec2(-1, 0)).x;
-    float s21 = textureOffset(s_height, p, ivec2(1, 0)).x;
-    float s10 = textureOffset(s_height, p, ivec2(0, -1)).x;
-    float s12 = textureOffset(s_height, p, ivec2(0, 1)).x;
-
-    // Central Difference Method from:
-    // http://www.iquilezles.org/www/articles/terrainmarching/terrainmarching.htm
-    vec3 n = vec3(s01 - s21, s10 - s12, 1.0);
-    return normalize(n);
-}
 
 // https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
 // https://imdoingitwrong.wordpress.com/2011/02/10/improved-light-attenuation/
