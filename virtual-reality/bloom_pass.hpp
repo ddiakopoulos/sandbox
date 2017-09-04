@@ -222,7 +222,7 @@ struct BloomPass
     {   
         if (!enabled) return;
 
-        if (ImGui::TreeNode("Tonemapping"))
+        if (ImGui::TreeNode("Bloom Parameters"))
         {
             ImGui::SliderFloat("MiddleGrey", &middleGrey, 0.1f, 1.0f);
             ImGui::SliderFloat("WhitePoint", &whitePoint, 0.1f, 2.0f);

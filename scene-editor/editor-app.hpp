@@ -147,8 +147,6 @@ struct scene_editor_app : public GLFWApp
     std::unique_ptr<gui::ImGuiManager> igm;
     std::unique_ptr<HosekProceduralSky> skybox;
 
-    std::vector<std::shared_ptr<MetallicRoughnessMaterial>> materials;
-
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
     std::unique_ptr<editor_controller<GameObject>> editor;
 

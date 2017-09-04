@@ -37,6 +37,13 @@ namespace avl
         return str;
     }
 
+    inline void write_file_text(const std::string & fileName, const std::string & output)
+    {
+        std::ofstream t(fileName);
+        t << output;
+        t.close();
+    }
+
 }
 
 #endif // file_io_h

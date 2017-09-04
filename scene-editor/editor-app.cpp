@@ -94,31 +94,28 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     {
         for (int j = 0; j < 6; ++j)
         {
-            std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
+            MetallicRoughnessMaterial pbrMaterialInstance("pbr-forward-lighting");
 
-            pbrMaterial.reset(new MetallicRoughnessMaterial("pbr-forward-lighting"));
-            pbrMaterial->set_albedo_texture("rusted-iron-albedo");
-            pbrMaterial->set_normal_texture("rusted-iron-normal");
-            pbrMaterial->set_metallic_texture("rusted-iron-metallic");
-            pbrMaterial->set_roughness_texture("rusted-iron-roughness");
-            pbrMaterial->set_height_texture("rusted-iron-height");
-            pbrMaterial->set_occulusion_texture("rusted-iron-occlusion");
-            pbrMaterial->set_radiance_cubemap("wells-radiance-cubemap");
-            pbrMaterial->set_irrradiance_cubemap("wells-irradiance-cubemap");
-
-            pbrMaterial->set_roughness(remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f));
-            pbrMaterial->set_metallic(remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f));
+            pbrMaterialInstance.set_albedo_texture("rusted-iron-albedo");
+            pbrMaterialInstance.set_normal_texture("rusted-iron-normal");
+            pbrMaterialInstance.set_metallic_texture("rusted-iron-metallic");
+            pbrMaterialInstance.set_roughness_texture("rusted-iron-roughness");
+            pbrMaterialInstance.set_height_texture("rusted-iron-height");
+            pbrMaterialInstance.set_occulusion_texture("rusted-iron-occlusion");
+            pbrMaterialInstance.set_radiance_cubemap("wells-radiance-cubemap");
+            pbrMaterialInstance.set_irrradiance_cubemap("wells-irradiance-cubemap");
+            pbrMaterialInstance.set_roughness(remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f));
+            pbrMaterialInstance.set_metallic(remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f));
+            global_register_asset("some-material-instance", std::move(pbrMaterialInstance));
 
             StaticMesh mesh(GlMeshHandle("icosphere"), GeometryHandle("icosphere"));
             Pose p;
             p.position = float3((i * 2) - 5, 0, (j * 2) - 5);
             mesh.set_pose(p);
-            mesh.set_material(pbrMaterial.get()); // todo - assign default material
+            mesh.set_material("some-material-instance");
 
             std::shared_ptr<StaticMesh> object = std::make_shared<StaticMesh>(std::move(mesh));
             objects.push_back(object);
-
-            materials.push_back(pbrMaterial);
         }
     }
 
@@ -129,10 +126,23 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     StaticMesh floorMesh(GlMeshHandle("cube"), GeometryHandle("cube"));
     floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
     floorMesh.set_scale(float3(16, 0.1f, 16));
-    floorMesh.set_material(materials.back().get());
+    floorMesh.set_material("some-material-instance");
 
     std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
     objects.push_back(floor);
+
+    auto output = cereal::ToJson(floor);
+    write_file_text("floor-object.json", output);
+
+    /*
+    auto floorJson = read_file_text("floor-object.json");
+    std::istringstream floorJsonStream(floorJson);
+    cereal::JSONInputArchive inJson(floorJsonStream);
+    std::shared_ptr<StaticMesh> floor;
+    inJson(floor);
+    objects.push_back(floor);
+    */
+
 }
 
 scene_editor_app::~scene_editor_app()

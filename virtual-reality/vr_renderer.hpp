@@ -122,13 +122,13 @@ class PhysicallyBasedRenderer
             float rDist = distance(cameraWorldspace, rhs->get_pose().position);
 
             // Can't sort by material if the renderable doesn't have a material
-            if (!lhs->get_material() || !rhs->get_material())
+            if (!lhs->has_material() || !rhs->has_material())
             {
                 return lDist < rDist;
             }
 
-            auto lid = lhs->get_material()->id();
-            auto rid = rhs->get_material()->id();
+            auto lid = lhs->get_material().get().id();
+            auto rid = rhs->get_material().get().id();
 
             if (lid != rid) return lid > rid;
             else return lDist < rDist;
@@ -152,16 +152,18 @@ class PhysicallyBasedRenderer
 
             // We assume that objects without a valid material take care of their own shading
             // in their `draw()` function
-            if (Material * mat = top->get_material())
+            if (top->has_material())
             {
-                mat->update_uniforms();
+                Material & mat = top->get_material().get();
 
-                if (auto * mr = dynamic_cast<MetallicRoughnessMaterial*>(mat))
+                mat.update_uniforms();
+
+                if (auto * mr = dynamic_cast<MetallicRoughnessMaterial*>(&mat))
                 {
                     mr->update_cascaded_shadow_array_handle(shadow->get_output_texture());
                 }
 
-                mat->use();
+                mat.use();
             }
 
             top->draw();

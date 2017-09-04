@@ -52,6 +52,18 @@ public:
         return handle->asset;
     }
 
+    bool assigned() const
+    {
+        if (handle->assigned) return true;
+        else return false;
+    }
+
+    std::string asset_id() const
+    {
+        if (handle->assigned) return handle->name;
+        else return std::string("");
+    }
+
     static std::vector<AssetHandle> list()
     {
         std::vector<AssetHandle> results;
