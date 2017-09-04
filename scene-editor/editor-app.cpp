@@ -53,21 +53,25 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     });
 
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
-    renderer->get_shadow_pass()->program = GlShaderHandle("cascaded-shadows"); // fixme -- this is not ideal
     renderer->set_procedural_sky(skybox.get());
 
     auto sky = renderer->get_procedural_sky();
-    directionalLight.direction = sky->get_sun_direction();
-    directionalLight.color = float3(1.f, 0.0f, 0.0f);
-    directionalLight.amount = 1.0f;
+    sun.data.direction = sky->get_sun_direction();
+    sun.data.color = float3(1.f, 1.0f, 1.0f);
+    sun.data.amount = 1.0f;
 
-    pointLights.push_back(uniforms::point_light{ float3(0.88f, 0.85f, 0.97f), float3(-5, 5, 0), 12.f });
-    pointLights.push_back(uniforms::point_light{ float3(0.67f, 1.00f, 0.85f), float3(+5, 5, 0), 12.f });
+    lightA.data.color = float3(0.88f, 0.85f, 0.97f);
+    lightA.data.position = float3(-5, 5, 0);
+    lightA.data.radius = 12.f;
 
-    global_register_asset("rusted-iron-albedo", load_image("../assets/nonfree/Metal_OldBlueSteel_2k_basecolor.tga", false));
-    global_register_asset("rusted-iron-normal", load_image("../assets/nonfree/Metal_OldBlueSteel_2k_n.tga", false));
-    global_register_asset("rusted-iron-metallic", load_image("../assets/nonfree/Metal_OldBlueSteel_2k_metallic.tga", false));
-    global_register_asset("rusted-iron-roughness", load_image("../assets/nonfree/Metal_OldBlueSteel_2k_roughness.tga", false));
+    lightA.data.color = float3(0.67f, 1.00f, 0.85f);
+    lightA.data.position = float3(+5, 5, 0);
+    lightA.data.radius = 12.f;
+
+    global_register_asset("rusted-iron-albedo", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_basecolor.tga", false));
+    global_register_asset("rusted-iron-normal", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_n.tga", false));
+    global_register_asset("rusted-iron-metallic", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_metallic.tga", false));
+    global_register_asset("rusted-iron-roughness", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_roughness.tga", false));
 
     auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
     auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
@@ -80,9 +84,9 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("icosphere", make_mesh_from_geometry(ico));
     global_register_asset("icosphere", std::move(ico));
 
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 6; ++i)
     {
-        for (int j = 0; j < 10; ++j)
+        for (int j = 0; j < 6; ++j)
         {
             std::shared_ptr<MetallicRoughnessMaterial> pbrMaterial;
 
@@ -94,15 +98,17 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             pbrMaterial->set_radiance_cubemap("wells-radiance-cubemap");
             pbrMaterial->set_irrradiance_cubemap("wells-irradiance-cubemap");
 
-            pbrMaterial->set_roughness(remap<float>(i, 0.0f, 9.0f, 0.0f, 1.f));
-            pbrMaterial->set_metallic(remap<float>(j, 0.0f, 9.0f, 0.0f, 1.f));
+            pbrMaterial->set_roughness(remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f));
+            pbrMaterial->set_metallic(remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f));
 
             StaticMesh mesh(GlMeshHandle("icosphere"), GeometryHandle("icosphere"));
             Pose p;
-            p.position = float3((i * 2) - 10, 0, (j * 2) - 10);
+            p.position = float3((i * 2) - 5, 0, (j * 2) - 5);
             mesh.set_pose(p);
             mesh.set_material(pbrMaterial.get()); // todo - assign default material
-            objects.push_back(std::move(mesh));
+
+            std::shared_ptr<StaticMesh> object = std::make_shared<StaticMesh>(std::move(mesh));
+            objects.push_back(object);
 
             materials.push_back(pbrMaterial);
         }
@@ -116,7 +122,9 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
     floorMesh.set_scale(float3(16, 0.1f, 16));
     floorMesh.set_material(materials.back().get());
-    objects.push_back(std::move(floorMesh));
+
+    std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
+    objects.push_back(floor);
 }
 
 scene_editor_app::~scene_editor_app()
@@ -162,13 +170,13 @@ void scene_editor_app::on_input(const InputEvent & event)
 
                 for (auto & obj : objects)
                 {
-                    RaycastResult result = obj.raycast(r);
+                    RaycastResult result = obj->raycast(r);
                     if (result.hit)
                     {
                         if (result.distance < best_t)
                         {
                             best_t = result.distance;
-                            hitObject = &obj;
+                            hitObject = obj.get();
                         }
                     }
                 }
@@ -242,13 +250,20 @@ void scene_editor_app::on_draw()
 
         // Lighting
         RenderLightingData sceneLighting;
-        sceneLighting.directionalLight = &directionalLight;
-        for (auto & ptLight : pointLights) sceneLighting.pointLights.push_back(&ptLight);
+        sceneLighting.directionalLight = &sun.data;
+        sceneLighting.pointLights.push_back(&lightA.data);
+        sceneLighting.pointLights.push_back(&lightB.data);
         renderer->add_lights(sceneLighting);
 
         // Objects
         std::vector<Renderable *> sceneObjects;
-        for (auto & obj : objects) sceneObjects.push_back(&obj);
+        for (auto & obj : objects)
+        {
+            if (auto * rndr = dynamic_cast<Renderable*>(obj.get()))
+            {
+                sceneObjects.push_back(rndr);
+            }
+        }
         renderer->add_objects(sceneObjects);
 
         renderer->render_frame();
@@ -273,6 +288,8 @@ void scene_editor_app::on_draw()
 
     // Selected objects as wireframe
     {
+        glDisable(GL_DEPTH_TEST);
+
         auto & program = AssetHandle<GlShader>("wireframe").get();
 
         program.bind();
@@ -282,11 +299,14 @@ void scene_editor_app::on_draw()
 
         for (auto obj : editor->get_selection())
         {
-            program.uniform("u_modelMatrix", obj->get_pose().matrix());
+            auto modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
+            program.uniform("u_modelMatrix", modelMatrix);
             obj->draw();
         }
 
         program.unbind();
+
+        glEnable(GL_DEPTH_TEST);
     }
 
     igm->begin_frame();
@@ -305,9 +325,9 @@ void scene_editor_app::on_draw()
         if (menu.item("Clone", GLFW_MOD_CONTROL, GLFW_KEY_D)) {}
         if (menu.item("Delete", 0, GLFW_KEY_DELETE)) 
         {
-            auto it = std::remove_if(begin(objects), end(objects), [this](StaticMesh & obj) 
+            auto it = std::remove_if(begin(objects), end(objects), [this](std::shared_ptr<GameObject> obj) 
             { 
-                return editor->selected(&obj);
+                return editor->selected(obj.get());
             });
             objects.erase(it, end(objects));
             editor->clear();
@@ -315,7 +335,10 @@ void scene_editor_app::on_draw()
         if (menu.item("Select All", GLFW_MOD_CONTROL, GLFW_KEY_A)) 
         {
             std::vector<GameObject *> selectedObjects;
-            for (auto & obj : objects) selectedObjects.push_back(&obj);
+            for (auto & obj : objects)
+            {
+                selectedObjects.push_back(obj.get());
+            }
             editor->set_selection(selectedObjects);
         }
         menu.end();
@@ -327,14 +350,14 @@ void scene_editor_app::on_draw()
     for (size_t i = 0; i < objects.size(); ++i)
     {
         ImGui::PushID(static_cast<int>(i));
-        bool selected = editor->selected(&objects[i]);
+        bool selected = editor->selected(objects[i].get());
         std::string name = std::string(typeid(objects[i]).name());
         std::vector<StaticMesh *> selectedObjects;
 
         if (ImGui::Selectable(name.c_str(), &selected))
         {
             if (!ImGui::GetIO().KeyCtrl) editor->clear();
-            editor->update_selection(&objects[i]);
+            editor->update_selection(objects[i].get());
         }
         ImGui::PopID();
     }

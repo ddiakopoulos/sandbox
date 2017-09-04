@@ -33,10 +33,7 @@ class StaticMesh final : public Renderable
 
 public:
 
-    StaticMesh(GlMeshHandle m, GeometryHandle g) : mesh(m), geom(g)
-    {
-
-    }
+    StaticMesh(GlMeshHandle m, GeometryHandle g) : mesh(m), geom(g) { }
 
     Pose get_pose() const override { return pose; }
     void set_pose(const Pose & p) override { pose = p; }

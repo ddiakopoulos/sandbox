@@ -53,7 +53,7 @@ struct StableCascadedShadowPass
 
     GlMesh fsQuad;
 
-    GlShaderHandle program;
+    GlShaderHandle program = { "cascaded-shadows" };
 
     StableCascadedShadowPass()
     {

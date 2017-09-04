@@ -77,6 +77,9 @@ class PhysicallyBasedRenderer
 
     ProceduralSky * skybox{ nullptr };
 
+    std::unique_ptr<BloomPass> bloom;
+    std::unique_ptr<StableCascadedShadowPass> shadow;
+
     void run_skybox_pass(const CameraData & d)
     {   
         if (!skybox) return;
@@ -136,9 +139,6 @@ class PhysicallyBasedRenderer
         while (!renderQueue.empty())
         {
             auto top = renderQueue.top();
-            Material * mat = top->get_material();
-
-            mat->update_uniforms();
 
             // Update per-object uniform buffer
             uniforms::per_object object = {};
@@ -148,12 +148,20 @@ class PhysicallyBasedRenderer
             object.receiveShadow = top->get_receive_shadow();
             perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
 
-            if (auto * mr = dynamic_cast<MetallicRoughnessMaterial*>(mat))
+            // We assume that objects without a valid material take care of their own shading
+            // in their `draw()` function
+            if (Material * mat = top->get_material())
             {
-                mr->update_cascaded_shadow_array_handle(shadow->get_output_texture());
+                mat->update_uniforms();
+
+                if (auto * mr = dynamic_cast<MetallicRoughnessMaterial*>(mat))
+                {
+                    mr->update_cascaded_shadow_array_handle(shadow->get_output_texture());
+                }
+
+                mat->use();
             }
 
-            mat->use();
             top->draw();
 
             renderQueue.pop();
@@ -192,9 +200,6 @@ class PhysicallyBasedRenderer
     }
 
 public:
-
-    std::unique_ptr<BloomPass> bloom;
-    std::unique_ptr<StableCascadedShadowPass> shadow;
 
     PhysicallyBasedRenderer(const float2 render_target_size) : renderSizePerEye(render_target_size)
     {
@@ -408,9 +413,15 @@ public:
         if (shadow) return shadow.get();
     }
 
-    void add_objects(const std::vector<Renderable *> & set) { renderSet = set; }
+    void add_objects(const std::vector<Renderable *> & set) 
+    { 
+        renderSet = set; 
+    }
 
-    void add_lights(const RenderLightingData & collection) { lights = collection; }
+    void add_lights(const RenderLightingData & collection) 
+    { 
+        lights = collection; 
+    }
 };
 
 #endif // end vr_renderer_hpp

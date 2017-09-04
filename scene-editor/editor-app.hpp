@@ -152,9 +152,10 @@ struct scene_editor_app : public GLFWApp
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
     std::unique_ptr<editor_controller<GameObject>> editor;
 
-    uniforms::directional_light directionalLight;
-    std::vector<uniforms::point_light> pointLights;
-    std::vector<StaticMesh> objects;
+    Light<uniforms::point_light> lightA;
+    Light<uniforms::point_light> lightB;
+    Light<uniforms::directional_light> sun;
+    std::vector<std::shared_ptr<GameObject>> objects;
 
     scene_editor_app();
     ~scene_editor_app();

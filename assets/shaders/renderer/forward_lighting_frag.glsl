@@ -22,6 +22,7 @@ in vec3 v_bitangent;
 uniform float u_roughness = 1;
 uniform float u_metallic = 1;
 uniform float u_opacity = 1.0;
+
 uniform sampler2D s_albedo;
 uniform sampler2D s_normal;
 uniform sampler2D s_roughness;
@@ -230,7 +231,7 @@ void main()
         vec3 diffuseContrib, specContrib;
         compute_cook_torrance(data, u_directionalLight.amount, diffuseContrib, specContrib);
 
-        Lo += NdotL * (diffuseContrib + specContrib);
+        Lo += NdotL * u_directionalLight.color * (diffuseContrib + specContrib);
     }
 
     // Compute point lights
