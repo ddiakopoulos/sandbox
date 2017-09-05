@@ -91,7 +91,9 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("scifi-floor-roughness", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_roughness.tga", false));
     global_register_asset("scifi-floor-occlusion", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_ao.tga", false));
 
-    auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
+
+    auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
+    //auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
     rescale_geometry(shaderball, 1.f);
     global_register_asset("shaderball", make_mesh_from_geometry(shaderball));
     global_register_asset("shaderball", std::move(shaderball));
@@ -118,6 +120,9 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             pbrMaterialInstance.occlusion = GlTextureHandle("rusted-iron-occlusion");
             pbrMaterialInstance.radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
             pbrMaterialInstance.irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
+
+            serialize_test(pbrMaterialInstance);
+
             global_register_asset(material_id.c_str(), std::move(pbrMaterialInstance));
 
             StaticMesh m;

@@ -61,6 +61,10 @@ struct StableCascadedShadowPass
 
         shadowArrayDepth.setup(GL_TEXTURE_2D_ARRAY, resolution, resolution, uniforms::NUM_CASCADES, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         glNamedFramebufferTextureEXT(shadowArrayFramebuffer, GL_DEPTH_ATTACHMENT, shadowArrayDepth, 0);
+        glTextureParameteriEXT(shadowArrayFramebuffer, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+        glTextureParameteriEXT(shadowArrayFramebuffer, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+        glTextureParameteriEXT(shadowArrayFramebuffer, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTextureParameteriEXT(shadowArrayFramebuffer, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
         shadowArrayFramebuffer.check_complete();
 
         gl_check_error(__FILE__, __LINE__);
@@ -116,7 +120,7 @@ struct StableCascadedShadowPass
             float sphereRadius = 0.0f;
             for (int i = 0; i < 8; ++i)
             {
-                float dist = length(splitFrustumVerts[i].xyz() - frustumCentroid) * 0.5; // argh
+                float dist = length(splitFrustumVerts[i].xyz() - frustumCentroid) * 0.50; // argh
                 sphereRadius = std::max(sphereRadius, dist);
             }
                 
@@ -175,8 +179,8 @@ struct StableCascadedShadowPass
         auto & shader = program.get();
 
         shader.bind();
-        shader.uniform("u_cascadeNear", uniforms::NUM_CASCADES, nearPlanes);
-        shader.uniform("u_cascadeFar", uniforms::NUM_CASCADES, farPlanes);
+        //shader.uniform("u_cascadeNear", uniforms::NUM_CASCADES, nearPlanes);
+        //shader.uniform("u_cascadeFar", uniforms::NUM_CASCADES, farPlanes);
         shader.uniform("u_cascadeViewMatrixArray", uniforms::NUM_CASCADES, viewMatrices);
         shader.uniform("u_cascadeProjMatrixArray", uniforms::NUM_CASCADES, projMatrices);
     }
@@ -188,6 +192,8 @@ struct StableCascadedShadowPass
         //glEnable(GL_CULL_FACE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         shader.unbind();
+
+        glGenerateTextureMipmapEXT(shadowArrayFramebuffer, GL_TEXTURE_2D_ARRAY);
     }
 
     GLuint get_output_texture() const { return shadowArrayDepth.id(); }

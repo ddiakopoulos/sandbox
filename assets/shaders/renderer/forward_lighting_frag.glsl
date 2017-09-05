@@ -246,7 +246,7 @@ void main()
         vec3 L = normalize(u_directionalLight.direction); 
         vec3 H = normalize(L + V);  
 
-        const float slope_bias = 0.01;
+        const float slope_bias = 0.02;
         const float normal_bias = 0.01;
         vec3 biased_pos = get_biased_position(v_world_position, slope_bias, normal_bias, N, L);
 

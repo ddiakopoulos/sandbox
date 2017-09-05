@@ -8,6 +8,23 @@
 #include "geometric.hpp"
 #include "assets.hpp"
 
+template<class F, class T> void visit_fields(T & t, F f)
+{
+    t.visit_fields(f);
+}
+
+template <unsigned int I = 0, class F, class... TS>
+inline typename std::enable_if<I == sizeof...(TS), void>::type visit_fields(std::tuple<TS...> & params, F f)
+{
+}
+
+template <unsigned int I = 0, class F, class... TS>
+inline typename std::enable_if< I < sizeof...(TS), void>::type visit_fields(std::tuple<TS...> &params, F f)
+{
+    f(std::get<I + 1>(params), std::get<I>(params));
+    visit_fields<I + 2, F, TS...>(params, f);
+}
+
 namespace avl
 {
 
@@ -51,15 +68,34 @@ namespace avl
         GlTextureHandle radianceCubemap;
         GlTextureHandle irradianceCubemap;
 
-        MetallicRoughnessMaterial() {} // Why does this need a default constructor? 
-
-        //MetallicRoughnessMaterial(GlShaderHandle shader);
-
+        MetallicRoughnessMaterial() {}
         void update_cascaded_shadow_array_handle(GLuint handle);
         void update_uniforms() override;
         void use() override;
     };
 
+}
+
+template<class F> void visit_fields(MetallicRoughnessMaterial & o, F f)
+{
+    f("1", o.baseAlbedo);
+    f("2", o.height);
+    f("3", o.shadowOpacity);
+    f("4", o.texcoordScale);
+};
+
+struct field_encoder 
+{ 
+    template<class T, class... TS> void operator () (const char * name, const T & field, TS...) 
+    { 
+        std::cout << "Name: " << name << std::endl;
+    } 
+};
+
+template<class T> void serialize_test(const T & o) 
+{ 
+    uint32_t test;
+    visit_fields(const_cast<T &>(o), field_encoder{ }); 
 }
 
 class RuntimeMaterialInstance

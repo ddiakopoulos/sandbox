@@ -173,7 +173,7 @@ public:
     ProceduralSky()
     {
         skyMesh = make_sphere_mesh(1.0);
-        set_sun_position(70, 110);
+        set_sun_position(50, 110);
     }
 
     void render(float4x4 viewProj, float3 eyepoint, float farClip)
@@ -248,7 +248,7 @@ public:
     HosekProceduralSky()
     {
         sky.reset(new GlShader(read_file_text("../assets/shaders/sky_vert.glsl"), read_file_text("../assets/shaders/sky_hosek_frag.glsl")));
-        recompute(4, 0.1f, 1.15f);
+        recompute(4, 0.1f, 0.9f);
     }
     
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) override
