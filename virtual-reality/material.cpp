@@ -3,21 +3,6 @@
 
 using namespace avl;
 
-////////////////////////
-//   Debug Material   //
-////////////////////////
-
-DebugMaterial::DebugMaterial(GlShaderHandle shader)
-{
-    program = shader;
-}
-
-void DebugMaterial::use()
-{
-    auto & shader = program.get();
-    shader.bind();
-}
-
 //////////////////////////////////////////////////////
 //   Physically-Based Metallic-Roughness Material   //
 //////////////////////////////////////////////////////

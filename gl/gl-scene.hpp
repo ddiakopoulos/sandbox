@@ -19,6 +19,8 @@
 #include "cereal/archives/json.hpp"
 #include "cereal/access.hpp"
 
+// https://github.com/USCiLab/cereal/issues/237
+
 namespace avl
 {
     struct DebugRenderable
@@ -37,7 +39,7 @@ namespace avl
     {
         bool hit = false;
         float distance = std::numeric_limits<float>::max();
-        float3 normal = {0, 0, 0};
+        float3 normal = { 0, 0, 0 };
         RaycastResult(bool h, float t, float3 n) : hit(h), distance(t), normal(n) {}
     };
 
@@ -56,20 +58,15 @@ namespace avl
         virtual RaycastResult raycast(const Ray & worldRay) const = 0;
     };
 
-    class Material;
     struct Renderable : public GameObject
     {
-        Material * mat{ nullptr };
+        std::shared_ptr<Material> mat;
 
         bool receive_shadow{ true };
         bool cast_shadow{ true };
 
-        Material * get_material() const { return mat; }
-        void set_material(Material * m) 
-        {
-            std::cout << "Setting Material: " << m << std::endl;
-            mat = m; 
-        }
+        Material * get_material() const { return mat.get(); }
+        void set_material(std::shared_ptr<Material> m) { mat = m; }
 
         void set_receive_shadow(const bool value) { receive_shadow = value; }
         bool get_receive_shadow() const { return receive_shadow; }
@@ -77,7 +74,7 @@ namespace avl
         void set_cast_shadow(const bool value) { cast_shadow = value; }
         bool get_cast_shadow() const { return cast_shadow; }
     };
-    
+
     struct PointLight final : public Renderable
     {
         uniforms::point_light data;
@@ -127,13 +124,13 @@ namespace avl
             cast_shadow = false;
         }
 
-        Pose get_pose() const override 
-        { 
+        Pose get_pose() const override
+        {
             auto directionQuat = make_quat_from_to({ 0, 1, 0 }, data.direction);
             return Pose(directionQuat);
         }
-        void set_pose(const Pose & p) override 
-        { 
+        void set_pose(const Pose & p) override
+        {
             data.direction = qydir(p.orientation);
         }
         Bounds3D get_bounds() const override { return Bounds3D(float3(-0.5f), float3(0.5f)); }
@@ -155,22 +152,20 @@ namespace avl
 
         RaycastResult raycast(const Ray & worldRay) const override
         {
-            return{ false, -FLT_MAX, {0,0,0} };
+            return{ false, -FLT_MAX,{ 0,0,0 } };
         }
     };
 
-    class StaticMesh final : public Renderable
+    struct StaticMesh final : public Renderable
     {
         Pose pose;
         float3 scale{ 1, 1, 1 };
         Bounds3D bounds;
 
-    public:
-
         GlMeshHandle mesh;
         GeometryHandle geom;
 
-        StaticMesh(GlMeshHandle m, GeometryHandle g) : mesh(m), geom(g) { }
+        StaticMesh() {}
 
         StaticMesh(StaticMesh && r)
         {
@@ -179,12 +174,13 @@ namespace avl
 
         StaticMesh & operator = (StaticMesh && r)
         {
+            std::swap(id, r.id);
             std::swap(pose, r.pose);
             std::swap(scale, r.scale);
             std::swap(bounds, r.bounds);
+            std::swap(mat, r.mat);
             std::swap(mesh, r.mesh);
             std::swap(geom, r.geom);
-            std::swap(mat, r.mat);
             return *this;
         }
 
@@ -229,6 +225,10 @@ namespace avl
 
 } // end namespace avl
 
+//////////////////////////////////////
+//  Anvil Base Type Serialization   //
+//////////////////////////////////////
+
 namespace cereal
 {
     template<class Archive> void serialize(Archive & archive, float2 & m) { archive(cereal::make_nvp("x", m.x), cereal::make_nvp("y", m.y)); }
@@ -250,17 +250,39 @@ namespace cereal
     template<class Archive> void serialize(Archive & archive, Sphere & m) { archive(cereal::make_nvp("center", m.center), cereal::make_nvp("radius", m.radius)); }
 }
 
-CEREAL_REGISTER_TYPE_WITH_NAME(GameObject, "GameObject");
-CEREAL_REGISTER_TYPE_WITH_NAME(Renderable, "Renderable");
-CEREAL_REGISTER_TYPE_WITH_NAME(StaticMesh, "StaticMesh");
-CEREAL_REGISTER_TYPE_WITH_NAME(DirectionalLight, "DirectionalLight");
-CEREAL_REGISTER_TYPE_WITH_NAME(PointLight, "PointLight");
+//////////////////////////////
+//   Handle Serialization   //
+//////////////////////////////
 
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Renderable, GameObject)
+namespace cereal
+{
+    template<class Archive> void serialize(Archive & archive, GlTextureHandle & m) { archive(cereal::make_nvp("id", m.name)); }
+    template<class Archive> void serialize(Archive & archive, GlShaderHandle & m) { archive(cereal::make_nvp("id", m.name)); }
+    template<class Archive> void serialize(Archive & archive, GlMeshHandle & m) { archive(cereal::make_nvp("id", m.name)); }
+    template<class Archive> void serialize(Archive & archive, GeometryHandle & m) { archive(cereal::make_nvp("id", m.name)); }
+}
 
-CEREAL_REGISTER_POLYMORPHIC_RELATION(StaticMesh, Renderable)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(DirectionalLight, Renderable)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(PointLight, Renderable)
+//////////////////////////////////////////
+//   Engine Relationship Declarations   //
+//////////////////////////////////////////
+
+CEREAL_REGISTER_TYPE_WITH_NAME(GameObject,                      "GameObjectBase");
+CEREAL_REGISTER_TYPE_WITH_NAME(Renderable,                      "Renderable");
+CEREAL_REGISTER_TYPE_WITH_NAME(StaticMesh,                      "StaticMesh");
+CEREAL_REGISTER_TYPE_WITH_NAME(DirectionalLight,                "DirectionalLight");
+CEREAL_REGISTER_TYPE_WITH_NAME(PointLight,                      "PointLight");
+CEREAL_REGISTER_TYPE_WITH_NAME(Material,                        "MaterialBase");
+CEREAL_REGISTER_TYPE_WITH_NAME(MetallicRoughnessMaterial,       "MetallicRoughnessMaterial");
+
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Renderable,                GameObject)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(StaticMesh,                Renderable)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(DirectionalLight,          Renderable)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(PointLight,                Renderable)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(MetallicRoughnessMaterial, Material);
+
+///////////////////////////////////
+//   Game Object Serialization   //
+///////////////////////////////////
 
 namespace cereal
 {
@@ -274,30 +296,16 @@ namespace cereal
         archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
         archive(cereal::make_nvp("cast_shadow", m.cast_shadow));
         archive(cereal::make_nvp("receive_shadow", m.receive_shadow));
-        //archive(cereal::make_nvp("material", m.material.asset_id()));
+        //archive(cereal::make_nvp("material_instance", m.mat));
     }
-
-    template <> 
-    struct LoadAndConstruct<StaticMesh>
-    {
-        template <class Archive>
-        static void load_and_construct(Archive & archive, cereal::construct<StaticMesh> & construct)
-        {
-            std::string mesh_handle;
-            std::string geometry_handle;
-            archive(cereal::make_nvp("mesh_handle", mesh_handle), cereal::make_nvp("geometry_handle", geometry_handle));
-            construct(mesh_handle, geometry_handle);
-        }
-    };
 
     template<class Archive> void serialize(Archive & archive, StaticMesh & m)
     {
         archive(cereal::make_nvp("renderable", cereal::base_class<Renderable>(&m)));
-        archive(cereal::make_nvp("pose", m.get_pose()));
-        archive(cereal::make_nvp("scale", m.get_scale()));
-        archive(cereal::make_nvp("bounds", m.get_bounds()));
-        archive(cereal::make_nvp("mesh_handle", m.mesh.asset_id()));
-        archive(cereal::make_nvp("geometry_handle", m.geom.asset_id()));
+        archive(cereal::make_nvp("pose", m.pose));
+        archive(cereal::make_nvp("scale", m.scale));
+        archive(cereal::make_nvp("mesh_handle", m.mesh));
+        archive(cereal::make_nvp("geometry_handle", m.geom));
     }
 
     template <typename T>
@@ -313,4 +321,24 @@ namespace cereal
 }
 
 
+///////////////////////////////////////
+//   Material System Serialization   //
+///////////////////////////////////////
+
+namespace cereal
+{
+    template<class Archive> void serialize(Archive & archive, MetallicRoughnessMaterial & m)
+    {
+        archive(cereal::make_nvp("program_handle", m.program));
+        archive(cereal::make_nvp("albedo_handle", m.albedo));
+        archive(cereal::make_nvp("normal_handle", m.normal));
+        archive(cereal::make_nvp("metallic_handle", m.metallic));
+        archive(cereal::make_nvp("roughness_handle", m.roughness));
+        archive(cereal::make_nvp("emissive_handle", m.emissive));
+        archive(cereal::make_nvp("height_handle", m.height));
+        archive(cereal::make_nvp("occlusion_handle", m.occlusion));
+        archive(cereal::make_nvp("radiance_cubemap_handle", m.radianceCubemap));
+        archive(cereal::make_nvp("irradiance_cubemap_handle", m.irradianceCubemap));
+    }
+}
 #endif

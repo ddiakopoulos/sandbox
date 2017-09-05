@@ -152,7 +152,6 @@ class PhysicallyBasedRenderer
 
             // We assume that objects without a valid material take care of their own shading
             // in their `draw()` function
-            std::cout << top->get_material() << std::endl;
             if (Material * mat = top->get_material())
             {
                 mat->update_uniforms();
