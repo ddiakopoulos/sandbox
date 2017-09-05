@@ -51,7 +51,7 @@ namespace avl
 
         MetallicRoughnessMaterial() {} // Why does this need a default constructor? 
 
-        MetallicRoughnessMaterial(GlShaderHandle shader);
+        //MetallicRoughnessMaterial(GlShaderHandle shader);
 
         void update_cascaded_shadow_array_handle(GLuint handle);
         void update_uniforms() override;
@@ -60,6 +60,29 @@ namespace avl
 
 }
 
-typedef AssetHandle<avl::MetallicRoughnessMaterial> MetallicRoughnessMaterialHandle;
+class RuntimeMaterialInstance
+{
+    void associate()
+    {
+        // Iterate all material types? 
+        for (auto & m : AssetHandle<MetallicRoughnessMaterial>::list())
+        {
+            if (m.name.size() > 0 && m.name == name)
+            {
+                std::cout << "Assigning material: " << name << std::endl;
+                mat = &m.get();
+            }
+        }
+    }
+
+public:
+    std::string name;
+    Material * mat{ nullptr };
+    RuntimeMaterialInstance() { associate(); }
+    RuntimeMaterialInstance(const std::string & name) : name(name) { associate(); }
+    Material * get() { return mat; }
+};
+
+typedef AssetHandle<RuntimeMaterialInstance> MaterialHandle;
 
 #endif // end vr_material_hpp

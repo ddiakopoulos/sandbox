@@ -90,17 +90,26 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("icosphere", make_mesh_from_geometry(ico));
     global_register_asset("icosphere", std::move(ico));
 
-    std::shared_ptr<MetallicRoughnessMaterial> pbrMaterialInstance;
-    pbrMaterialInstance = std::make_shared<MetallicRoughnessMaterial>("pbr-forward-lighting");
+    MetallicRoughnessMaterial pbrMaterialInstance;
+    pbrMaterialInstance.program = GlShaderHandle("pbr-forward-lighting");
+    pbrMaterialInstance.albedo = GlTextureHandle("rusted-iron-albedo");
+    pbrMaterialInstance.normal = GlTextureHandle("rusted-iron-normal");
+    pbrMaterialInstance.metallic = GlTextureHandle("rusted-iron-metallic");
+    pbrMaterialInstance.roughness = GlTextureHandle("rusted-iron-roughness");
+    pbrMaterialInstance.height = GlTextureHandle("rusted-iron-height");
+    pbrMaterialInstance.occlusion = GlTextureHandle("rusted-iron-occlusion");
+    pbrMaterialInstance.radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
+    pbrMaterialInstance.irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
+    global_register_asset("pbr-material", std::move(pbrMaterialInstance));
 
-    pbrMaterialInstance->albedo = GlTextureHandle("rusted-iron-albedo");
-    pbrMaterialInstance->normal = GlTextureHandle("rusted-iron-normal");
-    pbrMaterialInstance->metallic = GlTextureHandle("rusted-iron-metallic");
-    pbrMaterialInstance->roughness = GlTextureHandle("rusted-iron-roughness");
-    pbrMaterialInstance->height = GlTextureHandle("rusted-iron-height");
-    pbrMaterialInstance->occlusion = GlTextureHandle("rusted-iron-occlusion");
-    pbrMaterialInstance->radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
-    pbrMaterialInstance->irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
+    for (auto & w : AssetHandle<MetallicRoughnessMaterial>::list())
+    {
+        std::cout << "Materials: " << w.name << std::endl;
+    }
+
+    std::cout << "--------------------------------------" << std::endl;
+
+    // register asset as base class, polymorph at runtime
 
     //pbrMaterialInstance.set_roughness(remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f));
     //pbrMaterialInstance.set_metallic(remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f));
@@ -117,7 +126,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             Pose p;
             p.position = float3((i * 2) - 5, 0, (j * 2) - 5);
             m.set_pose(p);
-            m.set_material(pbrMaterialInstance);
+            m.set_material(RuntimeMaterialInstance("pbr-material"));
             m.mesh = GlMeshHandle("icosphere");
             m.geom = GeometryHandle("icosphere");
             objects.push_back(std::make_shared<StaticMesh>(std::move(m)));
@@ -127,26 +136,29 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     auto cube = make_cube();
     global_register_asset("cube", make_mesh_from_geometry(cube));
     global_register_asset("cube", std::move(cube));
+    
+    // Resolve runtime object => material bindings
+    {
 
-    /*
+    }
+
     StaticMesh floorMesh;
     floorMesh.mesh = GlMeshHandle("cube");
     floorMesh.geom = GeometryHandle("cube");
     floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
     floorMesh.set_scale(float3(16, 0.1f, 16));
-    floorMesh.set_material(pbrMaterialInstance);
+    floorMesh.set_material(RuntimeMaterialInstance("pbr-material"));
     std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
     objects.push_back(floor);
     auto output = cereal::ToJson(floor);
     write_file_text("floor-object.json", output);
-    */
 
-    auto floorJson = read_file_text("floor-object.json");
-    std::istringstream floorJsonStream(floorJson);
-    cereal::JSONInputArchive inJson(floorJsonStream);
-    std::shared_ptr<StaticMesh> floor;
-    inJson(floor);
-    objects.push_back(floor);
+    //auto floorJson = read_file_text("floor-object.json");
+    //std::istringstream floorJsonStream(floorJson);
+    //cereal::JSONInputArchive inJson(floorJsonStream);
+    //std::shared_ptr<StaticMesh> floor;
+    //inJson(floor);
+    //objects.push_back(floor);
 
 }
 

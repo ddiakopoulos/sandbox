@@ -24,7 +24,7 @@ class AssetHandle
 {
     static std::map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
     mutable std::shared_ptr<UniqueAsset<T>> handle;
-    AssetHandle(std::shared_ptr<UniqueAsset<T>> h) : handle(h) {} // private constructor for the static list() method below
+    AssetHandle(const::std::string & id, std::shared_ptr<UniqueAsset<T>> h) : name(id), handle(h) {} // private constructor for the static list() method below
 
 public:
 
@@ -70,7 +70,10 @@ public:
     static std::vector<AssetHandle> list()
     {
         std::vector<AssetHandle> results;
-        for (const auto & a : table) results.push_back(a.second);
+        for (const auto & a : table)
+        {
+            results.push_back(AssetHandle<T>(a.first, a.second));
+        }
         return results;
     }
 };

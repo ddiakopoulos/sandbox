@@ -60,13 +60,13 @@ namespace avl
 
     struct Renderable : public GameObject
     {
-        std::shared_ptr<Material> mat;
+        RuntimeMaterialInstance material;
 
         bool receive_shadow{ true };
         bool cast_shadow{ true };
 
-        Material * get_material() const { return mat.get(); }
-        void set_material(std::shared_ptr<Material> m) { mat = m; }
+        Material * get_material() { return material.get(); }
+        void set_material(RuntimeMaterialInstance instance) { material = instance; }
 
         void set_receive_shadow(const bool value) { receive_shadow = value; }
         bool get_receive_shadow() const { return receive_shadow; }
@@ -133,6 +133,7 @@ namespace avl
         {
             data.direction = qydir(p.orientation);
         }
+
         Bounds3D get_bounds() const override { return Bounds3D(float3(-0.5f), float3(0.5f)); }
         float3 get_scale() const override { return float3(1, 1, 1); }
         void set_scale(const float3 & s) override { /* no-op */ }
@@ -178,7 +179,7 @@ namespace avl
             std::swap(pose, r.pose);
             std::swap(scale, r.scale);
             std::swap(bounds, r.bounds);
-            std::swap(mat, r.mat);
+            std::swap(material, r.material);
             std::swap(mesh, r.mesh);
             std::swap(geom, r.geom);
             return *this;
@@ -260,6 +261,7 @@ namespace cereal
     template<class Archive> void serialize(Archive & archive, GlShaderHandle & m) { archive(cereal::make_nvp("id", m.name)); }
     template<class Archive> void serialize(Archive & archive, GlMeshHandle & m) { archive(cereal::make_nvp("id", m.name)); }
     template<class Archive> void serialize(Archive & archive, GeometryHandle & m) { archive(cereal::make_nvp("id", m.name)); }
+    template<class Archive> void serialize(Archive & archive, RuntimeMaterialInstance & m) { archive(cereal::make_nvp("id", m.name)); }
 }
 
 //////////////////////////////////////////
@@ -296,7 +298,7 @@ namespace cereal
         archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
         archive(cereal::make_nvp("cast_shadow", m.cast_shadow));
         archive(cereal::make_nvp("receive_shadow", m.receive_shadow));
-        //archive(cereal::make_nvp("material_instance", m.mat));
+        archive(cereal::make_nvp("material_handle", m.material));
     }
 
     template<class Archive> void serialize(Archive & archive, StaticMesh & m)

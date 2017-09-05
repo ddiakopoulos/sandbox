@@ -7,11 +7,6 @@ using namespace avl;
 //   Physically-Based Metallic-Roughness Material   //
 //////////////////////////////////////////////////////
 
-MetallicRoughnessMaterial::MetallicRoughnessMaterial(GlShaderHandle shader)
-{
-    program = shader;
-}
-
 void MetallicRoughnessMaterial::update_uniforms()
 {
     bindpoint = 0;
