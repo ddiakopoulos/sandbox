@@ -71,6 +71,23 @@ struct LightingInfo
     vec3 specularColor;           // color contribution from specular lighting
 };
 
+vec2 get_shadow_offsets(vec3 N, vec3 L) 
+{
+  float cos_alpha = clamp(dot(N, L), 0.0, 1.0);
+  float offset_scale_N = sqrt(1 - cos_alpha*cos_alpha); // sin(acos(L·N))
+  float offset_scale_L = offset_scale_N / cos_alpha;    // tan(acos(L·N))
+  return vec2(offset_scale_N, min(2, offset_scale_L));
+}
+
+// Offsets a position based on slope and normal
+vec3 get_biased_position(vec3 pos, float slope_bias, float normal_bias, vec3 normal, vec3 light)
+{
+    vec2 offsets = get_shadow_offsets(normal, light);
+    pos += normal * offsets.x * normal_bias;
+    pos += light  * offsets.y * slope_bias;
+    return pos;
+}
+
 // https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
 // https://imdoingitwrong.wordpress.com/2011/02/10/improved-light-attenuation/
 float point_light_attenuation(vec3 L, float lightRadius)
@@ -222,13 +239,21 @@ void main()
     vec3 Lo = vec3(0);
 
     vec3 weightedColor;
-    const float shadowTerm = calculate_csm_coefficient(s_csmArray, v_world_position, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, weightedColor);
-    const float shadowVisibility = (1.0 - (shadowTerm * u_shadowOpacity * u_receiveShadow));
+    float shadowTerm;
+    float shadowVisibility;
 
     // Compute directional light
     {
         vec3 L = normalize(u_directionalLight.direction); 
         vec3 H = normalize(L + V);  
+
+        const float slope_bias = 0.01;
+        const float normal_bias = 0.01;
+        vec3 biased_pos = get_biased_position(v_world_position, slope_bias, normal_bias, N, L);
+
+        vec3 weightedColor;
+        shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, weightedColor);
+        shadowVisibility = (1.0 - (shadowTerm * u_shadowOpacity * u_receiveShadow));
 
         float NdotL = clamp(dot(N, L), 0.001, 1.0);
         float NdotH = clamp(dot(N, H), 0.0, 1.0);
@@ -247,6 +272,7 @@ void main()
         Lo += NdotL * u_directionalLight.color * (diffuseContrib + specContrib);
     }
 
+    /*
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
@@ -271,6 +297,7 @@ void main()
 
         Lo += NdotL * u_pointLights[i].color * (diffuseContrib + specContrib);
     }
+    */
 
     #ifdef USE_IMAGE_BASED_LIGHTING
     {
@@ -300,6 +327,8 @@ void main()
     #endif
 
     Lo += u_emissive;
+
+    Lo += diffuseColor * vec3(0.5);
 
     // Debugging
     //f_color = vec4(vec3(weightedColor), 1.0);

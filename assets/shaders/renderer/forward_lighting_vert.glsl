@@ -21,7 +21,7 @@ void main()
     v_view_space_position = (u_modelViewMatrix * vec4(inPosition, 1.0)).xyz;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal, 0)).xyz);
     v_world_position = worldPosition.xyz;
-    v_texcoord = inTexCoord * vec2(4, 4);
+    v_texcoord = inTexCoord * vec2(8, 8);
     v_tangent = (u_modelMatrixIT * vec4(inTangent, 0)).xyz;
     v_bitangent = (u_modelMatrixIT * vec4(inBitangent, 0)).xyz;
 }

@@ -72,13 +72,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     lightB->data.radius = 12.f;
     objects.push_back(lightB);
 
-    global_register_asset("rusted-iron-albedo", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_basecolor.tga", false));
-    global_register_asset("rusted-iron-normal", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_n.tga", false));
-    global_register_asset("rusted-iron-metallic", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_metallic.tga", false));
-    global_register_asset("rusted-iron-roughness", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_roughness.tga", false));
-    global_register_asset("rusted-iron-occlusion", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_ao.tga", false));
-    //global_register_asset("rusted-iron-height", load_image("../assets/nonfree/Metal_RepaintedSteel_2k_h.tga", false));
-
     auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
     auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
     gli::texture_cube radianceHandle(gli::load_dds((char *)radianceBinary.data(), radianceBinary.size()));
@@ -86,49 +79,56 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
     global_register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
 
+    global_register_asset("rusted-iron-albedo", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_basecolor.tga", false));
+    global_register_asset("rusted-iron-normal", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_n.tga", false));
+    global_register_asset("rusted-iron-metallic", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_metallic.tga", false));
+    global_register_asset("rusted-iron-roughness", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_roughness.tga", false));
+    global_register_asset("rusted-iron-occlusion", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_ao.tga", false));
+
+    global_register_asset("scifi-floor-albedo", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_basecolor.tga", false));
+    global_register_asset("scifi-floor-normal", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_n.tga", false));
+    global_register_asset("scifi-floor-metallic", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_metallic.tga", false));
+    global_register_asset("scifi-floor-roughness", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_roughness.tga", false));
+    global_register_asset("scifi-floor-occlusion", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_ao.tga", false));
+
+    //global_register_asset("rusted-iron-height", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_h.tga", false));
+
+    auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
+    rescale_geometry(shaderball, 1.f);
+    global_register_asset("shaderball", make_mesh_from_geometry(shaderball));
+    global_register_asset("shaderball", std::move(shaderball));
+
     auto ico = make_icosasphere(5);
     global_register_asset("icosphere", make_mesh_from_geometry(ico));
     global_register_asset("icosphere", std::move(ico));
-
-    MetallicRoughnessMaterial pbrMaterialInstance;
-    pbrMaterialInstance.program = GlShaderHandle("pbr-forward-lighting");
-    pbrMaterialInstance.albedo = GlTextureHandle("rusted-iron-albedo");
-    pbrMaterialInstance.normal = GlTextureHandle("rusted-iron-normal");
-    pbrMaterialInstance.metallic = GlTextureHandle("rusted-iron-metallic");
-    pbrMaterialInstance.roughness = GlTextureHandle("rusted-iron-roughness");
-    pbrMaterialInstance.height = GlTextureHandle("rusted-iron-height");
-    pbrMaterialInstance.occlusion = GlTextureHandle("rusted-iron-occlusion");
-    pbrMaterialInstance.radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
-    pbrMaterialInstance.irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
-    global_register_asset("pbr-material", std::move(pbrMaterialInstance));
-
-    for (auto & w : AssetHandle<MetallicRoughnessMaterial>::list())
-    {
-        std::cout << "Materials: " << w.name << std::endl;
-    }
-
-    std::cout << "--------------------------------------" << std::endl;
-
-    // register asset as base class, polymorph at runtime
-
-    //pbrMaterialInstance.set_roughness(remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f));
-    //pbrMaterialInstance.set_metallic(remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f));
-    //global_register_asset("some-material-instance", std::move(pbrMaterialInstance));
-
-    // MetallicRoughnessMaterialHandle("some-material-instance"
-    // MetallicRoughnessMaterialHandle("some-material-instance")
 
     for (int i = 0; i < 6; ++i)
     {
         for (int j = 0; j < 6; ++j)
         {
+
+            MetallicRoughnessMaterial pbrMaterialInstance;
+            const std::string material_id = "pbr-material/" + std::to_string(i) + "-" + std::to_string(j);
+            pbrMaterialInstance.program = GlShaderHandle("pbr-forward-lighting");
+            pbrMaterialInstance.roughnessFactor = remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f);
+            pbrMaterialInstance.metallicFactor = remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f);
+            pbrMaterialInstance.albedo = GlTextureHandle("rusted-iron-albedo");
+            pbrMaterialInstance.normal = GlTextureHandle("rusted-iron-normal");
+            pbrMaterialInstance.metallic = GlTextureHandle("rusted-iron-metallic");
+            pbrMaterialInstance.roughness = GlTextureHandle("rusted-iron-roughness");
+            pbrMaterialInstance.height = GlTextureHandle("rusted-iron-height");
+            pbrMaterialInstance.occlusion = GlTextureHandle("rusted-iron-occlusion");
+            pbrMaterialInstance.radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
+            pbrMaterialInstance.irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
+            global_register_asset(material_id.c_str(), std::move(pbrMaterialInstance));
+
             StaticMesh m;
             Pose p;
-            p.position = float3((i * 2) - 5, 0, (j * 2) - 5);
+            p.position = float3((i * 3) - 5, 0, (j * 3) - 5);
             m.set_pose(p);
-            m.set_material(RuntimeMaterialInstance("pbr-material"));
-            m.mesh = GlMeshHandle("icosphere");
-            m.geom = GeometryHandle("icosphere");
+            m.set_material(RuntimeMaterialInstance(material_id));
+            m.mesh = GlMeshHandle("shaderball");
+            m.geom = GeometryHandle("shaderball");
             objects.push_back(std::make_shared<StaticMesh>(std::move(m)));
         }
     }
@@ -136,18 +136,27 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     auto cube = make_cube();
     global_register_asset("cube", make_mesh_from_geometry(cube));
     global_register_asset("cube", std::move(cube));
-    
-    // Resolve runtime object => material bindings
-    {
 
-    }
+    MetallicRoughnessMaterial pbrMaterialInstance;
+    const std::string material_id = "pbr-material/floor";
+    pbrMaterialInstance.program = GlShaderHandle("pbr-forward-lighting");
+    pbrMaterialInstance.roughnessFactor = 0.5;
+    pbrMaterialInstance.metallicFactor = 0.88f;
+    pbrMaterialInstance.albedo = GlTextureHandle("scifi-floor-albedo");
+    pbrMaterialInstance.normal = GlTextureHandle("scifi-floor-normal");
+    pbrMaterialInstance.metallic = GlTextureHandle("scifi-floor-metallic");
+    pbrMaterialInstance.roughness = GlTextureHandle("scifi-floor-roughness");
+    pbrMaterialInstance.occlusion = GlTextureHandle("scifi-floor-occlusion");
+    pbrMaterialInstance.radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
+    pbrMaterialInstance.irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
+    global_register_asset(material_id.c_str(), std::move(pbrMaterialInstance));
 
     StaticMesh floorMesh;
     floorMesh.mesh = GlMeshHandle("cube");
     floorMesh.geom = GeometryHandle("cube");
     floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
     floorMesh.set_scale(float3(16, 0.1f, 16));
-    floorMesh.set_material(RuntimeMaterialInstance("pbr-material"));
+    floorMesh.set_material(RuntimeMaterialInstance("pbr-material/floor"));
     std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
     objects.push_back(floor);
     auto output = cereal::ToJson(floor);

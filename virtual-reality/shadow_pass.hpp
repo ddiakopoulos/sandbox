@@ -115,11 +115,11 @@ struct StableCascadedShadowPass
             float sphereRadius = 0.0f;
             for (int i = 0; i < 8; ++i)
             {
-                float dist = length(splitFrustumVerts[i].xyz() - frustumCentroid);
+                float dist = length(splitFrustumVerts[i].xyz() - frustumCentroid) * 0.5; // argh
                 sphereRadius = std::max(sphereRadius, dist);
             }
                 
-            sphereRadius = (std::ceil(sphereRadius * 16.0f) / 16.0f);
+            sphereRadius = (std::ceil(sphereRadius * 8.0f) / 8.0f);
 
             const float3 maxExtents = float3(sphereRadius, sphereRadius, sphereRadius);
             const float3 minExtents = -maxExtents;
@@ -156,20 +156,21 @@ struct StableCascadedShadowPass
     void gather_imgui(const bool enabled)
     {
         if (!enabled) return;
-        ImGui::SliderFloat("Near Offset", &nearOffset, 0.0f, 128.0f);
-        ImGui::SliderFloat("Far Offset", &farOffset, 0.0f, 128.0f);
+        ImGui::SliderFloat("Near Offset", &nearOffset, 0.0f, 1.0f);
+        ImGui::SliderFloat("Far Offset", &farOffset, 0.0f, 1.0);
         ImGui::SliderFloat("Offset", &offset, -100.f, 100.0f);
     }
 
     void pre_draw()
     {
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
+
+        glDisable(GL_CULL_FACE);
+        //glCullFace(GL_FRONT);
 
         glBindFramebuffer(GL_FRAMEBUFFER, shadowArrayFramebuffer);
         glViewport(0, 0, resolution, resolution);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         auto & shader = program.get();
 
@@ -183,7 +184,8 @@ struct StableCascadedShadowPass
     void post_draw()
     {
         auto & shader = program.get();
-        glCullFace(GL_BACK);
+        //glCullFace(GL_BACK);
+        glEnable(GL_CULL_FACE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         shader.unbind();
     }

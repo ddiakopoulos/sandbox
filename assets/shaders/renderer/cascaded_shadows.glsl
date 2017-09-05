@@ -42,8 +42,7 @@ vec3 get_cascade_weighted_color(vec2 weights)
 }
 #endif
 
-
-float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos, mat4 viewProjArray[NUM_CASCADES], vec4 splitPlanes[NUM_CASCADES], out vec3 weightedColor)
+float calculate_csm_coefficient(sampler2DArray map, vec3 biasedWorldPos, vec3 viewPos, mat4 viewProjArray[NUM_CASCADES], vec4 splitPlanes[NUM_CASCADES], out vec3 weightedColor)
 {
     #ifdef FOUR_CASCADES
     vec4 weights = get_cascade_weights(-viewPos.z,
@@ -60,33 +59,35 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 worldPos, vec3 viewPos,
 
     // Get vertex position in light space
     mat4 lightViewProj = get_cascade_viewproj(weights, viewProjArray);
-    vec4 vertexLightPostion = lightViewProj * vec4(worldPos, 1.0);
+    vec4 vertexLightPostion = lightViewProj * vec4(biasedWorldPos, 1.0);
 
     // Compute perspective divide and transform to 0-1 range
     vec3 coords = (vertexLightPostion.xyz / vertexLightPostion.w) / 2.0 + 0.5;
 
     if (!(coords.z > 0.0 && coords.x > 0.0 && coords.y > 0.0 && coords.x <= 1.0 && coords.y <= 1.0)) return 0;
 
-    float bias = 0.004;
+    float contant_bias = 0.005;
     float currentDepth = coords.z;
 
     float shadowTerm = 0.0;
 
     // Non-PCF path, hard shadows
-    //float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
-    //shadowTerm = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
+    shadowTerm = (currentDepth - contant_bias) > closestDepth ? 1.0 : 0.0;
 
     // Percentage-closer filtering
+
     vec2 texelSize = 1.0 / textureSize(map, 0).xy;
     for (int x = -1; x <= 1; ++x)
     {
         for (int y = -1; y <= 1; ++y)
         {
             float pcfDepth = texture(map, vec3(coords.xy + vec2(x, y) * texelSize, get_cascade_layer(weights))).r;
-            shadowTerm += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;
+            shadowTerm += currentDepth - contant_bias > pcfDepth  ? 1.0 : 0.0;
         }
     }
     shadowTerm /= 9.0;
+
 
     weightedColor = get_cascade_weighted_color(weights);
 
