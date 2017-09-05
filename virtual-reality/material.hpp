@@ -39,6 +39,8 @@ namespace avl
         float ambientStrength{ 1.f };
         float shadowOpacity{ 0.9f };
 
+        float2 texcoordScale{ 1.f, 2.f };
+
         GlTextureHandle albedo;
         GlTextureHandle normal;
         GlTextureHandle metallic;

@@ -112,6 +112,7 @@ struct StableCascadedShadowPass
             frustumCentroid /= 8.0f;
 
             // Calculate the radius of a bounding sphere surrounding the frustum corners in worldspace
+            // This can be precomputed if the camera frustum does not change
             float sphereRadius = 0.0f;
             for (int i = 0; i < 8; ++i)
             {
@@ -164,8 +165,7 @@ struct StableCascadedShadowPass
     void pre_draw()
     {
         glEnable(GL_DEPTH_TEST);
-
-        glDisable(GL_CULL_FACE);
+        //glEnable(GL_CULL_FACE);
         //glCullFace(GL_FRONT);
 
         glBindFramebuffer(GL_FRAMEBUFFER, shadowArrayFramebuffer);
@@ -185,7 +185,7 @@ struct StableCascadedShadowPass
     {
         auto & shader = program.get();
         //glCullFace(GL_BACK);
-        glEnable(GL_CULL_FACE);
+        //glEnable(GL_CULL_FACE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         shader.unbind();
     }

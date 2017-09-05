@@ -14,6 +14,8 @@ out vec2 v_texcoord;
 out vec3 v_tangent;
 out vec3 v_bitangent;
 
+uniform vec2 u_texCoordScale = vec2(1, 1);
+
 void main()
 {
     vec4 worldPosition = u_modelMatrix * vec4(inPosition, 1.0);
@@ -21,7 +23,7 @@ void main()
     v_view_space_position = (u_modelViewMatrix * vec4(inPosition, 1.0)).xyz;
     v_normal = normalize((u_modelMatrixIT * vec4(inNormal, 0)).xyz);
     v_world_position = worldPosition.xyz;
-    v_texcoord = inTexCoord * vec2(8, 8);
+    v_texcoord = inTexCoord * u_texCoordScale;
     v_tangent = (u_modelMatrixIT * vec4(inTangent, 0)).xyz;
     v_bitangent = (u_modelMatrixIT * vec4(inBitangent, 0)).xyz;
 }

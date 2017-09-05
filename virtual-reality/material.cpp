@@ -24,6 +24,7 @@ void MetallicRoughnessMaterial::update_uniforms()
     shader.uniform("u_ambientStrength", ambientStrength);
     shader.uniform("u_emissiveStrength", emissiveStrength);
     shader.uniform("u_shadowOpacity", shadowOpacity);
+    shader.uniform("u_texCoordScale", texcoordScale);
 
     shader.texture("s_albedo", bindpoint++, albedo.get(), GL_TEXTURE_2D);
     shader.texture("s_normal", bindpoint++, normal.get(), GL_TEXTURE_2D);

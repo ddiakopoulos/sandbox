@@ -196,7 +196,6 @@ void main()
 #ifdef HAS_NORMAL_MAP
     vec3 nSample = texture(s_normal, v_texcoord).xyz * 2 - 1;
     N = normalize(normalize(v_tangent) * nSample.x + normalize(v_bitangent) * nSample.y + normalize(v_normal) * nSample.z);
-    //N = blend_normals_unity(v_normal, texture(s_normal, v_texcoord).xyz * 2 - 1);
 #endif
 
 #ifdef HAS_ROUGHNESS_MAP
@@ -238,7 +237,7 @@ void main()
 
     vec3 Lo = vec3(0);
 
-    vec3 weightedColor;
+    vec3 debugShadowCascadeColor;
     float shadowTerm;
     float shadowVisibility;
 
@@ -251,8 +250,7 @@ void main()
         const float normal_bias = 0.01;
         vec3 biased_pos = get_biased_position(v_world_position, slope_bias, normal_bias, N, L);
 
-        vec3 weightedColor;
-        shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, weightedColor);
+        shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, debugShadowCascadeColor);
         shadowVisibility = (1.0 - (shadowTerm * u_shadowOpacity * u_receiveShadow));
 
         float NdotL = clamp(dot(N, L), 0.001, 1.0);
@@ -272,7 +270,6 @@ void main()
         Lo += NdotL * u_directionalLight.color * (diffuseContrib + specContrib);
     }
 
-    /*
     // Compute point lights
     for (int i = 0; i < u_activePointLights; ++i)
     {
@@ -297,7 +294,6 @@ void main()
 
         Lo += NdotL * u_pointLights[i].color * (diffuseContrib + specContrib);
     }
-    */
 
     #ifdef USE_IMAGE_BASED_LIGHTING
     {
@@ -331,8 +327,8 @@ void main()
     Lo += diffuseColor * vec3(0.5);
 
     // Debugging
-    //f_color = vec4(vec3(weightedColor), 1.0);
-    //f_color = vec4(mix(vec3(shadowVisibility), vec3(weightedColor), 0.5), 1.0);
+    //f_color = vec4(vec3(debugShadowCascadeColor), 1.0);
+    //f_color = vec4(mix(vec3(shadowVisibility), vec3(debugShadowCascadeColor), 0.5), 1.0);
 
     // Combine direct lighting, IBL, and shadow visbility
     f_color = vec4(Lo * shadowVisibility, u_opacity); 
