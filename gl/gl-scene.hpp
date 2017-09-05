@@ -339,6 +339,18 @@ namespace cereal
         archive(cereal::make_nvp("occlusion_handle", m.occlusion));
         archive(cereal::make_nvp("radiance_cubemap_handle", m.radianceCubemap));
         archive(cereal::make_nvp("irradiance_cubemap_handle", m.irradianceCubemap));
+
+        archive(cereal::make_nvp("base_albedo", m.radianceCubemap));
+        archive(cereal::make_nvp("opacity", m.emissive));
+        archive(cereal::make_nvp("roughness_factor", m.metallic));
+        archive(cereal::make_nvp("metallic_factor", m.roughness));
+        archive(cereal::make_nvp("base_emissive", m.height));
+        archive(cereal::make_nvp("emissive_strength", m.occlusion));
+
+        archive(cereal::make_nvp("specularLevel", m.specularLevel));
+        archive(cereal::make_nvp("occulusion_strength", m.occlusionStrength));
+        archive(cereal::make_nvp("ambient_strength", m.ambientStrength));
+        archive(cereal::make_nvp("shadow_opacity", m.shadowOpacity));
     }
 }
 #endif

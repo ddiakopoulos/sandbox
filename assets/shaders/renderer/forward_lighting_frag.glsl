@@ -25,7 +25,7 @@ in vec3 v_bitangent;
 // Material Uniforms
 uniform float u_roughness = 1;
 uniform float u_metallic = 1;
-uniform float u_opacity = 1.0;
+uniform float u_opacity = 1;
 
 uniform sampler2D s_albedo;
 uniform sampler2D s_normal;
@@ -36,19 +36,21 @@ uniform sampler2D s_height;
 uniform sampler2D s_occlusion;
 
 // Image-Based-Lighting Uniforms
-uniform float u_ambientIntensity = 1.0;
 uniform samplerCube sc_radiance;
 uniform samplerCube sc_irradiance;
 
 // Lighting & Shadowing Uniforms
+uniform float u_pointLightAttenuation = 1.0;
+uniform float u_shadowOpacity = 0.88;
 
 // Dielectrics have an F0 between 0.2 - 0.5, often exposed as the "specular level" parameter
+uniform vec3 u_albedo = vec3(1, 1, 1);
+uniform vec3 u_emissive = vec3(1, 1, 1);
 uniform float u_specularLevel = 0.04;
-uniform vec3 u_albedo = vec3(1);
 uniform float u_occlusionStrength = 1.0;
-uniform float u_pointLightAttenuation = 1.0;
+uniform float u_ambientStrength = 1.0;
+uniform float u_emissiveStrength = 1.0;
 
-uniform float u_shadowOpacity = 0.88;
 uniform sampler2DArray s_csmArray;
 
 out vec4 f_color;
@@ -213,7 +215,7 @@ void main()
 
     // For typical incident reflectance range (between 4% to 100%) set the grazing reflectance to 100% for typical fresnel effect.
     // For very low reflectance range on highly diffuse objects (below 4%), incrementally reduce grazing reflecance to 0%.
-    float reflectance90 = clamp(reflectance * 25.0, 0.0, 1.0);
+    float reflectance90 = clamp(reflectance * 25, 0.0, 1.0);
     vec3 specularEnvironmentR0 = specularColor.rgb;
     vec3 specularEnvironmentR90 = vec3(1.0, 1.0, 1.0) * reflectance90;
 
@@ -276,8 +278,8 @@ void main()
         float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
         vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
 
-        vec3 irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
-        vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientIntensity;
+        vec3 irradiance = sRGBToLinear(texture(sc_irradiance, N).rgb, DEFAULT_GAMMA) * u_ambientStrength;
+        vec3 radiance = sRGBToLinear(textureLod(sc_radiance, cubemapLookup, mipLevel).rgb, DEFAULT_GAMMA) * u_ambientStrength;
 
         vec3 environment_reflectance = env_brdf_approx(specularColor, pow(roughness, 4.0), NdotV);
 
@@ -296,6 +298,8 @@ void main()
         float ao = texture(s_occlusion, v_texcoord).r;
         Lo = mix(Lo, Lo * ao, u_occlusionStrength);
     #endif
+
+    Lo += u_emissive;
 
     // Debugging
     //f_color = vec4(vec3(weightedColor), 1.0);

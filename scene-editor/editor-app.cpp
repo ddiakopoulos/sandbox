@@ -21,15 +21,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
 
-    {
-        // MetallicRoughnessMaterial and Material are two distinct types to the asset handle system. Hmm. 
-
-        //MetallicRoughnessMaterial mat("material-move-test");
-        //global_register_asset("material-move-test", std::move(mat));
-        //Material & handle = MaterialHandle("material-move-test").get();
-        //std::cout << "Handle: " << handle.id() << std::endl;
-    }
-
     skybox.reset(new HosekProceduralSky());
 
     auto wireframeProgram = GlShader(

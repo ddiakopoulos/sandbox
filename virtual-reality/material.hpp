@@ -25,13 +25,19 @@ namespace avl
 
     public:
 
-        float roughnessFactor{ 0.5f };
-        float metallicFactor{ 1.f };
-        float ambientIntensity{ 1.f };
+        float3 baseAlbedo{ float3(1, 1, 1) };
+        float opacity{ 1.f };
 
-        float3 emissiveColor{ float3(0, 0, 0) };
+        float roughnessFactor{ 0.04f };
+        float metallicFactor{ 1.f };
+
+        float3 baseEmissive{ float3(0, 0, 0) };
         float emissiveStrength{ 1.f };
-        float overshadowConstant{ 64.f };
+
+        float specularLevel{ 0.04f };
+        float occlusionStrength{ 1.f };
+        float ambientStrength{ 1.f };
+        float shadowOpacity{ 0.9f };
 
         GlTextureHandle albedo;
         GlTextureHandle normal;
