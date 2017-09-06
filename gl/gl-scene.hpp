@@ -209,6 +209,10 @@ namespace avl
 } // end namespace avl
 
 
+/////////////////////////////////////////
+//   Engine Relationship Declarations  //
+/////////////////////////////////////////
+
 template<class F> void visit_subclasses(GameObject * p, F f)
 {
     f("StaticMesh", dynamic_cast<StaticMesh *>(p));
@@ -223,6 +227,15 @@ template<class F> void visit_fields(GameObject & o, F f)
 template<class T> const T * query_metadata(const T & meta) { return &meta; }
 template<class T> const T * query_metadata() { return nullptr; }
 template<class T> struct range_metadata { T min, max; };
+
+inline bool Edit(const char * label, float & v) { return ImGui::InputFloat(label, &v); }
+inline bool Edit(const char * label, int & v) { return ImGui::InputInt(label, &v); }
+inline bool Edit(const char * label, int2 & v) { return ImGui::InputInt2(label, &v.x); }
+inline bool Edit(const char * label, int3 & v) { return ImGui::InputInt3(label, &v.x); }
+inline bool Edit(const char * label, int4 & v) { return ImGui::InputInt4(label, &v.x); }
+inline bool Edit(const char * label, float2 & v) { return ImGui::InputFloat2(label, &v.x); }
+inline bool Edit(const char * label, float3 & v) { return ImGui::InputFloat3(label, &v.x); }
+inline bool Edit(const char * label, float4 & v) { return ImGui::InputFloat4(label, &v.x); }
 
 inline bool Edit(const char * label, std::string & s)
 {
@@ -299,9 +312,9 @@ namespace cereal
     template<class Archive> void serialize(Archive & archive, RuntimeMaterialInstance & m) { archive(cereal::make_nvp("id", m.name)); }
 }
 
-//////////////////////////////////////////
-//   Engine Relationship Declarations   //
-//////////////////////////////////////////
+////////////////////////////////////////////////////
+//   Engine Relationship Declarations For Cereal  //
+////////////////////////////////////////////////////
 
 CEREAL_REGISTER_TYPE_WITH_NAME(GameObject,                      "GameObjectBase");
 CEREAL_REGISTER_TYPE_WITH_NAME(Renderable,                      "Renderable");
