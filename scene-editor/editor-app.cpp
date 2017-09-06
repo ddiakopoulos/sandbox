@@ -138,22 +138,18 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     floorInstance.radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
     floorInstance.irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
 
-    {
-        std::shared_ptr<MetallicRoughnessMaterial> rustedInstance;
-        rustedInstance = std::make_shared<MetallicRoughnessMaterial>();
-        rustedInstance->program = GlShaderHandle("pbr-forward-lighting");
-        rustedInstance->albedo = GlTextureHandle("rusted-iron-albedo");
-        rustedInstance->normal = GlTextureHandle("rusted-iron-normal");
-        rustedInstance->metallic = GlTextureHandle("rusted-iron-metallic");
-        rustedInstance->roughness = GlTextureHandle("rusted-iron-roughness");
-        rustedInstance->height = GlTextureHandle("rusted-iron-height");
-        rustedInstance->occlusion = GlTextureHandle("rusted-iron-occlusion");
-        rustedInstance->radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
-        rustedInstance->irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
-        std::cout << "Before: " << rustedInstance.use_count() << std::endl;
-        global_register_asset("pbr-material/floor", static_cast<std::shared_ptr<Material>>(rustedInstance));
-        std::cout << "After " << rustedInstance.use_count() << std::endl;
-    }
+    std::shared_ptr<MetallicRoughnessMaterial> rustedInstance;
+    rustedInstance = std::make_shared<MetallicRoughnessMaterial>();
+    rustedInstance->program = GlShaderHandle("pbr-forward-lighting");
+    rustedInstance->albedo = GlTextureHandle("rusted-iron-albedo");
+    rustedInstance->normal = GlTextureHandle("rusted-iron-normal");
+    rustedInstance->metallic = GlTextureHandle("rusted-iron-metallic");
+    rustedInstance->roughness = GlTextureHandle("rusted-iron-roughness");
+    rustedInstance->height = GlTextureHandle("rusted-iron-height");
+    rustedInstance->occlusion = GlTextureHandle("rusted-iron-occlusion");
+    rustedInstance->radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
+    rustedInstance->irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
+    global_register_asset("pbr-material/floor", static_cast<std::shared_ptr<Material>>(rustedInstance));
 
     for(auto & m : AssetHandle<std::shared_ptr<Material>>::list())
     {
@@ -167,24 +163,23 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     }
 
 
-    
     for (int i = 0; i < 6; ++i)
     {
         for (int j = 0; j < 6; ++j)
         {
             //serialize_test(pbrMaterialInstance);
 
-            MetallicRoughnessMaterial instance = floorInstance;
-            instance.roughnessFactor = remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f);
-            instance.metallicFactor = remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f);
+            std::shared_ptr<MetallicRoughnessMaterial> instance{ new MetallicRoughnessMaterial(*rustedInstance) };
+            instance->roughnessFactor = remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f);
+            instance->metallicFactor = remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f);
             const std::string material_id = "pbr-material/" + std::to_string(i) + "-" + std::to_string(j);
-            global_register_asset(material_id.c_str(), std::move(instance));
+            global_register_asset(material_id.c_str(), static_cast<std::shared_ptr<Material>>(instance));
 
             StaticMesh m;
             Pose p;
             p.position = float3((i * 3) - 5, 0, (j * 3) - 5);
             m.set_pose(p);
-            //m.set_material(RuntimeMaterialInstance(material_id));
+            m.set_material(AssetHandle<std::shared_ptr<Material>>(material_id));
             m.mesh = GlMeshHandle("shaderball");
             m.geom = GeometryHandle("shaderball");
             m.receive_shadow = true;
@@ -441,19 +436,17 @@ void scene_editor_app::on_draw()
     gui::imgui_fixed_window_end();
 
     gui::imgui_fixed_window_begin("Materials", { { width - 320, height / 4 }, { width, height / 2 } });
-    if (editor->get_selection().size() >= 1)
+
+    std::vector<std::string> mats;
+    for (auto & m : AssetHandle<std::shared_ptr<Material>>::list()) mats.push_back(m.name);
+    static int listbox_item_current = 1;
+    ImGui::ListBox("Material", &listbox_item_current, mats);
+    if (mats.size() >= 1)
     {
-
-        std::vector<std::string> mats;
-        for (auto & m : AssetHandle<MetallicRoughnessMaterial>::list()) mats.push_back(m.name);
-        static int listbox_item_current = 1;
-        ImGui::ListBox("Material", &listbox_item_current, mats);
-        if (mats.size() >= 1)
-        {
-            InspectGameObjectPolymorphic(nullptr, &AssetHandle<MetallicRoughnessMaterial>::list()[listbox_item_current].get());
-        }
-
+        auto w = AssetHandle<std::shared_ptr<Material>>::list()[listbox_item_current].get();
+        InspectGameObjectPolymorphic(nullptr, w.get());
     }
+
     gui::imgui_fixed_window_end();
 
 

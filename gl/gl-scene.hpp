@@ -60,11 +60,13 @@ namespace avl
 
     struct Renderable : public GameObject
     {
+        AssetHandle<std::shared_ptr<Material>> mat;
+
         bool receive_shadow{ true };
         bool cast_shadow{ true };
 
-        Material * get_material() { return nullptr; }
-        void set_material() { }
+        Material * get_material() { return mat.get().get(); }
+        void set_material(AssetHandle<std::shared_ptr<Material>> handle) { mat = handle; }
 
         void set_receive_shadow(const bool value) { receive_shadow = value; }
         bool get_receive_shadow() const { return receive_shadow; }
