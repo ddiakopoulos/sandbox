@@ -206,8 +206,60 @@ namespace avl
 
     };
 
-
 } // end namespace avl
+
+
+template<class F> void visit_subclasses(GameObject * p, F f)
+{
+    f("StaticMesh", dynamic_cast<StaticMesh *>(p));
+    //f("PointLight", dynamic_cast<PointLight *>(p));
+}
+
+template<class F> void visit_fields(GameObject & o, F f)
+{
+    f("id", o.id);
+}
+
+template<class T> const T * query_metadata(const T & meta) { return &meta; }
+template<class T> const T * query_metadata() { return nullptr; }
+template<class T> struct range_metadata { T min, max; };
+
+inline bool Edit(const char * label, std::string & s)
+{
+    char buffer[2048];
+    assert(s.size() + 1 < sizeof(buffer));
+    std::memcpy(buffer, s.data(), std::min(s.size() + 1, sizeof(buffer)));
+    if (ImGui::InputText(label, buffer, sizeof(buffer)))
+    {
+        s = buffer;
+        return true;
+    }
+    else return false;
+}
+
+template<class T> std::enable_if_t<std::is_class<T>::value, bool> Edit(const char * label, T & object)
+{
+    bool r = false;
+    visit_fields(object, [&r](const char * name, auto & field, auto... metadata)
+    {
+        r |= Edit(name, field, metadata...);
+    });
+    return r;
+}
+
+template<class T> bool InspectGameObjectPolymorphic(const char * label, T * ptr)
+{
+    bool r = false;
+    visit_subclasses(ptr, [&r, label](const char * name, auto * p)
+    {
+        if (p)
+        {
+            if (label) r = Edit((std::string(label) + " - " + name).c_str(), *p);
+            else r = Edit(name, *p);
+        }
+    });
+    return r;
+}
 
 //////////////////////////////////////
 //  Anvil Base Type Serialization   //
@@ -273,7 +325,10 @@ namespace cereal
 {
     template<class Archive> void serialize(Archive & archive, GameObject & m)
     {
-        archive(cereal::make_nvp("id", m.id));
+        visit_fields(m, [&archive](const char * name, auto & field, auto... metadata)
+        {
+            archive(cereal::make_nvp(name, field));
+        });
     }
 
     template<class Archive> void serialize(Archive & archive, Renderable & m)
@@ -294,7 +349,16 @@ namespace cereal
     }
 
     template <typename T>
-    std::string ToJson(T e)
+    std::string serialize_from_json(const std::string & asset, T & e)
+    {
+        const std::string ascii = read_file_text(asset);
+        std::istringstream input_stream(ascii);
+        cereal::JSONInputArchive input_archive(input_stream);
+        input_archive(e);
+    }
+
+    template <typename T>
+    std::string serialize_to_json(T e)
     {
         std::ostringstream oss;
         {

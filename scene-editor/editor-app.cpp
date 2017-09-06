@@ -34,7 +34,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         "../assets/shaders/renderer/forward_lighting_vert.glsl", 
         "../assets/shaders/renderer/forward_lighting_frag.glsl", 
         "../assets/shaders/renderer", 
-        {"TWO_CASCADES", 
+        {"TWO_CASCADES", "USE_PCF_3X3", 
          "USE_IMAGE_BASED_LIGHTING", 
          "HAS_ROUGHNESS_MAP", "HAS_METALNESS_MAP", "HAS_ALBEDO_MAP", "HAS_NORMAL_MAP", "HAS_OCCLUSION_MAP"}, [](GlShader shader)
     {
@@ -62,14 +62,14 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
 
     lightA.reset(new PointLight());
     lightA->data.color = float3(0.88f, 0.85f, 0.97f);
-    lightA->data.position = float3(-5, 5, 0);
-    lightA->data.radius = 12.f;
+    lightA->data.position = float3(-6.0, 3.0, 0);
+    lightA->data.radius = 4.f;
     objects.push_back(lightA);
 
     lightB.reset(new PointLight());
     lightB->data.color = float3(0.67f, 1.00f, 0.85f);
-    lightB->data.position = float3(+5, 5, 0);
-    lightB->data.radius = 12.f;
+    lightB->data.position = float3(+6, 3.0, 0);
+    lightB->data.radius = 4.f;
     objects.push_back(lightB);
 
     auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
@@ -161,7 +161,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     floorMesh.set_material(RuntimeMaterialInstance("pbr-material/floor"));
     std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
     objects.push_back(floor);
-    auto output = cereal::ToJson(floor);
+
+    auto output = cereal::serialize_to_json(floor);
     write_file_text("floor-object.json", output);
 
     //auto floorJson = read_file_text("floor-object.json");
@@ -331,7 +332,7 @@ void scene_editor_app::on_draw()
 
     // Selected objects as wireframe
     {
-        //glDisable(GL_DEPTH_TEST);
+        glDisable(GL_DEPTH_TEST);
 
         auto & program = GlShaderHandle("wireframe").get();
 
@@ -349,7 +350,7 @@ void scene_editor_app::on_draw()
 
         program.unbind();
 
-        //glEnable(GL_DEPTH_TEST);
+        glEnable(GL_DEPTH_TEST);
     }
 
     igm->begin_frame();
@@ -388,13 +389,23 @@ void scene_editor_app::on_draw()
     }
     menu.app_menu_end();
 
-    gui::imgui_fixed_window_begin("Objects", { { width - 320, 17 }, { width, height } });
+    // Object Inspector
+    gui::imgui_fixed_window_begin("Inspector", { { width - 320, 17 },{ width, height / 2 } });
+    if (editor->get_selection().size() >= 1)
+    {
+        InspectGameObjectPolymorphic(nullptr, editor->get_selection()[0]);
+    }
+    gui::imgui_fixed_window_end();
+
+
+    // Scene Object List
+    gui::imgui_fixed_window_begin("Objects", { { width - 320, (height / 2) }, { width, height } });
 
     for (size_t i = 0; i < objects.size(); ++i)
     {
         ImGui::PushID(static_cast<int>(i));
         bool selected = editor->selected(objects[i].get());
-        std::string name = std::string(typeid(objects[i]).name());
+        std::string name = std::string(typeid(*objects[i]).name()); // For polymorphic typeids, the trick is to dereference it first
         std::vector<StaticMesh *> selectedObjects;
 
         if (ImGui::Selectable(name.c_str(), &selected))
@@ -404,12 +415,14 @@ void scene_editor_app::on_draw()
         }
         ImGui::PopID();
     }
-
     gui::imgui_fixed_window_end();
 
+
+    // Renderer
     gui::imgui_fixed_window_begin("Renderer Settings", { { 0, 17 }, { 320, height } });
     renderer->gather_imgui();
     gui::imgui_fixed_window_end();
+
 
     igm->end_frame();
 
