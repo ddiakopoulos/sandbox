@@ -95,36 +95,35 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 biasedWorldPos, vec3 vi
     // Compute perspective divide and transform to 0-1 range
     const vec3 coords = (vertexLightPostion.xyz / vertexLightPostion.w) / 2.0 + 0.5;
 
-    if (!(coords.z > 0.0 && coords.x > 0.0 && coords.y > 0.0 && coords.x <= 1.0 && coords.y <= 1.0)) return 0;
+    if (!(coords.z > 0.0 && coords.x > 0.0 && coords.y > 0.0 && coords.x <= 1.0 && coords.y <= 1.0)) return 1;
 
     // float shadow_bias[5] = {0.00005, 0.00014, 0.0006, 0.0012, 0.005};
 
-    float contant_bias = 0.002;
+    float constant_bias = -0.0006;
     float currentDepth = coords.z;
 
     float shadowTerm = 0.0;
 
     // Non-PCF path, hard shadows
-    float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
-    shadowTerm = (currentDepth - contant_bias) > closestDepth ? 1.0 : 0.0;
+    //float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
+    //shadowTerm = (currentDepth - constant_bias) > closestDepth ? 1.0 : 0.0;
 
     // Percentage-closer filtering
     /*
-    vec2 texelSize = 1.0 / textureSize(map, 0).xy;
+    float texelSize = 1.0 / textureSize(map, 0).x;
     for (int x = -1; x <= 1; ++x)
     {
         for (int y = -1; y <= 1; ++y)
         {
-            float pcfDepth = texture(map, vec3(coords.xy + vec2(x, y) * texelSize, get_cascade_layer(weights))).r;
-            shadowTerm += currentDepth - contant_bias > pcfDepth  ? 1.0 : 0.0;
+            float pcfDepth = texture(map, vec3(coords.xy + vec2(x * texelSize, y * texelSize), get_cascade_layer(weights))).r;
+            shadowTerm += currentDepth - constant_bias > pcfDepth  ? 1.0 : 0.0;
         }
     }
     shadowTerm /= 9.0;
     */
 
-    /*
     // Stratified Poisson sampling for shadow map
-    float packing = 4096.0; // how close together are the samples
+    float packing = 2000.0; // how close together are the samples
     const vec2 poissonDisk[4] = 
     {
         vec2(-0.94201624,  -0.39906216),
@@ -133,15 +132,14 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 biasedWorldPos, vec3 vi
         vec2( 0.34495938,   0.29387760)
     };
 
-    int samples = 8;
+    int samples = 4;
     for (uint i = 0; i < samples; i++)
     {
         uint index = uint(samples * random(coords.xy * i)) % samples; // A pseudo-random number between 0 and 15, different for each pixel and each index
         float d = sample_shadowmap(map, textureSize(map, 0).xy, coords.xy + (poissonDisk[index] / packing),  coords.z, get_cascade_layer(weights));
-        shadowTerm += currentDepth - contant_bias > d  ? 1.0 : 0.0;
+        shadowTerm += currentDepth - constant_bias > d  ? 1.0 : 0.0;
     }   
     shadowTerm /= samples;
-    */
 
     weightedColor = get_cascade_weighted_color(weights);
 

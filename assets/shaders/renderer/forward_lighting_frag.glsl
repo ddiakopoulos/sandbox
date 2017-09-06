@@ -218,8 +218,6 @@ void main()
     vec3 V = normalize(u_eyePos.xyz - v_world_position);
     float NdotV = abs(dot(N, V)) + 0.001;
 
-    // vec3 reflection = -normalize(reflect(V, N));
-
     vec3 F0 = vec3(u_specularLevel);
     vec3 diffuseColor = albedo * (vec3(1.0) - F0);
     diffuseColor *= 1.0 - metallic;
@@ -238,21 +236,12 @@ void main()
     vec3 Lo = vec3(0);
 
     vec3 debugShadowCascadeColor;
-    float shadowTerm;
-    float shadowVisibility;
+    float shadowVisibility = 1;
 
     // Compute directional light
     {
         vec3 L = normalize(u_directionalLight.direction); 
         vec3 H = normalize(L + V);  
-
-        const float slope_bias = 0.02;
-        const float normal_bias = 0.01;
-        vec3 biased_pos = get_biased_position(v_world_position, slope_bias, normal_bias, N, L);
-
-        shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, debugShadowCascadeColor);
-        shadowVisibility = (1.0 - (shadowTerm * u_shadowOpacity * u_receiveShadow));
-
         float NdotL = clamp(dot(N, L), 0.001, 1.0);
         float NdotH = clamp(dot(N, H), 0.0, 1.0);
         float LdotH = clamp(dot(L, H), 0.0, 1.0);
@@ -263,6 +252,14 @@ void main()
             roughness, metallic, specularEnvironmentR0, specularEnvironmentR90, alphaRoughness,
             diffuseColor, specularColor
         );
+
+        float NdotL_S = clamp(dot(v_normal, L), 0.001, 1.0);
+        const float slope_bias = 0.04;
+        const float normal_bias = 0.01;
+        vec3 biased_pos = get_biased_position(v_world_position, slope_bias, normal_bias, v_normal, L);
+
+        float shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, debugShadowCascadeColor);
+        shadowVisibility = 1.0 - (shadowTerm * u_shadowOpacity * u_receiveShadow * NdotL);
 
         vec3 diffuseContrib, specContrib;
         compute_cook_torrance(data, u_directionalLight.amount, diffuseContrib, specContrib);
@@ -287,17 +284,19 @@ void main()
             diffuseColor, specularColor
         );
 
-        float attenuation = point_light_attenuation(L, 1.0);
+        //float attenuation = point_light_attenuation(L, 1.0);
+        float distance = length(u_pointLights[i].position - v_world_position);
+        float attenuation = (1.0 / (distance * distance)) * 2;
 
         vec3 diffuseContrib, specContrib;
         compute_cook_torrance(data, attenuation, diffuseContrib, specContrib);
 
-        Lo += NdotL * u_pointLights[i].color * (diffuseContrib + specContrib);
+        Lo += NdotL * u_pointLights[i].color * (diffuseContrib + specContrib) * attenuation;
     }
 
     #ifdef USE_IMAGE_BASED_LIGHTING
     {
-        const int NUM_MIP_LEVELS = 6;
+        const int NUM_MIP_LEVELS = 12;
         float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
         vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
 
@@ -324,12 +323,11 @@ void main()
 
     Lo += u_emissive;
 
-    Lo += diffuseColor * vec3(0.5);
-
     // Debugging
     //f_color = vec4(vec3(debugShadowCascadeColor), 1.0);
     //f_color = vec4(mix(vec3(shadowVisibility), vec3(debugShadowCascadeColor), 0.5), 1.0);
 
     // Combine direct lighting, IBL, and shadow visbility
+    //f_color = vec4(vec3(shadowVisibility), u_opacity); 
     f_color = vec4(Lo * shadowVisibility, u_opacity); 
 }

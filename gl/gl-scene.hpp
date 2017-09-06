@@ -168,23 +168,6 @@ namespace avl
 
         StaticMesh() {}
 
-        StaticMesh(StaticMesh && r)
-        {
-            *this = std::move(r);
-        }
-
-        StaticMesh & operator = (StaticMesh && r)
-        {
-            std::swap(id, r.id);
-            std::swap(pose, r.pose);
-            std::swap(scale, r.scale);
-            std::swap(bounds, r.bounds);
-            std::swap(material, r.material);
-            std::swap(mesh, r.mesh);
-            std::swap(geom, r.geom);
-            return *this;
-        }
-
         Pose get_pose() const override { return pose; }
         void set_pose(const Pose & p) override { pose = p; }
         Bounds3D get_bounds() const override { return bounds; }

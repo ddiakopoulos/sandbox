@@ -147,7 +147,7 @@ class PhysicallyBasedRenderer
             object.modelMatrix = mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale()));
             object.modelMatrixIT = inverse(transpose(object.modelMatrix));
             object.modelViewMatrix = mul(d.viewMatrix, object.modelMatrix);
-            object.receiveShadow = top->get_receive_shadow();
+            object.receiveShadow = (float) top->get_receive_shadow();
             perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
 
             // We assume that objects without a valid material take care of their own shading

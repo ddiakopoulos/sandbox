@@ -36,11 +36,16 @@ namespace avl
         uint32_t id() const { return program.get().handle(); }
     };
 
-    struct MetallicRoughnessMaterial final : public Material
+    class MetallicRoughnessMaterial final : public Material
     {
         int bindpoint = 0;
 
     public:
+
+        MetallicRoughnessMaterial() {}
+        void update_cascaded_shadow_array_handle(GLuint handle);
+        void update_uniforms() override;
+        void use() override;
 
         float3 baseAlbedo{ float3(1, 1, 1) };
         float opacity{ 1.f };
@@ -56,7 +61,7 @@ namespace avl
         float ambientStrength{ 1.f };
         float shadowOpacity{ 0.9f };
 
-        float2 texcoordScale{ 1.f, 2.f };
+        float2 texcoordScale{ 4.f, 4.f };
 
         GlTextureHandle albedo;
         GlTextureHandle normal;
@@ -67,11 +72,6 @@ namespace avl
         GlTextureHandle occlusion;
         GlTextureHandle radianceCubemap;
         GlTextureHandle irradianceCubemap;
-
-        MetallicRoughnessMaterial() {}
-        void update_cascaded_shadow_array_handle(GLuint handle);
-        void update_uniforms() override;
-        void use() override;
     };
 
 }

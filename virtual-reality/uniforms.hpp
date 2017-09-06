@@ -73,7 +73,7 @@ namespace uniforms
         ALIGNED(16) float4x4  modelMatrix;
         ALIGNED(16) float4x4  modelMatrixIT;
         ALIGNED(16) float4x4  modelViewMatrix;
-        float                 receiveShadow;
+        ALIGNED(16) float     receiveShadow;
     };
 
 }

@@ -40,6 +40,12 @@ public:
         name = asset_id;
     }
 
+    AssetHandle(const AssetHandle & r)
+    {
+        handle = r.handle;
+        name = r.name;
+    }
+
     T & get() const
     { 
         // lazy load in instances where we've deserialized a name didn't construct and do a lookup
