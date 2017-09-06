@@ -59,7 +59,8 @@ namespace avl
 
 }
 
-class RuntimeMaterialInstance
+/*
+struct RuntimeMaterialInstance
 {
     void associate()
     {
@@ -74,7 +75,6 @@ class RuntimeMaterialInstance
         }
     }
 
-public:
     std::string name;
     Material * mat{ nullptr };
     RuntimeMaterialInstance() { associate(); }
@@ -83,5 +83,6 @@ public:
 };
 
 typedef AssetHandle<RuntimeMaterialInstance> MaterialHandle;
+*/
 
 #endif // end vr_material_hpp

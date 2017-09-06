@@ -60,13 +60,11 @@ namespace avl
 
     struct Renderable : public GameObject
     {
-        RuntimeMaterialInstance material;
-
         bool receive_shadow{ true };
         bool cast_shadow{ true };
 
-        Material * get_material() { return material.get(); }
-        void set_material(RuntimeMaterialInstance instance) { material = instance; }
+        Material * get_material() { return nullptr; }
+        void set_material() { }
 
         void set_receive_shadow(const bool value) { receive_shadow = value; }
         bool get_receive_shadow() const { return receive_shadow; }
@@ -213,10 +211,23 @@ namespace avl
 //   Engine Relationship Declarations  //
 /////////////////////////////////////////
 
+template<class F> void visit_fields(GlTextureHandle & m, F f) { f("id", m.name); }
+template<class F> void visit_fields(GlShaderHandle & m, F f) { f("id", m.name); }
+template<class F> void visit_fields(GlMeshHandle & m, F f) { f("id", m.name); }
+template<class F> void visit_fields(GeometryHandle & m, F f) { f("id", m.name); }
+//template<class F> void visit_fields(RuntimeMaterialInstance & m, F f) { f("id", m.name); m.associate(); }
+
+template<class F> void visit_fields(Pose & o, F f)
+{
+    f("position", o.position);
+    f("orientation", o.orientation);
+}
+
+// Standard Game Objects
 template<class F> void visit_subclasses(GameObject * p, F f)
 {
     f("StaticMesh", dynamic_cast<StaticMesh *>(p));
-    //f("PointLight", dynamic_cast<PointLight *>(p));
+    // ...
 }
 
 template<class F> void visit_fields(GameObject & o, F f)
@@ -224,18 +235,50 @@ template<class F> void visit_fields(GameObject & o, F f)
     f("id", o.id);
 }
 
+template<class F> void visit_fields(StaticMesh & o, F f)
+{
+    f("pose", o.pose);
+    f("scale", o.scale);
+    //f("material", o.material);
+}
+
+// Materials
+template<class F> void visit_subclasses(Material * p, F f)
+{
+    f("MetallicRoughnessMaterial", dynamic_cast<MetallicRoughnessMaterial *>(p));
+}
+
+template<class F> void visit_fields(MetallicRoughnessMaterial & o, F f)
+{
+    f("base_albedo", o.baseAlbedo);
+    f("opacity", o.opacity);
+    f("roughness_factor", o.roughnessFactor);
+    f("metallic_factor", o.metallicFactor);
+    f("base_emissive", o.baseEmissive);
+    f("emissive_strength", o.emissiveStrength);
+    f("specularLevel", o.specularLevel);
+    f("occulusion_strength", o.occlusionStrength);
+    f("ambient_strength", o.ambientStrength);
+    f("shadow_opacity", o.shadowOpacity);
+    f("texcoord_scale", o.texcoordScale);
+}
+
+/*
+archive(cereal::make_nvp("program_handle", m.program));
+archive(cereal::make_nvp("albedo_handle", m.albedo));
+archive(cereal::make_nvp("normal_handle", m.normal));
+archive(cereal::make_nvp("metallic_handle", m.metallic));
+archive(cereal::make_nvp("roughness_handle", m.roughness));
+archive(cereal::make_nvp("emissive_handle", m.emissive));
+archive(cereal::make_nvp("height_handle", m.height));
+archive(cereal::make_nvp("occlusion_handle", m.occlusion));
+archive(cereal::make_nvp("radiance_cubemap_handle", m.radianceCubemap));
+archive(cereal::make_nvp("irradiance_cubemap_handle", m.irradianceCubemap));
+*/
+
 template<class T> const T * query_metadata(const T & meta) { return &meta; }
 template<class T> const T * query_metadata() { return nullptr; }
 template<class T> struct range_metadata { T min, max; };
-
-inline bool Edit(const char * label, float & v) { return ImGui::InputFloat(label, &v); }
-inline bool Edit(const char * label, int & v) { return ImGui::InputInt(label, &v); }
-inline bool Edit(const char * label, int2 & v) { return ImGui::InputInt2(label, &v.x); }
-inline bool Edit(const char * label, int3 & v) { return ImGui::InputInt3(label, &v.x); }
-inline bool Edit(const char * label, int4 & v) { return ImGui::InputInt4(label, &v.x); }
-inline bool Edit(const char * label, float2 & v) { return ImGui::InputFloat2(label, &v.x); }
-inline bool Edit(const char * label, float3 & v) { return ImGui::InputFloat3(label, &v.x); }
-inline bool Edit(const char * label, float4 & v) { return ImGui::InputFloat4(label, &v.x); }
 
 inline bool Edit(const char * label, std::string & s)
 {
@@ -249,6 +292,51 @@ inline bool Edit(const char * label, std::string & s)
     }
     else return false;
 }
+
+inline bool Edit(const char * label, bool & v) { return ImGui::Checkbox(label, &v); }
+inline bool Edit(const char * label, float & v) { return ImGui::InputFloat(label, &v); }
+inline bool Edit(const char * label, int & v) { return ImGui::InputInt(label, &v); }
+inline bool Edit(const char * label, int2 & v) { return ImGui::InputInt2(label, &v.x); }
+inline bool Edit(const char * label, int3 & v) { return ImGui::InputInt3(label, &v.x); }
+inline bool Edit(const char * label, int4 & v) { return ImGui::InputInt4(label, &v.x); }
+inline bool Edit(const char * label, float2 & v) { return ImGui::InputFloat2(label, &v.x); }
+inline bool Edit(const char * label, float3 & v) { return ImGui::InputFloat3(label, &v.x); }
+inline bool Edit(const char * label, float4 & v) { return ImGui::InputFloat4(label, &v.x); }
+
+// Slider for range_metadata<int>
+template<class... A> bool Edit(const char * label, int & f, const A & ... metadata)
+{
+    auto * range = query_metadata<range_metadata<int>>(metadata...);
+    if (range) return ImGui::SliderInt(label, &f, range->min, range->max);
+    else return ImGui::InputInt(label, &f);
+}
+
+// Slider for range_metadata<float>
+template<class... A> bool Edit(const char * label, float & f, const A & ... metadata)
+{
+    auto * rangeData = query_metadata<range_metadata<float>>(metadata...);
+    if (rangeData) return ImGui::SliderFloat(label, &f, rangeData->min, rangeData->max, "%.5f");
+    else return ImGui::InputFloat(label, &f);
+}
+template<class T> bool Edit(const char * label, AssetHandle<T> & h)
+{
+    int index;
+    std::vector<const char *> items;
+
+    for (auto & handle : AssetHandle<T>::list())
+    {
+        if (handle.name == h.name) index = static_cast<int>(items.size());
+        items.push_back(handle.name.c_str());
+    }
+
+    if (ImGui::Combo(label, &index, items.data(), static_cast<int>(items.size())))
+    {
+        h = items[index];
+        return true;
+    }
+    else return false;
+}
+
 
 template<class T> std::enable_if_t<std::is_class<T>::value, bool> Edit(const char * label, T & object)
 {
@@ -309,7 +397,7 @@ namespace cereal
     template<class Archive> void serialize(Archive & archive, GlShaderHandle & m) { archive(cereal::make_nvp("id", m.name)); }
     template<class Archive> void serialize(Archive & archive, GlMeshHandle & m) { archive(cereal::make_nvp("id", m.name)); }
     template<class Archive> void serialize(Archive & archive, GeometryHandle & m) { archive(cereal::make_nvp("id", m.name)); }
-    template<class Archive> void serialize(Archive & archive, RuntimeMaterialInstance & m) { archive(cereal::make_nvp("id", m.name)); }
+    //template<class Archive> void serialize(Archive & archive, RuntimeMaterialInstance & m) { archive(cereal::make_nvp("id", m.name)); }
 }
 
 ////////////////////////////////////////////////////
@@ -349,7 +437,7 @@ namespace cereal
         archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
         archive(cereal::make_nvp("cast_shadow", m.cast_shadow));
         archive(cereal::make_nvp("receive_shadow", m.receive_shadow));
-        archive(cereal::make_nvp("material_handle", m.material));
+        //archive(cereal::make_nvp("material_handle", m.material));
     }
 
     template<class Archive> void serialize(Archive & archive, StaticMesh & m)
@@ -391,28 +479,7 @@ namespace cereal
 {
     template<class Archive> void serialize(Archive & archive, MetallicRoughnessMaterial & m)
     {
-        archive(cereal::make_nvp("program_handle", m.program));
-        archive(cereal::make_nvp("albedo_handle", m.albedo));
-        archive(cereal::make_nvp("normal_handle", m.normal));
-        archive(cereal::make_nvp("metallic_handle", m.metallic));
-        archive(cereal::make_nvp("roughness_handle", m.roughness));
-        archive(cereal::make_nvp("emissive_handle", m.emissive));
-        archive(cereal::make_nvp("height_handle", m.height));
-        archive(cereal::make_nvp("occlusion_handle", m.occlusion));
-        archive(cereal::make_nvp("radiance_cubemap_handle", m.radianceCubemap));
-        archive(cereal::make_nvp("irradiance_cubemap_handle", m.irradianceCubemap));
 
-        archive(cereal::make_nvp("base_albedo", m.baseAlbedo));
-        archive(cereal::make_nvp("opacity", m.opacity));
-        archive(cereal::make_nvp("roughness_factor", m.roughnessFactor));
-        archive(cereal::make_nvp("metallic_factor", m.metallicFactor));
-        archive(cereal::make_nvp("base_emissive", m.baseEmissive));
-        archive(cereal::make_nvp("emissive_strength", m.emissiveStrength));
-        archive(cereal::make_nvp("specularLevel", m.specularLevel));
-        archive(cereal::make_nvp("occulusion_strength", m.occlusionStrength));
-        archive(cereal::make_nvp("ambient_strength", m.ambientStrength));
-        archive(cereal::make_nvp("shadow_opacity", m.shadowOpacity));
-        archive(cereal::make_nvp("texcoord_scale", m.texcoordScale));
     }
 }
 #endif
