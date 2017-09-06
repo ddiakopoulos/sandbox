@@ -61,10 +61,10 @@ float sample_shadowmap(sampler2DArray shadowMap, vec2 size, vec2 uv, float compa
     vec2 f = fract(uv * size + 0.5);
     vec2 centroidUV = floor(uv * size + 0.5) / size;
 
-    float lb = depth_test(shadowMap, vec3(centroidUV + texelSize * vec2(0.0, 0.0),layer), compare);
-    float lt = depth_test(shadowMap, vec3(centroidUV + texelSize * vec2(0.0, 1.0),layer), compare);
-    float rb = depth_test(shadowMap, vec3(centroidUV + texelSize * vec2(1.0, 0.0),layer), compare);
-    float rt = depth_test(shadowMap, vec3(centroidUV + texelSize * vec2(1.0, 1.0),layer), compare);
+    float lb = depth_test(shadowMap, vec3(centroidUV + texelSize * vec2(0.0, 0.0), layer), compare);
+    float lt = depth_test(shadowMap, vec3(centroidUV + texelSize * vec2(0.0, 1.0), layer), compare);
+    float rb = depth_test(shadowMap, vec3(centroidUV + texelSize * vec2(1.0, 0.0), layer), compare);
+    float rt = depth_test(shadowMap, vec3(centroidUV + texelSize * vec2(1.0, 1.0), layer), compare);
 
     float a = mix(lb, lt, f.y);
     float b = mix(rb, rt, f.y);
@@ -100,58 +100,57 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 biasedWorldPos, vec3 vi
     // float shadow_bias[5] = {0.00005, 0.00014, 0.0006, 0.0012, 0.005};
 
     float constant_bias = -0.0006;
-    float currentDepth = coords.z;
-
+    const float currentDepth = coords.z;
     float shadowTerm = 0.0;
 
     // Non-PCF path, hard shadows
-    //float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
-    //shadowTerm = (currentDepth - constant_bias) > closestDepth ? 1.0 : 0.0;
+    #ifdef USE_HARD_SHADOWS
+    {
+        float closestDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
+        shadowTerm = (currentDepth - constant_bias) > closestDepth ? 1.0 : 0.0;
+    }
+    #endif
 
     // Percentage-closer filtering
-    /*
-    float texelSize = 1.0 / textureSize(map, 0).x;
-    for (int x = -1; x <= 1; ++x)
+    #ifdef USE_PCF_3X3
     {
-        for (int y = -1; y <= 1; ++y)
+        float texelSize = 1.0 / textureSize(map, 0).x;
+        for (int x = -1; x <= 1; ++x)
         {
-            float pcfDepth = texture(map, vec3(coords.xy + vec2(x * texelSize, y * texelSize), get_cascade_layer(weights))).r;
-            shadowTerm += currentDepth - constant_bias > pcfDepth  ? 1.0 : 0.0;
+            for (int y = -1; y <= 1; ++y)
+            {
+                float pcfDepth = texture(map, vec3(coords.xy + vec2(x * texelSize, y * texelSize), get_cascade_layer(weights))).r;
+                shadowTerm += currentDepth - constant_bias > pcfDepth  ? 1.0 : 0.0;
+            }
         }
+        shadowTerm /= 9.0;
     }
-    shadowTerm /= 9.0;
-    */
+    #endif
 
-    // Stratified Poisson sampling for shadow map
-    float packing = 2000.0; // how close together are the samples
-    const vec2 poissonDisk[4] = 
+    // Stratified Poisson sampling
+    #ifdef USE_STRATIFIED_POISSON
     {
-        vec2(-0.94201624,  -0.39906216),
-        vec2( 0.94558609,  -0.76890725),
-        vec2(-0.094184101, -0.92938870),
-        vec2( 0.34495938,   0.29387760)
-    };
+        float packing = 2000.0; // how close together are the samples
+        const vec2 poissonDisk[4] = 
+        {
+            vec2(-0.94201624,  -0.39906216),
+            vec2( 0.94558609,  -0.76890725),
+            vec2(-0.094184101, -0.92938870),
+            vec2( 0.34495938,   0.29387760)
+        };
 
-    int samples = 4;
-    for (uint i = 0; i < samples; i++)
-    {
-        uint index = uint(samples * random(coords.xy * i)) % samples; // A pseudo-random number between 0 and 15, different for each pixel and each index
-        float d = sample_shadowmap(map, textureSize(map, 0).xy, coords.xy + (poissonDisk[index] / packing),  coords.z, get_cascade_layer(weights));
-        shadowTerm += currentDepth - constant_bias > d  ? 1.0 : 0.0;
-    }   
-    shadowTerm /= samples;
+
+        const int samples = 4;
+        for (uint i = 0; i < samples; i++)
+        {
+            uint index = uint(samples * random(coords.xy * i)) % samples; // A pseudo-random number between 0 and 15, different for each pixel and each index
+            float d = sample_shadowmap(map, textureSize(map, 0).xy, coords.xy + (poissonDisk[index] / packing),  coords.z, get_cascade_layer(weights));
+            shadowTerm += currentDepth - constant_bias > d  ? 1.0 : 0.0;
+        }   
+        shadowTerm /= samples;
+    }
+    #endif
 
     weightedColor = get_cascade_weighted_color(weights);
-
-    /*
-    // Exponential Shadow Filtering
-    const float overshadowConstant = 140;
-    float depth = (coords.z + bias);
-    float occluderDepth = texture(map, vec3(coords.xy, get_cascade_layer(weights))).r;
-    float occluder = exp(overshadowConstant * occluderDepth);
-    float receiver = exp(-overshadowConstant * depth);
-    shadowTerm = 1.0 - clamp(occluder * receiver, 0.0, 1.0);
-    */
-
     return shadowTerm;
 }

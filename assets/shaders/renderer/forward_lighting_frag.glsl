@@ -90,21 +90,15 @@ vec3 get_biased_position(vec3 pos, float slope_bias, float normal_bias, vec3 nor
 
 // https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
 // https://imdoingitwrong.wordpress.com/2011/02/10/improved-light-attenuation/
-float point_light_attenuation(vec3 L, float lightRadius)
+float point_light_attenuation(float radius, float intensity, float cutoff, float dist)
 {
-    // Calculate distance from light source to point on plane.
-    float dist = length(L);
-    float d = max(dist - lightRadius, 0.0);
-    L /= dist;
-
-    // Transform distance for smoother cutoff.
-    // Formula: d' = d / (1 - (d / dmax)^2)
-    float f = d / u_pointLightAttenuation;
-
-    // Calculate attenuation.
-    // Formula: att = 1 / (d' / r + 1)^2
-    f = d / lightRadius + 1.0;
-    return 1.0 / (f * f);
+    float d = max(dist - radius, 0.0);
+    float denom = d / radius + 1.0;
+    float attenuation = 0.0;
+    attenuation = intensity / (denom * denom);
+    attenuation = (attenuation - cutoff) / (1.0 - cutoff);
+    attenuation = max(attenuation, 0.0);
+    return attenuation;
 }
 
 // http://blog.selfshadow.com/publications/blending-in-detail/
@@ -284,9 +278,8 @@ void main()
             diffuseColor, specularColor
         );
 
-        //float attenuation = point_light_attenuation(L, 1.0);
-        float distance = length(u_pointLights[i].position - v_world_position);
-        float attenuation = (1.0 / (distance * distance)) * 2;
+        float dist = length(u_pointLights[i].position - v_world_position);
+        float attenuation = point_light_attenuation(u_pointLights[i].radius, 2.0, 0.1, dist); // reasonable intensity is 0.01 to 8
 
         vec3 diffuseContrib, specContrib;
         compute_cook_torrance(data, attenuation, diffuseContrib, specContrib);
@@ -296,7 +289,7 @@ void main()
 
     #ifdef USE_IMAGE_BASED_LIGHTING
     {
-        const int NUM_MIP_LEVELS = 12;
+        const int NUM_MIP_LEVELS = 6;
         float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
         vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
 
