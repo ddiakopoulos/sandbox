@@ -4,7 +4,6 @@
 #define renderable_grid_h
 
 #include "gl-api.hpp"
-#include "gl-scene.hpp"
 
 constexpr const char gridVertexShader[] = R"(#version 330
     layout(location = 0) in vec3 vertex;
@@ -30,13 +29,14 @@ constexpr const char gridFragmentShader[] = R"(#version 330
 namespace avl
 {
 
-class RenderableGrid : public DebugRenderable
+class RenderableGrid
 {
     GlShader gridShader;
     GlMesh gridMesh;
     float3 origin = { 0.f, 0.f, 0.f };
     int gridSz = 0;
     int qx, qy;
+
 public:
 
     RenderableGrid(float density = 1.0f, int qx = 32, int qy = 32) : qx(qx), qy(qy)
@@ -76,7 +76,7 @@ public:
         origin = newOrigin; 
     }
 
-    virtual void draw(const float4x4 & viewProj) override
+    void draw(const float4x4 & viewProj)    
     {
         auto model = make_translation_matrix(origin);
         auto modelViewProjectionMatrix = mul(viewProj, model);

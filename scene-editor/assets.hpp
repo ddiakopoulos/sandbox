@@ -96,6 +96,6 @@ template<class T> void global_register_asset(const char * asset_id, T && asset)
 typedef AssetHandle<GlTexture2D> GlTextureHandle;
 typedef AssetHandle<GlShader> GlShaderHandle;
 typedef AssetHandle<GlMesh> GlMeshHandle;
-typedef AssetHandle<Geometry> GeometryHandle;
+typedef AssetHandle<avl::Geometry> GeometryHandle;
 
 #endif // end vr_assets_hpp

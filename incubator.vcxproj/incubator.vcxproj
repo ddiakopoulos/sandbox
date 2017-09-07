@@ -37,7 +37,6 @@
     <ClInclude Include="..\gl\gl-procedural-sky.hpp" />
     <ClInclude Include="..\gl\gl-renderable-grid.hpp" />
     <ClInclude Include="..\gl\gl-renderable-meshline.hpp" />
-    <ClInclude Include="..\gl\gl-scene.hpp" />
     <ClInclude Include="..\gl\gl-shader-monitor.hpp" />
     <ClInclude Include="..\gl\gl-texture-view.hpp" />
     <ClInclude Include="..\gl\glfw-app.hpp" />

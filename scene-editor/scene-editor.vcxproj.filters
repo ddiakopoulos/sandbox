@@ -2,8 +2,46 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="editor-app.cpp" />
+    <ClCompile Include="material.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="editor-app.hpp" />
+    <ClInclude Include="uniforms.hpp">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="bloom_pass.hpp">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="fwd_renderer.hpp">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="shadow_pass.hpp">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="material.hpp">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="assets.hpp">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="gui.hpp">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="serialization.hpp">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="scene.hpp">
+      <Filter>core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="render">
+      <UniqueIdentifier>{ece5e5ad-3acb-47ea-ab3b-f54752866e93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{3937350d-e9c1-449b-9bf9-ce09c08db220}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

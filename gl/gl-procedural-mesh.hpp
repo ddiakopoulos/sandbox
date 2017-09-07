@@ -2,6 +2,8 @@
 #define gl_procedural_mesh_hpp
 
 #include "procedural_mesh.hpp"
+#include "gl-mesh.hpp"
+
 #include <assert.h>
 
 namespace avl

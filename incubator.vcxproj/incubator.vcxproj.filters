@@ -207,9 +207,6 @@
     <ClInclude Include="..\gl\gl-renderable-meshline.hpp">
       <Filter>source\gl-app\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\gl\gl-scene.hpp">
-      <Filter>source\gl-app\include</Filter>
-    </ClInclude>
     <ClInclude Include="..\gl\gl-shader-monitor.hpp">
       <Filter>source\gl-app\include</Filter>
     </ClInclude>

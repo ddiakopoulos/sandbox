@@ -59,30 +59,4 @@ namespace avl
 
 }
 
-/*
-struct RuntimeMaterialInstance
-{
-    void associate()
-    {
-        // Iterate all material types? 
-        for (auto & m : AssetHandle<MetallicRoughnessMaterial>::list())
-        {
-            if (m.name.size() > 0 && m.name == name)
-            {
-                std::cout << "Assigning material: " << name << std::endl;
-                mat = &m.get();
-            }
-        }
-    }
-
-    std::string name;
-    Material * mat{ nullptr };
-    RuntimeMaterialInstance() { associate(); }
-    RuntimeMaterialInstance(const std::string & name) : name(name) { associate(); }
-    Material * get() { return mat; }
-};
-
-typedef AssetHandle<RuntimeMaterialInstance> MaterialHandle;
-*/
-
 #endif // end vr_material_hpp

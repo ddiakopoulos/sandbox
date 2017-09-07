@@ -6,7 +6,7 @@
 #include "fwd_renderer.hpp"
 #include "uniforms.hpp"
 #include "assets.hpp"
-#include "static_mesh.hpp"
+#include "scene.hpp"
 
 static inline Pose to_linalg(tinygizmo::rigid_transform & t)
 {

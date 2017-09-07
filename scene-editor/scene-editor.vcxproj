@@ -143,9 +143,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="editor-app.cpp" />
+    <ClCompile Include="material.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="assets.hpp" />
+    <ClInclude Include="bloom_pass.hpp" />
     <ClInclude Include="editor-app.hpp" />
+    <ClInclude Include="fwd_renderer.hpp" />
+    <ClInclude Include="scene.hpp" />
+    <ClInclude Include="gui.hpp" />
+    <ClInclude Include="material.hpp" />
+    <ClInclude Include="serialization.hpp" />
+    <ClInclude Include="shadow_pass.hpp" />
+    <ClInclude Include="uniforms.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

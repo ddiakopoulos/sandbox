@@ -42,6 +42,5 @@
 #include "gl-procedural-sky.hpp"
 #include "gl-renderable-grid.hpp"
 #include "gl-renderable-meshline.hpp"
-#include "gl-scene.hpp"
 #include "gl-shader-monitor.hpp"
 #include "gl-texture-view.hpp"

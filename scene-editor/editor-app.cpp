@@ -1,6 +1,7 @@
 #include "index.hpp"
 #include "editor-app.hpp"
-#include "../virtual-reality/material.cpp" // HACK HACK
+#include "gui.hpp"
+#include "serialization.hpp"
 
 using namespace avl;
 

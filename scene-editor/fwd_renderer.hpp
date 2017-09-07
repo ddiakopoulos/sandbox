@@ -12,12 +12,12 @@
 #include "uniforms.hpp"
 #include "circular_buffer.hpp"
 
-#include "gl-scene.hpp"
 #include "gl-camera.hpp"
 #include "gl-async-gpu-timer.hpp"
 #include "gl-procedural-sky.hpp"
 #include "gl-imgui.hpp"
 
+#include "scene.hpp"
 #include "bloom_pass.hpp"
 #include "shadow_pass.hpp"
 

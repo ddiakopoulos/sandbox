@@ -161,7 +161,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="material.cpp" />
     <ClCompile Include="vr_app.cpp" />
     <ClCompile Include="third_party\bullet3\src\Bullet3Collision\BroadPhaseCollision\b3DynamicBvh.cpp" />
     <ClCompile Include="third_party\bullet3\src\Bullet3Collision\BroadPhaseCollision\b3DynamicBvhBroadphase.cpp" />
@@ -343,17 +342,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="assets.hpp" />
-    <ClInclude Include="bloom_pass.hpp" />
     <ClInclude Include="bullet_debug.hpp" />
     <ClInclude Include="bullet_engine.hpp" />
     <ClInclude Include="bullet_utils.hpp" />
     <ClInclude Include="debug_line_renderer.hpp" />
-    <ClInclude Include="material.hpp" />
-    <ClInclude Include="shadow_pass.hpp" />
-    <ClInclude Include="uniforms.hpp" />
     <ClInclude Include="vr_app.hpp" />
-    <ClInclude Include="vr_renderer.hpp" />
     <ClInclude Include="static_mesh.hpp" />
     <ClInclude Include="third_party\bullet3\src\btBulletCollisionCommon.h" />
     <ClInclude Include="third_party\bullet3\src\btBulletDynamicsCommon.h" />

@@ -6,6 +6,7 @@
 #include "util.hpp"
 #include "gl-api.hpp"
 #include "gl-procedural-mesh.hpp"
+#include "asset_io.hpp"
 
 #if defined(ANVIL_PLATFORM_WINDOWS)
 #pragma warning(push)
