@@ -5,6 +5,179 @@
 
 using namespace avl;
 
+// Linearize
+//  * writeonly LinearZ
+//  * uniform sampler2D Depth
+//  * CB0 with ZMagic
+
+// Downsample Passes
+//  * 
+//  *
+
+// Blur and Upsample Passes
+//  * 
+//  * 
+//  * 
+//  * 
+
+// AO Render Passes
+//  *
+//  *
+
+/*
+    void Dispatch( size_t GroupCountX = 1, size_t GroupCountY = 1, size_t GroupCountZ = 1 );
+    void Dispatch1D( size_t ThreadCountX, size_t GroupSizeX = 64);
+    void Dispatch2D( size_t ThreadCountX, size_t ThreadCountY, size_t GroupSizeX = 8, size_t GroupSizeY = 8);
+    void Dispatch3D( size_t ThreadCountX, size_t ThreadCountY, size_t ThreadCountZ, size_t GroupSizeX, size_t GroupSizeY, size_t GroupSizeZ );
+*/
+
+struct ScreenSpaceAmbientOcclusionPass
+{
+    // Controls how aggressive to fade off samples that occlude spheres but by so much as to be unreliable.
+    // This is what gives objects a dark halo around them when placed in front of a wall.  If you want to
+    // fade off the halo, boost your rejection falloff.  The tradeoff is that it reduces overall AO.
+    float RejectionFalloff = 2.5f;  // 1.0f, 10.0f, 0.5f;
+
+    // The effect normally marks anything that's 50% occluded or less as "fully unoccluded".  This throws away
+    // half of our result.  Accentuation gives more range to the effect, but it will darken all AO values in the
+    // process.  It will also cause "under occluded" geometry to appear to be highlighted.  If your ambient light
+    // is determined by the surface normal (such as with IBL), you might not want this side effect.
+    float Accentuation = 0.1f; // 0.0f, 1.0f, 0.1f;
+
+    GlComputeProgram linearizeDepth = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/linearize_depth_comp.glsl"), {});
+
+    GlComputeProgram prepareDepth1 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_prepare_depth1_comp.glsl"), {});
+    GlComputeProgram prepareDepth2 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_prepare_depth2_comp.glsl"), {});
+
+    GlComputeProgram aoRender1 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_render.glsl"), { "INTERLEAVE_RESULT" });
+    GlComputeProgram aoRender2 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_render.glsl"), {});
+
+    GlComputeProgram blendOut = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), { "BLEND_WITH_HIGHER_RESOLUTION" });
+    GlComputeProgram preMinBlendOut = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), { "COMBINE_LOWER_RESOLUTIONS", "BLEND_WITH_HIGHER_RESOLUTION" });
+    GlComputeProgram upsample = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), {});
+    GlComputeProgram PreMin = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), { "COMBINE_LOWER_RESOLUTIONS" });
+
+    float SampleThickness[12]; // Pre-computed sample thicknesses
+
+    ScreenSpaceAmbientOcclusionPass()
+    {
+
+        SampleThickness[0] = sqrt(1.0f - 0.2f * 0.2f);
+        SampleThickness[1] = sqrt(1.0f - 0.4f * 0.4f);
+        SampleThickness[2] = sqrt(1.0f - 0.6f * 0.6f);
+        SampleThickness[3] = sqrt(1.0f - 0.8f * 0.8f);
+        SampleThickness[4] = sqrt(1.0f - 0.2f * 0.2f - 0.2f * 0.2f);
+        SampleThickness[5] = sqrt(1.0f - 0.2f * 0.2f - 0.4f * 0.4f);
+        SampleThickness[6] = sqrt(1.0f - 0.2f * 0.2f - 0.6f * 0.6f);
+        SampleThickness[7] = sqrt(1.0f - 0.2f * 0.2f - 0.8f * 0.8f);
+        SampleThickness[8] = sqrt(1.0f - 0.4f * 0.4f - 0.4f * 0.4f);
+        SampleThickness[9] = sqrt(1.0f - 0.4f * 0.4f - 0.6f * 0.6f);
+        SampleThickness[10] = sqrt(1.0f - 0.4f * 0.4f - 0.8f * 0.8f);
+        SampleThickness[11] = sqrt(1.0f - 0.6f * 0.6f - 0.6f * 0.6f);
+    } 
+
+    void compute(GlTexture2D & Destination, GlTexture2D & DepthBuffer, const float TanHalfFovH)
+    {
+        size_t BufferWidth = DepthBuffer.width;
+        size_t BufferHeight = DepthBuffer.height;
+
+        size_t ArrayCount = DepthBuffer.GetDepth();
+
+        // Here we compute multipliers that convert the center depth value into (the reciprocal of)
+        // sphere thicknesses at each sample location.  This assumes a maximum sample radius of 5
+        // units, but since a sphere has no thickness at its extent, we don't need to sample that far
+        // out.  Only samples whole integer offsets with distance less than 25 are used.  This means
+        // that there is no sample at (3, 4) because its distance is exactly 25 (and has a thickness of 0.)
+
+        // The shaders are set up to sample a circular region within a 5-pixel radius.
+        const float ScreenspaceDiameter = 10.0f;
+
+        // SphereDiameter = CenterDepth * ThicknessMultiplier.  This will compute the thickness of a sphere centered
+        // at a specific depth.  The ellipsoid scale can stretch a sphere into an ellipsoid, which changes the
+        // characteristics of the AO.
+        // TanHalfFovH:  Radius of sphere in depth units if its center lies at Z = 1
+        // ScreenspaceDiameter:  Diameter of sample sphere in pixel units
+        // ScreenspaceDiameter / BufferWidth:  Ratio of the screen width that the sphere actually covers
+        // Note about the "2.0f * ":  Diameter = 2 * Radius
+        float ThicknessMultiplier = 2.0f * TanHalfFovH * ScreenspaceDiameter / BufferWidth;
+
+        if (ArrayCount == 1) ThicknessMultiplier *= 2.0f;
+
+        // This will transform a depth value from [0, thickness] to [0, 1].
+        float InverseRangeFactor = 1.0f / ThicknessMultiplier;
+
+        __declspec(align(16)) float SsaoCB[28];
+
+        // The thicknesses are smaller for all off-center samples of the sphere.  Compute thicknesses relative
+        // to the center sample.
+        SsaoCB[0] = InverseRangeFactor / SampleThickness[0];
+        SsaoCB[1] = InverseRangeFactor / SampleThickness[1];
+        SsaoCB[2] = InverseRangeFactor / SampleThickness[2];
+        SsaoCB[3] = InverseRangeFactor / SampleThickness[3];
+        SsaoCB[4] = InverseRangeFactor / SampleThickness[4];
+        SsaoCB[5] = InverseRangeFactor / SampleThickness[5];
+        SsaoCB[6] = InverseRangeFactor / SampleThickness[6];
+        SsaoCB[7] = InverseRangeFactor / SampleThickness[7];
+        SsaoCB[8] = InverseRangeFactor / SampleThickness[8];
+        SsaoCB[9] = InverseRangeFactor / SampleThickness[9];
+        SsaoCB[10] = InverseRangeFactor / SampleThickness[10];
+        SsaoCB[11] = InverseRangeFactor / SampleThickness[11];
+
+        // These are the weights that are multiplied against the samples because not all samples are
+        // equally important.  The farther the sample is from the center location, the less they matter.
+        // We use the thickness of the sphere to determine the weight.  The scalars in front are the number
+        // of samples with this weight because we sum the samples together before multiplying by the weight,
+        // so as an aggregate all of those samples matter more.  After generating this table, the weights
+        // are normalized.
+        SsaoCB[12] = 4.0f * SampleThickness[0];	 // Axial
+        SsaoCB[13] = 4.0f * SampleThickness[1];	 // Axial
+        SsaoCB[14] = 4.0f * SampleThickness[2];	 // Axial
+        SsaoCB[15] = 4.0f * SampleThickness[3];	 // Axial
+        SsaoCB[16] = 4.0f * SampleThickness[4];	 // Diagonal
+        SsaoCB[17] = 8.0f * SampleThickness[5];	 // L-shaped
+        SsaoCB[18] = 8.0f * SampleThickness[6];	 // L-shaped
+        SsaoCB[19] = 8.0f * SampleThickness[7];	 // L-shaped
+        SsaoCB[20] = 4.0f * SampleThickness[8];	 // Diagonal
+        SsaoCB[21] = 8.0f * SampleThickness[9];	 // L-shaped
+        SsaoCB[22] = 8.0f * SampleThickness[10]; // L-shaped
+        SsaoCB[23] = 4.0f * SampleThickness[11]; // Diagonal
+
+        // Normalize the weights by dividing by the sum of all weights
+        float totalWeight = 0.0f;
+        for (int i = 12; i < 24; ++i) totalWeight += SsaoCB[i];
+        for (int i = 12; i < 24; ++i) SsaoCB[i] /= totalWeight;
+
+        SsaoCB[24] = 1.0f / BufferWidth;
+        SsaoCB[25] = 1.0f / BufferHeight;
+        SsaoCB[26] = 1.0f / -RejectionFalloff;
+        SsaoCB[27] = 1.0f / (1.0f + Accentuation);
+
+        // Main_interleaved
+        cmd.SetComputeFloatParams(cs, "gInvThicknessTable", InvThicknessTable);
+        cmd.SetComputeFloatParams(cs, "gSampleWeightTable", SampleWeightTable);
+        cmd.SetComputeVectorParam(cs, "gInvSliceDimension", source.inverseDimensions);
+        cmd.SetComputeFloatParam(cs, "gRejectFadeoff", -1 / _thicknessModifier);
+        cmd.SetComputeFloatParam(cs, "gIntensity", _intensity);
+
+        cmd.SetComputeTextureParam(cs, kernel, "DepthTex", source.id);
+        cmd.SetComputeTextureParam(cs, kernel, "Occlusion", dest.id);
+
+        // Calculate the thread group count and add a dispatch command with them.
+
+        uint32_t xsize, ysize, zsize;
+        cs.GetKernelThreadGroupSizes(kernel, out xsize, out ysize, out zsize);
+
+        cmd.DispatchCompute(
+            cs, kernel,
+            (source.width + (int)xsize - 1) / (int)xsize,
+            (source.height + (int)ysize - 1) / (int)ysize,
+            (source.depth + (int)zsize - 1) / (int)zsize
+        );
+
+    }
+
+};
+
 scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
 {
     glfwMakeContextCurrent(window);
@@ -17,34 +190,15 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
-    // Downsample Passes
-    // * PrepareDepth1
-    // * PrepareDepth2
-
-    // Blur and Upsample Passes
-    //  * BlendOut (BLEND_WITH_HIGHER_RESOLUTION)
-    //  * PreMinBlendOut (COMBINE_LOWER_RESOLUTIONS, BLEND_WITH_HIGHER_RESOLUTION)
-    //  * PreMin (COMBINE_LOWER_RESOLUTIONS)
-
-    // AO Render Passes
-    //  * Render1 (INTERLEAVE_RESULT)
-    //  * Render2 ()
-
-    GlComputeProgram prepareDepth1 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_prepare_depth1_comp.glsl"), {});
-    GlComputeProgram prepareDepth2 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_prepare_depth2_comp.glsl"), {});
-
-    GlComputeProgram aoRender1 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_render.glsl"), {"INTERLEAVE_RESULT"});
-    GlComputeProgram aoRender2 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_render.glsl"), {});
-
-    GlComputeProgram blendOut = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), {"BLEND_WITH_HIGHER_RESOLUTION"});
-    GlComputeProgram preMinBlendOut = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), {"COMBINE_LOWER_RESOLUTIONS", "BLEND_WITH_HIGHER_RESOLUTION"});
-    GlComputeProgram PreMin = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), {"COMBINE_LOWER_RESOLUTIONS"});
+    // Linearization - LinearizeDepth
 
     //GlComputeProgram p(read_file_text("../assets/shaders/ao_prepare_depth2_comp.glsl"));
     //std::cout << "Max Threads Per Group: " << p.get_max_threads_per_workgroup() << std::endl;
     //std::cout << "Max Workgroup Size:    " << p.get_max_workgroup_size() << std::endl;
 
     editor.reset(new editor_controller<GameObject>());
+
+    ScreenSpaceAmbientOcclusionPass ssao;
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
