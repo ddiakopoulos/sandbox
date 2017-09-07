@@ -435,7 +435,7 @@ void scene_editor_app::on_draw()
     {
         ImGui::PushID(static_cast<int>(i));
         bool selected = editor->selected(scene.objects[i].get());
-        std::string name = std::string(typeid(*scene.objects[i]).name()); // For polymorphic typeids, the trick is to dereference it first
+        std::string name = scene.objects[i]->id.size() > 0 ? scene.objects[i]->id : std::string(typeid(*scene.objects[i]).name()); // For polymorphic typeids, the trick is to dereference it first
         std::vector<StaticMesh *> selectedObjects;
 
         if (ImGui::Selectable(name.c_str(), &selected))

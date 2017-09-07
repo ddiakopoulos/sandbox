@@ -44,7 +44,7 @@ namespace avl
         float ambientStrength{ 1.f };
         float shadowOpacity{ 0.9f };
 
-        float2 texcoordScale{ 4.f, 4.f };
+        int2 texcoordScale{ 4, 4 };
 
         GlTextureHandle albedo;
         GlTextureHandle normal;

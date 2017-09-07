@@ -15,8 +15,8 @@
 #include "cereal/archives/json.hpp"
 #include "cereal/access.hpp"
 
-// There are two distinct but related bits of functionality here. The frist is the `visit_fields` and `visit_subclasses` subclass paradigm,
-// which reflects class properties and defines polymorphic relationships, respectively. ImGui uses these definitions to build object
+// There are two distinct but related bits of functionality here. The first is the `visit_fields` and `visit_subclasses` paradigm,
+// reflecting class properties and defining polymorphic relationships, respectively. ImGui uses these definitions to build object
 // interfaces in the scene editor as defined in `gui.hpp`. Furthermore, metadata attributes can be provided as a third argument in `visit_fields`, 
 // whereby ImGui can be made aware of additional relevant properties (like hiding the field in the inspector or defining min/max ranges). The 
 // second bit of functionality makes use of the C++11 Cereal library. Unfortunately, Cereal requires a further definition of polymorphic
@@ -46,6 +46,7 @@ template<class F> void visit_fields(GameObject & o, F f)
 
 template<class F> void visit_fields(StaticMesh & o, F f)
 {
+    f("id", o.id);
     f("pose", o.pose);
     f("scale", o.scale);
     f("material", o.mat);
@@ -68,7 +69,7 @@ template<class F> void visit_fields(MetallicRoughnessMaterial & o, F f)
     f("occulusion_strength", o.occlusionStrength, range_metadata<float>{ 0.f, 1.f });
     f("ambient_strength", o.ambientStrength, range_metadata<float>{ 0.f, 1.f });
     f("shadow_opacity", o.shadowOpacity, range_metadata<float>{ 0.f, 1.f });
-    f("texcoord_scale", o.texcoordScale, range_metadata<float>{ -32, 32 });
+    f("texcoord_scale", o.texcoordScale, range_metadata<int>{ -32, 32 });
 
     f("albedo_handle", o.albedo);
     f("normal_handle", o.normal);
@@ -89,6 +90,10 @@ template<class F> void visit_fields(MetallicRoughnessMaterial & o, F f)
 
 namespace cereal
 {
+    template<class Archive> void serialize(Archive & archive, int2 & m) { archive(cereal::make_nvp("x", m.x), cereal::make_nvp("y", m.y)); }
+    template<class Archive> void serialize(Archive & archive, int3 & m) { archive(cereal::make_nvp("x", m.x), cereal::make_nvp("y", m.y), cereal::make_nvp("z", m.z)); }
+    template<class Archive> void serialize(Archive & archive, int4 & m) { archive(cereal::make_nvp("x", m.x), cereal::make_nvp("y", m.y), cereal::make_nvp("z", m.z), cereal::make_nvp("w", m.w)); }
+
     template<class Archive> void serialize(Archive & archive, float2 & m) { archive(cereal::make_nvp("x", m.x), cereal::make_nvp("y", m.y)); }
     template<class Archive> void serialize(Archive & archive, float3 & m) { archive(cereal::make_nvp("x", m.x), cereal::make_nvp("y", m.y), cereal::make_nvp("z", m.z)); }
     template<class Archive> void serialize(Archive & archive, float4 & m) { archive(cereal::make_nvp("x", m.x), cereal::make_nvp("y", m.y), cereal::make_nvp("z", m.z), cereal::make_nvp("w", m.w)); }

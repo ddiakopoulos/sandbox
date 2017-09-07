@@ -142,12 +142,12 @@ template<class... A> bool Edit(const char * label, float & f, const A & ... meta
     else return ImGui::InputFloat(label, &f);
 }
 
-// Slider for range_metadata<float2>
-template<class... A> bool Edit(const char * label, float2 & f, const A & ... metadata)
+// Slider for range_metadata<int2>
+template<class... A> bool Edit(const char * label, int2 & f, const A & ... metadata)
 {
-    auto * floatRange = query_metadata<range_metadata<float>>(metadata...);
-    if (floatRange) return ImGui::SliderFloat2(label, &f[0], floatRange->min, floatRange->max, "%.5f");
-    else return ImGui::SliderFloat2(label, &f[0], 0.0f, 1.0f);
+    auto * intRange = query_metadata<range_metadata<int>>(metadata...);
+    if (intRange) return ImGui::SliderInt2(label, &f[0], intRange->min, intRange->max, "%.5f");
+    else return ImGui::SliderInt2(label, &f[0], 0.0f, 1.0f);
 }
 
 template<class T, class ... A> bool Edit(const char * label, AssetHandle<T> & h, const A & ... metadata)
