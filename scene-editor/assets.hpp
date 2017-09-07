@@ -67,6 +67,13 @@ public:
         return handle->asset;
     }
 
+    T assign_shared(T asset)
+    {
+        handle->asset = asset;
+        handle->assigned = true;
+        return handle->asset;
+    }
+
     bool assigned() const
     {
         if (handle->assigned) return true;
@@ -91,6 +98,12 @@ template<class T> void global_register_asset(const char * asset_id, T && asset)
 {
     AssetHandle<T> assetHandle(asset_id);
     assetHandle.assign(std::move(asset));
+}
+
+template<class T> void global_register_asset_shared(const char * asset_id, T asset)
+{
+    AssetHandle<T> assetHandle(asset_id);
+    assetHandle.assign_shared(asset);
 }
 
 typedef AssetHandle<GlTexture2D> GlTextureHandle;
