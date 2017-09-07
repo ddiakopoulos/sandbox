@@ -6,11 +6,11 @@ void GroupMemoryBarrierWithGroupSync()
     barrier();
 }
 
-writeonly uniform image2D LinearZ;
-writeonly uniform image2D DS2x;
-writeonly uniform image2DArray DS2xAtlas;
-writeonly uniform image2D DS4x;
-writeonly uniform image2DArray DS4xAtlas;
+layout (binding = 0, r32f) writeonly uniform image2D LinearZ;
+layout (binding = 1, r32f) writeonly uniform image2D DS2x;
+layout (binding = 2, r32f) writeonly uniform image2DArray DS2xAtlas;
+layout (binding = 3, r32f) writeonly uniform image2D DS4x;
+layout (binding = 4, r32f) writeonly uniform image2DArray DS4xAtlas;
 
 layout(std140) uniform CB0
 {

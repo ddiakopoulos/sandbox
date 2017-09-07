@@ -122,52 +122,56 @@ struct ScreenSpaceAmbientOcclusionPass
         InvThicknessTable.resize(12);
         SampleWeightTable.resize(12);
 
-        //depthLinear;
+        depthLinear.setup(renderSize.x, renderSize.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        ambientOcclusion.setup(renderSize.x, renderSize.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
-        //lowDepth1; // L1 = /2
-        //lowDepth2;
-        //lowDepth3;
-        //lowDepth4; // L4
-
-        int2 ldSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
-        int2 ldSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
-        int2 ldSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
-        int2 ldSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
-        lowDepth1.setup(ldSize1.x, ldSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        lowDepth2.setup(ldSize2.x, ldSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        lowDepth3.setup(ldSize3.x, ldSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        lowDepth4.setup(ldSize4.x, ldSize4.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        {
+            int2 ldSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
+            int2 ldSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
+            int2 ldSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
+            int2 ldSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
+            lowDepth1.setup(ldSize1.x, ldSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            lowDepth2.setup(ldSize2.x, ldSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            lowDepth3.setup(ldSize3.x, ldSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            lowDepth4.setup(ldSize4.x, ldSize4.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        }
 
         gl_check_error(__FILE__, __LINE__);
 
-        int2 combSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
-        int2 combSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
-        int2 combSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
-        combined1.setup(combSize1.x, combSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        combined2.setup(combSize2.x, combSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        combined3.setup(combSize3.x, combSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        {
+            int2 combSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
+            int2 combSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
+            int2 combSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
+            combined1.setup(combSize1.x, combSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            combined2.setup(combSize2.x, combSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            combined3.setup(combSize3.x, combSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        }
 
         gl_check_error(__FILE__, __LINE__);
 
-        int2 tdSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
-        int2 tdSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
-        int2 tdSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 5);
-        int2 tdSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 6);
-        tiledDepth1.setup(GL_TEXTURE_2D_ARRAY, tdSize1.x, tdSize1.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 3
-        tiledDepth2.setup(GL_TEXTURE_2D_ARRAY, tdSize2.x, tdSize2.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 4
-        tiledDepth3.setup(GL_TEXTURE_2D_ARRAY, tdSize3.x, tdSize3.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 5
-        tiledDepth4.setup(GL_TEXTURE_2D_ARRAY, tdSize4.x, tdSize4.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 6
+        {
+            int2 tdSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
+            int2 tdSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
+            int2 tdSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 5);
+            int2 tdSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 6);
+            tiledDepth1.setup(GL_TEXTURE_2D_ARRAY, tdSize1.x, tdSize1.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 3
+            tiledDepth2.setup(GL_TEXTURE_2D_ARRAY, tdSize2.x, tdSize2.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 4
+            tiledDepth3.setup(GL_TEXTURE_2D_ARRAY, tdSize3.x, tdSize3.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 5
+            tiledDepth4.setup(GL_TEXTURE_2D_ARRAY, tdSize4.x, tdSize4.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 6
+        }
 
         gl_check_error(__FILE__, __LINE__);
 
-        int2 ocSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
-        int2 ocSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
-        int2 ocSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
-        int2 ocSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
-        occlusion1.setup(ocSize1.x, ocSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        occlusion2.setup(ocSize2.x, ocSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        occlusion3.setup(ocSize3.x, ocSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        occlusion4.setup(ocSize4.x, ocSize4.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        {
+            int2 ocSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
+            int2 ocSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
+            int2 ocSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
+            int2 ocSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
+            occlusion1.setup(ocSize1.x, ocSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            occlusion2.setup(ocSize2.x, ocSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            occlusion3.setup(ocSize3.x, ocSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            occlusion4.setup(ocSize4.x, ocSize4.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        }
 
         gl_check_error(__FILE__, __LINE__);
 
@@ -183,8 +187,46 @@ struct ScreenSpaceAmbientOcclusionPass
         SampleThickness[9] = sqrt(1.0f - 0.4f * 0.4f - 0.6f * 0.6f);
         SampleThickness[10] = sqrt(1.0f - 0.4f * 0.4f - 0.8f * 0.8f);
         SampleThickness[11] = sqrt(1.0f - 0.6f * 0.6f - 0.6f * 0.6f);
-
     } 
+    
+    void PushDownsampleCommands(const GLuint depthSource)
+    {
+        // First downsampling pass.
+        {
+            glUseProgram(prepareDepth1.handle());
+            glBindImageTexture(0, depthLinear, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+            gl_check_error(__FILE__, __LINE__);
+            glBindImageTexture(1, lowDepth1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+            gl_check_error(__FILE__, __LINE__);
+            glBindImageTexture(2, tiledDepth1, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
+            gl_check_error(__FILE__, __LINE__);
+            glBindImageTexture(3, lowDepth2, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+            gl_check_error(__FILE__, __LINE__);
+            glBindImageTexture(4, tiledDepth2, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
+            gl_check_error(__FILE__, __LINE__);
+            prepareDepth1.uniform("ZBufferParams", CalculateZBufferParams(0.1, 24.f)); // FIXME
+            gl_check_error(__FILE__, __LINE__);
+            prepareDepth1.texture("Depth", 0, depthSource, GL_TEXTURE_2D); // sampler 
+            gl_check_error(__FILE__, __LINE__);
+            prepareDepth1.dispatch(tiledDepth2.width, tiledDepth2.height, 1);
+            gl_check_error(__FILE__, __LINE__);
+        }
+
+        gl_check_error(__FILE__, __LINE__);
+
+        // Second downsampling pass.
+        {
+            glUseProgram(prepareDepth2.handle());
+            glBindImageTexture(0, lowDepth3, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+            glBindImageTexture(1, tiledDepth3, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
+            glBindImageTexture(2, lowDepth4, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+            glBindImageTexture(3, tiledDepth4, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
+            prepareDepth2.texture("DX4x", 0, lowDepth2, GL_TEXTURE_2D); // sampler 
+            prepareDepth2.dispatch(tiledDepth4.width, tiledDepth4.height, 1);
+        }
+
+        gl_check_error(__FILE__, __LINE__);
+    }
 
     void PushRenderAOCommands(const GLuint source, const GLuint dest, const float TanHalfFovH, const size_t BufferWidth, const size_t BufferHeight, const size_t ArrayCount)
     {
@@ -213,8 +255,7 @@ struct ScreenSpaceAmbientOcclusionPass
 
         // The thicknesses are smaller for all off-center samples of the sphere.  Compute thicknesses relative
         // to the center sample.
-        for (int i = 0; i < 12; i++)
-            InvThicknessTable[i] = InverseRangeFactor / SampleThickness[i];
+        for (int i = 0; i < 12; i++) InvThicknessTable[i] = InverseRangeFactor / SampleThickness[i];
 
         // These are the weights that are multiplied against the samples because not all samples are
         // equally important.  The farther the sample is from the center location, the less they matter.
@@ -252,7 +293,7 @@ struct ScreenSpaceAmbientOcclusionPass
 
         //https://stackoverflow.com/questions/37136813/what-is-the-difference-between-glbindimagetexture-and-glbindtexture
 
-        aoRender1.texture("DepthTex", 0, source, GL_TEXTURE_2D_ARRAY);
+        aoRender1.texture("DepthTex", 0, source, GL_TEXTURE_2D_ARRAY); // array vs not
 
         gl_check_error(__FILE__, __LINE__);
 
@@ -273,13 +314,50 @@ struct ScreenSpaceAmbientOcclusionPass
         gl_check_error(__FILE__, __LINE__);
     }
 
-    void RebuildCommandBuffers()
+    void PushUpsampleCommands(const GlTexture2D & lowResDepth, const GlTexture2D & interleavedAO, const GlTexture2D & highResDepth, const GlTexture2D & highResAO, const GlTexture2D & dest, bool highRes)
     {
+        GlComputeProgram & prog = (highRes == false) ? upsample : blendOut;
+
+        const float stepSize = 1920.0f / lowResDepth.width; // fix hardcoded resolution
+        float blurTolerance = (1.0 - std::pow(10, -4.6f) * stepSize);
+        blurTolerance *= blurTolerance;
+        const float upsampleTolerance = std::pow(10, -12.f);
+        const float noiseFilterWeight = 1 / (std::pow(10, 0.0f) + upsampleTolerance); // noise filter tolerance
+
+        prog.uniform("InvLowResolution", float2( 1.f / lowResDepth.width, 1.f / lowResDepth.height));
+        prog.uniform("InvHighResolution", float2(1.f / highResDepth.width, 1.f / highResDepth.height));
+        prog.uniform("NoiseFilterStrength", noiseFilterWeight);
+        prog.uniform("StepSize", stepSize);
+        prog.uniform("kBlurTolerance", blurTolerance);
+        prog.uniform("kUpsampleTolerance", upsampleTolerance);
+
+        prog.texture("LoResDB", 0, lowResDepth, GL_TEXTURE_2D);
+        prog.texture("HiResDB", 1, highResDepth, GL_TEXTURE_2D);
+        prog.texture("LoResAO1", 2, interleavedAO, GL_TEXTURE_2D);
+
+        if (highRes != false) prog.texture("HiResAO", 3, highResAO, GL_TEXTURE_2D);
+
+        glBindImageTexture(0, dest, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F); // AoResult
+
+        int xcount = (highResDepth.width + 17) / 16;
+        int ycount = (highResDepth.height + 17) / 16;
+        prog.dispatch(xcount, ycount, 1);
+    }
+
+    void RebuildCommandBuffers(const GLuint depthSrc)
+    {
+        PushDownsampleCommands(depthSrc);
+
         float tanHalfFovH = CalculateTanHalfFovHeight(Identity4x4); // FIXME FIXME
         PushRenderAOCommands(tiledDepth1, occlusion1, tanHalfFovH, tiledDepth1.width, tiledDepth1.height, tiledDepth1.depth); // src, dest
         PushRenderAOCommands(tiledDepth2, occlusion2, tanHalfFovH, tiledDepth2.width, tiledDepth2.height, tiledDepth1.depth);
         PushRenderAOCommands(tiledDepth3, occlusion3, tanHalfFovH, tiledDepth3.width, tiledDepth3.height, tiledDepth1.depth);
         PushRenderAOCommands(tiledDepth4, occlusion4, tanHalfFovH, tiledDepth4.width, tiledDepth4.height, tiledDepth1.depth);
+
+        PushUpsampleCommands(lowDepth4, occlusion4, lowDepth3, occlusion3, combined3, false);
+        PushUpsampleCommands(lowDepth3, combined3, lowDepth2, occlusion2, combined2, false);
+        PushUpsampleCommands(lowDepth2, combined2, lowDepth1, occlusion1, combined1, false);
+        PushUpsampleCommands(lowDepth1, combined1, depthLinear, occlusion1, ambientOcclusion, true); // occlusion1 again is fake
     }
 
 };
@@ -604,6 +682,13 @@ void scene_editor_app::on_draw()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
 
+        // SSAO Testing
+        {
+            computeTimer.start();
+            ssao->RebuildCommandBuffers(renderer->get_output_texture(0));
+            computeTimer.stop();
+        }
+
         glActiveTexture(GL_TEXTURE0);
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, renderer->get_output_texture(0));
@@ -618,12 +703,6 @@ void scene_editor_app::on_draw()
         gl_check_error(__FILE__, __LINE__);
     }
 
-    // SSAO Testing
-    {
-        computeTimer.start();
-        ssao->RebuildCommandBuffers();
-        computeTimer.stop();
-    }
 
     // Selected objects as wireframe
     {

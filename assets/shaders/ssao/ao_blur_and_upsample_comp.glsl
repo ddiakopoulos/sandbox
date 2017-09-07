@@ -18,7 +18,7 @@ uniform sampler2D LoResAO1;
     uniform sampler2D HiResAO;
 #endif
 
-writeonly uniform image2D AoResult;
+layout (binding = 0, r32f) writeonly uniform image2D AoResult;
 
 void GroupMemoryBarrierWithGroupSync()
 {

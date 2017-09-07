@@ -26,7 +26,7 @@ void GroupMemoryBarrierWithGroupSync()
     uniform sampler2D DepthTex;
 #endif
 
-writeonly uniform image2D Occlusion;
+layout (binding = 0, r32f) writeonly uniform image2D Occlusion;
 
 layout(std140) uniform CB1
 {

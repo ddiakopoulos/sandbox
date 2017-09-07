@@ -2,10 +2,10 @@
 
 uniform sampler2D DS4x;
 
-writeonly uniform image2D DS8x;
-writeonly uniform image2DArray DS8xAtlas;
-writeonly uniform image2D DS16x;
-writeonly uniform image2DArray DS16xAtlas;
+layout (binding = 0, r32f) writeonly uniform image2D DS8x;
+layout (binding = 1, r32f) writeonly uniform image2DArray DS8xAtlas;
+layout (binding = 2, r32f) writeonly uniform image2D DS16x;
+layout (binding = 3, r32f) writeonly uniform image2DArray DS16xAtlas;
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 

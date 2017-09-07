@@ -2,7 +2,7 @@
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-writeonly uniform image2D LinearZ;
+layout (binding = 0, r32f) writeonly uniform image2D LinearZ;
 
 uniform sampler2D Depth;
 
