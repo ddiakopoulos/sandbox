@@ -241,7 +241,7 @@ template<class F> void visit_fields(StaticMesh & o, F f)
 {
     f("pose", o.pose);
     f("scale", o.scale);
-    //f("material", o.material);
+    f("material", o.mat);
 }
 
 // Materials

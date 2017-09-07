@@ -306,7 +306,7 @@ void main()
     #endif
 
     #ifdef HAS_EMISSIVE_MAP
-        Lo += texture(s_emissive, v_texcoord).rgb; 
+        Lo += texture(s_emissive, v_texcoord).rgb * u_emissiveStrength; 
     #endif
 
     #ifdef HAS_OCCLUSION_MAP
@@ -314,7 +314,7 @@ void main()
         Lo = mix(Lo, Lo * ao, u_occlusionStrength);
     #endif
 
-    Lo += u_emissive;
+    Lo += u_emissive * u_emissiveStrength;
 
     // Debugging
     //f_color = vec4(vec3(debugShadowCascadeColor), 1.0);

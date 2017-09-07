@@ -427,31 +427,41 @@ void scene_editor_app::on_draw()
     }
     menu.app_menu_end();
 
-    // Object Inspector
-    gui::imgui_fixed_window_begin("Inspector", { { width - 320, 17 },{ width, height / 4 } });
+    static int horizSplit = 380;
+    static int rightSplit1 = (height / 3) - 17;
+    static int rightSplit2 = ((height / 3) - 17);
+    
+    // Define a split region between the whole window and the right panel
+    auto rightRegion = ImGui::Split({ { 0.f,17.f },{ (float) width, (float) height } }, &horizSplit, ImGui::SplitType::Right);
+
+    auto split2 = ImGui::Split(rightRegion.second, &rightSplit1, ImGui::SplitType::Top);
+    auto split3 = ImGui::Split(split2.first, &rightSplit2, ImGui::SplitType::Top); // split again by the same amount
+
+    ui_rect topRightPane = { { int2(split2.second.min()) }, { int2(split2.second.max()) } }; // top 1/3rd and `the rest`
+    ui_rect middleRightPane = { { int2(split3.first.min()) },{ int2(split3.first.max()) } }; // `the rest` split by the same amount
+    ui_rect bottomRightPane = { { int2(split3.second.min()) },{ int2(split3.second.max()) } }; // remainder
+
+    gui::imgui_fixed_window_begin("Inspector", topRightPane);
     if (editor->get_selection().size() >= 1)
     {
         InspectGameObjectPolymorphic(nullptr, editor->get_selection()[0]);
     }
     gui::imgui_fixed_window_end();
 
-    gui::imgui_fixed_window_begin("Materials", { { width - 320, height / 4 }, { width, height / 2 } });
-
+    gui::imgui_fixed_window_begin("Materials", middleRightPane);
     std::vector<std::string> mats;
     for (auto & m : AssetHandle<std::shared_ptr<Material>>::list()) mats.push_back(m.name);
-    static int listbox_item_current = 1;
-    ImGui::ListBox("Material", &listbox_item_current, mats);
+    static int selectedMaterial = 1;
+    ImGui::ListBox("Material", &selectedMaterial, mats);
     if (mats.size() >= 1)
     {
-        auto w = AssetHandle<std::shared_ptr<Material>>::list()[listbox_item_current].get();
+        auto w = AssetHandle<std::shared_ptr<Material>>::list()[selectedMaterial].get();
         InspectGameObjectPolymorphic(nullptr, w.get());
     }
-
     gui::imgui_fixed_window_end();
 
-
     // Scene Object List
-    gui::imgui_fixed_window_begin("Objects", { { width - 320, (height / 2) }, { width, height } });
+    gui::imgui_fixed_window_begin("Objects", bottomRightPane);
 
     for (size_t i = 0; i < objects.size(); ++i)
     {
@@ -468,7 +478,6 @@ void scene_editor_app::on_draw()
         ImGui::PopID();
     }
     gui::imgui_fixed_window_end();
-
 
     // Renderer
     gui::imgui_fixed_window_begin("Renderer Settings", { { 0, 17 }, { 320, height } });
