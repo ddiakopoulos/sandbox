@@ -443,6 +443,10 @@ public:
         return *this;
     }
 
+
+    GLuint handle() const { return program; }
+    GLint get_uniform_location(const std::string & name) const { return glGetUniformLocation(program, name.c_str()); }
+
     void dispatch(const GLuint numGroupsX, const GLuint numGroupsY, const GLuint numGroupsZ) const
     {
         // glBindImageTexture(0, images[1], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
@@ -487,7 +491,21 @@ public:
         return maxInvocations;
     }
 
-    GLuint handle() const { return program; }
+    void uniform(const std::string & name, int scalar) const { glProgramUniform1i(program, get_uniform_location(name), scalar); }
+    void uniform(const std::string & name, float scalar) const { glProgramUniform1f(program, get_uniform_location(name), scalar); }
+    void uniform(const std::string & name, const linalg::aliases::float2 & vec) const { glProgramUniform2fv(program, get_uniform_location(name), 1, &vec.x); }
+    void uniform(const std::string & name, const linalg::aliases::float4 & vec) const { glProgramUniform4fv(program, get_uniform_location(name), 1, &vec.x); }
+    void uniform(const std::string & name, const std::vector<float> & scalar) const { glProgramUniform1fv(program, get_uniform_location(name), scalar.size(), scalar.data()); }
+
+    void texture(GLint loc, GLenum target, int unit, GLuint tex) const
+    {
+        glUseProgram(program);
+        glBindMultiTextureEXT(GL_TEXTURE0 + unit, target, tex);
+        glProgramUniform1i(program, loc, unit);
+    }
+
+    void texture(const char * name, int unit, GLuint tex, GLenum target) const { texture(get_uniform_location(name), target, unit, tex); }
+
 };
 
 ////////////////
