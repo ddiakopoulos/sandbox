@@ -4,31 +4,6 @@
 
 using namespace avl;
 
-namespace ImGui
-{
-    static auto vector_getter = [](void* vec, int idx, const char** out_text)
-    {
-        auto& vector = *static_cast<std::vector<std::string>*>(vec);
-        if (idx < 0 || idx >= static_cast<int>(vector.size())) { return false; }
-        *out_text = vector.at(idx).c_str();
-        return true;
-    };
-
-    bool Combo(const char* label, int* currIndex, std::vector<std::string>& values)
-    {
-        if (values.empty()) { return false; }
-        return Combo(label, currIndex, vector_getter,
-            static_cast<void*>(&values), values.size());
-    }
-
-    bool ListBox(const char* label, int* currIndex, std::vector<std::string>& values)
-    {
-        if (values.empty()) { return false; }
-        return ListBox(label, currIndex, vector_getter,
-            static_cast<void*>(&values), values.size());
-    }
-
-}
 scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
 {
     glfwMakeContextCurrent(window);
@@ -138,6 +113,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     floorInstance.radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
     floorInstance.irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
 
+    /*
     std::shared_ptr<MetallicRoughnessMaterial> rustedInstance;
     rustedInstance = std::make_shared<MetallicRoughnessMaterial>();
     rustedInstance->program = GlShaderHandle("pbr-forward-lighting");
@@ -149,6 +125,11 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     rustedInstance->occlusion = GlTextureHandle("rusted-iron-occlusion");
     rustedInstance->radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
     rustedInstance->irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
+    global_register_asset("pbr-material/floor", static_cast<std::shared_ptr<Material>>(rustedInstance));
+    */
+
+    std::shared_ptr<MetallicRoughnessMaterial> rustedInstance;
+    cereal::serialize_from_json("rust.mat.json", rustedInstance);
     global_register_asset("pbr-material/floor", static_cast<std::shared_ptr<Material>>(rustedInstance));
 
     for(auto & m : AssetHandle<std::shared_ptr<Material>>::list())
@@ -196,12 +177,9 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     floorMesh.geom = GeometryHandle("cube");
     floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
     floorMesh.set_scale(float3(16, 0.1f, 16));
-    //floorMesh.set_material(RuntimeMaterialInstance("pbr-material/floor"));
+    floorMesh.set_material("pbr-material/floor");
     std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
     objects.push_back(floor);
-
-    auto output = cereal::serialize_to_json(floor);
-    write_file_text("floor-object.json", output);
 
     //auto floorJson = read_file_text("floor-object.json");
     //std::istringstream floorJsonStream(floorJson);

@@ -213,6 +213,11 @@ namespace avl
 //   Engine Relationship Declarations  //
 /////////////////////////////////////////
 
+template<class T> const T * query_metadata(const T & meta) { return &meta; }
+template<class T> const T * query_metadata() { return nullptr; }
+template<class T> struct range_metadata { T min, max; };
+struct editor_hidden {  };
+
 template<class F> void visit_fields(GlTextureHandle & m, F f) { f("id", m.name); }
 template<class F> void visit_fields(GlShaderHandle & m, F f) { f("id", m.name); }
 template<class F> void visit_fields(GlMeshHandle & m, F f) { f("id", m.name); }
@@ -253,34 +258,29 @@ template<class F> void visit_subclasses(Material * p, F f)
 template<class F> void visit_fields(MetallicRoughnessMaterial & o, F f)
 {
     f("base_albedo", o.baseAlbedo);
-    f("opacity", o.opacity);
-    f("roughness_factor", o.roughnessFactor);
-    f("metallic_factor", o.metallicFactor);
+    f("opacity", o.opacity, range_metadata<float>{ 0.f, 1.f });
+    f("roughness_factor", o.roughnessFactor, range_metadata<float>{ 0.04f, 1.f });
+    f("metallic_factor", o.metallicFactor, range_metadata<float>{ 0.f, 1.f });
     f("base_emissive", o.baseEmissive);
-    f("emissive_strength", o.emissiveStrength);
-    f("specularLevel", o.specularLevel);
-    f("occulusion_strength", o.occlusionStrength);
-    f("ambient_strength", o.ambientStrength);
-    f("shadow_opacity", o.shadowOpacity);
-    f("texcoord_scale", o.texcoordScale);
+    f("emissive_strength", o.emissiveStrength, range_metadata<float>{ 0.f, 1.f });
+    f("specularLevel", o.specularLevel, range_metadata<float>{ 0.f, 2.f });
+    f("occulusion_strength", o.occlusionStrength, range_metadata<float>{ 0.f, 1.f });
+    f("ambient_strength", o.ambientStrength, range_metadata<float>{ 0.f, 1.f });
+    f("shadow_opacity", o.shadowOpacity, range_metadata<float>{ 0.f, 1.f });
+    f("texcoord_scale", o.texcoordScale, range_metadata<float>{ -32, 32 });
+
+    f("albedo_handle", o.albedo);
+    f("normal_handle", o.normal);
+    f("metallic_handle", o.metallic);
+    f("roughness_handle", o.roughness);
+    f("emissive_handle", o.emissive);
+    f("height_handle", o.height);
+    f("occlusion_handle", o.occlusion);
+    f("radiance_cubemap_handle", o.radianceCubemap);
+    f("irradiance_cubemap_handle", o.irradianceCubemap);
+
+    f("program_handle", o.program, editor_hidden{});
 }
-
-/*
-archive(cereal::make_nvp("program_handle", m.program));
-archive(cereal::make_nvp("albedo_handle", m.albedo));
-archive(cereal::make_nvp("normal_handle", m.normal));
-archive(cereal::make_nvp("metallic_handle", m.metallic));
-archive(cereal::make_nvp("roughness_handle", m.roughness));
-archive(cereal::make_nvp("emissive_handle", m.emissive));
-archive(cereal::make_nvp("height_handle", m.height));
-archive(cereal::make_nvp("occlusion_handle", m.occlusion));
-archive(cereal::make_nvp("radiance_cubemap_handle", m.radianceCubemap));
-archive(cereal::make_nvp("irradiance_cubemap_handle", m.irradianceCubemap));
-*/
-
-template<class T> const T * query_metadata(const T & meta) { return &meta; }
-template<class T> const T * query_metadata() { return nullptr; }
-template<class T> struct range_metadata { T min, max; };
 
 inline bool Edit(const char * label, std::string & s)
 {
@@ -308,8 +308,8 @@ inline bool Edit(const char * label, float4 & v) { return ImGui::InputFloat4(lab
 // Slider for range_metadata<int>
 template<class... A> bool Edit(const char * label, int & f, const A & ... metadata)
 {
-    auto * range = query_metadata<range_metadata<int>>(metadata...);
-    if (range) return ImGui::SliderInt(label, &f, range->min, range->max);
+    auto * rangeData = query_metadata<range_metadata<int>>(metadata...);
+    if (rangeData) return ImGui::SliderInt(label, &f, rangeData->min, rangeData->max);
     else return ImGui::InputInt(label, &f);
 }
 
@@ -320,8 +320,20 @@ template<class... A> bool Edit(const char * label, float & f, const A & ... meta
     if (rangeData) return ImGui::SliderFloat(label, &f, rangeData->min, rangeData->max, "%.5f");
     else return ImGui::InputFloat(label, &f);
 }
-template<class T> bool Edit(const char * label, AssetHandle<T> & h)
+
+// Slider for range_metadata<float2>
+template<class... A> bool Edit(const char * label, float2 & f, const A & ... metadata)
 {
+    auto * floatRange = query_metadata<range_metadata<float>>(metadata...);
+    if (floatRange) return ImGui::SliderFloat2(label, &f[0], floatRange->min, floatRange->max, "%.5f");
+    else return ImGui::SliderFloat2(label, &f[0], 0.0f, 1.0f);
+}
+
+template<class T, class ... A> bool Edit(const char * label, AssetHandle<T> & h, const A & ... metadata)
+{
+    auto * hidden = query_metadata<editor_hidden>(metadata...);
+    if (hidden) return false;
+
     int index;
     std::vector<const char *> items;
 
@@ -452,9 +464,9 @@ namespace cereal
     }
 
     template <typename T>
-    std::string serialize_from_json(const std::string & asset, T & e)
+    void serialize_from_json(const std::string & pathToAsset, T & e)
     {
-        const std::string ascii = read_file_text(asset);
+        const std::string ascii = read_file_text(pathToAsset);
         std::istringstream input_stream(ascii);
         cereal::JSONInputArchive input_archive(input_stream);
         input_archive(e);
@@ -481,7 +493,10 @@ namespace cereal
 {
     template<class Archive> void serialize(Archive & archive, MetallicRoughnessMaterial & m)
     {
-
+        visit_fields(m, [&archive](const char * name, auto & field, auto... metadata)
+        {
+            archive(cereal::make_nvp(name, field));
+        });
     }
 }
 #endif
