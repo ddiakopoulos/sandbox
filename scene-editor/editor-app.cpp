@@ -23,12 +23,19 @@ using namespace avl;
 // AO Render Passes
 //  *
 //  *
+//
 
 /*
     void Dispatch( size_t GroupCountX = 1, size_t GroupCountY = 1, size_t GroupCountZ = 1 );
     void Dispatch1D( size_t ThreadCountX, size_t GroupSizeX = 64);
     void Dispatch2D( size_t ThreadCountX, size_t ThreadCountY, size_t GroupSizeX = 8, size_t GroupSizeY = 8);
     void Dispatch3D( size_t ThreadCountX, size_t ThreadCountY, size_t ThreadCountZ, size_t GroupSizeX, size_t GroupSizeY, size_t GroupSizeZ );
+
+    Fixed, Half, Float,                        // 2D render texture
+    FixedUAV, HalfUAV, FloatUAV,               // Read/write enabled
+    FixedTiledUAV, HalfTiledUAV, FloatTiledUAV // Texture array
+
+    //GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format
 */
 
 struct ScreenSpaceAmbientOcclusionPass
@@ -44,6 +51,29 @@ struct ScreenSpaceAmbientOcclusionPass
     // is determined by the surface normal (such as with IBL), you might not want this side effect.
     float Accentuation = 0.1f; // 0.0f, 1.0f, 0.1f;
 
+    GlTexture2D depthLinear;
+
+    GlTexture2D lowDepth1; // L1 = /2
+    GlTexture2D lowDepth2;
+    GlTexture2D lowDepth3;
+    GlTexture2D lowDepth4; // L4
+
+    GlTexture3D tiledDepth1; // 3
+    GlTexture3D tiledDepth2; // 4
+    GlTexture3D tiledDepth3; // 5
+    GlTexture3D tiledDepth4; // L6
+
+    GlTexture2D occlusion1; // L1
+    GlTexture2D occlusion2;
+    GlTexture2D occlusion3;
+    GlTexture2D occlusion4;
+
+    GlTexture2D combined1; // L1
+    GlTexture2D combined2;
+    GlTexture2D combined3;
+
+    GlTexture2D ambientOcclusion;
+
     GlComputeProgram linearizeDepth = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/linearize_depth_comp.glsl"), {});
 
     GlComputeProgram prepareDepth1 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_prepare_depth1_comp.glsl"), {});
@@ -57,10 +87,89 @@ struct ScreenSpaceAmbientOcclusionPass
     GlComputeProgram upsample = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), {});
     GlComputeProgram PreMin = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), { "COMBINE_LOWER_RESOLUTIONS" });
 
-    float SampleThickness[12]; // Pre-computed sample thicknesses
+    std::vector<float> SampleThickness; // Pre-computed sample thicknesses
+    std::vector<float> InvThicknessTable;
+    std::vector<float> SampleWeightTable;
+
+    // Calculate values in _ZBuferParams (built-in shader variable)
+    // We can't use _ZBufferParams in compute shaders, so this function is
+    // used to give the values in it to compute shaders.
+    float4 CalculateZBufferParams(float nearClip, float farClip)
+    {
+        float fpn = farClip / nearClip;
+        return float4(1 - fpn, fpn, 0, 0);
+    }
+
+    float CalculateTanHalfFovHeight(const float4x4 & projectionMatrix)
+    {
+        return 1.f / projectionMatrix[0][0];
+    }
+
+    // Calculate width/height of the texture from the base dimensions.
+    int2 CalculateMipSize(float2 size, int level)
+    {
+        auto div = 1 << (int) level;
+        size.x = (size.x + (div - 1)) / div;
+        size.y = (size.y + (div - 1)) / div;
+        return int2(size);
+    }
 
     ScreenSpaceAmbientOcclusionPass()
     {
+        const float2 renderSize = { 1920, 1080 };
+
+        SampleThickness.resize(12);
+        InvThicknessTable.resize(12);
+        SampleWeightTable.resize(12);
+
+        //depthLinear;
+
+        //lowDepth1; // L1 = /2
+        //lowDepth2;
+        //lowDepth3;
+        //lowDepth4; // L4
+
+        int2 ldSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
+        int2 ldSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
+        int2 ldSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
+        int2 ldSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
+        lowDepth1.setup(ldSize1.x, ldSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        lowDepth2.setup(ldSize2.x, ldSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        lowDepth3.setup(ldSize3.x, ldSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        lowDepth4.setup(ldSize4.x, ldSize4.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
+        gl_check_error(__FILE__, __LINE__);
+
+        int2 combSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
+        int2 combSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
+        int2 combSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
+        combined1.setup(combSize1.x, combSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        combined2.setup(combSize2.x, combSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        combined3.setup(combSize3.x, combSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
+        gl_check_error(__FILE__, __LINE__);
+
+        int2 tdSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
+        int2 tdSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
+        int2 tdSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 5);
+        int2 tdSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 6);
+        tiledDepth1.setup(GL_TEXTURE_2D_ARRAY, tdSize1.x, tdSize1.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 3
+        tiledDepth2.setup(GL_TEXTURE_2D_ARRAY, tdSize2.x, tdSize2.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 4
+        tiledDepth3.setup(GL_TEXTURE_2D_ARRAY, tdSize3.x, tdSize3.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 5
+        tiledDepth4.setup(GL_TEXTURE_2D_ARRAY, tdSize4.x, tdSize4.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 6
+
+        gl_check_error(__FILE__, __LINE__);
+
+        int2 ocSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
+        int2 ocSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
+        int2 ocSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
+        int2 ocSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
+        occlusion1.setup(ocSize1.x, ocSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        occlusion2.setup(ocSize2.x, ocSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        occlusion3.setup(ocSize3.x, ocSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        occlusion4.setup(ocSize4.x, ocSize4.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
+        gl_check_error(__FILE__, __LINE__);
 
         SampleThickness[0] = sqrt(1.0f - 0.2f * 0.2f);
         SampleThickness[1] = sqrt(1.0f - 0.4f * 0.4f);
@@ -74,15 +183,11 @@ struct ScreenSpaceAmbientOcclusionPass
         SampleThickness[9] = sqrt(1.0f - 0.4f * 0.4f - 0.6f * 0.6f);
         SampleThickness[10] = sqrt(1.0f - 0.4f * 0.4f - 0.8f * 0.8f);
         SampleThickness[11] = sqrt(1.0f - 0.6f * 0.6f - 0.6f * 0.6f);
+
     } 
 
-    void compute(GlTexture2D & Destination, GlTexture2D & DepthBuffer, const float TanHalfFovH)
+    void PushRenderAOCommands(const GLuint source, const GLuint dest, const float TanHalfFovH, const size_t BufferWidth, const size_t BufferHeight, const size_t ArrayCount)
     {
-        size_t BufferWidth = DepthBuffer.width;
-        size_t BufferHeight = DepthBuffer.height;
-
-        size_t ArrayCount = DepthBuffer.GetDepth();
-
         // Here we compute multipliers that convert the center depth value into (the reciprocal of)
         // sphere thicknesses at each sample location.  This assumes a maximum sample radius of 5
         // units, but since a sphere has no thickness at its extent, we don't need to sample that far
@@ -106,22 +211,10 @@ struct ScreenSpaceAmbientOcclusionPass
         // This will transform a depth value from [0, thickness] to [0, 1].
         float InverseRangeFactor = 1.0f / ThicknessMultiplier;
 
-        __declspec(align(16)) float SsaoCB[28];
-
         // The thicknesses are smaller for all off-center samples of the sphere.  Compute thicknesses relative
         // to the center sample.
-        SsaoCB[0] = InverseRangeFactor / SampleThickness[0];
-        SsaoCB[1] = InverseRangeFactor / SampleThickness[1];
-        SsaoCB[2] = InverseRangeFactor / SampleThickness[2];
-        SsaoCB[3] = InverseRangeFactor / SampleThickness[3];
-        SsaoCB[4] = InverseRangeFactor / SampleThickness[4];
-        SsaoCB[5] = InverseRangeFactor / SampleThickness[5];
-        SsaoCB[6] = InverseRangeFactor / SampleThickness[6];
-        SsaoCB[7] = InverseRangeFactor / SampleThickness[7];
-        SsaoCB[8] = InverseRangeFactor / SampleThickness[8];
-        SsaoCB[9] = InverseRangeFactor / SampleThickness[9];
-        SsaoCB[10] = InverseRangeFactor / SampleThickness[10];
-        SsaoCB[11] = InverseRangeFactor / SampleThickness[11];
+        for (int i = 0; i < 12; i++)
+            InvThicknessTable[i] = InverseRangeFactor / SampleThickness[i];
 
         // These are the weights that are multiplied against the samples because not all samples are
         // equally important.  The farther the sample is from the center location, the less they matter.
@@ -129,54 +222,69 @@ struct ScreenSpaceAmbientOcclusionPass
         // of samples with this weight because we sum the samples together before multiplying by the weight,
         // so as an aggregate all of those samples matter more.  After generating this table, the weights
         // are normalized.
-        SsaoCB[12] = 4.0f * SampleThickness[0];	 // Axial
-        SsaoCB[13] = 4.0f * SampleThickness[1];	 // Axial
-        SsaoCB[14] = 4.0f * SampleThickness[2];	 // Axial
-        SsaoCB[15] = 4.0f * SampleThickness[3];	 // Axial
-        SsaoCB[16] = 4.0f * SampleThickness[4];	 // Diagonal
-        SsaoCB[17] = 8.0f * SampleThickness[5];	 // L-shaped
-        SsaoCB[18] = 8.0f * SampleThickness[6];	 // L-shaped
-        SsaoCB[19] = 8.0f * SampleThickness[7];	 // L-shaped
-        SsaoCB[20] = 4.0f * SampleThickness[8];	 // Diagonal
-        SsaoCB[21] = 8.0f * SampleThickness[9];	 // L-shaped
-        SsaoCB[22] = 8.0f * SampleThickness[10]; // L-shaped
-        SsaoCB[23] = 4.0f * SampleThickness[11]; // Diagonal
+        SampleWeightTable[0] = 4 * SampleThickness[0];    // Axial
+        SampleWeightTable[1] = 4 * SampleThickness[1];    // Axial
+        SampleWeightTable[2] = 4 * SampleThickness[2];    // Axial
+        SampleWeightTable[3] = 4 * SampleThickness[3];    // Axial
+        SampleWeightTable[4] = 4 * SampleThickness[4];    // Diagonal
+        SampleWeightTable[5] = 8 * SampleThickness[5];    // L-shaped
+        SampleWeightTable[6] = 8 * SampleThickness[6];    // L-shaped
+        SampleWeightTable[7] = 8 * SampleThickness[7];    // L-shaped
+        SampleWeightTable[8] = 4 * SampleThickness[8];    // Diagonal
+        SampleWeightTable[9] = 8 * SampleThickness[9];    // L-shaped
+        SampleWeightTable[10] = 8 * SampleThickness[10];  // L-shaped
+        SampleWeightTable[11] = 4 * SampleThickness[11];  // Diagonal
 
         // Normalize the weights by dividing by the sum of all weights
         float totalWeight = 0.0f;
-        for (int i = 12; i < 24; ++i) totalWeight += SsaoCB[i];
-        for (int i = 12; i < 24; ++i) SsaoCB[i] /= totalWeight;
+        for(auto & w : SampleWeightTable) totalWeight += w;
 
-        SsaoCB[24] = 1.0f / BufferWidth;
-        SsaoCB[25] = 1.0f / BufferHeight;
-        SsaoCB[26] = 1.0f / -RejectionFalloff;
-        SsaoCB[27] = 1.0f / (1.0f + Accentuation);
+        for (int i = 0; i < 12; ++i) SampleWeightTable[i] /= totalWeight;
 
-        // Main_interleaved
-        cmd.SetComputeFloatParams(cs, "gInvThicknessTable", InvThicknessTable);
-        cmd.SetComputeFloatParams(cs, "gSampleWeightTable", SampleWeightTable);
-        cmd.SetComputeVectorParam(cs, "gInvSliceDimension", source.inverseDimensions);
-        cmd.SetComputeFloatParam(cs, "gRejectFadeoff", -1 / _thicknessModifier);
-        cmd.SetComputeFloatParam(cs, "gIntensity", _intensity);
+        glUseProgram(aoRender1.handle());
+        aoRender1.uniform("gInvThicknessTable", InvThicknessTable);
+        aoRender1.uniform("gSampleWeightTable", SampleWeightTable);
+        aoRender1.uniform("gInvSliceDimension", float2(1.0f / BufferWidth, 1.0f / BufferHeight));
+        aoRender1.uniform("gRejectFadeoff", -1.f / 1.0f);
+        aoRender1.uniform("gIntensity", 1.0f);
 
-        cmd.SetComputeTextureParam(cs, kernel, "DepthTex", source.id);
-        cmd.SetComputeTextureParam(cs, kernel, "Occlusion", dest.id);
+        gl_check_error(__FILE__, __LINE__);
+
+        //https://stackoverflow.com/questions/37136813/what-is-the-difference-between-glbindimagetexture-and-glbindtexture
+
+        aoRender1.texture("DepthTex", 0, source, GL_TEXTURE_2D_ARRAY);
+
+        gl_check_error(__FILE__, __LINE__);
+
+        //glBindImageTexture(0, source, 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F); //cmd.SetComputeTextureParam(cs, kernel, "DepthTex", source.id);
+        glBindImageTexture(0, dest, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F); //cmd.SetComputeTextureParam(cs, kernel, "Occlusion", dest.id);
+
+        gl_check_error(__FILE__, __LINE__);
 
         // Calculate the thread group count and add a dispatch command with them.
+        auto workgroupSize = aoRender1.get_max_workgroup_size();
 
-        uint32_t xsize, ysize, zsize;
-        cs.GetKernelThreadGroupSizes(kernel, out xsize, out ysize, out zsize);
+        workgroupSize.x = (BufferWidth +  (int) workgroupSize.x - 1) / (int) workgroupSize.x;
+        workgroupSize.y = (BufferHeight + (int) workgroupSize.y - 1) / (int) workgroupSize.y;
+        workgroupSize.z = (ArrayCount +   (int) workgroupSize.z - 1) / (int) workgroupSize.z;
 
-        cmd.DispatchCompute(
-            cs, kernel,
-            (source.width + (int)xsize - 1) / (int)xsize,
-            (source.height + (int)ysize - 1) / (int)ysize,
-            (source.depth + (int)zsize - 1) / (int)zsize
-        );
+        aoRender1.dispatch(workgroupSize);
 
+        gl_check_error(__FILE__, __LINE__);
+    }
+
+    void RebuildCommandBuffers()
+    {
+        float tanHalfFovH = CalculateTanHalfFovHeight(Identity4x4); // FIXME FIXME
+        PushRenderAOCommands(tiledDepth1, occlusion1, tanHalfFovH, tiledDepth1.width, tiledDepth1.height, tiledDepth1.depth); // src, dest
+        PushRenderAOCommands(tiledDepth2, occlusion2, tanHalfFovH, tiledDepth2.width, tiledDepth2.height, tiledDepth1.depth);
+        PushRenderAOCommands(tiledDepth3, occlusion3, tanHalfFovH, tiledDepth3.width, tiledDepth3.height, tiledDepth1.depth);
+        PushRenderAOCommands(tiledDepth4, occlusion4, tanHalfFovH, tiledDepth4.width, tiledDepth4.height, tiledDepth1.depth);
     }
 
 };
+
+std::unique_ptr<ScreenSpaceAmbientOcclusionPass> ssao;
 
 scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
 {
@@ -190,15 +298,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
-    // Linearization - LinearizeDepth
-
-    //GlComputeProgram p(read_file_text("../assets/shaders/ao_prepare_depth2_comp.glsl"));
-    //std::cout << "Max Threads Per Group: " << p.get_max_threads_per_workgroup() << std::endl;
-    //std::cout << "Max Workgroup Size:    " << p.get_max_workgroup_size() << std::endl;
-
     editor.reset(new editor_controller<GameObject>());
-
-    ScreenSpaceAmbientOcclusionPass ssao;
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -262,10 +362,10 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("scifi-floor-occlusion", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_ao.tga", false));
 
     //auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
-    auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
-    rescale_geometry(shaderball, 1.f);
-    global_register_asset("shaderball", make_mesh_from_geometry(shaderball));
-    global_register_asset("shaderball", std::move(shaderball));
+    //auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
+    //rescale_geometry(shaderball, 1.f);
+    //global_register_asset("shaderball", make_mesh_from_geometry(shaderball));
+    //global_register_asset("shaderball", std::move(shaderball));
 
     auto ico = make_icosasphere(5);
     global_register_asset("icosphere", make_mesh_from_geometry(ico));
@@ -320,19 +420,11 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             p.position = float3((i * 3) - 5, 0, (j * 3) - 5);
             m.set_pose(p);
             m.set_material(AssetHandle<std::shared_ptr<Material>>(material_id));
-            m.mesh = GlMeshHandle("shaderball");
-            m.geom = GeometryHandle("shaderball");
+            m.mesh = GlMeshHandle("icosphere");
+            m.geom = GeometryHandle("icosphere");
             m.receive_shadow = true;
             scene.objects.push_back(std::make_shared<StaticMesh>(std::move(m)));
         }
-    }
-
-    // Register all material instances with the asset system. Since everything is handle-based,
-    // we can do this wherever, so long as it's before the first rendered frame
-    for (auto & instance : scene.materialInstances)
-    {
-        std::cout << "Registering: " << instance.first.c_str() << std::endl;
-        global_register_asset(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
     }
 
     auto cube = make_cube();
@@ -359,6 +451,16 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     scene.lightB->data.position = float3(+6, 3.0, 0);
     scene.lightB->data.radius = 4.f;
     scene.objects.push_back(scene.lightB);
+
+    // Register all material instances with the asset system. Since everything is handle-based,
+    // we can do this wherever, so long as it's before the first rendered frame
+    for (auto & instance : scene.materialInstances)
+    {
+        global_register_asset_shared(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
+    }
+
+    ssao.reset(new ScreenSpaceAmbientOcclusionPass());
+
 }
 
 scene_editor_app::~scene_editor_app()
@@ -516,6 +618,13 @@ void scene_editor_app::on_draw()
         gl_check_error(__FILE__, __LINE__);
     }
 
+    // SSAO Testing
+    {
+        computeTimer.start();
+        ssao->RebuildCommandBuffers();
+        computeTimer.stop();
+    }
+
     // Selected objects as wireframe
     {
         glDisable(GL_DEPTH_TEST);
@@ -630,6 +739,7 @@ void scene_editor_app::on_draw()
 
     // Renderer
     gui::imgui_fixed_window_begin("Renderer Settings", { { 0, 17 }, { 320, height } });
+    ImGui::Text("Compute %f", computeTimer.elapsed_ms());
     renderer->gather_imgui();
     gui::imgui_fixed_window_end();
 
