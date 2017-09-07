@@ -17,6 +17,33 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     igm.reset(new gui::ImGuiManager(window));
     gui::make_dark_theme();
 
+    // Downsample Passes
+    // * PrepareDepth1
+    // * PrepareDepth2
+
+    // Blur and Upsample Passes
+    //  * BlendOut (BLEND_WITH_HIGHER_RESOLUTION)
+    //  * PreMinBlendOut (COMBINE_LOWER_RESOLUTIONS, BLEND_WITH_HIGHER_RESOLUTION)
+    //  * PreMin (COMBINE_LOWER_RESOLUTIONS)
+
+    // AO Render Passes
+    //  * Render1 (INTERLEAVE_RESULT)
+    //  * Render2 ()
+
+    GlComputeProgram prepareDepth1 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_prepare_depth1_comp.glsl"), {});
+    GlComputeProgram prepareDepth2 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_prepare_depth2_comp.glsl"), {});
+
+    GlComputeProgram aoRender1 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_render.glsl"), {"INTERLEAVE_RESULT"});
+    GlComputeProgram aoRender2 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_render.glsl"), {});
+
+    GlComputeProgram blendOut = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), {"BLEND_WITH_HIGHER_RESOLUTION"});
+    GlComputeProgram preMinBlendOut = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), {"COMBINE_LOWER_RESOLUTIONS", "BLEND_WITH_HIGHER_RESOLUTION"});
+    GlComputeProgram PreMin = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), {"COMBINE_LOWER_RESOLUTIONS"});
+
+    //GlComputeProgram p(read_file_text("../assets/shaders/ao_prepare_depth2_comp.glsl"));
+    //std::cout << "Max Threads Per Group: " << p.get_max_threads_per_workgroup() << std::endl;
+    //std::cout << "Max Workgroup Size:    " << p.get_max_workgroup_size() << std::endl;
+
     editor.reset(new editor_controller<GameObject>());
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
