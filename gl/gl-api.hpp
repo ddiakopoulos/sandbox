@@ -393,6 +393,103 @@ public:
     void unbind() { enabled = false; glUseProgram(0); }
 };
 
+
+class GlComputeProgram
+{
+    GLuint program;
+
+protected:
+
+    GlComputeProgram(const GlComputeProgram & r) = delete;
+    GlComputeProgram & operator = (const GlComputeProgram & r) = delete;
+
+public:
+
+    GlComputeProgram() : program() {}
+
+    GlComputeProgram(const std::string & compute)
+    {
+        program = glCreateProgram();
+
+        glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_FALSE);
+
+        ::compile_shader(program, GL_COMPUTE_SHADER, compute.c_str());
+
+        glLinkProgram(program);
+
+        GLint status, length;
+        glGetProgramiv(program, GL_LINK_STATUS, &status);
+
+        if (status == GL_FALSE)
+        {
+            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+            std::vector<GLchar> buffer(length);
+            glGetProgramInfoLog(program, (GLsizei)buffer.size(), nullptr, buffer.data());
+            std::cerr << "GL Link Error: " << buffer.data() << std::endl;
+            throw std::runtime_error("GLSL Link Failure");
+        }
+    }
+
+    ~GlComputeProgram() { if (program) glDeleteProgram(program); }
+
+    GlComputeProgram(GlComputeProgram && r) : GlComputeProgram()
+    {
+        *this = std::move(r);
+    }
+
+    GlComputeProgram & operator = (GlComputeProgram && r)
+    {
+        std::swap(program, r.program);
+        return *this;
+    }
+
+    void dispatch(const GLuint numGroupsX, const GLuint numGroupsY, const GLuint numGroupsZ) const
+    {
+        // glBindImageTexture(0, images[1], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
+        // glBindImageTexture(1, images[2], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+        // glBindImageTexture(0, t.texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8);
+        glUseProgram(program);
+        glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
+        // glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT); GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
+    }
+
+    void dispatch(const linalg::aliases::uint3 & numGroups) const
+    {
+        dispatch(numGroups.x, numGroups.y, numGroups.z);
+    }
+
+    void dispatch_group_size(const GLuint numGroupsX, const GLuint numGroupsY, const GLuint numGroupsZ, const GLuint groupSizeX, const GLuint groupSizeY, const GLuint groupSizeZ) const
+    {
+        glUseProgram(program);
+        glDispatchComputeGroupSizeARB(numGroupsX, numGroupsY, numGroupsZ, groupSizeX, groupSizeY, groupSizeZ);
+        // glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
+    }
+
+    void dispatch_group_size(const linalg::aliases::uint3 & numGroups, const linalg::aliases::uint3 & groupSizes) const
+    {
+        dispatch_group_size(numGroups.x, numGroups.y, numGroups.z, groupSizes.x, groupSizes.y, groupSizes.z);
+    }
+
+    linalg::aliases::uint3 get_max_workgroup_size() const
+    {
+        int maxSize;
+        linalg::aliases::uint3 ret;
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &maxSize); ret.x = maxSize;
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &maxSize); ret.y = maxSize;
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &maxSize); ret.z = maxSize;
+        return ret;
+    }
+
+    int get_max_threads_per_workgroup()
+    {
+        int maxInvocations;
+        glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &maxInvocations);
+        return maxInvocations;
+    }
+
+    GLuint handle() const { return program; }
+};
+
 ////////////////
 //   GlMesh   //
 ////////////////
@@ -506,7 +603,6 @@ public:
 // Todo: glMultiDrawElementsIndirect
 // Todo: occlusionQuery
 // Todo: timerQuery
-// Todo: computeShaders (glDispatchCompute)
 // Todo: blit/multisample?
 // Todo: mapped buffers
 // Todo: transform feedback
