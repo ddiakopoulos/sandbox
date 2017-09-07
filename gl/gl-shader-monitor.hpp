@@ -111,6 +111,20 @@ namespace avl
         }
     }
 
+    inline GlComputeProgram preprocess_compute_defines( const std::string & computeShader, const std::vector<std::string> & defines)
+    {
+        std::stringstream compute;
+
+        for (const auto define : defines)
+        {
+            if (computeShader.size()) compute << "#define " << define << std::endl;
+        }
+
+        if (computeShader.size()) compute << computeShader;
+
+        return GlComputeProgram(preprocess_version(compute.str()));
+    }
+
     class ShaderMonitor
     {
         std::unique_ptr<efsw::FileWatcher> fileWatcher;
