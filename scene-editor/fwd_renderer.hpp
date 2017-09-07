@@ -11,7 +11,6 @@
 #include "simple_timer.hpp"
 #include "uniforms.hpp"
 #include "circular_buffer.hpp"
-#include "debug_line_renderer.hpp" 
 
 #include "gl-scene.hpp"
 #include "gl-camera.hpp"

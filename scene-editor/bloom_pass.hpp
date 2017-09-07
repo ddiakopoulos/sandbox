@@ -11,15 +11,6 @@
 #include "file_io.hpp"
 #include "procedural_mesh.hpp"
 
-/*
- * To Do - 3.25.2017
- * [ ] Break out tonemapping into a separate pass (does not strictly belong to bloom)
- * [ ] Possibility to add upsampling pass nicer for visual quality
- * [ ] Downsampling for average scene luminance not used currently; auto-exposure experimentation
- * [ ] Downsampling is an ideal candidate for compute shader experimentation
- * [ ] Performance profiling (perEyeSize can be tweaked)
- */
-
 using namespace avl;
 
 struct BloomPass

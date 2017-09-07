@@ -1,5 +1,5 @@
 #include "material.hpp"
-#include "vr_renderer.hpp"
+#include "fwd_renderer.hpp"
 
 using namespace avl;
 
