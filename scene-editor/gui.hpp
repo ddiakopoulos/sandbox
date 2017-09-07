@@ -24,7 +24,7 @@ namespace ImGui
         return true;
     };
 
-    bool Combo(const char* label, int* currIndex, std::vector<std::string>& values)
+    bool Combo(const char* label, int* currIndex, std::vector<std::string> & values)
     {
         if (values.empty()) { return false; }
         return Combo(label, currIndex, vector_getter, static_cast<void*>(&values), values.size());
@@ -156,15 +156,15 @@ template<class T, class ... A> bool Edit(const char * label, AssetHandle<T> & h,
     if (hidden) return false;
 
     int index;
-    std::vector<const char *> items;
+    std::vector<std::string> items;
 
     for (auto & handle : AssetHandle<T>::list())
     {
         if (handle.name == h.name) index = static_cast<int>(items.size());
-        items.push_back(handle.name.c_str());
+        items.push_back(handle.name);
     }
 
-    if (ImGui::Combo(label, &index, items.data(), static_cast<int>(items.size())))
+    if (ImGui::Combo(label, &index, items))
     {
         h = items[index];
         return true;
