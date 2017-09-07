@@ -145,7 +145,7 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(MetallicRoughnessMaterial, Material);
 namespace cereal
 {
     template <typename T>
-    void serialize_from_json(const std::string & pathToAsset, T & e)
+    void deserialize_from_json(const std::string & pathToAsset, T & e)
     {
         const std::string ascii = read_file_text(pathToAsset);
         std::istringstream input_stream(ascii);

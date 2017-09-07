@@ -197,4 +197,19 @@ struct StaticMesh final : public Renderable
 
 };
 
+//////////////////////////
+//   Scene Definition   //
+//////////////////////////
+
+struct Scene
+{
+    std::unique_ptr<ProceduralSky> skybox;
+    std::shared_ptr<PointLight> lightA;
+    std::shared_ptr<PointLight> lightB;
+    std::shared_ptr<DirectionalLight> sun;
+    std::vector<std::shared_ptr<GameObject>> objects;
+    std::map<std::string, std::shared_ptr<Material>> materialInstances;
+};
+
+
 #endif // end core_scene_hpp

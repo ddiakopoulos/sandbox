@@ -22,7 +22,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
 
-    skybox.reset(new HosekProceduralSky());
+    scene.skybox.reset(new HosekProceduralSky());
 
     auto wireframeProgram = GlShader(
         read_file_text("../assets/shaders/wireframe_vert.glsl"), 
@@ -59,19 +59,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     });
 
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
-    renderer->set_procedural_sky(skybox.get());
-
-    lightA.reset(new PointLight());
-    lightA->data.color = float3(0.88f, 0.85f, 0.97f);
-    lightA->data.position = float3(-6.0, 3.0, 0);
-    lightA->data.radius = 4.f;
-    objects.push_back(lightA);
-
-    lightB.reset(new PointLight());
-    lightB->data.color = float3(0.67f, 1.00f, 0.85f);
-    lightB->data.position = float3(+6, 3.0, 0);
-    lightB->data.radius = 4.f;
-    objects.push_back(lightB);
+    renderer->set_procedural_sky(scene.skybox.get());
 
     auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
     auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
@@ -130,20 +118,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     */
 
     std::shared_ptr<MetallicRoughnessMaterial> rustedInstance;
-    cereal::serialize_from_json("rust.mat.json", rustedInstance);
-    global_register_asset("pbr-material/floor", static_cast<std::shared_ptr<Material>>(rustedInstance));
-
-    for(auto & m : AssetHandle<std::shared_ptr<Material>>::list())
-    {
-        std::cout << m.name << std::endl;
-        std::cout << "Use: " << m.get().use_count() << std::endl;
-
-        if (auto c = dynamic_cast<MetallicRoughnessMaterial*>(m.get().get()))
-        {
-            std::cout << "c - " << c->id() << std::endl;
-        }
-    }
-
+    cereal::deserialize_from_json("rust.mat.json", rustedInstance);
+    scene.materialInstances["pbr-material/floor"] = rustedInstance;
 
     for (int i = 0; i < 6; ++i)
     {
@@ -155,7 +131,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             instance->roughnessFactor = remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f);
             instance->metallicFactor = remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f);
             const std::string material_id = "pbr-material/" + std::to_string(i) + "-" + std::to_string(j);
-            global_register_asset(material_id.c_str(), static_cast<std::shared_ptr<Material>>(instance));
+            scene.materialInstances[material_id] = instance;
+
 
             StaticMesh m;
             Pose p;
@@ -165,8 +142,16 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             m.mesh = GlMeshHandle("shaderball");
             m.geom = GeometryHandle("shaderball");
             m.receive_shadow = true;
-            objects.push_back(std::make_shared<StaticMesh>(std::move(m)));
+            scene.objects.push_back(std::make_shared<StaticMesh>(std::move(m)));
         }
+    }
+
+    // Register all material instances with the asset system. Since everything is handle-based,
+    // we can do this wherever, so long as it's before the first rendered frame
+    for (auto & instance : scene.materialInstances)
+    {
+        std::cout << "Registering: " << instance.first.c_str() << std::endl;
+        global_register_asset(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
     }
 
     auto cube = make_cube();
@@ -180,14 +165,19 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     floorMesh.set_scale(float3(16, 0.1f, 16));
     floorMesh.set_material("pbr-material/floor");
     std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
-    objects.push_back(floor);
+    scene.objects.push_back(floor);
 
-    //auto floorJson = read_file_text("floor-object.json");
-    //std::istringstream floorJsonStream(floorJson);
-    //cereal::JSONInputArchive inJson(floorJsonStream);
-    //std::shared_ptr<StaticMesh> floor;
-    //inJson(floor);
-    //objects.push_back(floor);
+    scene.lightA.reset(new PointLight());
+    scene.lightA->data.color = float3(0.88f, 0.85f, 0.97f);
+    scene.lightA->data.position = float3(-6.0, 3.0, 0);
+    scene.lightA->data.radius = 4.f;
+    scene.objects.push_back(scene.lightA);
+
+    scene.lightB.reset(new PointLight());
+    scene.lightB->data.color = float3(0.67f, 1.00f, 0.85f);
+    scene.lightB->data.position = float3(+6, 3.0, 0);
+    scene.lightB->data.radius = 4.f;
+    scene.objects.push_back(scene.lightB);
 }
 
 scene_editor_app::~scene_editor_app()
@@ -209,6 +199,7 @@ void scene_editor_app::on_input(const InputEvent & event)
     // Prevent scene editor from responding to input destined for ImGui
     if (!ImGui::GetIO().WantCaptureMouse && !ImGui::GetIO().WantCaptureKeyboard)
     {
+
         if (event.type == InputEvent::KEY)
         {
             if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE)
@@ -231,7 +222,7 @@ void scene_editor_app::on_input(const InputEvent & event)
                 float best_t = std::numeric_limits<float>::max();
                 GameObject * hitObject = nullptr;
 
-                for (auto & obj : objects)
+                for (auto & obj : scene.objects)
                 {
                     RaycastResult result = obj->raycast(r);
                     if (result.hit)
@@ -313,17 +304,14 @@ void scene_editor_app::on_draw()
         renderer->add_camera(renderCam);
 
         // Lighting
-        renderer->add_light(&lightA->data);
-        renderer->add_light(&lightB->data);
+        renderer->add_light(&scene.lightA->data);
+        renderer->add_light(&scene.lightB->data);
 
         // Gather Objects
         std::vector<Renderable *> sceneObjects;
-        for (auto & obj : objects)
+        for (auto & obj : scene.objects)
         {
-            if (auto * rndr = dynamic_cast<Renderable*>(obj.get()))
-            {
-                sceneObjects.push_back(rndr);
-            }
+            if (auto * r = dynamic_cast<Renderable*>(obj.get())) sceneObjects.push_back(r);
         }
         renderer->add_objects(sceneObjects);
 
@@ -386,17 +374,18 @@ void scene_editor_app::on_draw()
         if (menu.item("Clone", GLFW_MOD_CONTROL, GLFW_KEY_D)) {}
         if (menu.item("Delete", 0, GLFW_KEY_DELETE)) 
         {
-            auto it = std::remove_if(begin(objects), end(objects), [this](std::shared_ptr<GameObject> obj) 
+            auto it = std::remove_if(std::begin(scene.objects), std::end(scene.objects), [this](std::shared_ptr<GameObject> obj) 
             { 
                 return editor->selected(obj.get());
             });
-            objects.erase(it, end(objects));
+            scene.objects.erase(it, std::end(scene.objects));
+
             editor->clear();
         }
         if (menu.item("Select All", GLFW_MOD_CONTROL, GLFW_KEY_A)) 
         {
             std::vector<GameObject *> selectedObjects;
-            for (auto & obj : objects)
+            for (auto & obj : scene.objects)
             {
                 selectedObjects.push_back(obj.get());
             }
@@ -442,17 +431,17 @@ void scene_editor_app::on_draw()
     // Scene Object List
     gui::imgui_fixed_window_begin("Objects", bottomRightPane);
 
-    for (size_t i = 0; i < objects.size(); ++i)
+    for (size_t i = 0; i < scene.objects.size(); ++i)
     {
         ImGui::PushID(static_cast<int>(i));
-        bool selected = editor->selected(objects[i].get());
-        std::string name = std::string(typeid(*objects[i]).name()); // For polymorphic typeids, the trick is to dereference it first
+        bool selected = editor->selected(scene.objects[i].get());
+        std::string name = std::string(typeid(*scene.objects[i]).name()); // For polymorphic typeids, the trick is to dereference it first
         std::vector<StaticMesh *> selectedObjects;
 
         if (ImGui::Selectable(name.c_str(), &selected))
         {
             if (!ImGui::GetIO().KeyCtrl) editor->clear();
-            editor->update_selection(objects[i].get());
+            editor->update_selection(scene.objects[i].get());
         }
         ImGui::PopID();
     }

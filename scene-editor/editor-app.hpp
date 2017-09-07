@@ -145,16 +145,12 @@ struct scene_editor_app : public GLFWApp
     GlCamera cam;
     FlyCameraController flycam;
     ShaderMonitor shaderMonitor { "../assets/" };
-    std::unique_ptr<gui::ImGuiManager> igm;
-    std::unique_ptr<HosekProceduralSky> skybox;
 
+    Scene scene;
+
+    std::unique_ptr<gui::ImGuiManager> igm;
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
     std::unique_ptr<editor_controller<GameObject>> editor;
-
-    std::shared_ptr<PointLight> lightA;
-    std::shared_ptr<PointLight> lightB;
-    std::shared_ptr<DirectionalLight> sun;
-    std::vector<std::shared_ptr<GameObject>> objects;
 
     scene_editor_app();
     ~scene_editor_app();

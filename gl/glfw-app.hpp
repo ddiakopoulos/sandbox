@@ -46,7 +46,7 @@ namespace avl
         float2 cursor;
         bool drag = false;
         
-        uint2 value; // button, key, codepoint, scrollX, scrollY
+        int2 value; // button, key, codepoint, scrollX, scrollY
         
         bool is_down() const { return action != GLFW_RELEASE; }
         bool is_up() const { return action == GLFW_RELEASE; }

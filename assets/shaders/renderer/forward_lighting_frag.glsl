@@ -252,8 +252,9 @@ void main()
         const float normal_bias = 0.01;
         vec3 biased_pos = get_biased_position(v_world_position, slope_bias, normal_bias, v_normal, L);
 
+        // The way this is structured, it impacts lighting if we stop updating shadow uniforms 
         float shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, debugShadowCascadeColor);
-        shadowVisibility = 1.0 - (shadowTerm * u_shadowOpacity * u_receiveShadow * NdotL);
+        shadowVisibility = 1.0 - ((shadowTerm  * NdotL) * u_shadowOpacity * u_receiveShadow);
 
         vec3 diffuseContrib, specContrib;
         compute_cook_torrance(data, u_directionalLight.amount, diffuseContrib, specContrib);

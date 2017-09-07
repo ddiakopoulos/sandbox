@@ -113,7 +113,8 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     
     glfwSetScrollCallback (window, [](GLFWwindow * window, double deltaX, double deltaY)
     {
-        auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); try { app->consume_scroll(deltaX, deltaY);} catch(...) { CATCH_CURRENT; }
+        auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); try { app->consume_scroll(deltaX, deltaY); }
+        catch (...) { CATCH_CURRENT; }
     });
     
 	/*    
@@ -183,8 +184,7 @@ void GLFWApp::main_loop()
     {
         glfwPollEvents();
         
-        for (auto & e : exceptions) 
-            on_uncaught_exception(e);
+        for (auto & e : exceptions) on_uncaught_exception(e);
 
         try
         {
