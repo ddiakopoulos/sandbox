@@ -503,12 +503,11 @@ public:
         return maxInvocations;
     }
 
-    void uniform(const std::string & name, int scalar) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform1i(program, get_uniform_location(name), scalar); }
-    void uniform(const std::string & name, float scalar) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform1f(program, get_uniform_location(name), scalar); }
-    void uniform(const std::string & name, const linalg::aliases::float2 & vec) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform2fv(program, get_uniform_location(name), 1, &vec.x); }
-    void uniform(const std::string & name, const linalg::aliases::float4 & vec) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform4fv(program, get_uniform_location(name), 1, &vec.x); }
-    //void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform1fv(program, get_uniform_location(name), elements, scalar.data()); }
-    void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float4> & vec) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform4fv(program, get_uniform_location(name), elements, &vec[0].x); }
+    void uniform(const std::string & name, int scalar) const { glProgramUniform1i(program, get_uniform_location(name), scalar); }
+    void uniform(const std::string & name, float scalar) const {  glProgramUniform1f(program, get_uniform_location(name), scalar); }
+    void uniform(const std::string & name, const linalg::aliases::float2 & vec) const { glProgramUniform2fv(program, get_uniform_location(name), 1, &vec.x); }
+    void uniform(const std::string & name, const linalg::aliases::float4 & vec) const { glProgramUniform4fv(program, get_uniform_location(name), 1, &vec.x); }
+    void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float4> & vec) const { glProgramUniform4fv(program, get_uniform_location(name), elements, &vec[0].x); }
 
     void texture(GLint loc, GLenum target, int unit, GLuint tex) const
     {
@@ -519,7 +518,6 @@ public:
 
     void texture(const char * name, int unit, GLuint tex, GLenum target) const 
     { 
-        std::cout << "Yo kid tex: " << name << get_uniform_location(name) << std::endl;
         texture(get_uniform_location(name), target, unit, tex);
     }
 

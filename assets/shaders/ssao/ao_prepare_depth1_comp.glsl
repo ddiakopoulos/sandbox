@@ -48,7 +48,7 @@ void main()
 
     GroupMemoryBarrierWithGroupSync();
 
-    uint ldsIndex = (gl_LocalInvocationID.x << 1u) | (gl_LocalInvocationID.y << 5u);
+    uint ldsIndex = (gl_LocalInvocationID.x << 1) | (gl_LocalInvocationID.y << 5);
     float w1 = g_CacheW[ldsIndex];
     uvec2 st = gl_GlobalInvocationID.xy;
     uint slice = ((st.x & 3) | (st.y << 2)) & 15;
@@ -61,7 +61,7 @@ void main()
         st = gl_GlobalInvocationID.xy >> uvec2(1);
         slice = ((st.x & 3) | (st.y << 2)) & 15;
         imageStore(DS4x, ivec2(st), vec4(w1)); // low-two?
-        imageStore(DS4xAtlas, ivec3(uvec3(st >> uvec2(2), slice)), vec4(w1));
+        imageStore(DS4xAtlas, ivec3(uvec3(st >> uvec2(2), slice)), vec4(w1)); //W1!
     }
    
 }

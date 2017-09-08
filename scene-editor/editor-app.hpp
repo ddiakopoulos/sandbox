@@ -149,6 +149,7 @@ struct scene_editor_app : public GLFWApp
     GlGpuTimer computeTimer;
 
     std::unique_ptr<GLTextureView> ssaoDebugView;
+    std::unique_ptr<GLTextureView3D> ssaoArrayView;
 
     Scene scene;
 

@@ -26,7 +26,7 @@ void GroupMemoryBarrierWithGroupSync()
     uniform sampler2D DepthTex;
 #endif
 
-layout (binding = 0, r32f) writeonly uniform image2D Occlusion;
+layout (binding = 0, r32f) uniform image2D Occlusion;
 
 uniform vec4  gInvThicknessTable[3];
 uniform vec4  gSampleWeightTable[3];
@@ -63,17 +63,20 @@ float TestSamples(uint centerIdx, uint x, uint y, float invDepth, float invThick
 
     if (y == 0) // Axial
     {
-        return 0.5f * (TestSamplePair(frontDepth, invRange, centerIdx, int(x)) + 
+        return 0.5f * (
+            TestSamplePair(frontDepth, invRange, centerIdx, int(x)) + 
             TestSamplePair(frontDepth, invRange, centerIdx, int(x * TILE_DIM)));
     }
     else if (x == y)  // Diagonal
     {
-        return 0.5f * (TestSamplePair(frontDepth, invRange, centerIdx, int(x * TILE_DIM - x)) + 
+        return 0.5f * (
+            TestSamplePair(frontDepth, invRange, centerIdx, int(x * TILE_DIM - x)) + 
             TestSamplePair(frontDepth, invRange, centerIdx, int(x * TILE_DIM + x)));
     }
     else // L-Shaped
     {
-        return 0.25f * (TestSamplePair(frontDepth, invRange, centerIdx, int(y * TILE_DIM + x)) + 
+        return 0.25f * (
+            TestSamplePair(frontDepth, invRange, centerIdx, int(y * TILE_DIM + x)) + 
             TestSamplePair(frontDepth, invRange, centerIdx, int(y * TILE_DIM - x)) + 
             TestSamplePair(frontDepth, invRange, centerIdx, int(x * TILE_DIM + y)) + 
             TestSamplePair(frontDepth, invRange, centerIdx, int(x * TILE_DIM - y)));
@@ -102,8 +105,8 @@ void main()
 
     DepthSamples[destIdx] = depths.w;
     DepthSamples[destIdx + 1] = depths.z;
-    DepthSamples[destIdx + 32] = depths.x;
-    DepthSamples[destIdx + 32 + 1] = depths.y;
+    DepthSamples[destIdx + TILE_DIM] = depths.x;
+    DepthSamples[destIdx + TILE_DIM + 1] = depths.y;
 
     GroupMemoryBarrierWithGroupSync();
 

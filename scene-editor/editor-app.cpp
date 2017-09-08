@@ -6,6 +6,7 @@
 using namespace avl;
 
 static int selectedTarget = 0;
+static int arrayView = 0;
 
 struct ScreenSpaceAmbientOcclusionPass
 {
@@ -84,13 +85,18 @@ struct ScreenSpaceAmbientOcclusionPass
         g_DepthTiled2.CreateArray( L"Depth De-Interleaved 2", bufferWidth4, bufferHeight4, 16, DXGI_FORMAT_R16_FLOAT, esram );
         g_DepthTiled3.CreateArray( L"Depth De-Interleaved 3", bufferWidth5, bufferHeight5, 16, DXGI_FORMAT_R16_FLOAT, esram );
         g_DepthTiled4.CreateArray( L"Depth De-Interleaved 4", bufferWidth6, bufferHeight6, 16, DXGI_FORMAT_R16_FLOAT, esram );
+
+        // Occlusion...
         g_AOMerged1.Create( L"AO Re-Interleaved 1", bufferWidth1, bufferHeight1, 1, DXGI_FORMAT_R8_UNORM, esram );
         g_AOMerged2.Create( L"AO Re-Interleaved 2", bufferWidth2, bufferHeight2, 1, DXGI_FORMAT_R8_UNORM, esram );
         g_AOMerged3.Create( L"AO Re-Interleaved 3", bufferWidth3, bufferHeight3, 1, DXGI_FORMAT_R8_UNORM, esram );
         g_AOMerged4.Create( L"AO Re-Interleaved 4", bufferWidth4, bufferHeight4, 1, DXGI_FORMAT_R8_UNORM, esram );
+
+        // Coombined?
         g_AOSmooth1.Create( L"AO Smoothed 1", bufferWidth1, bufferHeight1, 1, DXGI_FORMAT_R8_UNORM, esram );
         g_AOSmooth2.Create( L"AO Smoothed 2", bufferWidth2, bufferHeight2, 1, DXGI_FORMAT_R8_UNORM, esram );
         g_AOSmooth3.Create( L"AO Smoothed 3", bufferWidth3, bufferHeight3, 1, DXGI_FORMAT_R8_UNORM, esram );
+
         g_AOHighQuality1.Create( L"AO High Quality 1", bufferWidth1, bufferHeight1, 1, DXGI_FORMAT_R8_UNORM, esram );
         g_AOHighQuality2.Create( L"AO High Quality 2", bufferWidth2, bufferHeight2, 1, DXGI_FORMAT_R8_UNORM, esram );
         g_AOHighQuality3.Create( L"AO High Quality 3", bufferWidth3, bufferHeight3, 1, DXGI_FORMAT_R8_UNORM, esram );
@@ -160,22 +166,6 @@ struct ScreenSpaceAmbientOcclusionPass
     
     void PushDownsampleCommands(const float2 nearFarClip, const GLuint depthSource)
     {
-        //std::cout << "Near Far: " << nearFarClip << std::endl;
-        const float zMagic = (nearFarClip.y - nearFarClip.x) / nearFarClip.x;
-
-        /*
-        glUseProgram(linearizeDepth.handle());
-        glBindImageTexture(0, depthLinear, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthSource);
-
-        linearizeDepth.uniform("ZMagic", zMagic);
-        linearizeDepth.texture("Depth", 0, depthSource, GL_TEXTURE_2D); // sampler 
-        linearizeDepth.dispatch(1920/16, 1080/16, 1);
-
-        */
-
         // First downsampling pass
         {
             glUseProgram(prepareDepth1.handle());
@@ -188,9 +178,6 @@ struct ScreenSpaceAmbientOcclusionPass
             prepareDepth1.dispatch(tiledDepth2.width * 8, tiledDepth2.height * 8, 1);
         }
 
-  
-        gl_check_error(__FILE__, __LINE__);
-
         // Second downsampling pass
         {
             glUseProgram(prepareDepth2.handle());
@@ -201,44 +188,21 @@ struct ScreenSpaceAmbientOcclusionPass
             prepareDepth2.texture("DS4x", 0, lowDepth2, GL_TEXTURE_2D); // sampler 
             prepareDepth2.dispatch(tiledDepth4.width, tiledDepth4.height, 1);
         }
-        gl_check_error(__FILE__, __LINE__);
     }
 
     void PushRenderAOCommands(const GlTexture3D & source, const GlTexture2D & dest, const float TanHalfFovH)
     {
-        // Here we compute multipliers that convert the center depth value into (the reciprocal of)
-        // sphere thicknesses at each sample location.  This assumes a maximum sample radius of 5
-        // units, but since a sphere has no thickness at its extent, we don't need to sample that far
-        // out.  Only samples whole integer offsets with distance less than 25 are used.  This means
-        // that there is no sample at (3, 4) because its distance is exactly 25 (and has a thickness of 0.)
 
         // The shaders are set up to sample a circular region within a 5-pixel radius.
         const float ScreenspaceDiameter = 10.0f;
-
-        // SphereDiameter = CenterDepth * ThicknessMultiplier.  This will compute the thickness of a sphere centered
-        // at a specific depth.  The ellipsoid scale can stretch a sphere into an ellipsoid, which changes the
-        // characteristics of the AO.
-        // TanHalfFovH:  Radius of sphere in depth units if its center lies at Z = 1
-        // ScreenspaceDiameter:  Diameter of sample sphere in pixel units
-        // ScreenspaceDiameter / BufferWidth:  Ratio of the screen width that the sphere actually covers
-        // Note about the "2.0f * ":  Diameter = 2 * Radius
         float ThicknessMultiplier = 2.0f * TanHalfFovH * ScreenspaceDiameter / source.width;
 
         if (source.depth == 1) ThicknessMultiplier *= 2.0f;
 
-        // This will transform a depth value from [0, thickness] to [0, 1].
         float InverseRangeFactor = 1.0f / ThicknessMultiplier;
 
-        // The thicknesses are smaller for all off-center samples of the sphere.  Compute thicknesses relative
-        // to the center sample.
         for (int i = 0; i < 3; i++) InvThicknessTable[i] = InverseRangeFactor / SampleThickness[i]; // hmm
 
-        // These are the weights that are multiplied against the samples because not all samples are
-        // equally important.  The farther the sample is from the center location, the less they matter.
-        // We use the thickness of the sphere to determine the weight.  The scalars in front are the number
-        // of samples with this weight because we sum the samples together before multiplying by the weight,
-        // so as an aggregate all of those samples matter more.  After generating this table, the weights
-        // are normalized.
         SampleWeightTable[0].x = 4 * SampleThickness[0].x;   // Axial
         SampleWeightTable[0].y = 4 * SampleThickness[0].y;   // Axial
         SampleWeightTable[0].z = 4 * SampleThickness[0].z;   // Axial
@@ -272,16 +236,14 @@ struct ScreenSpaceAmbientOcclusionPass
         aoRender1.uniform("gInvSliceDimension", float2(1.0f / source.width, 1.0f / source.height));
         aoRender1.uniform("gRejectFadeoff", -1.f / 1.0f);
         aoRender1.uniform("gRcpAccentuation", 1.0f / (1.0f + Accentuation));
-        aoRender1.texture("DepthTex", 0, source, GL_TEXTURE_2D_ARRAY); // array vs not
-        glBindImageTexture(0, dest, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 
-        // Calculate the thread group count and add a dispatch command with them.
-        auto workgroupSize = aoRender1.get_max_workgroup_size();
+        aoRender1.texture("DepthTex", 0, source, GL_TEXTURE_2D_ARRAY);
+        glBindImageTexture(0, dest, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
 
+        auto workgroupSize = uint3(8, 8, 1); // thread local
         workgroupSize.x = (source.width +  (int) workgroupSize.x - 1) / (int) workgroupSize.x;
         workgroupSize.y = (source.height + (int) workgroupSize.y - 1) / (int) workgroupSize.y;
         workgroupSize.z = (source.depth +  (int) workgroupSize.z - 1) / (int) workgroupSize.z;
-
         aoRender1.dispatch(workgroupSize);
 
         gl_check_error(__FILE__, __LINE__);
@@ -296,8 +258,8 @@ struct ScreenSpaceAmbientOcclusionPass
         const float stepSize = 1920.0f / lowResDepth.width; // fix hardcoded resolution
         float blurTolerance = (1.0 - std::pow(10, -4.6f) * stepSize);
         blurTolerance *= blurTolerance;
-        const float upsampleTolerance = std::pow(10, -12.f);
-        const float noiseFilterWeight = 1 / (std::pow(10, 0.0f) + upsampleTolerance); // noise filter tolerance
+        const float upsampleTolerance = std::pow(10, -10.f);
+        const float noiseFilterWeight = 1; // 1 / (std::pow(10, 0.0f) + upsampleTolerance); // noise filter tolerance
 
         prog.uniform("InvLowResolution", float2( 1.f / lowResDepth.width, 1.f / lowResDepth.height));
         prog.uniform("InvHighResolution", float2(1.f / highResDepth.width, 1.f / highResDepth.height));
@@ -310,7 +272,7 @@ struct ScreenSpaceAmbientOcclusionPass
         prog.texture("HiResDB", 1, highResDepth, GL_TEXTURE_2D);
         prog.texture("LoResAO1", 2, interleavedAO, GL_TEXTURE_2D);
 
-        if (highRes == false) prog.texture("HiResAO", 3, highResAO, GL_TEXTURE_2D);
+        if (highRes == true) prog.texture("HiResAO", 3, highResAO, GL_TEXTURE_2D);
 
         glBindImageTexture(0, dest, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F); // AoResult
 
@@ -321,7 +283,7 @@ struct ScreenSpaceAmbientOcclusionPass
 
     void RebuildCommandBuffers(const float4x4 & projectionMatrix, const GLuint depthSrc)
     {
-        const float tanHalfFovH = 1.0; // CalculateTanHalfFovHeight(projectionMatrix);
+        const float tanHalfFovH = CalculateTanHalfFovHeight(projectionMatrix);
         const float2 nearFarClip = near_far_clip_from_projection(projectionMatrix);
 
         PushDownsampleCommands(nearFarClip, depthSrc);
@@ -330,15 +292,19 @@ struct ScreenSpaceAmbientOcclusionPass
         PushRenderAOCommands(tiledDepth2, occlusion2, tanHalfFovH);
         PushRenderAOCommands(tiledDepth3, occlusion3, tanHalfFovH);
         PushRenderAOCommands(tiledDepth4, occlusion4, tanHalfFovH);
-        
+
         // We need to block here on compute completion to ensure that the
         // computation is done before we render
         //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
+        //BlurAndUpsample(Context, g_AOSmooth3, g_DepthDownsize3, g_DepthDownsize4, NextSRV,
+        //    g_QualityLevel >= kSsaoQualityLow ? &g_AOHighQuality4 : nullptr, &g_AOMerged3);
+
+        // // Phase 4:  Iteratively blur and upsample, combining each result
         //PushUpsampleCommands(lowDepth4, occlusion4, lowDepth3, occlusion3, combined3, false);
         //PushUpsampleCommands(lowDepth3, combined3, lowDepth2, occlusion2, combined2, false);
         //PushUpsampleCommands(lowDepth2, combined2, lowDepth1, occlusion1, combined1, false);
-        //PushUpsampleCommands(lowDepth1, combined1, depthLinear, lowDepth4, ambientOcclusion, true); // occlusion1 again is fake
+        PushUpsampleCommands(lowDepth1, occlusion4, depthLinear, occlusion1, ambientOcclusion, true); // occlusion1 again is fake
     }
 
 };
@@ -360,6 +326,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     editor.reset(new editor_controller<GameObject>());
 
     ssaoDebugView.reset(new GLTextureView(true));
+    ssaoArrayView.reset(new GLTextureView3D());
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -672,6 +639,7 @@ void scene_editor_app::on_draw()
             computeTimer.stop();
 
             Bounds2D renderArea = { 300.f, 0.f, (float)1200, (float)700 };
+
             switch (selectedTarget)
             {
             case 0:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->depthLinear); break;
@@ -679,10 +647,6 @@ void scene_editor_app::on_draw()
             case 2:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->lowDepth2); break;
             case 3:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->lowDepth3); break;
             case 4:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->lowDepth4); break;
-            case 5:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->tiledDepth1); break;
-            case 6:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->tiledDepth2); break;
-            case 7:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->tiledDepth3); break;
-            case 8:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->tiledDepth4); break;
             case 9:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->occlusion1); break;
             case 10:    ssaoDebugView->draw(renderArea, float2(width, height), ssao->occlusion2); break;
             case 11:    ssaoDebugView->draw(renderArea, float2(width, height), ssao->occlusion3); break;
@@ -693,6 +657,18 @@ void scene_editor_app::on_draw()
             case 16:    ssaoDebugView->draw(renderArea, float2(width, height), ssao->ambientOcclusion); break;
             }
 
+        }
+
+        {
+            Bounds2D renderArea = { 300.f, 0.f, (float)1200, (float)700 };
+
+            switch (selectedTarget)
+            {
+                case 5:     ssaoArrayView->draw(renderArea, float2(width, height), ssao->tiledDepth1, GL_TEXTURE_2D_ARRAY, arrayView); break;
+                case 6:     ssaoArrayView->draw(renderArea, float2(width, height), ssao->tiledDepth2, GL_TEXTURE_2D_ARRAY, arrayView); break;
+                case 7:     ssaoArrayView->draw(renderArea, float2(width, height), ssao->tiledDepth3, GL_TEXTURE_2D_ARRAY, arrayView); break;
+                case 8:     ssaoArrayView->draw(renderArea, float2(width, height), ssao->tiledDepth4, GL_TEXTURE_2D_ARRAY, arrayView); break;
+            }
         }
 
         glActiveTexture(GL_TEXTURE0);
@@ -738,6 +714,7 @@ void scene_editor_app::on_draw()
     {
         std::vector<std::string> targets = { "linear depth input", "low1", "low2", "low3", "low4", "td1", "td2", "td3", "td4", "oc1", "oc2", "oc3", "oc4", "comb1", "comb2", "comb3", "ao output" };
         ImGui::Combo("Targets: ", &selectedTarget, targets);
+        ImGui::SliderInt("Array", &arrayView, 0, 16);
     }
 
     gui::imgui_menu_stack menu(*this, ImGui::GetIO().KeysDown);

@@ -1,7 +1,7 @@
 
 #version 450
 
-#define COMBINE_LOWER_RESOLUTIONS
+//#define COMBINE_LOWER_RESOLUTIONS
 // BLEND_WITH_HIGHER_RESOLUTION
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
@@ -80,7 +80,7 @@ void BlurHorizontally(uint leftMostIndex)
     float a2 = AOCache1[leftMostIndex + 2u];
     float a3 = AOCache1[leftMostIndex + 3u];
     float a4 = AOCache1[leftMostIndex + 4u];
-    float a5 = AOCache1[leftMostIndex + 5u];
+    float a5 = AOCache1[leftMostIndex + 5];
     float a6 = AOCache1[leftMostIndex + 6u];
 
     float d0 = DepthCache[leftMostIndex];
@@ -88,7 +88,7 @@ void BlurHorizontally(uint leftMostIndex)
     float d2 = DepthCache[leftMostIndex + 2u];
     float d3 = DepthCache[leftMostIndex + 3u];
     float d4 = DepthCache[leftMostIndex + 4u];
-    float d5 = DepthCache[leftMostIndex + 5u];
+    float d5 = DepthCache[leftMostIndex + 5];
     float d6 = DepthCache[leftMostIndex + 6u];
 
     float d01 = d1 - d0;
@@ -172,16 +172,19 @@ float BilateralUpsample(float HiDepth, float HiAO, vec4 LowDepths, vec4 LowAO)
 void main()
 {
     // Load 4 pixels per thread into LDS to fill the 16x16 LDS cache with depth and AO
-    PrefetchData(gl_LocalInvocationID.x << 1 | gl_LocalInvocationID.y << 5u, vec2(ivec2(gl_GlobalInvocationID.xy + gl_LocalInvocationID.xy - uvec2(2))) * InvLowResolution);
+    PrefetchData(gl_LocalInvocationID.x << 1 | gl_LocalInvocationID.y << 5, vec2(ivec2(gl_GlobalInvocationID.xy + gl_LocalInvocationID.xy - uvec2(2))) * InvLowResolution);
+   
     GroupMemoryBarrierWithGroupSync();
     
     // Goal:  End up with a 9x9 patch that is blurred so we can upsample.  Blur radius is 2 pixels, so start with 13x13 area.
     // Horizontally blur the pixels.    13x13 -> 9x13
-    if (gl_LocalInvocationIndex < 39u)BlurHorizontally((gl_LocalInvocationIndex / 3u) * 16 + (gl_LocalInvocationIndex % 3u) * 3u);
+    if (gl_LocalInvocationIndex < 39u)
+        BlurHorizontally((gl_LocalInvocationIndex / 3u) * 16 + (gl_LocalInvocationIndex % 3u) * 3u);
     GroupMemoryBarrierWithGroupSync();
     
     // Vertically blur the pixels.        9x13 -> 9x9
-    if (gl_LocalInvocationIndex < 45u) BlurVertically((gl_LocalInvocationIndex / 9u) * 32u + gl_LocalInvocationIndex % 9u);
+    if (gl_LocalInvocationIndex < 45) 
+        BlurVertically((gl_LocalInvocationIndex / 9u) * 32u + gl_LocalInvocationIndex % 9u);
     GroupMemoryBarrierWithGroupSync();
 
     // Bilateral upsample
@@ -189,8 +192,8 @@ void main()
     vec4 LoSSAOs = vec4(AOCache1[Idx0 + 16], AOCache1[Idx0 + 17], AOCache1[Idx0 + 1], AOCache1[Idx0]);
    
     // We work on a quad of pixels at once because then we can gather 4 each of high and low-res depth values
-    vec2 UV0 = vec2(gl_GlobalInvocationID.xy) * InvLowResolution;
-    vec2 UV1 = vec2(gl_GlobalInvocationID.xy * 2u) * InvHighResolution;
+    vec2 UV0 = vec2(gl_GlobalInvocationID.xy * InvLowResolution);
+    vec2 UV1 = vec2(gl_GlobalInvocationID.xy * 2u * InvHighResolution);
 
 #ifdef BLEND_WITH_HIGHER_RESOLUTION
     vec4 HiSSAOs  = textureGather(HiResAO, UV1, 0);
