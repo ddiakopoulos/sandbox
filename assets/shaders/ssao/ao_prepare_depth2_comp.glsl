@@ -1,4 +1,8 @@
-#version 430
+// Based on SSAO in Microsoft's MiniEngine (https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/MiniEngine)
+// Original Copyright (c) 2013-2015 Microsoft (MIT Licence)
+// Transliterated to GLSL compute in 2017 by https://github.com/ddiakopoulos
+
+#version 450
 
 uniform sampler2D DS4x;
 
