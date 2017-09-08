@@ -247,11 +247,11 @@ struct GlTexture3D : public GlTextureObject
     void setup(GLenum target, GLsizei width, GLsizei height, GLsizei depth, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels)
     {
         glTextureImage3DEXT(*this, target, 0, internal_fmt, width, height, depth, 0, format, type, pixels);
-        glTextureParameteriEXT(*this, target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTextureParameteriEXT(*this, target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+        glTextureParameteriEXT(*this, target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteriEXT(*this, target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTextureParameteriEXT(*this, target, GL_TEXTURE_WRAP_R, GL_REPEAT);
         this->width = static_cast<float>(width);
         this->height = static_cast<float>(height);
         this->depth = static_cast<float>(depth);
@@ -430,6 +430,23 @@ public:
         }
     }
 
+    std::map<uint32_t, std::string> reflect()
+    {
+        std::map<uint32_t, std::string> locations;
+        GLint count;
+        glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
+        for (GLuint i = 0; i < static_cast<GLuint>(count); ++i)
+        {
+            char buffer[1024]; GLenum type; GLsizei length; GLint size, block_index;
+            glGetActiveUniform(program, i, sizeof(buffer), &length, &size, &type, buffer);
+            glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_BLOCK_INDEX, &block_index);
+            if (block_index != -1) continue;
+            GLint loc = glGetUniformLocation(program, buffer);
+            locations[loc] = std::string(buffer);
+        }
+        return locations;
+    }
+
     ~GlComputeProgram() { if (program) glDeleteProgram(program); }
 
     GlComputeProgram(GlComputeProgram && r) : GlComputeProgram()
@@ -449,12 +466,8 @@ public:
 
     void dispatch(const GLuint numGroupsX, const GLuint numGroupsY, const GLuint numGroupsZ) const
     {
-        // glBindImageTexture(0, images[1], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
-        // glBindImageTexture(1, images[2], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
-        // glBindImageTexture(0, t.texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8);
         glUseProgram(program);
         glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
-        // glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT); GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
     }
 
     void dispatch(const linalg::aliases::uint3 & numGroups) const
@@ -466,7 +479,6 @@ public:
     {
         glUseProgram(program);
         glDispatchComputeGroupSizeARB(numGroupsX, numGroupsY, numGroupsZ, groupSizeX, groupSizeY, groupSizeZ);
-        // glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
     }
 
     void dispatch_group_size(const linalg::aliases::uint3 & numGroups, const linalg::aliases::uint3 & groupSizes) const
@@ -491,11 +503,12 @@ public:
         return maxInvocations;
     }
 
-    void uniform(const std::string & name, int scalar) const { glProgramUniform1i(program, get_uniform_location(name), scalar); }
-    void uniform(const std::string & name, float scalar) const { glProgramUniform1f(program, get_uniform_location(name), scalar); }
-    void uniform(const std::string & name, const linalg::aliases::float2 & vec) const { glProgramUniform2fv(program, get_uniform_location(name), 1, &vec.x); }
-    void uniform(const std::string & name, const linalg::aliases::float4 & vec) const { glProgramUniform4fv(program, get_uniform_location(name), 1, &vec.x); }
-    void uniform(const std::string & name, const std::vector<float> & scalar) const { glProgramUniform1fv(program, get_uniform_location(name), scalar.size(), scalar.data()); }
+    void uniform(const std::string & name, int scalar) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform1i(program, get_uniform_location(name), scalar); }
+    void uniform(const std::string & name, float scalar) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform1f(program, get_uniform_location(name), scalar); }
+    void uniform(const std::string & name, const linalg::aliases::float2 & vec) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform2fv(program, get_uniform_location(name), 1, &vec.x); }
+    void uniform(const std::string & name, const linalg::aliases::float4 & vec) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform4fv(program, get_uniform_location(name), 1, &vec.x); }
+    //void uniform(const std::string & name, const int elements, const std::vector<float> & scalar) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform1fv(program, get_uniform_location(name), elements, scalar.data()); }
+    void uniform(const std::string & name, const int elements, const std::vector<linalg::aliases::float4> & vec) const { std::cout << "Yo kid: " << name << get_uniform_location(name) << std::endl; glProgramUniform4fv(program, get_uniform_location(name), elements, &vec[0].x); }
 
     void texture(GLint loc, GLenum target, int unit, GLuint tex) const
     {
@@ -504,7 +517,11 @@ public:
         glProgramUniform1i(program, loc, unit);
     }
 
-    void texture(const char * name, int unit, GLuint tex, GLenum target) const { texture(get_uniform_location(name), target, unit, tex); }
+    void texture(const char * name, int unit, GLuint tex, GLenum target) const 
+    { 
+        std::cout << "Yo kid tex: " << name << get_uniform_location(name) << std::endl;
+        texture(get_uniform_location(name), target, unit, tex);
+    }
 
 };
 

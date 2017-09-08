@@ -38,7 +38,7 @@ static const char s_textureFrag[] = R"(#version 330
     void main()
     {
         vec4 sample = texture(u_texture, texCoord);
-        f_color = vec4(sample.r, sample.g, sample.b, 1.0); 
+        f_color = vec4(sample.r, sample.r, sample.r, 1.0); 
     }
 )";
 

@@ -26,15 +26,12 @@ void GroupMemoryBarrierWithGroupSync()
     barrier();
 }
 
-layout(std140) uniform CB1
-{
-    vec2  InvLowResolution;
-    vec2  InvHighResolution;
-    float NoiseFilterStrength;
-    float StepSize;
-    float kBlurTolerance;
-    float kUpsampleTolerance;
-};
+uniform vec2  InvLowResolution;
+uniform vec2  InvHighResolution;
+uniform float NoiseFilterStrength;
+uniform float StepSize;
+uniform float kBlurTolerance;
+uniform float kUpsampleTolerance;
 
 shared float DepthCache[256];
 shared float AOCache1[256];

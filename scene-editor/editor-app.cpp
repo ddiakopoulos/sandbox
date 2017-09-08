@@ -5,51 +5,20 @@
 
 using namespace avl;
 
-// Linearize
-//  * writeonly LinearZ
-//  * uniform sampler2D Depth
-//  * CB0 with ZMagic
-
-// Downsample Passes
-//  * 
-//  *
-
-// Blur and Upsample Passes
-//  * 
-//  * 
-//  * 
-//  * 
-
-// AO Render Passes
-//  *
-//  *
-//
-
-/*
-    void Dispatch( size_t GroupCountX = 1, size_t GroupCountY = 1, size_t GroupCountZ = 1 );
-    void Dispatch1D( size_t ThreadCountX, size_t GroupSizeX = 64);
-    void Dispatch2D( size_t ThreadCountX, size_t ThreadCountY, size_t GroupSizeX = 8, size_t GroupSizeY = 8);
-    void Dispatch3D( size_t ThreadCountX, size_t ThreadCountY, size_t ThreadCountZ, size_t GroupSizeX, size_t GroupSizeY, size_t GroupSizeZ );
-
-    Fixed, Half, Float,                        // 2D render texture
-    FixedUAV, HalfUAV, FloatUAV,               // Read/write enabled
-    FixedTiledUAV, HalfTiledUAV, FloatTiledUAV // Texture array
-
-    //GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format
-*/
+static int selectedTarget = 0;
 
 struct ScreenSpaceAmbientOcclusionPass
 {
     // Controls how aggressive to fade off samples that occlude spheres but by so much as to be unreliable.
     // This is what gives objects a dark halo around them when placed in front of a wall.  If you want to
     // fade off the halo, boost your rejection falloff.  The tradeoff is that it reduces overall AO.
-    float RejectionFalloff = 2.5f;  // 1.0f, 10.0f, 0.5f;
+    float RejectionFalloff = 5.f;  // 1.0f, 10.0f, 0.5f;
 
     // The effect normally marks anything that's 50% occluded or less as "fully unoccluded".  This throws away
     // half of our result.  Accentuation gives more range to the effect, but it will darken all AO values in the
     // process.  It will also cause "under occluded" geometry to appear to be highlighted.  If your ambient light
     // is determined by the surface normal (such as with IBL), you might not want this side effect.
-    float Accentuation = 0.1f; // 0.0f, 1.0f, 0.1f;
+    float Accentuation = 0.5f; // 0.0f, 1.0f, 0.1f;
 
     GlTexture2D depthLinear;
 
@@ -74,31 +43,22 @@ struct ScreenSpaceAmbientOcclusionPass
 
     GlTexture2D ambientOcclusion;
 
-    GlComputeProgram linearizeDepth = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/linearize_depth_comp.glsl"), {});
+    //GlComputeProgram linearizeDepth = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/linearize_depth_comp.glsl"), {});
 
     GlComputeProgram prepareDepth1 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_prepare_depth1_comp.glsl"), {});
     GlComputeProgram prepareDepth2 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_prepare_depth2_comp.glsl"), {});
 
     GlComputeProgram aoRender1 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_render.glsl"), { "INTERLEAVE_RESULT" });
-    GlComputeProgram aoRender2 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_render.glsl"), {});
+    //GlComputeProgram aoRender2 = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_render.glsl"), {});
 
     GlComputeProgram blendOut = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), { "BLEND_WITH_HIGHER_RESOLUTION" });
-    GlComputeProgram preMinBlendOut = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), { "COMBINE_LOWER_RESOLUTIONS", "BLEND_WITH_HIGHER_RESOLUTION" });
+    //GlComputeProgram preMinBlendOut = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), { "COMBINE_LOWER_RESOLUTIONS", "BLEND_WITH_HIGHER_RESOLUTION" });
     GlComputeProgram upsample = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), {});
-    GlComputeProgram PreMin = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), { "COMBINE_LOWER_RESOLUTIONS" });
+    //GlComputeProgram PreMin = preprocess_compute_defines(read_file_text("../assets/shaders/ssao/ao_blur_and_upsample_comp.glsl"), { "COMBINE_LOWER_RESOLUTIONS" });
 
-    std::vector<float> SampleThickness; // Pre-computed sample thicknesses
-    std::vector<float> InvThicknessTable;
-    std::vector<float> SampleWeightTable;
-
-    // Calculate values in _ZBuferParams (built-in shader variable)
-    // We can't use _ZBufferParams in compute shaders, so this function is
-    // used to give the values in it to compute shaders.
-    float4 CalculateZBufferParams(float nearClip, float farClip)
-    {
-        float fpn = farClip / nearClip;
-        return float4(1 - fpn, fpn, 0, 0);
-    }
+    std::vector<float4> SampleThickness; // Pre-computed sample thicknesses
+    std::vector<float4> InvThicknessTable;
+    std::vector<float4> SampleWeightTable;
 
     float CalculateTanHalfFovHeight(const float4x4 & projectionMatrix)
     {
@@ -114,121 +74,137 @@ struct ScreenSpaceAmbientOcclusionPass
         return int2(size);
     }
 
+    /*
+    
+        g_DepthDownsize1.Create( L"Depth Down-Sized 1", bufferWidth1, bufferHeight1, 1, DXGI_FORMAT_R32_FLOAT, esram );
+        g_DepthDownsize2.Create( L"Depth Down-Sized 2", bufferWidth2, bufferHeight2, 1, DXGI_FORMAT_R32_FLOAT, esram );
+        g_DepthDownsize3.Create( L"Depth Down-Sized 3", bufferWidth3, bufferHeight3, 1, DXGI_FORMAT_R32_FLOAT, esram );
+        g_DepthDownsize4.Create( L"Depth Down-Sized 4", bufferWidth4, bufferHeight4, 1, DXGI_FORMAT_R32_FLOAT, esram );
+        g_DepthTiled1.CreateArray( L"Depth De-Interleaved 1", bufferWidth3, bufferHeight3, 16, DXGI_FORMAT_R16_FLOAT, esram );
+        g_DepthTiled2.CreateArray( L"Depth De-Interleaved 2", bufferWidth4, bufferHeight4, 16, DXGI_FORMAT_R16_FLOAT, esram );
+        g_DepthTiled3.CreateArray( L"Depth De-Interleaved 3", bufferWidth5, bufferHeight5, 16, DXGI_FORMAT_R16_FLOAT, esram );
+        g_DepthTiled4.CreateArray( L"Depth De-Interleaved 4", bufferWidth6, bufferHeight6, 16, DXGI_FORMAT_R16_FLOAT, esram );
+        g_AOMerged1.Create( L"AO Re-Interleaved 1", bufferWidth1, bufferHeight1, 1, DXGI_FORMAT_R8_UNORM, esram );
+        g_AOMerged2.Create( L"AO Re-Interleaved 2", bufferWidth2, bufferHeight2, 1, DXGI_FORMAT_R8_UNORM, esram );
+        g_AOMerged3.Create( L"AO Re-Interleaved 3", bufferWidth3, bufferHeight3, 1, DXGI_FORMAT_R8_UNORM, esram );
+        g_AOMerged4.Create( L"AO Re-Interleaved 4", bufferWidth4, bufferHeight4, 1, DXGI_FORMAT_R8_UNORM, esram );
+        g_AOSmooth1.Create( L"AO Smoothed 1", bufferWidth1, bufferHeight1, 1, DXGI_FORMAT_R8_UNORM, esram );
+        g_AOSmooth2.Create( L"AO Smoothed 2", bufferWidth2, bufferHeight2, 1, DXGI_FORMAT_R8_UNORM, esram );
+        g_AOSmooth3.Create( L"AO Smoothed 3", bufferWidth3, bufferHeight3, 1, DXGI_FORMAT_R8_UNORM, esram );
+        g_AOHighQuality1.Create( L"AO High Quality 1", bufferWidth1, bufferHeight1, 1, DXGI_FORMAT_R8_UNORM, esram );
+        g_AOHighQuality2.Create( L"AO High Quality 2", bufferWidth2, bufferHeight2, 1, DXGI_FORMAT_R8_UNORM, esram );
+        g_AOHighQuality3.Create( L"AO High Quality 3", bufferWidth3, bufferHeight3, 1, DXGI_FORMAT_R8_UNORM, esram );
+        g_AOHighQuality4.Create( L"AO High Quality 4", bufferWidth4, bufferHeight4, 1, DXGI_FORMAT_R8_UNORM, esram );
+    */
+
     ScreenSpaceAmbientOcclusionPass()
     {
         const float2 renderSize = { 1920, 1080 };
 
-        SampleThickness.resize(12);
-        InvThicknessTable.resize(12);
-        SampleWeightTable.resize(12);
+        SampleThickness.resize(3);
+        InvThicknessTable.resize(3);
+        SampleWeightTable.resize(3);
 
-        depthLinear.setup(renderSize.x, renderSize.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        ambientOcclusion.setup(renderSize.x, renderSize.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        depthLinear.setup(renderSize.x, renderSize.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
+        ambientOcclusion.setup(renderSize.x, renderSize.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
 
-        {
-            int2 ldSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
-            int2 ldSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
-            int2 ldSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
-            int2 ldSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
-            lowDepth1.setup(ldSize1.x, ldSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-            lowDepth2.setup(ldSize2.x, ldSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-            lowDepth3.setup(ldSize3.x, ldSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-            lowDepth4.setup(ldSize4.x, ldSize4.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        }
-
-        gl_check_error(__FILE__, __LINE__);
+        const float2 renderSize1 = float2((renderSize.x + 1) / 2, (renderSize.y + 1) / 2);
+        const float2 renderSize2 = float2((renderSize.x + 3) / 4, (renderSize.y + 3) / 4);
+        const float2 renderSize3 = float2((renderSize.x + 7) / 8, (renderSize.y + 7) / 8);
+        const float2 renderSize4 = float2((renderSize.x + 15) / 16, (renderSize.y + 15) / 16);
+        const float2 renderSize5 = float2((renderSize.x + 31) / 32, (renderSize.y + 31) / 32);
+        const float2 renderSize6 = float2((renderSize.x + 63) / 64, (renderSize.y + 63) / 64);
 
         {
-            int2 combSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
-            int2 combSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
-            int2 combSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
-            combined1.setup(combSize1.x, combSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-            combined2.setup(combSize2.x, combSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-            combined3.setup(combSize3.x, combSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            lowDepth1.setup(renderSize1.x, renderSize1.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
+            lowDepth2.setup(renderSize2.x, renderSize2.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
+            lowDepth3.setup(renderSize3.x, renderSize3.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
+            lowDepth4.setup(renderSize4.x, renderSize4.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
         }
-
-        gl_check_error(__FILE__, __LINE__);
 
         {
-            int2 tdSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
-            int2 tdSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
-            int2 tdSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 5);
-            int2 tdSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 6);
-            tiledDepth1.setup(GL_TEXTURE_2D_ARRAY, tdSize1.x, tdSize1.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 3
-            tiledDepth2.setup(GL_TEXTURE_2D_ARRAY, tdSize2.x, tdSize2.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 4
-            tiledDepth3.setup(GL_TEXTURE_2D_ARRAY, tdSize3.x, tdSize3.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 5
-            tiledDepth4.setup(GL_TEXTURE_2D_ARRAY, tdSize4.x, tdSize4.y, 4, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // 6
+            tiledDepth1.setup(GL_TEXTURE_2D_ARRAY, renderSize3.x, renderSize3.y, 16, GL_R32F, GL_RED, GL_FLOAT, nullptr); // 3
+            tiledDepth2.setup(GL_TEXTURE_2D_ARRAY, renderSize4.x, renderSize4.y, 16, GL_R32F, GL_RED, GL_FLOAT, nullptr); // 4
+            tiledDepth3.setup(GL_TEXTURE_2D_ARRAY, renderSize5.x, renderSize5.y, 16, GL_R32F, GL_RED, GL_FLOAT, nullptr); // 5
+            tiledDepth4.setup(GL_TEXTURE_2D_ARRAY, renderSize6.x, renderSize6.y, 16, GL_R32F, GL_RED, GL_FLOAT, nullptr); // 6
         }
-
-        gl_check_error(__FILE__, __LINE__);
 
         {
-            int2 ocSize1 = CalculateMipSize(float2(renderSize.x, renderSize.y), 1);
-            int2 ocSize2 = CalculateMipSize(float2(renderSize.x, renderSize.y), 2);
-            int2 ocSize3 = CalculateMipSize(float2(renderSize.x, renderSize.y), 3);
-            int2 ocSize4 = CalculateMipSize(float2(renderSize.x, renderSize.y), 4);
-            occlusion1.setup(ocSize1.x, ocSize1.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-            occlusion2.setup(ocSize2.x, ocSize2.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-            occlusion3.setup(ocSize3.x, ocSize3.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-            occlusion4.setup(ocSize4.x, ocSize4.y, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            occlusion1.setup(renderSize1.x, renderSize1.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
+            occlusion2.setup(renderSize2.x, renderSize2.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
+            occlusion3.setup(renderSize3.x, renderSize3.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
+            occlusion4.setup(renderSize4.x, renderSize4.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
         }
 
-        gl_check_error(__FILE__, __LINE__);
+        {
+            combined1.setup(renderSize1.x, renderSize1.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
+            combined2.setup(renderSize2.x, renderSize2.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
+            combined3.setup(renderSize3.x, renderSize3.y, GL_R32F, GL_RED, GL_FLOAT, nullptr);
+        }
 
-        SampleThickness[0] = sqrt(1.0f - 0.2f * 0.2f);
-        SampleThickness[1] = sqrt(1.0f - 0.4f * 0.4f);
-        SampleThickness[2] = sqrt(1.0f - 0.6f * 0.6f);
-        SampleThickness[3] = sqrt(1.0f - 0.8f * 0.8f);
-        SampleThickness[4] = sqrt(1.0f - 0.2f * 0.2f - 0.2f * 0.2f);
-        SampleThickness[5] = sqrt(1.0f - 0.2f * 0.2f - 0.4f * 0.4f);
-        SampleThickness[6] = sqrt(1.0f - 0.2f * 0.2f - 0.6f * 0.6f);
-        SampleThickness[7] = sqrt(1.0f - 0.2f * 0.2f - 0.8f * 0.8f);
-        SampleThickness[8] = sqrt(1.0f - 0.4f * 0.4f - 0.4f * 0.4f);
-        SampleThickness[9] = sqrt(1.0f - 0.4f * 0.4f - 0.6f * 0.6f);
-        SampleThickness[10] = sqrt(1.0f - 0.4f * 0.4f - 0.8f * 0.8f);
-        SampleThickness[11] = sqrt(1.0f - 0.6f * 0.6f - 0.6f * 0.6f);
+        SampleThickness[0].x = sqrt(1.0f - 0.2f * 0.2f);
+        SampleThickness[0].y = sqrt(1.0f - 0.4f * 0.4f);
+        SampleThickness[0].z = sqrt(1.0f - 0.6f * 0.6f);
+        SampleThickness[0].w = sqrt(1.0f - 0.8f * 0.8f);
+
+        SampleThickness[1].x = sqrt(1.0f - 0.2f * 0.2f - 0.2f * 0.2f);
+        SampleThickness[1].y = sqrt(1.0f - 0.2f * 0.2f - 0.4f * 0.4f);
+        SampleThickness[1].z = sqrt(1.0f - 0.2f * 0.2f - 0.6f * 0.6f);
+        SampleThickness[1].w = sqrt(1.0f - 0.2f * 0.2f - 0.8f * 0.8f);
+
+        SampleThickness[2].x = sqrt(1.0f - 0.4f * 0.4f - 0.4f * 0.4f);
+        SampleThickness[2].y = sqrt(1.0f - 0.4f * 0.4f - 0.6f * 0.6f);
+        SampleThickness[2].z = sqrt(1.0f - 0.4f * 0.4f - 0.8f * 0.8f);
+        SampleThickness[2].w = sqrt(1.0f - 0.6f * 0.6f - 0.6f * 0.6f);
     } 
     
-    void PushDownsampleCommands(const GLuint depthSource)
+    void PushDownsampleCommands(const float2 nearFarClip, const GLuint depthSource)
     {
-        // First downsampling pass.
+        //std::cout << "Near Far: " << nearFarClip << std::endl;
+        const float zMagic = (nearFarClip.y - nearFarClip.x) / nearFarClip.x;
+
+        /*
+        glUseProgram(linearizeDepth.handle());
+        glBindImageTexture(0, depthLinear, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, depthSource);
+
+        linearizeDepth.uniform("ZMagic", zMagic);
+        linearizeDepth.texture("Depth", 0, depthSource, GL_TEXTURE_2D); // sampler 
+        linearizeDepth.dispatch(1920/16, 1080/16, 1);
+
+        */
+
+        // First downsampling pass
         {
             glUseProgram(prepareDepth1.handle());
             glBindImageTexture(0, depthLinear, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
-            gl_check_error(__FILE__, __LINE__);
-            glBindImageTexture(1, lowDepth1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
-            gl_check_error(__FILE__, __LINE__);
+            glBindImageTexture(1, lowDepth1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F); // by half
             glBindImageTexture(2, tiledDepth1, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
-            gl_check_error(__FILE__, __LINE__);
             glBindImageTexture(3, lowDepth2, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
-            gl_check_error(__FILE__, __LINE__);
             glBindImageTexture(4, tiledDepth2, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
-            gl_check_error(__FILE__, __LINE__);
-            prepareDepth1.uniform("ZBufferParams", CalculateZBufferParams(0.1, 24.f)); // FIXME
-            gl_check_error(__FILE__, __LINE__);
             prepareDepth1.texture("Depth", 0, depthSource, GL_TEXTURE_2D); // sampler 
-            gl_check_error(__FILE__, __LINE__);
-            prepareDepth1.dispatch(tiledDepth2.width, tiledDepth2.height, 1);
-            gl_check_error(__FILE__, __LINE__);
+            prepareDepth1.dispatch(tiledDepth2.width * 8, tiledDepth2.height * 8, 1);
         }
 
+  
         gl_check_error(__FILE__, __LINE__);
 
-        // Second downsampling pass.
+        // Second downsampling pass
         {
             glUseProgram(prepareDepth2.handle());
             glBindImageTexture(0, lowDepth3, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
             glBindImageTexture(1, tiledDepth3, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
             glBindImageTexture(2, lowDepth4, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
             glBindImageTexture(3, tiledDepth4, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
-            prepareDepth2.texture("DX4x", 0, lowDepth2, GL_TEXTURE_2D); // sampler 
+            prepareDepth2.texture("DS4x", 0, lowDepth2, GL_TEXTURE_2D); // sampler 
             prepareDepth2.dispatch(tiledDepth4.width, tiledDepth4.height, 1);
         }
-
         gl_check_error(__FILE__, __LINE__);
     }
 
-    void PushRenderAOCommands(const GLuint source, const GLuint dest, const float TanHalfFovH, const size_t BufferWidth, const size_t BufferHeight, const size_t ArrayCount)
+    void PushRenderAOCommands(const GlTexture3D & source, const GlTexture2D & dest, const float TanHalfFovH)
     {
         // Here we compute multipliers that convert the center depth value into (the reciprocal of)
         // sphere thicknesses at each sample location.  This assumes a maximum sample radius of 5
@@ -246,16 +222,16 @@ struct ScreenSpaceAmbientOcclusionPass
         // ScreenspaceDiameter:  Diameter of sample sphere in pixel units
         // ScreenspaceDiameter / BufferWidth:  Ratio of the screen width that the sphere actually covers
         // Note about the "2.0f * ":  Diameter = 2 * Radius
-        float ThicknessMultiplier = 2.0f * TanHalfFovH * ScreenspaceDiameter / BufferWidth;
+        float ThicknessMultiplier = 2.0f * TanHalfFovH * ScreenspaceDiameter / source.width;
 
-        if (ArrayCount == 1) ThicknessMultiplier *= 2.0f;
+        if (source.depth == 1) ThicknessMultiplier *= 2.0f;
 
         // This will transform a depth value from [0, thickness] to [0, 1].
         float InverseRangeFactor = 1.0f / ThicknessMultiplier;
 
         // The thicknesses are smaller for all off-center samples of the sphere.  Compute thicknesses relative
         // to the center sample.
-        for (int i = 0; i < 12; i++) InvThicknessTable[i] = InverseRangeFactor / SampleThickness[i];
+        for (int i = 0; i < 3; i++) InvThicknessTable[i] = InverseRangeFactor / SampleThickness[i]; // hmm
 
         // These are the weights that are multiplied against the samples because not all samples are
         // equally important.  The farther the sample is from the center location, the less they matter.
@@ -263,51 +239,48 @@ struct ScreenSpaceAmbientOcclusionPass
         // of samples with this weight because we sum the samples together before multiplying by the weight,
         // so as an aggregate all of those samples matter more.  After generating this table, the weights
         // are normalized.
-        SampleWeightTable[0] = 4 * SampleThickness[0];    // Axial
-        SampleWeightTable[1] = 4 * SampleThickness[1];    // Axial
-        SampleWeightTable[2] = 4 * SampleThickness[2];    // Axial
-        SampleWeightTable[3] = 4 * SampleThickness[3];    // Axial
-        SampleWeightTable[4] = 4 * SampleThickness[4];    // Diagonal
-        SampleWeightTable[5] = 8 * SampleThickness[5];    // L-shaped
-        SampleWeightTable[6] = 8 * SampleThickness[6];    // L-shaped
-        SampleWeightTable[7] = 8 * SampleThickness[7];    // L-shaped
-        SampleWeightTable[8] = 4 * SampleThickness[8];    // Diagonal
-        SampleWeightTable[9] = 8 * SampleThickness[9];    // L-shaped
-        SampleWeightTable[10] = 8 * SampleThickness[10];  // L-shaped
-        SampleWeightTable[11] = 4 * SampleThickness[11];  // Diagonal
+        SampleWeightTable[0].x = 4 * SampleThickness[0].x;   // Axial
+        SampleWeightTable[0].y = 4 * SampleThickness[0].y;   // Axial
+        SampleWeightTable[0].z = 4 * SampleThickness[0].z;   // Axial
+        SampleWeightTable[0].w = 4 * SampleThickness[0].w;   // Axial
+                                                         
+        SampleWeightTable[1].x = 4 * SampleThickness[1].x;   // Diagonal
+        SampleWeightTable[1].y = 8 * SampleThickness[1].y;   // L-shaped
+        SampleWeightTable[1].z = 8 * SampleThickness[1].z;   // L-shaped
+        SampleWeightTable[1].w = 8 * SampleThickness[1].w;   // L-shaped
+                                                         
+        SampleWeightTable[2].x = 4 * SampleThickness[2].x;   // Diagonal
+        SampleWeightTable[2].y = 8 * SampleThickness[2].y;   // L-shaped
+        SampleWeightTable[2].z = 8 * SampleThickness[2].z;   // L-shaped
+        SampleWeightTable[2].w = 4 * SampleThickness[2].w;   // Diagonal
 
         // Normalize the weights by dividing by the sum of all weights
-        float totalWeight = 0.0f;
-        for(auto & w : SampleWeightTable) totalWeight += w;
+        float totalWeight = 0.f;
+        for (auto & w : SampleWeightTable)
+        {
+            totalWeight += w.x;
+            totalWeight += w.y;
+            totalWeight += w.z;
+            totalWeight += w.w;
+        }
 
-        for (int i = 0; i < 12; ++i) SampleWeightTable[i] /= totalWeight;
+        for (int i = 0; i < 3; ++i) SampleWeightTable[i] /= totalWeight;
 
         glUseProgram(aoRender1.handle());
-        aoRender1.uniform("gInvThicknessTable", InvThicknessTable);
-        aoRender1.uniform("gSampleWeightTable", SampleWeightTable);
-        aoRender1.uniform("gInvSliceDimension", float2(1.0f / BufferWidth, 1.0f / BufferHeight));
+        aoRender1.uniform("gInvThicknessTable", 3, InvThicknessTable);
+        aoRender1.uniform("gSampleWeightTable", 3, SampleWeightTable);
+        aoRender1.uniform("gInvSliceDimension", float2(1.0f / source.width, 1.0f / source.height));
         aoRender1.uniform("gRejectFadeoff", -1.f / 1.0f);
-        aoRender1.uniform("gIntensity", 1.0f);
-
-        gl_check_error(__FILE__, __LINE__);
-
-        //https://stackoverflow.com/questions/37136813/what-is-the-difference-between-glbindimagetexture-and-glbindtexture
-
+        aoRender1.uniform("gRcpAccentuation", 1.0f / (1.0f + Accentuation));
         aoRender1.texture("DepthTex", 0, source, GL_TEXTURE_2D_ARRAY); // array vs not
-
-        gl_check_error(__FILE__, __LINE__);
-
-        //glBindImageTexture(0, source, 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F); //cmd.SetComputeTextureParam(cs, kernel, "DepthTex", source.id);
-        glBindImageTexture(0, dest, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F); //cmd.SetComputeTextureParam(cs, kernel, "Occlusion", dest.id);
-
-        gl_check_error(__FILE__, __LINE__);
+        glBindImageTexture(0, dest, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 
         // Calculate the thread group count and add a dispatch command with them.
         auto workgroupSize = aoRender1.get_max_workgroup_size();
 
-        workgroupSize.x = (BufferWidth +  (int) workgroupSize.x - 1) / (int) workgroupSize.x;
-        workgroupSize.y = (BufferHeight + (int) workgroupSize.y - 1) / (int) workgroupSize.y;
-        workgroupSize.z = (ArrayCount +   (int) workgroupSize.z - 1) / (int) workgroupSize.z;
+        workgroupSize.x = (source.width +  (int) workgroupSize.x - 1) / (int) workgroupSize.x;
+        workgroupSize.y = (source.height + (int) workgroupSize.y - 1) / (int) workgroupSize.y;
+        workgroupSize.z = (source.depth +  (int) workgroupSize.z - 1) / (int) workgroupSize.z;
 
         aoRender1.dispatch(workgroupSize);
 
@@ -317,6 +290,8 @@ struct ScreenSpaceAmbientOcclusionPass
     void PushUpsampleCommands(const GlTexture2D & lowResDepth, const GlTexture2D & interleavedAO, const GlTexture2D & highResDepth, const GlTexture2D & highResAO, const GlTexture2D & dest, bool highRes)
     {
         GlComputeProgram & prog = (highRes == false) ? upsample : blendOut;
+
+        glUseProgram(prog.handle());
 
         const float stepSize = 1920.0f / lowResDepth.width; // fix hardcoded resolution
         float blurTolerance = (1.0 - std::pow(10, -4.6f) * stepSize);
@@ -335,7 +310,7 @@ struct ScreenSpaceAmbientOcclusionPass
         prog.texture("HiResDB", 1, highResDepth, GL_TEXTURE_2D);
         prog.texture("LoResAO1", 2, interleavedAO, GL_TEXTURE_2D);
 
-        if (highRes != false) prog.texture("HiResAO", 3, highResAO, GL_TEXTURE_2D);
+        if (highRes == false) prog.texture("HiResAO", 3, highResAO, GL_TEXTURE_2D);
 
         glBindImageTexture(0, dest, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F); // AoResult
 
@@ -344,20 +319,26 @@ struct ScreenSpaceAmbientOcclusionPass
         prog.dispatch(xcount, ycount, 1);
     }
 
-    void RebuildCommandBuffers(const GLuint depthSrc)
+    void RebuildCommandBuffers(const float4x4 & projectionMatrix, const GLuint depthSrc)
     {
-        PushDownsampleCommands(depthSrc);
+        const float tanHalfFovH = 1.0; // CalculateTanHalfFovHeight(projectionMatrix);
+        const float2 nearFarClip = near_far_clip_from_projection(projectionMatrix);
 
-        float tanHalfFovH = CalculateTanHalfFovHeight(Identity4x4); // FIXME FIXME
-        PushRenderAOCommands(tiledDepth1, occlusion1, tanHalfFovH, tiledDepth1.width, tiledDepth1.height, tiledDepth1.depth); // src, dest
-        PushRenderAOCommands(tiledDepth2, occlusion2, tanHalfFovH, tiledDepth2.width, tiledDepth2.height, tiledDepth1.depth);
-        PushRenderAOCommands(tiledDepth3, occlusion3, tanHalfFovH, tiledDepth3.width, tiledDepth3.height, tiledDepth1.depth);
-        PushRenderAOCommands(tiledDepth4, occlusion4, tanHalfFovH, tiledDepth4.width, tiledDepth4.height, tiledDepth1.depth);
+        PushDownsampleCommands(nearFarClip, depthSrc);
 
-        PushUpsampleCommands(lowDepth4, occlusion4, lowDepth3, occlusion3, combined3, false);
-        PushUpsampleCommands(lowDepth3, combined3, lowDepth2, occlusion2, combined2, false);
-        PushUpsampleCommands(lowDepth2, combined2, lowDepth1, occlusion1, combined1, false);
-        PushUpsampleCommands(lowDepth1, combined1, depthLinear, occlusion1, ambientOcclusion, true); // occlusion1 again is fake
+        PushRenderAOCommands(tiledDepth1, occlusion1, tanHalfFovH);
+        PushRenderAOCommands(tiledDepth2, occlusion2, tanHalfFovH);
+        PushRenderAOCommands(tiledDepth3, occlusion3, tanHalfFovH);
+        PushRenderAOCommands(tiledDepth4, occlusion4, tanHalfFovH);
+        
+        // We need to block here on compute completion to ensure that the
+        // computation is done before we render
+        //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+        //PushUpsampleCommands(lowDepth4, occlusion4, lowDepth3, occlusion3, combined3, false);
+        //PushUpsampleCommands(lowDepth3, combined3, lowDepth2, occlusion2, combined2, false);
+        //PushUpsampleCommands(lowDepth2, combined2, lowDepth1, occlusion1, combined1, false);
+        //PushUpsampleCommands(lowDepth1, combined1, depthLinear, lowDepth4, ambientOcclusion, true); // occlusion1 again is fake
     }
 
 };
@@ -377,6 +358,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     gui::make_dark_theme();
 
     editor.reset(new editor_controller<GameObject>());
+
+    ssaoDebugView.reset(new GLTextureView(true));
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
@@ -440,10 +423,10 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("scifi-floor-occlusion", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_ao.tga", false));
 
     //auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
-    //auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
-    //rescale_geometry(shaderball, 1.f);
-    //global_register_asset("shaderball", make_mesh_from_geometry(shaderball));
-    //global_register_asset("shaderball", std::move(shaderball));
+    auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
+    rescale_geometry(shaderball, 1.f);
+    global_register_asset("shaderball", make_mesh_from_geometry(shaderball));
+    global_register_asset("shaderball", std::move(shaderball));
 
     auto ico = make_icosasphere(5);
     global_register_asset("icosphere", make_mesh_from_geometry(ico));
@@ -498,8 +481,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             p.position = float3((i * 3) - 5, 0, (j * 3) - 5);
             m.set_pose(p);
             m.set_material(AssetHandle<std::shared_ptr<Material>>(material_id));
-            m.mesh = GlMeshHandle("icosphere");
-            m.geom = GeometryHandle("icosphere");
+            m.mesh = GlMeshHandle("shaderball");
+            m.geom = GeometryHandle("shaderball");
             m.receive_shadow = true;
             scene.objects.push_back(std::make_shared<StaticMesh>(std::move(m)));
         }
@@ -512,7 +495,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     StaticMesh floorMesh;
     floorMesh.mesh = GlMeshHandle("cube");
     floorMesh.geom = GeometryHandle("cube");
-    floorMesh.set_pose(Pose(float3(0, -2.01f, 0)));
+    floorMesh.set_pose(Pose(float3(0, .01f, 0)));
     floorMesh.set_scale(float3(16, 0.1f, 16));
     floorMesh.set_material("pbr-material/floor");
     std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
@@ -685,8 +668,31 @@ void scene_editor_app::on_draw()
         // SSAO Testing
         {
             computeTimer.start();
-            ssao->RebuildCommandBuffers(renderer->get_output_texture(0));
+            ssao->RebuildCommandBuffers(projectionMatrix, renderer->get_output_texture_depth(0));
             computeTimer.stop();
+
+            Bounds2D renderArea = { 300.f, 0.f, (float)1200, (float)700 };
+            switch (selectedTarget)
+            {
+            case 0:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->depthLinear); break;
+            case 1:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->lowDepth1); break;
+            case 2:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->lowDepth2); break;
+            case 3:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->lowDepth3); break;
+            case 4:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->lowDepth4); break;
+            case 5:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->tiledDepth1); break;
+            case 6:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->tiledDepth2); break;
+            case 7:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->tiledDepth3); break;
+            case 8:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->tiledDepth4); break;
+            case 9:     ssaoDebugView->draw(renderArea, float2(width, height), ssao->occlusion1); break;
+            case 10:    ssaoDebugView->draw(renderArea, float2(width, height), ssao->occlusion2); break;
+            case 11:    ssaoDebugView->draw(renderArea, float2(width, height), ssao->occlusion3); break;
+            case 12:    ssaoDebugView->draw(renderArea, float2(width, height), ssao->occlusion4); break;
+            case 13:    ssaoDebugView->draw(renderArea, float2(width, height), ssao->combined1); break;
+            case 14:    ssaoDebugView->draw(renderArea, float2(width, height), ssao->combined2); break;
+            case 15:    ssaoDebugView->draw(renderArea, float2(width, height), ssao->combined3); break;
+            case 16:    ssaoDebugView->draw(renderArea, float2(width, height), ssao->ambientOcclusion); break;
+            }
+
         }
 
         glActiveTexture(GL_TEXTURE0);
@@ -728,6 +734,11 @@ void scene_editor_app::on_draw()
     }
 
     igm->begin_frame();
+
+    {
+        std::vector<std::string> targets = { "linear depth input", "low1", "low2", "low3", "low4", "td1", "td2", "td3", "td4", "oc1", "oc2", "oc3", "oc4", "comb1", "comb2", "comb3", "ao output" };
+        ImGui::Combo("Targets: ", &selectedTarget, targets);
+    }
 
     gui::imgui_menu_stack menu(*this, ImGui::GetIO().KeysDown);
     menu.app_menu_begin();

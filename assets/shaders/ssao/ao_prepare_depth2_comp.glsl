@@ -15,16 +15,16 @@ void main()
 
     uvec2 st = gl_GlobalInvocationID.xy;
     uvec2 stAtlas = st >> uvec2(2);
-    uint stSlice = (st.x & 3u) | ((st.y & 3u) << 2u);
+    uint stSlice =  ((st.x & 3) | (st.y << 2)) & 15;
 
     imageStore(DS8x, ivec2(st), vec4(m1));
     imageStore(DS8xAtlas, ivec3(uvec3(stAtlas, stSlice)), vec4(m1));
 
-    if ((gl_LocalInvocationIndex & 11u) == 0u)
+    if ((gl_LocalInvocationIndex & 011) == 0)
     {
         uvec2 st = gl_GlobalInvocationID.xy >> uvec2(1);
         uvec2 stAtlas = st >> uvec2(2);
-        uint stSlice = (st.x & 3u) | ((st.y & 3u) << 2u);
+        uint stSlice =  ((st.x & 3) | (st.y << 2)) & 15;
         imageStore(DS16x, ivec2(st), vec4(m1));
         imageStore(DS16xAtlas, ivec3(uvec3(stAtlas, stSlice)), vec4(m1));
     }

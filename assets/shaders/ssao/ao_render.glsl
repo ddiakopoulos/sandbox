@@ -28,14 +28,11 @@ void GroupMemoryBarrierWithGroupSync()
 
 layout (binding = 0, r32f) writeonly uniform image2D Occlusion;
 
-layout(std140) uniform CB1
-{
-    vec4  gInvThicknessTable[3];
-    vec4  gSampleWeightTable[3];
-    vec2  gInvSliceDimension;
-    float gRejectFadeoff;
-    float gRcpAccentuation;
-};
+uniform vec4  gInvThicknessTable[3];
+uniform vec4  gSampleWeightTable[3];
+uniform vec2  gInvSliceDimension;
+uniform float gRejectFadeoff;
+uniform float gRcpAccentuation;
 
 shared float DepthSamples[TILE_DIM * TILE_DIM];
 

@@ -58,10 +58,13 @@ class PhysicallyBasedRenderer
 
     GlFramebuffer eyeFramebuffers[NumEyes];
     GlTexture2D eyeTextures[NumEyes];
+    GlTexture2D eyeDepthTextures[NumEyes];
+
     GlRenderbuffer multisampleRenderbuffers[NumEyes];
     GlFramebuffer multisampleFramebuffer;
 
     GLuint outputTextureHandles[NumEyes];
+    GLuint outputDepthTextureHandles[NumEyes];
 
     bool renderPost{ true };
     bool renderShadows{ true };
@@ -171,6 +174,7 @@ class PhysicallyBasedRenderer
         for (int eyeIndex = 0; eyeIndex < NumEyes; ++eyeIndex)
         {
             outputTextureHandles[eyeIndex] = eyeTextures[eyeIndex];
+            outputDepthTextureHandles[eyeIndex] = eyeDepthTextures[eyeIndex];
         }
     }
 
@@ -223,7 +227,13 @@ public:
             glTextureParameteriEXT(eyeTextures[eyeIndex], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTextureParameteriEXT(eyeTextures[eyeIndex], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTextureParameteriEXT(eyeTextures[eyeIndex], GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+
+            // Depth tex
+            eyeDepthTextures[eyeIndex].setup(renderSizePerEye.x, renderSizePerEye.y, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
             glNamedFramebufferTexture2DEXT(eyeFramebuffers[eyeIndex], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eyeTextures[eyeIndex], 0);
+            glNamedFramebufferTexture2DEXT(eyeFramebuffers[eyeIndex], GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, eyeDepthTextures[eyeIndex], 0);
+
             eyeFramebuffers[eyeIndex].check_complete();
         }
 
@@ -327,7 +337,18 @@ public:
             glDisable(GL_MULTISAMPLE);
 
             // Resolve multisample into per-eye textures
-            glBlitNamedFramebuffer(multisampleFramebuffer, eyeTextures[eyeIdx], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+            // blit color
+            glBlitNamedFramebuffer(multisampleFramebuffer, 
+                eyeTextures[eyeIdx], 
+                0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, 
+                renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR); // GL_LINEAR vs GL_NEAREST
+
+            // blit depth
+            glBlitNamedFramebuffer(multisampleFramebuffer,
+                eyeTextures[eyeIdx],
+                0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0,
+                renderSizePerEye.x, renderSizePerEye.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST); // GL_LINEAR vs GL_NEAREST
 
             gl_check_error(__FILE__, __LINE__);
         }
@@ -396,6 +417,12 @@ public:
     { 
         assert(idx <= NumEyes);
         return outputTextureHandles[idx]; 
+    }
+
+    GLuint get_output_texture_depth(const uint32_t idx) const
+    {
+        assert(idx <= NumEyes);
+        return outputDepthTextureHandles[idx];
     }
 
     void set_procedural_sky(ProceduralSky * sky)
