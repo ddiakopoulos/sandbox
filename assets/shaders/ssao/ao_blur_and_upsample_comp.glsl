@@ -181,7 +181,7 @@ void main()
     // Horizontally blur the pixels. 13x13 -> 9x13
     if (gl_LocalInvocationIndex < 39)
     {
-        //BlurHorizontally((gl_LocalInvocationIndex / 3) * 16 + (gl_LocalInvocationIndex % 3) * 3);
+        BlurHorizontally((gl_LocalInvocationIndex / 3) * 16 + (gl_LocalInvocationIndex % 3) * 3);
     }
 
     GroupMemoryBarrierWithGroupSync();
@@ -189,7 +189,7 @@ void main()
     // Vertically blur the pixels. 9x13 -> 9x9
     if (gl_LocalInvocationIndex < 45) 
     {
-        //BlurVertically((gl_LocalInvocationIndex / 9) * 32 + gl_LocalInvocationIndex % 9);
+        BlurVertically((gl_LocalInvocationIndex / 9) * 32 + gl_LocalInvocationIndex % 9);
     }
 
     GroupMemoryBarrierWithGroupSync();
@@ -200,12 +200,12 @@ void main()
    
     // We work on a quad of pixels at once because then we can gather 4 each of high and low-res depth values
     vec2 UV0 = vec2(gl_GlobalInvocationID.xy * InvLowResolution);
-    vec2 UV1 = vec2(gl_GlobalInvocationID.xy * InvHighResolution * 2);
+    vec2 UV1 = vec2(gl_GlobalInvocationID.xy * 2 * InvHighResolution);
 
 #ifdef BLEND_WITH_HIGHER_RESOLUTION
     vec4 HiSSAOs  = textureGather(HiResAO, UV1, 0);
 #else
-    vec4 HiSSAOs = vec4(1.0);
+    vec4 HiSSAOs = vec4(2.0); // (MEGA HACK WARNING) DEPTH BUFFER SCALING ISSUES - THIS SHOULD BE 1.0
 #endif
 
     vec4 LoDepths = textureGather(LoResDB, UV0, 0);

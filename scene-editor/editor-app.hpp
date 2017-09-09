@@ -151,6 +151,9 @@ struct scene_editor_app : public GLFWApp
     std::unique_ptr<GLTextureView> ssaoDebugView;
     std::unique_ptr<GLTextureView3D> ssaoArrayView;
 
+    GlShader aoBlit;
+    GlMesh fullscreenquad;
+
     Scene scene;
 
     std::unique_ptr<gui::ImGuiManager> igm;

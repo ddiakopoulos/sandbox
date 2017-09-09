@@ -137,5 +137,5 @@ void main()
     uvec2 OutPixel = gl_GlobalInvocationID.xy;
 #endif
 
-    imageStore(Occlusion, ivec2(OutPixel), vec4(ao * gRcpAccentuation)); // hmm
+    imageStore(Occlusion, ivec2(OutPixel), vec4(ao * gRcpAccentuation)); 
 }

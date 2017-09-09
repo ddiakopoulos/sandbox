@@ -13,19 +13,27 @@ void GroupMemoryBarrierWithGroupSync()
 layout(location = 0) uniform sampler2D Depth;
 
 layout (binding = 0) writeonly uniform image2D LinearZ;
-layout (binding = 1) writeonly uniform image2D DS2x; // float2
+layout (binding = 1) writeonly uniform image2D DS2x;
 layout (binding = 2) writeonly uniform image2DArray DS2xAtlas;
-layout (binding = 3) writeonly uniform image2D DS4x; // float2
+layout (binding = 3) writeonly uniform image2D DS4x; 
 layout (binding = 4) writeonly uniform image2DArray DS4xAtlas;
 
-const float zNear = 0.2;
+const float zNear = 0.01;
 const float zFar = 64.0;
 
-const vec4 zBufferParams = vec4(1.0 - zFar/zNear, zFar/zNear, 0, 0);
+// Used to linearize Z buffer values. x is (1-far/near), y is (far/near), z is (x/far) and w is (y/far).
+const vec4 zBufferParams = vec4(1.0 - zFar/zNear, zFar/zNear, (1.0 - zFar/zNear) / zFar, (zFar/zNear) / zFar);
 
 float linear_01_depth(in float z) 
 {
-    return (1.00000 / ((zBufferParams.x * z) + zBufferParams.y ));
+    return 1.0 / (zBufferParams.x * z + zBufferParams.y);
+}
+
+// Z buffer to linear depth
+float LinearEyeDepth(in float z)
+{
+    //(n * f) / (f - z * (f - n))
+    return 1.0 / (zBufferParams.z * z + zBufferParams.w);
 }
 
 float Linearize(uvec2 st)
