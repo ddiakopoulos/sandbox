@@ -649,6 +649,7 @@ void scene_editor_app::on_draw()
             ssao->RebuildCommandBuffers(projectionMatrix, renderer->get_output_texture_depth(0));
             computeTimer.stop();
 
+            /*
             Bounds2D renderArea = { 300.f, 0.f, (float)1200, (float)700 };
 
             switch (selectedTarget)
@@ -676,6 +677,7 @@ void scene_editor_app::on_draw()
                 case 8:     ssaoArrayView->draw(renderArea, float2(width, height), ssao->tiledDepth4, GL_TEXTURE_2D_ARRAY, arrayView); break;
             }
 
+            */
             glEnable(GL_BLEND);
 
             aoBlit.bind();
