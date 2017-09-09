@@ -15,7 +15,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     glViewport(0, 0, width, height);
 
     igm.reset(new gui::ImGuiManager(window));
-    gui::make_dark_theme();
+    gui::make_light_theme();
 
     editor.reset(new editor_controller<GameObject>());
 
@@ -450,9 +450,12 @@ void scene_editor_app::on_draw()
     }
     gui::imgui_fixed_window_end();
 
-    // Renderer
-    gui::imgui_fixed_window_begin("Renderer Settings", { { 0, 17 }, { 320, height } });
-    ImGui::Text("Compute %f", computeTimer.elapsed_ms());
+    // Define a split region between the whole window and the left panel
+    static int leftSplit = 380;
+    auto leftRegionSplit = ImGui::Split({ { 0.f,17.f },{ (float)width, (float)height } }, &leftSplit, ImGui::SplitType::Left);
+    ui_rect leftPane = { { int2(leftRegionSplit.second.min()) },{ int2(leftRegionSplit.second.max()) } };
+
+    gui::imgui_fixed_window_begin("Renderer Settings", leftPane);
     renderer->gather_imgui();
     gui::imgui_fixed_window_end();
 

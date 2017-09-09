@@ -136,6 +136,66 @@ namespace gui
         s.Colors[ImGuiCol_TooltipBg]             = ImVec4(0.47f, 0.77f, 0.83f, 0.72f);
         s.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.22f, 0.27f, 0.73f);
     }
+
+    inline void make_light_theme()
+    {
+        ImGuiStyle & s = ImGui::GetStyle();
+
+        s.WindowMinSize = ImVec2(160, 20);
+        s.FramePadding = ImVec2(4, 2);
+        s.ItemSpacing = ImVec2(6, 2);
+        s.ItemInnerSpacing = ImVec2(6, 4);
+        s.Alpha = 0.70f;
+        s.WindowFillAlphaDefault = 1.0f;
+        s.WindowRounding = 0.0f;
+        s.FrameRounding = 0.0f;
+        s.IndentSpacing = 4.0f;
+        s.ColumnsMinSpacing = 50.0f;
+        s.GrabMinSize = 14.0f;
+        s.GrabRounding = 4.0f;
+        s.ScrollbarSize = 16.0f;
+        s.ScrollbarRounding = 2.0f;
+
+        s.Colors[ImGuiCol_Text] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+        s.Colors[ImGuiCol_TextDisabled] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
+        s.Colors[ImGuiCol_WindowBg] = ImVec4(0.94f, 0.94f, 0.94f, 1.00f);
+        s.Colors[ImGuiCol_ChildWindowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+        s.Colors[ImGuiCol_Border] = ImVec4(0.00f, 0.00f, 0.00f, 0.39f);
+        s.Colors[ImGuiCol_BorderShadow] = ImVec4(1.00f, 1.00f, 1.00f, 0.10f);
+        s.Colors[ImGuiCol_FrameBg] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+        s.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.29f, 0.60f, 0.999f, 0.40f);
+        s.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.29f, 0.60f, 0.999f, 0.67f);
+        s.Colors[ImGuiCol_TitleBg] = ImVec4(0.999f, 0.999f, 0.999f, 1.00f);
+        s.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 1.00f, 1.00f, 0.51f);
+        s.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.82f, 0.82f, 0.82f, 1.00f);
+        s.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
+        s.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.999f, 0.999f, 0.999f, 0.53f);
+        s.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.69f, 0.69f, 0.69f, 0.80f);
+        s.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.49f, 0.49f, 0.49f, 0.80f);
+        s.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.49f, 0.49f, 0.49f, 1.00f);
+        s.Colors[ImGuiCol_ComboBg] = ImVec4(0.86f, 0.86f, 0.86f, 0.99f);
+        s.Colors[ImGuiCol_CheckMark] = ImVec4(0.29f, 0.60f, 0.999f, 1.00f);
+        s.Colors[ImGuiCol_SliderGrab] = ImVec4(0.29f, 0.60f, 0.999f, 0.78f);
+        s.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.29f, 0.60f, 0.999f, 1.00f);
+        s.Colors[ImGuiCol_Button] = ImVec4(0.29f, 0.60f, 0.999f, 0.40f);
+        s.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.29f, 0.60f, 0.999f, 1.00f);
+        s.Colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.999f, 1.00f);
+        s.Colors[ImGuiCol_Header] = ImVec4(0.29f, 0.60f, 0.999f, 0.8f);
+        s.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.29f, 0.60f, 0.999f, 0.80f);
+        s.Colors[ImGuiCol_HeaderActive] = ImVec4(0.29f, 0.60f, 0.999f, 1.00f);
+        s.Colors[ImGuiCol_ResizeGrip] = ImVec4(0.82f, 0.82f, 0.82f, 1.00f);
+        s.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.29f, 0.60f, 0.999f, 0.67f);
+        s.Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.29f, 0.60f, 0.999f, 0.95f);
+        s.Colors[ImGuiCol_CloseButton] = ImVec4(0.60f, 0.60f, 0.60f, 0.50f);
+        s.Colors[ImGuiCol_CloseButtonHovered] = ImVec4(0.999f, 0.39f, 0.36f, 1.00f);
+        s.Colors[ImGuiCol_CloseButtonActive] = ImVec4(0.999f, 0.39f, 0.36f, 1.00f);
+        s.Colors[ImGuiCol_PlotLines] = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
+        s.Colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+        s.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+        s.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+        s.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.29f, 0.60f, 0.999f, 0.35f);
+        s.Colors[ImGuiCol_ModalWindowDarkening] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+    }
     
     //////////////////////////////
     //   Helper Functionality   //
@@ -169,7 +229,7 @@ namespace gui
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0));
         bool result = ImGui::Begin(name, NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-        ImGui::TextColored({ 1,1,0.5f,1 }, name);
+        ImGui::TextColored({ 0, 0, 0,1 }, name);
         ImGui::Separator();
         assert(result);
     }

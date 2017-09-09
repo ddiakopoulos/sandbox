@@ -47,7 +47,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     glViewport(0, 0, width, height);
 
     igm.reset(new gui::ImGuiManager(window));
-    gui::make_dark_theme();
+    gui::make_light_theme();
 
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
     litShader = shaderMonitor.watch("../assets/shaders/simple_vert.glsl", "../assets/shaders/simple_frag.glsl");

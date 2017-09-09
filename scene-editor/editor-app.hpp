@@ -146,8 +146,6 @@ struct scene_editor_app : public GLFWApp
     FlyCameraController flycam;
     ShaderMonitor shaderMonitor { "../assets/" };
 
-    GlGpuTimer computeTimer;
-
     std::unique_ptr<GLTextureView> ssaoDebugView;
     std::unique_ptr<GLTextureView3D> ssaoArrayView;
 
