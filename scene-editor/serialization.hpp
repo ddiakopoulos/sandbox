@@ -225,7 +225,7 @@ namespace cereal
         visit_fields(m, [&archive](const char * name, auto & field, auto... metadata) { archive(cereal::make_nvp(name, field)); });
     };
 
-    template<class Archive> void serialize(Archive & archive, DirectionalLight m)
+    template<class Archive> void serialize(Archive & archive, DirectionalLight & m)
     {
         archive(cereal::make_nvp("renderable", cereal::base_class<Renderable>(&m)));
         archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
@@ -244,22 +244,10 @@ namespace cereal
 
 namespace cereal
 {
-    /*
-    template<class Archive> void serialize(Archive & archive, MetallicRoughnessMaterial & m)
-    {
-        visit_fields(m, [&archive](const char * name, auto & field, auto... metadata)
-        {
-            archive(cereal::make_nvp(name, field));
-        });
-    }
-    */
-
     template<class Archive> void serialize(Archive & archive, Material & m)
     {
         visit_subclasses(&m, [&archive](const char * name, auto * p)
         {
-            std::cout << " Visiting: " << name << " - " << p << std::endl;
-
             if (p)
             {
                 visit_fields(*p, [&archive](const char * name, auto & field, auto... metadata)
@@ -268,7 +256,6 @@ namespace cereal
                 });
             }
         });
- 
     }
 }
 

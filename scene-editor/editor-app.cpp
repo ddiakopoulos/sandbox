@@ -90,40 +90,18 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     std::shared_ptr<DefaultMaterial> default = std::make_shared<DefaultMaterial>();
     global_register_asset("default-material", static_cast<std::shared_ptr<Material>>(default));
 
-    MetallicRoughnessMaterial floorInstance;
-    floorInstance.program = GlShaderHandle("pbr-forward-lighting");
-    floorInstance.roughnessFactor = 0.5;
-    floorInstance.metallicFactor = 0.88f;
-    floorInstance.albedo = GlTextureHandle("scifi-floor-albedo");
-    floorInstance.normal = GlTextureHandle("scifi-floor-normal");
-    floorInstance.metallic = GlTextureHandle("scifi-floor-metallic");
-    floorInstance.roughness = GlTextureHandle("scifi-floor-roughness");
-    floorInstance.occlusion = GlTextureHandle("scifi-floor-occlusion");
-    floorInstance.radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
-    floorInstance.irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
+    cereal::deserialize_from_json("materials.json", scene.materialInstances);
 
-    std::shared_ptr<MetallicRoughnessMaterial> rustedInstance;
-    cereal::deserialize_from_json("rust.mat.json", rustedInstance);
-    scene.materialInstances["pbr-material/floor"] = rustedInstance;
-
-    // still need to serialize materials
-    for (int i = 0; i < 6; ++i)
+    // Register all material instances with the asset system. Since everything is handle-based,
+    // we can do this wherever, so long as it's before the first rendered frame
+    for (auto & instance : scene.materialInstances)
     {
-        for (int j = 0; j < 6; ++j)
-        {
-            //serialize_test(pbrMaterialInstance);
-
-            std::shared_ptr<MetallicRoughnessMaterial> instance{ new MetallicRoughnessMaterial(*rustedInstance) };
-            instance->roughnessFactor = remap<float>(i, 0.0f, 5.0f, 0.0f, 1.f);
-            instance->metallicFactor = remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f);
-            const std::string material_id = "pbr-material/" + std::to_string(i) + "-" + std::to_string(j);
-            scene.materialInstances[material_id] = instance;
-        }
+        global_register_asset(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
+        std::cout << "Registered: " << instance.first.c_str() << std::endl;
+        std::cout << "Program Shader Handle Name: " << instance.second->program.name << std::endl;
+        std::cout << "Program Shader Handle Asset: " << instance.second->program.get().handle() << std::endl;
     }
 
-    //auto materialTableJSON = cereal::serialize_to_json(scene.materialInstances);
-    //write_file_text("materials.json", materialTableJSON);
-    
     //auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
     auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
     rescale_geometry(shaderball, 1.f);
@@ -138,16 +116,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("cube", make_mesh_from_geometry(cube));
     global_register_asset("cube", std::move(cube));
 
-    // Register all material instances with the asset system. Since everything is handle-based,
-    // we can do this wherever, so long as it's before the first rendered frame
-    for (auto & instance : scene.materialInstances)
-    {
-        global_register_asset(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
-        std::cout << "Registered: " << instance.first.c_str() << std::endl;
-        std::cout << "Program Shader Handle Name: " << instance.second->program.name << std::endl;
-        std::cout << "Program Shader Handle Asset: " << instance.second->program.get().handle() << std::endl;
-    }
-    
+
     scene.objects.clear();
     cereal::deserialize_from_json("scene.json", scene.objects);
 }
