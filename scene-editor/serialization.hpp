@@ -6,6 +6,7 @@
 #include "uniforms.hpp"
 #include "assets.hpp"
 #include "material.hpp"
+#include "scene.hpp"
 
 #include "cereal/cereal.hpp"
 #include "cereal/types/memory.hpp"
@@ -26,17 +27,18 @@
 //   Engine Relationship Declarations  //
 /////////////////////////////////////////
 
+template<class F> void visit_fields(Pose & o, F f) { f("position", o.position); f("orientation", o.orientation); }
+
 template<class F> void visit_fields(GlTextureHandle & m, F f) { f("id", m.name); }
 template<class F> void visit_fields(GlShaderHandle & m, F f) { f("id", m.name); }
 template<class F> void visit_fields(GlMeshHandle & m, F f) { f("id", m.name); }
 template<class F> void visit_fields(GeometryHandle & m, F f) { f("id", m.name); }
 
-template<class F> void visit_fields(Pose & o, F f) { f("position", o.position); f("orientation", o.orientation); }
-
 template<class F> void visit_subclasses(GameObject * p, F f)
 {
-    f("StaticMesh", dynamic_cast<StaticMesh *>(p));
-    // ...
+    f("static_mesh",            dynamic_cast<StaticMesh *>(p));
+    f("point_light",            dynamic_cast<PointLight *>(p));
+    f("directional_light",      dynamic_cast<DirectionalLight *>(p));
 }
 
 template<class F> void visit_fields(GameObject & o, F f)
@@ -44,12 +46,37 @@ template<class F> void visit_fields(GameObject & o, F f)
     f("id", o.id);
 }
 
+template<class F> void visit_fields(Renderable & o, F f)
+{
+    visit_fields(*dynamic_cast<GameObject *>(&o), [&](const char * name, auto & field, auto... metadata) { f(name, field); });
+    f("material", o.mat);
+    f("receive_shadow", o.receive_shadow);
+    f("cast_shadow", o.cast_shadow);
+}
+
 template<class F> void visit_fields(StaticMesh & o, F f)
 {
-    f("id", o.id);
+    visit_fields(*dynamic_cast<Renderable *>(&o), [&](const char * name, auto & field, auto... metadata) { f(name, field); });
     f("pose", o.pose);
     f("scale", o.scale);
-    f("material", o.mat);
+    f("geometry_handle", o.geom);
+    f("mesh_handle", o.mesh);
+}
+
+template<class F> void visit_fields(PointLight & o, F f)
+{
+    visit_fields(*dynamic_cast<Renderable *>(&o), [&](const char * name, auto & field, auto... metadata) { f(name, field); });
+    f("color", o.data.color);
+    f("position", o.data.position);
+    f("radius", o.data.radius);
+}
+
+template<class F> void visit_fields(DirectionalLight & o, F f)
+{
+    visit_fields(*dynamic_cast<Renderable *>(&o), [&](const char * name, auto & field, auto... metadata) { f(name, field); });
+    f("color", o.data.color);
+    f("amount", o.data.amount);
+    f("direction", o.data.direction);
 }
 
 template<class F> void visit_subclasses(Material * p, F f)
@@ -123,25 +150,30 @@ namespace cereal
     template<class Archive> void serialize(Archive & archive, GlShaderHandle & m) { archive(cereal::make_nvp("id", m.name)); }
     template<class Archive> void serialize(Archive & archive, GlMeshHandle & m) { archive(cereal::make_nvp("id", m.name)); }
     template<class Archive> void serialize(Archive & archive, GeometryHandle & m) { archive(cereal::make_nvp("id", m.name)); }
+    template<class Archive> void serialize(Archive & archive, MaterialHandle & m) { archive(cereal::make_nvp("id", m.name)); }
 }
 
 ////////////////////////////////////////////////////
 //   Engine Relationship Declarations For Cereal  //
 ////////////////////////////////////////////////////
 
-CEREAL_REGISTER_TYPE_WITH_NAME(GameObject,                      "GameObjectBase");
-CEREAL_REGISTER_TYPE_WITH_NAME(Renderable,                      "Renderable");
+//CEREAL_REGISTER_TYPE_WITH_NAME(GameObject,                      "GameObjectBase");
+//CEREAL_REGISTER_TYPE_WITH_NAME(Renderable,                      "Renderable");
+
 CEREAL_REGISTER_TYPE_WITH_NAME(StaticMesh,                      "StaticMesh");
-CEREAL_REGISTER_TYPE_WITH_NAME(DirectionalLight,                "DirectionalLight");
 CEREAL_REGISTER_TYPE_WITH_NAME(PointLight,                      "PointLight");
+CEREAL_REGISTER_TYPE_WITH_NAME(DirectionalLight,                "DirectionalLight");
+
 CEREAL_REGISTER_TYPE_WITH_NAME(Material,                        "MaterialBase");
 CEREAL_REGISTER_TYPE_WITH_NAME(MetallicRoughnessMaterial,       "MetallicRoughnessMaterial");
 
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Renderable,                GameObject)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(StaticMesh,                Renderable)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(DirectionalLight,          Renderable)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(PointLight,                Renderable)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(MetallicRoughnessMaterial, Material);
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Renderable, GameObject)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(GameObject, Renderable)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Renderable, StaticMesh)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Renderable, PointLight)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Renderable, DirectionalLight)
+
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Material, MetallicRoughnessMaterial);
 
 ///////////////////////////////////
 //   Game Object Serialization   //
@@ -152,6 +184,7 @@ namespace cereal
     template <typename T>
     void deserialize_from_json(const std::string & pathToAsset, T & e)
     {
+        assert(pathToAsset.size() > 0);
         const std::string ascii = read_file_text(pathToAsset);
         std::istringstream input_stream(ascii);
         cereal::JSONInputArchive input_archive(input_stream);
@@ -161,6 +194,8 @@ namespace cereal
     template <typename T>
     std::string serialize_to_json(T e)
     {
+        std::cout << " typeid " << typeid(e).raw_name() << std::endl;
+
         std::ostringstream oss;
         {
             cereal::JSONOutputArchive json(oss);
@@ -169,30 +204,38 @@ namespace cereal
         return oss.str();
     }
 
-    template<class Archive> void serialize(Archive & archive, GameObject & m)
-    {
-        visit_fields(m, [&archive](const char * name, auto & field, auto... metadata)
-        {
-            archive(cereal::make_nvp(name, field));
-        });
-    }
 
-    template<class Archive> void serialize(Archive & archive, Renderable & m)
-    {
-        archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
-        archive(cereal::make_nvp("cast_shadow", m.cast_shadow));
-        archive(cereal::make_nvp("receive_shadow", m.receive_shadow));
-        //archive(cereal::make_nvp("material_handle", m.material));
-    }
 
     template<class Archive> void serialize(Archive & archive, StaticMesh & m)
     {
+        std::cout << "Static Mesh" << std::endl;
         archive(cereal::make_nvp("renderable", cereal::base_class<Renderable>(&m)));
-        archive(cereal::make_nvp("pose", m.pose));
-        archive(cereal::make_nvp("scale", m.scale));
-        archive(cereal::make_nvp("mesh_handle", m.mesh));
-        archive(cereal::make_nvp("geometry_handle", m.geom));
-    }
+        archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
+        visit_fields(m, [&archive](const char * name, auto & field, auto... metadata) { archive(cereal::make_nvp(name, field)); });
+    };
+
+    template<class Archive> void serialize(Archive & archive, PointLight & m)
+    {
+        std::cout << "PointLight" << std::endl;
+        archive(cereal::make_nvp("renderable", cereal::base_class<Renderable>(&m)));
+        archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
+        visit_fields(m, [&archive](const char * name, auto & field, auto... metadata) { archive(cereal::make_nvp(name, field)); });
+    };
+
+    template<class Archive> void serialize(Archive & archive, DirectionalLight m)
+    {
+        std::cout << "DirectionalLight" << std::endl;
+        archive(cereal::make_nvp("renderable", cereal::base_class<Renderable>(&m)));
+        archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
+        visit_fields(m, [&archive](const char * name, auto & field, auto... metadata) { archive(cereal::make_nvp(name, field)); });
+    };
+
+    // Base classes for Cereal need to be defined, but they are no-ops since the polymorphic
+    // serialization/deserialization actually happens in `visit_fields`
+    template<class Archive> void serialize(Archive & archive, GameObject & m) { std::cout << "GameObject" << std::endl; }
+    template<class Archive> void serialize(Archive & archive, Renderable & m) { std::cout << "Renderable" << std::endl; }
+
+
 }
 
 

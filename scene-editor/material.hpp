@@ -7,7 +7,6 @@
 #include "linalg_util.hpp"
 #include "geometric.hpp"
 #include "assets.hpp"
-
 namespace avl
 {
 
@@ -58,5 +57,7 @@ namespace avl
     };
 
 }
+
+typedef AssetHandle<std::shared_ptr<avl::Material>> MaterialHandle;
 
 #endif // end vr_material_hpp

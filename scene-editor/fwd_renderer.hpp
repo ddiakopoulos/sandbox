@@ -433,6 +433,16 @@ public:
         sunlight.color = float3(1.f, 1.0f, 1.0f);
         sunlight.amount = 1.0f;
     }
+   
+    uniforms::directional_light get_sunlight() const
+    {
+        return sunlight;
+    }
+
+    void set_sunlight(uniforms::directional_light sun)
+    {
+        sunlight = sun;
+    }
 
     ProceduralSky * get_procedural_sky() const
     {

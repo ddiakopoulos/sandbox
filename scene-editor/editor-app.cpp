@@ -19,9 +19,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
 
     editor.reset(new editor_controller<GameObject>());
 
-    ssaoDebugView.reset(new GLTextureView(true));
-    ssaoArrayView.reset(new GLTextureView3D());
-
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
 
@@ -145,7 +142,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             m.mesh = GlMeshHandle("shaderball");
             m.geom = GeometryHandle("shaderball");
             m.receive_shadow = true;
-            scene.objects.push_back(std::make_shared<StaticMesh>(std::move(m)));
+            //scene.objects.push_back(std::make_shared<StaticMesh>(std::move(m)));
         }
     }
 
@@ -160,19 +157,19 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     floorMesh.set_scale(float3(16, 0.1f, 16));
     floorMesh.set_material("pbr-material/floor");
     std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
-    scene.objects.push_back(floor);
+    //scene.objects.push_back(floor);
 
     scene.lightA.reset(new PointLight());
     scene.lightA->data.color = float3(0.88f, 0.85f, 0.97f);
     scene.lightA->data.position = float3(-6.0, 3.0, 0);
     scene.lightA->data.radius = 4.f;
-    scene.objects.push_back(scene.lightA);
+    //scene.objects.push_back(scene.lightA);
 
     scene.lightB.reset(new PointLight());
     scene.lightB->data.color = float3(0.67f, 1.00f, 0.85f);
     scene.lightB->data.position = float3(+6, 3.0, 0);
     scene.lightB->data.radius = 4.f;
-    scene.objects.push_back(scene.lightB);
+    //scene.objects.push_back(scene.lightB);
 
     // Register all material instances with the asset system. Since everything is handle-based,
     // we can do this wherever, so long as it's before the first rendered frame
@@ -180,6 +177,23 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     {
         global_register_asset_shared(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
     }
+
+    // Serialization testing
+    //std::cout << cereal::serialize_to_json(scene.lightA) << std::endl; // point light 
+    //std::cout << cereal::serialize_to_json(floor) << std::endl; // StaticMesh
+    //std::cout << cereal::serialize_to_json(scene.objects[0]) << std::endl; // game object
+
+    //write_file_text("scene.json", cereal::serialize_to_json(scene.objects));
+    
+    scene.objects.clear();
+
+    cereal::deserialize_from_json("scene.json", scene.objects);
+    
+    //write_file_text("object-0.obj.json", cereal::serialize_to_json(scene.objects[0]));
+    //std::shared_ptr<StaticMesh> m;
+    //cereal::deserialize_from_json("object-0.obj.json", m);
+    //std::cout << m->get_pose() << std::endl;
+
 }
 
 scene_editor_app::~scene_editor_app()
@@ -313,7 +327,10 @@ void scene_editor_app::on_draw()
         std::vector<Renderable *> sceneObjects;
         for (auto & obj : scene.objects)
         {
-            if (auto * r = dynamic_cast<Renderable*>(obj.get())) sceneObjects.push_back(r);
+            if (auto * r = dynamic_cast<Renderable*>(obj.get()))
+            {
+                sceneObjects.push_back(r);
+            }
         }
         renderer->add_objects(sceneObjects);
 

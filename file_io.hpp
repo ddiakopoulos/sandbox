@@ -32,7 +32,7 @@ namespace avl
     
     inline std::string read_file_text(const std::string & pathToFile)
     {
-        std::ifstream t(pathToFile);
+        std::ifstream t(pathToFile.c_str());
         std::string str ((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
         return str;
     }

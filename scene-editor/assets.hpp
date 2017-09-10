@@ -7,6 +7,7 @@
 #include "linalg_util.hpp"
 #include "gl-api.hpp"
 #include "geometry.hpp"
+#include "material.hpp"
 
 #include <memory>
 #include <vector>
