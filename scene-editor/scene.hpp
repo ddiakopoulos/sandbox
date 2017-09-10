@@ -68,6 +68,7 @@ struct Renderable : public GameObject
 
 struct PointLight final : public Renderable
 {
+    bool enabled = true;
     uniforms::point_light data;
 
     PointLight()
@@ -84,9 +85,7 @@ struct PointLight final : public Renderable
 
     void draw() const override
     {
-        //GlShaderHandle("wireframe").get().bind();
-        //GlMeshHandle("icosphere").get().draw_elements();
-        //GlShaderHandle("wireframe").get().unbind();
+
     }
 
     Bounds3D get_world_bounds() const override
@@ -107,6 +106,7 @@ struct PointLight final : public Renderable
 
 struct DirectionalLight final : public Renderable
 {
+    bool enabled = true;
     uniforms::directional_light data;
 
     DirectionalLight()
@@ -131,9 +131,7 @@ struct DirectionalLight final : public Renderable
 
     void draw() const override
     {
-        //GlShaderHandle("wireframe").get().bind();
-        //GlMeshHandle("icosphere").get().draw_elements();
-        //GlShaderHandle("wireframe").get().unbind();
+
     }
 
     Bounds3D get_world_bounds() const override
@@ -203,9 +201,7 @@ struct StaticMesh final : public Renderable
 
 struct Scene
 {
-    std::unique_ptr<ProceduralSky> skybox;
-    std::shared_ptr<PointLight> lightA; // remove me
-    std::shared_ptr<PointLight> lightB; // remove me 
+    std::shared_ptr<ProceduralSky> skybox;
     std::vector<std::shared_ptr<GameObject>> objects;
     std::map<std::string, std::shared_ptr<Material>> materialInstances;
 };

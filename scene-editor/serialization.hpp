@@ -11,6 +11,7 @@
 #include "cereal/cereal.hpp"
 #include "cereal/types/memory.hpp"
 #include "cereal/types/vector.hpp"
+#include "cereal/types/map.hpp"
 #include "cereal/types/polymorphic.hpp"
 #include "cereal/types/base_class.hpp"
 #include "cereal/archives/json.hpp"
@@ -157,9 +158,6 @@ namespace cereal
 //   Engine Relationship Declarations For Cereal  //
 ////////////////////////////////////////////////////
 
-//CEREAL_REGISTER_TYPE_WITH_NAME(GameObject,                      "GameObjectBase");
-//CEREAL_REGISTER_TYPE_WITH_NAME(Renderable,                      "Renderable");
-
 CEREAL_REGISTER_TYPE_WITH_NAME(StaticMesh,                      "StaticMesh");
 CEREAL_REGISTER_TYPE_WITH_NAME(PointLight,                      "PointLight");
 CEREAL_REGISTER_TYPE_WITH_NAME(DirectionalLight,                "DirectionalLight");
@@ -167,7 +165,6 @@ CEREAL_REGISTER_TYPE_WITH_NAME(DirectionalLight,                "DirectionalLigh
 CEREAL_REGISTER_TYPE_WITH_NAME(Material,                        "MaterialBase");
 CEREAL_REGISTER_TYPE_WITH_NAME(MetallicRoughnessMaterial,       "MetallicRoughnessMaterial");
 
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Renderable, GameObject)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(GameObject, Renderable)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Renderable, StaticMesh)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Renderable, PointLight)
@@ -194,8 +191,6 @@ namespace cereal
     template <typename T>
     std::string serialize_to_json(T e)
     {
-        std::cout << " typeid " << typeid(e).raw_name() << std::endl;
-
         std::ostringstream oss;
         {
             cereal::JSONOutputArchive json(oss);
@@ -204,11 +199,20 @@ namespace cereal
         return oss.str();
     }
 
-
+    template <typename T>
+    std::string serialize_to_json(std::shared_ptr<T> e)
+    {
+        assert(e != nullptr);
+        std::ostringstream oss;
+        {
+            cereal::JSONOutputArchive json(oss);
+            json(e);
+        }
+        return oss.str();
+    }
 
     template<class Archive> void serialize(Archive & archive, StaticMesh & m)
     {
-        std::cout << "Static Mesh" << std::endl;
         archive(cereal::make_nvp("renderable", cereal::base_class<Renderable>(&m)));
         archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
         visit_fields(m, [&archive](const char * name, auto & field, auto... metadata) { archive(cereal::make_nvp(name, field)); });
@@ -216,7 +220,6 @@ namespace cereal
 
     template<class Archive> void serialize(Archive & archive, PointLight & m)
     {
-        std::cout << "PointLight" << std::endl;
         archive(cereal::make_nvp("renderable", cereal::base_class<Renderable>(&m)));
         archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
         visit_fields(m, [&archive](const char * name, auto & field, auto... metadata) { archive(cereal::make_nvp(name, field)); });
@@ -224,7 +227,6 @@ namespace cereal
 
     template<class Archive> void serialize(Archive & archive, DirectionalLight m)
     {
-        std::cout << "DirectionalLight" << std::endl;
         archive(cereal::make_nvp("renderable", cereal::base_class<Renderable>(&m)));
         archive(cereal::make_nvp("game_object", cereal::base_class<GameObject>(&m)));
         visit_fields(m, [&archive](const char * name, auto & field, auto... metadata) { archive(cereal::make_nvp(name, field)); });
@@ -232,12 +234,9 @@ namespace cereal
 
     // Base classes for Cereal need to be defined, but they are no-ops since the polymorphic
     // serialization/deserialization actually happens in `visit_fields`
-    template<class Archive> void serialize(Archive & archive, GameObject & m) { std::cout << "GameObject" << std::endl; }
-    template<class Archive> void serialize(Archive & archive, Renderable & m) { std::cout << "Renderable" << std::endl; }
-
-
+    template<class Archive> void serialize(Archive & archive, GameObject & m) { }
+    template<class Archive> void serialize(Archive & archive, Renderable & m) { }
 }
-
 
 ///////////////////////////////////////
 //   Material System Serialization   //
@@ -245,12 +244,31 @@ namespace cereal
 
 namespace cereal
 {
+    /*
     template<class Archive> void serialize(Archive & archive, MetallicRoughnessMaterial & m)
     {
         visit_fields(m, [&archive](const char * name, auto & field, auto... metadata)
         {
             archive(cereal::make_nvp(name, field));
         });
+    }
+    */
+
+    template<class Archive> void serialize(Archive & archive, Material & m)
+    {
+        visit_subclasses(&m, [&archive](const char * name, auto * p)
+        {
+            std::cout << " Visiting: " << name << " - " << p << std::endl;
+
+            if (p)
+            {
+                visit_fields(*p, [&archive](const char * name, auto & field, auto... metadata)
+                {
+                    archive(cereal::make_nvp(name, field));
+                });
+            }
+        });
+ 
     }
 }
 

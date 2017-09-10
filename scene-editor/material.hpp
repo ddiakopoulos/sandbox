@@ -18,6 +18,12 @@ namespace avl
         uint32_t id() const { return program.get().handle(); }
     };
 
+    struct DefaultMaterial final : public Material
+    {
+        DefaultMaterial() { program = { "default-shader" }; }
+        void use() override { program.get().bind(); }
+    };
+
     class MetallicRoughnessMaterial final : public Material
     {
         int bindpoint = 0;

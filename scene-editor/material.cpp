@@ -26,17 +26,19 @@ void MetallicRoughnessMaterial::update_uniforms()
     shader.uniform("u_shadowOpacity", shadowOpacity);
     shader.uniform("u_texCoordScale", float2(texcoordScale));
 
-    shader.texture("s_albedo", bindpoint++, albedo.get(), GL_TEXTURE_2D);
-    shader.texture("s_normal", bindpoint++, normal.get(), GL_TEXTURE_2D);
-    shader.texture("s_roughness", bindpoint++, roughness.get(), GL_TEXTURE_2D);
-    shader.texture("s_metallic", bindpoint++, metallic.get(), GL_TEXTURE_2D);
+    if (shader.has_define("HAS_ALBEDO_MAP")) shader.texture("s_albedo", bindpoint++, albedo.get(), GL_TEXTURE_2D);
+    if (shader.has_define("HAS_NORMAL_MAP")) shader.texture("s_normal", bindpoint++, normal.get(), GL_TEXTURE_2D);
+    if (shader.has_define("HAS_ROUGHNESS_MAP")) shader.texture("s_roughness", bindpoint++, roughness.get(), GL_TEXTURE_2D);
+    if (shader.has_define("HAS_METALNESS_MAP")) shader.texture("s_metallic", bindpoint++, metallic.get(), GL_TEXTURE_2D);
     
-    shader.texture("sc_radiance", bindpoint++, radianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
-    shader.texture("sc_irradiance", bindpoint++, irradianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
+    if (shader.has_define("USE_IMAGE_BASED_LIGHTING")) shader.texture("sc_radiance", bindpoint++, radianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
+    if (shader.has_define("USE_IMAGE_BASED_LIGHTING")) shader.texture("sc_irradiance", bindpoint++, irradianceCubemap.get(), GL_TEXTURE_CUBE_MAP);
 
     if (shader.has_define("HAS_EMISSIVE_MAP")) shader.texture("s_emissive", bindpoint++, emissive.get(), GL_TEXTURE_2D);
     if (shader.has_define("HAS_HEIGHT_MAP")) shader.texture("s_height", bindpoint++, height.get(), GL_TEXTURE_2D);
     if (shader.has_define("HAS_OCCLUSION_MAP")) shader.texture("s_occlusion", bindpoint++, occlusion.get(), GL_TEXTURE_2D);
+
+    shader.unbind();
 }
 
 void MetallicRoughnessMaterial::update_cascaded_shadow_array_handle(GLuint handle)
@@ -44,6 +46,7 @@ void MetallicRoughnessMaterial::update_cascaded_shadow_array_handle(GLuint handl
     auto & shader = program.get();
     shader.bind();
     shader.texture("s_csmArray", bindpoint++, handle, GL_TEXTURE_2D_ARRAY);
+    shader.unbind();
 }
 
 void MetallicRoughnessMaterial::use()

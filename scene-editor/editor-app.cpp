@@ -30,7 +30,14 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         read_file_text("../assets/shaders/wireframe_geom.glsl"));
     global_register_asset("wireframe", std::move(wireframeProgram));
 
-     // USE_IMAGE_BASED_LIGHTING
+    shaderMonitor.watch(
+        "../assets/shaders/renderer/forward_lighting_vert.glsl",
+        "../assets/shaders/renderer/default_material_frag.glsl",
+        "../assets/shaders/renderer", {}, [](GlShader shader)
+    {
+        auto & asset = AssetHandle<GlShader>("default-shader").assign(std::move(shader));
+    });
+
     shaderMonitor.watch(
         "../assets/shaders/renderer/forward_lighting_vert.glsl", 
         "../assets/shaders/renderer/forward_lighting_frag.glsl", 
@@ -80,15 +87,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("scifi-floor-roughness", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_roughness.tga", false));
     global_register_asset("scifi-floor-occlusion", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_ao.tga", false));
 
-    //auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
-    auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
-    rescale_geometry(shaderball, 1.f);
-    global_register_asset("shaderball", make_mesh_from_geometry(shaderball));
-    global_register_asset("shaderball", std::move(shaderball));
-
-    auto ico = make_icosasphere(5);
-    global_register_asset("icosphere", make_mesh_from_geometry(ico));
-    global_register_asset("icosphere", std::move(ico));
+    std::shared_ptr<DefaultMaterial> default = std::make_shared<DefaultMaterial>();
+    global_register_asset("default-material", static_cast<std::shared_ptr<Material>>(default));
 
     MetallicRoughnessMaterial floorInstance;
     floorInstance.program = GlShaderHandle("pbr-forward-lighting");
@@ -102,25 +102,11 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     floorInstance.radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
     floorInstance.irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
 
-    /*
-    std::shared_ptr<MetallicRoughnessMaterial> rustedInstance;
-    rustedInstance = std::make_shared<MetallicRoughnessMaterial>();
-    rustedInstance->program = GlShaderHandle("pbr-forward-lighting");
-    rustedInstance->albedo = GlTextureHandle("rusted-iron-albedo");
-    rustedInstance->normal = GlTextureHandle("rusted-iron-normal");
-    rustedInstance->metallic = GlTextureHandle("rusted-iron-metallic");
-    rustedInstance->roughness = GlTextureHandle("rusted-iron-roughness");
-    rustedInstance->height = GlTextureHandle("rusted-iron-height");
-    rustedInstance->occlusion = GlTextureHandle("rusted-iron-occlusion");
-    rustedInstance->radianceCubemap = GlTextureHandle("wells-radiance-cubemap");
-    rustedInstance->irradianceCubemap = GlTextureHandle("wells-irradiance-cubemap");
-    global_register_asset("pbr-material/floor", static_cast<std::shared_ptr<Material>>(rustedInstance));
-    */
-
     std::shared_ptr<MetallicRoughnessMaterial> rustedInstance;
     cereal::deserialize_from_json("rust.mat.json", rustedInstance);
     scene.materialInstances["pbr-material/floor"] = rustedInstance;
 
+    // still need to serialize materials
     for (int i = 0; i < 6; ++i)
     {
         for (int j = 0; j < 6; ++j)
@@ -132,68 +118,38 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
             instance->metallicFactor = remap<float>(j, 0.0f, 5.0f, 0.0f, 1.f);
             const std::string material_id = "pbr-material/" + std::to_string(i) + "-" + std::to_string(j);
             scene.materialInstances[material_id] = instance;
-
-
-            StaticMesh m;
-            Pose p;
-            p.position = float3((i * 3) - 5, 0, (j * 3) - 5);
-            m.set_pose(p);
-            m.set_material(AssetHandle<std::shared_ptr<Material>>(material_id));
-            m.mesh = GlMeshHandle("shaderball");
-            m.geom = GeometryHandle("shaderball");
-            m.receive_shadow = true;
-            //scene.objects.push_back(std::make_shared<StaticMesh>(std::move(m)));
         }
     }
+
+    //auto materialTableJSON = cereal::serialize_to_json(scene.materialInstances);
+    //write_file_text("materials.json", materialTableJSON);
+    
+    //auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
+    auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
+    rescale_geometry(shaderball, 1.f);
+    global_register_asset("shaderball", make_mesh_from_geometry(shaderball));
+    global_register_asset("shaderball", std::move(shaderball));
+
+    auto ico = make_icosasphere(5);
+    global_register_asset("icosphere", make_mesh_from_geometry(ico));
+    global_register_asset("icosphere", std::move(ico));
 
     auto cube = make_cube();
     global_register_asset("cube", make_mesh_from_geometry(cube));
     global_register_asset("cube", std::move(cube));
 
-    StaticMesh floorMesh;
-    floorMesh.mesh = GlMeshHandle("cube");
-    floorMesh.geom = GeometryHandle("cube");
-    floorMesh.set_pose(Pose(float3(0, .01f, 0)));
-    floorMesh.set_scale(float3(16, 0.1f, 16));
-    floorMesh.set_material("pbr-material/floor");
-    std::shared_ptr<StaticMesh> floor = std::make_shared<StaticMesh>(std::move(floorMesh));
-    //scene.objects.push_back(floor);
-
-    scene.lightA.reset(new PointLight());
-    scene.lightA->data.color = float3(0.88f, 0.85f, 0.97f);
-    scene.lightA->data.position = float3(-6.0, 3.0, 0);
-    scene.lightA->data.radius = 4.f;
-    //scene.objects.push_back(scene.lightA);
-
-    scene.lightB.reset(new PointLight());
-    scene.lightB->data.color = float3(0.67f, 1.00f, 0.85f);
-    scene.lightB->data.position = float3(+6, 3.0, 0);
-    scene.lightB->data.radius = 4.f;
-    //scene.objects.push_back(scene.lightB);
-
     // Register all material instances with the asset system. Since everything is handle-based,
     // we can do this wherever, so long as it's before the first rendered frame
     for (auto & instance : scene.materialInstances)
     {
-        global_register_asset_shared(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
+        global_register_asset(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
+        std::cout << "Registered: " << instance.first.c_str() << std::endl;
+        std::cout << "Program Shader Handle Name: " << instance.second->program.name << std::endl;
+        std::cout << "Program Shader Handle Asset: " << instance.second->program.get().handle() << std::endl;
     }
-
-    // Serialization testing
-    //std::cout << cereal::serialize_to_json(scene.lightA) << std::endl; // point light 
-    //std::cout << cereal::serialize_to_json(floor) << std::endl; // StaticMesh
-    //std::cout << cereal::serialize_to_json(scene.objects[0]) << std::endl; // game object
-
-    //write_file_text("scene.json", cereal::serialize_to_json(scene.objects));
     
     scene.objects.clear();
-
     cereal::deserialize_from_json("scene.json", scene.objects);
-    
-    //write_file_text("object-0.obj.json", cereal::serialize_to_json(scene.objects[0]));
-    //std::shared_ptr<StaticMesh> m;
-    //cereal::deserialize_from_json("object-0.obj.json", m);
-    //std::cout << m->get_pose() << std::endl;
-
 }
 
 scene_editor_app::~scene_editor_app()
@@ -320,17 +276,16 @@ void scene_editor_app::on_draw()
         renderer->add_camera(renderCam);
 
         // Lighting
-        renderer->add_light(&scene.lightA->data);
-        renderer->add_light(&scene.lightB->data);
+        for (auto & obj : scene.objects)
+        {
+            if (auto * r = dynamic_cast<PointLight*>(obj.get())) renderer->add_light(&r->data);
+        }
 
         // Gather Objects
         std::vector<Renderable *> sceneObjects;
         for (auto & obj : scene.objects)
         {
-            if (auto * r = dynamic_cast<Renderable*>(obj.get()))
-            {
-                sceneObjects.push_back(r);
-            }
+            if (auto * r = dynamic_cast<Renderable*>(obj.get()))  sceneObjects.push_back(r);
         }
         renderer->add_objects(sceneObjects);
 
@@ -384,9 +339,18 @@ void scene_editor_app::on_draw()
     menu.app_menu_begin();
     {
         menu.begin("File");
-        if (menu.item("Open Scene", GLFW_MOD_CONTROL, GLFW_KEY_O)) {}
-        if (menu.item("Save Scene", GLFW_MOD_CONTROL, GLFW_KEY_S)) {}
-        if (menu.item("New Scene", GLFW_MOD_CONTROL, GLFW_KEY_N)) {}
+        if (menu.item("Open Scene", GLFW_MOD_CONTROL, GLFW_KEY_O))
+        {
+
+        }
+        if (menu.item("Save Scene", GLFW_MOD_CONTROL, GLFW_KEY_S)) 
+        {
+            write_file_text("scene.json", cereal::serialize_to_json(scene.objects));
+        }
+        if (menu.item("New Scene", GLFW_MOD_CONTROL, GLFW_KEY_N)) 
+        {
+            scene.objects.clear();
+        }
         if (menu.item("Exit", GLFW_MOD_ALT, GLFW_KEY_F4)) exit();
         menu.end();
 
@@ -412,6 +376,19 @@ void scene_editor_app::on_draw()
             editor->set_selection(selectedObjects);
         }
         menu.end();
+
+        menu.begin("Spawn");
+        visit_subclasses((GameObject*)0, [&](const char * name, auto * p)
+        {
+            if (menu.item(name))
+            {
+                auto obj = std::make_shared<std::remove_reference_t<decltype(*p)>>();
+                obj->set_material("default-material");
+                scene.objects.push_back(obj);
+            }
+        });
+        menu.end();
+
     }
     menu.app_menu_end();
 

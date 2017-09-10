@@ -99,6 +99,8 @@ class PhysicallyBasedRenderer
 
         shadow->pre_draw();
 
+        gl_check_error(__FILE__, __LINE__);
+
         for (Renderable * obj : renderSet)
         {
             if (obj->get_cast_shadow())
@@ -110,6 +112,8 @@ class PhysicallyBasedRenderer
         }
 
         shadow->post_draw();
+
+        gl_check_error(__FILE__, __LINE__);
     }
 
     void run_forward_pass(const CameraData & d)
@@ -154,6 +158,7 @@ class PhysicallyBasedRenderer
 
             // We assume that objects without a valid material take care of their own shading
             // in their `draw()` function
+            std::cout << top->get_material() << std::endl;
             if (Material * mat = top->get_material())
             {
                 mat->update_uniforms();
@@ -168,8 +173,12 @@ class PhysicallyBasedRenderer
 
             top->draw();
 
+            gl_check_error(__FILE__, __LINE__);
+
             renderQueue.pop();
         }
+
+        gl_check_error(__FILE__, __LINE__);
 
         for (int eyeIndex = 0; eyeIndex < NumEyes; ++eyeIndex)
         {
