@@ -39,7 +39,6 @@ struct GameObject
     std::string id;
     virtual ~GameObject() {}
     virtual void update(const float & dt) {}
-    virtual void draw() const {};
     virtual Bounds3D get_world_bounds() const = 0;
     virtual Bounds3D get_bounds() const = 0;
     virtual float3 get_scale() const = 0;
@@ -64,6 +63,8 @@ struct Renderable : public GameObject
 
     void set_cast_shadow(const bool value) { cast_shadow = value; }
     bool get_cast_shadow() const { return cast_shadow; }
+
+    virtual void draw() const {};
 };
 
 struct PointLight final : public Renderable
@@ -195,6 +196,114 @@ struct StaticMesh final : public Renderable
 
 };
 
+struct PhysicsMesh final : public Renderable
+{
+    PhysicsMesh() { }
+    Pose get_pose() const override { return Pose(); }
+    void set_pose(const Pose & p) override { }
+    float3 get_scale() const override { return float3(); }
+    void set_scale(const float3 & s) override { }
+    Bounds3D get_bounds() const override { return Bounds3D(); }
+    Bounds3D get_world_bounds() const override { return Bounds3D(); }
+    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
+};
+
+struct VRController final : public Renderable
+{
+    VRController() { }
+    Pose get_pose() const override { return Pose(); }
+    void set_pose(const Pose & p) override { }
+    float3 get_scale() const override { return float3(); }
+    void set_scale(const float3 & s) override { }
+    Bounds3D get_bounds() const override { return Bounds3D(); }
+    Bounds3D get_world_bounds() const override { return Bounds3D(); }
+    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
+};
+
+struct VRHandsController final : public Renderable
+{
+    VRHandsController() { }
+    Pose get_pose() const override { return Pose(); }
+    void set_pose(const Pose & p) override { }
+    float3 get_scale() const override { return float3(); }
+    void set_scale(const float3 & s) override { }
+    Bounds3D get_bounds() const override { return Bounds3D(); }
+    Bounds3D get_world_bounds() const override { return Bounds3D(); }
+    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
+};
+
+struct TeleportDestination final : public Renderable
+{
+    TeleportDestination() { }
+    Pose get_pose() const override { return Pose(); }
+    void set_pose(const Pose & p) override { }
+    float3 get_scale() const override { return float3(); }
+    void set_scale(const float3 & s) override { }
+    Bounds3D get_bounds() const override { return Bounds3D(); }
+    Bounds3D get_world_bounds() const override { return Bounds3D(); }
+    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
+};
+
+struct Reticle final : public Renderable
+{
+    Reticle() { }
+    Pose get_pose() const override { return Pose(); }
+    void set_pose(const Pose & p) override { }
+    float3 get_scale() const override { return float3(); }
+    void set_scale(const float3 & s) override { }
+    Bounds3D get_bounds() const override { return Bounds3D(); }
+    Bounds3D get_world_bounds() const override { return Bounds3D(); }
+    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
+};
+
+struct VRCanvasNVG final : public Renderable
+{
+    VRCanvasNVG() { }
+    Pose get_pose() const override { return Pose(); }
+    void set_pose(const Pose & p) override { }
+    float3 get_scale() const override { return float3(); }
+    void set_scale(const float3 & s) override { }
+    Bounds3D get_bounds() const override { return Bounds3D(); }
+    Bounds3D get_world_bounds() const override { return Bounds3D(); }
+    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
+};
+
+struct Billboard final : public Renderable
+{
+    Billboard() { }
+    Pose get_pose() const override { return Pose(); }
+    void set_pose(const Pose & p) override { }
+    float3 get_scale() const override { return float3(); }
+    void set_scale(const float3 & s) override { }
+    Bounds3D get_bounds() const override { return Bounds3D(); }
+    Bounds3D get_world_bounds() const override { return Bounds3D(); }
+    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
+};
+
+struct WorldAnchor final : public GameObject
+{
+    WorldAnchor() { }
+    Pose get_pose() const override { return Pose(); }
+    void set_pose(const Pose & p) override { }
+    float3 get_scale() const override { return float3(); }
+    void set_scale(const float3 & s) override { }
+    Bounds3D get_bounds() const override { return Bounds3D(); }
+    Bounds3D get_world_bounds() const override { return Bounds3D(); }
+    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
+};
+
+struct AudioEmitter final : public GameObject
+{
+    AudioEmitter() { }
+    Pose get_pose() const override { return Pose(); }
+    void set_pose(const Pose & p) override { }
+    float3 get_scale() const override { return float3(); }
+    void set_scale(const float3 & s) override { }
+    Bounds3D get_bounds() const override { return Bounds3D(); }
+    Bounds3D get_world_bounds() const override { return Bounds3D(); }
+    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
+};
+
 //////////////////////////
 //   Scene Definition   //
 //////////////////////////
@@ -205,6 +314,5 @@ struct Scene
     std::vector<std::shared_ptr<GameObject>> objects;
     std::map<std::string, std::shared_ptr<Material>> materialInstances;
 };
-
 
 #endif // end core_scene_hpp

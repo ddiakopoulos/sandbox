@@ -292,9 +292,12 @@ void scene_editor_app::on_draw()
 
         for (auto obj : editor->get_selection())
         {
-            auto modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
-            program.uniform("u_modelMatrix", modelMatrix);
-            obj->draw();
+            if (auto * r = dynamic_cast<Renderable*>(obj))
+            {
+                auto modelMatrix = mul(obj->get_pose().matrix(), make_scaling_matrix(obj->get_scale()));
+                program.uniform("u_modelMatrix", modelMatrix);
+                r->draw();
+            }
         }
 
         program.unbind();
