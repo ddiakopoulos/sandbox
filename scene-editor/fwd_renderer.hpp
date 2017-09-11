@@ -35,18 +35,11 @@ struct CameraData
 template<uint32_t NumEyes>
 class PhysicallyBasedRenderer
 {
-    std::vector<Renderable *> renderSet;
-
     float2 renderSizePerEye;
 
     GlGpuTimer forwardTimer;
     GlGpuTimer shadowTimer;
     GlGpuTimer postTimer;
-
-    CircularBuffer<float> forwardAverage = { 3 };
-    CircularBuffer<float> shadowAverage = { 3 };
-    CircularBuffer<float> postAverage = { 3 };
-    CircularBuffer<float> frameAverage = { 3 };
 
     SimpleTimer timer;
 
@@ -66,9 +59,7 @@ class PhysicallyBasedRenderer
     GLuint outputTextureHandles[NumEyes];
     GLuint outputDepthTextureHandles[NumEyes];
 
-    bool renderPost{ true };
-    bool renderShadows{ true };
-    bool renderBloom{ true };
+    std::vector<Renderable *> renderSet;
 
     std::vector<uniforms::point_light *> pointLights;
 
@@ -188,8 +179,6 @@ class PhysicallyBasedRenderer
 
     void run_post_pass(const CameraData & d)
     {
-        if (!renderPost) return;
-
         GLboolean wasCullingEnabled = glIsEnabled(GL_CULL_FACE);
         GLboolean wasDepthTestingEnabled = glIsEnabled(GL_DEPTH_TEST);
 
@@ -197,10 +186,7 @@ class PhysicallyBasedRenderer
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
 
-        if (renderBloom)
-        {
-            run_bloom_pass(d);
-        }
+        run_bloom_pass(d);
 
         if (wasCullingEnabled) glEnable(GL_CULL_FACE);
         if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
@@ -285,7 +271,7 @@ public:
     
         shadowTimer.start();
 
-        if (renderShadows)
+        if (shadow->enabled) // render shadows
         {
             // Default to the first camera
             CameraData shadowCamera = cameras[0];
@@ -377,41 +363,16 @@ public:
 
         renderSet.clear();
         pointLights.clear();
-    }
 
-    void gather_imgui()
-    {
-        float shadowMs = shadowTimer.elapsed_ms();
-        float forwardMs = forwardTimer.elapsed_ms();
-        float postMs = postTimer.elapsed_ms();
-
-        forwardAverage.put(forwardMs);
-        shadowAverage.put(shadowMs);
-        postAverage.put(postMs);
-        frameAverage.put(shadowMs + forwardMs + postMs);
-
-        ImGui::Text("Shadow  %f ms", compute_mean(shadowAverage));
-        ImGui::Text("Forward %f ms", compute_mean(forwardAverage));
-        ImGui::Text("Post    %f ms", compute_mean(postAverage));
-        ImGui::Text("Frame   %f ms", compute_mean(frameAverage));
-
-        if (ImGui::CollapsingHeader("Cascaded Shadow Mapping"))
+        // Compute frame GPU performance timing info
         {
-            ImGui::Checkbox("Enable Shadows", &renderShadows);
-            shadow->gather_imgui(renderShadows);
-        }
-
-        if (ImGui::CollapsingHeader("Post Processing"))
-        {
-            ImGui::Checkbox("Enable Post", &renderPost);
-            if (renderPost)
-            {
-                if (ImGui::CollapsingHeader("Bloom"))
-                {
-                    ImGui::Checkbox("Enable Bloom", &renderBloom);
-                    bloom->gather_imgui(renderBloom);
-                }
-            }
+            const float shadowMs = shadowTimer.elapsed_ms();
+            const float forwardMs = forwardTimer.elapsed_ms();
+            const float postMs = postTimer.elapsed_ms();
+            forwardAverage.put(forwardMs);
+            shadowAverage.put(shadowMs);
+            postAverage.put(postMs);
+            frameAverage.put(shadowMs + forwardMs + postMs);
         }
     }
 
@@ -458,10 +419,8 @@ public:
         else return nullptr;
     }
 
-    StableCascadedShadowPass * get_shadow_pass() const
-    {
-        if (shadow) return shadow.get();
-    }
+    StableCascadedShadowPass * get_shadow_pass() const { if (shadow) return shadow.get(); }
+    BloomPass * get_bloom_pass() const { if (bloom) return bloom.get(); }
 
     void add_objects(const std::vector<Renderable *> & set) 
     { 
@@ -472,6 +431,12 @@ public:
     { 
         pointLights.push_back(light);
     }
+
+    CircularBuffer<float> forwardAverage = { 3 };
+    CircularBuffer<float> shadowAverage = { 3 };
+    CircularBuffer<float> postAverage = { 3 };
+    CircularBuffer<float> frameAverage = { 3 };
+
 };
 
 #endif // end vr_renderer_hpp

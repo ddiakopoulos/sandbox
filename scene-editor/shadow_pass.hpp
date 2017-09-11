@@ -21,7 +21,7 @@
  * To Do - 3.25.2017
  * [ ] Set shadow map resolution at runtime (default 1024^2)
  * [X] Set number of cascades used at compile time (default 4)
- * [ ] Configurable filtering modes (ESM, PCF, PCSS + PCF)
+ * [X] Configurable filtering modes (ESM, PCF, PCSS + PCF)
  * [ ] Experiment with Moment Shadow Maps
  * [ ] Frustum depth-split is a good candidate for compute shader experimentation (default far-near/4)
  * [ ] Blending / overlap between cascades
@@ -43,31 +43,17 @@ struct StableCascadedShadowPass
     std::vector<float> nearPlanes;
     std::vector<float> farPlanes;
 
+    bool enabled = true;
     float resolution = 2048; // shadowmap resolution
     float splitLambda = 0.25f;  // frustum split constant
-    float nearOffset = 12.0f;
-    float farOffset = 24.0f;
-    float offset = 0.0f;
-
-    // float expCascade = 150.f;  // overshadowing constant
-
-    GlMesh fsQuad;
 
     GlShaderHandle program = { "cascaded-shadows" };
 
     StableCascadedShadowPass()
     {
-        fsQuad = make_fullscreen_quad();
-
         shadowArrayDepth.setup(GL_TEXTURE_2D_ARRAY, resolution, resolution, uniforms::NUM_CASCADES, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
         glNamedFramebufferTextureEXT(shadowArrayFramebuffer, GL_DEPTH_ATTACHMENT, shadowArrayDepth, 0);
-
-        //glTextureParameteriEXT(shadowArrayFramebuffer, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-        //glTextureParameteriEXT(shadowArrayFramebuffer, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-        //glTextureParameteriEXT(shadowArrayFramebuffer, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        //glTextureParameteriEXT(shadowArrayFramebuffer, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
         shadowArrayFramebuffer.check_complete();
-
         gl_check_error(__FILE__, __LINE__);
     }
 
@@ -121,7 +107,7 @@ struct StableCascadedShadowPass
             float sphereRadius = 0.0f;
             for (int i = 0; i < 8; ++i)
             {
-                float dist = length(splitFrustumVerts[i].xyz() - frustumCentroid) * 1.0; // argh
+                float dist = length(splitFrustumVerts[i].xyz() - frustumCentroid) * 1.0;
                 sphereRadius = std::max(sphereRadius, dist);
             }
                 
@@ -159,14 +145,6 @@ struct StableCascadedShadowPass
 
     }
 
-    void gather_imgui(const bool enabled)
-    {
-        if (!enabled) return;
-        ImGui::SliderFloat("Near Offset", &nearOffset, 0.0f, 1.0f);
-        ImGui::SliderFloat("Far Offset", &farOffset, 0.0f, 1.0);
-        ImGui::SliderFloat("Offset", &offset, -100.f, 100.0f);
-    }
-
     void pre_draw()
     {
         glEnable(GL_DEPTH_TEST);
@@ -178,12 +156,11 @@ struct StableCascadedShadowPass
         glClear(GL_DEPTH_BUFFER_BIT);
 
         auto & shader = program.get();
-
         shader.bind();
-        //shader.uniform("u_cascadeNear", uniforms::NUM_CASCADES, nearPlanes);
-        //shader.uniform("u_cascadeFar", uniforms::NUM_CASCADES, farPlanes);
         shader.uniform("u_cascadeViewMatrixArray", uniforms::NUM_CASCADES, viewMatrices);
         shader.uniform("u_cascadeProjMatrixArray", uniforms::NUM_CASCADES, projMatrices);
+        //shader.uniform("u_cascadeNear", uniforms::NUM_CASCADES, nearPlanes);
+        //shader.uniform("u_cascadeFar", uniforms::NUM_CASCADES, farPlanes);
     }
 
     void post_draw()
@@ -193,11 +170,16 @@ struct StableCascadedShadowPass
         glEnable(GL_CULL_FACE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         shader.unbind();
-
-        //glGenerateTextureMipmapEXT(shadowArrayFramebuffer, GL_TEXTURE_2D_ARRAY);
     }
 
     GLuint get_output_texture() const { return shadowArrayDepth.id(); }
 };
+
+template<class F> void visit_fields(StableCascadedShadowPass & o, F f)
+{
+    f("enabled", o.enabled);
+    f("shadowmap_resolution", o.resolution);
+    f("cascade_split", o.splitLambda, range_metadata<float>{ 0.1f, 1.0f });
+}
 
 #endif // end shadow_pass_hpp

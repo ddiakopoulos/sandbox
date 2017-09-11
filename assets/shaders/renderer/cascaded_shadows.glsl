@@ -42,6 +42,12 @@ vec3 get_cascade_weighted_color(vec2 weights)
 }
 #endif
 
+float compute_distance_fade(float depth, float zFar, float shadowTerm, float maxDist)
+{
+    float minDist = zFar * maxDist;
+    return min(1.0, shadowTerm + max(0.0, (depth - minDist) / (zFar - minDist)));
+}
+
 float random(vec2 seed2) 
 {
     vec4 seed4 = vec4(seed2.x, seed2.y, seed2.y, 1.0);
@@ -151,6 +157,10 @@ float calculate_csm_coefficient(sampler2DArray map, vec3 biasedWorldPos, vec3 vi
     }
     #endif
 
-    weightedColor = get_cascade_weighted_color(weights);
+    //weightedColor = get_cascade_weighted_color(weights);
+    //float compute_distance_fade(float depth, float zFar, float shadowTerm, float maxDist)
+    //float fade = compute_distance_fade(coords.z, 4, shadowTerm, 1);
+
     return shadowTerm;
+
 }

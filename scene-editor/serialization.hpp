@@ -66,7 +66,6 @@ template<class F> void visit_fields(StaticMesh & o, F f)
 
 template<class F> void visit_fields(PointLight & o, F f)
 {
-    visit_fields(*dynamic_cast<Renderable *>(&o), [&](const char * name, auto & field, auto... metadata) { f(name, field); });
     f("color", o.data.color);
     f("position", o.data.position);
     f("radius", o.data.radius);
@@ -74,7 +73,6 @@ template<class F> void visit_fields(PointLight & o, F f)
 
 template<class F> void visit_fields(DirectionalLight & o, F f)
 {
-    visit_fields(*dynamic_cast<Renderable *>(&o), [&](const char * name, auto & field, auto... metadata) { f(name, field); });
     f("color", o.data.color);
     f("amount", o.data.amount);
     f("direction", o.data.direction);

@@ -21,11 +21,6 @@ struct BloomPass
         struct { GLuint downsample_pipeline; };
     };
 
-    float middleGrey = 1.0f;
-    float whitePoint = 1.5f;
-    float threshold = 0.66f;
-    float blurSigma = 4.0f;
-    int blurPixelsPerSide = 2;
 
     GlShader hdr_post;
     GlShader hdr_lumShader;
@@ -44,6 +39,12 @@ struct BloomPass
     GlMesh fsQuad;
 
     float2 perEyeSize;
+
+    int blurPixelsPerSide = 2;
+    float blurSigma = 4.0f;
+    float middleGrey = 1.0f;
+    float whitePoint = 1.5f;
+    float threshold = 0.66f;
     float exposure = 0.5f;
 
     float blurDownsampleFactor = 2.0f;
@@ -209,26 +210,6 @@ struct BloomPass
         tonemapProgram.unbind();
     }
 
-    void gather_imgui(const bool enabled)
-    {   
-        if (!enabled) return;
-
-        if (ImGui::TreeNode("Bloom Parameters"))
-        {
-            ImGui::SliderFloat("MiddleGrey", &middleGrey, 0.1f, 1.0f);
-            ImGui::SliderFloat("WhitePoint", &whitePoint, 0.1f, 2.0f);
-            ImGui::SliderFloat("Threshold", &threshold, 0.1f, 2.0f);
-            ImGui::SliderFloat("Exposure", &exposure, 0.1f, 2.0f);
-            ImGui::SliderFloat("Blur Sigma", &blurSigma, 2.0f, 6.0f);
-            ImGui::SliderInt("Blur Size", &blurPixelsPerSide, 2, 6);
-        }
-
-        if (ImGui::TreeNode("Tonemapping")) 
-        {
-
-        }
-    }
-
     GLuint get_output_texture() const { return outputFramebuffer.id(); }
 
     GLuint get_luminance_texture() const { return luminanceTex[0].id(); }
@@ -237,5 +218,15 @@ struct BloomPass
 
     GLuint get_blur_tex() const { return blurPasses[0].id(); }
 };
+
+template<class F> void visit_fields(BloomPass & o, F f)
+{
+    f("blur_radius", o.blurPixelsPerSide, range_metadata<int>{ 2, 6 });
+    f("blur_sigma", o.blurSigma, range_metadata<float>{ 0.1f, 8.f});
+    f("middle_grey", o.middleGrey, range_metadata<float>{ 0.1f, 1.0});
+    f("whitepoint", o.whitePoint, range_metadata<float>{ 0.1f, 2.f});
+    f("threshold", o.threshold, range_metadata<float>{ 0.f, 2.f});
+    f("exposure", o.exposure, range_metadata<float>{ 0.f, 2.f});
+}
 
 #endif // end bloom_pass_hpp

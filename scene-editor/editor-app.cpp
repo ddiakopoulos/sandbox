@@ -421,8 +421,23 @@ void scene_editor_app::on_draw()
     auto leftRegionSplit = ImGui::Split({ { 0.f,17.f },{ (float)width, (float)height } }, &leftSplit, ImGui::SplitType::Left);
     ui_rect leftPane = { { int2(leftRegionSplit.second.min()) },{ int2(leftRegionSplit.second.max()) } };
 
-    gui::imgui_fixed_window_begin("Renderer Settings", leftPane);
-    renderer->gather_imgui();
+    gui::imgui_fixed_window_begin("Renderer", leftPane);
+    {
+        ImGui::Text("Shadow  %f ms", compute_mean(renderer->shadowAverage));
+        ImGui::Text("Forward %f ms", compute_mean(renderer->forwardAverage));
+        ImGui::Text("Post    %f ms", compute_mean(renderer->postAverage));
+        ImGui::Text("Frame   %f ms", compute_mean(renderer->frameAverage));
+
+        if (ImGui::TreeNode("Bloom"))
+        {
+            Edit("bloom", *renderer->get_shadow_pass());
+        }
+
+        if (ImGui::TreeNode("Cascaded Shadow Mapping"))
+        {
+            Edit("shadows", *renderer->get_bloom_pass());
+        }
+    }
     gui::imgui_fixed_window_end();
 
     igm->end_frame();
@@ -450,3 +465,32 @@ IMPLEMENT_MAIN(int argc, char * argv[])
     }
     return EXIT_SUCCESS;
 }
+
+/*
+
+
+void gather_imgui()
+{
+
+
+if (ImGui::CollapsingHeader("Cascaded Shadow Mapping"))
+{
+ImGui::Checkbox("Enable Shadows", &renderShadows);
+shadow->gather_imgui(renderShadows);
+}
+
+if (ImGui::CollapsingHeader("Post Processing"))
+{
+ImGui::Checkbox("Enable Post", &renderPost);
+if (renderPost)
+{
+if (ImGui::CollapsingHeader("Bloom"))
+{
+ImGui::Checkbox("Enable Bloom", &renderBloom);
+bloom->gather_imgui(renderBloom);
+}
+}
+}
+}
+
+*/
