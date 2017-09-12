@@ -7,6 +7,7 @@
 #include "gl-api.hpp"
 #include "gl-procedural-mesh.hpp"
 #include "asset_io.hpp"
+#include <functional>
 
 #if defined(ANVIL_PLATFORM_WINDOWS)
 #pragma warning(push)
@@ -166,11 +167,17 @@ class ProceduralSky
 protected:
 
     GlMesh skyMesh;
-    float2 sunPosition;
     virtual void render_internal(float4x4 viewProj, float3 sunDir, float4x4 world) = 0;
 
 public:
     
+    float2 sunPosition;
+    float normalizedSunY = 1.15f;
+    float albedo = 0.1f;
+    float turbidity = 4.f;
+
+    std::function<void()> onParametersChanged;
+
     ProceduralSky()
     {
         skyMesh = make_sphere_mesh(1.0);
@@ -249,12 +256,13 @@ public:
     HosekProceduralSky()
     {
         sky.reset(new GlShader(read_file_text("../assets/shaders/sky_vert.glsl"), read_file_text("../assets/shaders/sky_hosek_frag.glsl")));
-        recompute(4, 0.1f, 0.9f);
+        recompute(turbidity, albedo, normalizedSunY);
     }
     
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) override
     {
         data = HosekSkyRadianceData::compute(get_sun_direction(), turbidity, albedo, normalizedSunY);
+        if (onParametersChanged) onParametersChanged();
     }
 
 };
@@ -285,12 +293,13 @@ public:
     PreethamProceduralSky()
     {
         sky.reset(new GlShader(read_file_text("../assets/shaders/sky_vert.glsl"), read_file_text("../assets/shaders/sky_preetham_frag.glsl")));
-        recompute(4, 0.1f, 1.15f);
+        recompute(turbidity, albedo, normalizedSunY);
     }
     
     virtual void recompute(float turbidity, float albedo, float normalizedSunY) override
     {
         data = PreethamSkyRadianceData::compute(get_sun_direction(), turbidity, albedo, normalizedSunY);
+        if (onParametersChanged) onParametersChanged();
     }
     
 };

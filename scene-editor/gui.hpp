@@ -16,6 +16,72 @@
 
 namespace ImGui
 {
+
+    struct ImGuiAppLog
+    {
+        ImGuiTextBuffer Buf;
+        ImGuiTextFilter Filter;
+        ImVector<int> LineOffsets;
+        bool ScrollToBottom;
+
+        void Clear() { Buf.clear(); LineOffsets.clear(); }
+
+        void AddLog(const char * fmt, ...)
+        {
+            int old_size = Buf.size();
+            va_list args;
+            va_start(args, fmt);
+            Buf.appendv(fmt, args);
+            va_end(args);
+            for (int new_size = Buf.size(); old_size < new_size; old_size++)
+            {
+                if (Buf[old_size] == '\n') LineOffsets.push_back(old_size);
+            }
+            ScrollToBottom = true;
+        }
+
+        void Draw(const char * title)
+        {
+            if (ImGui::Button("Clear")) Clear();
+            ImGui::SameLine();
+
+            bool copy = ImGui::Button("Copy");
+
+            ImGui::SameLine();
+
+            Filter.Draw("Filter", -100.0f);
+            ImGui::Separator();
+
+            ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+            if (copy) ImGui::LogToClipboard();
+
+            if (Filter.IsActive())
+            {
+                const char* buf_begin = Buf.begin();
+                const char* line = buf_begin;
+                for (int line_no = 0; line != NULL; line_no++)
+                {
+                    const char* line_end = (line_no < LineOffsets.Size) ? buf_begin + LineOffsets[line_no] : NULL;
+                    if (Filter.PassFilter(line, line_end))
+                    {
+                        ImGui::TextUnformatted(line, line_end);
+                    }
+                    line = line_end && line_end[1] ? line_end + 1 : NULL;
+                }
+            }
+            else ImGui::TextUnformatted(Buf.begin());
+
+            if (ScrollToBottom)
+            {
+                ImGui::SetScrollHere(1.0f);
+            }
+            ScrollToBottom = false;
+
+            ImGui::EndChild();
+        }
+    };
+
     static auto vector_getter = [](void* vec, int idx, const char** out_text)
     {
         auto & vector = *static_cast<std::vector<std::string>*>(vec);
@@ -49,6 +115,7 @@ namespace ImGui
     SplitRegion Split(const Bounds2D & r, int * v, SplitType t)
     {
         ImGuiWindow * window = ImGui::GetCurrentWindowRead();
+
         const ImGuiID id = window->GetID(v);
         const auto & io = ImGui::GetIO();
 
@@ -56,7 +123,6 @@ namespace ImGui
 
         if (GImGui->ActiveId == id)
         {
-
             // Get the current mouse position relative to the desired axis
             if (io.MouseDown[0])
             {
@@ -101,6 +167,8 @@ namespace ImGui
 template<class T> const T * query_metadata(const T & meta) { return &meta; }
 template<class T> const T * query_metadata() { return nullptr; }
 template<class T> struct range_metadata { T min, max; };
+template<class T> struct degree_metadata { T min, max; };
+
 struct editor_hidden {  };
 
 inline bool Edit(const char * label, std::string & s)
@@ -176,7 +244,7 @@ template<class T> std::enable_if_t<std::is_class<T>::value, bool> Edit(const cha
 {
     bool r = false;
     visit_fields(object, [&r](const char * name, auto & field, auto... metadata)
-    {
+    {   
         r |= Edit(name, field, metadata...);
     });
     return r;

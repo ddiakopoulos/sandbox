@@ -75,11 +75,6 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
 #endif
     
     glfwSetWindowUserPointer(window, this);
-
-    glfwSetWindowRefreshCallback(window, [](GLFWwindow * window)
-    {
-        //auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); try { app->on_draw();} catch(...) { CATCH_CURRENT; }
-    });
     
     glfwSetWindowFocusCallback  (window, [](GLFWwindow * window, int focused)
     {
@@ -117,12 +112,10 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
         catch (...) { CATCH_CURRENT; }
     });
     
-	/*    
     glfwSetDropCallback (window, [](GLFWwindow * window, int count, const char * names[])
     {
         auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); try { app->on_drop({names, names+count});} catch(...) { CATCH_CURRENT; }
     });
-	*/
 }
 
 GLFWApp::~GLFWApp() 

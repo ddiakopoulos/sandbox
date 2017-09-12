@@ -22,7 +22,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
 
-    scene.skybox.reset(new HosekProceduralSky());
 
     auto wireframeProgram = GlShader(
         read_file_text("../assets/shaders/wireframe_vert.glsl"), 
@@ -66,7 +65,17 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     });
 
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
+
+    scene.skybox.reset(new HosekProceduralSky());
     renderer->set_procedural_sky(scene.skybox.get());
+    scene.skybox->onParametersChanged = [&]
+    {
+        uniforms::directional_light updatedSun;
+        updatedSun.direction = scene.skybox->get_sun_direction();
+        updatedSun.color = float3(1.f, 1.0f, 1.0f);
+        updatedSun.amount = 1.0f;
+        renderer->set_sunlight(updatedSun);
+    };
 
     auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
     auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
@@ -103,7 +112,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     }
 
     //auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
-    auto shaderball = load_geometry_from_ply("../assets/models/geometry/CubeHollowOpen.ply");
+    auto shaderball = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply");
     rescale_geometry(shaderball, 1.f);
     global_register_asset("shaderball", make_mesh_from_geometry(shaderball));
     global_register_asset("shaderball", std::move(shaderball));
@@ -116,7 +125,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     global_register_asset("cube", make_mesh_from_geometry(cube));
     global_register_asset("cube", std::move(cube));
 
-
     scene.objects.clear();
     cereal::deserialize_from_json("scene.json", scene.objects);
 }
@@ -124,6 +132,39 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
 scene_editor_app::~scene_editor_app()
 { 
 
+}
+
+void scene_editor_app::on_drop(std::vector<std::string> filepaths)
+{
+    for (auto path : filepaths)
+    {
+        std::transform(path.begin(), path.end(), path.begin(), ::tolower);
+        const std::string fileExtension = get_extension(path);
+
+        if (fileExtension == "png" || fileExtension == "tga" || fileExtension == "jpg")
+        {
+            global_register_asset(get_filename_without_extension(path).c_str(), load_image(path, false));
+        }
+
+        if (fileExtension == "ply")
+        {
+            auto plyImport = load_geometry_from_ply(path);
+            rescale_geometry(plyImport, 1.f);
+            global_register_asset(get_filename_without_extension(path).c_str(), make_mesh_from_geometry(plyImport));
+            global_register_asset(get_filename_without_extension(path).c_str(), std::move(plyImport));
+        }
+
+        if (fileExtension == "obj")
+        {
+            auto objImport = load_geometry_from_obj_no_texture(path);
+            for (auto & mesh : objImport)
+            {
+                rescale_geometry(mesh, 1.f);
+                global_register_asset(get_filename_without_extension(path).c_str(), make_mesh_from_geometry(mesh));
+                global_register_asset(get_filename_without_extension(path).c_str(), std::move(mesh));
+            }
+        }
+    }
 }
 
 void scene_editor_app::on_window_resize(int2 size) 
@@ -370,7 +411,6 @@ void scene_editor_app::on_draw()
     
     // Define a split region between the whole window and the right panel
     auto rightRegion = ImGui::Split({ { 0.f,17.f },{ (float) width, (float) height } }, &horizSplit, ImGui::SplitType::Right);
-
     auto split2 = ImGui::Split(rightRegion.second, &rightSplit1, ImGui::SplitType::Top);
     auto split3 = ImGui::Split(split2.first, &rightSplit2, ImGui::SplitType::Top); // split again by the same amount
 
@@ -418,27 +458,37 @@ void scene_editor_app::on_draw()
 
     // Define a split region between the whole window and the left panel
     static int leftSplit = 380;
+    static int leftSplit1 = (height / 2);
     auto leftRegionSplit = ImGui::Split({ { 0.f,17.f },{ (float)width, (float)height } }, &leftSplit, ImGui::SplitType::Left);
-    ui_rect leftPane = { { int2(leftRegionSplit.second.min()) },{ int2(leftRegionSplit.second.max()) } };
+    auto lsplit2 = ImGui::Split(leftRegionSplit.second, &leftSplit1, ImGui::SplitType::Top);
+    ui_rect topLeftPane = { { int2(lsplit2.second.min()) },{ int2(lsplit2.second.max()) } };
+    ui_rect bottomLeftPane = { { int2(lsplit2.first.min()) },{ int2(lsplit2.first.max()) } };
 
-    gui::imgui_fixed_window_begin("Renderer", leftPane);
+    gui::imgui_fixed_window_begin("Renderer", topLeftPane);
     {
         ImGui::Text("Shadow  %f ms", compute_mean(renderer->shadowAverage));
         ImGui::Text("Forward %f ms", compute_mean(renderer->forwardAverage));
         ImGui::Text("Post    %f ms", compute_mean(renderer->postAverage));
         ImGui::Text("Frame   %f ms", compute_mean(renderer->frameAverage));
 
-        if (ImGui::TreeNode("Bloom"))
-        {
-            Edit("bloom", *renderer->get_shadow_pass());
-        }
+        ImGui::Separator();
 
-        if (ImGui::TreeNode("Cascaded Shadow Mapping"))
-        {
-            Edit("shadows", *renderer->get_bloom_pass());
-        }
+        if (ImGui::TreeNode("Procedural Sky")) InspectGameObjectPolymorphic(nullptr, renderer->get_procedural_sky());
+        if (ImGui::TreeNode("Bloom + Tonemap")) Edit("bloom", *renderer->get_bloom_pass());
+        if (ImGui::TreeNode("Cascaded Shadow Mapping")) Edit("shadows", *renderer->get_shadow_pass());
+
+        ImGui::Separator();
     }
     gui::imgui_fixed_window_end();
+
+
+    gui::imgui_fixed_window_begin("Application Log", bottomLeftPane);
+    {
+        static ImGui::ImGuiAppLog log;
+        log.Draw("-");
+    }
+    gui::imgui_fixed_window_end();
+
 
     igm->end_frame();
 
@@ -465,32 +515,3 @@ IMPLEMENT_MAIN(int argc, char * argv[])
     }
     return EXIT_SUCCESS;
 }
-
-/*
-
-
-void gather_imgui()
-{
-
-
-if (ImGui::CollapsingHeader("Cascaded Shadow Mapping"))
-{
-ImGui::Checkbox("Enable Shadows", &renderShadows);
-shadow->gather_imgui(renderShadows);
-}
-
-if (ImGui::CollapsingHeader("Post Processing"))
-{
-ImGui::Checkbox("Enable Post", &renderPost);
-if (renderPost)
-{
-if (ImGui::CollapsingHeader("Bloom"))
-{
-ImGui::Checkbox("Enable Bloom", &renderBloom);
-bloom->gather_imgui(renderBloom);
-}
-}
-}
-}
-
-*/

@@ -37,6 +37,13 @@ namespace avl
             list.push_back(item);
         return list;
     }
+
+    inline std::string get_extension(const std::string & path)
+    {
+        auto found = path.find_last_of('.');
+        if (found == std::string::npos) return "";
+        else return path.substr(found + 1);
+    }
     
     inline std::string get_filename_with_extension(const std::string & path)
     {

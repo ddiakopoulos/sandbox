@@ -140,7 +140,7 @@ public:
     }
 };
 
-struct scene_editor_app : public GLFWApp
+struct scene_editor_app final : public GLFWApp
 {
     GlCamera cam;
     FlyCameraController flycam;
@@ -155,8 +155,9 @@ struct scene_editor_app : public GLFWApp
     scene_editor_app();
     ~scene_editor_app();
 
-    virtual void on_window_resize(int2 size) override;
-    virtual void on_input(const InputEvent & event) override;
-    virtual void on_update(const UpdateEvent & e) override;
-    virtual void on_draw() override;
+    void on_window_resize(int2 size) override;
+    void on_input(const InputEvent & event) override;
+    void on_update(const UpdateEvent & e) override;
+    void on_draw() override;
+    void on_drop(std::vector <std::string> filepaths) override;
 };

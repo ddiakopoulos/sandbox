@@ -7,6 +7,7 @@
 #include "assets.hpp"
 #include "material.hpp"
 #include "scene.hpp"
+#include "gl-procedural-sky.hpp"
 
 #include "cereal/cereal.hpp"
 #include "cereal/types/memory.hpp"
@@ -27,6 +28,21 @@
 /////////////////////////////////////////
 //   Engine Relationship Declarations  //
 /////////////////////////////////////////
+
+template<class F> void visit_subclasses(ProceduralSky * p, F f)
+{
+    f("hosek_model",    dynamic_cast<HosekProceduralSky *>(p));
+}
+
+template<class F> void visit_fields(HosekProceduralSky & o, F f)
+{
+    f("sun_position_theta",     o.sunPosition.x, range_metadata<float>{ 0.f, (float) ANVIL_PI });
+    f("sun_position_phi",       o.sunPosition.y, range_metadata<float>{ 0.f, (float) ANVIL_TWO_PI });
+    f("normalized_sun_y",       o.normalizedSunY, range_metadata<float>{ 0.f, (float)ANVIL_PI });
+    f("albedo",                 o.albedo, range_metadata<float>{ 0.01f, 4.f});
+    f("turbidity",              o.turbidity, range_metadata<float>{ 1.f, 14.f });
+    o.recompute(o.turbidity, o.albedo, o.normalizedSunY);
+}
 
 template<class F> void visit_fields(Pose & o, F f) { f("position", o.position); f("orientation", o.orientation); }
 
