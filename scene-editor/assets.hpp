@@ -11,19 +11,21 @@
 
 #include <memory>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 template<typename T>
 struct UniqueAsset : public Noncopyable
 {
     T asset;
     bool assigned = false;
+    std::string filepath;
+    std::string timestamp;
 };
 
 template<typename T>
 class AssetHandle
 {
-    static std::map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
+    static std::unordered_map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
     mutable std::shared_ptr<UniqueAsset<T>> handle{ nullptr };
     AssetHandle(const::std::string & id, std::shared_ptr<UniqueAsset<T>> h) : name(id), handle(h) {} // private constructor for the static list() method below
 
@@ -36,10 +38,7 @@ public:
     AssetHandle(const char * asset_id)
     {
         auto & a = table[asset_id];
-        if (!a)
-        {
-            a = std::make_shared<UniqueAsset<T>>(); // this will construct a handle for an asset that hasn't been assigned yet
-        }
+        if (!a) a = std::make_shared<UniqueAsset<T>>();
         handle = a;
         name = asset_id;
     }
@@ -50,74 +49,63 @@ public:
         name = r.name;
     }
 
+    // Return const reference to underlying resource. Note that `UniqueAsset` is default constructable,
+    // so this function may not return the desired asset if loading has failed.
     T & get() const
     { 
-        //std::cout << "Handle is: " << handle << std::endl;
-        //std::cout << "GET " << typeid(this).name() << " - " << name << " - " << handle->assigned << std::endl;
-        //std::cout << "get assigned?: " << typeid(this).name() << " - " << name << " - " << handle << " // " << handle->assigned << std::endl;
-
-        if (name.size() == 0)
+        if (name.size() == 0) throw std::invalid_argument("asset has no identifier");
+        
+        if (handle->assigned) return handle->asset; // Check if this handle has a cached asset
+        else // If not, this is a virgin handle and we should lookup from the static table
         {
-            throw std::invalid_argument("asset has no identifier");
-        }
-        if (handle)
-        {
-            return handle->asset;
-        }
-        else
-        {
-            auto & a = table[name.c_str()];
-
-            if (!a)
+            auto & a = table[name];
+            if (a)
             {
-                a = std::make_shared<UniqueAsset<T>>(); // this will construct a handle for an asset that hasn't been assigned yet
                 handle = a;
                 return handle->asset;
             }
-            else
-            {
-                throw std::runtime_error("no assignment has been made to this asset - " + name);
-            }
         }
+
+        // No valid asset was found...
+        std::cout << "Returning default-constructed asset for " << name << std::endl;
+        return handle->asset;
     }
 
     T & assign(T && asset)
     {
-        handle = std::make_shared<UniqueAsset<T>>();
+        std::cout << "Assigning: " << typeid(this).name() << " - " << name << " - " << handle << " // " << handle->assigned << std::endl;
         handle->asset = std::move(asset);
         handle->assigned = true;
-        std::cout << "assigning: " << typeid(this).name() << " - " << name << " - " << handle << " // " << handle->assigned << std::endl;
         return handle->asset;
     }
 
+    // Since `AssetHandle`s can serve back default-constructed values (handle->assigned == false)
+    // this also needs to lookup back to the table in the case that we check if an asset has 
+    // been assigned before ever calling `get()`
     bool assigned() const
     {
-        std::cout << "assigned?: " << typeid(this).name() << " - " << name << " - " << handle << " // " << handle->assigned << std::endl;
-        if (handle->assigned)
-        {
-            return true;
-        }
-        else return false;
+        auto & a = table[name];
+        if (a) handle = a;
+        if (handle->assigned) return true;
+        return false;
     }
 
     static std::vector<AssetHandle> list()
     {
         std::vector<AssetHandle> results;
-        for (const auto & a : table)
-        {
-            results.push_back(AssetHandle<T>(a.first, a.second));
-        }
+        for (const auto & a : table) results.push_back(AssetHandle<T>(a.first, a.second));
         return results;
     }
 };
 
 template<class T> 
-std::map<std::string, std::shared_ptr<UniqueAsset<T>>> AssetHandle<T>::table;
+std::unordered_map<std::string, std::shared_ptr<UniqueAsset<T>>> AssetHandle<T>::table;
 
-template<class T> void global_register_asset(const char * asset_id, T && asset)
+template<class T> AssetHandle<T> create_handle_for_asset(const char * asset_id, T && asset)
 {
     AssetHandle<T> assetHandle(asset_id);
     assetHandle.assign(std::move(asset));
+    return assetHandle;
 }
 
 typedef AssetHandle<GlTexture2D> GlTextureHandle;
