@@ -22,7 +22,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
 
-
     auto wireframeProgram = GlShader(
         read_file_text("../assets/shaders/wireframe_vert.glsl"), 
         read_file_text("../assets/shaders/wireframe_frag.glsl"),
@@ -109,6 +108,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         std::cout << "Registered: " << instance.first.c_str() << std::endl;
         std::cout << "Program Shader Handle Name: " << instance.second->program.name << std::endl;
         std::cout << "Program Shader Handle Asset: " << instance.second->program.get().handle() << std::endl;
+        // assigned?
     }
 
     //auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
@@ -295,7 +295,7 @@ void scene_editor_app::on_draw()
         std::vector<Renderable *> sceneObjects;
         for (auto & obj : scene.objects)
         {
-            if (auto * r = dynamic_cast<Renderable*>(obj.get()))  sceneObjects.push_back(r);
+            if (auto * r = dynamic_cast<Renderable*>(obj.get())) sceneObjects.push_back(r);
         }
         renderer->add_objects(sceneObjects);
 
@@ -473,14 +473,13 @@ void scene_editor_app::on_draw()
 
         ImGui::Separator();
 
-        if (ImGui::TreeNode("Procedural Sky")) InspectGameObjectPolymorphic(nullptr, renderer->get_procedural_sky());
-        if (ImGui::TreeNode("Bloom + Tonemap")) Edit("bloom", *renderer->get_bloom_pass());
-        if (ImGui::TreeNode("Cascaded Shadow Mapping")) Edit("shadows", *renderer->get_shadow_pass());
+        //if (ImGui::TreeNode("Procedural Sky")) InspectGameObjectPolymorphic(nullptr, renderer->get_procedural_sky());
+        //if (ImGui::TreeNode("Bloom + Tonemap")) Edit("bloom", *renderer->get_bloom_pass());
+        //if (ImGui::TreeNode("Cascaded Shadow Mapping")) Edit("shadows", *renderer->get_shadow_pass());
 
         ImGui::Separator();
     }
     gui::imgui_fixed_window_end();
-
 
     gui::imgui_fixed_window_begin("Application Log", bottomLeftPane);
     {
@@ -488,7 +487,6 @@ void scene_editor_app::on_draw()
         log.Draw("-");
     }
     gui::imgui_fixed_window_end();
-
 
     igm->end_frame();
 

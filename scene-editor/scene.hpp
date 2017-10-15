@@ -50,12 +50,21 @@ struct GameObject
 
 struct Renderable : public GameObject
 {
-    AssetHandle<std::shared_ptr<Material>> mat;
+    MaterialHandle mat;
 
     bool receive_shadow{ true };
     bool cast_shadow{ true };
 
-    Material * get_material() { return mat.get().get(); }
+    Material * get_material() 
+    {
+
+        if (mat.assigned())
+        {
+            return mat.get().get();
+        }
+
+        else return nullptr; 
+    }
     void set_material(AssetHandle<std::shared_ptr<Material>> handle) { mat = handle; }
 
     void set_receive_shadow(const bool value) { receive_shadow = value; }
@@ -121,6 +130,7 @@ struct DirectionalLight final : public Renderable
         auto directionQuat = make_quat_from_to({ 0, 1, 0 }, data.direction);
         return Pose(directionQuat);
     }
+
     void set_pose(const Pose & p) override
     {
         data.direction = qydir(p.orientation);

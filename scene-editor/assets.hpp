@@ -24,7 +24,7 @@ template<typename T>
 class AssetHandle
 {
     static std::map<std::string, std::shared_ptr<UniqueAsset<T>>> table;
-    mutable std::shared_ptr<UniqueAsset<T>> handle;
+    mutable std::shared_ptr<UniqueAsset<T>> handle{ nullptr };
     AssetHandle(const::std::string & id, std::shared_ptr<UniqueAsset<T>> h) : name(id), handle(h) {} // private constructor for the static list() method below
 
 public:
@@ -36,7 +36,10 @@ public:
     AssetHandle(const char * asset_id)
     {
         auto & a = table[asset_id];
-        if (!a) a = std::make_shared<UniqueAsset<T>>();
+        if (!a)
+        {
+            a = std::make_shared<UniqueAsset<T>>(); // this will construct a handle for an asset that hasn't been assigned yet
+        }
         handle = a;
         name = asset_id;
     }
@@ -49,28 +52,51 @@ public:
 
     T & get() const
     { 
-        // lazy load in instances where we've deserialized a name didn't construct and do a lookup
-        // if there's a registered asset
-        if (handle->assigned) return handle->asset;
+        //std::cout << "Handle is: " << handle << std::endl;
+        //std::cout << "GET " << typeid(this).name() << " - " << name << " - " << handle->assigned << std::endl;
+        //std::cout << "get assigned?: " << typeid(this).name() << " - " << name << " - " << handle << " // " << handle->assigned << std::endl;
+
+        if (name.size() == 0)
+        {
+            throw std::invalid_argument("asset has no identifier");
+        }
+        if (handle)
+        {
+            return handle->asset;
+        }
         else
         {
             auto & a = table[name.c_str()];
-            handle = a;
-            return handle->asset;
+
+            if (!a)
+            {
+                a = std::make_shared<UniqueAsset<T>>(); // this will construct a handle for an asset that hasn't been assigned yet
+                handle = a;
+                return handle->asset;
+            }
+            else
+            {
+                throw std::runtime_error("no assignment has been made to this asset - " + name);
+            }
         }
-        throw std::runtime_error("no assignment has been made to this asset - " + name);
     }
 
     T & assign(T && asset)
     {
+        handle = std::make_shared<UniqueAsset<T>>();
         handle->asset = std::move(asset);
         handle->assigned = true;
+        std::cout << "assigning: " << typeid(this).name() << " - " << name << " - " << handle << " // " << handle->assigned << std::endl;
         return handle->asset;
     }
 
     bool assigned() const
     {
-        if (handle->assigned) return true;
+        std::cout << "assigned?: " << typeid(this).name() << " - " << name << " - " << handle << " // " << handle->assigned << std::endl;
+        if (handle->assigned)
+        {
+            return true;
+        }
         else return false;
     }
 

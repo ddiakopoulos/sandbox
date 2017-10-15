@@ -119,25 +119,29 @@ class PhysicallyBasedRenderer
             float rDist = distance(cameraWorldspace, rhs->get_pose().position);
 
             // Can't sort by material if the renderable doesn't have a material
-            if (!lhs->get_material() || !rhs->get_material())
+            if (lhs->get_material() == nullptr || rhs->get_material() == nullptr)
             {
                 return lDist < rDist;
             }
 
             auto lid = lhs->get_material()->id();
             auto rid = rhs->get_material()->id();
-
             if (lid != rid) return lid > rid;
-            else return lDist < rDist;
+
+            return lDist < rDist;
         };
 
         std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(renderSortFunc)> renderQueue(renderSortFunc);
 
-        for (auto obj : renderSet) { renderQueue.push(obj); }
+        for (auto obj : renderSet) 
+        { 
+            renderQueue.push(obj); 
+        }
 
         while (!renderQueue.empty())
         {
-            auto top = renderQueue.top();
+            Renderable * top = renderQueue.top();
+            renderQueue.pop();
 
             // Update per-object uniform buffer
             uniforms::per_object object = {};
@@ -149,7 +153,9 @@ class PhysicallyBasedRenderer
 
             // We assume that objects without a valid material take care of their own shading
             // in their `draw()` function
-            if (Material * mat = top->get_material())
+            Material * mat = top->get_material();
+
+            if (mat)
             {
                 mat->update_uniforms();
 
@@ -164,8 +170,6 @@ class PhysicallyBasedRenderer
             top->draw();
 
             gl_check_error(__FILE__, __LINE__);
-
-            renderQueue.pop();
         }
 
         gl_check_error(__FILE__, __LINE__);
@@ -436,7 +440,6 @@ public:
     CircularBuffer<float> shadowAverage = { 3 };
     CircularBuffer<float> postAverage = { 3 };
     CircularBuffer<float> frameAverage = { 3 };
-
 };
 
 #endif // end vr_renderer_hpp
