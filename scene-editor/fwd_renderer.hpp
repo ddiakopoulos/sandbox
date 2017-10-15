@@ -111,18 +111,14 @@ class PhysicallyBasedRenderer
     {
         glEnable(GL_DEPTH_TEST);
 
-        // todo - this is done per-eye but should be done per frame instead
-        auto renderSortFunc = [&d](Renderable * lhs, Renderable * rhs)
-        {
-            float3 cameraWorldspace = d.pose.position;
-            float lDist = distance(cameraWorldspace, lhs->get_pose().position);
-            float rDist = distance(cameraWorldspace, rhs->get_pose().position);
+        // http://realtimecollisiondetection.net/blog/?p=86
 
-            // Can't sort by material if the renderable doesn't have a material
-            if (lhs->get_material() == nullptr || rhs->get_material() == nullptr)
-            {
-                return lDist < rDist;
-            }
+        // todo - this is done per-eye but should be done per frame instead
+        auto materialSortFunc = [&d](Renderable * lhs, Renderable * rhs)
+        {
+            const float3 cameraWorldspace = d.pose.position;
+            const float lDist = distance(cameraWorldspace, lhs->get_pose().position);
+            const float rDist = distance(cameraWorldspace, rhs->get_pose().position);
 
             auto lid = lhs->get_material()->id();
             auto rid = rhs->get_material()->id();
@@ -131,45 +127,64 @@ class PhysicallyBasedRenderer
             return lDist < rDist;
         };
 
-        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(renderSortFunc)> renderQueue(renderSortFunc);
+        auto distanceSortFunc = [&d](Renderable * lhs, Renderable * rhs)
+        {
+            const float3 cameraWorldspace = d.pose.position;
+            const float lDist = distance(cameraWorldspace, lhs->get_pose().position);
+            const float rDist = distance(cameraWorldspace, rhs->get_pose().position);
+            return lDist < rDist;
+        };
+
+        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(materialSortFunc)> renderQueueMaterial(materialSortFunc);
+        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(distanceSortFunc)> renderQueueDefault(distanceSortFunc);
 
         for (auto obj : renderSet) 
         { 
-            renderQueue.push(obj); 
+            // Can't sort by material if the renderable doesn't *have* a material; 
+            // bucket all other objects 
+            if (obj->get_material() != nullptr) renderQueueMaterial.push(obj);
+            else renderQueueDefault.push(obj);
         }
 
-        while (!renderQueue.empty())
+        // Update per-object uniform buffer
+        auto update_per_object = [&](Renderable * top)
         {
-            Renderable * top = renderQueue.top();
-            renderQueue.pop();
-
-            // Update per-object uniform buffer
             uniforms::per_object object = {};
             object.modelMatrix = mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale()));
             object.modelMatrixIT = inverse(transpose(object.modelMatrix));
             object.modelViewMatrix = mul(d.viewMatrix, object.modelMatrix);
-            object.receiveShadow = (float) top->get_receive_shadow();
+            object.receiveShadow = (float)top->get_receive_shadow();
             perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
+        };
 
-            // We assume that objects without a valid material take care of their own shading
-            // in their `draw()` function
+        while (!renderQueueMaterial.empty())
+        {
+            Renderable * top = renderQueueMaterial.top();
+            renderQueueMaterial.pop();
+
+            update_per_object(top);
             Material * mat = top->get_material();
 
-            if (mat)
+            mat->update_uniforms();
+
+            if (auto * mr = dynamic_cast<MetallicRoughnessMaterial*>(mat))
             {
-                mat->update_uniforms();
-
-                if (auto * mr = dynamic_cast<MetallicRoughnessMaterial*>(mat))
-                {
-                    mr->update_cascaded_shadow_array_handle(shadow->get_output_texture());
-                }
-
-                mat->use();
+                mr->update_cascaded_shadow_array_handle(shadow->get_output_texture());
             }
 
-            top->draw();
+            mat->use();
 
-            gl_check_error(__FILE__, __LINE__);
+            top->draw();
+        }
+
+        // We assume that objects without a valid material take care of their own shading
+        // in their `draw()` function. 
+        while (!renderQueueDefault.empty())
+        {
+            Renderable * top = renderQueueDefault.top();
+            renderQueueDefault.pop();
+            update_per_object(top);
+            top->draw();
         }
 
         gl_check_error(__FILE__, __LINE__);

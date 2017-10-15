@@ -7,6 +7,8 @@ using namespace avl;
 
 scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
 {
+    std::cout << "Timestamp: " << HumanTime().make_timestamp() << std::endl;
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
@@ -26,14 +28,14 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         read_file_text("../assets/shaders/wireframe_vert.glsl"), 
         read_file_text("../assets/shaders/wireframe_frag.glsl"),
         read_file_text("../assets/shaders/wireframe_geom.glsl"));
-    global_register_asset("wireframe", std::move(wireframeProgram));
+    create_handle_for_asset("wireframe", std::move(wireframeProgram));
 
     shaderMonitor.watch(
         "../assets/shaders/renderer/forward_lighting_vert.glsl",
         "../assets/shaders/renderer/default_material_frag.glsl",
         "../assets/shaders/renderer", {}, [](GlShader shader)
     {
-        auto & asset = AssetHandle<GlShader>("default-shader").assign(std::move(shader));
+        create_handle_for_asset("default-shader", std::move(shader));
     });
 
     shaderMonitor.watch(
@@ -44,7 +46,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
          "USE_IMAGE_BASED_LIGHTING", 
          "HAS_ROUGHNESS_MAP", "HAS_METALNESS_MAP", "HAS_ALBEDO_MAP", "HAS_NORMAL_MAP", "HAS_OCCLUSION_MAP"}, [](GlShader shader)
     {
-        auto & asset = AssetHandle<GlShader>("pbr-forward-lighting").assign(std::move(shader));
+        create_handle_for_asset("pbr-forward-lighting", std::move(shader));
     });
 
     shaderMonitor.watch(
@@ -52,15 +54,17 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         "../assets/shaders/renderer/shadowcascade_frag.glsl", 
         "../assets/shaders/renderer/shadowcascade_geom.glsl", 
         "../assets/shaders/renderer", {}, 
-        [](GlShader shader) {
-        auto & asset = AssetHandle<GlShader>("cascaded-shadows").assign(std::move(shader));
+        [](GlShader shader) 
+    {
+        create_handle_for_asset("cascaded-shadows", std::move(shader));
     });
 
     shaderMonitor.watch(
         "../assets/shaders/renderer/post_tonemap_vert.glsl",
         "../assets/shaders/renderer/post_tonemap_frag.glsl",
-        [](GlShader shader) {
-        auto & asset = AssetHandle<GlShader>("post-tonemap").assign(std::move(shader));
+        [](GlShader shader) 
+    {
+        create_handle_for_asset("post-tonemap", std::move(shader));
     });
 
     renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
@@ -80,23 +84,23 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
     gli::texture_cube radianceHandle(gli::load_dds((char *)radianceBinary.data(), radianceBinary.size()));
     gli::texture_cube irradianceHandle(gli::load_dds((char *)irradianceBinary.data(), irradianceBinary.size()));
-    global_register_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
-    global_register_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
+    create_handle_for_asset("wells-radiance-cubemap", load_cubemap(radianceHandle));
+    create_handle_for_asset("wells-irradiance-cubemap", load_cubemap(irradianceHandle));
 
-    global_register_asset("rusted-iron-albedo", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_basecolor.tga", false));
-    global_register_asset("rusted-iron-normal", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_n.tga", false));
-    global_register_asset("rusted-iron-metallic", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_metallic.tga", false));
-    global_register_asset("rusted-iron-roughness", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_roughness.tga", false));
-    global_register_asset("rusted-iron-occlusion", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_ao.tga", false));
+    create_handle_for_asset("rusted-iron-albedo", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_basecolor.tga", false));
+    create_handle_for_asset("rusted-iron-normal", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_n.tga", false));
+    create_handle_for_asset("rusted-iron-metallic", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_metallic.tga", false));
+    create_handle_for_asset("rusted-iron-roughness", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_roughness.tga", false));
+    create_handle_for_asset("rusted-iron-occlusion", load_image("../assets/nonfree/Metal_ModernMetalIsoDiamondTile_2k_ao.tga", false));
 
-    global_register_asset("scifi-floor-albedo", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_basecolor.tga", false));
-    global_register_asset("scifi-floor-normal", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_n.tga", false));
-    global_register_asset("scifi-floor-metallic", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_metallic.tga", false));
-    global_register_asset("scifi-floor-roughness", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_roughness.tga", false));
-    global_register_asset("scifi-floor-occlusion", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_ao.tga", false));
+    create_handle_for_asset("scifi-floor-albedo", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_basecolor.tga", false));
+    create_handle_for_asset("scifi-floor-normal", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_n.tga", false));
+    create_handle_for_asset("scifi-floor-metallic", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_metallic.tga", false));
+    create_handle_for_asset("scifi-floor-roughness", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_roughness.tga", false));
+    create_handle_for_asset("scifi-floor-occlusion", load_image("../assets/nonfree/Metal_ScifiHangarFloor_2k_ao.tga", false));
 
     std::shared_ptr<DefaultMaterial> default = std::make_shared<DefaultMaterial>();
-    global_register_asset("default-material", static_cast<std::shared_ptr<Material>>(default));
+    create_handle_for_asset("default-material", static_cast<std::shared_ptr<Material>>(default));
 
     cereal::deserialize_from_json("materials.json", scene.materialInstances);
 
@@ -104,8 +108,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     // we can do this wherever, so long as it's before the first rendered frame
     for (auto & instance : scene.materialInstances)
     {
-        global_register_asset(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
-        std::cout << "Registered: " << instance.first.c_str() << std::endl;
+        create_handle_for_asset(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
+        std::cout << "Material Handle (Instance): " << instance.first.c_str() << std::endl;
         std::cout << "Program Shader Handle Name: " << instance.second->program.name << std::endl;
         std::cout << "Program Shader Handle Asset: " << instance.second->program.get().handle() << std::endl;
         // assigned?
@@ -114,16 +118,16 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     //auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
     auto shaderball = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply");
     rescale_geometry(shaderball, 1.f);
-    global_register_asset("shaderball", make_mesh_from_geometry(shaderball));
-    global_register_asset("shaderball", std::move(shaderball));
+    create_handle_for_asset("shaderball", make_mesh_from_geometry(shaderball));
+    create_handle_for_asset("shaderball", std::move(shaderball));
 
     auto ico = make_icosasphere(5);
-    global_register_asset("icosphere", make_mesh_from_geometry(ico));
-    global_register_asset("icosphere", std::move(ico));
+    create_handle_for_asset("icosphere", make_mesh_from_geometry(ico));
+    create_handle_for_asset("icosphere", std::move(ico));
 
     auto cube = make_cube();
-    global_register_asset("cube", make_mesh_from_geometry(cube));
-    global_register_asset("cube", std::move(cube));
+    create_handle_for_asset("cube", make_mesh_from_geometry(cube));
+    create_handle_for_asset("cube", std::move(cube));
 
     scene.objects.clear();
     cereal::deserialize_from_json("scene.json", scene.objects);
@@ -143,15 +147,15 @@ void scene_editor_app::on_drop(std::vector<std::string> filepaths)
 
         if (fileExtension == "png" || fileExtension == "tga" || fileExtension == "jpg")
         {
-            global_register_asset(get_filename_without_extension(path).c_str(), load_image(path, false));
+            create_handle_for_asset(get_filename_without_extension(path).c_str(), load_image(path, false));
         }
 
         if (fileExtension == "ply")
         {
             auto plyImport = load_geometry_from_ply(path);
             rescale_geometry(plyImport, 1.f);
-            global_register_asset(get_filename_without_extension(path).c_str(), make_mesh_from_geometry(plyImport));
-            global_register_asset(get_filename_without_extension(path).c_str(), std::move(plyImport));
+            create_handle_for_asset(get_filename_without_extension(path).c_str(), make_mesh_from_geometry(plyImport));
+            create_handle_for_asset(get_filename_without_extension(path).c_str(), std::move(plyImport));
         }
 
         if (fileExtension == "obj")
@@ -160,8 +164,8 @@ void scene_editor_app::on_drop(std::vector<std::string> filepaths)
             for (auto & mesh : objImport)
             {
                 rescale_geometry(mesh, 1.f);
-                global_register_asset(get_filename_without_extension(path).c_str(), make_mesh_from_geometry(mesh));
-                global_register_asset(get_filename_without_extension(path).c_str(), std::move(mesh));
+                create_handle_for_asset(get_filename_without_extension(path).c_str(), make_mesh_from_geometry(mesh));
+                create_handle_for_asset(get_filename_without_extension(path).c_str(), std::move(mesh));
             }
         }
     }
