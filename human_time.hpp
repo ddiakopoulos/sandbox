@@ -31,19 +31,30 @@ namespace avl
         void update()
         {
             std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-            time_t tt = std::chrono::system_clock::to_time_t(now);
-            tm utc_tm = *gmtime(&tt);
-            year = utc_tm.tm_year + 1900;
-            month = utc_tm.tm_mon;
-            monthDay = utc_tm.tm_mday;
-            yearDay = utc_tm.tm_yday;
-            weekDay = utc_tm.tm_wday;
-            hour = utc_tm.tm_hour;
-            minute = utc_tm.tm_min;
-            second = utc_tm.tm_sec;
-            isDST = utc_tm.tm_isdst;
+            std::time_t tt = std::chrono::system_clock::to_time_t(now);
+            tm local_tm = *localtime(&tt);
+            year = local_tm.tm_year + 1900;
+            month = local_tm.tm_mon + 1;
+            monthDay = local_tm.tm_mday;
+            yearDay = local_tm.tm_yday;
+            weekDay = local_tm.tm_wday;
+            hour = local_tm.tm_hour;
+            minute = local_tm.tm_min;
+            second = local_tm.tm_sec;
+            isDST = local_tm.tm_isdst;
         }
 
+        std::string make_timestamp()
+        {
+            std::string timestamp =
+                std::to_string(month) + "." +
+                std::to_string(monthDay) + "." +
+                std::to_string(year) + "-" +
+                std::to_string(hour) + "." +
+                std::to_string(minute) + "." +
+                std::to_string(second);
+            return timestamp;
+        }
     };
 
 }
