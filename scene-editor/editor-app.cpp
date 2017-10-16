@@ -31,6 +31,14 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     create_handle_for_asset("wireframe", std::move(wireframeProgram));
 
     shaderMonitor.watch(
+        "../assets/shaders/renderer/depth_prepass_vert.glsl",
+        "../assets/shaders/renderer/depth_prepass_frag.glsl",
+        "../assets/shaders/renderer", {}, [](GlShader shader)
+    {
+        create_handle_for_asset("depth-prepass", std::move(shader));
+    });
+
+    shaderMonitor.watch(
         "../assets/shaders/renderer/forward_lighting_vert.glsl",
         "../assets/shaders/renderer/default_material_frag.glsl",
         "../assets/shaders/renderer", {}, [](GlShader shader)
@@ -102,7 +110,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     std::shared_ptr<DefaultMaterial> default = std::make_shared<DefaultMaterial>();
     create_handle_for_asset("default-material", static_cast<std::shared_ptr<Material>>(default));
 
-    cereal::deserialize_from_json("materials.json", scene.materialInstances);
+    cereal::deserialize_from_json("../assets/materials.json", scene.materialInstances);
 
     // Register all material instances with the asset system. Since everything is handle-based,
     // we can do this wherever, so long as it's before the first rendered frame
@@ -130,7 +138,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     create_handle_for_asset("cube", std::move(cube));
 
     scene.objects.clear();
-    cereal::deserialize_from_json("scene.json", scene.objects);
+    cereal::deserialize_from_json("../assets/scene.json", scene.objects);
 }
 
 scene_editor_app::~scene_editor_app()
@@ -305,9 +313,15 @@ void scene_editor_app::on_draw()
 
         renderer->render_frame();
 
+        gl_check_error(__FILE__, __LINE__);
+
+        glDisable(GL_DEPTH_TEST); // ???
+
         glUseProgram(0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
+
+        gl_check_error(__FILE__, __LINE__);
 
         glActiveTexture(GL_TEXTURE0);
         glEnable(GL_TEXTURE_2D);
@@ -323,7 +337,7 @@ void scene_editor_app::on_draw()
         gl_check_error(__FILE__, __LINE__);
     }
 
-
+    /*
     // Selected objects as wireframe
     {
         glDisable(GL_DEPTH_TEST);
@@ -362,7 +376,7 @@ void scene_editor_app::on_draw()
         }
         if (menu.item("Save Scene", GLFW_MOD_CONTROL, GLFW_KEY_S)) 
         {
-            write_file_text("scene.json", cereal::serialize_to_json(scene.objects));
+            write_file_text("../assets/scene.json", cereal::serialize_to_json(scene.objects));
         }
         if (menu.item("New Scene", GLFW_MOD_CONTROL, GLFW_KEY_N)) 
         {
@@ -471,6 +485,7 @@ void scene_editor_app::on_draw()
     gui::imgui_fixed_window_begin("Renderer", topLeftPane);
     {
         ImGui::Text("Shadow  %f ms", compute_mean(renderer->shadowAverage));
+        ImGui::Text("Early Z %f ms", compute_mean(renderer->earlyZAverage));
         ImGui::Text("Forward %f ms", compute_mean(renderer->forwardAverage));
         ImGui::Text("Post    %f ms", compute_mean(renderer->postAverage));
         ImGui::Text("Frame   %f ms", compute_mean(renderer->frameAverage));
@@ -499,6 +514,7 @@ void scene_editor_app::on_draw()
     editor->on_draw();
 
     gl_check_error(__FILE__, __LINE__);
+    */
 
     glfwSwapBuffers(window); 
 }
