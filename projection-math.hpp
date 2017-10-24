@@ -39,6 +39,11 @@ namespace avl
         return (1.f / (tan(vFoV * 0.5f) * 2.0f));
     }
 
+    inline float get_focal_length_pixels(const int widthPixels, float vFoV)
+    {
+        auto f = widthPixels / 2 / std::tan(vFoV * 0.5f);
+    }
+
     inline float dfov_to_vfov(float dFoV, float aspectRatio)
     {
         return 2.f * atan(tan(dFoV / 2.f) / sqrt(1.f + aspectRatio * aspectRatio));

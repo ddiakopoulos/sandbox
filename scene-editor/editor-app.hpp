@@ -152,6 +152,9 @@ struct scene_editor_app final : public GLFWApp
     std::unique_ptr<PhysicallyBasedRenderer<1>> renderer;
     std::unique_ptr<editor_controller<GameObject>> editor;
 
+    ScreenSpaceAutoLayout uiSurface;
+    std::vector<std::shared_ptr<GLTextureView>> debugViews;
+
     scene_editor_app();
     ~scene_editor_app();
 

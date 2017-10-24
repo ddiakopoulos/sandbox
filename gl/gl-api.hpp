@@ -128,17 +128,31 @@ public:
     GlObject(GLuint h) : handle(g) {}
     ~GlObject() { if (handle) factory_t::destroy(handle); }
     GlObject(const GlObject & r) = delete;
-    GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); std::swap(n, r.n);  return *this; }
+    GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); std::swap(n, r.n); return *this; }
     GlObject(GlObject && r) { *this = std::move(r); }
-    operator GLuint () const { if (!handle)  factory_t::create(handle); return handle; }
+    operator GLuint () const { if (!handle) factory_t::create(handle); return handle; }
     GlObject & operator = (GLuint & other) { handle = other; return *this; }
     void set_name(const std::string & newName) { n = newName; }
     std::string name() const { return n; }
-    GLuint id() const { return handle; };
+    GLuint id() const { if (!handle) factory_t::create(handle); return handle; };
 };
 
 struct GlBufferFactory { static void create(GLuint & x) { glGenBuffers(1, &x); }; static void destroy(GLuint x) { glDeleteBuffers(1, &x); }; };
-struct GlTextureFactory { static void create(GLuint & x) { glGenTextures(1, &x); }; static void destroy(GLuint x) { glDeleteTextures(1, &x); }; };
+
+struct GlTextureFactory 
+{ 
+    static void create(GLuint & x) 
+    { 
+        glGenTextures(1, &x); 
+        std::cout << "Create Handle: " << x << std::endl;
+    }; 
+    static void destroy(GLuint x)
+    { 
+        glDeleteTextures(1, &x); 
+        std::cout << "DELETE Handle: " << x << std::endl;
+    };
+};
+
 struct GlVertexArrayFactory { static void create(GLuint & x) { glGenVertexArrays(1, &x); }; static void destroy(GLuint x) { glDeleteVertexArrays(1, &x); }; };
 struct GlRenderbufferFactory { static void create(GLuint & x) { glGenRenderbuffers(1, &x); }; static void destroy(GLuint x) { glDeleteRenderbuffers(1, &x); }; };
 struct GlFramebufferFactory { static void create(GLuint & x) { glGenFramebuffers(1, &x); }; static void destroy(GLuint x) { glDeleteFramebuffers(1, &x); }; };
@@ -205,6 +219,7 @@ struct GlTexture2D : public GlTextureObject
 
     void setup(GLsizei width, GLsizei height, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels, bool createMipmap = false)
     {
+        std::cout << "SETUP *this " << *this << std::endl;
         glTextureImage2DEXT(*this, GL_TEXTURE_2D, 0, internal_fmt, width, height, 0, format, type, pixels);
         if (createMipmap) glGenerateTextureMipmapEXT(*this, GL_TEXTURE_2D);
         glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

@@ -11,6 +11,7 @@
 #include "simple_timer.hpp"
 #include "uniforms.hpp"
 #include "circular_buffer.hpp"
+#include "human_time.hpp"
 
 #include "gl-camera.hpp"
 #include "gl-async-gpu-timer.hpp"
@@ -22,6 +23,17 @@
 #include "shadow_pass.hpp"
 
 using namespace avl;
+
+inline bool take_screenshot(int2 size)
+{
+    HumanTime t;
+    std::vector<uint8_t> screenShot(size.x * size.y * 3);
+    glReadPixels(0, 0, size.x, size.y, GL_DEPTH_COMPONENT, GL_FLOAT, screenShot.data());
+    auto flipped = screenShot;
+    for (int y = 0; y<size.y; ++y) memcpy(flipped.data() + y*size.x * 1, screenShot.data() + (size.y - y - 1)*size.x * 1, size.x * 1);
+    stbi_write_png(std::string("depth_render_" + t.make_timestamp() + ".png").c_str(), size.x, size.y, 1, flipped.data(), 1 * size.x);
+    return false;
+}
 
 struct CameraData
 {
@@ -49,13 +61,16 @@ class PhysicallyBasedRenderer
 
     CameraData cameras[NumEyes];
 
+    // MSAA 
+    GlRenderbuffer multisampleRenderbuffers[2];
+    GlFramebuffer multisampleFramebuffer;
+
+    // Non-MSAA Targets
     GlFramebuffer eyeFramebuffers[NumEyes];
     GlTexture2D eyeTextures[NumEyes];
     GlTexture2D eyeDepthTextures[NumEyes];
 
-    GlRenderbuffer multisampleRenderbuffers[NumEyes];
-    GlFramebuffer multisampleFramebuffer;
-
+    // Cached as state for convenience (revisit this later?)
     GLuint outputTextureHandles[NumEyes];
     GLuint outputDepthTextureHandles[NumEyes];
 
@@ -74,7 +89,6 @@ class PhysicallyBasedRenderer
         if (!skybox) return;
         glDisable(GL_DEPTH_TEST);
         skybox->render(d.viewProjMatrix, d.pose.position, near_far_clip_from_projection(d.projectionMatrix).y);
-        glDisable(GL_DEPTH_TEST);
     }
 
     void run_shadow_pass(const CameraData & d)
@@ -186,14 +200,6 @@ class PhysicallyBasedRenderer
             update_per_object(top);
             top->draw();
         }
-
-        gl_check_error(__FILE__, __LINE__);
-
-        for (int eyeIndex = 0; eyeIndex < NumEyes; ++eyeIndex)
-        {
-            outputTextureHandles[eyeIndex] = eyeTextures[eyeIndex];
-            outputDepthTextureHandles[eyeIndex] = eyeDepthTextures[eyeIndex];
-        }
     }
 
     void run_post_pass(const CameraData & d)
@@ -215,6 +221,7 @@ class PhysicallyBasedRenderer
     {
         bloom->execute(eyeTextures[d.index]);
         glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.index], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+        gl_check_error(__FILE__, __LINE__);
     }
 
 public:
@@ -226,10 +233,11 @@ public:
 
         // Generate multisample render buffers for color and depth, attach to multi-sampled framebuffer target
         glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderSizePerEye.x, renderSizePerEye.y);
-        glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, renderSizePerEye.x, renderSizePerEye.y);
         glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffers[0]);
+        glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, renderSizePerEye.x, renderSizePerEye.y);
         glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, multisampleRenderbuffers[1]);
-        if (glCheckNamedFramebufferStatusEXT(multisampleFramebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("Framebuffer incomplete!");
+
+        multisampleFramebuffer.check_complete();
 
         // Generate textures and framebuffers for `NumEyes`
         for (int eyeIndex = 0; eyeIndex < NumEyes; ++eyeIndex)
@@ -285,7 +293,7 @@ public:
         b.directional_light.amount = sunlight.amount;
         for (int i = 0; i < (int)std::min(pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = *pointLights[i];
 
-        GLfloat defaultColor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
+        GLfloat defaultColor[] = { 0.0f, 1.0f, 0.f, 1.0f };
         GLfloat defaultDepth = 1.f;
     
         shadowTimer.start();
@@ -339,7 +347,9 @@ public:
             // Render into 4x multisampled fbo
             glEnable(GL_MULTISAMPLE);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
+
             glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
+
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_COLOR, 0, &defaultColor[0]);
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
@@ -349,34 +359,34 @@ public:
 
             glDisable(GL_MULTISAMPLE);
 
-            // Resolve multisample into per-eye textures
+            // Resolve multisample into per-eye framebuffers
 
-            // blit color
-            glBlitNamedFramebuffer(multisampleFramebuffer, 
-                eyeTextures[eyeIdx], 
+            // blit color ... read, draw - fbo to fbo, not fbo to texture
+            glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[eyeIdx], 
                 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, 
-                renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR); // GL_LINEAR vs GL_NEAREST
-
-            // blit depth
-            glBlitNamedFramebuffer(multisampleFramebuffer,
-                eyeTextures[eyeIdx],
-                0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0,
-                renderSizePerEye.x, renderSizePerEye.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST); // GL_LINEAR vs GL_NEAREST
+                renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR); // GL_LINEAR for color
 
             gl_check_error(__FILE__, __LINE__);
         }
 
-        forwardTimer.stop();
-
-        postTimer.start();
-
-        // Execute the post passes after having resolved the multisample framebuffers
-        for (int eyeIdx = 0; eyeIdx < NumEyes; ++eyeIdx)
+        // fixme - cache handles.. don't need to do this on every frame
+        for (int eyeIndex = 0; eyeIndex < NumEyes; ++eyeIndex)
         {
-            run_post_pass(cameras[eyeIdx]);
+            outputTextureHandles[eyeIndex] = eyeTextures[eyeIndex];
+            outputDepthTextureHandles[eyeIndex] = eyeDepthTextures[eyeIndex];
         }
 
-        postTimer.stop();
+        forwardTimer.stop();
+
+        // Execute the post passes after having resolved the multisample framebuffers
+        {
+            postTimer.start();
+            for (int eyeIdx = 0; eyeIdx < NumEyes; ++eyeIdx)
+            {
+                run_post_pass(cameras[eyeIdx]);
+            }
+            postTimer.stop();
+        }
 
         glDisable(GL_FRAMEBUFFER_SRGB);
 
@@ -393,6 +403,8 @@ public:
             postAverage.put(postMs);
             frameAverage.put(shadowMs + forwardMs + postMs);
         }
+
+        gl_check_error(__FILE__, __LINE__);
     }
 
     void add_camera(const CameraData & data)

@@ -102,7 +102,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     std::shared_ptr<DefaultMaterial> default = std::make_shared<DefaultMaterial>();
     create_handle_for_asset("default-material", static_cast<std::shared_ptr<Material>>(default));
 
-    cereal::deserialize_from_json("materials.json", scene.materialInstances);
+    cereal::deserialize_from_json("../assets/materials.json", scene.materialInstances);
 
     // Register all material instances with the asset system. Since everything is handle-based,
     // we can do this wherever, so long as it's before the first rendered frame
@@ -130,7 +130,17 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     create_handle_for_asset("cube", std::move(cube));
 
     scene.objects.clear();
-    cereal::deserialize_from_json("scene.json", scene.objects);
+    cereal::deserialize_from_json("../assets/scene.json", scene.objects);
+
+    // Setup Debug visualizations
+    uiSurface.bounds = { 0, 0, (float)width, (float)height };
+    uiSurface.add_child({ { 0.0000f, +20 },{ 0, +20 },{ 0.1667f, -10 },{ 0.133f, +10 } });
+    uiSurface.add_child({ { 0.1667f, +20 },{ 0, +20 },{ 0.3334f, -10 },{ 0.133f, +10 } });
+    uiSurface.add_child({ { 0.3334f, +20 },{ 0, +20 },{ 0.5009f, -10 },{ 0.133f, +10 } });
+    uiSurface.add_child({ { 0.5000f, +20 },{ 0, +20 },{ 0.6668f, -10 },{ 0.133f, +10 } });
+    uiSurface.layout();
+
+    for (int i = 0; i < 4; ++i) debugViews.push_back(std::make_shared<GLTextureView>(true));
 }
 
 scene_editor_app::~scene_editor_app()
@@ -173,7 +183,8 @@ void scene_editor_app::on_drop(std::vector<std::string> filepaths)
 
 void scene_editor_app::on_window_resize(int2 size) 
 { 
-
+    uiSurface.bounds = { 0, 0, (float)size.x, (float)size.y };
+    uiSurface.layout();
 }
 
 void scene_editor_app::on_input(const InputEvent & event)
@@ -303,7 +314,11 @@ void scene_editor_app::on_draw()
         }
         renderer->add_objects(sceneObjects);
 
+        gl_check_error(__FILE__, __LINE__);
+
         renderer->render_frame();
+
+        gl_check_error(__FILE__, __LINE__);
 
         glUseProgram(0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -493,6 +508,14 @@ void scene_editor_app::on_draw()
     gui::imgui_fixed_window_end();
 
     igm->end_frame();
+
+
+    for (int i = 0; i < 4; ++i)
+    {
+        glViewport(0, 0, width, height);
+        glDisable(GL_DEPTH_TEST);
+        debugViews[i]->draw(uiSurface.children[i]->bounds, float2(width, height), renderer->get_output_texture(0));
+    }
 
     // Scene editor gizmo
     glClear(GL_DEPTH_BUFFER_BIT);
