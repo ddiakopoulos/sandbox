@@ -288,7 +288,7 @@ void scene_editor_app::on_draw()
     glfwGetWindowSize(window, &width, &height);
 
     glViewport(0, 0, width, height);
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glEnable(GL_BLEND);
@@ -321,13 +321,14 @@ void scene_editor_app::on_draw()
             if (auto * r = dynamic_cast<Renderable*>(obj.get())) sceneObjects.push_back(r);
         }
         renderer->add_objects(sceneObjects);
+
         renderer->render_frame();
+
+        gl_check_error(__FILE__, __LINE__);
 
         glUseProgram(0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
-
-        gl_check_error(__FILE__, __LINE__);
 
         glActiveTexture(GL_TEXTURE0);
         glEnable(GL_TEXTURE_2D);
@@ -513,7 +514,6 @@ void scene_editor_app::on_draw()
     gui::imgui_fixed_window_end();
 
     igm->end_frame();
-
 
     for (int i = 0; i < 4; ++i)
     {

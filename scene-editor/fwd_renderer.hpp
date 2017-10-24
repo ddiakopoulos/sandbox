@@ -120,8 +120,8 @@ class PhysicallyBasedRenderer
             perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
         };
 
-        auto & depthprepass = earlyZPass.get();
-        depthprepass.bind();
+        auto & shader = earlyZPass.get();
+        shader.bind();
 
         for (auto obj : renderSet)
         {
@@ -139,7 +139,7 @@ class PhysicallyBasedRenderer
         }
         */
 
-        depthprepass.unbind();
+        shader.unbind();
 
         earlyZTimer.stop();
     }
@@ -147,8 +147,11 @@ class PhysicallyBasedRenderer
     void run_skybox_pass(const CameraData & d)
     {   
         if (!skybox) return;
+
+        GLboolean wasDepthTestingEnabled = glIsEnabled(GL_DEPTH_TEST);
         glDisable(GL_DEPTH_TEST);
         skybox->render(d.viewProjMatrix, d.pose.position, near_far_clip_from_projection(d.projectionMatrix).y);
+        if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
     }
 
     void run_shadow_pass(const CameraData & d)
@@ -184,9 +187,9 @@ class PhysicallyBasedRenderer
     void run_forward_pass(const CameraData & d)
     {
         glEnable(GL_DEPTH_TEST);
-        //glDepthFunc(GL_LEQUAL);
-        //glColorMask(1, 1, 1, 1);    // re-enable color mask after z prepass
-        //glDepthMask(GL_FALSE);      // depth already comes from the prepass
+        glDepthFunc(GL_LEQUAL);
+        glColorMask(1, 1, 1, 1);    // re-enable color mask after z prepass
+        glDepthMask(GL_FALSE);      // depth already comes from the prepass
 
         // Follows sorting strategy outlined here: 
         // http://realtimecollisiondetection.net/blog/?p=86
@@ -296,10 +299,6 @@ public:
         assert(renderSizePerEye.x >= 0 && renderSizePerEye.y >= 0);
         assert(NumEyes >= 1);
 
-        std::cout << multisampleFramebuffer << std::endl;
-        std::cout << multisampleRenderbuffers[0] << std::endl;
-        std::cout << multisampleRenderbuffers[1] << std::endl;
-
         // Generate multisample render buffers for color and depth, attach to multi-sampled framebuffer target
         glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderSizePerEye.x, renderSizePerEye.y);
         glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffers[0]);
@@ -362,7 +361,7 @@ public:
         b.directional_light.amount = sunlight.amount;
         for (int i = 0; i < (int)std::min(pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = *pointLights[i];
 
-        GLfloat defaultColor[] = { 0.0f, 1.0f, 0.f, 1.0f };
+        GLfloat defaultColor[] = { 0.0f, 0.0f, 1.f, 1.0f };
         GLfloat defaultDepth = 1.f;
     
         shadowTimer.start();
@@ -427,7 +426,7 @@ public:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // Execute the forward passes
-            run_depth_prepass(cameras[eyeIdx]);
+            //run_depth_prepass(cameras[eyeIdx]);
             run_skybox_pass(cameras[eyeIdx]);
             run_forward_pass(cameras[eyeIdx]);
 

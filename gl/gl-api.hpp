@@ -205,7 +205,6 @@ struct GlTexture2D : public GlTextureObject
 
     void setup(GLsizei width, GLsizei height, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels, bool createMipmap = false)
     {
-        std::cout << "SETUP *this " << *this << std::endl;
         glTextureImage2DEXT(*this, GL_TEXTURE_2D, 0, internal_fmt, width, height, 0, format, type, pixels);
         if (createMipmap) glGenerateTextureMipmapEXT(*this, GL_TEXTURE_2D);
         glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
