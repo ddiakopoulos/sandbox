@@ -28,7 +28,7 @@ constexpr const char default_color_frag[] = R"(#version 330
 struct ExperimentalApp : public GLFWApp
 {
     ShaderMonitor shaderMonitor = { "../assets/" };
-    std::shared_ptr<GlShader> wireframeShader;
+    GlShader wireframeShader;
 
     GlCamera debugCamera;
     FlyCameraController cameraController;
@@ -50,7 +50,10 @@ struct ExperimentalApp : public GLFWApp
         gizmo.reset(new GlGizmo());
         xform.position = { 0.1f, 0.1f, 0.1f };
 
-        wireframeShader = shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl");
+        shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl", [&](GlShader & shader)
+        {
+            wireframeShader = std::move(shader);
+        });;
 
         mesh = make_mesh_from_geometry(make_icosasphere(3));
 
@@ -97,14 +100,12 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 viewMatrix = debugCamera.get_view_matrix();
         const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
-        wireframeShader->bind();
-        wireframeShader->uniform("u_eyePos", debugCamera.get_eye_point());
-        wireframeShader->uniform("u_viewProjMatrix", viewProjectionMatrix);
-        wireframeShader->uniform("u_modelMatrix", Identity4x4);
-
+        wireframeShader.bind();
+        wireframeShader.uniform("u_eyePos", debugCamera.get_eye_point());
+        wireframeShader.uniform("u_viewProjMatrix", viewProjectionMatrix);
+        wireframeShader.uniform("u_modelMatrix", Identity4x4);
         mesh.draw_elements();
- 
-        wireframeShader->unbind();
+        wireframeShader.unbind();
 
         if (gizmo) gizmo->draw();
 

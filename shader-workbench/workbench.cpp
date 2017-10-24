@@ -23,7 +23,8 @@ constexpr const char basic_frag[] = R"(#version 330
 )";
 
 GlMesh fullscreen_quad, capsuleMesh, portalMesh, frustumMesh;
-std::shared_ptr<GlShader> litShader, billboardShader, basicShader;
+std::shared_ptr<GlShader> basicShader;
+GlShader billboardShader, litShader;
 std::unique_ptr<RenderableGrid> grid;
 
 struct PointLight
@@ -50,8 +51,16 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
     gui::make_light_theme();
 
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
-    litShader = shaderMonitor.watch("../assets/shaders/simple_vert.glsl", "../assets/shaders/simple_frag.glsl");
-    billboardShader = shaderMonitor.watch("../assets/shaders/billboard_vert.glsl", "../assets/shaders/billboard_frag.glsl");
+
+    shaderMonitor.watch("../assets/shaders/simple_vert.glsl", "../assets/shaders/simple_frag.glsl", [&](GlShader & shader)
+    {
+        litShader = std::move(shader);
+    });
+
+    shaderMonitor.watch("../assets/shaders/billboard_vert.glsl", "../assets/shaders/billboard_frag.glsl", [&](GlShader & shader)
+    {
+        billboardShader = std::move(shader);
+    });
 
     fullscreen_quad = make_fullscreen_quad_ndc();
     capsuleMesh = make_capsule_mesh(32, 0.5f, 2.f);
@@ -134,37 +143,37 @@ void shader_workbench::on_draw()
 
     auto draw_scene = [this](const float3 & eye, const float4x4 & viewProjectionMatrix)
     {
-        litShader->bind();
+        litShader.bind();
 
-        litShader->uniform("u_viewProj", viewProjectionMatrix);
-        litShader->uniform("u_eye", eye);
+        litShader.uniform("u_viewProj", viewProjectionMatrix);
+        litShader.uniform("u_eye", eye);
 
-        litShader->uniform("u_emissive", float3(0.f, 0.0f, 0.0f));
-        litShader->uniform("u_diffuse", float3(0.7f, 0.4f, 0.7f));
+        litShader.uniform("u_emissive", float3(0.f, 0.0f, 0.0f));
+        litShader.uniform("u_diffuse", float3(0.7f, 0.4f, 0.7f));
 
         for (int i = 0; i < lights.size(); i++)
         {
             const auto & light = lights[i];
-            litShader->uniform("u_lights[" + std::to_string(i) + "].position", light.position);
-            litShader->uniform("u_lights[" + std::to_string(i) + "].color", light.color);
+            litShader.uniform("u_lights[" + std::to_string(i) + "].position", light.position);
+            litShader.uniform("u_lights[" + std::to_string(i) + "].color", light.color);
         }
 
         for (auto & obj : objects)
         {
-            litShader->uniform("u_modelMatrix", obj.matrix());
-            litShader->uniform("u_modelMatrixIT", inv(transpose(obj.matrix())));
+            litShader.uniform("u_modelMatrix", obj.matrix());
+            litShader.uniform("u_modelMatrixIT", inv(transpose(obj.matrix())));
             capsuleMesh.draw_elements();
         }
 
-        litShader->unbind();
+        litShader.unbind();
 
-        billboardShader->bind();
-        billboardShader->uniform("u_modelMatrix", sourcePose.matrix());
-        billboardShader->uniform("u_modelMatrixIT", inv(transpose(sourcePose.matrix())));
-        billboardShader->uniform("u_viewProj", viewProjectionMatrix);
-        billboardShader->texture("s_billboard", 0, portalCameraRGB, GL_TEXTURE_2D);
+        billboardShader.bind();
+        billboardShader.uniform("u_modelMatrix", sourcePose.matrix());
+        billboardShader.uniform("u_modelMatrixIT", inv(transpose(sourcePose.matrix())));
+        billboardShader.uniform("u_viewProj", viewProjectionMatrix);
+        billboardShader.texture("s_billboard", 0, portalCameraRGB, GL_TEXTURE_2D);
         portalMesh.draw_elements();
-        billboardShader->unbind();
+        billboardShader.unbind();
 
         {
             basicShader->bind();

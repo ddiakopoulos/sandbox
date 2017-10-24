@@ -15,9 +15,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="camera_app.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
     <ClInclude Include="decal_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
@@ -25,9 +22,6 @@
       <Filter>applications</Filter>
     </ClInclude>
     <ClInclude Include="instance_app.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
-    <ClInclude Include="lens_dev.hpp">
       <Filter>applications</Filter>
     </ClInclude>
     <ClInclude Include="meshline_app.hpp">
@@ -43,9 +37,6 @@
       <Filter>applications</Filter>
     </ClInclude>
     <ClInclude Include="textured_model_app.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
-    <ClInclude Include="asset_test.hpp">
       <Filter>applications</Filter>
     </ClInclude>
     <ClInclude Include="octree_test_app.hpp">

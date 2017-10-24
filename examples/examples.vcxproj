@@ -161,7 +161,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="asset_test.hpp" />
     <ClInclude Include="decal_app.hpp" />
     <ClInclude Include="empty_app.hpp" />
     <ClInclude Include="octree_test_app.hpp" />
