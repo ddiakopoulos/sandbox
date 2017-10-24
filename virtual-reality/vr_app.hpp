@@ -1,16 +1,14 @@
 #include "index.hpp"
 #include "vr_hmd.hpp"
-#include "vr_renderer.hpp"
-#include "static_mesh.hpp"
 #include "bullet_debug.hpp"
 #include "radix_sort.hpp"
 #include "procedural_mesh.hpp"
 #include "parabolic_pointer.hpp"
+#include "bullet_engine.hpp"
 #include <future>
 #include "quick_hull.hpp"
 #include "algo_misc.hpp"
 #include "gl-imgui.hpp"
-#include "assets.hpp"
 
 using namespace avl;
 
@@ -91,62 +89,20 @@ struct Scene
 
     std::unique_ptr<MotionControllerVR> leftController;
     std::unique_ptr<MotionControllerVR> rightController;
-    std::vector<StaticMesh> controllers;
-    StaticMesh teleportationArc;
+
     bool needsTeleport{ false };
     float3 teleportLocation;
+    /* StaticMesh teleportationArc; */
 
     std::vector<std::shared_ptr<BulletObjectVR>> physicsObjects;
 
-    std::vector<StaticMesh> models;
-
-    uniforms::directional_light directionalLight;
-    std::vector<uniforms::point_light> pointLights;
-
-    std::map<std::string, std::shared_ptr<Material>> namedMaterialList;
-
-    void gather(std::vector<Renderable *> & objects, LightCollection & lights)
-    {
-        uint32_t invalidBounds = 0;
-        auto valid_bounds = [&invalidBounds](const Renderable * r) -> bool
-        {
-            auto result = r->get_bounds().volume() > 0.f ? true : false;
-            invalidBounds += (uint32_t) !result;
-            return result;
-        };
-
-        for (auto & model : models) if (valid_bounds(&model)) objects.push_back(&model);
-        //for (auto & ctrlr : controllers) if (valid_bounds(&ctrlr)) objects.push_back(&ctrlr);
-        //if (valid_bounds(&teleportationArc)) objects.push_back(&teleportationArc);
-
-        lights.directionalLight = &directionalLight;
-        for (auto & ptLight : pointLights)
-        {
-            lights.pointLights.push_back(&ptLight);
-        }
-
-        // Validate existance of material on object
-        for (auto obj : objects)
-        {
-            Material * mat = obj->get_material();
-            if (!mat) throw std::runtime_error("object does not have material");
-        }
-
-    }
 };
 
 struct VirtualRealityApp : public GLFWApp
 {
     uint64_t frameCount = 0;
-    bool shouldTakeScreenshot = false;
 
-    AssetDatabase<GlTexture2D> texDatabase;
-
-    std::unique_ptr<VR_Renderer> renderer;
     std::unique_ptr<OpenVR_HMD> hmd;
-    ScreenSpaceAutoLayout uiSurface;
-
-    std::vector<std::shared_ptr<GLTextureView3D>> csmViews;
 
     GlCamera debugCam;
     FlyCameraController cameraController;
@@ -169,13 +125,8 @@ struct VirtualRealityApp : public GLFWApp
 
     void setup_physics();
 
-    void setup_scene();
-
     void on_window_resize(int2 size) override;
-
     void on_input(const InputEvent & event) override;
-
     void on_update(const UpdateEvent & e) override;
-
     void on_draw() override;
 };

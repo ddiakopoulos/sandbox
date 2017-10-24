@@ -347,7 +347,6 @@
     <ClInclude Include="bullet_utils.hpp" />
     <ClInclude Include="debug_line_renderer.hpp" />
     <ClInclude Include="vr_app.hpp" />
-    <ClInclude Include="static_mesh.hpp" />
     <ClInclude Include="third_party\bullet3\src\btBulletCollisionCommon.h" />
     <ClInclude Include="third_party\bullet3\src\btBulletDynamicsCommon.h" />
     <ClInclude Include="third_party\bullet3\src\Bullet3Collision\BroadPhaseCollision\b3BroadphaseCallback.h" />

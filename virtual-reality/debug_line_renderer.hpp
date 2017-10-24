@@ -5,12 +5,11 @@
 
 #include "linalg_util.hpp"
 #include "gl-api.hpp"
-#include "gl-scene.hpp"
 #include "procedural_mesh.hpp"
 
 using namespace avl;
 
-class DebugLineRenderer : public DebugRenderable
+class DebugLineRenderer
 {
     struct Vertex { float3 position; float3 color; };
     std::vector<Vertex> vertices;
@@ -42,7 +41,7 @@ public:
         debugShader = GlShader(debugVertexShader, debugFragmentShader);
     }
 
-    virtual void draw(const float4x4 & viewProj) override
+    void draw(const float4x4 & viewProj)
     {
         debugMesh.set_vertices(vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
         debugMesh.set_attribute(0, &Vertex::position);

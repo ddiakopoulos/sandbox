@@ -7,13 +7,12 @@
 #include "linalg_util.hpp"
 #include "geometric.hpp"
 #include "gl-api.hpp"
-#include "gl-scene.hpp"
 #include "stb/stb_easy_font.h"
 #include "btBulletCollisionCommon.h"
 
 using namespace avl;
 
-class PhysicsDebugRenderer : public btIDebugDraw, public DebugRenderable
+class PhysicsDebugRenderer : public btIDebugDraw
 {
     constexpr const static char debugVertexShader[] = R"(#version 330
         layout(location = 0) in vec3 vertex;
@@ -52,7 +51,7 @@ public:
         debugShader = GlShader(debugVertexShader, debugFragmentShader);
     }
 
-    virtual void draw(const float4x4 & viewProj) override
+    void draw(const float4x4 & viewProj) 
     {
         debugMesh.set_vertices(vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
         debugMesh.set_attribute(0, &Vertex::position);
