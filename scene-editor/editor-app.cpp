@@ -31,6 +31,14 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     create_handle_for_asset("wireframe", std::move(wireframeProgram));
 
     shaderMonitor.watch(
+        "../assets/shaders/renderer/depth_prepass_vert.glsl",
+        "../assets/shaders/renderer/depth_prepass_frag.glsl",
+        "../assets/shaders/renderer", {}, [](GlShader shader)
+    {
+        create_handle_for_asset("depth-prepass", std::move(shader));
+    });
+
+    shaderMonitor.watch(
         "../assets/shaders/renderer/forward_lighting_vert.glsl",
         "../assets/shaders/renderer/default_material_frag.glsl",
         "../assets/shaders/renderer", {}, [](GlShader shader)
@@ -313,16 +321,13 @@ void scene_editor_app::on_draw()
             if (auto * r = dynamic_cast<Renderable*>(obj.get())) sceneObjects.push_back(r);
         }
         renderer->add_objects(sceneObjects);
-
-        gl_check_error(__FILE__, __LINE__);
-
         renderer->render_frame();
-
-        gl_check_error(__FILE__, __LINE__);
 
         glUseProgram(0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
+
+        gl_check_error(__FILE__, __LINE__);
 
         glActiveTexture(GL_TEXTURE0);
         glEnable(GL_TEXTURE_2D);
@@ -337,7 +342,6 @@ void scene_editor_app::on_draw()
 
         gl_check_error(__FILE__, __LINE__);
     }
-
 
     // Selected objects as wireframe
     {
@@ -377,7 +381,7 @@ void scene_editor_app::on_draw()
         }
         if (menu.item("Save Scene", GLFW_MOD_CONTROL, GLFW_KEY_S)) 
         {
-            write_file_text("scene.json", cereal::serialize_to_json(scene.objects));
+            write_file_text("../assets/scene.json", cereal::serialize_to_json(scene.objects));
         }
         if (menu.item("New Scene", GLFW_MOD_CONTROL, GLFW_KEY_N)) 
         {
@@ -486,6 +490,7 @@ void scene_editor_app::on_draw()
     gui::imgui_fixed_window_begin("Renderer", topLeftPane);
     {
         ImGui::Text("Shadow  %f ms", compute_mean(renderer->shadowAverage));
+        ImGui::Text("Early Z %f ms", compute_mean(renderer->earlyZAverage));
         ImGui::Text("Forward %f ms", compute_mean(renderer->forwardAverage));
         ImGui::Text("Post    %f ms", compute_mean(renderer->postAverage));
         ImGui::Text("Frame   %f ms", compute_mean(renderer->frameAverage));

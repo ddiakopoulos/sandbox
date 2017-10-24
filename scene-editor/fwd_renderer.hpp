@@ -49,6 +49,7 @@ class PhysicallyBasedRenderer
 {
     float2 renderSizePerEye;
 
+    GlGpuTimer earlyZTimer;
     GlGpuTimer forwardTimer;
     GlGpuTimer shadowTimer;
     GlGpuTimer postTimer;
@@ -70,12 +71,10 @@ class PhysicallyBasedRenderer
     GlTexture2D eyeTextures[NumEyes];
     GlTexture2D eyeDepthTextures[NumEyes];
 
-    // Cached as state for convenience (revisit this later?)
     GLuint outputTextureHandles[NumEyes];
     GLuint outputDepthTextureHandles[NumEyes];
 
     std::vector<Renderable *> renderSet;
-
     std::vector<uniforms::point_light *> pointLights;
 
     uniforms::directional_light sunlight;
@@ -83,6 +82,67 @@ class PhysicallyBasedRenderer
 
     std::unique_ptr<BloomPass> bloom;
     std::unique_ptr<StableCascadedShadowPass> shadow;
+
+    GlShaderHandle earlyZPass = { "depth-prepass" };
+
+    void run_depth_prepass(const CameraData & d)
+    {
+        glEnable(GL_DEPTH_TEST);
+
+        earlyZTimer.start();
+
+        /*
+        auto distanceSortFunc = [&d](Renderable * lhs, Renderable * rhs)
+        {
+            const float3 cameraWorldspace = d.pose.position;
+            const float lDist = distance(cameraWorldspace, lhs->get_pose().position);
+            const float rDist = distance(cameraWorldspace, rhs->get_pose().position);
+            return lDist < rDist;
+        };
+
+        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(distanceSortFunc)> renderQueueDefault(distanceSortFunc);
+        */
+
+       // for (auto obj : renderSet) renderQueueDefault.push(obj);
+
+        glDepthFunc(GL_LESS);           // Nearest pixel
+        glDepthMask(GL_TRUE);           // Need depth mask on
+        glColorMask(0, 0, 0, 0);        // Do not write color
+
+        // Update per-object uniform buffer
+        auto update_per_object = [&](Renderable * top)
+        {
+            uniforms::per_object object = {};
+            object.modelMatrix = mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale()));
+            object.modelMatrixIT = inverse(transpose(object.modelMatrix));
+            object.modelViewMatrix = mul(d.viewMatrix, object.modelMatrix);
+            object.receiveShadow = (float)top->get_receive_shadow();
+            perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
+        };
+
+        auto & depthprepass = earlyZPass.get();
+        depthprepass.bind();
+
+        for (auto obj : renderSet)
+        {
+            update_per_object(obj);
+            obj->draw();
+        }
+
+        /*
+        while (!renderQueueDefault.empty())
+        {
+            Renderable * top = renderQueueDefault.top();
+            renderQueueDefault.pop();
+            update_per_object(top);
+            top->draw();
+        }
+        */
+
+        depthprepass.unbind();
+
+        earlyZTimer.stop();
+    }
 
     void run_skybox_pass(const CameraData & d)
     {   
@@ -124,10 +184,14 @@ class PhysicallyBasedRenderer
     void run_forward_pass(const CameraData & d)
     {
         glEnable(GL_DEPTH_TEST);
+        //glDepthFunc(GL_LEQUAL);
+        //glColorMask(1, 1, 1, 1);    // re-enable color mask after z prepass
+        //glDepthMask(GL_FALSE);      // depth already comes from the prepass
 
+        // Follows sorting strategy outlined here: 
         // http://realtimecollisiondetection.net/blog/?p=86
+        // todo - sorting is is done per-eye but should be done per frame instead
 
-        // todo - this is done per-eye but should be done per frame instead
         auto materialSortFunc = [&d](Renderable * lhs, Renderable * rhs)
         {
             const float3 cameraWorldspace = d.pose.position;
@@ -191,8 +255,7 @@ class PhysicallyBasedRenderer
             top->draw();
         }
 
-        // We assume that objects without a valid material take care of their own shading
-        // in their `draw()` function. 
+        // We assume that objects without a valid material take care of their own shading in the `draw()` function. 
         while (!renderQueueDefault.empty())
         {
             Renderable * top = renderQueueDefault.top();
@@ -200,6 +263,8 @@ class PhysicallyBasedRenderer
             update_per_object(top);
             top->draw();
         }
+
+        gl_check_error(__FILE__, __LINE__);
     }
 
     void run_post_pass(const CameraData & d)
@@ -230,6 +295,10 @@ public:
     {
         assert(renderSizePerEye.x >= 0 && renderSizePerEye.y >= 0);
         assert(NumEyes >= 1);
+
+        std::cout << multisampleFramebuffer << std::endl;
+        std::cout << multisampleRenderbuffers[0] << std::endl;
+        std::cout << multisampleRenderbuffers[1] << std::endl;
 
         // Generate multisample render buffers for color and depth, attach to multi-sampled framebuffer target
         glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderSizePerEye.x, renderSizePerEye.y);
@@ -304,6 +373,8 @@ public:
             CameraData shadowCamera = cameras[0];
 
             // In VR, we create a virtual camera in between both eyes.
+            // todo - this is somewhat wrong since we need to actually create a superfrustum
+            // which is max(left, right)
             if (NumEyes == 2)
             {
                 // Average the positions and re-generate the relevant matrices
@@ -353,7 +424,10 @@ public:
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_COLOR, 0, &defaultColor[0]);
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
             // Execute the forward passes
+            run_depth_prepass(cameras[eyeIdx]);
             run_skybox_pass(cameras[eyeIdx]);
             run_forward_pass(cameras[eyeIdx]);
 
@@ -361,7 +435,7 @@ public:
 
             // Resolve multisample into per-eye framebuffers
 
-            // blit color ... read, draw - fbo to fbo, not fbo to texture
+            // blit color 
             glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[eyeIdx], 
                 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, 
                 renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR); // GL_LINEAR for color
@@ -369,14 +443,14 @@ public:
             gl_check_error(__FILE__, __LINE__);
         }
 
+        forwardTimer.stop();
+
         // fixme - cache handles.. don't need to do this on every frame
         for (int eyeIndex = 0; eyeIndex < NumEyes; ++eyeIndex)
         {
             outputTextureHandles[eyeIndex] = eyeTextures[eyeIndex];
             outputDepthTextureHandles[eyeIndex] = eyeDepthTextures[eyeIndex];
         }
-
-        forwardTimer.stop();
 
         // Execute the post passes after having resolved the multisample framebuffers
         {
@@ -396,12 +470,14 @@ public:
         // Compute frame GPU performance timing info
         {
             const float shadowMs = shadowTimer.elapsed_ms();
+            const float earlyZMs = earlyZTimer.elapsed_ms();
             const float forwardMs = forwardTimer.elapsed_ms();
             const float postMs = postTimer.elapsed_ms();
+            earlyZAverage.put(earlyZMs);
             forwardAverage.put(forwardMs);
             shadowAverage.put(shadowMs);
             postAverage.put(postMs);
-            frameAverage.put(shadowMs + forwardMs + postMs);
+            frameAverage.put(earlyZMs + shadowMs + forwardMs + postMs);
         }
 
         gl_check_error(__FILE__, __LINE__);
@@ -463,6 +539,7 @@ public:
         pointLights.push_back(light);
     }
 
+    CircularBuffer<float> earlyZAverage = { 3 };
     CircularBuffer<float> forwardAverage = { 3 };
     CircularBuffer<float> shadowAverage = { 3 };
     CircularBuffer<float> postAverage = { 3 };
