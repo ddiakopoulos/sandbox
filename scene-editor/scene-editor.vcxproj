@@ -138,7 +138,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\incubator.vcxproj\incubator.vcxproj">
+    <ProjectReference Include="..\lib-incubator\lib-incubator.vcxproj">
       <Project>{992e85a7-b590-477b-a1b2-8a04aaad0e10}</Project>
     </ProjectReference>
     <ProjectReference Include="..\third_party\glfw-3.1.2\glfw3.vcxproj">

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libincubator", "incubator.vcxproj", "{992E85A7-B590-477B-A1B2-8A04AAAD0E10}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libincubator", "..\lib-incubator\lib-incubator.vcxproj", "{992E85A7-B590-477B-A1B2-8A04AAAD0E10}"
 	ProjectSection(ProjectDependencies) = postProject
 		{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC} = {BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}
 	EndProjectSection
@@ -12,7 +12,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw3", "..\third_party\glf
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "light-transport", "..\light-transport\light-transport.vcxproj", "{61FE6721-3098-4E43-A736-8D0E52277FC3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "virtual-reality", "..\virtual-reality\virtual-reality.vcxproj", "{8935AE6A-79E7-421D-B215-C1DEEB35EBA3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vr-environment", "..\vr-environment\vr-environment.vcxproj", "{8935AE6A-79E7-421D-B215-C1DEEB35EBA3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "examples", "..\examples\examples.vcxproj", "{93ED2D4D-908C-4383-9930-AF8922BE0EED}"
 EndProject
