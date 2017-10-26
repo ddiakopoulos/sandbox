@@ -10,8 +10,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libincubator", "..\lib-incu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw3", "..\third_party\glfw-3.1.2\glfw3.vcxproj", "{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "light-transport", "..\light-transport\light-transport.vcxproj", "{61FE6721-3098-4E43-A736-8D0E52277FC3}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vr-environment", "..\vr-environment\vr-environment.vcxproj", "{8935AE6A-79E7-421D-B215-C1DEEB35EBA3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "examples", "..\examples\examples.vcxproj", "{93ED2D4D-908C-4383-9930-AF8922BE0EED}"
@@ -44,14 +42,6 @@ Global
 		{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}.Release|Win32.Build.0 = Release|Win32
 		{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}.Release|x64.ActiveCfg = Release|x64
 		{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}.Release|x64.Build.0 = Release|x64
-		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Debug|Win32.ActiveCfg = Debug|Win32
-		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Debug|Win32.Build.0 = Debug|Win32
-		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Debug|x64.ActiveCfg = Debug|x64
-		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Debug|x64.Build.0 = Debug|x64
-		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Release|Win32.ActiveCfg = Release|Win32
-		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Release|Win32.Build.0 = Release|Win32
-		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Release|x64.ActiveCfg = Release|x64
-		{61FE6721-3098-4E43-A736-8D0E52277FC3}.Release|x64.Build.0 = Release|x64
 		{8935AE6A-79E7-421D-B215-C1DEEB35EBA3}.Debug|Win32.ActiveCfg = Debug|Win32
 		{8935AE6A-79E7-421D-B215-C1DEEB35EBA3}.Debug|Win32.Build.0 = Debug|Win32
 		{8935AE6A-79E7-421D-B215-C1DEEB35EBA3}.Debug|x64.ActiveCfg = Debug|x64
