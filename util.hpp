@@ -140,6 +140,7 @@ namespace avl
         UniformRandomGenerator() : rd(), gen(rd()) { }
         float random_float() { return full(gen); }
         float random_float(float max) { std::uniform_real_distribution<float> custom(0.f, max); return custom(gen); }
+        float random_float(float min, float max) { std::uniform_real_distribution<float> custom(min, max); return custom(gen); }
         float random_float_sphere() { return two_pi(gen); }
         float random_float_safe() { return safe(gen); }
         int random_int(int max) { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }

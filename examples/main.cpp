@@ -7,7 +7,7 @@
 
 using namespace avl;
 
-#include "examples/empty_app.hpp"
+//#include "examples/empty_app.hpp"
 //#include "examples/decal_app.hpp"
 //#include "examples/geometric_algo_dev.hpp"
 //#include "examples/instance_app.hpp"
@@ -15,7 +15,7 @@ using namespace avl;
 //#include "examples/octree_test_app.hpp"
 //#include "examples/reaction_app.hpp"
 //#include "examples/simplex_noise_app.hpp"
-//#include "examples/terrain_app.hpp"
+#include "examples/terrain_app.hpp"
 //#include "examples/textured_model_app.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION

@@ -68,6 +68,13 @@ namespace avl
         return axisMesh;
     }
 
+    inline GlMesh make_axis_mesh(const float3 & xAxis, const float3 & yAxis, const float3 & zAxis)
+    {
+        auto axisMesh = make_mesh_from_geometry(make_axis(xAxis, yAxis, zAxis));
+        axisMesh.set_non_indexed(GL_LINES);
+        return axisMesh;
+    }
+
     inline GlMesh make_spiral_mesh(float resolution = 512.0f, float freq = 128.f)
     {
         assert(freq < resolution);

@@ -601,23 +601,37 @@ namespace avl
         axis.vertices.emplace_back(0.f, 0.f, 0.f);
         axis.vertices.emplace_back(0.f, 0.f, 1.f);
 
-        axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
-        axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
-        axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
-        axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
         axis.colors.emplace_back(1.f, 0.f, 0.f, 1.f);
         axis.colors.emplace_back(1.f, 0.f, 0.f, 1.f);
-
-        axis.normals.emplace_back(0.f, 0.f, 1.f);
-        axis.normals.emplace_back(0.f, 0.f, 1.f);
-        axis.normals.emplace_back(0.f, 1.f, 0.f);
-        axis.normals.emplace_back(0.f, 1.f, 0.f);
-        axis.normals.emplace_back(1.f, 0.f, 0.f);
-        axis.normals.emplace_back(1.f, 0.f, 0.f);
+        axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
+        axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
+        axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
+        axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
 
         return axis;
     }
-    
+
+    inline Geometry make_axis(const float3 & xAxis, const float3 & yAxis, const float3 & zAxis)
+    {
+        Geometry axis;
+
+        axis.vertices.emplace_back(0.f, 0.f, 0.f);
+        axis.vertices.emplace_back(xAxis);
+        axis.vertices.emplace_back(0.f, 0.f, 0.f);
+        axis.vertices.emplace_back(yAxis);
+        axis.vertices.emplace_back(0.f, 0.f, 0.f);
+        axis.vertices.emplace_back(zAxis);
+
+        axis.colors.emplace_back(1.f, 0.f, 0.f, 1.f);
+        axis.colors.emplace_back(1.f, 0.f, 0.f, 1.f);
+        axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
+        axis.colors.emplace_back(0.f, 1.f, 0.f, 1.f);
+        axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
+        axis.colors.emplace_back(0.f, 0.f, 1.f, 1.f);
+
+        return axis;
+    }
+
     inline Geometry make_spiral(float resolution = 512.0f, float freq = 128.f)
     {
         Geometry spiral;

@@ -48,14 +48,14 @@ void main(void)
     float ambientIntensity = 0.75;
 
     vec3 surfacePos = (u_modelView * vec4(vPosition, 0.0)).xyz;
-    vec3 surfaceToLight = normalize(u_lightPosition - surfacePos);
-    vec3 surfaceToCamera = normalize(u_eyePosition - surfacePos);
+    vec3 surfaceToLight = normalize(surfacePos - u_lightPosition);
+    vec3 surfaceToCamera = normalize(surfacePos - u_eyePosition);
 
     vec3 ambient = ambientIntensity * surfaceColor;
     float diffuseCoefficient = max(0.0, dot(n, surfaceToLight));
     vec3 diffuse = diffuseCoefficient * surfaceColor;
 
-    vec3 lightFactor = ambient + diffuse;
+    vec3 lightFactor = clamp(ambient + diffuse, vec3(0), vec3(1));
 
     vec2 uv = (gl_FragCoord.xy) / u_resolution;
     vec2 reflectionUV = vec2(uv.x, uv.y);
@@ -63,15 +63,15 @@ void main(void)
 
     float ndotl = max(dot(surfacePos, n), 0);
     float facing = 1.0 - ndotl;
-    float fresnelFac = fresnel(facing, 0.9, 0.25);
+    float fresnelFac = fresnel(facing, 0.2, 0.25);
 
     float depth = texture(u_depthTexture, uv).x;
     float waterDepth = linearize_depth(depth) - linearize_depth(gl_FragCoord.z);
 
-    f_color = vec4(lightFactor, 0.4 + 0.2 * diffuseCoefficient);
+    f_color = vec4(lightFactor, 0.1 * diffuseCoefficient);
 
     // Reflection tex
-    f_color.rgb = mix(texture(u_reflectionTexture, reflectionUV).rgb * fresnelFac, f_color.rgb, 0.5);
+    f_color.rgb = mix(texture(u_reflectionTexture, reflectionUV).rgb, f_color.rgb, 0.5);
 
     // Smooth water edges
     f_color.a *= clamp(waterDepth * 1.5, 0.0, 1.0);

@@ -29,7 +29,7 @@
 #include "geometry.hpp"
 #include "projection-math.hpp"
 
-// OpenGL Rendering
+// OpenGL Rendering + Utilities
 #include "glfw-app.hpp"
 #include "gl-api.hpp"
 #include "gl-async-gpu-timer.hpp"
@@ -44,3 +44,4 @@
 #include "gl-renderable-meshline.hpp"
 #include "gl-shader-monitor.hpp"
 #include "gl-texture-view.hpp"
+#include "gl-gizmo.hpp"

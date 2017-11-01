@@ -221,7 +221,7 @@ namespace avl
         float3 get_back() const { return get_axis(coord_axis::back); }
     };
 
-    inline float4x4 coordinate_system_xform(const coord_system & from, const coord_system & to) 
+    inline float4x4 coordinate_system_from_to(const coord_system & from, const coord_system & to) 
     { 
         return { 
             { to.get_axis(from.x_axis), 0 },
@@ -664,6 +664,7 @@ namespace avl
         return p;
     }
 
+    // This is not even remotely correct for PTFs
     inline Pose make_pose_from_transform_matrix(float4x4 transform)
     {
         Pose p;
