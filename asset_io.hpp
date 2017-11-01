@@ -14,7 +14,7 @@ inline std::vector<uint8_t> load_image_data(const std::string & path)
     int width, height, nBytes;
     auto data = stbi_load_from_memory(binaryFile.data(), (int)binaryFile.size(), &width, &height, &nBytes, 0);
     std::vector<uint8_t> d(width * height * nBytes);
-    memcpy(d.data(), data, nBytes * width * height);
+    std::memcpy(d.data(), data, nBytes * width * height);
     stbi_image_free(data);
     return d;
 }

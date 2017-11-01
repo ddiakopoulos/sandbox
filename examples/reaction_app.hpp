@@ -20,10 +20,11 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GrayScottSimulator> gs;
     
     std::vector<uint8_t> pixels;
-    
+    std::vector<uint8_t> seedImagePixels;
+
     float frameDelta = 0.0f;
     
-    std::shared_ptr<GlShader> displacementShader;
+    GlShader displacementShader;
     GlMesh displacementMesh;
     
     ExperimentalApp() : GLFWApp(1280, 720, "Gray-Scott Reaction-Diffusion Simulation")
@@ -40,16 +41,35 @@ struct ExperimentalApp : public GLFWApp
         
         pixels.resize(256 * 256 * 3, 150);
         gs.reset(new GrayScottSimulator(float2(256, 256), false));
-        gs->set_coefficients(0.023f, 0.077f, 0.16f, 0.08f);
+        gs->set_coefficients(0.023f, 0.077f, 0.12f, 0.08f);
         
         fullscreen_reaction_quad = make_fullscreen_quad();
         
-        displacementMesh = make_plane_mesh(48, 48, 256, 256);
+        displacementMesh = make_plane_mesh(48, 48, 512, 512);
         
         gsOutput.setup(256, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
         gsOutputView.reset(new GLTextureView(gsOutput.id()));
 
-        displacementShader = shaderMonitor.watch("../assets/shaders/reaction_displacement_vert.glsl", "../assets/shaders/reaction_displacement_frag.glsl");
+        auto seedImage = load_image_data("../assets/textures/imperial.png");
+
+        // Assuming 4-channel RGBA image, 256x256 pixels
+        for (int i = 0; i < seedImage.size(); i += 4)
+        {
+            // Use the alpha channel...
+            if (seedImage[i + 3] > 0)
+            {
+                seedImagePixels.push_back(255);
+            }
+            else
+            {
+                seedImagePixels.push_back(0);
+            }
+        }
+
+        shaderMonitor.watch("../assets/shaders/prototype/reaction_displacement_vert.glsl", "../assets/shaders/prototype/reaction_displacement_frag.glsl", [&](GlShader & shader)
+        {
+            displacementShader = std::move(shader);
+        });
 
         gl_check_error(__FILE__, __LINE__);
     }
@@ -66,18 +86,23 @@ struct ExperimentalApp : public GLFWApp
             if (event.value[0] == GLFW_KEY_SPACE)
             {
                 gs->reset();
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+                gs->seed_image(seedImagePixels, 256, 256);
             }
         }
-        auto rX = remap<float>(event.cursor.x, 0, event.windowSize.x, 0, 256, true);
-        auto rY = remap<float>(event.cursor.y, 0, event.windowSize.y, 0, 256, true);
-        gs->trigger_region(rX , 256 - rY, 10, 10);
+
+        /*
+            auto rX = remap<float>(event.cursor.x, 0, event.windowSize.x, 0, 256, true);
+            auto rY = remap<float>(event.cursor.y, 0, event.windowSize.y, 0, 256, true);
+            gs->trigger_region(rX , 256 - rY, 10, 10);
+        */
 
         cameraController.handle_input(event);
     }
     
     void on_update(const UpdateEvent & e) override
     {
-        frameDelta = e.timestep_ms * 1000;
+        frameDelta = e.timestep_ms * 100;
         cameraController.update(e.timestep_ms);
         shaderMonitor.handle_recompile();
     }
@@ -93,10 +118,14 @@ struct ExperimentalApp : public GLFWApp
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         
-        const float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);;
+        const float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
         const float4x4 viewProj = mul(camera.get_projection_matrix((float) width / (float) height), camera.get_view_matrix());
         
-        for (int i = 0; i < 4; ++i) gs->update(frameDelta);
+        // Run xx iterations per frame
+        for (int i = 0; i < 8; ++i)
+        {
+            gs->update(frameDelta);
+        }
         
         auto output = gs->output_v();
         double cellValue;
@@ -112,20 +141,20 @@ struct ExperimentalApp : public GLFWApp
         gsOutput.setup(256, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
         
         {
-            displacementShader->bind();
+            displacementShader.bind();
             
-            displacementShader->uniform("u_modelMatrix", model);
-            displacementShader->uniform("u_modelMatrixIT", inv(transpose(model)));
-            displacementShader->uniform("u_viewProj", viewProj);
-            displacementShader->texture("u_displacementTex", 0, gsOutput, GL_TEXTURE_2D);
+            displacementShader.uniform("u_modelMatrix", model);
+            displacementShader.uniform("u_modelMatrixIT", inv(transpose(model)));
+            displacementShader.uniform("u_viewProj", viewProj);
+            displacementShader.texture("u_displacementTex", 0, gsOutput, GL_TEXTURE_2D);
             
-            displacementShader->uniform("u_eye", camera.get_eye_point());
-            displacementShader->uniform("u_diffuse", float3(0.4f, 0.4f, 0.4f));
-            displacementShader->uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
+            displacementShader.uniform("u_eye", camera.get_eye_point());
+            displacementShader.uniform("u_diffuse", float3(0.9f, 0.9f, 0.9f));
+            displacementShader.uniform("u_emissive", float3(.10f, 0.10f, 0.10f));
             
             displacementMesh.draw_elements();
 
-            displacementShader->unbind();
+            displacementShader.unbind();
         }
         
         gl_check_error(__FILE__, __LINE__);
