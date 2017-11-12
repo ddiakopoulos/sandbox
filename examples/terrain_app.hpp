@@ -340,16 +340,20 @@ struct ExperimentalApp : public GLFWApp
             playbackIndex = 0;
         }
 
+        // Set view matrix
         if (cameraFollowing) viewMatrix = follower.get_transform(playbackIndex);
         else viewMatrix = camera.get_view_matrix();
 
+        // Correct for inverse
+        if (cameraFollowing)
+        {
+            viewMatrix = inverse(viewMatrix);
+        }
+
+        // Set position
         if (cameraFollowing) cameraPosition = viewMatrix.w.xyz(); 
         else cameraPosition = camera.get_eye_point();
 
-        if (cameraFollowing)
-        {
-            //viewMatrix = inverse(make_rigid_transformation_matrix(float4(0, 0, 0, 1), cameraPosition));
-        }
 
         const float4x4 viewProj = mul(camera.get_projection_matrix((float)width / (float)height), viewMatrix);
 
