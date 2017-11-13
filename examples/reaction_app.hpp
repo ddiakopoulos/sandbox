@@ -7,12 +7,13 @@ struct ExperimentalApp : public GLFWApp
     GlCamera camera;
     FlyCameraController cameraController;
     
-    SimpleTimer timer;
-
     GlMesh fullscreen_reaction_quad;
     
     ShaderMonitor shaderMonitor = { "../assets/" };
-
+    
+    std::random_device rd;
+    std::mt19937 gen;
+    
     GlTexture2D gsOutput;
     std::unique_ptr<GLTextureView> gsOutputView;
     
@@ -28,6 +29,8 @@ struct ExperimentalApp : public GLFWApp
     
     ExperimentalApp() : GLFWApp(1280, 720, "Gray-Scott Reaction-Diffusion Simulation")
     {
+        gen = std::mt19937(rd());
+        
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -55,11 +58,11 @@ struct ExperimentalApp : public GLFWApp
             // Use the alpha channel...
             if (seedImage[i + 3] > 0)
             {
-                seedImagePixels.push_back(0);
+                seedImagePixels.push_back(255);
             }
             else
             {
-                seedImagePixels.push_back(255);
+                seedImagePixels.push_back(0);
             }
         }
 
@@ -83,7 +86,8 @@ struct ExperimentalApp : public GLFWApp
             if (event.value[0] == GLFW_KEY_SPACE)
             {
                 gs->reset();
-                timer.start();
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+                gs->seed_image(seedImagePixels, 256, 256);
             }
         }
 
@@ -117,12 +121,6 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 model = make_rotation_matrix({1, 0, 0}, ANVIL_PI / 2);
         const float4x4 viewProj = mul(camera.get_projection_matrix((float) width / (float) height), camera.get_view_matrix());
         
-        if (timer.milliseconds().count() > 1000)
-        {
-            gs->seed_image(seedImagePixels, 256, 256);
-            timer.stop();
-        }
-
         // Run xx iterations per frame
         for (int i = 0; i < 8; ++i)
         {
@@ -139,7 +137,7 @@ struct ExperimentalApp : public GLFWApp
             pixels[i * 3 + 1] = col;
             pixels[i * 3 + 2] = col;
         }
-
+        
         gsOutput.setup(256, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
         
         {
