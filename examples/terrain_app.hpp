@@ -27,16 +27,16 @@ struct CameraPathFollower
 {
     std::vector<float4x4> parallelTransportFrames;
 
-    void compute(std::array<float3, 4> & controlPoints)
+    void compute(std::array<Pose, 4> & controlPoints)
     {
-        parallelTransportFrames = make_parallel_transport_frame_bezier(controlPoints, 32);
+        parallelTransportFrames = make_parallel_transport_frame_bezier(controlPoints, 128);
     }
 
     float4x4 get_transform(const size_t idx) const
     {
         assert(parallelTransportFrames.size() > 0);
-        if (idx > 0) return parallelTransportFrames[idx];
-        else return parallelTransportFrames[parallelTransportFrames.size() - 1];
+        if (idx >= 0) return parallelTransportFrames[idx];
+        else return parallelTransportFrames[parallelTransportFrames.size()];
     }
 
     std::vector<GlMesh> debug_draw() const
@@ -112,7 +112,7 @@ struct ExperimentalApp : public GLFWApp
     int playbackIndex = 0;
 
     int splinePointIndex = 0;
-    std::array<float3, 4> cameraSpline;
+    std::array<Pose, 4> cameraSpline;
 
     ExperimentalApp() : GLFWApp(1280, 720, "Terrain & Water Scene")
     {
@@ -120,7 +120,6 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        camera.farclip = 96;
         camera.look_at({0, 4, 12}, {0, 0.0f, -0.1f});
 
         cameraController.set_camera(&camera);
@@ -148,7 +147,7 @@ struct ExperimentalApp : public GLFWApp
         igm.reset(new gui::ImGuiManager(window));
         gui::make_light_theme();
 
-        sphereMesh = make_sphere_mesh(0.25);
+        sphereMesh = make_sphere_mesh(0.1f);
         axisMesh = make_axis_mesh();
 
         gl_check_error(__FILE__, __LINE__);
@@ -243,8 +242,8 @@ struct ExperimentalApp : public GLFWApp
             }
             else if (event.value[0] == GLFW_KEY_SPACE)
             {
-                cameraSpline[splinePointIndex++] = camera.get_eye_point();
-                if (splinePointIndex == 4)  follower.compute(cameraSpline);
+                cameraSpline[splinePointIndex++] = camera.get_pose();
+                if (splinePointIndex == 4) follower.compute(cameraSpline);
             }
         }
     }
@@ -334,11 +333,13 @@ struct ExperimentalApp : public GLFWApp
         float4x4 viewMatrix = camera.get_view_matrix();
         float3 cameraPosition = camera.get_eye_point();
 
+        /*
         // Loop the playback if following
         if (cameraFollowing && playbackIndex == follower.parallelTransportFrames.size())
         {
             playbackIndex = 0;
         }
+        */
 
         // Set view matrix
         if (cameraFollowing) viewMatrix = follower.get_transform(playbackIndex);
@@ -351,9 +352,8 @@ struct ExperimentalApp : public GLFWApp
         }
 
         // Set position
-        if (cameraFollowing) cameraPosition = viewMatrix.w.xyz(); 
+        if (cameraFollowing) cameraPosition = follower.get_transform(playbackIndex)[3].xyz();
         else cameraPosition = camera.get_eye_point();
-
 
         const float4x4 viewProj = mul(camera.get_projection_matrix((float)width / (float)height), viewMatrix);
 
@@ -468,7 +468,7 @@ struct ExperimentalApp : public GLFWApp
                 // Draw the camera control points
                 for (auto & m : cameraSpline)
                 {
-                    basicShader->uniform("u_mvp", mul(viewProj, make_translation_matrix(m)));
+                    basicShader->uniform("u_mvp", mul(viewProj, make_translation_matrix(m.position)));
                     sphereMesh.draw_elements();
                 }
 

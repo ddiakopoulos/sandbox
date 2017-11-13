@@ -20,31 +20,19 @@
 //
 //   See Game Programming Gems 2, Section 2.5
 
-// This function returns the transformation matrix to the reference frame
-// defined by the three points 'firstPoint', 'secondPoint' and 'thirdPoint'. Note that if the two
-// vectors <firstPoint, secondPoint> and <firstPoint, thirdPoint> are co-linears, an arbitrary twist value will
-// be chosen.
 static inline float4x4 ptf_first_frame(const float3 & firstPoint, const float3 & secondPoint, const float3 & thirdPoint)
 {
-    const float3 t = normalize(secondPoint - firstPoint); // dir of first deriv (fwd)
-    float3 n = normalize(cross(t, thirdPoint - firstPoint)); // dir of second deriv (up)
+    //float3 zDir = normalize(eyePoint - target);
+    //float3 xDir = normalize(cross(worldUp, zDir));
+    //float3 yDir = cross(zDir, xDir);
 
-    // if these are are collinear, an arbitrary twist value is chosen
-    if (length(n) == 0.0f) 
-    {
-        int i = std::abs(t[0]) < std::abs(t[1]) ? 0 : 1;
+    // Expressed in a Y-up, right-handed coordinate system
+    const float3 B = normalize(secondPoint - firstPoint);   // bitangent
+    const float3 N = normalize(cross({ 0, 1, 0 }, B));      // normal
+    const float3 T = cross(T, N);                           // tangent
+    float4x4 M = { float4(-T, 0), float4(N, 0), float4(B, 0), float4(firstPoint, 1) };
 
-        if (std::abs(t[2]) < std::abs(t[i])) i = 2;
-
-        float3 v;
-        v[i] = 1.0f;
-
-        n = normalize(cross(t, v));
-    }
-
-    const float3 b = cross(t, n); // binormal (left)
-
-    float4x4 M = { float4(b, 0), float4(n, 0), float4(t, 0), float4(firstPoint, 1) };
+    //std::cout << "det: " << determinant(M) << std::endl;
 
     return M;
 }
@@ -94,10 +82,9 @@ static inline float4x4 ptf_last_frame(const float4x4 & prevMatrix, const float3 
     return mul(make_translation_matrix(lastPoint - prevPoint), prevMatrix);
 }
 
-inline std::vector<float4x4> make_parallel_transport_frame_bezier(const std::array<float3, 4> controlPoints, const int segments)
+inline std::vector<float4x4> make_parallel_transport_frame_bezier(const std::array<Pose, 4> controlPoints, const int segments)
 {
-    BezierCurve curve(controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3]);
-
+    BezierCurve curve(controlPoints[0].position, controlPoints[1].position, controlPoints[2].position, controlPoints[3].position);
 
     std::vector<float3> points;         // Points in spline
     std::vector<float3> tangents;       // Tangents in spline (fwd dir)
