@@ -1,6 +1,12 @@
 #include "index.hpp"
 #include "gl-gizmo.hpp"
 
+struct PointLight
+{
+    float3 position;
+    float3 color;
+};
+
 struct shader_workbench : public GLFWApp
 {
     GlCamera cam;
@@ -13,6 +19,20 @@ struct shader_workbench : public GLFWApp
     GlTexture2D portalCameraRGB;
     GlTexture2D portalCameraDepth;
     GlFramebuffer portalFramebuffer;
+
+
+    GlMesh fullscreen_quad, capsuleMesh, portalMesh, frustumMesh;
+    std::shared_ptr<GlShader> basicShader;
+    GlShader billboardShader, litShader;
+    std::unique_ptr<RenderableGrid> grid;
+
+    std::vector<PointLight> lights;
+    std::vector<Pose> objects;
+
+    Pose sourcePose;
+    Pose destinationPose;
+    Pose portalCameraPose;
+    tinygizmo::rigid_transform destination;
 
     float elapsedTime{ 0 };
 

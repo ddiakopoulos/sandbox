@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}</ProjectGuid>
-    <RootNamespace>shader-workbench</RootNamespace>
+    <RootNamespace>portal-rendering</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -138,10 +138,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="workbench.cpp" />
+    <ClCompile Include="portal-rendering.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="workbench.hpp" />
+    <ClInclude Include="portal-rendering.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

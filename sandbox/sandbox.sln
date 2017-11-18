@@ -14,9 +14,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vr-environment", "..\vr-env
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "examples", "..\examples\examples.vcxproj", "{93ED2D4D-908C-4383-9930-AF8922BE0EED}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shader-workbench", "..\shader-workbench\shader-workbench.vcxproj", "{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "scene-editor", "..\scene-editor\scene-editor.vcxproj", "{516363FB-3F0D-463F-9CE5-8B739253C9E3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "portal-rendering", "..\portal-rendering\portal-rendering.vcxproj", "{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "projective-texturing", "..\projective-texturing\projective-texturing.vcxproj", "{7886ED0B-8C4F-4582-9618-39BAB13D142D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "particle-system", "..\particle-system\particle-system.vcxproj", "{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,14 +62,6 @@ Global
 		{93ED2D4D-908C-4383-9930-AF8922BE0EED}.Release|Win32.Build.0 = Release|Win32
 		{93ED2D4D-908C-4383-9930-AF8922BE0EED}.Release|x64.ActiveCfg = Release|x64
 		{93ED2D4D-908C-4383-9930-AF8922BE0EED}.Release|x64.Build.0 = Release|x64
-		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|Win32.Build.0 = Debug|Win32
-		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|x64.ActiveCfg = Debug|x64
-		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|x64.Build.0 = Debug|x64
-		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|Win32.ActiveCfg = Release|Win32
-		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|Win32.Build.0 = Release|Win32
-		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|x64.ActiveCfg = Release|x64
-		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|x64.Build.0 = Release|x64
 		{516363FB-3F0D-463F-9CE5-8B739253C9E3}.Debug|Win32.ActiveCfg = Debug|Win32
 		{516363FB-3F0D-463F-9CE5-8B739253C9E3}.Debug|Win32.Build.0 = Debug|Win32
 		{516363FB-3F0D-463F-9CE5-8B739253C9E3}.Debug|x64.ActiveCfg = Debug|x64
@@ -74,6 +70,30 @@ Global
 		{516363FB-3F0D-463F-9CE5-8B739253C9E3}.Release|Win32.Build.0 = Release|Win32
 		{516363FB-3F0D-463F-9CE5-8B739253C9E3}.Release|x64.ActiveCfg = Release|x64
 		{516363FB-3F0D-463F-9CE5-8B739253C9E3}.Release|x64.Build.0 = Release|x64
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|Win32.Build.0 = Debug|Win32
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|x64.ActiveCfg = Debug|x64
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Debug|x64.Build.0 = Debug|x64
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|Win32.ActiveCfg = Release|Win32
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|Win32.Build.0 = Release|Win32
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|x64.ActiveCfg = Release|x64
+		{DA55A6AC-C2B2-446E-9D0B-4C57DDEC169A}.Release|x64.Build.0 = Release|x64
+		{7886ED0B-8C4F-4582-9618-39BAB13D142D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7886ED0B-8C4F-4582-9618-39BAB13D142D}.Debug|Win32.Build.0 = Debug|Win32
+		{7886ED0B-8C4F-4582-9618-39BAB13D142D}.Debug|x64.ActiveCfg = Debug|x64
+		{7886ED0B-8C4F-4582-9618-39BAB13D142D}.Debug|x64.Build.0 = Debug|x64
+		{7886ED0B-8C4F-4582-9618-39BAB13D142D}.Release|Win32.ActiveCfg = Release|Win32
+		{7886ED0B-8C4F-4582-9618-39BAB13D142D}.Release|Win32.Build.0 = Release|Win32
+		{7886ED0B-8C4F-4582-9618-39BAB13D142D}.Release|x64.ActiveCfg = Release|x64
+		{7886ED0B-8C4F-4582-9618-39BAB13D142D}.Release|x64.Build.0 = Release|x64
+		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Debug|Win32.Build.0 = Debug|Win32
+		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Debug|x64.ActiveCfg = Debug|x64
+		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Debug|x64.Build.0 = Debug|x64
+		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Release|Win32.ActiveCfg = Release|Win32
+		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Release|Win32.Build.0 = Release|Win32
+		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Release|x64.ActiveCfg = Release|x64
+		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

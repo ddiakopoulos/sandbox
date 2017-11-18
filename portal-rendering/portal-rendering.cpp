@@ -1,5 +1,5 @@
 #include "index.hpp"
-#include "workbench.hpp"
+#include "portal-rendering.hpp"
 #include "imgui/imgui_internal.h"
 
 using namespace avl;
@@ -22,26 +22,7 @@ constexpr const char basic_frag[] = R"(#version 330
     }
 )";
 
-GlMesh fullscreen_quad, capsuleMesh, portalMesh, frustumMesh;
-std::shared_ptr<GlShader> basicShader;
-GlShader billboardShader, litShader;
-std::unique_ptr<RenderableGrid> grid;
-
-struct PointLight
-{
-    float3 position;
-    float3 color;
-};
-
-std::vector<PointLight> lights;
-std::vector<Pose> objects;
-
-Pose sourcePose;
-Pose destinationPose;
-Pose portalCameraPose;
-tinygizmo::rigid_transform destination;
-
-shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
+shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Portal Rendering Sample")
 {
     int width, height;
     glfwGetWindowSize(window, &width, &height);
@@ -52,7 +33,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Shader Workbench")
 
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
 
-    shaderMonitor.watch("../assets/shaders/simple_vert.glsl", "../assets/shaders/simple_frag.glsl", [&](GlShader & shader)
+    shaderMonitor.watch("../assets/shaders/prototype/simple_vert.glsl", "../assets/shaders/prototype/simple_frag.glsl", [&](GlShader & shader)
     {
         litShader = std::move(shader);
     });
