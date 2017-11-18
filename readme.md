@@ -10,9 +10,12 @@ A collection of C++11 classes and GLSL shaders united under the arbitrarily chos
 
 ## Project Structure
 
-  * `virtual-reality\` - OpenVR sandbox implementing a forward renderer.
-  * `light-transport\` - A half-finished educational pathtracer started during a vacation in 2016.
-  * `incubator.vcxproj` - lib-incubator, shared code between public & private projects.
+  * `scene-editor\` - A scene editor implementing forward rendering, physically-based materials, and asset serialization. 
+  * `particle-system\` - Work-in-progress CPU and GPU particle system simulator and renderer
+  * `projective-texturing\` - Implements projective surface texturing (i.e. Unity's projector object)
+  * `portal-rendering\` - A simple sample for source/target portal rendering. Does not handle nested portals.
+  * `vr-environment\` - Incomplete sample for physics + VR interaction using Bullet 3
+  * `lib-incubator\` - Shared code between public & private projects.
   * `examples\` - Tests of functionality in lib-incubator. Not likely to compile if you are not me. 
 
 ## Recent
@@ -29,7 +32,7 @@ A collection of C++11 classes and GLSL shaders united under the arbitrarily chos
   * Kmeans clustering of pointclouds
   * Quickhull of pointclouds
 * Rendering
-  * Lightweight, header-only opengl wrapper (GL_API.hpp)
+  * Lightweight, header-only opengl wrapper (`gl-api.hpp`)
   * Decal projection on arbitrary meshes
   * Spherical environment mapping (matcap shading)
   * Billboarded triangle mesh line renderer
@@ -38,7 +41,6 @@ A collection of C++11 classes and GLSL shaders united under the arbitrarily chos
 * App-Dev
   * GLSL shader program hot-reload (via efsw library)
   * 2D resolution-independent layout system for screen debug output (textures, etc)
-  * Frame capture => GIF export
   * Dear-Imgui Bindings
 * DSP Algorithms & Filters
   * One-euro, complimentary, and exponential filters for 1D data
