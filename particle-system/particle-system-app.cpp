@@ -22,18 +22,49 @@ constexpr const char basic_frag[] = R"(#version 330
     }
 )";
 
+particle_system::particle_system()
+{
+    const float2 texCoords[] = { { 0,0 },{ 1,0 },{ 1,1 },{ 0,1 } };
+    glNamedBufferDataEXT(vertexBuffer, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
+}
 
 void particle_system::add(const float3 & position, const float3 & velocity, float size)
 {
-
+    particles.push_back({ position, velocity, size });
 }
 
 void particle_system::update(float dt, const float3 & gravityVec)
 {
+    for (auto & p : particles)
+    {
+        p.position += gravityVec * dt * dt * 0.5f + p.velocity * dt;
+        p.velocity += gravityVec * dt;
+    }
 
+    if (particles.size() == 0)
+    {
+        return;
+    }
+
+    instances.clear();
+
+    for (auto & p : particles)
+    {
+        float3 position = p.position;
+        float sz = p.size;
+
+        // create a trail using instancing
+        for (int i = 0; i < 4; ++i)
+        {
+            instances.push_back({ position, sz });
+            position -= p.velocity * 0.001f;
+            sz *= 0.9f;
+        }
+    }
+    glNamedBufferDataEXT(instanceBuffer, instances.size() * sizeof(float4), instances.data(), GL_DYNAMIC_DRAW);
 }
 
-void particle_system::draw(GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex)
+void particle_system::draw(const float4x4 & viewMat, const float4x4 & projMat, GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex)
 {
 
 }
