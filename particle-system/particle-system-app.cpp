@@ -22,9 +22,6 @@ constexpr const char basic_frag[] = R"(#version 330
     }
 )";
 
-std::shared_ptr<GlShader> basicShader;
-std::unique_ptr<RenderableGrid> grid;
-
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Example")
 {
     int width, height;
