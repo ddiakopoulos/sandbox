@@ -31,6 +31,7 @@ struct shader_workbench : public GLFWApp
 
     std::shared_ptr<GlShader> basicShader;
     std::unique_ptr<RenderableGrid> grid;
+    GlShader particleShader;
 
     float elapsedTime{ 0 };
 

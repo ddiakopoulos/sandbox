@@ -24,8 +24,8 @@ constexpr const char basic_frag[] = R"(#version 330
 
 particle_system::particle_system()
 {
-    const float2 texCoords[] = { { 0,0 },{ 1,0 },{ 1,1 },{ 0,1 } };
-    glNamedBufferDataEXT(vertexBuffer, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
+    const float2 quadCoords[] = { { 0,0 },{ 1,0 },{ 1,1 },{ 0,1 } };
+    glNamedBufferDataEXT(vertexBuffer, sizeof(quadCoords), quadCoords, GL_STATIC_DRAW);
 }
 
 void particle_system::add(const float3 & position, const float3 & velocity, float size)
@@ -66,7 +66,43 @@ void particle_system::update(float dt, const float3 & gravityVec)
 
 void particle_system::draw(const float4x4 & viewMat, const float4x4 & projMat, GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex)
 {
+    if (instances.size() == 0) return;
 
+    shader.bind();
+
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);
+        glDepthMask(GL_FALSE);
+
+        shader.uniform("u_modelMatrix", Identity4x4);
+        shader.uniform("u_viewMat", viewMat);
+        shader.uniform("u_viewProjMat", mul(projMat, viewMat));
+        shader.texture("s_outerTex", 0, outerTex, GL_TEXTURE_2D);
+        shader.texture("s_innerTex", 1, innerTex, GL_TEXTURE_2D);
+
+        // Instance buffer contains position and size
+        glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float4), nullptr);
+        glVertexAttribDivisor(0, 1);
+
+        // Quad
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float2), nullptr);
+        glVertexAttribDivisor(1, 0);
+
+        glDrawArraysInstanced(GL_QUADS, 0, 4, (GLsizei)instances.size());
+
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+    }
+
+    shader.unbind();
 }
 
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Example")
@@ -80,7 +116,10 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
 
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
 
-    // shaderMonitor.watch("../assets/shaders/particles/---.glsl", "../assets/shaders/particles/---.glsl", [&](GlShader & shader) { });
+    shaderMonitor.watch("../assets/shaders/particles/particle_system_vert.glsl", "../assets/shaders/particles/particle_system_frag.glsl", [&](GlShader & shader) 
+    { 
+        particleShader = std::move(shader);
+    });
 
     gizmo.reset(new GlGizmo());
     grid.reset(new RenderableGrid());
