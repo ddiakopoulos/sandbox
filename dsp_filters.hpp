@@ -5,7 +5,7 @@
 
 namespace avl
 {
-    
+ 
     template<typename T>
     class Filter
     {
@@ -14,7 +14,7 @@ namespace avl
     public:
         T get() const { return v; }
         operator T () { return get(); }
-        virtual T update(T const n);
+        virtual T update(T const n) = 0;
         virtual void reset() = 0;
     }; 
 
@@ -25,14 +25,11 @@ namespace avl
     */
 
     template<typename T>
-    struct SingleExponential : public Filter<T>
+    struct SingleExponential final : public Filter<T>
     {
         double alpha;
 
-        SingleExponential(double alpha = 0.50) : alpha(alpha)
-        {
-            
-        }
+        SingleExponential(double alpha = 0.50) : alpha(alpha) { }
 
         virtual T update(T const n) override
         {
@@ -56,7 +53,7 @@ namespace avl
     */
 
     template<typename T>
-    class DoubleExponential : public Filter<T>
+    class DoubleExponential final : public Filter<T>
     {
         double slope;
 
@@ -85,47 +82,11 @@ namespace avl
     };
 
     /*
-    * A simple complimentary filter (designed to fuse accelerometer and gyro data) 
-    * Reference: http://philstech.blogspot.com/2015/06/complimentary-filter-example-quaternion.html
-    */
-    class ComplementaryFilterQuaternion
-    {
-        float4 value;
-    public:
-
-        float3 correctedBody = float3(0, 0, 0);
-        float3 correctedWorld = float3(0, 0, 0);
-        float3 accelWorld = float3(0, 0, 0);
-        const float3 worldUp = float3(0.0f, 1.0f, 0.0f);
-    
-        ComplementaryFilterQuaternion()
-        {
-            reset();
-        }
-
-        float4 update(float3 gyro, float3 accelBody, const float samplePeriod)
-        {
-            accelWorld = qrot(value, accelBody);
-            correctedWorld = cross(accelWorld, worldUp); // compute error
-            correctedBody = qrot(qconj(value), correctedWorld); // rotate correction back to body
-            gyro = gyro + correctedBody;  // add correction vector to gyro
-            float4 incrementalRotation = float4(gyro, samplePeriod);
-            value = qmul(incrementalRotation, value); // integrate quaternion
-            return value;
-        }
-
-        void reset()
-        {
-            value = float4(0, 0, 0, 1);
-        }
-    };
-
-    /*
     * A simple 1D Linear Kalman Filter
     */
 
     template<typename T>
-    class Kalman1D : public Filter<T>
+    class Kalman1D final : public Filter<T>
     {
         double processErrorCovar; // 0 - 1
         double measurementErrorCovar; // 0 - 1
@@ -160,6 +121,33 @@ namespace avl
             measurementErrorCovar = 0.0;
             estimateProbability = 0.0;
             Filter<T>::v = T(0);
+        }
+    };
+
+    /*
+    * A simple complimentary filter (designed to fuse accelerometer and gyro data)
+    * Reference: http://philstech.blogspot.com/2015/06/complimentary-filter-example-quaternion.html
+    */
+    class ComplementaryFilterQuaternion
+    {
+        float4 value = float4(0, 0, 0, 1);
+        float3 correctedBody = float3(0, 0, 0);
+        float3 correctedWorld = float3(0, 0, 0);
+        float3 accelWorld = float3(0, 0, 0);
+        float3 worldUp = float3(0, 0, 0);
+    public:
+
+        ComplementaryFilterQuaternion(float3 worldUp = { 0.0f, 1.0f, 0.0f }) : worldUp(worldUp) { }
+
+        float4 update(float3 gyro, float3 accelBody, const float samplePeriod)
+        {
+            accelWorld = qrot(value, accelBody);
+            correctedWorld = cross(accelWorld, worldUp); // compute error
+            correctedBody = qrot(qconj(value), correctedWorld); // rotate correction back to body
+            gyro = gyro + correctedBody;  // add correction vector to gyro
+            float4 incrementalRotation = float4(gyro, samplePeriod);
+            value = qmul(incrementalRotation, value); // integrate quaternion
+            return value;
         }
     };
     
