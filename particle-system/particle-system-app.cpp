@@ -22,6 +22,22 @@ constexpr const char basic_frag[] = R"(#version 330
     }
 )";
 
+
+void particle_system::add(const float3 & position, const float3 & velocity, float size)
+{
+
+}
+
+void particle_system::update(float dt, const float3 & gravityVec)
+{
+
+}
+
+void particle_system::draw(GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex)
+{
+
+}
+
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Example")
 {
     int width, height;

@@ -13,6 +13,10 @@ class particle_system
     std::vector<particle> particles;
     std::vector<float4> instances;
     GlBuffer vertexBuffer, instanceBuffer;
+public:
+    void update(float dt, const float3 & gravityVec);
+    void add(const float3 & position, const float3 & velocity, float size);
+    void draw(GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex);
 };
 
 struct shader_workbench : public GLFWApp
