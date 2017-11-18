@@ -31,8 +31,13 @@ struct shader_workbench : public GLFWApp
 
     std::shared_ptr<GlShader> basicShader;
     std::unique_ptr<RenderableGrid> grid;
-    GlShader particleShader;
 
+    std::unique_ptr<particle_system> particleSystem;
+    GlShader particleShader;
+    GlTexture2D outerTex;
+    GlTexture2D innerTex;
+
+    UpdateEvent lastUpdate;
     float elapsedTime{ 0 };
 
     shader_workbench();

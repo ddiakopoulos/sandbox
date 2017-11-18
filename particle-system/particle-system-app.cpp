@@ -22,6 +22,8 @@ constexpr const char basic_frag[] = R"(#version 330
     }
 )";
 
+UniformRandomGenerator gen;
+
 particle_system::particle_system()
 {
     const float2 quadCoords[] = { { 0,0 },{ 1,0 },{ 1,1 },{ 0,1 } };
@@ -115,11 +117,25 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     gui::make_light_theme();
 
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
+    
+    particleSystem.reset(new particle_system());
+
+    Pose emitterLocation = Pose(float3(0, 2, 0));
+    for (int i = 0; i < 512; ++i)
+    {
+        auto v1 = gen.random_float(-0.9f, 0.9f);
+        auto v2 = gen.random_float(1.f, 3.f);
+        auto v3 = gen.random_float(-0.5f, 0.5f);
+        particleSystem->add(emitterLocation.position, float3(v1, v2, v3), gen.random_float(0.01f, 0.1f));
+    }
 
     shaderMonitor.watch("../assets/shaders/particles/particle_system_vert.glsl", "../assets/shaders/particles/particle_system_frag.glsl", [&](GlShader & shader) 
     { 
         particleShader = std::move(shader);
     });
+
+    outerTex = load_image("../assets/images/particle.png");
+    innerTex = load_image("../assets/images/Blur_03.png");
 
     gizmo.reset(new GlGizmo());
     grid.reset(new RenderableGrid());
@@ -150,6 +166,7 @@ void shader_workbench::on_update(const UpdateEvent & e)
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
     elapsedTime += e.timestep_ms;
+    lastUpdate = e;
 }
 
 void shader_workbench::on_draw()
@@ -162,6 +179,8 @@ void shader_workbench::on_draw()
     glViewport(0, 0, width, height);
 
     gpuTimer.start();
+
+    particleSystem->update(lastUpdate.timestep_ms, float3(0, -1, 0));
 
     if (gizmo) gizmo->update(cam, float2(width, height));
 
@@ -185,6 +204,8 @@ void shader_workbench::on_draw()
         glViewport(0, 0, width, height);
         glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        particleSystem->draw(viewMatrix, projectionMatrix, particleShader, outerTex, innerTex);
 
         draw_scene(cam.get_eye_point(), viewProjectionMatrix);
     }
