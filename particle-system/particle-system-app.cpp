@@ -142,6 +142,10 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
     
     particleSystem.reset(new particle_system(4));
+
+    auto groundPlaneModifier = std::unique_ptr<ground_modifier>(new ground_modifier(Plane({ 0, 1, 0 }, 0.f)));
+    particleSystem->add_modifier(std::move(groundPlaneModifier));
+
     auto gravityModifier = std::unique_ptr<gravity_modifier>(new gravity_modifier(float3(0, -1, 0)));
     particleSystem->add_modifier(std::move(gravityModifier));
 
@@ -149,9 +153,9 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     for (int i = 0; i < 24; ++i)
     {
         auto v1 = gen.random_float(-0.9f, 0.9f);
-        auto v2 = gen.random_float(1.f, 3.f);
+        auto v2 = gen.random_float(0.5f, 1.5f);
         auto v3 = gen.random_float(-0.5f, 0.5f);
-        particleSystem->add(emitterLocation.position, float3(v1, v2, v3), gen.random_float(0.05f, 0.2f), 4.f);
+        particleSystem->add(emitterLocation.position, float3(v1, v2, v3), gen.random_float(0.05f, 0.2f), 10.f);
     }
 
     shaderMonitor.watch("../assets/shaders/particles/particle_system_vert.glsl", "../assets/shaders/particles/particle_system_frag.glsl", [&](GlShader & shader) 

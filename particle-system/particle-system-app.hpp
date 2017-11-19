@@ -31,6 +31,23 @@ struct gravity_modifier final : public particle_modifier
     }
 };
 
+struct ground_modifier final : public particle_modifier
+{
+    Plane ground;
+    ground_modifier(const Plane p) : ground(p) {}
+    void update(std::vector<particle> & particles, float dt) override
+    {
+        for (auto & p : particles)
+        {
+            float reflectedVelocity = dot(ground.get_normal(), p.velocity);
+            if (dot(ground.equation, float4(p.position, 1)) < 0.f && reflectedVelocity < 0.f)
+            {
+                p.velocity -= ground.get_normal() * (reflectedVelocity * 2.0f);
+            }
+        }
+    }
+};
+
 class particle_system
 {
     std::vector<particle> particles;
