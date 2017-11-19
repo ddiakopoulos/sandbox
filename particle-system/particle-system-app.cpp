@@ -151,11 +151,14 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     auto dampingModifier = std::unique_ptr<damping_modifier>(new damping_modifier(0.5f));
     particleSystem->add_modifier(std::move(dampingModifier));
 
-    auto ptGravityModifier = std::unique_ptr<point_gravity_modifier>(new point_gravity_modifier(float3(-2, 2, -2), 3.f, 0.5f, 8.f));
-    particleSystem->add_modifier(std::move(ptGravityModifier));
+    //auto ptGravityModifier = std::unique_ptr<point_gravity_modifier>(new point_gravity_modifier(float3(-2, 2, -2), 3.f, 0.5f, 8.f));
+    //particleSystem->add_modifier(std::move(ptGravityModifier));
 
-    auto ptGravityModifier2 = std::unique_ptr<point_gravity_modifier>(new point_gravity_modifier(float3(+2, 2, +2), 3.f, 0.5f, 8.f));
-    particleSystem->add_modifier(std::move(ptGravityModifier2));
+    //auto ptGravityModifier2 = std::unique_ptr<point_gravity_modifier>(new point_gravity_modifier(float3(+2, 2, +2), 3.f, 0.5f, 8.f));
+    //particleSystem->add_modifier(std::move(ptGravityModifier2));
+
+    auto vortexModifier = std::unique_ptr<vortex_modifier>(new vortex_modifier(float3(+2, 2, +2), float3(0, 0, -1), IM_PI, 2.0f, 8.0f, 2.5f));
+    particleSystem->add_modifier(std::move(vortexModifier));
 
     pointEmitter.pose.position = float3(0, 4, 0);
 

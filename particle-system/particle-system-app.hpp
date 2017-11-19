@@ -84,6 +84,46 @@ struct ground_modifier final : public particle_modifier
     }
 };
 
+struct vortex_modifier final : public particle_modifier
+{
+    float3 position;
+    float3 direction;
+    float angle;
+    float strength;
+    float radius;
+    float damping;
+
+    vortex_modifier(float3 & position, float3 & direction, float angle, float strenth, float radius, float damping)
+        : position(position), direction(direction), angle(angle), strength(strenth), radius(radius), damping(damping) { }
+
+    void update(std::vector<particle> & particles, float dt) override
+    {
+        for (auto & p : particles)
+        {
+            float3 relativeDistance = p.position - position;
+            float distance = length(relativeDistance);
+
+            float3 force;
+            float forceStrength = 0.f;
+
+            //if (distance > radius) return;
+
+            forceStrength = strength * (radius - distance) / radius;
+            force = cross(direction, relativeDistance);
+
+            auto rotator = make_rotation_matrix({ 0, 0, 1 }, angle);
+            force = transform_vector(rotator, force);
+            force *= forceStrength;
+
+            //force -= p.velocity * length(p.velocity) * damping;
+
+            p.velocity += force;
+
+        }
+    }
+};
+
+
 class particle_system
 {
     std::vector<particle> particles;
