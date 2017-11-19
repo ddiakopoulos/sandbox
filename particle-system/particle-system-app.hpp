@@ -20,7 +20,7 @@ struct particle_modifier
 struct gravity_modifier final : public particle_modifier
 {
     float3 gravityVec;
-    gravity_modifier(const float3 gravityVec) : gravityVec(gravityVec) {}
+    gravity_modifier(const float3 gravityVec) : gravityVec(gravityVec) { }
     void update(std::vector<particle> & particles, float dt) override
     {
         for (auto & p : particles)
@@ -31,10 +31,23 @@ struct gravity_modifier final : public particle_modifier
     }
 };
 
+struct damping_modifier final : public particle_modifier
+{
+    float damping;
+    damping_modifier(const float damping) : damping(damping) { }
+    void update(std::vector<particle> & particles, float dt) override
+    {
+        for (auto & p : particles)
+        {
+            p.velocity += p.velocity * damping * dt;
+        }
+    }
+};
+
 struct ground_modifier final : public particle_modifier
 {
     Plane ground;
-    ground_modifier(const Plane p) : ground(p) {}
+    ground_modifier(const Plane p) : ground(p) { }
     void update(std::vector<particle> & particles, float dt) override
     {
         for (auto & p : particles)

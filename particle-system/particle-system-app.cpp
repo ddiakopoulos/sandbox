@@ -149,12 +149,15 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     auto gravityModifier = std::unique_ptr<gravity_modifier>(new gravity_modifier(float3(0, -1, 0)));
     particleSystem->add_modifier(std::move(gravityModifier));
 
+    //auto dampingModifier = std::unique_ptr<damping_modifier>(new damping_modifier(-1.0f));
+    //particleSystem->add_modifier(std::move(dampingModifier));
+
     Pose emitterLocation = Pose(float3(0, 2, 0));
     for (int i = 0; i < 24; ++i)
     {
         auto v1 = gen.random_float(-0.9f, 0.9f);
         auto v2 = gen.random_float(0.5f, 1.5f);
-        auto v3 = gen.random_float(-0.5f, 0.5f);
+        auto v3 = gen.random_float(-0.9f, 0.9f);
         particleSystem->add(emitterLocation.position, float3(v1, v2, v3), gen.random_float(0.05f, 0.2f), 10.f);
     }
 
