@@ -15,7 +15,6 @@ void main()
     mat4 invView = inverse(u_viewMat);
     vec3 qxdir = (invView * vec4(1, 0, 0, 0)).xyz;
     vec3 qydir = (invView * vec4(0, 1, 0, 0)).xyz;
-    vec3 qzdir = (invView * vec4(0, 0, 1, 0)).xyz;
 
     vec4 position = vec4(in_pos_size.xyz + qxdir * ((in_texcoord.x*2-1)*in_pos_size.w) + qydir * ((in_texcoord.y*2-1)*in_pos_size.w), 1);
     v_position = (u_viewMat * vec4((u_modelMatrix * position).xyz, 1)).xyz;

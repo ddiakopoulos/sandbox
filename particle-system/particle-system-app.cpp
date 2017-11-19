@@ -121,7 +121,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     particleSystem.reset(new particle_system());
 
     Pose emitterLocation = Pose(float3(0, 2, 0));
-    for (int i = 0; i < 512; ++i)
+    for (int i = 0; i < 1; ++i)
     {
         auto v1 = gen.random_float(-0.9f, 0.9f);
         auto v2 = gen.random_float(1.f, 3.f);
@@ -135,7 +135,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     });
 
     outerTex = load_image("../assets/images/particle.png");
-    innerTex = load_image("../assets/images/Blur_03.png");
+    innerTex = load_image("../assets/images/blur_03.png");
 
     gizmo.reset(new GlGizmo());
     grid.reset(new RenderableGrid());
@@ -180,7 +180,7 @@ void shader_workbench::on_draw()
 
     gpuTimer.start();
 
-    particleSystem->update(lastUpdate.timestep_ms, float3(0, -1, 0));
+    particleSystem->update(0, float3(0, -1, 0));
 
     if (gizmo) gizmo->update(cam, float2(width, height));
 
