@@ -103,10 +103,10 @@ struct vortex_modifier final : public particle_modifier
             float3 relativeDistance = p.position - position;
             float distance = length(relativeDistance);
 
+            //if (distance > radius) return;
+
             float3 force;
             float forceStrength = 0.f;
-
-            //if (distance > radius) return;
 
             forceStrength = strength * (radius - distance) / radius;
             force = cross(direction, relativeDistance);
@@ -162,21 +162,51 @@ struct point_emitter final : public particle_emitter
 
 struct cube_emitter final : public particle_emitter
 {
-    void emit(particle_system & system) override { }
+    Bounds3D localBounds;
+    cube_emitter(Bounds3D local) : localBounds(local) { }
+    void emit(particle_system & system) override 
+    { 
+        float3 min = pose.transform_coord(-(localBounds.size() * 0.5f));
+        float3 max = pose.transform_coord(+(localBounds.size() * 0.5f));
+
+        for (int i = 0; i < 1; ++i)
+        {
+            auto v1 = gen.random_float(min.x, max.x);
+            auto v2 = gen.random_float(min.y, max.y);
+            auto v3 = gen.random_float(min.z, max.z);
+            system.add(float3(v1, v2, v3), float3(0, 1, 0), gen.random_float(0.05f, 0.2f), 4.f);
+        }
+    }
 };
 
 struct sphere_emitter final : public particle_emitter
 {
-    void emit(particle_system & system) override { }
+    Bounds3D localBounds;
+    sphere_emitter(Bounds3D local) : localBounds(local) { }
+    void emit(particle_system & system) override 
+    {
+        for (int i = 0; i < 12; ++i)
+        {
+            float u = gen.random_float(0, 1) * float(ANVIL_PI);
+            float v = gen.random_float(0, 1) * float(ANVIL_TAU);
+            float3 normal = cartsesian_coord(u, v, 1.f);
+            float3 point = pose.transform_coord(normal);
+            system.add(point, normal * 0.5f, 0.1f, 4.f);
+        }
+    }
 };
 
 struct plane_emitter_2d final : public particle_emitter
 {
+    Bounds2D localBounds;
+    plane_emitter_2d(Bounds2D local) : localBounds(local) { }
     void emit(particle_system & system) override { }
 };
 
 struct circle_emitter_2d final : public particle_emitter
 {
+    Bounds2D localBounds;
+    circle_emitter_2d(Bounds2D local) : localBounds(local) { }
     void emit(particle_system & system) override { }
 };
 
@@ -194,7 +224,12 @@ struct shader_workbench : public GLFWApp
 
     std::unique_ptr<particle_system> particleSystem;
     std::unique_ptr<gravity_modifier> gravityModifier;
+
     point_emitter pointEmitter;
+    cube_emitter cubeEmitter = { Bounds3D(float3(-1.f), float3(1.f)) };
+    sphere_emitter sphereEmitter = { Bounds3D(float3(-1.f), float3(1.f)) };
+    plane_emitter_2d planeEmitter = { Bounds2D(float2(-1.f), float2(1.f)) };
+    circle_emitter_2d circleEmitter = { Bounds2D(float2(-1.f), float2(1.f)) };
 
     GlShader particleShader;
     GlTexture2D outerTex;

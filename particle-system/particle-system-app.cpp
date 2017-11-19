@@ -142,14 +142,14 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     
     particleSystem.reset(new particle_system(4));
 
-    auto groundPlaneModifier = std::unique_ptr<ground_modifier>(new ground_modifier(Plane({ 0, 1, 0 }, 0.f)));
-    particleSystem->add_modifier(std::move(groundPlaneModifier));
+    //auto groundPlaneModifier = std::unique_ptr<ground_modifier>(new ground_modifier(Plane({ 0, 1, 0 }, 0.f)));
+    //particleSystem->add_modifier(std::move(groundPlaneModifier));
 
-    auto gravityModifier = std::unique_ptr<gravity_modifier>(new gravity_modifier(float3(0, -9.8f, 0)));
-    particleSystem->add_modifier(std::move(gravityModifier));
+    //auto gravityModifier = std::unique_ptr<gravity_modifier>(new gravity_modifier(float3(0, -9.8f, 0)));
+    //particleSystem->add_modifier(std::move(gravityModifier));
 
-    auto dampingModifier = std::unique_ptr<damping_modifier>(new damping_modifier(0.5f));
-    particleSystem->add_modifier(std::move(dampingModifier));
+    //auto dampingModifier = std::unique_ptr<damping_modifier>(new damping_modifier(0.5f));
+    //particleSystem->add_modifier(std::move(dampingModifier));
 
     //auto ptGravityModifier = std::unique_ptr<point_gravity_modifier>(new point_gravity_modifier(float3(-2, 2, -2), 3.f, 0.5f, 8.f));
     //particleSystem->add_modifier(std::move(ptGravityModifier));
@@ -157,10 +157,15 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     //auto ptGravityModifier2 = std::unique_ptr<point_gravity_modifier>(new point_gravity_modifier(float3(+2, 2, +2), 3.f, 0.5f, 8.f));
     //particleSystem->add_modifier(std::move(ptGravityModifier2));
 
-    auto vortexModifier = std::unique_ptr<vortex_modifier>(new vortex_modifier(float3(+2, 2, +2), float3(0, 0, -1), IM_PI, 2.0f, 8.0f, 2.5f));
-    particleSystem->add_modifier(std::move(vortexModifier));
+    //auto vortexModifier = std::unique_ptr<vortex_modifier>(new vortex_modifier(float3(0, 9, 0), float3(0, 1, -1), IM_PI / 2.f, 1.0f, 8.0f, 2.5f));
+    //particleSystem->add_modifier(std::move(vortexModifier));
 
     pointEmitter.pose.position = float3(0, 4, 0);
+
+    cubeEmitter.pose.position = float3(-8, 0, 0);
+    sphereEmitter.pose.position = float3(0, 0, 8);
+    planeEmitter.pose.position = float3(-8, 0, -8);
+    circleEmitter.pose.position = float3(8, 0, 8);
 
     shaderMonitor.watch("../assets/shaders/particles/particle_system_vert.glsl", "../assets/shaders/particles/particle_system_frag.glsl", [&](GlShader & shader) 
     { 
@@ -200,7 +205,12 @@ void shader_workbench::on_update(const UpdateEvent & e)
     shaderMonitor.handle_recompile();
     elapsedTime += e.timestep_ms;
     lastUpdate = e;
-    pointEmitter.emit(*particleSystem.get());
+
+    //pointEmitter.emit(*particleSystem.get());
+    cubeEmitter.emit(*particleSystem.get());
+    sphereEmitter.emit(*particleSystem.get());
+    planeEmitter.emit(*particleSystem.get());
+    circleEmitter.emit(*particleSystem.get());
 }
 
 void shader_workbench::on_draw()

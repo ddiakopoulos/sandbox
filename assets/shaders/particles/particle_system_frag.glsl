@@ -10,5 +10,6 @@ out vec4 f_color;
 
 void main() 
 {
-    f_color = texture2D(s_outerTex, v_texcoord) * 0.1;
+    vec4 tex = texture2D(s_outerTex, v_texcoord);
+    f_color = vec4(tex.rgb * vec3(1, 1, 0), tex.a) * 0.05;
 }
