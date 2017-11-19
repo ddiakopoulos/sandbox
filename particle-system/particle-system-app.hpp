@@ -30,6 +30,30 @@ struct gravity_modifier final : public particle_modifier
     }
 };
 
+struct point_gravity_modifier final : public particle_modifier
+{
+    float3 position;
+    float strength;
+    float maxStrength;
+    float radiusSquared;
+
+    point_gravity_modifier(float3 & position, float strength, float maxStrength, float radius)
+        : position(position), strength(strength), maxStrength(maxStrength), radiusSquared(radius * radius) { }
+
+    void update(std::vector<particle> & particles, float dt) override
+    {
+        for (auto & p : particles)
+        {
+            float3 distance = position - p.position;
+            float distSqr = length2(distance);
+            if (distSqr > radiusSquared) return;
+            float force = strength / distSqr;
+            force = force > maxStrength ? maxStrength : force;
+            p.velocity += normalize(distance) * force;
+        }
+    }
+};
+
 struct damping_modifier final : public particle_modifier
 {
     float damping;

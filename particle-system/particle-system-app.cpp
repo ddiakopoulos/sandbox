@@ -145,11 +145,17 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     auto groundPlaneModifier = std::unique_ptr<ground_modifier>(new ground_modifier(Plane({ 0, 1, 0 }, 0.f)));
     particleSystem->add_modifier(std::move(groundPlaneModifier));
 
-    auto gravityModifier = std::unique_ptr<gravity_modifier>(new gravity_modifier(float3(0, -1, 0)));
+    auto gravityModifier = std::unique_ptr<gravity_modifier>(new gravity_modifier(float3(0, -9.8f, 0)));
     particleSystem->add_modifier(std::move(gravityModifier));
 
-    //auto dampingModifier = std::unique_ptr<damping_modifier>(new damping_modifier(-1.0f));
-    //particleSystem->add_modifier(std::move(dampingModifier));
+    auto dampingModifier = std::unique_ptr<damping_modifier>(new damping_modifier(0.5f));
+    particleSystem->add_modifier(std::move(dampingModifier));
+
+    auto ptGravityModifier = std::unique_ptr<point_gravity_modifier>(new point_gravity_modifier(float3(-2, 2, -2), 3.f, 0.5f, 8.f));
+    particleSystem->add_modifier(std::move(ptGravityModifier));
+
+    auto ptGravityModifier2 = std::unique_ptr<point_gravity_modifier>(new point_gravity_modifier(float3(+2, 2, +2), 3.f, 0.5f, 8.f));
+    particleSystem->add_modifier(std::move(ptGravityModifier2));
 
     pointEmitter.pose.position = float3(0, 4, 0);
 
