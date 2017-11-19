@@ -53,14 +53,44 @@ class particle_system
     std::vector<particle> particles;
     std::vector<float4> instances;
     GlBuffer vertexBuffer, instanceBuffer;
-    size_t trailCount = 0;
     std::vector<std::unique_ptr<particle_modifier>> particleModifiers;
+    size_t trailCount = 0;
 public:
     particle_system(size_t trailCount);
     void update(float dt, const float3 & gravityVec);
     void add_modifier(std::unique_ptr<particle_modifier> modifier);
     void add(const float3 & position, const float3 & velocity, float size, float lifeMs);
     void draw(const float4x4 & viewMat, const float4x4 & projMat, GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex);
+};
+
+struct particle_emitter
+{
+    virtual void emit(particle_system & system) = 0;
+};
+
+struct point_emitter final : public particle_emitter
+{
+    virtual void emit(particle_system & system) { }
+};
+
+struct cube_emitter final : public particle_emitter
+{
+    virtual void emit(particle_system & system) { }
+};
+
+struct sphere_emitter final : public particle_emitter
+{
+    virtual void emit(particle_system & system) { }
+};
+
+struct plane_emitter_2d final : public particle_emitter
+{
+    virtual void emit(particle_system & system) { }
+};
+
+struct circle_emitter_2d final : public particle_emitter
+{
+    virtual void emit(particle_system & system) { }
 };
 
 struct shader_workbench : public GLFWApp
