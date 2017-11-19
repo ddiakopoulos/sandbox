@@ -30,6 +30,11 @@ particle_system::particle_system(size_t trailCount) : trailCount(trailCount)
     glNamedBufferDataEXT(vertexBuffer, sizeof(quadCoords), quadCoords, GL_STATIC_DRAW);
 }
 
+void particle_system::add_modifier(std::unique_ptr<particle_modifier> modifier)
+{
+    particleModifiers.push_back(std::move(modifier));
+}
+
 void particle_system::add(const float3 & position, const float3 & velocity, float size, float lifeMs)
 {
     particle p;
@@ -46,10 +51,15 @@ void particle_system::update(float dt, const float3 & gravityVec)
 
     for (auto & p : particles)
     {
-        p.position += gravityVec * dt * dt * 0.5f + p.velocity * dt;
-        p.velocity += gravityVec * dt;
+        p.position += dt * 0.5f + p.velocity * dt;
+        p.velocity += 0.f;
         p.lifeMs -= dt;
         p.isDead = p.lifeMs <= 0.f;
+    }
+
+    for (auto & modifier : particleModifiers)
+    {
+        modifier->update(particles, dt);
     }
 
     if (!particles.empty())
@@ -131,7 +141,9 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
 
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
     
-    particleSystem.reset(new particle_system(8));
+    particleSystem.reset(new particle_system(4));
+    auto gravityModifier = std::unique_ptr<gravity_modifier>(new gravity_modifier(float3(0, -1, 0)));
+    particleSystem->add_modifier(std::move(gravityModifier));
 
     Pose emitterLocation = Pose(float3(0, 2, 0));
     for (int i = 0; i < 24; ++i)
@@ -139,7 +151,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
         auto v1 = gen.random_float(-0.9f, 0.9f);
         auto v2 = gen.random_float(1.f, 3.f);
         auto v3 = gen.random_float(-0.5f, 0.5f);
-        particleSystem->add(emitterLocation.position, float3(v1, v2, v3), gen.random_float(0.01f, 0.1f), 2.f);
+        particleSystem->add(emitterLocation.position, float3(v1, v2, v3), gen.random_float(0.05f, 0.2f), 4.f);
     }
 
     shaderMonitor.watch("../assets/shaders/particles/particle_system_vert.glsl", "../assets/shaders/particles/particle_system_frag.glsl", [&](GlShader & shader) 

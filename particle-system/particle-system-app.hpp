@@ -12,15 +12,36 @@ struct particle
     bool isDead = false;
 };
 
+struct particle_modifier
+{
+    virtual void update(std::vector<particle> & particles, float dt) = 0;
+};
+
+struct gravity_modifier final : public particle_modifier
+{
+    float3 gravityVec;
+    gravity_modifier(const float3 gravityVec) : gravityVec(gravityVec) {}
+    void update(std::vector<particle> & particles, float dt) override
+    {
+        for (auto & p : particles)
+        {
+            p.position += gravityVec * dt;
+            p.velocity += gravityVec * dt;
+        }
+    }
+};
+
 class particle_system
 {
     std::vector<particle> particles;
     std::vector<float4> instances;
     GlBuffer vertexBuffer, instanceBuffer;
     size_t trailCount = 0;
+    std::vector<std::unique_ptr<particle_modifier>> particleModifiers;
 public:
     particle_system(size_t trailCount);
     void update(float dt, const float3 & gravityVec);
+    void add_modifier(std::unique_ptr<particle_modifier> modifier);
     void add(const float3 & position, const float3 & velocity, float size, float lifeMs);
     void draw(const float4x4 & viewMat, const float4x4 & projMat, GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex);
 };
@@ -38,6 +59,7 @@ struct shader_workbench : public GLFWApp
     std::unique_ptr<RenderableGrid> grid;
 
     std::unique_ptr<particle_system> particleSystem;
+    std::unique_ptr<gravity_modifier> gravityModifier;
     GlShader particleShader;
     GlTexture2D outerTex;
     GlTexture2D innerTex;
