@@ -25,7 +25,6 @@ struct gravity_modifier final : public particle_modifier
     {
         for (auto & p : particles)
         {
-            p.position += gravityVec * dt;
             p.velocity += gravityVec * dt;
         }
     }
@@ -39,7 +38,7 @@ struct damping_modifier final : public particle_modifier
     {
         for (auto & p : particles)
         {
-            p.velocity += p.velocity * damping * dt;
+            p.velocity *= std::pow(damping, dt);
         }
     }
 };
@@ -78,32 +77,43 @@ public:
 
 struct particle_emitter
 {
+    Pose pose;
+    UniformRandomGenerator gen;
     virtual void emit(particle_system & system) = 0;
 };
 
 struct point_emitter final : public particle_emitter
 {
-    virtual void emit(particle_system & system) { }
+    void emit(particle_system & system) override 
+    {
+        for (int i = 0; i < 12; ++i)
+        {
+            auto v1 = gen.random_float(-.5f, +.5f);
+            auto v2 = gen.random_float(0.5f, 2.f);
+            auto v3 = gen.random_float(-.5f, +.5f);
+            system.add(pose.position, float3(v1, v2, v3), gen.random_float(0.05f, 0.2f), 4.f);
+        }
+    }
 };
 
 struct cube_emitter final : public particle_emitter
 {
-    virtual void emit(particle_system & system) { }
+    void emit(particle_system & system) override { }
 };
 
 struct sphere_emitter final : public particle_emitter
 {
-    virtual void emit(particle_system & system) { }
+    void emit(particle_system & system) override { }
 };
 
 struct plane_emitter_2d final : public particle_emitter
 {
-    virtual void emit(particle_system & system) { }
+    void emit(particle_system & system) override { }
 };
 
 struct circle_emitter_2d final : public particle_emitter
 {
-    virtual void emit(particle_system & system) { }
+    void emit(particle_system & system) override { }
 };
 
 struct shader_workbench : public GLFWApp
@@ -120,6 +130,8 @@ struct shader_workbench : public GLFWApp
 
     std::unique_ptr<particle_system> particleSystem;
     std::unique_ptr<gravity_modifier> gravityModifier;
+    point_emitter pointEmitter;
+
     GlShader particleShader;
     GlTexture2D outerTex;
     GlTexture2D innerTex;

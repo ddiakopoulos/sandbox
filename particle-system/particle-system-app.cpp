@@ -51,8 +51,7 @@ void particle_system::update(float dt, const float3 & gravityVec)
 
     for (auto & p : particles)
     {
-        p.position += dt * 0.5f + p.velocity * dt;
-        p.velocity += 0.f;
+        p.position += p.velocity * dt;
         p.lifeMs -= dt;
         p.isDead = p.lifeMs <= 0.f;
     }
@@ -152,14 +151,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     //auto dampingModifier = std::unique_ptr<damping_modifier>(new damping_modifier(-1.0f));
     //particleSystem->add_modifier(std::move(dampingModifier));
 
-    Pose emitterLocation = Pose(float3(0, 2, 0));
-    for (int i = 0; i < 24; ++i)
-    {
-        auto v1 = gen.random_float(-0.9f, 0.9f);
-        auto v2 = gen.random_float(0.5f, 1.5f);
-        auto v3 = gen.random_float(-0.9f, 0.9f);
-        particleSystem->add(emitterLocation.position, float3(v1, v2, v3), gen.random_float(0.05f, 0.2f), 10.f);
-    }
+    pointEmitter.pose.position = float3(0, 4, 0);
 
     shaderMonitor.watch("../assets/shaders/particles/particle_system_vert.glsl", "../assets/shaders/particles/particle_system_frag.glsl", [&](GlShader & shader) 
     { 
@@ -199,6 +191,7 @@ void shader_workbench::on_update(const UpdateEvent & e)
     shaderMonitor.handle_recompile();
     elapsedTime += e.timestep_ms;
     lastUpdate = e;
+    pointEmitter.emit(*particleSystem.get());
 }
 
 void shader_workbench::on_draw()
