@@ -30,9 +30,14 @@ particle_system::particle_system()
     glNamedBufferDataEXT(vertexBuffer, sizeof(quadCoords), quadCoords, GL_STATIC_DRAW);
 }
 
-void particle_system::add(const float3 & position, const float3 & velocity, float size)
+void particle_system::add(const float3 & position, const float3 & velocity, float size, float lifeMs)
 {
-    particles.push_back({ position, velocity, size });
+    particle p;
+    p.position = position;
+    p.velocity = velocity;
+    p.size = size;
+    p.lifeMs = lifeMs;
+    particles.push_back(std::move(p));
 }
 
 void particle_system::update(float dt, const float3 & gravityVec)
@@ -41,6 +46,17 @@ void particle_system::update(float dt, const float3 & gravityVec)
     {
         p.position += gravityVec * dt * dt * 0.5f + p.velocity * dt;
         p.velocity += gravityVec * dt;
+        p.lifeMs -= dt;
+        p.isDead = p.lifeMs <= 0.f;
+    }
+
+    if (!particles.empty())
+    {
+        auto it = std::remove_if(std::begin(particles), std::end(particles), [](const particle & p) 
+        {
+            return p.isDead;
+        });
+        particles.erase(it, std::end(particles));
     }
 
     if (particles.size() == 0)
@@ -121,12 +137,12 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
     particleSystem.reset(new particle_system());
 
     Pose emitterLocation = Pose(float3(0, 2, 0));
-    for (int i = 0; i < 1; ++i)
+    for (int i = 0; i < 24; ++i)
     {
         auto v1 = gen.random_float(-0.9f, 0.9f);
         auto v2 = gen.random_float(1.f, 3.f);
         auto v3 = gen.random_float(-0.5f, 0.5f);
-        particleSystem->add(emitterLocation.position, float3(v1, v2, v3), gen.random_float(0.01f, 0.1f));
+        particleSystem->add(emitterLocation.position, float3(v1, v2, v3), gen.random_float(0.01f, 0.1f), 2.f);
     }
 
     shaderMonitor.watch("../assets/shaders/particles/particle_system_vert.glsl", "../assets/shaders/particles/particle_system_frag.glsl", [&](GlShader & shader) 
@@ -180,7 +196,7 @@ void shader_workbench::on_draw()
 
     gpuTimer.start();
 
-    particleSystem->update(0, float3(0, -1, 0));
+    particleSystem->update(lastUpdate.timestep_ms, float3(0, -1, 0));
 
     if (gizmo) gizmo->update(cam, float2(width, height));
 

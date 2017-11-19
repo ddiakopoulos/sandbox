@@ -1,11 +1,15 @@
 #include "index.hpp"
 #include "gl-gizmo.hpp"
 
+// http://www.bfilipek.com/2014/04/flexible-particle-system-start.html?m=1
+
 struct particle
 {
     float3 position;
     float3 velocity;
     float size;
+    float lifeMs;
+    bool isDead = false;
 };
 
 class particle_system
@@ -16,7 +20,7 @@ class particle_system
 public:
     particle_system();
     void update(float dt, const float3 & gravityVec);
-    void add(const float3 & position, const float3 & velocity, float size);
+    void add(const float3 & position, const float3 & velocity, float size, float lifeMs);
     void draw(const float4x4 & viewMat, const float4x4 & projMat, GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex);
 };
 
