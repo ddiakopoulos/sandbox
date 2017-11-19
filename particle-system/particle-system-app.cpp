@@ -24,7 +24,7 @@ constexpr const char basic_frag[] = R"(#version 330
 
 UniformRandomGenerator gen;
 
-particle_system::particle_system()
+particle_system::particle_system(size_t trailCount) : trailCount(trailCount)
 {
     const float2 quadCoords[] = { { 0,0 },{ 1,0 },{ 1,1 },{ 0,1 } };
     glNamedBufferDataEXT(vertexBuffer, sizeof(quadCoords), quadCoords, GL_STATIC_DRAW);
@@ -42,6 +42,8 @@ void particle_system::add(const float3 & position, const float3 & velocity, floa
 
 void particle_system::update(float dt, const float3 & gravityVec)
 {
+    if (particles.size() == 0) return;
+
     for (auto & p : particles)
     {
         p.position += gravityVec * dt * dt * 0.5f + p.velocity * dt;
@@ -59,11 +61,6 @@ void particle_system::update(float dt, const float3 & gravityVec)
         particles.erase(it, std::end(particles));
     }
 
-    if (particles.size() == 0)
-    {
-        return;
-    }
-
     instances.clear();
 
     for (auto & p : particles)
@@ -72,7 +69,7 @@ void particle_system::update(float dt, const float3 & gravityVec)
         float sz = p.size;
 
         // create a trail using instancing
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < (1 + trailCount); ++i)
         {
             instances.push_back({ position, sz });
             position -= p.velocity * 0.001f;
@@ -134,7 +131,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
 
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);
     
-    particleSystem.reset(new particle_system());
+    particleSystem.reset(new particle_system(8));
 
     Pose emitterLocation = Pose(float3(0, 2, 0));
     for (int i = 0; i < 24; ++i)

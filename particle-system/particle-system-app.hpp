@@ -17,8 +17,9 @@ class particle_system
     std::vector<particle> particles;
     std::vector<float4> instances;
     GlBuffer vertexBuffer, instanceBuffer;
+    size_t trailCount = 0;
 public:
-    particle_system();
+    particle_system(size_t trailCount);
     void update(float dt, const float3 & gravityVec);
     void add(const float3 & position, const float3 & velocity, float size, float lifeMs);
     void draw(const float4x4 & viewMat, const float4x4 & projMat, GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex);
