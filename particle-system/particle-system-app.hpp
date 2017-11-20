@@ -136,7 +136,7 @@ public:
     void update(float dt, const float3 & gravityVec);
     void add_modifier(std::unique_ptr<particle_modifier> modifier);
     void add(const float3 & position, const float3 & velocity, float size, float lifeMs);
-    void draw(const float4x4 & viewMat, const float4x4 & projMat, GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex);
+    void draw(const float4x4 & viewMat, const float4x4 & projMat, GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex, float time);
 };
 
 struct particle_emitter
@@ -241,6 +241,8 @@ struct shader_workbench : public GLFWApp
     std::unique_ptr<gui::ImGuiManager> igm;
     GlGpuTimer gpuTimer;
     std::unique_ptr<GlGizmo> gizmo;
+
+    SimpleTimer timer;
 
     std::shared_ptr<GlShader> basicShader;
     std::unique_ptr<RenderableGrid> grid;

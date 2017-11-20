@@ -88,7 +88,7 @@ void particle_system::update(float dt, const float3 & gravityVec)
     glNamedBufferDataEXT(instanceBuffer, instances.size() * sizeof(float4), instances.data(), GL_DYNAMIC_DRAW);
 }
 
-void particle_system::draw(const float4x4 & viewMat, const float4x4 & projMat, GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex)
+void particle_system::draw(const float4x4 & viewMat, const float4x4 & projMat, GlShader & shader, GlTexture2D & outerTex, GlTexture2D & innerTex, float time)
 {
     if (instances.size() == 0) return;
 
@@ -96,12 +96,13 @@ void particle_system::draw(const float4x4 & viewMat, const float4x4 & projMat, G
 
     {
         glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // one-one, additive
         glDepthMask(GL_FALSE);
 
         shader.uniform("u_modelMatrix", Identity4x4);
         shader.uniform("u_viewMat", viewMat);
         shader.uniform("u_viewProjMat", mul(projMat, viewMat));
+        shader.uniform("u_time", time);
         shader.texture("s_outerTex", 0, outerTex, GL_TEXTURE_2D);
         shader.texture("s_innerTex", 1, innerTex, GL_TEXTURE_2D);
 
@@ -180,9 +181,11 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
+
+    timer.start();
 }
 
-shader_workbench::~shader_workbench() { }
+shader_workbench::~shader_workbench() { timer.stop();  }
 
 void shader_workbench::on_window_resize(int2 size) { }
 
@@ -240,6 +243,8 @@ void shader_workbench::on_draw()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
+    float timeSeconds = timer.milliseconds().count() / 1000.f;
+
     {
         const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
         const float4x4 viewMatrix = cam.get_view_matrix();
@@ -249,7 +254,7 @@ void shader_workbench::on_draw()
         glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        particleSystem->draw(viewMatrix, projectionMatrix, particleShader, outerTex, innerTex);
+        particleSystem->draw(viewMatrix, projectionMatrix, particleShader, outerTex, innerTex, timeSeconds);
 
         draw_scene(cam.get_eye_point(), viewProjectionMatrix);
     }
@@ -261,6 +266,7 @@ void shader_workbench::on_draw()
     igm->begin_frame();
 
     ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
+    ImGui::Text("Global Time %f s", timeSeconds);
 
     igm->end_frame();
     if (gizmo) gizmo->draw();
