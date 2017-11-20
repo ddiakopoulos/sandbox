@@ -200,14 +200,37 @@ struct plane_emitter_2d final : public particle_emitter
 {
     Bounds2D localBounds;
     plane_emitter_2d(Bounds2D local) : localBounds(local) { }
-    void emit(particle_system & system) override { }
+    void emit(particle_system & system) override 
+    { 
+        for (int i = 0; i < 3; ++i)
+        {
+            float2 halfExtents = localBounds.size() * 0.5f;
+            float w = gen.random_float(-halfExtents.x, halfExtents.x);
+            float h = gen.random_float(-halfExtents.y, halfExtents.y);
+            float3 point = pose.transform_coord(float3(w, 0, h));
+            system.add(point, float3(0, 1, 0), 0.1f, 4.f);
+        }
+    }
 };
 
 struct circle_emitter_2d final : public particle_emitter
 {
     Bounds2D localBounds;
     circle_emitter_2d(Bounds2D local) : localBounds(local) { }
-    void emit(particle_system & system) override { }
+    void emit(particle_system & system) override 
+    { 
+        float2 size = localBounds.size();
+        float radius = 0.5f * std::sqrt(size.x * size.x + size.y * size.y);
+        radius = gen.random_float(0, radius);
+        for (int i = 0; i < 3; ++i)
+        {
+            float ang = gen.random_float_sphere();
+            float w = std::cos(ang) * radius;
+            float h = std::sin(ang) * radius;
+            float3 point = pose.transform_coord(float3(w, 0, h));
+            system.add(point, float3(0, 1, 0), 0.1f, 4.f);
+        }
+    }
 };
 
 struct shader_workbench : public GLFWApp

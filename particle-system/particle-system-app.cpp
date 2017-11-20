@@ -164,8 +164,8 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
 
     cubeEmitter.pose.position = float3(-8, 0, 0);
     sphereEmitter.pose.position = float3(0, 0, 8);
-    planeEmitter.pose.position = float3(-8, 0, -8);
-    circleEmitter.pose.position = float3(8, 0, 8);
+    planeEmitter.pose.position = float3(0, 0, -8);
+    circleEmitter.pose.position = float3(+8, 0, 0);
 
     shaderMonitor.watch("../assets/shaders/particles/particle_system_vert.glsl", "../assets/shaders/particles/particle_system_frag.glsl", [&](GlShader & shader) 
     { 
@@ -206,7 +206,7 @@ void shader_workbench::on_update(const UpdateEvent & e)
     elapsedTime += e.timestep_ms;
     lastUpdate = e;
 
-    //pointEmitter.emit(*particleSystem.get());
+    pointEmitter.emit(*particleSystem.get());
     cubeEmitter.emit(*particleSystem.get());
     sphereEmitter.emit(*particleSystem.get());
     planeEmitter.emit(*particleSystem.get());
