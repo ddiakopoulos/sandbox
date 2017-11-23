@@ -77,27 +77,8 @@ struct ExperimentalApp : public GLFWApp
         cameraController.update(e.timestep_ms);
     }
     
-    void on_draw() override
+    void render_scene(const float4x4 & viewMatrix, const float4x4 & projectionMatrix)
     {
-        glfwMakeContextCurrent(window);
-        glfwSwapInterval(1);
-        
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-
-        int width, height;
-        glfwGetWindowSize(window, &width, &height);
-        glViewport(0, 0, width, height);
-     
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-
-        if (gizmo) gizmo->update(debugCamera, float2(width, height));
-        tinygizmo::transform_gizmo("destination", gizmo->gizmo_ctx, xform);
-
-        const float windowAspectRatio = (float)width / (float)height;
-        const float4x4 projectionMatrix = debugCamera.get_projection_matrix(windowAspectRatio);
-        const float4x4 viewMatrix = debugCamera.get_view_matrix();
         const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
         wireframeShader.bind();
@@ -108,6 +89,40 @@ struct ExperimentalApp : public GLFWApp
         wireframeShader.unbind();
 
         if (gizmo) gizmo->draw();
+    }
+
+    void on_draw() override
+    {
+        glfwMakeContextCurrent(window);
+        glfwSwapInterval(1);
+        
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+     
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+
+        if (gizmo) gizmo->update(debugCamera, float2(width, height));
+        tinygizmo::transform_gizmo("destination", gizmo->gizmo_ctx, xform);
+
+        const float windowAspectRatio = (float)width / (float)height;
+        const float4x4 projectionMatrix = debugCamera.get_projection_matrix(windowAspectRatio);
+        const float4x4 viewMatrix = debugCamera.get_view_matrix();
+
+        float aspectWidth = (width * 0.5f) / (float)width; // new / old
+        float aspectHeight = height / (float)height; // new / old
+        float ratio = std::max(aspectWidth, aspectHeight); // min for aspect fit, max for aspect fill
+
+        float2 scaledSize = float2(width * ratio, height * ratio);
+        float2 scaledPosition = float2( ((width * 0.5f) - scaledSize.x) / 2.0f, ((height) - scaledSize.y) / 2.0f); // target size - scaled size
+        glViewport(scaledPosition.x, scaledPosition.y, scaledSize.x, scaledSize.y);
+        render_scene(viewMatrix, projectionMatrix);
+     
+        glViewport(width * 0.5f, 0, width * 0.5, height);
+        render_scene(viewMatrix, projectionMatrix);
 
         gl_check_error(__FILE__, __LINE__);
         
