@@ -1,8 +1,6 @@
-
 #include <iostream>
 #include <sstream>
 
-#include "index.hpp"
 #include "index.hpp"
 
 using namespace avl;
