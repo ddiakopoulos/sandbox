@@ -9,24 +9,27 @@
 UniformRandomGenerator generator;
 
 template<class T, int M> void require_zero(const linalg::vec<T, M> & v) { for (int j = 0; j<M; ++j) REQUIRE(v[j] == 0); }
-template<class T, int M> void require_approx_equal(const linalg::vec<T, M> & a, const linalg::vec<T, M> & b) { for (int j = 0; j<M; ++j) REQUIRE(a[j] == Approx(b[j]).epsilon(0.001)); }
+template<class T, int M> void require_approx_equal(const linalg::vec<T, M> & a, const linalg::vec<T, M> & b) { for (int j = 0; j<M; ++j) REQUIRE(a[j] == Approx(b[j]).epsilon(0.01)); }
 template<class T, int M, int N> void require_zero(const linalg::mat<T, M, N> & m) { for (int i = 0; i<N; ++i) require_zero(m[i]); }
 template<class T, int M, int N> void require_approx_equal(const linalg::mat<T, M, N> & a, const linalg::mat<T, M, N> & b) { for (int i = 0; i<N; ++i) require_approx_equal(a[i], b[i]); }
+
+AffineTransform<float> p;
 
 TEST_CASE("linalg-eigen matrix identity conversions")
 {
     float3x3 linalgIdentity3 = Identity3x3;
     Eigen::Matrix<float, 3, 3> eigenIdentity3 = Eigen::Matrix<float, 3, 3>::Identity();
     REQUIRE(linalgIdentity3 == to_linalg(eigenIdentity3));
+    REQUIRE(to_eigen(linalgIdentity3) == eigenIdentity3);
 
     float4x4 linalgIdentity4 = Identity4x4;
     Eigen::Matrix<float, 4, 4> eigenIdentity4 = Eigen::Matrix<float, 4, 4>::Identity(); 
     REQUIRE(linalgIdentity4 == to_linalg(eigenIdentity4));
+    REQUIRE(to_eigen(linalgIdentity4) == eigenIdentity4);
 }
 
 TEST_CASE("linalg-eigen matrix general conversions")
 {
-
     // Swizzle test on 3x3
     for (int i = 0; i < 1024; ++i)
     {
@@ -55,6 +58,7 @@ TEST_CASE("linalg-eigen matrix general conversions")
         eigenMatrix(2, 2) = m33;
 
         REQUIRE(linalgMatrix == to_linalg(eigenMatrix));
+        REQUIRE(to_eigen(linalgMatrix) == eigenMatrix);
     }
 
     // Transpose test on 4x4
@@ -104,8 +108,10 @@ TEST_CASE("linalg-eigen matrix general conversions")
         eigenMatrix(3, 3) = m44;
 
         Eigen::Matrix<float, 4, 4> eigenMatrix_T = eigenMatrix.transpose();
+        float4x4 linalgMatrix_T = transpose(linalgMatrix);
 
-        REQUIRE(transpose(linalgMatrix) == to_linalg(eigenMatrix_T));
+        REQUIRE(linalgMatrix_T == to_linalg(eigenMatrix_T));
+        REQUIRE(to_eigen(linalgMatrix_T) == eigenMatrix_T);
     }
 }
 
@@ -119,6 +125,7 @@ TEST_CASE("linalg-eigen vector conversions")
         float2 lf2 = { r1, r2};
         Eigen::Matrix<float, 2, 1> ef2 = { r1, r2 };
         REQUIRE(lf2 == to_linalg(ef2));
+        REQUIRE(to_eigen(lf2) == ef2);
     }
 
     for (int i = 0; i < 1024; ++i)
@@ -130,6 +137,7 @@ TEST_CASE("linalg-eigen vector conversions")
         float3 lf3 = { r1, r2, r3 };
         Eigen::Matrix<float, 3, 1> ef3 = { r1, r2, r3 };
         REQUIRE(lf3 == to_linalg(ef3));
+        REQUIRE(to_eigen(lf3) == ef3);
     }
 
     for (int i = 0; i < 1024; ++i)
@@ -142,6 +150,7 @@ TEST_CASE("linalg-eigen vector conversions")
         float4 lf4 = { r1, r2, r3, r4 };
         Eigen::Matrix<float, 4, 1> ef4 = { r1, r2, r3, r4 };
         REQUIRE(lf4 == to_linalg(ef4));
+        REQUIRE(to_eigen(lf4) == ef4);
     }
 }
 
@@ -161,5 +170,3 @@ TEST_CASE("linalg-eigen quaternion/rotation conversions")
         require_approx_equal(lrm, to_linalg(erm));
     }
 }
-
-

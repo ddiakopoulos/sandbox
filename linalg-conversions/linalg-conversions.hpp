@@ -109,6 +109,28 @@ inline Eigen::Matrix<scalar_t, H, W> cv_to_eigen(const cv::Mat_<scalar_t> & cvMa
 
 #include <Eigen/Core>
 
+template<typename scalar_t>
+struct AffineTransform
+{
+    Eigen::Matrix<scalar_t, 3, 1> position;
+    Eigen::Quaternion<scalar_t> orientation;
+
+    AffineTransform() : position(0, 0, 0), orientation(0, 0, 0, 1) { };
+
+    template<class scalar_t> AffineTransform(const Eigen::Quaternion<scalar_t> & o, const Eigen::Matrix<scalar_t, 3, 1> & p) : orientation(o), position(p) { }
+    template<class scalar_t> AffineTransform(const AffineTransform<scalar_t> & other) : orientation(other.orientation), position(other.position) { }
+
+    template<class scalar_t> AffineTransform<scalar_t> operator * (const AffineTransform<scalar_t> & other) const
+    {
+        return AffineTransform<scalar_t>(Eigen::Quaternion<scalar_t>(orientation * other.orientation), Eigen::Matrix<scalar_t 3, 1>(position + orientation._transformVector(other.position)));
+    }
+
+    AffineTransform<scalar_t> inverse()
+    {
+        return AffineTransform<scalar_t>(Eigen::Quaternion<T>(orientation.conjugate()), Eigen::Matrix<scalar_t, 3, 1>(orientation.conjugate()._transformVector(-position)));
+    }
+};
+
 template <typename scalar_t>
 inline linalg::vec<scalar_t, 2> to_linalg(const Eigen::Matrix<scalar_t, 2, 1> & v)
 {
@@ -116,13 +138,13 @@ inline linalg::vec<scalar_t, 2> to_linalg(const Eigen::Matrix<scalar_t, 2, 1> & 
 }
 
 template <typename scalar_t>
-inline  linalg::vec<scalar_t, 3> to_linalg(const Eigen::Matrix<scalar_t, 3, 1> & v)
+inline linalg::vec<scalar_t, 3> to_linalg(const Eigen::Matrix<scalar_t, 3, 1> & v)
 {
     return{ v(0), v(1), v(2) };
 }
 
 template <typename scalar_t>
-inline  linalg::vec<scalar_t, 4> to_linalg(const Eigen::Matrix<scalar_t, 4, 1> & v)
+inline linalg::vec<scalar_t, 4> to_linalg(const Eigen::Matrix<scalar_t, 4, 1> & v)
 {
     return{ v(0), v(1), v(2), v(3) };
 }
@@ -149,9 +171,46 @@ inline linalg::mat<scalar_t, 4, 4> to_linalg(const Eigen::Matrix<scalar_t, 4, 4>
     return matrix;
 }
 
+// To Eigen
+
+template <typename scalar_t>
+inline Eigen::Matrix<scalar_t, 2, 1> to_eigen(const linalg::vec<scalar_t, 2> & v)
+{
+    return{ v.x, v.y };
+}
+
+template <typename scalar_t>
+inline Eigen::Matrix<scalar_t, 3, 1> to_eigen(const linalg::vec<scalar_t, 3> & v)
+{
+    return{ v.x, v.y, v.z};
+}
+
+template <typename scalar_t>
+inline const Eigen::Matrix<scalar_t, 4, 1> to_eigen(const linalg::vec<scalar_t, 4> & v)
+{
+    return{ v.x, v.y, v.z, v.w };
+}
+
+template <typename scalar_t>
+inline Eigen::Matrix<scalar_t, 3, 3> to_eigen(const linalg::mat<scalar_t, 3, 3> & m)
+{
+    Eigen::Matrix<scalar_t, 3, 3> matrix;
+    std::memcpy(matrix.data(), &m[0].x, sizeof(scalar_t) * 9);
+    return matrix;
+}
+
+template <typename scalar_t>
+inline Eigen::Matrix<scalar_t, 4, 4> to_eigen(const linalg::mat<scalar_t, 4, 4> & m)
+{
+    Eigen::Matrix<scalar_t, 4, 4> matrix;
+    std::memcpy(matrix.data(), &m[0].x, sizeof(scalar_t) * 16);
+    return matrix;
+}
+
 ///////////////////////////////////////////////////////////
 // GLM to Eigen Conversions for Vectors and NxM Matrices //
 ///////////////////////////////////////////////////////////
 
+// to do
 
 #endif // linalg_conversions_hpp
