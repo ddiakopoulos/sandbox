@@ -22,6 +22,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "projective-texturing", "..\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "particle-system", "..\particle-system\particle-system.vcxproj", "{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "linalg-conversions", "..\linalg-conversions\linalg-conversions.vcxproj", "{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -94,6 +96,14 @@ Global
 		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Release|Win32.Build.0 = Release|Win32
 		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Release|x64.ActiveCfg = Release|x64
 		{A8861A2E-CFB2-45CC-80D6-E28EC8D9452E}.Release|x64.Build.0 = Release|x64
+		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Debug|Win32.Build.0 = Debug|Win32
+		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Debug|x64.ActiveCfg = Debug|x64
+		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Debug|x64.Build.0 = Debug|x64
+		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Release|Win32.ActiveCfg = Release|Win32
+		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Release|Win32.Build.0 = Release|Win32
+		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Release|x64.ActiveCfg = Release|x64
+		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

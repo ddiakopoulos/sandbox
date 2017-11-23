@@ -3,6 +3,8 @@
 
 #include "linalg_util.hpp"
 
+using namespace avl;
+
 //////////////////////////////////////////////////////////////
 // Eigen to OpenCV Conversions for Vectors and NxM Matrices //
 //////////////////////////////////////////////////////////////
@@ -10,7 +12,6 @@
 #ifdef HAVE_OPENCV
 
 #include <opencv2/core/core.hpp>
-#include <Eigen/Core>
 
 template <typename scalar_t>
 inline cv::Vec<scalar_t, 2> eigen_to_cv(const Eigen::Matrix<scalar_t, 2, 1> & v)
@@ -106,6 +107,47 @@ inline Eigen::Matrix<scalar_t, H, W> cv_to_eigen(const cv::Mat_<scalar_t> & cvMa
 // Linalg.h to Eigen Conversions for Vectors and NxM Matrices //
 ////////////////////////////////////////////////////////////////
 
+#include <Eigen/Core>
+
+template <typename scalar_t>
+inline linalg::vec<scalar_t, 2> to_linalg(const Eigen::Matrix<scalar_t, 2, 1> & v)
+{
+    return{ v(0), v(1) };
+}
+
+template <typename scalar_t>
+inline  linalg::vec<scalar_t, 3> to_linalg(const Eigen::Matrix<scalar_t, 3, 1> & v)
+{
+    return{ v(0), v(1), v(2) };
+}
+
+template <typename scalar_t>
+inline  linalg::vec<scalar_t, 4> to_linalg(const Eigen::Matrix<scalar_t, 4, 1> & v)
+{
+    return{ v(0), v(1), v(2), v(3) };
+}
+
+template <typename scalar_t>
+inline linalg::vec<scalar_t, 4> to_linalg(const Eigen::Quaternion<scalar_t> & q)
+{
+    return{ q(0), q(1), q(2), q(3) };
+}
+
+template <typename scalar_t>
+inline linalg::mat<scalar_t, 3, 3> to_linalg(const Eigen::Matrix<scalar_t, 3, 3> & ep)
+{
+    linalg::mat<scalar_t, 3, 3> matrix;
+    std::memcpy(&matrix[0].x, ep.data(), sizeof(scalar_t) * 9);
+    return matrix;
+}
+
+template <typename scalar_t>
+inline linalg::mat<scalar_t, 4, 4> to_linalg(const Eigen::Matrix<scalar_t, 4, 4> & ep)
+{
+    linalg::mat<scalar_t, 4, 4> matrix;
+    std::memcpy(&matrix[0].x, ep.data(), sizeof(scalar_t) * 16);
+    return matrix;
+}
 
 ///////////////////////////////////////////////////////////
 // GLM to Eigen Conversions for Vectors and NxM Matrices //
