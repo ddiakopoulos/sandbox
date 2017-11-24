@@ -74,40 +74,41 @@ class PhysicallyBasedRenderer
 
     GlShaderHandle earlyZPass = { "depth-prepass" };
 
+    // Update per-object uniform buffer
+    void update_per_object(Renderable * top, const CameraData & d)
+    {
+        uniforms::per_object object = {};
+        object.modelMatrix = mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale()));
+        object.modelMatrixIT = inverse(transpose(object.modelMatrix));
+        object.modelViewMatrix = mul(d.viewMatrix, object.modelMatrix);
+        object.receiveShadow = (float)top->get_receive_shadow();
+        perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
+    };
+
     // http://casual-effects.blogspot.com/2013/08/z-prepass-considered-irrelevant.html
     void run_depth_prepass(const CameraData & d)
     {
         earlyZTimer.start();
 
-        GLboolean savedColorMask[4];
-        glGetBooleanv(GL_COLOR_WRITEMASK, &savedColorMask[0]);
+        GLboolean colorMask[4];
+        glGetBooleanv(GL_COLOR_WRITEMASK, &colorMask[0]);
 
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);           // Nearest pixel
-        glDepthMask(GL_TRUE);           // Need depth mask on
-        glColorMask(0, 0, 0, 0);        // Do not write any color
-
-        // Update per-object uniform buffer
-        auto update_per_object = [&](Renderable * top)
-        {
-            uniforms::per_object object = {};
-            object.modelMatrix = mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale()));
-            object.modelMatrixIT = inverse(transpose(object.modelMatrix));
-            object.modelViewMatrix = mul(d.viewMatrix, object.modelMatrix);
-            object.receiveShadow = (float)top->get_receive_shadow();
-            perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
-        };
+        glEnable(GL_DEPTH_TEST);    // Enable depth testing
+        glDepthFunc(GL_LESS);       // Nearest pixel
+        glDepthMask(GL_TRUE);       // Need depth mask on
+        glColorMask(0, 0, 0, 0);    // Do not write any color
 
         auto & shader = earlyZPass.get();
         shader.bind();
 
         for (auto obj : renderSet)
         {
-            update_per_object(obj);
+            update_per_object(obj, d);
             obj->draw();
         }
 
-        glColorMask(savedColorMask[0], savedColorMask[1], savedColorMask[2], savedColorMask[3]); // Restore color mask state
+        //  // Restore color mask state
+        glColorMask(colorMask[0], colorMask[1], colorMask[2], colorMask[3]);
 
         shader.unbind();
 
@@ -154,74 +155,22 @@ class PhysicallyBasedRenderer
         gl_check_error(__FILE__, __LINE__);
     }
 
-    void run_forward_pass(const CameraData & d)
+    template<typename MaterialQueueType, typename DefaultQueueType>
+    void run_forward_pass(MaterialQueueType & renderQueueMaterial, DefaultQueueType & renderQueueDefault, const CameraData & d)
     {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glDepthMask(GL_FALSE); // depth already comes from the prepass
 
-        // Follows sorting strategy outlined here: 
-        // http://realtimecollisiondetection.net/blog/?p=86
-        // todo - sorting is is done per-eye but should be done per frame instead
-
-        auto materialSortFunc = [&d](Renderable * lhs, Renderable * rhs)
-        {
-            const float3 cameraWorldspace = d.pose.position;
-            const float lDist = distance(cameraWorldspace, lhs->get_pose().position);
-            const float rDist = distance(cameraWorldspace, rhs->get_pose().position);
-
-            auto lid = lhs->get_material()->id();
-            auto rid = rhs->get_material()->id();
-            if (lid != rid) return lid > rid;
-
-            return lDist < rDist;
-        };
-
-        auto distanceSortFunc = [&d](Renderable * lhs, Renderable * rhs)
-        {
-            const float3 cameraWorldspace = d.pose.position;
-            const float lDist = distance(cameraWorldspace, lhs->get_pose().position);
-            const float rDist = distance(cameraWorldspace, rhs->get_pose().position);
-            return lDist < rDist;
-        };
-
-        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(materialSortFunc)> renderQueueMaterial(materialSortFunc);
-        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(distanceSortFunc)> renderQueueDefault(distanceSortFunc);
-
-        for (auto obj : renderSet) 
-        { 
-            // Can't sort by material if the renderable doesn't *have* a material; 
-            // bucket all other objects 
-            if (obj->get_material() != nullptr) renderQueueMaterial.push(obj);
-            else renderQueueDefault.push(obj);
-        }
-
-        // Update per-object uniform buffer
-        auto update_per_object = [&](Renderable * top)
-        {
-            uniforms::per_object object = {};
-            object.modelMatrix = mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale()));
-            object.modelMatrixIT = inverse(transpose(object.modelMatrix));
-            object.modelViewMatrix = mul(d.viewMatrix, object.modelMatrix);
-            object.receiveShadow = (float)top->get_receive_shadow();
-            perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
-        };
-
         while (!renderQueueMaterial.empty())
         {
             Renderable * top = renderQueueMaterial.top();
             renderQueueMaterial.pop();
+            update_per_object(top, d);
 
-            update_per_object(top);
             Material * mat = top->get_material();
-
             mat->update_uniforms();
-
-            if (auto * mr = dynamic_cast<MetallicRoughnessMaterial*>(mat))
-            {
-                mr->update_cascaded_shadow_array_handle(shadow->get_output_texture());
-            }
-
+            if (auto * mr = dynamic_cast<MetallicRoughnessMaterial*>(mat)) mr->update_cascaded_shadow_array_handle(shadow->get_output_texture());
             mat->use();
 
             top->draw();
@@ -232,7 +181,7 @@ class PhysicallyBasedRenderer
         {
             Renderable * top = renderQueueDefault.top();
             renderQueueDefault.pop();
-            update_per_object(top);
+            update_per_object(top, d);
             top->draw();
         }
 
@@ -336,19 +285,23 @@ public:
         
         shadowTimer.start();
 
-        if (shadow->enabled) // render shadows
+        // In VR, we create a virtual camera in between both eyes.
+        // todo - this is somewhat wrong since we need to actually create a superfrustum
+        // which is max(left, right)
+        float3 cameraWorldspace;
+        if (NumEyes == 2) cameraWorldspace = (cameras[0].pose.position + cameras[1].pose.position) * 0.5f;
+        else cameraWorldspace = cameras[0].pose.position;
+
+        if (shadow->enabled)
         {
             // Default to the first camera
             CameraData shadowCamera = cameras[0];
 
-            // In VR, we create a virtual camera in between both eyes.
-            // todo - this is somewhat wrong since we need to actually create a superfrustum
-            // which is max(left, right)
+            // regenerate the relevant matrices because we've already changed camera position
             if (NumEyes == 2)
             {
-                // Average the positions and re-generate the relevant matrices
-                const float3 centerPosition = (cameras[0].pose.position + cameras[1].pose.position) * 0.5f;
-                shadowCamera.pose.position = centerPosition;
+                // Average the positions and 
+                shadowCamera.pose.position = cameraWorldspace;
                 shadowCamera.viewMatrix = make_view_matrix_from_pose(shadowCamera.pose);
                 shadowCamera.viewProjMatrix = mul(shadowCamera.projectionMatrix, shadowCamera.viewMatrix);
             }
@@ -370,6 +323,41 @@ public:
 
         // Per-scene can be uploaded now that the shadow pass has completed
         perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
+
+        // Follows sorting strategy outlined here: 
+        // http://realtimecollisiondetection.net/blog/?p=86
+
+        auto materialSortFunc = [cameraWorldspace](Renderable * lhs, Renderable * rhs)
+        {
+            const float lDist = distance(cameraWorldspace, lhs->get_pose().position);
+            const float rDist = distance(cameraWorldspace, rhs->get_pose().position);
+
+            // Sort by material (expensive shader state change)
+            auto lid = lhs->get_material()->id();
+            auto rid = rhs->get_material()->id();
+            if (lid != rid) return lid > rid;
+
+            // Otherwise sort by distance
+            return lDist < rDist;
+        };
+
+        auto distanceSortFunc = [cameraWorldspace](Renderable * lhs, Renderable * rhs)
+        {
+            const float lDist = distance(cameraWorldspace, lhs->get_pose().position);
+            const float rDist = distance(cameraWorldspace, rhs->get_pose().position);
+            return lDist < rDist;
+        };
+
+        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(materialSortFunc)> renderQueueMaterial(materialSortFunc);
+        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(distanceSortFunc)> renderQueueDefault(distanceSortFunc);
+
+        for (auto obj : renderSet)
+        {
+            // Can't sort by material if the renderable doesn't *have* a material; 
+            // bucket all other objects 
+            if (obj->get_material() != nullptr) renderQueueMaterial.push(obj);
+            else renderQueueDefault.push(obj);
+        }
 
         for (int eyeIdx = 0; eyeIdx < NumEyes; ++eyeIdx)
         {
@@ -394,7 +382,7 @@ public:
             // Execute the forward passes
             run_depth_prepass(cameras[eyeIdx]);
             run_skybox_pass(cameras[eyeIdx]);
-            run_forward_pass(cameras[eyeIdx]);
+            run_forward_pass(renderQueueMaterial, renderQueueDefault, cameras[eyeIdx]);
 
             glDisable(GL_MULTISAMPLE);
 
