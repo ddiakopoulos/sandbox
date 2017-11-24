@@ -79,21 +79,6 @@ class PhysicallyBasedRenderer
     {
         earlyZTimer.start();
 
-        /*
-        auto distanceSortFunc = [&d](Renderable * lhs, Renderable * rhs)
-        {
-            const float3 cameraWorldspace = d.pose.position;
-            const float lDist = distance(cameraWorldspace, lhs->get_pose().position);
-            const float rDist = distance(cameraWorldspace, rhs->get_pose().position);
-            return lDist < rDist;
-        };
-
-        std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(distanceSortFunc)> renderQueueDefault(distanceSortFunc);
-        */
-
-       // for (auto obj : renderSet) renderQueueDefault.push(obj);
-
-
         GLboolean savedColorMask[4];
         glGetBooleanv(GL_COLOR_WRITEMASK, &savedColorMask[0]);
 
@@ -121,16 +106,6 @@ class PhysicallyBasedRenderer
             update_per_object(obj);
             obj->draw();
         }
-
-        /*
-        while (!renderQueueDefault.empty())
-        {
-            Renderable * top = renderQueueDefault.top();
-            renderQueueDefault.pop();
-            update_per_object(top);
-            top->draw();
-        }
-        */
 
         glColorMask(savedColorMask[0], savedColorMask[1], savedColorMask[2], savedColorMask[3]); // Restore color mask state
 
@@ -183,7 +158,7 @@ class PhysicallyBasedRenderer
     {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
-        glDepthMask(GL_FALSE); // depth already comes from the prepass -- this gets the values stuck
+        glDepthMask(GL_FALSE); // depth already comes from the prepass
 
         // Follows sorting strategy outlined here: 
         // http://realtimecollisiondetection.net/blog/?p=86
@@ -261,7 +236,7 @@ class PhysicallyBasedRenderer
             top->draw();
         }
 
-        glDepthMask(GL_TRUE);
+        glDepthMask(GL_TRUE); // cleanup state
 
         gl_check_error(__FILE__, __LINE__);
     }
@@ -356,10 +331,9 @@ public:
         b.directional_light.amount = sunlight.amount;
         for (int i = 0; i < (int)std::min(pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = *pointLights[i];
 
-        GLfloat defaultColor[] = { 0.0f, 0.0f, 1.f, 1.0f };
+        GLfloat defaultColor[] = { 1.0f, 0.0f, 0.f, 1.0f };
         GLfloat defaultDepth = 1.f;
         
-        /*
         shadowTimer.start();
 
         if (shadow->enabled) // render shadows
@@ -391,7 +365,6 @@ public:
         }
 
         shadowTimer.stop();
-        */
 
         forwardTimer.start();
 
@@ -415,28 +388,28 @@ public:
             glEnable(GL_MULTISAMPLE);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
             glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
-
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_COLOR, 0, &defaultColor[0]);
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
             // Execute the forward passes
             run_depth_prepass(cameras[eyeIdx]);
-            //run_skybox_pass(cameras[eyeIdx]);
+            run_skybox_pass(cameras[eyeIdx]);
             run_forward_pass(cameras[eyeIdx]);
 
             glDisable(GL_MULTISAMPLE);
 
             // Resolve multisample into per-eye framebuffers
+            {
+                // blit color 
+                glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[eyeIdx],
+                    0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0,
+                    renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
-            // blit color 
-            glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[eyeIdx], 
-                0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, 
-                renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-            // blit depth
-            glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[eyeIdx],
-                0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0,
-                renderSizePerEye.x, renderSizePerEye.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST); 
+                // blit depth
+                glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[eyeIdx],
+                    0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0,
+                    renderSizePerEye.x, renderSizePerEye.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+            }
 
             gl_check_error(__FILE__, __LINE__);
         }
