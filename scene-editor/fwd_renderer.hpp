@@ -155,39 +155,32 @@ class PhysicallyBasedRenderer
         gl_check_error(__FILE__, __LINE__);
     }
 
-    template<typename MaterialQueueType, typename DefaultQueueType>
-    void run_forward_pass(MaterialQueueType & renderQueueMaterial, DefaultQueueType & renderQueueDefault, const CameraData & d)
+    void run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const CameraData & d)
     {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glDepthMask(GL_FALSE); // depth already comes from the prepass
 
-        while (!renderQueueMaterial.empty())
+        for (auto r : renderQueueMaterial)
         {
-            Renderable * top = renderQueueMaterial.top();
-            renderQueueMaterial.pop();
-            update_per_object(top, d);
+            update_per_object(r, d);
 
-            Material * mat = top->get_material();
+            Material * mat = r->get_material();
             mat->update_uniforms();
             if (auto * mr = dynamic_cast<MetallicRoughnessMaterial*>(mat)) mr->update_cascaded_shadow_array_handle(shadow->get_output_texture());
             mat->use();
 
-            top->draw();
+            r->draw();
         }
 
         // We assume that objects without a valid material take care of their own shading in the `draw()` function. 
-        while (!renderQueueDefault.empty())
+        for (auto r : renderQueueDefault)
         {
-            Renderable * top = renderQueueDefault.top();
-            renderQueueDefault.pop();
-            update_per_object(top, d);
-            top->draw();
+            update_per_object(r, d);
+            r->draw();
         }
 
         glDepthMask(GL_TRUE); // cleanup state
-
-        gl_check_error(__FILE__, __LINE__);
     }
 
     void run_post_pass(const CameraData & d)
@@ -353,10 +346,26 @@ public:
 
         for (auto obj : renderSet)
         {
-            // Can't sort by material if the renderable doesn't *have* a material; 
-            // bucket all other objects 
+            // Can't sort by material if the renderable doesn't *have* a material; bucket all other objects 
             if (obj->get_material() != nullptr) renderQueueMaterial.push(obj);
             else renderQueueDefault.push(obj);
+        }
+
+        // Resolve render queues into flat lists
+        std::vector<Renderable *> materialRenderList;
+        while (!renderQueueMaterial.empty())
+        {
+            Renderable * top = renderQueueMaterial.top();
+            renderQueueMaterial.pop();
+            materialRenderList.push_back(top);
+        }
+
+        std::vector<Renderable *> defaultRenderList;
+        while (!renderQueueDefault.empty())
+        {
+            Renderable * top = renderQueueDefault.top();
+            renderQueueDefault.pop();
+            defaultRenderList.push_back(top);
         }
 
         for (int eyeIdx = 0; eyeIdx < NumEyes; ++eyeIdx)
@@ -382,7 +391,7 @@ public:
             // Execute the forward passes
             run_depth_prepass(cameras[eyeIdx]);
             run_skybox_pass(cameras[eyeIdx]);
-            run_forward_pass(renderQueueMaterial, renderQueueDefault, cameras[eyeIdx]);
+            run_forward_pass(materialRenderList, defaultRenderList, cameras[eyeIdx]);
 
             glDisable(GL_MULTISAMPLE);
 
