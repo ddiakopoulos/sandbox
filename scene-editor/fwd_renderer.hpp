@@ -74,6 +74,7 @@ class PhysicallyBasedRenderer
 
     GlShaderHandle earlyZPass = { "depth-prepass" };
 
+    // http://casual-effects.blogspot.com/2013/08/z-prepass-considered-irrelevant.html
     void run_depth_prepass(const CameraData & d)
     {
         earlyZTimer.start();
@@ -181,9 +182,8 @@ class PhysicallyBasedRenderer
     void run_forward_pass(const CameraData & d)
     {
         glEnable(GL_DEPTH_TEST);
-        //glDepthFunc(GL_LEQUAL);
-        //glColorMask(1, 1, 1, 1);    // re-enable color mask after z prepass
-        //glDepthMask(GL_FALSE);      // depth already comes from the prepass
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_FALSE); // depth already comes from the prepass -- this gets the values stuck
 
         // Follows sorting strategy outlined here: 
         // http://realtimecollisiondetection.net/blog/?p=86
@@ -260,6 +260,8 @@ class PhysicallyBasedRenderer
             update_per_object(top);
             top->draw();
         }
+
+        glDepthMask(GL_TRUE);
 
         gl_check_error(__FILE__, __LINE__);
     }
@@ -413,15 +415,14 @@ public:
             glEnable(GL_MULTISAMPLE);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
             glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
+
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_COLOR, 0, &defaultColor[0]);
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
-
-            //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // Execute the forward passes
             run_depth_prepass(cameras[eyeIdx]);
             //run_skybox_pass(cameras[eyeIdx]);
-            //run_forward_pass(cameras[eyeIdx]);
+            run_forward_pass(cameras[eyeIdx]);
 
             glDisable(GL_MULTISAMPLE);
 

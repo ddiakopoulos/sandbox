@@ -149,7 +149,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     uiSurface.layout();
 
     debugViews.push_back(std::make_shared<GLTextureView>(true));
-    debugViews.push_back(std::make_shared<GLTextureView>(true, true));
+    debugViews.push_back(std::make_shared<GLTextureView>(true, float2(cam.nearclip, cam.farclip)));
 }
 
 scene_editor_app::~scene_editor_app()
