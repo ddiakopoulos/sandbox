@@ -118,7 +118,7 @@ struct VirtualRealityApp : public GLFWApp
     std::shared_ptr<BulletEngineVR> physicsEngine;
     std::unique_ptr<PhysicsDebugRenderer> physicsDebugRenderer;
 
-    std::unique_ptr<gui::ImGuiManager> igm;
+    std::unique_ptr<gui::ImGuiInstance> igm;
 
     VirtualRealityApp();
     ~VirtualRealityApp();

@@ -75,7 +75,7 @@ struct ExperimentalApp : public GLFWApp
     HosekProceduralSky skydome;
     FlyCameraController cameraController;
 
-    std::unique_ptr<ImGuiManager> igm;
+    std::unique_ptr<ImGuiInstance> igm;
     std::unique_ptr<GlGizmo> gizmo;
 
     tinygizmo::rigid_transform destination;

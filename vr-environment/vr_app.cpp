@@ -9,7 +9,7 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR Sandbox")
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
 
-    igm.reset(new gui::ImGuiManager(window));
+    igm.reset(new gui::ImGuiInstance(window));
     gui::make_dark_theme();
 
     gpuTimer.init();

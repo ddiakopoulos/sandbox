@@ -9,7 +9,7 @@ enum class ShadingMode
 
 struct ExperimentalApp : public GLFWApp
 {
-    std::unique_ptr<gui::ImGuiManager> igm;
+    std::unique_ptr<gui::ImGuiInstance> igm;
 
     SimpleStaticMesh mesh;
     
@@ -43,7 +43,7 @@ struct ExperimentalApp : public GLFWApp
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
         
-        igm.reset(new gui::ImGuiManager(window));
+        igm.reset(new gui::ImGuiInstance(window));
 
         mesh.set_static_mesh(make_cube());
 

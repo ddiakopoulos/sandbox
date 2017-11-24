@@ -153,7 +153,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Projective Texturing 
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    igm.reset(new gui::ImGuiManager(window));
+    igm.reset(new gui::ImGuiInstance(window));
     gui::make_light_theme();
 
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);

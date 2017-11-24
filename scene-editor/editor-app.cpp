@@ -16,7 +16,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    igm.reset(new gui::ImGuiManager(window));
+    igm.reset(new gui::ImGuiInstance(window));
     gui::make_light_theme();
 
     editor.reset(new editor_controller<GameObject>());

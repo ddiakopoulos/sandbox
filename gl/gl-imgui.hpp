@@ -43,32 +43,30 @@ struct GLFWwindow;
 namespace gui
 {
 
-    struct ImGuiApp : public avl::Singleton<ImGuiApp>
+    struct ImGuiInstanceData
     {
-        GLFWwindow * window;
-        double       Time = 0.0f;
-        bool         MousePressed[3] = { false, false, false };
-        float        MouseWheel = 0.0f;
-        uint32_t     FontTexture = 0;
-        int          ShaderHandle = 0, VertHandle = 0, FragHandle = 0;
-        int          AttribLocationTex = 0, AttribLocationProjMtx = 0;
-        int          AttribLocationPosition = 0, AttribLocationUV = 0, AttribLocationColor = 0;
-        unsigned int VboHandle = 0, VaoHandle = 0, ElementsHandle = 0;
-        friend class avl::Singleton<ImGuiApp>;
+        GLFWwindow      * window;
+        ImGuiContext    * context;
+        double          Time = 0.0f;
+        bool            MousePressed[3] = { false, false, false };
+        float           MouseWheel = 0.0f;
+        int             ShaderHandle = 0, VertHandle = 0, FragHandle = 0;
+        int             AttribLocationTex = 0, AttribLocationProjMtx = 0;
+        int             AttribLocationPosition = 0, AttribLocationUV = 0, AttribLocationColor = 0;
+        uint32_t        FontTexture = 0;
+        unsigned int    VboHandle = 0, VaoHandle = 0, ElementsHandle = 0;
     };
 
-    class ImGuiManager
+    class ImGuiInstance
     {
         bool create_fonts_texture();
         bool create_render_objects();
         void destroy_render_objects();
+        ImGuiInstanceData data;
     public:
-        
-        ImGuiManager(GLFWwindow * win);
-        ~ImGuiManager();
-        
+        ImGuiInstance(GLFWwindow * win);
+        ~ImGuiInstance();
         void update_input(const avl::InputEvent & e);
-
         void begin_frame();
         void end_frame();
     };
@@ -82,7 +80,6 @@ namespace gui
         s.ItemSpacing                            = ImVec2(6, 2);
         s.ItemInnerSpacing                       = ImVec2(6, 4);
         s.Alpha                                  = 0.90f;
-        s.WindowFillAlphaDefault                 = 1.0f;
         s.WindowRounding                         = 4.0f;
         s.FrameRounding                          = 2.0f;
         s.IndentSpacing                          = 6.0f;
@@ -109,7 +106,6 @@ namespace gui
         s.Colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.47f, 0.77f, 0.83f, 0.21f);
         s.Colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
         s.Colors[ImGuiCol_ScrollbarGrabActive]   = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
-        s.Colors[ImGuiCol_ComboBg]               = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
         s.Colors[ImGuiCol_CheckMark]             = ImVec4(0.71f, 0.22f, 0.27f, 1.00f);
         s.Colors[ImGuiCol_SliderGrab]            = ImVec4(0.47f, 0.77f, 0.83f, 0.14f);
         s.Colors[ImGuiCol_SliderGrabActive]      = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
@@ -133,7 +129,6 @@ namespace gui
         s.Colors[ImGuiCol_PlotHistogram]         = ImVec4(0.86f, 0.93f, 0.89f, 0.63f);
         s.Colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
         s.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.92f, 0.18f, 0.29f, 0.43f);
-        s.Colors[ImGuiCol_TooltipBg]             = ImVec4(0.47f, 0.77f, 0.83f, 0.72f);
         s.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.22f, 0.27f, 0.73f);
     }
 
@@ -146,7 +141,6 @@ namespace gui
         s.ItemSpacing = ImVec2(6, 2);
         s.ItemInnerSpacing = ImVec2(6, 4);
         s.Alpha = 0.80f;
-        s.WindowFillAlphaDefault = 1.0f;
         s.WindowRounding = 0.0f;
         s.FrameRounding = 0.0f;
         s.IndentSpacing = 4.0f;
@@ -173,7 +167,6 @@ namespace gui
         s.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.69f, 0.69f, 0.69f, 0.80f);
         s.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.49f, 0.49f, 0.49f, 0.80f);
         s.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.49f, 0.49f, 0.49f, 1.00f);
-        s.Colors[ImGuiCol_ComboBg] = ImVec4(0.86f, 0.86f, 0.86f, 1.0f);
         s.Colors[ImGuiCol_CheckMark] = ImVec4(0.90f, 0.11f, 0.05f, 1.00f);
         s.Colors[ImGuiCol_SliderGrab] = ImVec4(0.90f, 0.11f, 0.05f, 0.78f);
         s.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.90f, 0.11f, 0.05f, 1.00f);
