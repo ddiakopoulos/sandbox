@@ -148,7 +148,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     uiSurface.add_child({ { 0.5000f, +20 },{ 0, +20 },{ 0.6668f, -10 },{ 0.133f, +10 } });
     uiSurface.layout();
 
-    for (int i = 0; i < 4; ++i) debugViews.push_back(std::make_shared<GLTextureView>(true));
+    debugViews.push_back(std::make_shared<GLTextureView>(true));
+    debugViews.push_back(std::make_shared<GLTextureView>(true, true));
 }
 
 scene_editor_app::~scene_editor_app()
@@ -288,7 +289,7 @@ void scene_editor_app::on_draw()
     glfwGetWindowSize(window, &width, &height);
 
     glViewport(0, 0, width, height);
-    glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
+    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glEnable(GL_BLEND);
@@ -515,11 +516,13 @@ void scene_editor_app::on_draw()
 
     igm->end_frame();
 
-    for (int i = 0; i < 4; ++i)
+    // Debug Views
     {
         glViewport(0, 0, width, height);
         glDisable(GL_DEPTH_TEST);
-        debugViews[i]->draw(uiSurface.children[i]->bounds, float2(width, height), renderer->get_output_texture(0));
+        debugViews[0]->draw(uiSurface.children[0]->bounds, float2(width, height), renderer->get_output_texture(0));
+        debugViews[1]->draw(uiSurface.children[1]->bounds, float2(width, height), renderer->get_output_texture_depth(0));
+        glEnable(GL_DEPTH_TEST);
     }
 
     // Scene editor gizmo

@@ -24,17 +24,6 @@
 
 using namespace avl;
 
-inline bool take_screenshot(int2 size)
-{
-    HumanTime t;
-    std::vector<uint8_t> screenShot(size.x * size.y * 3);
-    glReadPixels(0, 0, size.x, size.y, GL_DEPTH_COMPONENT, GL_FLOAT, screenShot.data());
-    auto flipped = screenShot;
-    for (int y = 0; y<size.y; ++y) memcpy(flipped.data() + y*size.x * 1, screenShot.data() + (size.y - y - 1)*size.x * 1, size.x * 1);
-    stbi_write_png(std::string("depth_render_" + t.make_timestamp() + ".png").c_str(), size.x, size.y, 1, flipped.data(), 1 * size.x);
-    return false;
-}
-
 struct CameraData
 {
     uint32_t index;
@@ -87,8 +76,6 @@ class PhysicallyBasedRenderer
 
     void run_depth_prepass(const CameraData & d)
     {
-        glEnable(GL_DEPTH_TEST);
-
         earlyZTimer.start();
 
         /*
@@ -105,9 +92,14 @@ class PhysicallyBasedRenderer
 
        // for (auto obj : renderSet) renderQueueDefault.push(obj);
 
+
+        GLboolean savedColorMask[4];
+        glGetBooleanv(GL_COLOR_WRITEMASK, &savedColorMask[0]);
+
+        glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);           // Nearest pixel
         glDepthMask(GL_TRUE);           // Need depth mask on
-        glColorMask(0, 0, 0, 0);        // Do not write color
+        glColorMask(0, 0, 0, 0);        // Do not write any color
 
         // Update per-object uniform buffer
         auto update_per_object = [&](Renderable * top)
@@ -138,6 +130,8 @@ class PhysicallyBasedRenderer
             top->draw();
         }
         */
+
+        glColorMask(savedColorMask[0], savedColorMask[1], savedColorMask[2], savedColorMask[3]); // Restore color mask state
 
         shader.unbind();
 
@@ -187,9 +181,9 @@ class PhysicallyBasedRenderer
     void run_forward_pass(const CameraData & d)
     {
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        glColorMask(1, 1, 1, 1);    // re-enable color mask after z prepass
-        glDepthMask(GL_FALSE);      // depth already comes from the prepass
+        //glDepthFunc(GL_LEQUAL);
+        //glColorMask(1, 1, 1, 1);    // re-enable color mask after z prepass
+        //glDepthMask(GL_FALSE);      // depth already comes from the prepass
 
         // Follows sorting strategy outlined here: 
         // http://realtimecollisiondetection.net/blog/?p=86
@@ -319,7 +313,6 @@ public:
 
             // Depth tex
             eyeDepthTextures[eyeIndex].setup(renderSizePerEye.x, renderSizePerEye.y, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-
             glNamedFramebufferTexture2DEXT(eyeFramebuffers[eyeIndex], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eyeTextures[eyeIndex], 0);
             glNamedFramebufferTexture2DEXT(eyeFramebuffers[eyeIndex], GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, eyeDepthTextures[eyeIndex], 0);
 
@@ -363,7 +356,8 @@ public:
 
         GLfloat defaultColor[] = { 0.0f, 0.0f, 1.f, 1.0f };
         GLfloat defaultDepth = 1.f;
-    
+        
+        /*
         shadowTimer.start();
 
         if (shadow->enabled) // render shadows
@@ -395,6 +389,7 @@ public:
         }
 
         shadowTimer.stop();
+        */
 
         forwardTimer.start();
 
@@ -414,21 +409,19 @@ public:
             cameras[eyeIdx].viewMatrix = v.view;
             cameras[eyeIdx].viewProjMatrix = v.viewProj;
 
-            // Render into 4x multisampled fbo
+            // Render into multisampled fbo
             glEnable(GL_MULTISAMPLE);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
-
             glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
-
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_COLOR, 0, &defaultColor[0]);
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // Execute the forward passes
-            //run_depth_prepass(cameras[eyeIdx]);
-            run_skybox_pass(cameras[eyeIdx]);
-            run_forward_pass(cameras[eyeIdx]);
+            run_depth_prepass(cameras[eyeIdx]);
+            //run_skybox_pass(cameras[eyeIdx]);
+            //run_forward_pass(cameras[eyeIdx]);
 
             glDisable(GL_MULTISAMPLE);
 
@@ -437,14 +430,19 @@ public:
             // blit color 
             glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[eyeIdx], 
                 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, 
-                renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR); // GL_LINEAR for color
+                renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+            // blit depth
+            glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[eyeIdx],
+                0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0,
+                renderSizePerEye.x, renderSizePerEye.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST); 
 
             gl_check_error(__FILE__, __LINE__);
         }
 
         forwardTimer.stop();
 
-        // fixme - cache handles.. don't need to do this on every frame
+        // fixme - cache handles... don't need to do this on every frame
         for (int eyeIndex = 0; eyeIndex < NumEyes; ++eyeIndex)
         {
             outputTextureHandles[eyeIndex] = eyeTextures[eyeIndex];

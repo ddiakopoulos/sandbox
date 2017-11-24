@@ -42,6 +42,17 @@ static const char s_textureFrag[] = R"(#version 330
     }
 )";
 
+static const char s_textureFragDepth[] = R"(#version 330
+    uniform sampler2D u_texture;
+    in vec2 texCoord;
+    out vec4 f_color;
+    void main()
+    {
+        vec4 sample = texture(u_texture, texCoord);
+        f_color = vec4(sample.r, sample.r, sample.r, 1.0); 
+    }
+)";
+
 ///////////////////////////////////////////////////////////////////////////////////////
 
 static const char s_textureVert3D[] = R"(#version 330
@@ -76,9 +87,18 @@ namespace avl
         GlShader program;
         GlMesh mesh = make_fullscreen_quad_screenspace();
         
-        GLTextureView(bool flip = false)
+        GLTextureView(bool flip = false, bool depthTexture = false)
         {
-            program = flip ? GlShader(s_textureVertFlip, s_textureFrag) : GlShader(s_textureVert, s_textureFrag);
+            if (flip)
+            {
+                if (depthTexture) program = GlShader(s_textureVertFlip, s_textureFragDepth);
+                else program = GlShader(s_textureVertFlip, s_textureFrag);
+            }
+            else
+            {
+                if (depthTexture) program = GlShader(s_textureVert, s_textureFragDepth);
+                else program = GlShader(s_textureVert, s_textureFrag);
+            }
         }
         
         void draw(const Bounds2D & rect, const float2 windowSize, const GLuint tex)
