@@ -520,7 +520,7 @@ void scene_editor_app::on_draw()
     {
         glViewport(0, 0, width, height);
         glDisable(GL_DEPTH_TEST);
-        debugViews[0]->draw(uiSurface.children[0]->bounds, float2(width, height), renderer->get_output_texture(0));
+        //debugViews[0]->draw(uiSurface.children[0]->bounds, float2(width, height), renderer->get_output_texture(0));
         debugViews[1]->draw(uiSurface.children[1]->bounds, float2(width, height), renderer->get_output_texture_depth(0));
         glEnable(GL_DEPTH_TEST);
     }
