@@ -141,6 +141,7 @@
     <ClCompile Include="particle-system-app.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bubble-chamber.hpp" />
     <ClInclude Include="particle-system-app.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

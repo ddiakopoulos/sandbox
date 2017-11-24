@@ -127,7 +127,7 @@ struct AffineTransform
 
     AffineTransform<scalar_t> inverse()
     {
-        return AffineTransform<scalar_t>(Eigen::Quaternion<T>(orientation.conjugate()), Eigen::Matrix<scalar_t, 3, 1>(orientation.conjugate()._transformVector(-position)));
+        return AffineTransform<scalar_t>(Eigen::Quaternion<scalar_t>(orientation.conjugate()), Eigen::Matrix<scalar_t, 3, 1>(orientation.conjugate()._transformVector(-position)));
     }
 };
 
