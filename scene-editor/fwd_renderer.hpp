@@ -24,6 +24,15 @@
 
 using namespace avl;
 
+struct RendererSettings
+{
+    uint32_t cameraCount = 1;
+    uint32_t msaaSamples = 4;
+    float2 renderSize;
+    bool performanceProfiling = true;
+    bool useDepthPrepass = true;
+};
+
 struct CameraData
 {
     uint32_t index;
@@ -33,10 +42,9 @@ struct CameraData
     float4x4 viewProjMatrix;
 };
 
-template<uint32_t NumEyes>
 class PhysicallyBasedRenderer
 {
-    float2 renderSizePerEye;
+    RendererSettings settings;
 
     GlGpuTimer earlyZTimer;
     GlGpuTimer forwardTimer;
@@ -49,19 +57,16 @@ class PhysicallyBasedRenderer
     GlBuffer perView;
     GlBuffer perObject;
 
-    CameraData cameras[NumEyes];
+    std::vector<CameraData> cameras;
 
     // MSAA 
     GlRenderbuffer multisampleRenderbuffers[2];
     GlFramebuffer multisampleFramebuffer;
 
     // Non-MSAA Targets
-    GlFramebuffer eyeFramebuffers[NumEyes];
-    GlTexture2D eyeTextures[NumEyes];
-    GlTexture2D eyeDepthTextures[NumEyes];
-
-    GLuint outputTextureHandles[NumEyes];
-    GLuint outputDepthTextureHandles[NumEyes];
+    std::vector<GlFramebuffer> eyeFramebuffers;
+    std::vector<GlTexture2D> eyeTextures;
+    std::vector<GlTexture2D> eyeDepthTextures;
 
     std::vector<Renderable *> renderSet;
     std::vector<uniforms::point_light *> pointLights;
@@ -85,7 +90,6 @@ class PhysicallyBasedRenderer
         perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
     };
 
-    // http://casual-effects.blogspot.com/2013/08/z-prepass-considered-irrelevant.html
     void run_depth_prepass(const CameraData & d)
     {
         earlyZTimer.start();
@@ -107,7 +111,7 @@ class PhysicallyBasedRenderer
             obj->draw();
         }
 
-        //  // Restore color mask state
+        // Restore color mask state
         glColorMask(colorMask[0], colorMask[1], colorMask[2], colorMask[3]);
 
         shader.unbind();
@@ -121,7 +125,9 @@ class PhysicallyBasedRenderer
 
         GLboolean wasDepthTestingEnabled = glIsEnabled(GL_DEPTH_TEST);
         glDisable(GL_DEPTH_TEST);
+
         skybox->render(d.viewProjMatrix, d.pose.position, near_far_clip_from_projection(d.projectionMatrix).y);
+
         if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
     }
 
@@ -201,45 +207,51 @@ class PhysicallyBasedRenderer
     void run_bloom_pass(const CameraData & d)
     {
         bloom->execute(eyeTextures[d.index]);
-        glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.index], 0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0, renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-        gl_check_error(__FILE__, __LINE__);
+        glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.index], 0, 0,
+            settings.renderSize.x, settings.renderSize.y, 0, 0, 
+            settings.renderSize.x, settings.renderSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
     }
 
 public:
 
-    PhysicallyBasedRenderer(const float2 render_target_size) : renderSizePerEye(render_target_size)
+    PhysicallyBasedRenderer(const RendererSettings & settings) : settings(settings)
     {
-        assert(renderSizePerEye.x >= 0 && renderSizePerEye.y >= 0);
-        assert(NumEyes >= 1);
+        assert(settings.renderSize.x >= 0 && settings.renderSize.y >= 0);
+        assert(settings.cameraCount >= 1);
+
+        cameras.resize(settings.cameraCount);
+        eyeFramebuffers.resize(settings.cameraCount);
+        eyeTextures.resize(settings.cameraCount);
+        eyeDepthTextures.resize(settings.cameraCount);
 
         // Generate multisample render buffers for color and depth, attach to multi-sampled framebuffer target
-        glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, renderSizePerEye.x, renderSizePerEye.y);
+        glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, settings.renderSize.x, settings.renderSize.y);
         glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffers[0]);
-        glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, renderSizePerEye.x, renderSizePerEye.y);
+        glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, settings.renderSize.x, settings.renderSize.y);
         glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, multisampleRenderbuffers[1]);
 
         multisampleFramebuffer.check_complete();
 
-        // Generate textures and framebuffers for `NumEyes`
-        for (int eyeIndex = 0; eyeIndex < NumEyes; ++eyeIndex)
+        // Generate textures and framebuffers for `settings.cameraCount`
+        for (int camIdx = 0; camIdx < settings.cameraCount; ++camIdx)
         {
-            glTextureImage2DEXT(eyeTextures[eyeIndex], GL_TEXTURE_2D, 0, GL_RGBA8, renderSizePerEye.x, renderSizePerEye.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-            glTextureParameteriEXT(eyeTextures[eyeIndex], GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTextureParameteriEXT(eyeTextures[eyeIndex], GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTextureParameteriEXT(eyeTextures[eyeIndex], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTextureParameteriEXT(eyeTextures[eyeIndex], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTextureParameteriEXT(eyeTextures[eyeIndex], GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+            glTextureImage2DEXT(eyeTextures[camIdx], GL_TEXTURE_2D, 0, GL_RGBA8, settings.renderSize.x, settings.renderSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+            glTextureParameteriEXT(eyeTextures[camIdx], GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTextureParameteriEXT(eyeTextures[camIdx], GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTextureParameteriEXT(eyeTextures[camIdx], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTextureParameteriEXT(eyeTextures[camIdx], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTextureParameteriEXT(eyeTextures[camIdx], GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 
             // Depth tex
-            eyeDepthTextures[eyeIndex].setup(renderSizePerEye.x, renderSizePerEye.y, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-            glNamedFramebufferTexture2DEXT(eyeFramebuffers[eyeIndex], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eyeTextures[eyeIndex], 0);
-            glNamedFramebufferTexture2DEXT(eyeFramebuffers[eyeIndex], GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, eyeDepthTextures[eyeIndex], 0);
+            eyeDepthTextures[camIdx].setup(settings.renderSize.x, settings.renderSize.y, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            glNamedFramebufferTexture2DEXT(eyeFramebuffers[camIdx], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eyeTextures[camIdx], 0);
+            glNamedFramebufferTexture2DEXT(eyeFramebuffers[camIdx], GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, eyeDepthTextures[camIdx], 0);
 
-            eyeFramebuffers[eyeIndex].check_complete();
+            eyeFramebuffers[camIdx].check_complete();
         }
 
         shadow.reset(new StableCascadedShadowPass());
-        bloom.reset(new BloomPass(renderSizePerEye));
+        bloom.reset(new BloomPass(settings.renderSize));
 
         timer.start();
     }
@@ -263,8 +275,8 @@ public:
 
         // Update per-scene uniform buffer
         uniforms::per_scene b = {};
-        b.time = timer.milliseconds().count();
-        b.resolution = renderSizePerEye;
+        b.time = timer.milliseconds().count() / 1000.f; // millisecond resolution expressed as seconds
+        b.resolution = settings.renderSize;
         b.invResolution = 1.f / b.resolution;
         b.activePointLights = pointLights.size();
 
@@ -282,7 +294,7 @@ public:
         // todo - this is somewhat wrong since we need to actually create a superfrustum
         // which is max(left, right)
         float3 cameraWorldspace;
-        if (NumEyes == 2) cameraWorldspace = (cameras[0].pose.position + cameras[1].pose.position) * 0.5f;
+        if (settings.cameraCount == 2) cameraWorldspace = (cameras[0].pose.position + cameras[1].pose.position) * 0.5f;
         else cameraWorldspace = cameras[0].pose.position;
 
         if (shadow->enabled)
@@ -291,7 +303,7 @@ public:
             CameraData shadowCamera = cameras[0];
 
             // regenerate the relevant matrices because we've already changed camera position
-            if (NumEyes == 2)
+            if (settings.cameraCount == 2)
             {
                 // Average the positions and 
                 shadowCamera.pose.position = cameraWorldspace;
@@ -368,44 +380,44 @@ public:
             defaultRenderList.push_back(top);
         }
 
-        for (int eyeIdx = 0; eyeIdx < NumEyes; ++eyeIdx)
+        for (int camIdx = 0; camIdx < settings.cameraCount; ++camIdx)
         {
             // Update per-view uniform buffer
             uniforms::per_view v = {};
-            v.view = cameras[eyeIdx].pose.inverse().matrix();
-            v.viewProj = mul(cameras[eyeIdx].projectionMatrix, cameras[eyeIdx].pose.inverse().matrix());
-            v.eyePos = float4(cameras[eyeIdx].pose.position, 1);
+            v.view = cameras[camIdx].pose.inverse().matrix();
+            v.viewProj = mul(cameras[camIdx].projectionMatrix, cameras[camIdx].pose.inverse().matrix());
+            v.eyePos = float4(cameras[camIdx].pose.position, 1);
             perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
 
             // Update render pass data
-            cameras[eyeIdx].viewMatrix = v.view;
-            cameras[eyeIdx].viewProjMatrix = v.viewProj;
+            cameras[camIdx].viewMatrix = v.view;
+            cameras[camIdx].viewProjMatrix = v.viewProj;
 
             // Render into multisampled fbo
             glEnable(GL_MULTISAMPLE);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFramebuffer);
-            glViewport(0, 0, renderSizePerEye.x, renderSizePerEye.y);
+            glViewport(0, 0, settings.renderSize.x, settings.renderSize.y);
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_COLOR, 0, &defaultColor[0]);
             glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
             // Execute the forward passes
-            run_depth_prepass(cameras[eyeIdx]);
-            run_skybox_pass(cameras[eyeIdx]);
-            run_forward_pass(materialRenderList, defaultRenderList, cameras[eyeIdx]);
+            run_depth_prepass(cameras[camIdx]);
+            run_skybox_pass(cameras[camIdx]);
+            run_forward_pass(materialRenderList, defaultRenderList, cameras[camIdx]);
 
             glDisable(GL_MULTISAMPLE);
 
             // Resolve multisample into per-eye framebuffers
             {
                 // blit color 
-                glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[eyeIdx],
-                    0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0,
-                    renderSizePerEye.x, renderSizePerEye.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+                glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[camIdx],
+                    0, 0, settings.renderSize.x, settings.renderSize.y, 0, 0,
+                    settings.renderSize.x, settings.renderSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
                 // blit depth
-                glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[eyeIdx],
-                    0, 0, renderSizePerEye.x, renderSizePerEye.y, 0, 0,
-                    renderSizePerEye.x, renderSizePerEye.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[camIdx],
+                    0, 0, settings.renderSize.x, settings.renderSize.y, 0, 0,
+                    settings.renderSize.x, settings.renderSize.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
             }
 
             gl_check_error(__FILE__, __LINE__);
@@ -413,19 +425,12 @@ public:
 
         forwardTimer.stop();
 
-        // fixme - cache handles... don't need to do this on every frame
-        for (int eyeIndex = 0; eyeIndex < NumEyes; ++eyeIndex)
-        {
-            outputTextureHandles[eyeIndex] = eyeTextures[eyeIndex];
-            outputDepthTextureHandles[eyeIndex] = eyeDepthTextures[eyeIndex];
-        }
-
         // Execute the post passes after having resolved the multisample framebuffers
         {
             postTimer.start();
-            for (int eyeIdx = 0; eyeIdx < NumEyes; ++eyeIdx)
+            for (int camIdx = 0; camIdx < settings.cameraCount; ++camIdx)
             {
-                run_post_pass(cameras[eyeIdx]);
+                run_post_pass(cameras[camIdx]);
             }
             postTimer.stop();
         }
@@ -453,20 +458,20 @@ public:
 
     void add_camera(const CameraData & data)
     {
-        assert(data.index <= NumEyes);
+        assert(data.index <= settings.cameraCount);
         cameras[data.index] = data;
     }
 
     GLuint get_output_texture(const uint32_t idx) const
     { 
-        assert(idx <= NumEyes);
-        return outputTextureHandles[idx]; 
+        assert(idx <= settings.cameraCount);
+        return eyeTextures[idx]; 
     }
 
     GLuint get_output_texture_depth(const uint32_t idx) const
     {
-        assert(idx <= NumEyes);
-        return outputDepthTextureHandles[idx];
+        assert(idx <= settings.cameraCount);
+        return eyeDepthTextures[idx];
     }
 
     void set_procedural_sky(ProceduralSky * sky)
