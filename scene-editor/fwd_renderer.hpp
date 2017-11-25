@@ -3,20 +3,18 @@
 #ifndef vr_renderer_hpp
 #define vr_renderer_hpp
 
-#include "projection-math.hpp"
+// http://efficientshading.com/2016/09/18/clustered-shading-in-the-wild/
+
 #include "linalg_util.hpp"
-#include "geometric.hpp"
-#include "geometry.hpp"
-#include "procedural_mesh.hpp"
 #include "simple_timer.hpp"
 #include "uniforms.hpp"
 #include "circular_buffer.hpp"
 #include "human_time.hpp"
+#include "projection-math.hpp"
 
 #include "gl-camera.hpp"
 #include "gl-async-gpu-timer.hpp"
 #include "gl-procedural-sky.hpp"
-#include "gl-imgui.hpp"
 
 #include "scene.hpp"
 #include "bloom_pass.hpp"

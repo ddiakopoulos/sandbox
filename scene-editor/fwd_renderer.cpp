@@ -1,5 +1,8 @@
 #include "fwd_renderer.hpp"
+
 #include "material.hpp"
+#include "geometric.hpp"
+#include "geometry.hpp"
 
 // Update per-object uniform buffer
 void PhysicallyBasedRenderer::update_per_object_uniform_buffer(Renderable * r, const ViewParameter & d)
