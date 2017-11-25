@@ -71,9 +71,23 @@ struct ClusteredLighting
     static const uint32_t NumPlanesY = 8;
     static const uint32_t numPlanesZ = 24;
 
+    float nearClip, farClip;
+    float vFov;
+    float aspect;
+
+    ClusteredLighting(float vFov, float aspect, float nearClip, float farClip) : vFov(vFov), aspect(aspect), nearClip(nearClip), farClip(farClip)
+    {
+
+    }
+
     void cull_lights(const float4x4 & viewMatrix, const std::vector<Light> & lights)
     {
 
+        Plane near = Plane(float3(0.0f, 0.0f, -nearClip), float3(0.0f, 0.0f, 1.0f));
+        Plane far = Plane(float3(0.0f, 0.0f, -farClip), float3(0.0f, 0.0f, 1.0f));
+
+        float normalizedHeightHalf = std::tanf(vFov * 0.5f);
+        float normalizedWidthHalf = normalizedHeightHalf * aspect;
     }
 
 };
