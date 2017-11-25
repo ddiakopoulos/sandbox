@@ -97,7 +97,6 @@ class PhysicallyBasedRenderer
     void run_shadow_pass(const ViewParameter & d);
     void run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const ViewParameter & d);
     void run_post_pass(const ViewParameter & d);
-    void run_bloom_pass(const ViewParameter & d);
 
 public:
 

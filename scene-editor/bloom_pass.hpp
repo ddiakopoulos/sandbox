@@ -210,7 +210,7 @@ struct BloomPass
         tonemapProgram.unbind();
     }
 
-    GLuint get_output_texture() const { return outputFramebuffer.id(); }
+    GLuint get_output_framebuffer() const { return outputFramebuffer.id(); }
 
     GLuint get_luminance_texture() const { return luminanceTex[0].id(); }
 

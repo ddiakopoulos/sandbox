@@ -118,21 +118,14 @@ void PhysicallyBasedRenderer::run_post_pass(const ViewParameter & d)
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
 
-    run_bloom_pass(d);
+    bloom->execute(eyeTextures[d.index]);
+    glBlitNamedFramebuffer(bloom->get_output_framebuffer(), eyeFramebuffers[d.index], 0, 0,
+        settings.renderSize.x, settings.renderSize.y, 0, 0,
+        settings.renderSize.x, settings.renderSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
     if (wasCullingEnabled) glEnable(GL_CULL_FACE);
     if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
 }
-
-void PhysicallyBasedRenderer::run_bloom_pass(const ViewParameter & d)
-{
-    bloom->execute(eyeTextures[d.index]);
-    glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.index], 0, 0,
-        settings.renderSize.x, settings.renderSize.y, 0, 0,
-        settings.renderSize.x, settings.renderSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-}
-
-// ...
 
 PhysicallyBasedRenderer::PhysicallyBasedRenderer(const RendererSettings settings) : settings(settings)
 {
@@ -250,8 +243,7 @@ void PhysicallyBasedRenderer::render_frame()
     // Per-scene can be uploaded now that the shadow pass has completed
     perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
 
-    // Follows sorting strategy outlined here: 
-    // http://realtimecollisiondetection.net/blog/?p=86
+    // We follow the sorting strategy outlined here: http://realtimecollisiondetection.net/blog/?p=86
 
     auto materialSortFunc = [cameraWorldspace](Renderable * lhs, Renderable * rhs)
     {
