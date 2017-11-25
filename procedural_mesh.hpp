@@ -527,7 +527,7 @@ namespace avl
             }
         }
         
-        plane.compute_normals(false);
+        plane.compute_normals(false); // fixme: this is broken for this geom
         plane.compute_tangents();
         plane.compute_bounds();
         

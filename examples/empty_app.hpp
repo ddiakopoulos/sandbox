@@ -64,8 +64,11 @@ struct ExperimentalApp : public GLFWApp
     GlShader basicShader;
     GlShader clusteredShader;
 
+    std::unique_ptr<gui::ImGuiInstance> igm;
+
     GlCamera debugCamera;
     FlyCameraController cameraController;
+    std::unique_ptr<RenderableGrid> grid;
 
     UniformRandomGenerator rand;
 
@@ -73,6 +76,8 @@ struct ExperimentalApp : public GLFWApp
     tinygizmo::rigid_transform xform;
 
     GlMesh mesh;
+    GlMesh floor;
+    GlGpuTimer gpuTimer;
 
     struct Light
     {
@@ -89,6 +94,8 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         gl_check_error(__FILE__, __LINE__);
 
+        igm.reset(new gui::ImGuiInstance(window));
+
         gizmo.reset(new GlGizmo());
         xform.position = { 0.1f, 0.1f, 0.1f };
 
@@ -102,12 +109,20 @@ struct ExperimentalApp : public GLFWApp
             clusteredShader = std::move(shader);
         });
 
+        grid.reset(new RenderableGrid(1.0f, 128, 128));
+
         basicShader = GlShader(default_color_vert, default_color_frag);
 
         mesh = make_mesh_from_geometry(make_sphere(0.25f));
+        //floor = make_plane_mesh(20, 20, 24, 24, true);
+        floor = make_cube_mesh();
 
-        lights[0] = { { 0, 10, -10 },{ 0, 0, 1 } };
-        lights[1] = { { 0, 10, 10 },{ 0, 1, 0 } };
+        for (int i = 0; i < 128; i++)
+        {
+            float3 randomPosition = float3(rand.random_float(-10, 10), rand.random_float(0, 5), rand.random_float(-10, 10));
+            float3 randomColor = float3(rand.random_float(), rand.random_float(), rand.random_float());
+            lights.push_back({ randomPosition, randomColor });
+        }
 
         debugCamera.look_at({0, 3.0, -3.5}, {0, 2.0, 0});
         cameraController.set_camera(&debugCamera);
@@ -121,26 +136,31 @@ struct ExperimentalApp : public GLFWApp
     void on_input(const InputEvent & event) override
     {
         cameraController.handle_input(event);
+        if (igm) igm->update_input(event);
         if (gizmo) gizmo->handle_input(event);
     }
     
     void on_update(const UpdateEvent & e) override
     {
         cameraController.update(e.timestep_ms);
+        shaderMonitor.handle_recompile();
     }
     
     void render_scene(const float4x4 & viewMatrix, const float4x4 & projectionMatrix)
     {
+        gpuTimer.start();
+
         const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
+        /*
         float4x4 modelMatrix = make_translation_matrix(float3(xform.position.x, xform.position.y, xform.position.z));
-
         wireframeShader.bind();
         wireframeShader.uniform("u_eyePos", debugCamera.get_eye_point());
         wireframeShader.uniform("u_viewProjMatrix", viewProjectionMatrix);
         wireframeShader.uniform("u_modelMatrix", modelMatrix);
         mesh.draw_elements();
         wireframeShader.unbind();
+        */
 
         const float4x4 debugProjection = linalg::perspective_matrix(1.f, 1.0f, 0.5f, 10.f);
         Pose p = look_at_pose_rh(float3(0, 0, 0), float3(0, 0, -.1f));
@@ -148,9 +168,7 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 debugViewProj = mul(debugProjection, debugView);
 
         Frustum f(debugViewProj);
-
         float3 color = (f.contains(float3(xform.position.x, xform.position.y, xform.position.z))) ? float3(1, 0, 0) : float3(0, 0, 0);
-
         draw_debug_frustum(&basicShader, debugViewProj, viewProjectionMatrix, color);
 
         {
@@ -158,24 +176,38 @@ struct ExperimentalApp : public GLFWApp
 
             clusteredShader.uniform("u_eye", debugCamera.get_eye_point());
             clusteredShader.uniform("u_viewProj", viewProjectionMatrix);
-
             clusteredShader.uniform("u_diffuse", float3(1.0f, 1.0f, 1.0f));
 
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < lights.size(); i++)
             {
                 clusteredShader.uniform("u_lights[" + std::to_string(i) + "].position", lights[i].position);
                 clusteredShader.uniform("u_lights[" + std::to_string(i) + "].color", lights[i].color);
             }
 
+            /*
             for (const auto & model : shadedModels)
             {
                 clusteredShader.uniform("u_modelMatrix", model.get_model());
                 clusteredShader.uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
                 model.draw();
             }
+            */
+
+            {
+                float4x4 floorModel = make_scaling_matrix(float3(12, 0.1, 12));
+                floorModel = mul(make_translation_matrix(float3(0, -0.1, 0)), floorModel);
+
+                clusteredShader.uniform("u_modelMatrix", floorModel);
+                clusteredShader.uniform("u_modelMatrixIT", inverse(transpose(floorModel)));
+                floor.draw_elements();
+            }
 
             clusteredShader.unbind();
         }
+
+        //grid->draw(viewProjectionMatrix);
+
+        gpuTimer.stop();
 
         if (gizmo) gizmo->draw();
     }
@@ -215,6 +247,9 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         render_scene(viewMatrix, projectionMatrix);
 
+        if (igm) igm->begin_frame();
+        ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
+        if (igm) igm->end_frame();
         gl_check_error(__FILE__, __LINE__);
         
         glfwSwapBuffers(window);

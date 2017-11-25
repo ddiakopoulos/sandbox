@@ -184,7 +184,10 @@ namespace avl
                 if (action == efsw::Actions::Modified)
                 {
                     std::cout << "Shader file updated: " << filename << std::endl;
-                    if (callback) callback(filename);
+                    if (callback)
+                    {
+                        callback(filename);
+                    }
                 }
             }
         };
@@ -234,11 +237,14 @@ namespace avl
         {
             for (auto & shader : assets)
             {
-                if (shader.shouldRecompile) shader.recompile();
+                if (shader.shouldRecompile)
+                {
+                    shader.recompile();
+                }
             }
         }
 
-        // Watch vertex, fragment, and geometry
+        // Watch vertex and fragment
         void watch(
             const std::string & vertexShader,
             const std::string & fragmentShader,

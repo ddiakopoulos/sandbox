@@ -1,6 +1,7 @@
 #include "glfw-app.hpp"
 #include "util.hpp"
 #include "geometric.hpp"
+#include "gl-api.hpp"
 
 using namespace avl;
 
@@ -48,8 +49,10 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
     
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 0);
-    
+#ifdef _DEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+#endif
+
     glfwSetErrorCallback(s_error_callback);
     
     window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
@@ -72,6 +75,11 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     if (GLenum err = glewInit()) 
        throw std::runtime_error(std::string("glewInit() failed - ") + (const char *)glewGetErrorString(err));
     ANVIL_INFO("GLEW_VERSION = " << (char *)glewGetString(GLEW_VERSION));
+#endif
+
+#ifdef _DEBUG
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(&gl_debug_callback, nullptr);
 #endif
     
     glfwSetWindowUserPointer(window, this);
