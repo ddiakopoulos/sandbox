@@ -22,7 +22,7 @@ constexpr const char default_color_frag[] = R"(#version 330
     }
 )";
 
-void draw_debug_frustrum(GlShader * shader, const float4x4 & debugViewProjMatrix, const float4x4 & renderViewProjMatrix, const float3 & color)
+void draw_debug_frustum(GlShader * shader, const float4x4 & debugViewProjMatrix, const float4x4 & renderViewProjMatrix, const float3 & color)
 {
 
     Frustum f(debugViewProjMatrix);
@@ -59,8 +59,10 @@ void draw_debug_frustrum(GlShader * shader, const float4x4 & debugViewProjMatrix
 struct ExperimentalApp : public GLFWApp
 {
     ShaderMonitor shaderMonitor = { "../assets/" };
+
     GlShader wireframeShader;
     GlShader basicShader;
+    GlShader clusteredShader;
 
     GlCamera debugCamera;
     FlyCameraController cameraController;
@@ -71,6 +73,14 @@ struct ExperimentalApp : public GLFWApp
     tinygizmo::rigid_transform xform;
 
     GlMesh mesh;
+
+    struct Light
+    {
+        float3 position;
+        float3 color;
+    };
+
+    std::vector<Light> lights;
 
     ExperimentalApp() : GLFWApp(1280, 800, "Nearly Empty App")
     {
@@ -87,9 +97,17 @@ struct ExperimentalApp : public GLFWApp
             wireframeShader = std::move(shader);
         });
 
+        shaderMonitor.watch("../assets/shaders/prototype/simple_clustered_vert.glsl", "../assets/shaders/prototype/simple_clustered_frag.glsl", [&](GlShader & shader)
+        {
+            clusteredShader = std::move(shader);
+        });
+
         basicShader = GlShader(default_color_vert, default_color_frag);
 
         mesh = make_mesh_from_geometry(make_sphere(0.25f));
+
+        lights[0] = { { 0, 10, -10 },{ 0, 0, 1 } };
+        lights[1] = { { 0, 10, 10 },{ 0, 1, 0 } };
 
         debugCamera.look_at({0, 3.0, -3.5}, {0, 2.0, 0});
         cameraController.set_camera(&debugCamera);
@@ -133,7 +151,31 @@ struct ExperimentalApp : public GLFWApp
 
         float3 color = (f.contains(float3(xform.position.x, xform.position.y, xform.position.z))) ? float3(1, 0, 0) : float3(0, 0, 0);
 
-        draw_debug_frustrum(&basicShader, debugViewProj, viewProjectionMatrix, color);
+        draw_debug_frustum(&basicShader, debugViewProj, viewProjectionMatrix, color);
+
+        {
+            clusteredShader.bind();
+
+            clusteredShader.uniform("u_eye", debugCamera.get_eye_point());
+            clusteredShader.uniform("u_viewProj", viewProjectionMatrix);
+
+            clusteredShader.uniform("u_diffuse", float3(1.0f, 1.0f, 1.0f));
+
+            for (int i = 0; i < 2; i++)
+            {
+                clusteredShader.uniform("u_lights[" + std::to_string(i) + "].position", lights[i].position);
+                clusteredShader.uniform("u_lights[" + std::to_string(i) + "].color", lights[i].color);
+            }
+
+            for (const auto & model : shadedModels)
+            {
+                clusteredShader.uniform("u_modelMatrix", model.get_model());
+                clusteredShader.uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
+                model.draw();
+            }
+
+            clusteredShader.unbind();
+        }
 
         if (gizmo) gizmo->draw();
     }
