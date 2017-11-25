@@ -7,6 +7,7 @@
 #include "linalg_util.hpp"
 #include "geometric.hpp"
 #include "assets.hpp"
+
 namespace avl
 {
 

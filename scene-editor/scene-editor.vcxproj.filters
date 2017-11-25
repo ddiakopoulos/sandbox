@@ -5,6 +5,9 @@
     <ClCompile Include="material.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="fwd_renderer.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="editor-app.hpp" />

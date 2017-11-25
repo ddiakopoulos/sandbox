@@ -75,7 +75,9 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         create_handle_for_asset("post-tonemap", std::move(shader));
     });
 
-    renderer.reset(new PhysicallyBasedRenderer<1>(float2(width, height)));
+    RendererSettings settings;
+    settings.renderSize = float2(width, height);
+    renderer.reset(new PhysicallyBasedRenderer(settings));
 
     scene.skybox.reset(new HosekProceduralSky());
     renderer->set_procedural_sky(scene.skybox.get());
@@ -301,18 +303,12 @@ void scene_editor_app::on_draw()
 
     {
         // Single-viewport camera
-        CameraData renderCam;
-        renderCam.index = 0;
-        renderCam.pose = cam.get_pose();
-        renderCam.projectionMatrix = projectionMatrix;
-        renderCam.viewMatrix = viewMatrix;
-        renderCam.viewProjMatrix = viewProjectionMatrix;
-        renderer->add_camera(renderCam);
+        renderer->add_camera(cam, 0);
 
         // Lighting
         for (auto & obj : scene.objects)
         {
-            if (auto * r = dynamic_cast<PointLight*>(obj.get())) renderer->add_light(&r->data);
+            if (auto * r = dynamic_cast<PointLight*>(obj.get())) renderer->add_light(r->data);
         }
 
         // Gather Objects
@@ -333,7 +329,7 @@ void scene_editor_app::on_draw()
 
         glActiveTexture(GL_TEXTURE0);
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, renderer->get_output_texture(0));
+        glBindTexture(GL_TEXTURE_2D, renderer->get_output_texture(TextureType::COLOR, 0));
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex2f(-1, -1);
         glTexCoord2f(1, 0); glVertex2f(+1, -1);
@@ -491,11 +487,12 @@ void scene_editor_app::on_draw()
 
     gui::imgui_fixed_window_begin("Renderer", topLeftPane);
     {
-        ImGui::Text("Shadow  %f ms", compute_mean(renderer->shadowAverage));
-        ImGui::Text("Early Z %f ms", compute_mean(renderer->earlyZAverage));
-        ImGui::Text("Forward %f ms", compute_mean(renderer->forwardAverage));
-        ImGui::Text("Post    %f ms", compute_mean(renderer->postAverage));
-        ImGui::Text("Frame   %f ms", compute_mean(renderer->frameAverage));
+        ImGui::Text("Shadow     %f ms", compute_mean(renderer->shadowAverage));
+        ImGui::Text("Early Z    %f ms", compute_mean(renderer->earlyZAverage));
+        ImGui::Text("Forward    %f ms", compute_mean(renderer->forwardAverage));
+        ImGui::Text("Post       %f ms", compute_mean(renderer->postAverage));
+        ImGui::Text("Frame      %f ms", compute_mean(renderer->frameAverage));
+        ImGui::Text("Frame CPU  %f ms", compute_mean(renderer->frameAverageCPU));
 
         ImGui::Separator();
 
@@ -521,7 +518,7 @@ void scene_editor_app::on_draw()
         glViewport(0, 0, width, height);
         glDisable(GL_DEPTH_TEST);
         //debugViews[0]->draw(uiSurface.children[0]->bounds, float2(width, height), renderer->get_output_texture(0));
-        debugViews[1]->draw(uiSurface.children[1]->bounds, float2(width, height), renderer->get_output_texture_depth(0));
+        debugViews[1]->draw(uiSurface.children[1]->bounds, float2(width, height), renderer->get_output_texture(TextureType::DEPTH, 0));
         glEnable(GL_DEPTH_TEST);
     }
 

@@ -1,18 +1,18 @@
 #include "fwd_renderer.hpp"
-
+#include "material.hpp"
 
 // Update per-object uniform buffer
-void update_per_object_uniform_buffer(Renderable * top, const CameraData & d)
+void PhysicallyBasedRenderer::update_per_object_uniform_buffer(Renderable * r, const ViewParameter & d)
 {
     uniforms::per_object object = {};
-    object.modelMatrix = mul(top->get_pose().matrix(), make_scaling_matrix(top->get_scale()));
+    object.modelMatrix = mul(r->get_pose().matrix(), make_scaling_matrix(r->get_scale()));
     object.modelMatrixIT = inverse(transpose(object.modelMatrix));
     object.modelViewMatrix = mul(d.viewMatrix, object.modelMatrix);
-    object.receiveShadow = (float)top->get_receive_shadow();
+    object.receiveShadow = (float)r->get_receive_shadow();
     perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
-};
+}
 
-void run_depth_prepass(const CameraData & d)
+void PhysicallyBasedRenderer::run_depth_prepass(const ViewParameter & d)
 {
     earlyZTimer.start();
 
@@ -29,7 +29,7 @@ void run_depth_prepass(const CameraData & d)
 
     for (auto obj : renderSet)
     {
-        update_per_object(obj, d);
+        update_per_object_uniform_buffer(obj, d);
         obj->draw();
     }
 
@@ -41,25 +41,23 @@ void run_depth_prepass(const CameraData & d)
     earlyZTimer.stop();
 }
 
-void run_skybox_pass(const CameraData & d)
+void PhysicallyBasedRenderer::run_skybox_pass(const ViewParameter & d)
 {
     if (!skybox) return;
 
     GLboolean wasDepthTestingEnabled = glIsEnabled(GL_DEPTH_TEST);
     glDisable(GL_DEPTH_TEST);
 
-    skybox->render(d.viewProjMatrix, d.pose.position, near_far_clip_from_projection(d.projectionMatrix).y);
+    skybox->render(d.viewProjMatrix, d.pose.position, d.farClip);
 
     if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
 }
 
-void run_shadow_pass(const CameraData & d)
+void PhysicallyBasedRenderer::run_shadow_pass(const ViewParameter & d)
 {
-    const float2 nearFarClip = near_far_clip_from_projection(d.projectionMatrix);
-
     shadow->update_cascades(d.viewMatrix,
-        nearFarClip.x,
-        nearFarClip.y,
+        d.nearClip,
+        d.farClip,
         aspect_from_projection(d.projectionMatrix),
         vfov_from_projection(d.projectionMatrix),
         sunlight.direction);
@@ -83,7 +81,7 @@ void run_shadow_pass(const CameraData & d)
     gl_check_error(__FILE__, __LINE__);
 }
 
-void run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const CameraData & d)
+void PhysicallyBasedRenderer::run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const ViewParameter & d)
 {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -91,7 +89,7 @@ void run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vect
 
     for (auto r : renderQueueMaterial)
     {
-        update_per_object(r, d);
+        update_per_object_uniform_buffer(r, d);
 
         Material * mat = r->get_material();
         mat->update_uniforms();
@@ -104,14 +102,14 @@ void run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vect
     // We assume that objects without a valid material take care of their own shading in the `draw()` function. 
     for (auto r : renderQueueDefault)
     {
-        update_per_object(r, d);
+        update_per_object_uniform_buffer(r, d);
         r->draw();
     }
 
     glDepthMask(GL_TRUE); // cleanup state
 }
 
-void run_post_pass(const CameraData & d)
+void PhysicallyBasedRenderer::run_post_pass(const ViewParameter & d)
 {
     GLboolean wasCullingEnabled = glIsEnabled(GL_CULL_FACE);
     GLboolean wasDepthTestingEnabled = glIsEnabled(GL_DEPTH_TEST);
@@ -126,7 +124,7 @@ void run_post_pass(const CameraData & d)
     if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
 }
 
-void run_bloom_pass(const CameraData & d)
+void PhysicallyBasedRenderer::run_bloom_pass(const ViewParameter & d)
 {
     bloom->execute(eyeTextures[d.index]);
     glBlitNamedFramebuffer(bloom->get_output_texture(), eyeTextures[d.index], 0, 0,
@@ -134,12 +132,14 @@ void run_bloom_pass(const CameraData & d)
         settings.renderSize.x, settings.renderSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }
 
-PhysicallyBasedRenderer(const RendererSettings & settings) : settings(settings)
+// ...
+
+PhysicallyBasedRenderer::PhysicallyBasedRenderer(const RendererSettings settings) : settings(settings)
 {
     assert(settings.renderSize.x >= 0 && settings.renderSize.y >= 0);
     assert(settings.cameraCount >= 1);
 
-    cameras.resize(settings.cameraCount);
+    views.resize(settings.cameraCount);
     eyeFramebuffers.resize(settings.cameraCount);
     eyeTextures.resize(settings.cameraCount);
     eyeDepthTextures.resize(settings.cameraCount);
@@ -176,17 +176,19 @@ PhysicallyBasedRenderer(const RendererSettings & settings) : settings(settings)
     timer.start();
 }
 
-~PhysicallyBasedRenderer()
+PhysicallyBasedRenderer::~PhysicallyBasedRenderer()
 {
     timer.stop();
 }
 
-void render_frame()
+void PhysicallyBasedRenderer::render_frame()
 {
+    renderLoopTimer.start();
+    renderLoopTimerCPU.start();
+
     // Renderer default state
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-
     glEnable(GL_FRAMEBUFFER_SRGB);
 
     glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::per_scene::binding, perScene);
@@ -203,7 +205,7 @@ void render_frame()
     b.directional_light.color = sunlight.color;
     b.directional_light.direction = sunlight.direction;
     b.directional_light.amount = sunlight.amount;
-    for (int i = 0; i < (int)std::min(pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = *pointLights[i];
+    for (int i = 0; i < (int)std::min(pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = pointLights[i];
 
     GLfloat defaultColor[] = { 1.0f, 0.0f, 0.f, 1.0f };
     GLfloat defaultDepth = 1.f;
@@ -214,24 +216,23 @@ void render_frame()
     // todo - this is somewhat wrong since we need to actually create a superfrustum
     // which is max(left, right)
     float3 cameraWorldspace;
-    if (settings.cameraCount == 2) cameraWorldspace = (cameras[0].pose.position + cameras[1].pose.position) * 0.5f;
-    else cameraWorldspace = cameras[0].pose.position;
+    if (settings.cameraCount == 2) cameraWorldspace = (views[0].pose.position + views[1].pose.position) * 0.5f;
+    else cameraWorldspace = views[0].pose.position;
 
     if (shadow->enabled)
     {
         // Default to the first camera
-        CameraData shadowCamera = cameras[0];
+        ViewParameter shadowView = views[0];
 
         // regenerate the relevant matrices because we've already changed camera position
         if (settings.cameraCount == 2)
         {
-            // Average the positions and 
-            shadowCamera.pose.position = cameraWorldspace;
-            shadowCamera.viewMatrix = make_view_matrix_from_pose(shadowCamera.pose);
-            shadowCamera.viewProjMatrix = mul(shadowCamera.projectionMatrix, shadowCamera.viewMatrix);
+            shadowView.pose.position = cameraWorldspace;
+            shadowView.viewMatrix = make_view_matrix_from_pose(shadowView.pose);
+            shadowView.viewProjMatrix = mul(shadowView.projectionMatrix, shadowView.viewMatrix);
         }
 
-        run_shadow_pass(shadowCamera);
+        run_shadow_pass(shadowView);
 
         for (int c = 0; c < uniforms::NUM_CASCADES; c++)
         {
@@ -304,14 +305,14 @@ void render_frame()
     {
         // Update per-view uniform buffer
         uniforms::per_view v = {};
-        v.view = cameras[camIdx].pose.inverse().matrix();
-        v.viewProj = mul(cameras[camIdx].projectionMatrix, cameras[camIdx].pose.inverse().matrix());
-        v.eyePos = float4(cameras[camIdx].pose.position, 1);
+        v.view = views[camIdx].pose.inverse().matrix();
+        v.viewProj = mul(views[camIdx].projectionMatrix, views[camIdx].pose.inverse().matrix());
+        v.eyePos = float4(views[camIdx].pose.position, 1);
         perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
 
         // Update render pass data
-        cameras[camIdx].viewMatrix = v.view;
-        cameras[camIdx].viewProjMatrix = v.viewProj;
+        views[camIdx].viewMatrix = v.view;
+        views[camIdx].viewProjMatrix = v.viewProj;
 
         // Render into multisampled fbo
         glEnable(GL_MULTISAMPLE);
@@ -321,13 +322,13 @@ void render_frame()
         glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
         // Execute the forward passes
-        run_depth_prepass(cameras[camIdx]);
-        run_skybox_pass(cameras[camIdx]);
-        run_forward_pass(materialRenderList, defaultRenderList, cameras[camIdx]);
+        run_depth_prepass(views[camIdx]);
+        run_skybox_pass(views[camIdx]);
+        run_forward_pass(materialRenderList, defaultRenderList, views[camIdx]);
 
         glDisable(GL_MULTISAMPLE);
 
-        // Resolve multisample into per-eye framebuffers
+        // Resolve multisample into per-view framebuffer
         {
             // blit color 
             glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[camIdx],
@@ -350,12 +351,14 @@ void render_frame()
         postTimer.start();
         for (int camIdx = 0; camIdx < settings.cameraCount; ++camIdx)
         {
-            run_post_pass(cameras[camIdx]);
+            run_post_pass(views[camIdx]);
         }
         postTimer.stop();
     }
 
     glDisable(GL_FRAMEBUFFER_SRGB);
+
+    renderLoopTimer.stop();
 
     renderSet.clear();
     pointLights.clear();
@@ -366,12 +369,17 @@ void render_frame()
         const float earlyZMs = earlyZTimer.elapsed_ms();
         const float forwardMs = forwardTimer.elapsed_ms();
         const float postMs = postTimer.elapsed_ms();
+        const float averageMs = renderLoopTimer.elapsed_ms();
+        const float averageCPU = renderLoopTimerCPU.milliseconds().count();
         earlyZAverage.put(earlyZMs);
         forwardAverage.put(forwardMs);
         shadowAverage.put(shadowMs);
         postAverage.put(postMs);
-        frameAverage.put(earlyZMs + shadowMs + forwardMs + postMs);
+        frameAverage.put(averageMs);
+        frameAverageCPU.put(averageCPU);
     }
+
+    renderLoopTimerCPU.stop();
 
     gl_check_error(__FILE__, __LINE__);
 }

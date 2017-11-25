@@ -58,6 +58,8 @@ class PhysicallyBasedRenderer
     GlGpuTimer forwardTimer;
     GlGpuTimer shadowTimer;
     GlGpuTimer postTimer;
+    GlGpuTimer renderLoopTimer;
+    SimpleTimer renderLoopTimerCPU;
 
     SimpleTimer timer;
 
@@ -87,12 +89,6 @@ class PhysicallyBasedRenderer
 
     GlShaderHandle earlyZPass = { "depth-prepass" };
 
-    CircularBuffer<float> earlyZAverage = { 3 };
-    CircularBuffer<float> forwardAverage = { 3 };
-    CircularBuffer<float> shadowAverage = { 3 };
-    CircularBuffer<float> postAverage = { 3 };
-    CircularBuffer<float> frameAverage = { 3 };
-
     // Update per-object uniform buffer
     void update_per_object_uniform_buffer(Renderable * top, const ViewParameter & d);
 
@@ -104,6 +100,13 @@ class PhysicallyBasedRenderer
     void run_bloom_pass(const ViewParameter & d);
 
 public:
+
+    CircularBuffer<float> earlyZAverage = { 3 };
+    CircularBuffer<float> forwardAverage = { 3 };
+    CircularBuffer<float> shadowAverage = { 3 };
+    CircularBuffer<float> postAverage = { 3 };
+    CircularBuffer<float> frameAverage = { 3 };
+    CircularBuffer<float> frameAverageCPU = { 3 };
 
     PhysicallyBasedRenderer(const RendererSettings settings);
     ~PhysicallyBasedRenderer();
@@ -135,6 +138,16 @@ public:
         pointLights.push_back(light);
     }
 
+    void set_sunlight(uniforms::directional_light sun)
+    {
+        sunlight = sun;
+    }
+
+    uniforms::directional_light get_sunlight() const
+    {
+        return sunlight;
+    }
+
     GLuint get_output_texture(const TextureType type, const uint32_t idx) const
     { 
         assert(idx <= settings.cameraCount);
@@ -157,16 +170,6 @@ public:
     {
         if (skybox) return skybox;
         else return nullptr;
-    }
-   
-    void set_sunlight(uniforms::directional_light sun)
-    {
-        sunlight = sun;
-    }
-
-    uniforms::directional_light get_sunlight() const
-    {
-        return sunlight;
     }
 
     StableCascadedShadowPass * get_shadow_pass() const

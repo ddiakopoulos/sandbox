@@ -147,6 +147,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="editor-app.cpp" />
+    <ClCompile Include="fwd_renderer.cpp" />
     <ClCompile Include="material.cpp" />
   </ItemGroup>
   <ItemGroup>
