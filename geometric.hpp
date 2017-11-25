@@ -1065,15 +1065,15 @@ namespace avl
 
         Frustum()
         {
-            planes[FrustumPlane::RIGHT] =   Plane({ -1, 0, 0 }, 1.f);
-            planes[FrustumPlane::LEFT] =    Plane({ +1, 0, 0 }, 1.f);
-            planes[FrustumPlane::BOTTOM] =  Plane({ 0, +1, 0 }, 1.f);
-            planes[FrustumPlane::TOP] =     Plane({ 0, -1, 0 }, 1.f);
-            planes[FrustumPlane::NEAR] =    Plane({ 0, 0, +1 }, 1.f);
-            planes[FrustumPlane::FAR] =     Plane({ 0, 0, -1 }, 1.f);
+            planes[FrustumPlane::RIGHT] =   Plane({ -1, 0, 0 }, 0.f);
+            planes[FrustumPlane::LEFT] =    Plane({ +1, 0, 0 }, 0.f);
+            planes[FrustumPlane::BOTTOM] =  Plane({ 0, +1, 0 }, 0.f);
+            planes[FrustumPlane::TOP] =     Plane({ 0, -1, 0 }, 0.f);
+            planes[FrustumPlane::NEAR] =    Plane({ 0, 0, +1 }, 0.f);
+            planes[FrustumPlane::FAR] =     Plane({ 0, 0, -1 }, 0.f);
         }
 
-        Frustum(float4x4 viewProj)
+        Frustum(const float4x4 & viewProj)
         {
             // See "Fast Extraction of Viewing Frustum Planes from the WorldView-Projection Matrix" by Gil Gribb and Klaus Hartmann
             for (int i = 0; i < 4; ++i) planes[FrustumPlane::RIGHT].equation[i] =   viewProj[i][3] - viewProj[i][0];

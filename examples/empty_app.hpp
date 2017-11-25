@@ -22,9 +22,9 @@ constexpr const char default_color_frag[] = R"(#version 330
     }
 )";
 
+
 void draw_debug_frustum(GlShader * shader, const float4x4 & debugViewProjMatrix, const float4x4 & renderViewProjMatrix, const float3 & color)
 {
-
     Frustum f(debugViewProjMatrix);
     auto generated_frustum_corners = make_frustum_corners(f);
 
@@ -56,6 +56,40 @@ void draw_debug_frustum(GlShader * shader, const float4x4 & debugViewProjMatrix,
     shader->unbind();
 }
 
+void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & renderViewProjMatrix, const float3 & color)
+{
+    auto generated_frustum_corners = make_frustum_corners(f);
+
+    float3 ftl = generated_frustum_corners[0];
+    float3 fbr = generated_frustum_corners[1];
+    float3 fbl = generated_frustum_corners[2];
+    float3 ftr = generated_frustum_corners[3];
+    float3 ntl = generated_frustum_corners[4];
+    float3 nbr = generated_frustum_corners[5];
+    float3 nbl = generated_frustum_corners[6];
+    float3 ntr = generated_frustum_corners[7];
+
+    std::vector<float3> frustum_coords = {
+        ntl, ntr, ntr, nbr, nbr, nbl, nbl, ntl, // near quad
+        ntl, ftl, ntr, ftr, nbr, fbr, nbl, fbl, // between
+        ftl, ftr, ftr, fbr, fbr, fbl, fbl, ftl, // far quad
+    };
+
+    Geometry g;
+    for (auto & v : frustum_coords) g.vertices.push_back(v);
+    GlMesh mesh = make_mesh_from_geometry(g);
+    mesh.set_non_indexed(GL_LINES);
+
+    // Draw debug visualization 
+    shader->bind();
+    shader->uniform("u_mvp", mul(renderViewProjMatrix, Identity4x4));
+    shader->uniform("u_color", color);
+    mesh.draw_elements();
+    shader->unbind();
+}
+
+// shader->uniform("u_color", float3(x * 0.5, y * 0.5, 0.5 * 0.5));
+
 // http://www.humus.name/Articles/PracticalClusteredShading.pdf
 
 struct Light
@@ -66,15 +100,15 @@ struct Light
 
 struct ClusteredLighting
 {
-
-    static const uint32_t NumPlanesX = 16;
-    static const uint32_t NumPlanesY = 8;
-    static const uint32_t numPlanesZ = 24;
+    static const uint32_t NumClustersX = 16;
+    static const uint32_t NumClustersY = 8;
+    static const uint32_t NumClustersZ = 24;
 
     float nearClip, farClip;
     float vFov;
     float aspect;
 
+    // -1 to 1
     ClusteredLighting(float vFov, float aspect, float nearClip, float farClip) : vFov(vFov), aspect(aspect), nearClip(nearClip), farClip(farClip)
     {
 
@@ -83,11 +117,46 @@ struct ClusteredLighting
     void cull_lights(const float4x4 & viewMatrix, const std::vector<Light> & lights)
     {
 
-        Plane near = Plane(float3(0.0f, 0.0f, -nearClip), float3(0.0f, 0.0f, 1.0f));
-        Plane far = Plane(float3(0.0f, 0.0f, -farClip), float3(0.0f, 0.0f, 1.0f));
+    }
 
-        float normalizedHeightHalf = std::tanf(vFov * 0.5f);
-        float normalizedWidthHalf = normalizedHeightHalf * aspect;
+    std::vector<Frustum> build_froxels()
+    {
+        std::vector<Frustum> froxels;
+
+        const float stepZ = (farClip - nearClip) / NumClustersZ;
+
+        for (int z = 0; z < NumClustersZ; z++)
+        {
+            const float near = nearClip + (stepZ * z);
+            const float far = near + stepZ;
+
+            const float top = near * std::tan(vFov * 0.5f);       // normalized height
+            const float right = top * aspect;                     // normalized width
+            const float left = -right;
+            const float bottom = -top;
+
+            const float stepX = (right * 2.0f) / NumClustersX;
+            const float stepY = (top   * 2.0f) / NumClustersY;
+
+            float L, R, B, T;
+
+            for (int y = 0; y < NumClustersY; y++)
+            {
+                for (int x = 0; x < NumClustersX; x++)
+                {
+                    L = left + (stepX * x);
+                    R = L + stepX;
+                    B = bottom + (stepY * y);
+                    T = B + stepY;
+
+                    const float4x4 projection = make_projection_matrix(L, R, B, T, near, far);
+                    const Frustum froxel(projection);
+                    froxels.push_back(froxel);
+                }
+            }
+        }
+
+        return froxels;
     }
 
 };
@@ -116,6 +185,8 @@ struct ExperimentalApp : public GLFWApp
     GlMesh mesh;
     GlMesh floor;
     GlGpuTimer gpuTimer;
+
+    std::unique_ptr<ClusteredLighting> clusteredLighting;
 
     ExperimentalApp() : GLFWApp(1280, 800, "Nearly Empty App")
     {
@@ -156,6 +227,8 @@ struct ExperimentalApp : public GLFWApp
 
         debugCamera.look_at({0, 3.0, -3.5}, {0, 2.0, 0});
         cameraController.set_camera(&debugCamera);
+
+        clusteredLighting.reset(new ClusteredLighting(debugCamera.vfov, float(width) / float(height), debugCamera.nearclip, debugCamera.farclip));
     }
     
     void on_window_resize(int2 size) override
@@ -192,14 +265,23 @@ struct ExperimentalApp : public GLFWApp
         wireframeShader.unbind();
         */
 
-        const float4x4 debugProjection = linalg::perspective_matrix(1.f, 1.0f, 0.5f, 10.f);
-        Pose p = look_at_pose_rh(float3(0, 0, 0), float3(0, 0, -.1f));
+        const float4x4 debugProjection = make_perspective_matrix(1.f, 1.f, 0.5f, 12.f);
+        Pose p = look_at_pose_rh(float3(0.00, -0.01, 0.00), float3(0, 0, -1.f));
         const float4x4 debugView = inverse(p.matrix());
         const float4x4 debugViewProj = mul(debugProjection, debugView);
 
         Frustum f(debugViewProj);
-        float3 color = (f.contains(float3(xform.position.x, xform.position.y, xform.position.z))) ? float3(1, 0, 0) : float3(0, 0, 0);
-        draw_debug_frustum(&basicShader, debugViewProj, viewProjectionMatrix, color);
+        //float3 color = (f.contains(float3(xform.position.x, xform.position.y, xform.position.z))) ? float3(1, 0, 0) : float3(0, 0, 0);
+        draw_debug_frustum(&basicShader, debugViewProj, viewProjectionMatrix, float3(1, 1, 1));
+
+        //draw_debug_generated(&basicShader, viewProjectionMatrix, float3(16, 8, 24));
+        //draw_debug_generated(&basicShader, 5.75, 12, viewProjectionMatrix);
+
+        auto froxelList = clusteredLighting->build_froxels();
+        for (auto & f : froxelList)
+        {
+            draw_debug_frustum(&basicShader, f, viewProjectionMatrix, float3(1, 1, 1));
+        }
 
         {
             clusteredShader.bind();
