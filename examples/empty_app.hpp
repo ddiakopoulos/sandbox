@@ -56,6 +56,28 @@ void draw_debug_frustum(GlShader * shader, const float4x4 & debugViewProjMatrix,
     shader->unbind();
 }
 
+// http://www.humus.name/Articles/PracticalClusteredShading.pdf
+
+struct Light
+{
+    float3 position;
+    float3 color;
+};
+
+struct ClusteredLighting
+{
+
+    static const uint32_t NumPlanesX = 16;
+    static const uint32_t NumPlanesY = 8;
+    static const uint32_t numPlanesZ = 24;
+
+    void cull_lights(const float4x4 & viewMatrix, const std::vector<Light> & lights)
+    {
+
+    }
+
+};
+
 struct ExperimentalApp : public GLFWApp
 {
     ShaderMonitor shaderMonitor = { "../assets/" };
@@ -63,6 +85,8 @@ struct ExperimentalApp : public GLFWApp
     GlShader wireframeShader;
     GlShader basicShader;
     GlShader clusteredShader;
+
+    std::vector<Light> lights;
 
     std::unique_ptr<gui::ImGuiInstance> igm;
 
@@ -78,14 +102,6 @@ struct ExperimentalApp : public GLFWApp
     GlMesh mesh;
     GlMesh floor;
     GlGpuTimer gpuTimer;
-
-    struct Light
-    {
-        float3 position;
-        float3 color;
-    };
-
-    std::vector<Light> lights;
 
     ExperimentalApp() : GLFWApp(1280, 800, "Nearly Empty App")
     {
