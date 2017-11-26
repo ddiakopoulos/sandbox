@@ -15,15 +15,15 @@ constexpr const char default_color_vert[] = R"(#version 330
 
 constexpr const char default_color_frag[] = R"(#version 330
     out vec4 f_color;
-    uniform vec3 u_color;
+    uniform vec4 u_color;
     void main()
     {
-        f_color = vec4(u_color, 1);
+        f_color = vec4(u_color);
     }
 )";
 
 
-void draw_debug_frustum(GlShader * shader, const float4x4 & debugViewProjMatrix, const float4x4 & renderViewProjMatrix, const float3 & color)
+void draw_debug_frustum(GlShader * shader, const float4x4 & debugViewProjMatrix, const float4x4 & renderViewProjMatrix, const float4 & color)
 {
     Frustum f(debugViewProjMatrix);
     auto generated_frustum_corners = make_frustum_corners(f);
@@ -56,7 +56,7 @@ void draw_debug_frustum(GlShader * shader, const float4x4 & debugViewProjMatrix,
     shader->unbind();
 }
 
-void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & renderViewProjMatrix, const float3 & color)
+void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & renderViewProjMatrix, const float4 & color)
 {
     auto generated_frustum_corners = make_frustum_corners(f);
 
@@ -90,14 +90,13 @@ void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & r
 
 // shader->uniform("u_color", float3(x * 0.5, y * 0.5, 0.5 * 0.5));
 
-// http://www.humus.name/Articles/PracticalClusteredShading.pdf
-
 struct Light
 {
-    float3 position;
-    float3 color;
+    float4 positionRadius;
+    float4 color;
 };
 
+// http://www.humus.name/Articles/PracticalClusteredShading.pdf
 struct ClusteredLighting
 {
     static const uint32_t NumClustersX = 16;
@@ -116,6 +115,9 @@ struct ClusteredLighting
 
     void cull_lights(const float4x4 & viewMatrix, const std::vector<Light> & lights)
     {
+        // num visible lights
+
+        // Check if light is in frustum (sphere frustum check)
 
     }
 
@@ -182,7 +184,7 @@ struct ExperimentalApp : public GLFWApp
     std::unique_ptr<GlGizmo> gizmo;
     tinygizmo::rigid_transform xform;
 
-    GlMesh mesh;
+    GlMesh sphereMesh;
     GlMesh floor;
     GlGpuTimer gpuTimer;
 
@@ -214,17 +216,18 @@ struct ExperimentalApp : public GLFWApp
 
         basicShader = GlShader(default_color_vert, default_color_frag);
 
-        mesh = make_mesh_from_geometry(make_sphere(0.25f));
-        //floor = make_plane_mesh(20, 20, 24, 24, true);
+        sphereMesh = make_mesh_from_geometry(make_sphere(1.0f));
         floor = make_cube_mesh();
 
-        for (int i = 0; i < 128; i++)
+        for (int i = 0; i < 64; i++)
         {
-            float3 randomPosition = float3(rand.random_float(-10, 10), rand.random_float(0, 5), rand.random_float(-10, 10));
-            float3 randomColor = float3(rand.random_float(), rand.random_float(), rand.random_float());
+            float4 randomPosition = float4(rand.random_float(-10, 10), rand.random_float(0, 2), rand.random_float(-10, 10), rand.random_float(1, 3)); // position + radius
+            float4 randomColor = float4(rand.random_float(), rand.random_float(), rand.random_float(), 1.f);
             lights.push_back({ randomPosition, randomColor });
         }
 
+        debugCamera.nearclip = 1.f;
+        debugCamera.farclip = 24.f;
         debugCamera.look_at({0, 3.0, -3.5}, {0, 2.0, 0});
         cameraController.set_camera(&debugCamera);
 
@@ -255,16 +258,6 @@ struct ExperimentalApp : public GLFWApp
 
         const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
-        /*
-        float4x4 modelMatrix = make_translation_matrix(float3(xform.position.x, xform.position.y, xform.position.z));
-        wireframeShader.bind();
-        wireframeShader.uniform("u_eyePos", debugCamera.get_eye_point());
-        wireframeShader.uniform("u_viewProjMatrix", viewProjectionMatrix);
-        wireframeShader.uniform("u_modelMatrix", modelMatrix);
-        mesh.draw_elements();
-        wireframeShader.unbind();
-        */
-
         const float4x4 debugProjection = make_perspective_matrix(1.f, 1.f, 0.5f, 12.f);
         Pose p = look_at_pose_rh(float3(0.00, -0.01, 0.00), float3(0, 0, -1.f));
         const float4x4 debugView = inverse(p.matrix());
@@ -272,15 +265,14 @@ struct ExperimentalApp : public GLFWApp
 
         Frustum f(debugViewProj);
         //float3 color = (f.contains(float3(xform.position.x, xform.position.y, xform.position.z))) ? float3(1, 0, 0) : float3(0, 0, 0);
-        draw_debug_frustum(&basicShader, debugViewProj, viewProjectionMatrix, float3(1, 1, 1));
-
+        //draw_debug_frustum(&basicShader, debugViewProj, viewProjectionMatrix, float3(1, 1, 1));
         //draw_debug_generated(&basicShader, viewProjectionMatrix, float3(16, 8, 24));
         //draw_debug_generated(&basicShader, 5.75, 12, viewProjectionMatrix);
 
         auto froxelList = clusteredLighting->build_froxels();
         for (auto & f : froxelList)
         {
-            draw_debug_frustum(&basicShader, f, viewProjectionMatrix, float3(1, 1, 1));
+            draw_debug_frustum(&basicShader, f, viewProjectionMatrix, float4(1.f, 1.f, 1.f, 0.5f));
         }
 
         {
@@ -292,18 +284,9 @@ struct ExperimentalApp : public GLFWApp
 
             for (int i = 0; i < lights.size(); i++)
             {
-                clusteredShader.uniform("u_lights[" + std::to_string(i) + "].position", lights[i].position);
+                clusteredShader.uniform("u_lights[" + std::to_string(i) + "].position", lights[i].positionRadius);
                 clusteredShader.uniform("u_lights[" + std::to_string(i) + "].color", lights[i].color);
             }
-
-            /*
-            for (const auto & model : shadedModels)
-            {
-                clusteredShader.uniform("u_modelMatrix", model.get_model());
-                clusteredShader.uniform("u_modelMatrixIT", inv(transpose(model.get_model())));
-                model.draw();
-            }
-            */
 
             {
                 float4x4 floorModel = make_scaling_matrix(float3(12, 0.1, 12));
@@ -315,13 +298,28 @@ struct ExperimentalApp : public GLFWApp
             }
 
             clusteredShader.unbind();
+
+            // Visualize the lights
+            glDisable(GL_CULL_FACE);
+            wireframeShader.bind();
+            wireframeShader.uniform("u_eyePos", debugCamera.get_eye_point());
+            wireframeShader.uniform("u_viewProjMatrix", viewProjectionMatrix);
+            for (auto & l : lights)
+            {
+                auto translation = make_translation_matrix(l.positionRadius.xyz());
+                auto scale = make_scaling_matrix(l.positionRadius.w);
+                auto model = mul(translation, scale);
+                wireframeShader.uniform("u_modelMatrix", model);
+                sphereMesh.draw_elements();
+            }
+            glEnable(GL_CULL_FACE);
+            wireframeShader.unbind();
         }
 
         //grid->draw(viewProjectionMatrix);
 
         gpuTimer.stop();
 
-        if (gizmo) gizmo->draw();
     }
 
     void on_draw() override
@@ -331,12 +329,14 @@ struct ExperimentalApp : public GLFWApp
         
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         int width, height;
         glfwGetWindowSize(window, &width, &height);
      
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+        glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 
         if (gizmo) gizmo->update(debugCamera, float2(width, height));
         tinygizmo::transform_gizmo("destination", gizmo->gizmo_ctx, xform);
@@ -345,19 +345,10 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 projectionMatrix = debugCamera.get_projection_matrix(windowAspectRatio);
         const float4x4 viewMatrix = debugCamera.get_view_matrix();
 
-        /*
-        float aspectWidth = (width * 0.5f) / (float)width; // new / old
-        float aspectHeight = height / (float)height; // new / old
-        float ratio = std::max(aspectWidth, aspectHeight); // min for aspect fit, max for aspect fill
-
-        float2 scaledSize = float2(width * ratio, height * ratio);
-        float2 scaledPosition = float2( ((width * 0.5f) - scaledSize.x) / 2.0f, ((height) - scaledSize.y) / 2.0f); // target size - scaled size
-        glViewport(scaledPosition.x, scaledPosition.y, scaledSize.x, scaledSize.y);
-        render_scene(viewMatrix, projectionMatrix);
-        */
-     
         glViewport(0, 0, width, height);
         render_scene(viewMatrix, projectionMatrix);
+
+        if (gizmo) gizmo->draw();
 
         if (igm) igm->begin_frame();
         ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
