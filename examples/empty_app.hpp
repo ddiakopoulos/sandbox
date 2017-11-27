@@ -22,7 +22,6 @@ constexpr const char default_color_frag[] = R"(#version 330
     }
 )";
 
-
 void draw_debug_frustum(GlShader * shader, const float4x4 & debugViewProjMatrix, const float4x4 & renderViewProjMatrix, const float4 & color)
 {
     Frustum f(debugViewProjMatrix);
@@ -88,68 +87,62 @@ void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & r
     shader->unbind();
 }
 
-
 //  "2D Polyhedral Bounds of a Clipped, Perspective - Projected 3D Sphere"
-void sphere_for_axis(const float3 & axis, const float3 & sphere_center, float sphere_radius, float znear, float3 boundsViewSpace[2])
+inline Bounds3D sphere_for_axis(const float3 & axis, const float3 & sphereCenter, const float sphereRadius, const float zNearClipCamera)
 {
-    bool sphereClipByZNear = !((sphere_center.z + sphere_radius) < znear);
+    const bool sphereClipByZNear = !((sphereCenter.z + sphereRadius) < zNearClipCamera);
 
-    // given in coordinates (a,z), where a is in the direction of the vector a, and z is in the standard z direction
-    const float2 projectedCenter = float2(dot(axis, sphere_center), sphere_center.z);
-    float2 bounds_az[2];
+    const float2 projectedCenter = float2(dot(axis, sphereCenter), sphereCenter.z);
 
-    float tSquared = dot(projectedCenter, projectedCenter) - (sphere_radius * sphere_radius);
-    float t, cLength, costheta, sintheta;
+    const float tSquared = dot(projectedCenter, projectedCenter) - (sphereRadius * sphereRadius);
+    float t, cLength, cosTheta, sintheta;
 
-    bool camera_outside_sphere = (tSquared > 0);
-    if (camera_outside_sphere)
+    bool outsideSphere = (tSquared > 0);
+    if (outsideSphere)
     { 
-        // Distance to the tangent points of the sphere (points where a vector from the camera are tangent to the sphere) (calculated a-z space)
+        // cosTheta, sinTheta of angle between the projected center (in a-z space) and a tangent
         t = sqrt(tSquared);
         cLength = length(projectedCenter);
-
-        // Theta is the angle between the vector from the camera to the center of the sphere and the vectors from the camera to the tangent points
-        costheta = t / cLength;
-        sintheta = sphere_radius / cLength;
+        cosTheta = t / cLength;
+        sintheta = sphereRadius / cLength;
     }
 
+    // Square root of the discriminant; NaN(and unused) if the camera is in the sphere
     float sqrtPart;
     if (sphereClipByZNear)
     {
-        sqrtPart = std::sqrt((sphere_radius * sphere_radius) - ((znear - projectedCenter.y) * (znear - projectedCenter.y)));
+        sqrtPart = std::sqrt((sphereRadius * sphereRadius) - ((zNearClipCamera - projectedCenter.y) * (zNearClipCamera - projectedCenter.y)));
     }
+
+    float2 bounds[2]; // in the a-z reference frame
 
     sqrtPart *= -1.f;
     for (int i = 0; i < 2; ++i)
     {
         if (tSquared >  0)
         {
-            const float2x2 rotateTheta = { { costheta, -sintheta}, {sintheta, costheta} };
-
-            float2 rotated = mul(rotateTheta, projectedCenter);
-            float2 norm = rotated / length(rotated);
-            float2 point = t * norm;
-
-            bounds_az[i] = costheta * mul(rotateTheta, projectedCenter);
-
-            int a = 0;
+            const float2x2 rotator = { { cosTheta, -sintheta}, {sintheta, cosTheta } };
+            const float2 rotated = normalize(mul(rotator, projectedCenter));
+            bounds[i] = cosTheta * mul(rotator, projectedCenter);
         }
 
-        if (sphereClipByZNear && (!camera_outside_sphere || bounds_az[i].y > znear))
+        if (sphereClipByZNear && (!outsideSphere || bounds[i].y > zNearClipCamera))
         {
-            bounds_az[i].x = projectedCenter.x + sqrtPart;
-            bounds_az[i].y = znear;
+            bounds[i].x = projectedCenter.x + sqrtPart;
+            bounds[i].y = zNearClipCamera;
         }
-        sintheta *= -1; 
-        sqrtPart *= -1; 
+        sintheta *= -1.f; 
+        sqrtPart *= -1.f; 
     }
 
-    boundsViewSpace[0] = bounds_az[0].x * axis;
-    boundsViewSpace[0].z = bounds_az[0].y;
-    boundsViewSpace[1] = bounds_az[1].x * axis;
-    boundsViewSpace[1].z = bounds_az[1].y;
-}
+    Bounds3D boundsViewSpace;
+    boundsViewSpace._min = bounds[0].x * axis;
+    boundsViewSpace._min.z = bounds[0].y;
+    boundsViewSpace._max = bounds[1].x * axis;
+    boundsViewSpace._max.z = bounds[1].y;
 
+    return boundsViewSpace;
+}
 
 struct Light
 {
@@ -160,31 +153,52 @@ struct Light
 // http://www.humus.name/Articles/PracticalClusteredShading.pdf
 struct ClusteredLighting
 {
-    static const uint32_t NumClustersX = 16; // Tiles in X
-    static const uint32_t NumClustersY = 8;  // Tiles in Y
-    static const uint32_t NumClustersZ = 24; // Slices in Z
+    static const int32_t NumClustersX = 8; // Tiles in X
+    static const int32_t NumClustersY = 8; // Tiles in Y
+    static const int32_t NumClustersZ = 8; // Slices in Z
 
     float nearClip, farClip;
     float vFov;
     float aspect;
 
+    enum class LightType
+    {
+        Spherical,
+        Spot,
+        Area
+    };
+
     // This is stored in a 3D texture (R32G32_UINT)
     struct ClusterPointer
     {
-        uint32_t offset;        // offset into 
-        uint32_t lightCount;
+        uint32_t offset = 0; // offset into 
+        uint32_t lightCount = 0;
     };
 
-    ClusterPointer clusterTable[NumClustersX * NumClustersY * NumClustersZ];
+    std::vector<ClusterPointer> clusterTable;
+    std::vector<uint16_t> lightIndices;         // light ids only
+    //std::vector<uint16_t> lightKeys;          // packed clusterTable lookup and light type
+    uint32_t numLightIndices = 0;
 
-    // -1 to 1
     ClusteredLighting(float vFov, float aspect, float nearClip, float farClip) : vFov(vFov), aspect(aspect), nearClip(nearClip), farClip(farClip)
     {
+        clusterTable.resize(NumClustersX * NumClustersY * NumClustersZ);
+        lightIndices.resize(std::numeric_limits<uint16_t>::max());
+        //lightKeys.resize(std::numeric_limits<uint16_t>::max());
+    }
 
+    int _toFlatFroxelIndex(int x, int y, int z)
+    {
+        return x + y * NumClustersX + z * (NumClustersX * NumClustersY);
     }
 
     void cull_lights(const float4x4 & viewMatrix, const float4x4 & projectionMatrix, const std::vector<Light> & lights)
     {   
+        // Reset state
+        lightIndices.clear();
+        for (auto & c : clusterTable) c = {};
+        numLightIndices = 0;
+
         uint32_t visibleLightCount = 0;
         Frustum cameraFrustum(mul(projectionMatrix, viewMatrix));
 
@@ -202,70 +216,46 @@ struct ClusteredLighting
 
            visibleLightCount++;
 
-           /*
-           //float3 viewSpace = mul(viewMatrix, float4(l.positionRadius.xyz(), 0)).xyz();
-           float linearDepthMin = (-viewSpace.z - l.positionRadius.w - nearClip) * nearFarDistanceRCP;
-           float linearDepthMax = (-viewSpace.z + l.positionRadius.w - nearClip) * nearFarDistanceRCP;
-           auto z0 = std::max(uint32_t(0), std::min((uint32_t) (linearDepthMin * (float) NumClustersZ), NumClustersZ - 1));
-           auto z1 = std::max(uint32_t(0), std::min((uint32_t) (linearDepthMax * (float) NumClustersZ), NumClustersZ - 1));
-           std::cout << "Z0 - " << z0 << ", Z1 - " << z1 << std::endl;
-           */
-           
            auto viewDepthToFroxelDepth = [&](float viewspaceDepth)
            {
                float vZ = (viewspaceDepth - nearClip) / (farClip - nearClip);
-               float fZ = std::pow(vZ, 1 / 2.0f); // fixme, distribution factor 
-               return clamp(fZ, 0.f, 1.f);
+               //float fZ = std::pow(vZ, 1 / 2.0f); // fixme, distribution factor 
+               return clamp(vZ, 0.f, 1.f);
            };
-
 
            // Convert sphere to froxel bounds 
            float3 lightCenterVS = transform_coord(viewMatrix, l.positionRadius.xyz());
            float nearClipVS = -nearClip;
 
-           float zLightMin = (-lightCenterVS.z) - l.positionRadius.w;
-           float zLightMax = (-lightCenterVS.z) + l.positionRadius.w;
+           float linearDepthMin = (-lightCenterVS.z - l.positionRadius.w - nearClip) * nearFarDistanceRCP;
+           float linearDepthMax = (-lightCenterVS.z + l.positionRadius.w - nearClip) * nearFarDistanceRCP;
 
-           float3 leftRightViewSpace[2];
-           float3 bottomTopViewSpace[2];
-           sphere_for_axis(float3(1, 0, 0), lightCenterVS, l.positionRadius.w, -nearClipVS, leftRightViewSpace);
-           sphere_for_axis(float3(0, 1, 0), lightCenterVS, l.positionRadius.w, -nearClipVS, bottomTopViewSpace);
+           Bounds3D leftRightViewSpace = sphere_for_axis(float3(1, 0, 0), lightCenterVS, l.positionRadius.w, -nearClipVS);
+           Bounds3D bottomTopViewSpace = sphere_for_axis(float3(0, 1, 0), lightCenterVS, l.positionRadius.w, -nearClipVS);
 
-           Bounds3D result;
-           result._min = float3(transform_coord(projectionMatrix, leftRightViewSpace[0]).x, transform_coord(projectionMatrix, bottomTopViewSpace[0]).y, viewDepthToFroxelDepth(zLightMin));
-           result._max = float3(transform_coord(projectionMatrix, leftRightViewSpace[1]).x, transform_coord(projectionMatrix, bottomTopViewSpace[1]).y, viewDepthToFroxelDepth(zLightMax));
+           //std::cout << "Left:    " << leftRightViewSpace.min().x << std::endl;
+           //std::cout << "Right:   " << leftRightViewSpace.max().x << std::endl;
+           //std::cout << "Bottom:  " << bottomTopViewSpace.min().y << std::endl;
+           //std::cout << "Top:     " << bottomTopViewSpace.max().y << std::endl;
 
-           //std::cout << "Left:    " << result.min().x << std::endl;
-           //std::cout << "Bottom:  " << result.min().y << std::endl;
-           //std::cout << "Right:   " << result.max().x << std::endl;
-           //std::cout << "Top:     " << result.max().y << std::endl;
+           Bounds3D sphereClipSpace;
+           sphereClipSpace._min = float3(transform_coord(projectionMatrix, leftRightViewSpace.min()).x, transform_coord(projectionMatrix, bottomTopViewSpace.min()).y, viewDepthToFroxelDepth(linearDepthMin));
+           sphereClipSpace._max = float3(transform_coord(projectionMatrix, leftRightViewSpace.max()).x, transform_coord(projectionMatrix, bottomTopViewSpace.max()).y, viewDepthToFroxelDepth(linearDepthMax));
 
-            float2 min = (result.min().xy() + float2(1.f)) * 0.5f; // screenspace? 
-            float2 max = (result.max().xy() + float2(1.f)) * 0.5f;
+           std::cout << "Left:    " << sphereClipSpace.max().x << std::endl;
+           std::cout << "Right:   " << sphereClipSpace.min().x << std::endl;
+           std::cout << "Bottom:  " << sphereClipSpace.max().y << std::endl;
+           std::cout << "Top:     " << sphereClipSpace.min().y << std::endl;
 
-           //std::cout << "center: " << result.center() << std::endl;
-           //std::cout << "size:   " << result.size() << std::endl;
+            // Get the clip-space min, max extents of the sphere clamped to voxel boundaries. 
+            float z0 = (int) std::max(0, std::min((int)(linearDepthMin * (float)NumClustersZ), NumClustersZ - 1));
+            float z1 = (int) std::max(0, std::min((int)(linearDepthMax * (float)NumClustersZ), NumClustersZ - 1));
+            float y0 = (int) std::min((int)((sphereClipSpace._min.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
+            float y1 = (int) std::min((int)((sphereClipSpace._max.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
+            float x0 = (int) std::min((int)((sphereClipSpace._min.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
+            float x1 = (int) std::min((int)((sphereClipSpace._max.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
 
-           result._min.x = min.x;
-           result._min.y = min.y;
-           result._max.x = max.x;
-           result._max.y = max.y;
-
-            // Clip space AABB
-            //std::cout << result << std::endl;
-
-            Bounds3D voxelsOverlappingSphere;
-            voxelsOverlappingSphere._min.x = (int)clamp(floor(result._min.x * NumClustersX), 0.0f, NumClustersX - 1.0f);
-            voxelsOverlappingSphere._min.y = (int)clamp(floor(result._min.y * NumClustersY), 0.0f, NumClustersY - 1.0f);
-            voxelsOverlappingSphere._min.z = (int)clamp(floor(result._min.z * NumClustersZ), 0.0f, NumClustersZ - 1.0f);
-            voxelsOverlappingSphere._max.x = (int)clamp(ceil(result._max.x  * NumClustersX), 0.0f, NumClustersX - 1.0f);
-            voxelsOverlappingSphere._max.y = (int)clamp(ceil(result._max.y  * NumClustersY), 0.0f, NumClustersY - 1.0f);
-            voxelsOverlappingSphere._max.z = (int)clamp(ceil(result._max.z  * NumClustersZ), 0.0f, NumClustersZ - 1.0f);
-
-            voxelsOverlappingSphere._min.x = (int)voxelsOverlappingSphere._min.x / 2;
-            voxelsOverlappingSphere._max.x = (int)voxelsOverlappingSphere._max.x / 2;
-            voxelsOverlappingSphere._min.y = (int)voxelsOverlappingSphere._min.y / 2;
-            voxelsOverlappingSphere._max.y = (int)voxelsOverlappingSphere._max.y / 2;
+            Bounds3D voxelsOverlappingSphere({ x0, y0, z0 }, { x1, y1, z1 });
 
             for (int z = voxelsOverlappingSphere._min.z; z <= voxelsOverlappingSphere._max.z; z++)
             {
@@ -273,17 +263,15 @@ struct ClusteredLighting
                 {
                     for (int x = voxelsOverlappingSphere._min.x; x <= voxelsOverlappingSphere._max.x; x++)
                     {
-
                         uint16_t clusterId = z * (NumClustersX * NumClustersY) + y * NumClustersX + x; 
 
-                        // runtime assert max clusters
+                        std::cout << "Cluster ID is " << clusterId << std::endl;
 
-                        this->clusterLightPointerList[clusterId].pointLightCount++;
+                        // todo - runtime assert max clusters. also there's an issue with spheres close to the nearclip. 
 
-                        this->lightIndices[this->numLightIndices] = idx; // store light index
-                        this->lightSortKeys[this->numLightIndices] = (clusterId); // &LIGHT_TYPE_MASK ); // store light key
-
-                        ++this->numLightIndices;
+                        clusterTable[clusterId].lightCount += 1;
+                        lightIndices[numLightIndices] = lightIndex;
+                        numLightIndices += 1;
                     }
                 }
             }
@@ -291,6 +279,20 @@ struct ClusteredLighting
 
         }
 
+        /*
+        for (int i = 0; i < numLightIndices; i++)
+        {
+            std::cout << "Index: " << lightIndices[i] << std::endl;
+        }
+        */
+
+        for (int idx = 0; idx < clusterTable.size(); idx++)
+        {
+           auto c = clusterTable[idx];
+          // std::cout << "I: " <<  c.lightCount << std::endl;
+        }
+
+        std::cout << "--------------------\n";
         ImGui::Text("Visible Lights %i", visibleLightCount);
 
         // Check if light is in frustum (sphere frustum check). 
@@ -304,7 +306,7 @@ struct ClusteredLighting
         // Sort light indices
     }
 
-    std::vector<Frustum> build_froxels()
+    std::vector<Frustum> build_froxels(const float4x4 & viewMatrix)
     {
         std::vector<Frustum> froxels;
 
@@ -334,8 +336,8 @@ struct ClusteredLighting
                     B = bottom + (stepY * y);
                     T = B + stepY;
 
-                    const float4x4 projection = make_projection_matrix(L, R, B, T, near, far);
-                    const Frustum froxel(projection);
+                    const float4x4 projectionMatrix = make_projection_matrix(L, R, B, T, near, far);
+                    const Frustum froxel(mul(projectionMatrix, viewMatrix));
                     froxels.push_back(froxel);
                 }
             }
@@ -402,14 +404,14 @@ struct ExperimentalApp : public GLFWApp
         sphereMesh = make_mesh_from_geometry(make_sphere(1.0f));
         floor = make_cube_mesh();
 
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < 1; i++)
         {
-            float4 randomPosition = float4(rand.random_float(-10, 10), rand.random_float(0, 1), rand.random_float(-10, 10), rand.random_float(0.5, 0.5)); // position + radius
+            float4 randomPosition = float4(rand.random_float(-10, 10), rand.random_float(0.25, 0.25), rand.random_float(-10, 10), rand.random_float(0.5, 0.5)); // position + radius
             float4 randomColor = float4(rand.random_float(), rand.random_float(), rand.random_float(), 1.f);
             lights.push_back({ randomPosition, randomColor });
         }
 
-        debugCamera.nearclip = 1.f;
+        debugCamera.nearclip = 0.5f;
         debugCamera.farclip = 24.f;
         debugCamera.look_at({0, 3.0, -3.5}, {0, 2.0, 0});
         cameraController.set_camera(&debugCamera);
@@ -453,11 +455,7 @@ struct ExperimentalApp : public GLFWApp
         //draw_debug_generated(&basicShader, 5.75, 12, viewProjectionMatrix);
 
         /*
-        auto froxelList = clusteredLighting->build_froxels();
-        for (auto & f : froxelList)
-        {
-            draw_debug_frustum(&basicShader, f, viewProjectionMatrix, float4(1.f, 1.f, 1.f, 0.5f));
-        }
+
         */
 
         {
@@ -535,12 +533,27 @@ struct ExperimentalApp : public GLFWApp
         glViewport(0, 0, width, height);
         render_scene(viewMatrix, projectionMatrix);
 
-        //float4x4 debugViewMatrix = inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 2, 1 })));
-        //draw_debug_frustum(&basicShader, debugViewMatrix, mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
+        {
+            float4x4 debugViewMatrix = inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
+            float4x4 debugProjectionMatrix = projectionMatrix;
+
+            draw_debug_frustum(&basicShader, mul(debugProjectionMatrix, debugViewMatrix), mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
+            clusteredLighting->cull_lights(debugViewMatrix, debugProjectionMatrix, lights);
+
+           
+
+            auto froxelList = clusteredLighting->build_froxels(debugViewMatrix);
+            for (int f = 0; f < froxelList.size(); f++)
+            {
+                float4 color = float4(0, 1, 0.f, .25f);
+
+                Frustum frox = froxelList[f];
+                if (clusteredLighting->clusterTable[f].lightCount > 0) color = float4(1, 0, 0, 1);
+                draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
+            }
+        }
 
         //std::cout << debugViewMatrix << std::endl;
-
-        clusteredLighting->cull_lights(viewMatrix, projectionMatrix, lights);
 
         if (gizmo) gizmo->draw();
 
