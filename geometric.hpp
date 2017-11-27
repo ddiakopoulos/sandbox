@@ -1065,12 +1065,12 @@ namespace avl
 
         Frustum()
         {
-            planes[FrustumPlane::RIGHT] =   Plane({ -1, 0, 0 }, 0.f);
-            planes[FrustumPlane::LEFT] =    Plane({ +1, 0, 0 }, 0.f);
-            planes[FrustumPlane::BOTTOM] =  Plane({ 0, +1, 0 }, 0.f);
-            planes[FrustumPlane::TOP] =     Plane({ 0, -1, 0 }, 0.f);
-            planes[FrustumPlane::NEAR] =    Plane({ 0, 0, +1 }, 0.f);
-            planes[FrustumPlane::FAR] =     Plane({ 0, 0, -1 }, 0.f);
+            planes[FrustumPlane::RIGHT] =   Plane({ -1, 0, 0 }, 1.f);
+            planes[FrustumPlane::LEFT] =    Plane({ +1, 0, 0 }, 1.f);
+            planes[FrustumPlane::BOTTOM] =  Plane({ 0, +1, 0 }, 1.f);
+            planes[FrustumPlane::TOP] =     Plane({ 0, -1, 0 }, 1.f);
+            planes[FrustumPlane::NEAR] =    Plane({ 0, 0, +1 }, 1.f);
+            planes[FrustumPlane::FAR] =     Plane({ 0, 0, -1 }, 1.f);
         }
 
         Frustum(const float4x4 & viewProj)
@@ -1083,6 +1083,7 @@ namespace avl
             for (int i = 0; i < 4; ++i) planes[FrustumPlane::NEAR].equation[i] =    viewProj[i][3] + viewProj[i][2];
             for (int i = 0; i < 4; ++i) planes[FrustumPlane::FAR].equation[i] =     viewProj[i][3] - viewProj[i][2];
             for (auto & p : planes) p.normalize();
+            
         }
 
         // A point is within the frustum if it is in front of all six planes simultaneously.

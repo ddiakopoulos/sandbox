@@ -49,7 +49,7 @@ void main()
         float dist = distance(u_lights[i].position.xyz, v_position);
         float lightIntensity = cubic_gaussian(2.0 * dist / u_lights[i].position.w); 
 
-        light += L * lightIntensity;
+        light += L * lightIntensity * 8;
     }
     f_color = vec4(light, 1);
 }
