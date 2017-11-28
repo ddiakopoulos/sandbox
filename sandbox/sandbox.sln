@@ -24,6 +24,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "particle-system", "..\parti
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "linalg-conversions", "..\linalg-conversions\linalg-conversions.vcxproj", "{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "clustered-shading", "..\clustered-shading\clustered-shading.vcxproj", "{61F27053-ECE9-45B7-A89A-082C946F1462}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -104,6 +106,14 @@ Global
 		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Release|Win32.Build.0 = Release|Win32
 		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Release|x64.ActiveCfg = Release|x64
 		{3DE3D929-AB9B-4B6C-8FC8-C741D05978F2}.Release|x64.Build.0 = Release|x64
+		{61F27053-ECE9-45B7-A89A-082C946F1462}.Debug|Win32.ActiveCfg = Debug|Win32
+		{61F27053-ECE9-45B7-A89A-082C946F1462}.Debug|Win32.Build.0 = Debug|Win32
+		{61F27053-ECE9-45B7-A89A-082C946F1462}.Debug|x64.ActiveCfg = Debug|x64
+		{61F27053-ECE9-45B7-A89A-082C946F1462}.Debug|x64.Build.0 = Debug|x64
+		{61F27053-ECE9-45B7-A89A-082C946F1462}.Release|Win32.ActiveCfg = Release|Win32
+		{61F27053-ECE9-45B7-A89A-082C946F1462}.Release|Win32.Build.0 = Release|Win32
+		{61F27053-ECE9-45B7-A89A-082C946F1462}.Release|x64.ActiveCfg = Release|x64
+		{61F27053-ECE9-45B7-A89A-082C946F1462}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
