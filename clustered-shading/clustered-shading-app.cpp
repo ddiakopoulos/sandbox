@@ -57,9 +57,9 @@ void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & r
 // http://www.humus.name/Articles/PracticalClusteredShading.pdf
 struct ClusteredLighting
 {
-    static const int32_t NumClustersX = 12; // Tiles in X
-    static const int32_t NumClustersY = 12; // Tiles in Y
-    static const int32_t NumClustersZ = 16; // Slices in Z
+    static const int32_t NumClustersX = 2; // Tiles in X
+    static const int32_t NumClustersY = 2; // Tiles in Y
+    static const int32_t NumClustersZ = 2; // Slices in Z
 
     float nearClip, farClip;
     float vFov;
@@ -211,31 +211,29 @@ struct ClusteredLighting
         manual_timer t;
         t.start();
 
-        // Need a list of the index into the light list, and how many of them
+        // We need the cluster ID and to know what light IDs are assigned to it. We'll do this
+        // by sorting on the cluster id, and then by the light index
         std::vector<std::pair<uint16_t, uint16_t>> lightListToSort;
         for (int i = 0; i < numLightIndices; ++i) lightListToSort.push_back({ lightClusterIDs[i], lightIndices[i] });
         std::sort(lightListToSort.begin(), lightListToSort.end());
 
-        std::vector<uint16_t> packedLightIndices;
-
         // Indices are tightly packed
+        std::vector<uint16_t> packedLightIndices;
         uint16_t lastClusterID = 0;
         for (int i = 0; i < numLightIndices; ++i)
         {
-            // We have the cluster ID and we know what light IDs are assigned to it
             uint16_t clusterId = lightListToSort[i].first;
 
-            // New cluster
+            // New cluster. One cluster can hold many lights, but we only need to store the offset to
+            // the first one in the list. 
             if (clusterId != lastClusterID)
             {
-                auto currentLightIndex = packedLightIndices.size(); // the last inserted
+                auto currentLightIndex = packedLightIndices.size(); 
                 clusterTable[clusterId].offset = currentLightIndex;
-                //std::cout << "New Cluster: " << clusterId << " with offset " << currentLightIndex << " and count " << clusterTable[clusterId].lightCount << std::endl;
             }
 
-            packedLightIndices.push_back(lightListToSort[i].second); // light index
-
-            //lastIndex = sortedIndexKey;
+            // Keep on inserting sorted light indices into the packed buffer
+            packedLightIndices.push_back(lightListToSort[i].second);
             lastClusterID = clusterId;
         }
 
@@ -246,37 +244,6 @@ struct ClusteredLighting
         }
 
         t.stop();
-
-        /*
-        for (auto p : packedLightIndices)
-        {
-            std::cout << "Packed: " << p << std::endl;
-        }
-        std::cout << "====================================== \n";
-
-
-        for (auto & c : lightListToSort)
-        {
-            clusterTable[c.second].offset = 0;
-            std::cout << "Sorted:  " << c.first  << ", " << c.second << std::endl;
-        }
-        std::cout << "====================================== \n";
-        */
-
-        /*
-        // Offset + light count
-        for (auto & c : clusterTable)
-        {
-            std::cout << "Offset " << c.offset << std::endl;
-            std::cout << "Light Count: " << c.lightCount << std::endl;
-        }
-        std::cout << "====================================== \n";
-
-        clusterTable[clusterId].lightCount += 1;
-        clusterTable[clusterId].offset = ?;
-        lightIndices[numLightIndices] = lightIndex;
-        lightClusterIDs[numLightIndices] = clusterId;
-        */
 
         // Update clustered lighting UBO
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
@@ -438,18 +405,17 @@ void shader_workbench::on_draw()
 
     glViewport(0, 0, width, height);
 
-    /*
     // Cluster Debugging
     {
         clusterCPUTimer.start();
 
-        float4x4 debugViewMatrix = inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
-        float4x4 debugProjectionMatrix = projectionMatrix;
+        //float4x4 debugViewMatrix = inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
+        //float4x4 debugProjectionMatrix = projectionMatrix;
 
-        draw_debug_frustum(&basicShader, mul(debugProjectionMatrix, debugViewMatrix), mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
-        clusteredLighting->cull_lights(debugViewMatrix, debugProjectionMatrix, lights);
+        draw_debug_frustum(&basicShader, mul(projectionMatrix, viewMatrix), mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
+        //clusteredLighting->cull_lights(viewMatrix, projectionMatrix, lights);
 
-        auto froxelList = clusteredLighting->build_froxels(debugViewMatrix);
+        auto froxelList = clusteredLighting->build_froxels(viewMatrix);
         for (int f = 0; f < froxelList.size(); f++)
         {
             float4 color = float4(1, 1, 1, .1f);
@@ -461,7 +427,6 @@ void shader_workbench::on_draw()
 
         clusterCPUTimer.pause();
     }
-    */
 
     // Primary scene rendering
     {
@@ -478,7 +443,7 @@ void shader_workbench::on_draw()
             clusteredShader.texture("s_lightIndexTexture", 1, clusteredLighting->lightIndexTexture, GL_TEXTURE_BUFFER);
 
             clusteredShader.uniform("u_eye", debugCamera.get_eye_point());
-            clusteredShader.uniform("u_viewMat", viewMatrix); // hmm!
+            clusteredShader.uniform("u_viewMat", viewMatrix); 
             clusteredShader.uniform("u_viewProj", viewProjectionMatrix);
             clusteredShader.uniform("u_diffuse", float3(1.0f, 1.0f, 1.0f));
 
