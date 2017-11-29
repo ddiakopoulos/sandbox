@@ -104,7 +104,17 @@ struct ClusteredLighting
 
         gl_check_error(__FILE__, __LINE__);
 
-        glNamedBufferData(lightIndexBuffer, maxLights * sizeof(uint16_t), NULL, GL_DYNAMIC_DRAW); // DSA glBufferData
+        std::cout << "Light Index Buffer: " << lightIndexBuffer.id() << std::endl;
+
+        glNamedBufferData(lightIndexBuffer, maxLights * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW); // DSA glBufferData
+
+        gl_check_error(__FILE__, __LINE__);
+
+        std::cout << "Light Tex Buffer: " << lightIndexTexture.id() << std::endl;
+
+        GLuint lib;
+        glCreateTextures(GL_TEXTURE_BUFFER, 1, &lib);
+        lightIndexTexture = GlTexture2D(lib);
         glTextureBuffer(lightIndexTexture, GL_R16UI, lightIndexBuffer); // DSA for glTexBuffer
 
         gl_check_error(__FILE__, __LINE__);
@@ -181,6 +191,15 @@ struct ClusteredLighting
             }
         }
 
+        /*
+        for (auto & c : clusterTable)
+        {
+            std::cout << "Offset " << c.offset << std::endl;
+            std::cout << "Light Count: " << c.lightCount << std::endl;
+        }
+        std::cout << "====================================== \n";
+        */
+
         ImGui::Text("Visible Lights %i", visibleLightCount);
     }
 
@@ -189,22 +208,36 @@ struct ClusteredLighting
         // Update clustered lighting UBO
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
         uniforms::clustered_lighting_buffer lighting = {};
-        for (int l = 0; l < numLightIndices; l++) lighting.lights[l] = lights[l];
+        for (int l = 0; l < lights.size(); l++) lighting.lights[l] = lights[l];
         lightingBuffer.set_buffer_data(sizeof(lighting), &lighting, GL_STREAM_DRAW);
         ImGui::Text("Uploaded %i lights indices to the lighting buffer", numLightIndices);
 
         gl_check_error(__FILE__, __LINE__);
 
         // Update Index Data
-        glBindBufferBase(GL_TEXTURE_BUFFER, 0, lightIndexBuffer);
-        lightIndexBuffer.set_buffer_data(sizeof(uint16_t) * lightIndices.size(), lightIndices.data(), GL_STREAM_DRAW);
-        ImGui::Text("Uploaded %i bytes to the index buffer", sizeof(uint16_t) * lightIndices.size());
 
+        for (int i = 0; i < 64; i++)
+        {
+            lightIndices[i] = i;
+        }
+
+        //glBindBufferBase(GL_TEXTURE_BUFFER, 0, lightIndexBuffer);
+        glBindBuffer(GL_TEXTURE_BUFFER, lightIndexBuffer);
+        lightIndexBuffer.set_buffer_data(sizeof(uint16_t) * lightIndices.size(), lightIndices.data(), GL_STREAM_DRAW); // fixme to use subData
         gl_check_error(__FILE__, __LINE__);
 
-        // Update cluster grid
-        glTexSubImage3DEXT(clusterTexture, 0, 0, 0, 0, NumClustersX, NumClustersY, NumClustersZ, GL_RG_INTEGER, GL_UNSIGNED_INT, (void *)clusterTable.data());
+        ImGui::Text("Uploaded %i bytes to the index buffer", sizeof(uint16_t) * lightIndices.size());
 
+        /*
+        for (auto l : lightIndices)
+        {
+            if (l > 0) std::cout << l << std::endl;
+        }
+        std::cout << "-------------------------\n";
+        */
+
+        // Update cluster grid
+        glTextureSubImage3D(clusterTexture, 0, 0, 0, 0, NumClustersX, NumClustersY, NumClustersZ, GL_RG_INTEGER, GL_UNSIGNED_INT, (void *)clusterTable.data());
         gl_check_error(__FILE__, __LINE__);
     }
 

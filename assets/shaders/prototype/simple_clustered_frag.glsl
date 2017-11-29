@@ -72,26 +72,28 @@ float cubic_gaussian(float h)
 void main()
 {
     vec3 eyeDir = normalize(u_eye - v_position);
-    vec3 light = vec3(0, 0, 0);
+    vec3 lightingContribution = vec3(0, 0, 0);
 
     int indexOffset = 0;
     int sphereLightCount = 0;
     vec3 clusterCoord = cluster_coord_for_vertex(gl_FragCoord.xy, v_position_vs.z, indexOffset, sphereLightCount);
 
     for(int i = 0; i < sphereLightCount; ++i)
-    {
+    {   
+        PointLight light = get_point_light_for_index(indexOffset++);
+
         vec3 L = vec3(0, 0, 0);
 
-        vec3 lightDir = normalize(pointLights[i].position.xyz - v_position);
-        L += pointLights[i].color.rgb * max(dot(v_normal, lightDir), 0);
+        vec3 lightDir = normalize(light.position.xyz - v_position);
+        L += light.color.rgb * max(dot(v_normal, lightDir), 0);
 
         vec3 halfDir = normalize(lightDir + eyeDir);
-        L += pointLights[i].color.rgb * pow(max(dot(v_normal, halfDir), 0), 128);
+        L += light.color.rgb * pow(max(dot(v_normal, halfDir), 0), 128);
 
-        float dist = distance(pointLights[i].position.xyz, v_position);
-        float lightIntensity = cubic_gaussian(2.0 * dist / pointLights[i].position.w); 
+        float dist = distance(light.position.xyz, v_position);
+        float lightIntensity = cubic_gaussian(2.0 * dist / light.position.w); 
 
-        light += L * lightIntensity * 8; // multiplier for debugging only
+        lightingContribution += L * lightIntensity * 8; // multiplier for debugging only
     }
-    f_color = vec4(light, 1);
+    f_color = vec4(lightingContribution, 1);
 }
