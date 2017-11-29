@@ -125,7 +125,7 @@ class GlObject
     std::string n;
 public:
     GlObject() {}
-    GlObject(GLuint h) : handle(g) {}
+    GlObject(GLuint h) : handle(h) {}
     ~GlObject() { if (handle) factory_t::destroy(handle); }
     GlObject(const GlObject & r) = delete;
     GlObject & operator = (GlObject && r) { std::swap(handle, r.handle); std::swap(n, r.n); return *this; }
@@ -137,8 +137,8 @@ public:
     GLuint id() const { if (!handle) factory_t::create(handle); return handle; };
 };
 
-struct GlBufferFactory { static void create(GLuint & x) { glGenBuffers(1, &x); }; static void destroy(GLuint x) { glDeleteBuffers(1, &x); }; };
-struct GlTextureFactory { static void create(GLuint & x) { glGenTextures(1, &x); }; static void destroy(GLuint x) { glDeleteTextures(1, &x);  }; };
+struct GlBufferFactory { static void create(GLuint & x) { glCreateBuffers(1, &x); }; static void destroy(GLuint x) { glDeleteBuffers(1, &x); }; };
+struct GlTextureFactory { static void create(GLuint & x) { glGenTextures(1, &x); }; static void destroy(GLuint x) { glDeleteTextures(1, &x); }; };
 struct GlVertexArrayFactory { static void create(GLuint & x) { glGenVertexArrays(1, &x); }; static void destroy(GLuint x) { glDeleteVertexArrays(1, &x); }; };
 struct GlRenderbufferFactory { static void create(GLuint & x) { glGenRenderbuffers(1, &x); }; static void destroy(GLuint x) { glDeleteRenderbuffers(1, &x); }; };
 struct GlFramebufferFactory { static void create(GLuint & x) { glGenFramebuffers(1, &x); }; static void destroy(GLuint x) { glDeleteFramebuffers(1, &x); }; };
@@ -200,7 +200,8 @@ struct GlFramebuffer : public GlFramebufferObject
 struct GlTexture2D : public GlTextureObject
 {
     float width{ 0 }, height{ 0 };
-    GlTexture2D() {}
+    GlTexture2D() { }
+    GlTexture2D(GLuint id) : GlTextureObject(id) { }
     GlTexture2D(float width, float height) : width(width), height(height) {}
 
     void setup(GLsizei width, GLsizei height, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels, bool createMipmap = false)
