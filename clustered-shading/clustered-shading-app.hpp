@@ -97,6 +97,8 @@ struct shader_workbench : public GLFWApp
 
     GlMesh sphereMesh;
     GlMesh floor;
+    GlMesh torusKnot;
+    std::vector<float3> randomPositions;
 
     std::vector<uniforms::point_light> lights;
 

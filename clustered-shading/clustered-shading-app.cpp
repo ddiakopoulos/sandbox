@@ -57,9 +57,9 @@ void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & r
 // http://www.humus.name/Articles/PracticalClusteredShading.pdf
 struct ClusteredLighting
 {
-    static const int32_t NumClustersX = 8; // Tiles in X
-    static const int32_t NumClustersY = 8; // Tiles in Y
-    static const int32_t NumClustersZ = 8; // Slices in Z
+    static const int32_t NumClustersX = 12; // Tiles in X
+    static const int32_t NumClustersY = 12; // Tiles in Y
+    static const int32_t NumClustersZ = 16; // Slices in Z
 
     float nearClip, farClip;
     float vFov;
@@ -89,7 +89,7 @@ struct ClusteredLighting
     std::vector<uint16_t> lightClusterIDs;      // clusterId
     uint32_t numLightIndices = 0;
 
-    static const uint16_t maxLights = std::numeric_limits<uint16_t>::max();
+    static const size_t maxLights = std::numeric_limits<uint16_t>::max() * 8;
 
     ClusteredLighting(float vFov, float aspect, float nearClip, float farClip) : vFov(vFov), aspect(aspect), nearClip(nearClip), farClip(farClip)
     {
@@ -122,6 +122,10 @@ struct ClusteredLighting
 
     void cull_lights(const float4x4 & viewMatrix, const float4x4 & projectionMatrix, const std::vector<uniforms::point_light> & lights)
     {
+        manual_timer t;
+
+        t.start();
+
         // Reset state
         for (auto & i : lightClusterIDs) i = 0;
         for (auto & i : lightIndices) i = 0;
@@ -185,6 +189,9 @@ struct ClusteredLighting
                         const uint16_t clusterId = z * (NumClustersX * NumClustersY) + y * NumClustersX + x;
                         if (clusterId >= clusterTable.size()) continue; // todo - runtime assert max clusters. also there's an issue with spheres close to the nearclip. 
                         clusterTable[clusterId].lightCount += 1;
+
+                        if (numLightIndices > lightIndices.size()) continue; // actually return, can't handle any more lights
+
                         lightIndices[numLightIndices] = lightIndex;
                         lightClusterIDs[numLightIndices] = clusterId;
                         numLightIndices += 1;
@@ -193,11 +200,17 @@ struct ClusteredLighting
             }
         }
 
+        t.stop();
+
         ImGui::Text("Visible Lights %i", visibleLightCount);
+        ImGui::Text("Cluster Generation CPU %f ms", t.get());
     }
 
     void upload(std::vector<uniforms::point_light> & lights)
     {
+        manual_timer t;
+        t.start();
+
         // Need a list of the index into the light list, and how many of them
         std::vector<std::pair<uint16_t, uint16_t>> lightListToSort;
         for (int i = 0; i < numLightIndices; ++i) lightListToSort.push_back({ lightClusterIDs[i], lightIndices[i] });
@@ -211,17 +224,16 @@ struct ClusteredLighting
         {
             // We have the cluster ID and we know what light IDs are assigned to it
             uint16_t clusterId = lightListToSort[i].first;
-            packedLightIndices.push_back(lightListToSort[i].second); // light index
 
             // New cluster
             if (clusterId != lastClusterID)
             {
                 auto currentLightIndex = packedLightIndices.size(); // the last inserted
                 clusterTable[clusterId].offset = currentLightIndex;
+                //std::cout << "New Cluster: " << clusterId << " with offset " << currentLightIndex << " and count " << clusterTable[clusterId].lightCount << std::endl;
             }
 
-            // Set the offset in the cluster table
-            //clusterTable[lightListToSort[i].first].offset = currentLightIndex;
+            packedLightIndices.push_back(lightListToSort[i].second); // light index
 
             //lastIndex = sortedIndexKey;
             lastClusterID = clusterId;
@@ -233,12 +245,16 @@ struct ClusteredLighting
             lightIndices[i] = packedLightIndices[i]; 
         }
 
-        //if (sortedIndexKey != lastIndex)
-       // {
-       //     packedLightIndices.push_back(sortedIndexKey);
-       // }
+        t.stop();
 
         /*
+        for (auto p : packedLightIndices)
+        {
+            std::cout << "Packed: " << p << std::endl;
+        }
+        std::cout << "====================================== \n";
+
+
         for (auto & c : lightListToSort)
         {
             clusterTable[c.second].offset = 0;
@@ -246,6 +262,7 @@ struct ClusteredLighting
         }
         std::cout << "====================================== \n";
         */
+
         /*
         // Offset + light count
         for (auto & c : clusterTable)
@@ -279,6 +296,7 @@ struct ClusteredLighting
 
         ImGui::Text("Uploaded %i lights indices to the lighting buffer", numLightIndices);
         ImGui::Text("Uploaded %i bytes to the index buffer", sizeof(uint16_t) * lightIndices.size());
+        ImGui::Text("Sorted List Generation CPU %f ms", t.get());
     }
 
     std::vector<Frustum> build_froxels(const float4x4 & viewMatrix)
@@ -349,11 +367,19 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     sphereMesh = make_mesh_from_geometry(make_sphere(1.0f));
     floor = make_cube_mesh();
 
-    for (int i = 0; i < 64; i++)
+    for (int i = 0; i < 256; i++)
     {
-        float4 randomPosition = float4(rand.random_float(-10, 10), rand.random_float(0.25, 0.25), rand.random_float(-10, 10), rand.random_float(0.5, 0.5)); // position + radius
+        float4 randomPosition = float4(rand.random_float(-12, 12), rand.random_float(0.1, 0.5), rand.random_float(-12, 12), rand.random_float(0.1, 4)); // position + radius
         float4 randomColor = float4(rand.random_float(), rand.random_float(), rand.random_float(), 1.f);
         lights.push_back({ randomPosition, randomColor });
+    }
+
+    auto knot = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply");
+    rescale_geometry(knot, 1.f);
+    torusKnot = make_mesh_from_geometry(knot);
+    for (int i = 0; i < 128; i++)
+    {
+        randomPositions.push_back({ rand.random_float(-12, 12), rand.random_float(0.1, 0.5), rand.random_float(-12, 12) });
     }
 
     debugCamera.nearclip = 0.5f;
@@ -469,11 +495,22 @@ void shader_workbench::on_draw()
                 floor.draw_elements();
             }
 
+            {
+                for (int i = 0; i < 128; i++)
+                {
+                    auto modelMat = make_translation_matrix(randomPositions[i]);
+                    clusteredShader.uniform("u_modelMatrix", modelMat);
+                    clusteredShader.uniform("u_modelMatrixIT", inverse(transpose(modelMat)));
+                    torusKnot.draw_elements();
+                }
+            }
+
             clusteredShader.unbind();
         }
 
         renderTimer.stop();
 
+        /*
         // Visualize the lights
         glDisable(GL_CULL_FACE);
         wireframeShader.bind();
@@ -489,6 +526,7 @@ void shader_workbench::on_draw()
         }
         glEnable(GL_CULL_FACE);
         wireframeShader.unbind();
+        */
 
         //grid->draw(viewProjectionMatrix);
     }
@@ -496,7 +534,6 @@ void shader_workbench::on_draw()
     if (gizmo) gizmo->draw();
 
     ImGui::Text("Render Time GPU %f ms", renderTimer.elapsed_ms());
-    ImGui::Text("Cluster Generation CPU %u ms", clusterCPUTimer.milliseconds().count());
 
     if (igm) igm->end_frame();
     gl_check_error(__FILE__, __LINE__);

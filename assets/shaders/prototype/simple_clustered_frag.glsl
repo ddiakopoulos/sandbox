@@ -8,9 +8,9 @@ uniform float u_farClip;
 uniform vec2 u_rcpViewportSize;
 
 const int MAX_POINT_LIGHTS = 1024;
-const float NUM_TILES_X = 8.0;
-const float NUM_TILES_Y = 8.0;
-const float NUM_SLICES_Z = 8.0;
+const float NUM_TILES_X = 12.0;
+const float NUM_TILES_Y = 12.0;
+const float NUM_SLICES_Z = 16.0;
 
 struct PointLight
 {
@@ -93,7 +93,7 @@ void main()
         float dist = distance(light.position.xyz, v_position);
         float lightIntensity = cubic_gaussian(2.0 * dist / light.position.w); 
 
-        lightingContribution += L * lightIntensity * 8; // multiplier for debugging only
+        lightingContribution += L * lightIntensity; // multiplier for debugging only
     }
     f_color = vec4(lightingContribution, 1);
 }
