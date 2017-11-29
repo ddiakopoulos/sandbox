@@ -86,7 +86,7 @@ struct ClusteredLighting
 
     std::vector<ClusterPointer> clusterTable;
     std::vector<uint16_t> lightIndices;         // light ids only
-    //std::vector<uint16_t> lightKeys;          // packed clusterTable lookup and light type
+    std::vector<uint16_t> lightClusterIDs;      // clusterId
     uint32_t numLightIndices = 0;
 
     static const uint16_t maxLights = std::numeric_limits<uint16_t>::max();
@@ -95,7 +95,7 @@ struct ClusteredLighting
     {
         clusterTable.resize(NumClustersX * NumClustersY * NumClustersZ);
         lightIndices.resize(maxLights);
-        //lightKeys.resize(maxLights);
+        lightClusterIDs.resize(maxLights);
         
         // Setup 3D cluster texture
         clusterTexture.setup(GL_TEXTURE_3D, NumClustersX, NumClustersY, NumClustersZ, GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, nullptr);
@@ -123,6 +123,7 @@ struct ClusteredLighting
     void cull_lights(const float4x4 & viewMatrix, const float4x4 & projectionMatrix, const std::vector<uniforms::point_light> & lights)
     {
         // Reset state
+        for (auto & i : lightClusterIDs) i = 0;
         for (auto & i : lightIndices) i = 0;
         for (auto & c : clusterTable) c = {};
         numLightIndices = 0;
@@ -185,27 +186,81 @@ struct ClusteredLighting
                         if (clusterId >= clusterTable.size()) continue; // todo - runtime assert max clusters. also there's an issue with spheres close to the nearclip. 
                         clusterTable[clusterId].lightCount += 1;
                         lightIndices[numLightIndices] = lightIndex;
+                        lightClusterIDs[numLightIndices] = clusterId;
                         numLightIndices += 1;
                     }
                 }
             }
         }
 
-        // Need to assign offset! 
+        ImGui::Text("Visible Lights %i", visibleLightCount);
+    }
+
+    void upload(std::vector<uniforms::point_light> & lights)
+    {
+        // Need a list of the index into the light list, and how many of them
+        std::vector<std::pair<uint16_t, uint16_t>> lightListToSort;
+        for (int i = 0; i < numLightIndices; ++i) lightListToSort.push_back({ lightClusterIDs[i], lightIndices[i] });
+        std::sort(lightListToSort.begin(), lightListToSort.end());
+
+        std::vector<uint16_t> packedLightIndices;
+
+        // Indices are tightly packed
+        uint16_t lastClusterID = 0;
+        for (int i = 0; i < numLightIndices; ++i)
+        {
+            // We have the cluster ID and we know what light IDs are assigned to it
+            uint16_t clusterId = lightListToSort[i].first;
+            packedLightIndices.push_back(lightListToSort[i].second); // light index
+
+            // New cluster
+            if (clusterId != lastClusterID)
+            {
+                auto currentLightIndex = packedLightIndices.size(); // the last inserted
+                clusterTable[clusterId].offset = currentLightIndex;
+            }
+
+            // Set the offset in the cluster table
+            //clusterTable[lightListToSort[i].first].offset = currentLightIndex;
+
+            //lastIndex = sortedIndexKey;
+            lastClusterID = clusterId;
+        }
+
+        // repack the light indices now sorted by cluster id
+        for (int i = 0; i < numLightIndices; ++i)
+        {
+            lightIndices[i] = packedLightIndices[i]; 
+        }
+
+        //if (sortedIndexKey != lastIndex)
+       // {
+       //     packedLightIndices.push_back(sortedIndexKey);
+       // }
+
         /*
+        for (auto & c : lightListToSort)
+        {
+            clusterTable[c.second].offset = 0;
+            std::cout << "Sorted:  " << c.first  << ", " << c.second << std::endl;
+        }
+        std::cout << "====================================== \n";
+        */
+        /*
+        // Offset + light count
         for (auto & c : clusterTable)
         {
             std::cout << "Offset " << c.offset << std::endl;
             std::cout << "Light Count: " << c.lightCount << std::endl;
         }
         std::cout << "====================================== \n";
+
+        clusterTable[clusterId].lightCount += 1;
+        clusterTable[clusterId].offset = ?;
+        lightIndices[numLightIndices] = lightIndex;
+        lightClusterIDs[numLightIndices] = clusterId;
         */
 
-        ImGui::Text("Visible Lights %i", visibleLightCount);
-    }
-
-    void upload(std::vector<uniforms::point_light> & lights)
-    {
         // Update clustered lighting UBO
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
         uniforms::clustered_lighting_buffer lighting = {};
@@ -392,6 +447,7 @@ void shader_workbench::on_draw()
             clusteredLighting->cull_lights(viewMatrix, projectionMatrix, lights);
 
             clusteredLighting->upload(lights);
+
             clusteredShader.texture("s_clusterTexture", 0, clusteredLighting->clusterTexture, GL_TEXTURE_3D);
             clusteredShader.texture("s_lightIndexTexture", 1, clusteredLighting->lightIndexTexture, GL_TEXTURE_BUFFER);
 
