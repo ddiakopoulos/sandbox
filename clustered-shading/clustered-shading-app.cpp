@@ -99,6 +99,11 @@ struct ClusteredLighting
     float vFov;
     float aspect;
 
+    GlBuffer lightingBuffer;
+    GlBuffer lightIndexBuffer;
+    GlTexture2D lightIndexTexture;
+    GlTexture3D clusterTexture;
+
     enum class LightType
     {
         Spherical,
@@ -106,7 +111,7 @@ struct ClusteredLighting
         Area
     };
 
-    // This is stored in a 3D texture (R32G32_UINT)
+    // This is stored in a 3D texture (clusterTexture => R32G32_UINT)
     struct ClusterPointer
     {
         uint32_t offset = 0; // offset into 
@@ -115,22 +120,29 @@ struct ClusteredLighting
 
     std::vector<ClusterPointer> clusterTable;
     std::vector<uint16_t> lightIndices;         // light ids only
-                                                //std::vector<uint16_t> lightKeys;          // packed clusterTable lookup and light type
+    //std::vector<uint16_t> lightKeys;          // packed clusterTable lookup and light type
     uint32_t numLightIndices = 0;
+
+    static const uint16_t maxLights = std::numeric_limits<uint16_t>::max();
 
     ClusteredLighting(float vFov, float aspect, float nearClip, float farClip) : vFov(vFov), aspect(aspect), nearClip(nearClip), farClip(farClip)
     {
         clusterTable.resize(NumClustersX * NumClustersY * NumClustersZ);
-        lightIndices.resize(std::numeric_limits<uint16_t>::max());
-        //lightKeys.resize(std::numeric_limits<uint16_t>::max());
+        lightIndices.resize(maxLights);
+        //lightKeys.resize(maxLights);
+        
+        // Setup 3D cluster texture
+        clusterTexture.setup(GL_TEXTURE_3D, NumClustersX, NumClustersY, NumClustersZ, GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, nullptr);
+        glTextureParameteriEXT(clusterTexture, GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureParameteriEXT(clusterTexture, GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        glNamedBufferData(lightIndexBuffer, maxLights * sizeof(uint16_t), NULL, GL_DYNAMIC_DRAW); // DSA glBufferData
+        glTextureBuffer(lightIndexTexture, GL_R16UI, lightIndexBuffer); // DSA for glTexBuffer
+
+        gl_check_error(__FILE__, __LINE__);
     }
 
-    int _toFlatFroxelIndex(int x, int y, int z)
-    {
-        return x + y * NumClustersX + z * (NumClustersX * NumClustersY);
-    }
-
-    void cull_lights(const float4x4 & viewMatrix, const float4x4 & projectionMatrix, const std::vector<Light> & lights)
+    void cull_lights(const float4x4 & viewMatrix, const float4x4 & projectionMatrix, const std::vector<uniforms::point_light> & lights)
     {
         // Reset state
         lightIndices.clear();
@@ -144,7 +156,7 @@ struct ClusteredLighting
 
         for (int lightIndex = 0; lightIndex < lights.size(); ++lightIndex)
         {
-            const Light & l = lights[lightIndex];
+            const uniforms::point_light & l = lights[lightIndex];
 
             // Conservative light culling based on worldspace camera frustum
             if (!cameraFrustum.intersects(l.positionRadius.xyz(), l.positionRadius.w))
@@ -162,36 +174,26 @@ struct ClusteredLighting
             };
 
             // Convert sphere to froxel bounds 
-            float3 lightCenterVS = transform_coord(viewMatrix, l.positionRadius.xyz());
-            float nearClipVS = -nearClip;
+            const float3 lightCenterVS = transform_coord(viewMatrix, l.positionRadius.xyz());
+            const float nearClipVS = -nearClip;
 
-            float linearDepthMin = (-lightCenterVS.z - l.positionRadius.w - nearClip) * nearFarDistanceRCP;
-            float linearDepthMax = (-lightCenterVS.z + l.positionRadius.w - nearClip) * nearFarDistanceRCP;
+            const float linearDepthMin = (-lightCenterVS.z - l.positionRadius.w - nearClip) * nearFarDistanceRCP;
+            const float linearDepthMax = (-lightCenterVS.z + l.positionRadius.w - nearClip) * nearFarDistanceRCP;
 
-            Bounds3D leftRightViewSpace = sphere_for_axis(float3(1, 0, 0), lightCenterVS, l.positionRadius.w, -nearClipVS);
-            Bounds3D bottomTopViewSpace = sphere_for_axis(float3(0, 1, 0), lightCenterVS, l.positionRadius.w, -nearClipVS);
-
-            //std::cout << "Left:    " << leftRightViewSpace.min().x << std::endl;
-            //std::cout << "Right:   " << leftRightViewSpace.max().x << std::endl;
-            //std::cout << "Bottom:  " << bottomTopViewSpace.min().y << std::endl;
-            //std::cout << "Top:     " << bottomTopViewSpace.max().y << std::endl;
+            const Bounds3D leftRightViewSpace = sphere_for_axis(float3(1, 0, 0), lightCenterVS, l.positionRadius.w, -nearClipVS);
+            const Bounds3D bottomTopViewSpace = sphere_for_axis(float3(0, 1, 0), lightCenterVS, l.positionRadius.w, -nearClipVS);
 
             Bounds3D sphereClipSpace;
             sphereClipSpace._min = float3(transform_coord(projectionMatrix, leftRightViewSpace.min()).x, transform_coord(projectionMatrix, bottomTopViewSpace.min()).y, viewDepthToFroxelDepth(linearDepthMin));
             sphereClipSpace._max = float3(transform_coord(projectionMatrix, leftRightViewSpace.max()).x, transform_coord(projectionMatrix, bottomTopViewSpace.max()).y, viewDepthToFroxelDepth(linearDepthMax));
 
-            std::cout << "Left:    " << sphereClipSpace.max().x << std::endl;
-            std::cout << "Right:   " << sphereClipSpace.min().x << std::endl;
-            std::cout << "Bottom:  " << sphereClipSpace.max().y << std::endl;
-            std::cout << "Top:     " << sphereClipSpace.min().y << std::endl;
-
             // Get the clip-space min, max extents of the sphere clamped to voxel boundaries. 
-            float z0 = (int)std::max(0, std::min((int)(linearDepthMin * (float)NumClustersZ), NumClustersZ - 1));
-            float z1 = (int)std::max(0, std::min((int)(linearDepthMax * (float)NumClustersZ), NumClustersZ - 1));
-            float y0 = (int)std::min((int)((sphereClipSpace._min.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
-            float y1 = (int)std::min((int)((sphereClipSpace._max.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
-            float x0 = (int)std::min((int)((sphereClipSpace._min.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
-            float x1 = (int)std::min((int)((sphereClipSpace._max.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
+            const float z0 = (int)std::max(0, std::min((int)(linearDepthMin * (float)NumClustersZ), NumClustersZ - 1));
+            const float z1 = (int)std::max(0, std::min((int)(linearDepthMax * (float)NumClustersZ), NumClustersZ - 1));
+            const float y0 = (int)std::min((int)((sphereClipSpace._min.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
+            const float y1 = (int)std::min((int)((sphereClipSpace._max.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
+            const float x0 = (int)std::min((int)((sphereClipSpace._min.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
+            const float x1 = (int)std::min((int)((sphereClipSpace._max.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
 
             Bounds3D voxelsOverlappingSphere({ x0, y0, z0 }, { x1, y1, z1 });
 
@@ -242,6 +244,21 @@ struct ClusteredLighting
         // Add point to cluster
 
         // Sort light indices
+    }
+
+    void update()
+    {
+        // Update clustered lighting UBO
+        glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
+        uniforms::clustered_lighting_buffer lighting = {};
+        lightingBuffer.set_buffer_data(sizeof(lighting), &lighting, GL_STREAM_DRAW);
+
+        // Update Index Data
+        glBindBufferBase(GL_TEXTURE_BUFFER, 0, lightIndexBuffer);
+        lightIndexBuffer.set_buffer_data(sizeof(lighting), &lighting, GL_STREAM_DRAW);
+        
+        // Update cluster grid
+        glTexSubImage3DEXT(clusterTexture, 0, 0, 0, 0, NumClustersX, NumClustersY, NumClustersZ, GL_RG_INTEGER, GL_UNSIGNED_INT, (void *)clusterTable.data());
     }
 
     std::vector<Frustum> build_froxels(const float4x4 & viewMatrix)
@@ -391,7 +408,7 @@ void shader_workbench::on_draw()
             for (int i = 0; i < lights.size(); i++)
             {
                 clusteredShader.uniform("u_lights[" + std::to_string(i) + "].position", lights[i].positionRadius);
-                clusteredShader.uniform("u_lights[" + std::to_string(i) + "].color", lights[i].color);
+                clusteredShader.uniform("u_lights[" + std::to_string(i) + "].color", lights[i].colorIntensity);
             }
 
             {

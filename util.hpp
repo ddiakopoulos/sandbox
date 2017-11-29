@@ -62,6 +62,12 @@
     #define GL_POP_ATTRIB();
 #endif
 
+#if defined(ANVIL_PLATFORM_WINDOWS)
+    #define ALIGNED(n) __declspec(align(n))
+#else
+    #define ALIGNED(n) alignas(n)
+#endif
+
 namespace avl
 {
     class TryLocker

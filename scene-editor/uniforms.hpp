@@ -8,12 +8,6 @@
 
 using namespace avl;
 
-#if defined(ANVIL_PLATFORM_WINDOWS)
-    #define ALIGNED(n) __declspec(align(n))
-#else
-    #define ALIGNED(n) alignas(n)
-#endif
-
 // https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)#Memory_layout
 
 namespace uniforms

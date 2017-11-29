@@ -1,17 +1,33 @@
 #include "index.hpp"
 #include "gl-gizmo.hpp"
 
+namespace uniforms
+{
+    static const size_t MAX_POINT_LIGHTS = 4096;
+
+    struct point_light
+    {
+        ALIGNED(16) float4 positionRadius;
+        ALIGNED(16) float4 colorIntensity;
+    };
+
+    struct clustered_lighting_buffer
+    {
+        static const int binding = 8;
+        point_light lights[MAX_POINT_LIGHTS];
+    };
+};
+
 //  "2D Polyhedral Bounds of a Clipped, Perspective - Projected 3D Sphere"
 inline Bounds3D sphere_for_axis(const float3 & axis, const float3 & sphereCenter, const float sphereRadius, const float zNearClipCamera)
 {
     const bool sphereClipByZNear = !((sphereCenter.z + sphereRadius) < zNearClipCamera);
-
     const float2 projectedCenter = float2(dot(axis, sphereCenter), sphereCenter.z);
-
     const float tSquared = dot(projectedCenter, projectedCenter) - (sphereRadius * sphereRadius);
+
     float t, cLength, cosTheta, sintheta;
 
-    bool outsideSphere = (tSquared > 0);
+    const bool outsideSphere = (tSquared > 0);
     if (outsideSphere)
     {
         // cosTheta, sinTheta of angle between the projected center (in a-z space) and a tangent
@@ -58,12 +74,6 @@ inline Bounds3D sphere_for_axis(const float3 & axis, const float3 & sphereCenter
     return boundsViewSpace;
 }
 
-struct Light
-{
-    float4 positionRadius;
-    float4 color;
-};
-
 struct shader_workbench : public GLFWApp
 {
     GlCamera debugCamera;
@@ -88,7 +98,7 @@ struct shader_workbench : public GLFWApp
     GlMesh sphereMesh;
     GlMesh floor;
 
-    std::vector<Light> lights;
+    std::vector<uniforms::point_light> lights;
 
     UpdateEvent lastUpdate;
     float elapsedTime{ 0 };
