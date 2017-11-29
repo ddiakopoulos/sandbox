@@ -113,7 +113,7 @@ struct ClusteredLighting
     void cull_lights(const float4x4 & viewMatrix, const float4x4 & projectionMatrix, const std::vector<uniforms::point_light> & lights)
     {
         // Reset state
-        lightIndices.clear();
+        for (auto & i : lightIndices) i = 0;
         for (auto & c : clusterTable) c = {};
         numLightIndices = 0;
 
@@ -171,12 +171,8 @@ struct ClusteredLighting
                 {
                     for (int x = voxelsOverlappingSphere._min.x; x <= voxelsOverlappingSphere._max.x; x++)
                     {
-                        uint16_t clusterId = z * (NumClustersX * NumClustersY) + y * NumClustersX + x;
-
-                        std::cout << "Cluster ID is " << clusterId << std::endl;
-
-                        // todo - runtime assert max clusters. also there's an issue with spheres close to the nearclip. 
-
+                        const uint16_t clusterId = z * (NumClustersX * NumClustersY) + y * NumClustersX + x;
+                        if (clusterId >= clusterTable.size()) continue; // todo - runtime assert max clusters. also there's an issue with spheres close to the nearclip. 
                         clusterTable[clusterId].lightCount += 1;
                         lightIndices[numLightIndices] = lightIndex;
                         numLightIndices += 1;
@@ -185,36 +181,25 @@ struct ClusteredLighting
             }
         }
 
-        /*
-        for (int i = 0; i < numLightIndices; i++)
-        {
-        std::cout << "Index: " << lightIndices[i] << std::endl;
-        }
-        */
-
-        for (int idx = 0; idx < clusterTable.size(); idx++)
-        {
-            auto c = clusterTable[idx];
-            // std::cout << "I: " <<  c.lightCount << std::endl;
-        }
-
-        std::cout << "--------------------\n";
         ImGui::Text("Visible Lights %i", visibleLightCount);
     }
 
-    void upload()
+    void upload(std::vector<uniforms::point_light> & lights)
     {
         // Update clustered lighting UBO
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
         uniforms::clustered_lighting_buffer lighting = {};
+        for (int l = 0; l < numLightIndices; l++) lighting.lights[l] = lights[l];
         lightingBuffer.set_buffer_data(sizeof(lighting), &lighting, GL_STREAM_DRAW);
+        ImGui::Text("Uploaded %i lights indices to the lighting buffer", numLightIndices);
 
         gl_check_error(__FILE__, __LINE__);
 
         // Update Index Data
         glBindBufferBase(GL_TEXTURE_BUFFER, 0, lightIndexBuffer);
         lightIndexBuffer.set_buffer_data(sizeof(uint16_t) * lightIndices.size(), lightIndices.data(), GL_STREAM_DRAW);
-        
+        ImGui::Text("Uploaded %i bytes to the index buffer", sizeof(uint16_t) * lightIndices.size());
+
         gl_check_error(__FILE__, __LINE__);
 
         // Update cluster grid
@@ -269,11 +254,6 @@ std::unique_ptr<ClusteredLighting> clusteredLighting;
 
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Example")
 {
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
-    glViewport(0, 0, width, height);
-    gl_check_error(__FILE__, __LINE__);
-
     igm.reset(new gui::ImGuiInstance(window));
 
     gizmo.reset(new GlGizmo());
@@ -296,7 +276,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     sphereMesh = make_mesh_from_geometry(make_sphere(1.0f));
     floor = make_cube_mesh();
 
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 64; i++)
     {
         float4 randomPosition = float4(rand.random_float(-10, 10), rand.random_float(0.25, 0.25), rand.random_float(-10, 10), rand.random_float(0.5, 0.5)); // position + radius
         float4 randomColor = float4(rand.random_float(), rand.random_float(), rand.random_float(), 1.f);
@@ -307,6 +287,9 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     debugCamera.farclip = 24.f;
     debugCamera.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     cameraController.set_camera(&debugCamera);
+
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
 
     clusteredLighting.reset(new ClusteredLighting(debugCamera.vfov, float(width) / float(height), debugCamera.nearclip, debugCamera.farclip));
 }
@@ -347,7 +330,7 @@ void shader_workbench::on_draw()
     glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 
     if (gizmo) gizmo->update(debugCamera, float2(width, height));
-    tinygizmo::transform_gizmo("destination", gizmo->gizmo_ctx, xform);
+    tinygizmo::transform_gizmo("frustum", gizmo->gizmo_ctx, xform);
 
     const float windowAspectRatio = (float)width / (float)height;
     const float4x4 projectionMatrix = debugCamera.get_projection_matrix(windowAspectRatio);
@@ -376,7 +359,7 @@ void shader_workbench::on_draw()
             draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
         }
 
-        clusteredLighting->upload();
+        clusteredLighting->upload(lights);
 
         clusterCPUTimer.pause();
     }
