@@ -191,6 +191,7 @@ struct ClusteredLighting
             }
         }
 
+        // Need to assign offset! 
         /*
         for (auto & c : clusterTable)
         {
@@ -210,35 +211,19 @@ struct ClusteredLighting
         uniforms::clustered_lighting_buffer lighting = {};
         for (int l = 0; l < lights.size(); l++) lighting.lights[l] = lights[l];
         lightingBuffer.set_buffer_data(sizeof(lighting), &lighting, GL_STREAM_DRAW);
-        ImGui::Text("Uploaded %i lights indices to the lighting buffer", numLightIndices);
-
         gl_check_error(__FILE__, __LINE__);
 
         // Update Index Data
-
-        for (int i = 0; i < 64; i++)
-        {
-            lightIndices[i] = i;
-        }
-
-        //glBindBufferBase(GL_TEXTURE_BUFFER, 0, lightIndexBuffer);
         glBindBuffer(GL_TEXTURE_BUFFER, lightIndexBuffer);
         lightIndexBuffer.set_buffer_data(sizeof(uint16_t) * lightIndices.size(), lightIndices.data(), GL_STREAM_DRAW); // fixme to use subData
         gl_check_error(__FILE__, __LINE__);
 
-        ImGui::Text("Uploaded %i bytes to the index buffer", sizeof(uint16_t) * lightIndices.size());
-
-        /*
-        for (auto l : lightIndices)
-        {
-            if (l > 0) std::cout << l << std::endl;
-        }
-        std::cout << "-------------------------\n";
-        */
-
         // Update cluster grid
         glTextureSubImage3D(clusterTexture, 0, 0, 0, 0, NumClustersX, NumClustersY, NumClustersZ, GL_RG_INTEGER, GL_UNSIGNED_INT, (void *)clusterTable.data());
         gl_check_error(__FILE__, __LINE__);
+
+        ImGui::Text("Uploaded %i lights indices to the lighting buffer", numLightIndices);
+        ImGui::Text("Uploaded %i bytes to the index buffer", sizeof(uint16_t) * lightIndices.size());
     }
 
     std::vector<Frustum> build_froxels(const float4x4 & viewMatrix)
