@@ -1,4 +1,4 @@
-#version 330
+#version 450
 
 uniform mat4 u_modelMatrix;
 uniform mat4 u_modelMatrixIT;

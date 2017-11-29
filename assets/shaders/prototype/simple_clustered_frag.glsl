@@ -1,7 +1,12 @@
-#version 330
+#version 450
 
 uniform vec3 u_diffuse;
 uniform vec3 u_eye;
+
+const int MAX_POINT_LIGHTS = 1024;
+const float NUM_TILES_X = 8.0;
+const float NUM_TILES_Y = 8.0;
+const float NUM_SLICES_Z = 8.0;
 
 struct PointLight
 {
@@ -9,7 +14,13 @@ struct PointLight
     vec4 color;
 };
 
-uniform PointLight u_lights[64];
+layout(binding = 7, std140) uniform ClusteredLighting
+{
+    PointLight pointLights[MAX_POINT_LIGHTS];
+};
+
+uniform usampler3D s_clusterTexture;
+uniform usamplerBuffer s_lightIndexTexture;
 
 in vec3 v_position;
 in vec3 v_normal;
@@ -36,20 +47,21 @@ void main()
 {
     vec3 eyeDir = normalize(u_eye - v_position);
     vec3 light = vec3(0, 0, 0);
-    for(int i = 0; i < 64; ++i)
+
+    for(int i = 0; i < MAX_POINT_LIGHTS; ++i)
     {
         vec3 L = vec3(0, 0, 0);
 
-        vec3 lightDir = normalize(u_lights[i].position.xyz - v_position);
-        L += u_lights[i].color.rgb * max(dot(v_normal, lightDir), 0);
+        vec3 lightDir = normalize(pointLights[i].position.xyz - v_position);
+        L += pointLights[i].color.rgb * max(dot(v_normal, lightDir), 0);
 
         vec3 halfDir = normalize(lightDir + eyeDir);
-        L += u_lights[i].color.rgb * pow(max(dot(v_normal, halfDir), 0), 128);
+        L += pointLights[i].color.rgb * pow(max(dot(v_normal, halfDir), 0), 128);
 
-        float dist = distance(u_lights[i].position.xyz, v_position);
-        float lightIntensity = cubic_gaussian(2.0 * dist / u_lights[i].position.w); 
+        float dist = distance(pointLights[i].position.xyz, v_position);
+        float lightIntensity = cubic_gaussian(2.0 * dist / pointLights[i].position.w); 
 
-        light += L * lightIntensity * 8;
+        light += L * lightIntensity * 8; // multiplier for debugging only
     }
     f_color = vec4(light, 1);
 }

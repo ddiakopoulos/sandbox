@@ -3,7 +3,7 @@
 
 namespace uniforms
 {
-    static const size_t MAX_POINT_LIGHTS = 4096;
+    static const size_t MAX_POINT_LIGHTS = 1024;
 
     struct point_light
     {
@@ -13,7 +13,7 @@ namespace uniforms
 
     struct clustered_lighting_buffer
     {
-        static const int binding = 8;
+        static const int binding = 7;
         point_light lights[MAX_POINT_LIGHTS];
     };
 };

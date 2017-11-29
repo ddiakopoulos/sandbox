@@ -352,14 +352,12 @@ void shader_workbench::on_draw()
         auto froxelList = clusteredLighting->build_froxels(debugViewMatrix);
         for (int f = 0; f < froxelList.size(); f++)
         {
-            float4 color = float4(0, 1, 0.f, .25f);
+            float4 color = float4(1, 1, 1, .1f);
 
             Frustum frox = froxelList[f];
-            if (clusteredLighting->clusterTable[f].lightCount > 0) color = float4(1, 0, 0, 1);
+            if (clusteredLighting->clusterTable[f].lightCount > 0) color = float4(0.25, 0.35, .66, 1);
             draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
         }
-
-        clusteredLighting->upload(lights);
 
         clusterCPUTimer.pause();
     }
@@ -371,15 +369,13 @@ void shader_workbench::on_draw()
         {
             clusteredShader.bind();
 
+            clusteredLighting->upload(lights);
+            clusteredShader.texture("s_clusterTexture", 0, clusteredLighting->clusterTexture, GL_TEXTURE_3D);
+            clusteredShader.texture("s_lightIndexTexture", 1, clusteredLighting->lightIndexTexture, GL_TEXTURE_BUFFER);
+
             clusteredShader.uniform("u_eye", debugCamera.get_eye_point());
             clusteredShader.uniform("u_viewProj", viewProjectionMatrix);
             clusteredShader.uniform("u_diffuse", float3(1.0f, 1.0f, 1.0f));
-
-            for (int i = 0; i < lights.size(); i++)
-            {
-                clusteredShader.uniform("u_lights[" + std::to_string(i) + "].position", lights[i].positionRadius);
-                clusteredShader.uniform("u_lights[" + std::to_string(i) + "].color", lights[i].colorIntensity);
-            }
 
             {
                 float4x4 floorModel = make_scaling_matrix(float3(12, 0.1, 12));
@@ -417,7 +413,7 @@ void shader_workbench::on_draw()
     if (gizmo) gizmo->draw();
 
     ImGui::Text("Render Time GPU %f ms", renderTimer.elapsed_ms());
-    ImGui::Text("Cluster Generation CPU %f ms", clusterCPUTimer.milliseconds().count());
+    ImGui::Text("Cluster Generation CPU %u ms", clusterCPUTimer.milliseconds().count());
 
     if (igm) igm->end_frame();
     gl_check_error(__FILE__, __LINE__);
