@@ -86,8 +86,8 @@ struct shader_workbench : public GLFWApp
 
     UniformRandomGenerator rand;
 
-    GlGpuTimer gpuTimer;
-    SimpleTimer timer;
+    GlGpuTimer renderTimer;
+    SimpleTimer clusterCPUTimer;
 
     GlShader basicShader;
     GlShader wireframeShader;

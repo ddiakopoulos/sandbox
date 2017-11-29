@@ -197,20 +197,6 @@ struct GlFramebuffer : public GlFramebufferObject
 //   GlTexture   //
 ///////////////////
 
-struct GlTexture1D : public GlTextureObject
-{
-    GlTexture1D() {}
-
-    void setup(GLsizei size, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * data)
-    {
-        glTextureImage1DEXT(*this, GL_TEXTURE_BUFFER, 0, internal_fmt, size, 0, format, type, data);
-        glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, createMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
-        glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    }
-};
-
 struct GlTexture2D : public GlTextureObject
 {
     float width{ 0 }, height{ 0 };

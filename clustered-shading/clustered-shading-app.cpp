@@ -22,39 +22,6 @@ constexpr const char default_color_frag[] = R"(#version 330
     }
 )";
 
-void draw_debug_frustum(GlShader * shader, const float4x4 & debugViewProjMatrix, const float4x4 & renderViewProjMatrix, const float4 & color)
-{
-    Frustum f(debugViewProjMatrix);
-    auto generated_frustum_corners = make_frustum_corners(f);
-
-    float3 ftl = generated_frustum_corners[0];
-    float3 fbr = generated_frustum_corners[1];
-    float3 fbl = generated_frustum_corners[2];
-    float3 ftr = generated_frustum_corners[3];
-    float3 ntl = generated_frustum_corners[4];
-    float3 nbr = generated_frustum_corners[5];
-    float3 nbl = generated_frustum_corners[6];
-    float3 ntr = generated_frustum_corners[7];
-
-    std::vector<float3> frustum_coords = {
-        ntl, ntr, ntr, nbr, nbr, nbl, nbl, ntl, // near quad
-        ntl, ftl, ntr, ftr, nbr, fbr, nbl, fbl, // between
-        ftl, ftr, ftr, fbr, fbr, fbl, fbl, ftl, // far quad
-    };
-
-    Geometry g;
-    for (auto & v : frustum_coords) g.vertices.push_back(v);
-    GlMesh mesh = make_mesh_from_geometry(g);
-    mesh.set_non_indexed(GL_LINES);
-
-    // Draw debug visualization 
-    shader->bind();
-    shader->uniform("u_mvp", mul(renderViewProjMatrix, Identity4x4));
-    shader->uniform("u_color", color);
-    mesh.draw_elements();
-    shader->unbind();
-}
-
 void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & renderViewProjMatrix, const float4 & color)
 {
     auto generated_frustum_corners = make_frustum_corners(f);
@@ -86,7 +53,6 @@ void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & r
     mesh.draw_elements();
     shader->unbind();
 }
-
 
 // http://www.humus.name/Articles/PracticalClusteredShading.pdf
 struct ClusteredLighting
@@ -135,6 +101,8 @@ struct ClusteredLighting
         clusterTexture.setup(GL_TEXTURE_3D, NumClustersX, NumClustersY, NumClustersZ, GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, nullptr);
         glTextureParameteriEXT(clusterTexture, GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTextureParameteriEXT(clusterTexture, GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        gl_check_error(__FILE__, __LINE__);
 
         glNamedBufferData(lightIndexBuffer, maxLights * sizeof(uint16_t), NULL, GL_DYNAMIC_DRAW); // DSA glBufferData
         glTextureBuffer(lightIndexTexture, GL_R16UI, lightIndexBuffer); // DSA for glTexBuffer
@@ -215,8 +183,6 @@ struct ClusteredLighting
                     }
                 }
             }
-
-
         }
 
         /*
@@ -234,31 +200,27 @@ struct ClusteredLighting
 
         std::cout << "--------------------\n";
         ImGui::Text("Visible Lights %i", visibleLightCount);
-
-        // Check if light is in frustum (sphere frustum check). 
-
-        // Get the extents of the sphere in Z
-
-        // Project the sphere, check planes
-
-        // Add point to cluster
-
-        // Sort light indices
     }
 
-    void update()
+    void upload()
     {
         // Update clustered lighting UBO
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
         uniforms::clustered_lighting_buffer lighting = {};
         lightingBuffer.set_buffer_data(sizeof(lighting), &lighting, GL_STREAM_DRAW);
 
+        gl_check_error(__FILE__, __LINE__);
+
         // Update Index Data
         glBindBufferBase(GL_TEXTURE_BUFFER, 0, lightIndexBuffer);
-        lightIndexBuffer.set_buffer_data(sizeof(lighting), &lighting, GL_STREAM_DRAW);
+        lightIndexBuffer.set_buffer_data(sizeof(uint16_t) * lightIndices.size(), lightIndices.data(), GL_STREAM_DRAW);
         
+        gl_check_error(__FILE__, __LINE__);
+
         // Update cluster grid
         glTexSubImage3DEXT(clusterTexture, 0, 0, 0, 0, NumClustersX, NumClustersY, NumClustersZ, GL_RG_INTEGER, GL_UNSIGNED_INT, (void *)clusterTable.data());
+
+        gl_check_error(__FILE__, __LINE__);
     }
 
     std::vector<Frustum> build_froxels(const float4x4 & viewMatrix)
@@ -349,7 +311,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     clusteredLighting.reset(new ClusteredLighting(debugCamera.vfov, float(width) / float(height), debugCamera.nearclip, debugCamera.farclip));
 }
 
-shader_workbench::~shader_workbench() { timer.stop();  }
+shader_workbench::~shader_workbench() { }
 
 void shader_workbench::on_window_resize(int2 size) { }
 
@@ -394,9 +356,34 @@ void shader_workbench::on_draw()
 
     glViewport(0, 0, width, height);
 
+    // Cluster Debugging
+    {
+        clusterCPUTimer.start();
+
+        float4x4 debugViewMatrix = inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
+        float4x4 debugProjectionMatrix = projectionMatrix;
+
+        draw_debug_frustum(&basicShader, mul(debugProjectionMatrix, debugViewMatrix), mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
+        clusteredLighting->cull_lights(debugViewMatrix, debugProjectionMatrix, lights);
+
+        auto froxelList = clusteredLighting->build_froxels(debugViewMatrix);
+        for (int f = 0; f < froxelList.size(); f++)
+        {
+            float4 color = float4(0, 1, 0.f, .25f);
+
+            Frustum frox = froxelList[f];
+            if (clusteredLighting->clusterTable[f].lightCount > 0) color = float4(1, 0, 0, 1);
+            draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
+        }
+
+        clusteredLighting->upload();
+
+        clusterCPUTimer.pause();
+    }
+
     // Primary scene rendering
     {
-        gpuTimer.start();
+        renderTimer.start();
 
         {
             clusteredShader.bind();
@@ -421,51 +408,34 @@ void shader_workbench::on_draw()
             }
 
             clusteredShader.unbind();
-
-            // Visualize the lights
-            glDisable(GL_CULL_FACE);
-            wireframeShader.bind();
-            wireframeShader.uniform("u_eyePos", debugCamera.get_eye_point());
-            wireframeShader.uniform("u_viewProjMatrix", viewProjectionMatrix);
-            for (auto & l : lights)
-            {
-                auto translation = make_translation_matrix(l.positionRadius.xyz());
-                auto scale = make_scaling_matrix(l.positionRadius.w);
-                auto model = mul(translation, scale);
-                wireframeShader.uniform("u_modelMatrix", model);
-                sphereMesh.draw_elements();
-            }
-            glEnable(GL_CULL_FACE);
-            wireframeShader.unbind();
         }
+
+        renderTimer.stop();
+
+        // Visualize the lights
+        glDisable(GL_CULL_FACE);
+        wireframeShader.bind();
+        wireframeShader.uniform("u_eyePos", debugCamera.get_eye_point());
+        wireframeShader.uniform("u_viewProjMatrix", viewProjectionMatrix);
+        for (auto & l : lights)
+        {
+            auto translation = make_translation_matrix(l.positionRadius.xyz());
+            auto scale = make_scaling_matrix(l.positionRadius.w);
+            auto model = mul(translation, scale);
+            wireframeShader.uniform("u_modelMatrix", model);
+            sphereMesh.draw_elements();
+        }
+        glEnable(GL_CULL_FACE);
+        wireframeShader.unbind();
 
         //grid->draw(viewProjectionMatrix);
-
-        gpuTimer.stop();
     }
     
-    // Debug Rendering
-    {
-        float4x4 debugViewMatrix = inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
-        float4x4 debugProjectionMatrix = projectionMatrix;
-
-        draw_debug_frustum(&basicShader, mul(debugProjectionMatrix, debugViewMatrix), mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
-        clusteredLighting->cull_lights(debugViewMatrix, debugProjectionMatrix, lights);
-
-        auto froxelList = clusteredLighting->build_froxels(debugViewMatrix);
-        for (int f = 0; f < froxelList.size(); f++)
-        {
-            float4 color = float4(0, 1, 0.f, .25f);
-
-            Frustum frox = froxelList[f];
-            if (clusteredLighting->clusterTable[f].lightCount > 0) color = float4(1, 0, 0, 1);
-            draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
-        }
-    }
-
     if (gizmo) gizmo->draw();
 
-    ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
+    ImGui::Text("Render Time GPU %f ms", renderTimer.elapsed_ms());
+    ImGui::Text("Cluster Generation CPU %f ms", clusterCPUTimer.milliseconds().count());
+
     if (igm) igm->end_frame();
     gl_check_error(__FILE__, __LINE__);
 
