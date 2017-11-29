@@ -339,6 +339,7 @@ void shader_workbench::on_draw()
 
     glViewport(0, 0, width, height);
 
+    /*
     // Cluster Debugging
     {
         clusterCPUTimer.start();
@@ -361,6 +362,7 @@ void shader_workbench::on_draw()
 
         clusterCPUTimer.pause();
     }
+    */
 
     // Primary scene rendering
     {
@@ -369,16 +371,23 @@ void shader_workbench::on_draw()
         {
             clusteredShader.bind();
 
+            clusteredLighting->cull_lights(viewMatrix, projectionMatrix, lights);
+
             clusteredLighting->upload(lights);
             clusteredShader.texture("s_clusterTexture", 0, clusteredLighting->clusterTexture, GL_TEXTURE_3D);
             clusteredShader.texture("s_lightIndexTexture", 1, clusteredLighting->lightIndexTexture, GL_TEXTURE_BUFFER);
 
             clusteredShader.uniform("u_eye", debugCamera.get_eye_point());
+            clusteredShader.uniform("u_viewMat", viewMatrix); // hmm!
             clusteredShader.uniform("u_viewProj", viewProjectionMatrix);
             clusteredShader.uniform("u_diffuse", float3(1.0f, 1.0f, 1.0f));
 
+            clusteredShader.uniform("u_nearClip", debugCamera.nearclip);
+            clusteredShader.uniform("u_farClip", debugCamera.farclip);
+            clusteredShader.uniform("u_rcpViewportSize", float2(1.f / (float) width, 1.f / (float) height));
+
             {
-                float4x4 floorModel = make_scaling_matrix(float3(12, 0.1, 12));
+                float4x4 floorModel = make_scaling_matrix(float3(14, 0.1, 14));
                 floorModel = mul(make_translation_matrix(float3(0, -0.1, 0)), floorModel);
 
                 clusteredShader.uniform("u_modelMatrix", floorModel);
