@@ -1,6 +1,7 @@
 #include "index.hpp"
 #include "imgui/imgui_internal.h"
 #include "clustered-shading-app.hpp"
+#include "clustered-shading.hpp"
 
 using namespace avl;
 
@@ -22,326 +23,9 @@ constexpr const char default_color_frag[] = R"(#version 330
     }
 )";
 
-void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & renderViewProjMatrix, const float4 & color)
-{
-    auto generated_frustum_corners = make_frustum_corners(f);
-
-    float3 ftl = generated_frustum_corners[0];
-    float3 fbr = generated_frustum_corners[1];
-    float3 fbl = generated_frustum_corners[2];
-    float3 ftr = generated_frustum_corners[3];
-    float3 ntl = generated_frustum_corners[4];
-    float3 nbr = generated_frustum_corners[5];
-    float3 nbl = generated_frustum_corners[6];
-    float3 ntr = generated_frustum_corners[7];
-
-    std::vector<float3> frustum_coords = {
-        ntl, ntr, ntr, nbr, nbr, nbl, nbl, ntl, // near quad
-        ntl, ftl, ntr, ftr, nbr, fbr, nbl, fbl, // between
-        ftl, ftr, ftr, fbr, fbr, fbl, fbl, ftl, // far quad
-    };
-
-    Geometry g;
-    for (auto & v : frustum_coords) g.vertices.push_back(v);
-    GlMesh mesh = make_mesh_from_geometry(g);
-    mesh.set_non_indexed(GL_LINES);
-
-    // Draw debug visualization 
-    shader->bind();
-    shader->uniform("u_mvp", mul(renderViewProjMatrix, Identity4x4));
-    shader->uniform("u_color", color);
-    mesh.draw_elements();
-    shader->unbind();
-}
-
-// http://www.humus.name/Articles/PracticalClusteredShading.pdf
-struct ClusteredLighting
-{
-    static const int32_t NumClustersX = 16; // Tiles in X
-    static const int32_t NumClustersY = 16; // Tiles in Y
-    static const int32_t NumClustersZ = 16; // Slices in Z
-
-    float nearClip, farClip;
-    float vFov;
-    float aspect;
-
-    GlBuffer lightingBuffer;
-    GlBuffer lightIndexBuffer;
-    GlTexture2D lightIndexTexture;
-    GlTexture3D clusterTexture;
-
-    enum class LightType
-    {
-        Spherical,
-        Spot,
-        Area
-    };
-
-    // This is stored in a 3D texture (clusterTexture => GL_RG32UI)
-    struct ClusterPointer
-    {
-        uint32_t offset = 0; // offset into 
-        uint32_t lightCount = 0;
-    };
-
-    std::vector<ClusterPointer> clusterTable;
-    std::vector<uint16_t> lightIndices;         // light ids only
-    std::vector<uint16_t> lightClusterIDs;      // clusterId
-    uint32_t numLightIndices = 0;
-
-    static const size_t maxLights = std::numeric_limits<uint16_t>::max() * 8;
-
-    ClusteredLighting(float vFov, float aspect, float nearClip, float farClip) : vFov(vFov), aspect(aspect), nearClip(nearClip), farClip(farClip)
-    {
-        clusterTable.resize(NumClustersX * NumClustersY * NumClustersZ);
-        lightIndices.resize(maxLights);
-        lightClusterIDs.resize(maxLights);
-        
-        // Setup 3D cluster texture
-        clusterTexture.setup(GL_TEXTURE_3D, NumClustersX, NumClustersY, NumClustersZ, GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, nullptr);
-        glTextureParameteriEXT(clusterTexture, GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTextureParameteriEXT(clusterTexture, GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        gl_check_error(__FILE__, __LINE__);
-
-        glNamedBufferData(lightIndexBuffer, maxLights * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW); // DSA glBufferData
-
-        gl_check_error(__FILE__, __LINE__);
-
-        GLuint lib;
-        glCreateTextures(GL_TEXTURE_BUFFER, 1, &lib);
-        lightIndexTexture = GlTexture2D(lib);
-        glTextureBuffer(lightIndexTexture, GL_R16UI, lightIndexBuffer); // DSA for glTexBuffer
-
-        gl_check_error(__FILE__, __LINE__);
-    }
-
-    float linear_01_depth(float z)
-    {
-        return (z - nearClip) / (farClip - nearClip);
-        //return (1.00000 / (((1.0 - farClip / nearClip) * z) + farClip / nearClip));
-    }
-
-    void cull_lights(const float4x4 & viewMatrix, const float4x4 & projectionMatrix, const std::vector<uniforms::point_light> & lights)
-    {
-        manual_timer t;
-
-        t.start();
-
-        // Reset state
-        for (auto & i : lightClusterIDs) i = -1;
-        for (auto & i : lightIndices) i = -1;
-        for (auto & c : clusterTable) c = {};
-        numLightIndices = 0;
-
-        uint32_t visibleLightCount = 0;
-        Frustum cameraFrustum(mul(projectionMatrix, viewMatrix));
-
-        float nearFarDistanceRCP = 1.0f / (farClip - nearClip);
-
-        for (int lightIndex = 0; lightIndex < lights.size(); ++lightIndex)
-        {
-
-            const uniforms::point_light & l = lights[lightIndex];
-
-            // Conservative light culling based on worldspace camera frustum
-            if (!cameraFrustum.intersects(l.positionRadius.xyz(), l.positionRadius.w))
-            {
-                continue;
-            }
-
-            ImGui::Text("Light Idx %u", lightIndex);
-
-            visibleLightCount++;
-
-            auto viewDepthToFroxelDepth = [&](float viewspaceDepth)
-            {
-                float vZ = (viewspaceDepth - nearClip) / (farClip - nearClip);
-                //float fZ = std::pow(vZ, 1 / 2.0f); // fixme, distribution factor 
-                return vZ;// clamp(vZ, 0.f, 1.f);
-            };
-
-            // Convert sphere to froxel bounds 
-            const float3 lightCenterVS = transform_coord(viewMatrix, l.positionRadius.xyz());
-            const float nearClipVS = -nearClip;
-
-            const float linearDepthMin = (-lightCenterVS.z - l.positionRadius.w) * nearFarDistanceRCP;
-            const float linearDepthMax = (-lightCenterVS.z + l.positionRadius.w) * nearFarDistanceRCP;
-
-             ImGui::Text("Min %f, Max %f", linearDepthMin, linearDepthMax);
-
-            const Bounds3D leftRightViewSpace = sphere_for_axis(float3(1, 0, 0), lightCenterVS, l.positionRadius.w, nearClipVS);
-            const Bounds3D bottomTopViewSpace = sphere_for_axis(float3(0, 1, 0), lightCenterVS, l.positionRadius.w, nearClipVS);
-
-            Bounds3D sphereClipSpace;
-            sphereClipSpace._min = float3(transform_coord(projectionMatrix, leftRightViewSpace.min()).x, transform_coord(projectionMatrix, bottomTopViewSpace.min()).y, linearDepthMin);
-            sphereClipSpace._max = float3(transform_coord(projectionMatrix, leftRightViewSpace.max()).x, transform_coord(projectionMatrix, bottomTopViewSpace.max()).y, linearDepthMax);
-
-            sphereClipSpace._min = clamp(sphereClipSpace._min, float3(-1.f), float3(1.f));
-            sphereClipSpace._max = clamp(sphereClipSpace._max, float3(-1.f), float3(1.f));
-
-            /*
-            sphereClipSpace._min.x = clamp(sphereClipSpace._min.x, -1.f, 1.f);
-            sphereClipSpace._max.x = clamp(sphereClipSpace._max.x, -1.f, 1.f);
-            sphereClipSpace._min.y = clamp(sphereClipSpace._min.y, -1.f, 1.f);
-            sphereClipSpace._max.y = clamp(sphereClipSpace._max.y, -1.f, 1.f);
-            sphereClipSpace._min.z = clamp(sphereClipSpace._min.z, -1.f, 1.f);
-            sphereClipSpace._max.z = clamp(sphereClipSpace._max.z, -1.f, 1.f);
-            */
-
-            ImGui::Text("VS Overlap Min %f %f %f", sphereClipSpace._min.x, sphereClipSpace._min.y, sphereClipSpace._min.z);
-            ImGui::Text("VS Overlap Max %f %f %f", sphereClipSpace._max.x, sphereClipSpace._max.y, sphereClipSpace._max.z);
-
-            // Get the clip-space min/max extents of the sphere clamped to voxel boundaries. This will give us AABB cluster indices => clusterID.
-            const float z0 = (int)std::max(0, std::min((int)(linearDepthMin * (float)NumClustersZ), NumClustersZ - 1));
-            const float z1 = (int)std::max(0, std::min((int)(linearDepthMax * (float)NumClustersZ), NumClustersZ - 1));
-            const float y0 = (int)std::min((int)((sphereClipSpace._min.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
-            const float y1 = (int)std::min((int)((sphereClipSpace._max.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
-            const float x0 = (int)std::min((int)((sphereClipSpace._min.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
-            const float x1 = (int)std::min((int)((sphereClipSpace._max.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
-
-            Bounds3D voxelsOverlappingSphere({ x0, y0, z0 }, { x1, y1, z1 });
-
-            //ImGui::Text("What %f", ((sphereClipSpace._min.y * 0.5f + 0.5f) * (float)NumClustersY));
-
-            ImGui::Text("Froxel View Depth Min %f, Max %f", viewDepthToFroxelDepth(linearDepthMin), viewDepthToFroxelDepth(linearDepthMax));
-
-           // ImGui::Text("Overlap Min %f %f", (sphereClipSpace._min.x * 0.5f + 0.5f), (sphereClipSpace._min.y * 0.5f + 0.5f)); // takes -1 to 1 into 0 to 1
-            //ImGui::Text("Overlap Max %f %f", (sphereClipSpace._max.x * 0.5f + 0.5f), (sphereClipSpace._max.y * 0.5f + 0.5f)); // takes -1 to 1 into 0 to 1
-
-            ImGui::Text("Clamped Overlap Min %f %f %f", x0, y0, z0);
-            ImGui::Text("Clamped Overlap Max %f %f %f", x1, y1, z1);
-
-            for (int z = voxelsOverlappingSphere._min.z; z <= voxelsOverlappingSphere._max.z; z++)
-            {
-                for (int y = voxelsOverlappingSphere._min.y; y <= voxelsOverlappingSphere._max.y; y++)
-                {
-                    for (int x = voxelsOverlappingSphere._min.x; x <= voxelsOverlappingSphere._max.x; x++)
-                    {
-                        const uint16_t clusterId = z * (NumClustersX * NumClustersY) + y * NumClustersX + x;
-                        if (clusterId >= clusterTable.size()) continue; // todo - runtime assert max clusters. also there's an issue with spheres close to the nearclip. 
-                        clusterTable[clusterId].lightCount += 1;
-
-                        ImGui::Text("ClusterID %u / Light Idx Ct %u", clusterId, numLightIndices);
-
-                        if (numLightIndices > lightIndices.size()) continue; // actually return, can't handle any more lights
-
-                        lightIndices[numLightIndices] = lightIndex;
-                        lightClusterIDs[numLightIndices] = clusterId;
-                        numLightIndices += 1;
-                    }
-                }
-            }
-        }
-
-        t.stop();
-
-        ImGui::Text("Visible Lights %i", visibleLightCount);
-        ImGui::Text("Cluster Generation CPU %f ms", t.get());
-    }
-
-    void upload(std::vector<uniforms::point_light> & lights)
-    {
-        manual_timer t;
-        t.start();
-
-        // We need the cluster ID and to know what light IDs are assigned to it. We'll do this
-        // by sorting on the cluster id, and then by the light index
-        std::vector<std::pair<uint16_t, uint16_t>> lightListToSort;
-        for (int i = 0; i < numLightIndices; ++i) lightListToSort.push_back({ lightClusterIDs[i], lightIndices[i] });
-        std::sort(lightListToSort.begin(), lightListToSort.end());
-
-        // Indices are tightly packed
-        std::vector<uint16_t> packedLightIndices;
-        uint16_t lastClusterID = -1;
-        uint16_t lastLightIndex = -1;
-        for (int i = 0; i < numLightIndices; ++i)
-        {
-            uint16_t clusterId = lightListToSort[i].first;
-
-            // New cluster. One cluster can hold many lights, but we only need to store the offset to
-            // the first one in the list. 
-            if (clusterId != lastClusterID)
-            {
-                auto currentLightIndex = packedLightIndices.size(); 
-                clusterTable[clusterId].offset = currentLightIndex;
-                //ImGui::Text("ClusterID %u / Light Idx %u", clusterId, lightListToSort[i].second);
-            }
-
-            packedLightIndices.push_back(lightListToSort[i].second);
-            lastLightIndex = lightListToSort[i].second;
-            lastClusterID = clusterId;
-        }
-
-        // repack the light indices now sorted by cluster id
-        for (int i = 0; i < numLightIndices; ++i) lightIndices[i] = packedLightIndices[i];
-
-        // Update clustered lighting UBO
-        glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
-        uniforms::clustered_lighting_buffer lighting = {};
-        for (int l = 0; l < lights.size(); l++) lighting.lights[l] = lights[l];
-        lightingBuffer.set_buffer_data(sizeof(lighting), &lighting, GL_STREAM_DRAW);
-        gl_check_error(__FILE__, __LINE__);
-
-        // Update Index Data
-        glBindBuffer(GL_TEXTURE_BUFFER, lightIndexBuffer);
-        lightIndexBuffer.set_buffer_data(sizeof(uint16_t) * lightIndices.size(), lightIndices.data(), GL_STREAM_DRAW); // fixme to use subData
-        gl_check_error(__FILE__, __LINE__);
-
-        // Update cluster grid
-        glTextureSubImage3D(clusterTexture, 0, 0, 0, 0, NumClustersX, NumClustersY, NumClustersZ, GL_RG_INTEGER, GL_UNSIGNED_INT, (void *)clusterTable.data());
-        gl_check_error(__FILE__, __LINE__);
-
-        ImGui::Text("Uploaded %i lights indices to the lighting buffer", numLightIndices);
-        ImGui::Text("Uploaded %i bytes to the index buffer", sizeof(uint16_t) * lightIndices.size());
-        ImGui::Text("Sorted List Generation CPU %f ms", t.get());
-    }
-
-    std::vector<Frustum> build_froxels(const float4x4 & viewMatrix)
-    {
-        std::vector<Frustum> froxels;
-
-        const float stepZ = (farClip - nearClip) / NumClustersZ;
-
-        for (int z = 0; z < NumClustersZ; z++)
-        {
-            const float near = nearClip + (stepZ * z);
-            const float far = near + stepZ;
-
-            const float top = near * std::tan(vFov * 0.5f); // normalized height
-            const float right = top * aspect; // normalized width
-            const float left = -right;
-            const float bottom = -top;
-
-            const float stepX = (right * 2.0f) / NumClustersX;
-            const float stepY = (top   * 2.0f) / NumClustersY;
-
-            float L, R, B, T;
-
-            for (int y = 0; y < NumClustersY; y++)
-            {
-                for (int x = 0; x < NumClustersX; x++)
-                {
-                    L = left + (stepX * x);
-                    R = L + stepX;
-                    B = bottom + (stepY * y);
-                    T = B + stepY;
-
-                    const float4x4 projectionMatrix = make_projection_matrix(L, R, B, T, near, far);
-                    const Frustum froxel(mul(projectionMatrix, viewMatrix));
-                    froxels.push_back(froxel);
-                }
-            }
-        }
-
-        return froxels;
-    }
-
-};
-
-std::unique_ptr<ClusteredLighting> clusteredLighting;
+std::unique_ptr<ClusteredShading> clusteredLighting;
 static bool animateLights = false;
-static int numLights = 128;
+static int numLights = 256;
 
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Example")
 {
@@ -389,7 +73,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
-    clusteredLighting.reset(new ClusteredLighting(debugCamera.vfov, float(width) / float(height), debugCamera.nearclip, debugCamera.farclip));
+    clusteredLighting.reset(new ClusteredShading(debugCamera.vfov, float(width) / float(height), debugCamera.nearclip, debugCamera.farclip));
 }
 
 shader_workbench::~shader_workbench() { }
@@ -431,7 +115,7 @@ void shader_workbench::regenerate_lights(size_t numLights)
     for (int i = 0; i < numLights; i++)
     {
         val += h;
-        float4 randomPosition = float4(rand.random_float(-5, 5), rand.random_float(0.1, 0.5), rand.random_float(-5, 5), rand.random_float(3, 6)); // position + radius
+        float4 randomPosition = float4(rand.random_float(-10, 10), rand.random_float(0.1, 0.5), rand.random_float(-10, 10), rand.random_float(0.5, 8)); // position + radius
         float3 r3 = float3({ rand.random_float(1), rand.random_float(1), rand.random_float(1) });
         float4 randomColor = float4(r3, 1.f);
         lights.push_back({ randomPosition, randomColor });
@@ -466,28 +150,26 @@ void shader_workbench::on_draw()
 
     glViewport(0, 0, width, height);
 
-    float4x4 debugViewMatrix = viewMatrix; // inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
-    float4x4 debugProjectionMatrix = projectionMatrix;
-
     // Cluster Debugging
+    /*
     {
-        clusterCPUTimer.start();
+        float4x4 debugViewMatrix = inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
+        float4x4 debugProjectionMatrix = projectionMatrix;
 
+        // Main Camera View
         draw_debug_frustum(&basicShader, mul(debugProjectionMatrix, debugViewMatrix), mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
-        clusteredLighting->cull_lights(debugViewMatrix, debugProjectionMatrix, lights);
 
-        auto froxelList = clusteredLighting->build_froxels(debugViewMatrix);
+        auto froxelList = clusteredLighting->build_debug_froxel_array(debugViewMatrix);
         for (int f = 0; f < froxelList.size(); f++)
         {
             float4 color = float4(1, 1, 1, .1f);
 
             Frustum frox = froxelList[f];
             if (clusteredLighting->clusterTable[f].lightCount > 0) color = float4(0.25, 0.35, .66, 1);
-            //draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
+            draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
         }
-
-        clusterCPUTimer.pause();
     }
+    */
 
     // Primary scene rendering
     {
@@ -496,9 +178,10 @@ void shader_workbench::on_draw()
         {
             clusteredShader.bind();
 
-            //clusteredLighting->cull_lights(viewMatrix, projectionMatrix, lights);
-
+            clusterCPUTimer.start();
+            clusteredLighting->cull_lights(viewMatrix, projectionMatrix, lights);
             clusteredLighting->upload(lights);
+            clusterCPUTimer.pause();
 
             clusteredShader.texture("s_clusterTexture", 0, clusteredLighting->clusterTexture, GL_TEXTURE_3D);
             clusteredShader.texture("s_lightIndexTexture", 1, clusteredLighting->lightIndexTexture, GL_TEXTURE_BUFFER);
@@ -521,6 +204,7 @@ void shader_workbench::on_draw()
                 floor.draw_elements();
             }
 
+            /*
             {
                 for (int i = 0; i < 48; i++)
                 {
@@ -530,6 +214,7 @@ void shader_workbench::on_draw()
                     //torusKnot.draw_elements();
                 }
             }
+            */
 
             clusteredShader.unbind();
         }
@@ -557,6 +242,7 @@ void shader_workbench::on_draw()
     
     if (gizmo) gizmo->draw();
 
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::Text("Render Time GPU %f ms", renderTimer.elapsed_ms());
     ImGui::Checkbox("Animate Lights", &animateLights);
     if (ImGui::SliderInt("Num Lights", &numLights, 1, 256)) regenerate_lights(numLights);
