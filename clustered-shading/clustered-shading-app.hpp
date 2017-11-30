@@ -28,6 +28,7 @@ inline Bounds3D sphere_for_axis(const float3 & axis, const float3 & sphereCenter
     float t, cLength, cosTheta, sintheta;
 
     const bool outsideSphere = (tSquared > 0);
+
     if (outsideSphere)
     {
         // cosTheta, sinTheta of angle between the projected center (in a-z space) and a tangent
@@ -38,7 +39,7 @@ inline Bounds3D sphere_for_axis(const float3 & axis, const float3 & sphereCenter
     }
 
     // Square root of the discriminant; NaN(and unused) if the camera is in the sphere
-    float sqrtPart;
+    float sqrtPart = 0.f;
     if (sphereClipByZNear)
     {
         sqrtPart = std::sqrt((sphereRadius * sphereRadius) - ((zNearClipCamera - projectedCenter.y) * (zNearClipCamera - projectedCenter.y)));

@@ -127,8 +127,8 @@ struct ClusteredLighting
         t.start();
 
         // Reset state
-        for (auto & i : lightClusterIDs) i = 0;
-        for (auto & i : lightIndices) i = 0;
+        for (auto & i : lightClusterIDs) i = -1;
+        for (auto & i : lightIndices) i = -1;
         for (auto & c : clusterTable) c = {};
         numLightIndices = 0;
 
@@ -167,22 +167,25 @@ struct ClusteredLighting
 
             //ImGui::Text("Min %f, Max %f", linearDepthMin, linearDepthMax);
 
-            const Bounds3D leftRightViewSpace = sphere_for_axis(float3(1, 0, 0), lightCenterVS, l.positionRadius.w, -nearClipVS);
-            const Bounds3D bottomTopViewSpace = sphere_for_axis(float3(0, 1, 0), lightCenterVS, l.positionRadius.w, -nearClipVS);
+            const Bounds3D leftRightViewSpace = sphere_for_axis(float3(1, 0, 0), lightCenterVS, l.positionRadius.w, nearClipVS);
+            const Bounds3D bottomTopViewSpace = sphere_for_axis(float3(0, 1, 0), lightCenterVS, l.positionRadius.w, nearClipVS);
 
             Bounds3D sphereClipSpace;
             sphereClipSpace._min = float3(transform_coord(projectionMatrix, leftRightViewSpace.min()).x, transform_coord(projectionMatrix, bottomTopViewSpace.min()).y, viewDepthToFroxelDepth(linearDepthMin));
             sphereClipSpace._max = float3(transform_coord(projectionMatrix, leftRightViewSpace.max()).x, transform_coord(projectionMatrix, bottomTopViewSpace.max()).y, viewDepthToFroxelDepth(linearDepthMax));
 
             // Get the clip-space min, max extents of the sphere clamped to voxel boundaries. 
-            const float z0 = (int)std::max(0, std::min((int)(linearDepthMin * (float)NumClustersZ), NumClustersZ - 1));
-            const float z1 = (int)std::max(0, std::min((int)(linearDepthMax * (float)NumClustersZ), NumClustersZ - 1));
-            const float y0 = (int)std::min((int)((sphereClipSpace._min.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
-            const float y1 = (int)std::min((int)((sphereClipSpace._max.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
-            const float x0 = (int)std::min((int)((sphereClipSpace._min.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
-            const float x1 = (int)std::min((int)((sphereClipSpace._max.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
+            const float z0 = clamp((int)std::max(0, std::min((int)(linearDepthMin * (float)NumClustersZ), NumClustersZ - 1)), 0, 1);
+            const float z1 = clamp((int)std::max(0, std::min((int)(linearDepthMax * (float)NumClustersZ), NumClustersZ - 1)), 0, 1);
+            const float y0 = clamp((int)std::min((int)((sphereClipSpace._min.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1), 0, 1);
+            const float y1 = clamp((int)std::min((int)((sphereClipSpace._max.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1), 0, 1);
+            const float x0 = clamp((int)std::min((int)((sphereClipSpace._min.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1), 0, 1);
+            const float x1 = clamp((int)std::min((int)((sphereClipSpace._max.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1), 0, 1);
 
             Bounds3D voxelsOverlappingSphere({ x0, y0, z0 }, { x1, y1, z1 });
+
+            ImGui::Text("Overlap Min %f %f %f", x0, y0, z0);
+            ImGui::Text("Overlap Max %f %f %f", x1, y1, z1);
 
             for (int z = voxelsOverlappingSphere._min.z; z <= voxelsOverlappingSphere._max.z; z++)
             {
@@ -253,7 +256,6 @@ struct ClusteredLighting
         for (int i = 0; i < numLightIndices; ++i)
         {
             lightIndices[i] = packedLightIndices[i]; 
-
             ImGui::Text("Index %u / Value %u", i, packedLightIndices[i]);
         }
 
@@ -271,7 +273,6 @@ struct ClusteredLighting
             //if (t.offset == 0) t.lightCount = 0;
         }
 
-        t.stop();
 
         // Update clustered lighting UBO
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
@@ -362,7 +363,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     sphereMesh = make_mesh_from_geometry(make_sphere(1.0f));
     floor = make_cube_mesh();
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 256; i++)
     {
         float4 randomPosition = float4(rand.random_float(-5, 5), rand.random_float(0.1, 0.1), rand.random_float(-5, 5), rand.random_float(0.1, 6)); // position + radius
         float4 randomColor = float4(rand.random_float(), rand.random_float(), rand.random_float(), 1.f);
