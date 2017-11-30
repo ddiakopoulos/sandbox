@@ -184,8 +184,8 @@ struct ClusteredLighting
 
             Bounds3D voxelsOverlappingSphere({ x0, y0, z0 }, { x1, y1, z1 });
 
-            ImGui::Text("Overlap Min %f %f %f", x0, y0, z0);
-            ImGui::Text("Overlap Max %f %f %f", x1, y1, z1);
+            //ImGui::Text("Overlap Min %f %f %f", x0, y0, z0);
+            //ImGui::Text("Overlap Max %f %f %f", x1, y1, z1);
 
             for (int z = voxelsOverlappingSphere._min.z; z <= voxelsOverlappingSphere._max.z; z++)
             {
@@ -241,38 +241,13 @@ struct ClusteredLighting
                 ImGui::Text("ClusterID %u / Light Idx %u", clusterId, lightListToSort[i].second);
             }
 
-            // Keep on inserting sorted light indices into the packed buffer
-            //if (lastLightIndex != lightListToSort[i].second)
-            {
-                packedLightIndices.push_back(lightListToSort[i].second);
-            }
-
+            packedLightIndices.push_back(lightListToSort[i].second);
             lastLightIndex = lightListToSort[i].second;
-
             lastClusterID = clusterId;
         }
 
         // repack the light indices now sorted by cluster id
-        for (int i = 0; i < numLightIndices; ++i)
-        {
-            lightIndices[i] = packedLightIndices[i]; 
-            ImGui::Text("Index %u / Value %u", i, packedLightIndices[i]);
-        }
-
-        for (auto & t : clusterTable)
-        {
-            if (t.lightCount > 0)
-            {
-                ImGui::Text("Offset %u /  Lights %u", t.offset, t.lightCount);
-                for (int l = 0; l < t.lightCount; l++)
-                {
-                    ImGui::Text("Light Index %u ", packedLightIndices[t.offset + l]);
-                }
-            }
-            //t.lightCount 
-            //if (t.offset == 0) t.lightCount = 0;
-        }
-
+        for (int i = 0; i < numLightIndices; ++i) lightIndices[i] = packedLightIndices[i];
 
         // Update clustered lighting UBO
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
@@ -363,23 +338,29 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     sphereMesh = make_mesh_from_geometry(make_sphere(1.0f));
     floor = make_cube_mesh();
 
+    float h = 1.f / 256.f;
+    float val = 0.f;
     for (int i = 0; i < 256; i++)
     {
-        float4 randomPosition = float4(rand.random_float(-5, 5), rand.random_float(0.1, 0.1), rand.random_float(-5, 5), rand.random_float(0.1, 6)); // position + radius
-        float4 randomColor = float4(rand.random_float(), rand.random_float(), rand.random_float(), 1.f);
+        val += h;
+        float4 randomPosition = float4(rand.random_float(-1, 1), rand.random_float(0.1, 0.5), rand.random_float(-1, 1), rand.random_float(0.1, 6)); // position + radius
+        auto hsvToRGB = hsv_to_rgb({ val, rand.random_float(0.5), rand.random_float(0.5) });
+        float4 randomColor = float4(hsvToRGB, 1.f);
         lights.push_back({ randomPosition, randomColor });
     }
+
+    angle.resize(256);
 
     auto knot = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply");
     rescale_geometry(knot, 1.f);
     torusKnot = make_mesh_from_geometry(knot);
     for (int i = 0; i < 128; i++)
     {
-        randomPositions.push_back({ rand.random_float(-12, 12), rand.random_float(0.5, 0.5), rand.random_float(-12, 12) });
+        randomPositions.push_back({ rand.random_float(-24, 24), rand.random_float(1, 1), rand.random_float(-24, 24), rand.random_float(1, 2) });
     }
 
     debugCamera.nearclip = 0.5f;
-    debugCamera.farclip = 24.f;
+    debugCamera.farclip = 64.f;
     debugCamera.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     cameraController.set_camera(&debugCamera);
     cameraController.enableSpring = false;
@@ -389,6 +370,8 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     glfwGetWindowSize(window, &width, &height);
 
     clusteredLighting.reset(new ClusteredLighting(debugCamera.vfov, float(width) / float(height), debugCamera.nearclip, debugCamera.farclip));
+
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
 shader_workbench::~shader_workbench() { }
@@ -406,6 +389,18 @@ void shader_workbench::on_update(const UpdateEvent & e)
 {
     cameraController.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
+
+    for (int i = 0; i < lights.size(); ++i)
+    {
+        angle[i] += rand.random_float(0.005f, 0.01f);
+    }
+
+    for (int i = 0; i < lights.size(); ++i)
+    {
+        auto & l = lights[i];
+        l.positionRadius.x += cos(angle[i] * l.positionRadius.w) * 0.5;
+        l.positionRadius.z += sin(angle[i] * l.positionRadius.w) * 0.5;// *(l.positionRadius.w * 0.025);
+    }
 }
 
 void shader_workbench::on_draw()
@@ -436,7 +431,7 @@ void shader_workbench::on_draw()
 
     glViewport(0, 0, width, height);
 
-    float4x4 debugViewMatrix = viewMatrix; // inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
+    float4x4 debugViewMatrix = inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
     float4x4 debugProjectionMatrix = projectionMatrix;
 
     // Cluster Debugging
@@ -453,7 +448,7 @@ void shader_workbench::on_draw()
 
             Frustum frox = froxelList[f];
             if (clusteredLighting->clusterTable[f].lightCount > 0) color = float4(0.25, 0.35, .66, 1);
-            //draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
+            draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
         }
 
         clusterCPUTimer.pause();
@@ -483,7 +478,7 @@ void shader_workbench::on_draw()
             clusteredShader.uniform("u_rcpViewportSize", float2(1.f / (float) width, 1.f / (float) height));
 
             {
-                float4x4 floorModel = make_scaling_matrix(float3(14, 0.1, 14));
+                float4x4 floorModel = make_scaling_matrix(float3(80, 0.1, 80));
                 floorModel = mul(make_translation_matrix(float3(0, -0.1, 0)), floorModel);
 
                 clusteredShader.uniform("u_modelMatrix", floorModel);
@@ -492,9 +487,9 @@ void shader_workbench::on_draw()
             }
 
             {
-                for (int i = 0; i < 128; i++)
+                for (int i = 0; i < 48; i++)
                 {
-                    auto modelMat = make_translation_matrix(randomPositions[i]);
+                    auto modelMat = mul(make_translation_matrix(randomPositions[i].xyz()), make_scaling_matrix(randomPositions[i].w));
                     clusteredShader.uniform("u_modelMatrix", modelMat);
                     clusteredShader.uniform("u_modelMatrixIT", inverse(transpose(modelMat)));
                     //torusKnot.draw_elements();

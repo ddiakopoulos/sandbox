@@ -99,7 +99,7 @@ struct shader_workbench : public GLFWApp
     GlMesh sphereMesh;
     GlMesh floor;
     GlMesh torusKnot;
-    std::vector<float3> randomPositions;
+    std::vector<float4> randomPositions;
 
     std::vector<uniforms::point_light> lights;
 
@@ -108,6 +108,8 @@ struct shader_workbench : public GLFWApp
 
     shader_workbench();
     ~shader_workbench();
+
+    std::vector<float> angle;
 
     virtual void on_window_resize(int2 size) override;
     virtual void on_input(const InputEvent & event) override;
