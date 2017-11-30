@@ -160,8 +160,12 @@ struct ClusteredLighting
             const float3 lightCenterVS = transform_coord(viewMatrix, l.positionRadius.xyz());
             const float nearClipVS = -nearClip;
 
-            const float linearDepthMin = (-lightCenterVS.z - l.positionRadius.w - nearClip) * nearFarDistanceRCP;
+            const float linearDepthMin = clamp((-lightCenterVS.z - l.positionRadius.w - nearClip) * nearFarDistanceRCP, -1.f, 1.f);
             const float linearDepthMax = (-lightCenterVS.z + l.positionRadius.w - nearClip) * nearFarDistanceRCP;
+
+            //if (linearDepthMin == 0.f) continue;
+
+            //ImGui::Text("Min %f, Max %f", linearDepthMin, linearDepthMax);
 
             const Bounds3D leftRightViewSpace = sphere_for_axis(float3(1, 0, 0), lightCenterVS, l.positionRadius.w, -nearClipVS);
             const Bounds3D bottomTopViewSpace = sphere_for_axis(float3(0, 1, 0), lightCenterVS, l.positionRadius.w, -nearClipVS);
@@ -219,7 +223,8 @@ struct ClusteredLighting
 
         // Indices are tightly packed
         std::vector<uint16_t> packedLightIndices;
-        uint16_t lastClusterID = 0;
+        uint16_t lastClusterID = -1;
+        uint16_t lastLightIndex = -1;
         for (int i = 0; i < numLightIndices; ++i)
         {
             uint16_t clusterId = lightListToSort[i].first;
@@ -230,10 +235,17 @@ struct ClusteredLighting
             {
                 auto currentLightIndex = packedLightIndices.size(); 
                 clusterTable[clusterId].offset = currentLightIndex;
+                ImGui::Text("ClusterID %u / Light Idx %u", clusterId, lightListToSort[i].second);
             }
 
             // Keep on inserting sorted light indices into the packed buffer
-            packedLightIndices.push_back(lightListToSort[i].second);
+            //if (lastLightIndex != lightListToSort[i].second)
+            {
+                packedLightIndices.push_back(lightListToSort[i].second);
+            }
+
+            lastLightIndex = lightListToSort[i].second;
+
             lastClusterID = clusterId;
         }
 
@@ -241,6 +253,22 @@ struct ClusteredLighting
         for (int i = 0; i < numLightIndices; ++i)
         {
             lightIndices[i] = packedLightIndices[i]; 
+
+            ImGui::Text("Index %u / Value %u", i, packedLightIndices[i]);
+        }
+
+        for (auto & t : clusterTable)
+        {
+            if (t.lightCount > 0)
+            {
+                ImGui::Text("Offset %u /  Lights %u", t.offset, t.lightCount);
+                for (int l = 0; l < t.lightCount; l++)
+                {
+                    ImGui::Text("Light Index %u ", packedLightIndices[t.offset + l]);
+                }
+            }
+            //t.lightCount 
+            //if (t.offset == 0) t.lightCount = 0;
         }
 
         t.stop();
@@ -334,9 +362,9 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     sphereMesh = make_mesh_from_geometry(make_sphere(1.0f));
     floor = make_cube_mesh();
 
-    for (int i = 0; i < 256; i++)
+    for (int i = 0; i < 4; i++)
     {
-        float4 randomPosition = float4(rand.random_float(-12, 12), rand.random_float(0.1, 0.5), rand.random_float(-12, 12), rand.random_float(0.1, 4)); // position + radius
+        float4 randomPosition = float4(rand.random_float(-5, 5), rand.random_float(0.1, 0.1), rand.random_float(-5, 5), rand.random_float(0.1, 6)); // position + radius
         float4 randomColor = float4(rand.random_float(), rand.random_float(), rand.random_float(), 1.f);
         lights.push_back({ randomPosition, randomColor });
     }
@@ -346,13 +374,15 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     torusKnot = make_mesh_from_geometry(knot);
     for (int i = 0; i < 128; i++)
     {
-        randomPositions.push_back({ rand.random_float(-12, 12), rand.random_float(0.1, 0.5), rand.random_float(-12, 12) });
+        randomPositions.push_back({ rand.random_float(-12, 12), rand.random_float(0.5, 0.5), rand.random_float(-12, 12) });
     }
 
     debugCamera.nearclip = 0.5f;
     debugCamera.farclip = 24.f;
     debugCamera.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
     cameraController.set_camera(&debugCamera);
+    cameraController.enableSpring = false;
+    cameraController.movementSpeed = 0.25f;
 
     int width, height;
     glfwGetWindowSize(window, &width, &height);
@@ -405,24 +435,24 @@ void shader_workbench::on_draw()
 
     glViewport(0, 0, width, height);
 
+    float4x4 debugViewMatrix = viewMatrix; // inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
+    float4x4 debugProjectionMatrix = projectionMatrix;
+
     // Cluster Debugging
     {
         clusterCPUTimer.start();
 
-        //float4x4 debugViewMatrix = inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
-        //float4x4 debugProjectionMatrix = projectionMatrix;
+        draw_debug_frustum(&basicShader, mul(debugProjectionMatrix, debugViewMatrix), mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
+        clusteredLighting->cull_lights(debugViewMatrix, debugProjectionMatrix, lights);
 
-        draw_debug_frustum(&basicShader, mul(projectionMatrix, viewMatrix), mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
-        //clusteredLighting->cull_lights(viewMatrix, projectionMatrix, lights);
-
-        auto froxelList = clusteredLighting->build_froxels(viewMatrix);
+        auto froxelList = clusteredLighting->build_froxels(debugViewMatrix);
         for (int f = 0; f < froxelList.size(); f++)
         {
             float4 color = float4(1, 1, 1, .1f);
 
             Frustum frox = froxelList[f];
             if (clusteredLighting->clusterTable[f].lightCount > 0) color = float4(0.25, 0.35, .66, 1);
-            draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
+            //draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
         }
 
         clusterCPUTimer.pause();
@@ -435,7 +465,7 @@ void shader_workbench::on_draw()
         {
             clusteredShader.bind();
 
-            clusteredLighting->cull_lights(viewMatrix, projectionMatrix, lights);
+            //clusteredLighting->cull_lights(viewMatrix, projectionMatrix, lights);
 
             clusteredLighting->upload(lights);
 
@@ -466,7 +496,7 @@ void shader_workbench::on_draw()
                     auto modelMat = make_translation_matrix(randomPositions[i]);
                     clusteredShader.uniform("u_modelMatrix", modelMat);
                     clusteredShader.uniform("u_modelMatrixIT", inverse(transpose(modelMat)));
-                    torusKnot.draw_elements();
+                    //torusKnot.draw_elements();
                 }
             }
 
@@ -475,7 +505,6 @@ void shader_workbench::on_draw()
 
         renderTimer.stop();
 
-        /*
         // Visualize the lights
         glDisable(GL_CULL_FACE);
         wireframeShader.bind();
@@ -491,7 +520,6 @@ void shader_workbench::on_draw()
         }
         glEnable(GL_CULL_FACE);
         wireframeShader.unbind();
-        */
 
         //grid->draw(viewProjectionMatrix);
     }

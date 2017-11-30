@@ -93,7 +93,10 @@ void main()
         float dist = distance(light.position.xyz, v_position);
         float lightIntensity = cubic_gaussian(2.0 * dist / light.position.w); 
 
-        lightingContribution += L * lightIntensity; // multiplier for debugging only
+        lightingContribution += L * lightIntensity * 8; // multiplier for debugging only
     }
+
+    clusterCoord /= vec3(NUM_TILES_Y, NUM_TILES_Y, NUM_SLICES_Z);
+
     f_color = vec4(lightingContribution, 1);
 }
