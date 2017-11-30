@@ -12,17 +12,17 @@ namespace avl
     inline double to_radians(const double degrees) { return degrees * ANVIL_PI / 180.0; }
     inline double to_degrees(const double radians) { return radians * 180.0 / ANVIL_PI; }
 
-    template<typename T> T min(const T & x, const T & y) { return ((x) < (y) ? (x) : (y)); }
-    template<typename T> T max(const T & x, const T & y) { return ((x) > (y) ? (x) : (y)); }
-    template<typename T> T min(const T & a, const T & b, const T & c) { return std::min(a, std::min(b, c)); }
-    template<typename T> T max(const T & a, const T & b, const T & c) { return std::max(a, std::max(b, c)); }
-    template<typename T> T max(const T & a, const T & b, const T & c, const T & d) { return std::max(a, std::max(b, std::max(c, d))); }
+    template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type> T min(const T & x, const T & y) { return ((x) < (y) ? (x) : (y)); }
+    template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type> T max(const T & x, const T & y) { return ((x) > (y) ? (x) : (y)); }
+    template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type> T min(const T & a, const T & b, const T & c) { return std::min(a, std::min(b, c)); }
+    template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type> T max(const T & a, const T & b, const T & c) { return std::max(a, std::max(b, c)); }
+    template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type> T max(const T & a, const T & b, const T & c, const T & d) { return std::max(a, std::max(b, std::max(c, d))); }
+    template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type> T clamp(const T & val, const T & min, const T & max) { return std::min(std::max(val, min), max); }
+    template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type> T normalize(T value, T min, T max) { return clamp<T>((value - min) / (max - min), T(0), T(1)); }
+    template<typename T> bool in_range(T val, T min, T max) { return (val >= min && val <= max); }
     template<typename T> T sign(const T & a, const T & b) { return ((b) >= 0.0 ? std::abs(a) : -std::abs(a)); }
     template<typename T> T sign(const T & a) { return (a == 0) ? T(0) : ((a > 0.0) ? T(1) : T(-1)); }
     template<typename T> T mix(const T & a, const T & b, const T & t) { return a * (T(1) - t) + b * t; }
-    template<typename T> T clamp(const T & val, const T & min, const T & max) { return std::min(std::max(val, min), max); }
-    template<typename T> T normalize(T value, T min, T max) { return clamp<T>((value - min) / (max - min), T(0), T(1)); }
-    template<typename T> bool in_range(T val, T min, T max) { return (val >= min && val <= max); }
 
     template <typename T>
     inline T remap(T value, T inputMin, T inputMax, T outputMin, T outputMax, bool clamp = true)

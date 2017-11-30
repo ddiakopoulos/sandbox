@@ -177,12 +177,17 @@ struct ClusteredLighting
             sphereClipSpace._min = float3(transform_coord(projectionMatrix, leftRightViewSpace.min()).x, transform_coord(projectionMatrix, bottomTopViewSpace.min()).y, linearDepthMin);
             sphereClipSpace._max = float3(transform_coord(projectionMatrix, leftRightViewSpace.max()).x, transform_coord(projectionMatrix, bottomTopViewSpace.max()).y, linearDepthMax);
 
+            sphereClipSpace._min = clamp(sphereClipSpace._min, float3(-1.f), float3(1.f));
+            sphereClipSpace._max = clamp(sphereClipSpace._max, float3(-1.f), float3(1.f));
+
+            /*
             sphereClipSpace._min.x = clamp(sphereClipSpace._min.x, -1.f, 1.f);
             sphereClipSpace._max.x = clamp(sphereClipSpace._max.x, -1.f, 1.f);
             sphereClipSpace._min.y = clamp(sphereClipSpace._min.y, -1.f, 1.f);
             sphereClipSpace._max.y = clamp(sphereClipSpace._max.y, -1.f, 1.f);
             sphereClipSpace._min.z = clamp(sphereClipSpace._min.z, -1.f, 1.f);
             sphereClipSpace._max.z = clamp(sphereClipSpace._max.z, -1.f, 1.f);
+            */
 
             ImGui::Text("VS Overlap Min %f %f %f", sphereClipSpace._min.x, sphereClipSpace._min.y, sphereClipSpace._min.z);
             ImGui::Text("VS Overlap Max %f %f %f", sphereClipSpace._max.x, sphereClipSpace._max.y, sphereClipSpace._max.z);
