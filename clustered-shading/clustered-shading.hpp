@@ -35,6 +35,7 @@
  * [2] http://www.adriancourreges.com/blog/2016/09/09/doom-2016-graphics-study/
  * [3] https://developer.oculus.com/blog/introducing-the-oculus-unreal-renderer/
  * [4] http://diglib.eg.org/handle/10.2312/EGGH.HPG12.087-096
+ * [5] https://www.3dgep.com/forward-plus/
  */
 
 #ifndef clustered_shading_hpp
@@ -118,7 +119,7 @@ inline Bounds3D sphere_for_axis(const float3 & axis, const float3 & sphereCenter
         sintheta = sphereRadius / cLength;
     }
 
-    // Square root of the discriminant; NaN(and unused) if the camera is in the sphere
+    // Square root of the discriminant; NaN (and unused) if the camera is in the sphere
     float sqrtPart = 0.f;
     if (sphereClipByZNear)
     {
@@ -185,8 +186,7 @@ struct ClusteredShading
     };
 
     std::vector<ClusterPointer> clusterTable;
-    std::vector<uint16_t> lightIndices;         // light ids only
-    std::vector<uint16_t> lightClusterIDs;      // clusterId
+    std::vector<std::pair<uint16_t, uint16_t>> lightIndices;
     uint32_t numLightIndices = 0;
 
     static const size_t maxLights = std::numeric_limits<uint16_t>::max() * 8;
@@ -195,7 +195,6 @@ struct ClusteredShading
     {
         clusterTable.resize(NumClustersX * NumClustersY * NumClustersZ);
         lightIndices.resize(maxLights);
-        lightClusterIDs.resize(maxLights);
 
         // Setup 3D cluster texture
         clusterTexture.setup(GL_TEXTURE_3D, NumClustersX, NumClustersY, NumClustersZ, GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, nullptr);
@@ -221,8 +220,7 @@ struct ClusteredShading
         t.start();
 
         // Reset state
-        for (auto & i : lightClusterIDs) i = -1;
-        for (auto & i : lightIndices) i = -1;
+        lightIndices.clear();
         for (auto & c : clusterTable) c = {};
         numLightIndices = 0;
 
@@ -275,15 +273,14 @@ struct ClusteredShading
                     for (int x = voxelsOverlappingSphere._min.x; x <= voxelsOverlappingSphere._max.x; x++)
                     {
                         const uint16_t clusterId = z * (NumClustersX * NumClustersY) + y * NumClustersX + x;
-                        if (clusterId >= clusterTable.size()) continue; // todo - runtime assert max clusters. also there's an issue with spheres close to the nearclip. 
+                        if (clusterId >= clusterTable.size()) continue;
                         clusterTable[clusterId].lightCount += 1;
-
-                        //ImGui::Text("ClusterID %u / Light Idx Ct %u", clusterId, numLightIndices);
 
                         if (numLightIndices > lightIndices.size()) continue; // actually return, can't handle any more lights
 
-                        lightIndices[numLightIndices] = lightIndex;
-                        lightClusterIDs[numLightIndices] = clusterId;
+                        // We need the cluster ID and to know what light IDs are assigned to it. We'll do this
+                        // by sorting on the cluster id, and then by the light index. The actual sort is performed later.
+                        lightIndices.push_back({clusterId, lightIndex});
                         numLightIndices += 1;
                     }
                 }
@@ -301,18 +298,15 @@ struct ClusteredShading
         manual_timer t;
         t.start();
 
-        // We need the cluster ID and to know what light IDs are assigned to it. We'll do this
-        // by sorting on the cluster id, and then by the light index
-        std::vector<std::pair<uint16_t, uint16_t>> lightListToSort;
-        for (int i = 0; i < numLightIndices; ++i) lightListToSort.push_back({ lightClusterIDs[i], lightIndices[i] });
-        std::sort(lightListToSort.begin(), lightListToSort.end());
+        // Sort the list
+        std::sort(lightIndices.begin(), lightIndices.end());
 
         // Indices are tightly packed
         std::vector<uint16_t> packedLightIndices;
         uint16_t lastClusterID = -1;
         for (int i = 0; i < numLightIndices; ++i)
         {
-            uint16_t clusterId = lightListToSort[i].first;
+            uint16_t clusterId = lightIndices[i].first;
 
             // New cluster. One cluster can hold many lights, but we only need to store the offset to
             // the first one in the list. 
@@ -322,13 +316,10 @@ struct ClusteredShading
                 clusterTable[clusterId].offset = currentLightIndex;
             }
 
-            packedLightIndices.push_back(lightListToSort[i].second);
+            packedLightIndices.push_back(lightIndices[i].second);
             lastClusterID = clusterId;
         }
-
-        // Repack the light indices which were sorted by cluster id
-        for (int i = 0; i < numLightIndices; ++i) lightIndices[i] = packedLightIndices[i];
-
+        
         // Update clustered lighting UBO
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
         uniforms::clustered_lighting_buffer lighting = {};
@@ -337,10 +328,12 @@ struct ClusteredShading
 
         // Update Index Data
         glBindBuffer(GL_TEXTURE_BUFFER, lightIndexBuffer);
-        lightIndexBuffer.set_buffer_data(sizeof(uint16_t) * lightIndices.size(), lightIndices.data(), GL_STREAM_DRAW); // fixme to use subData
+        lightIndexBuffer.set_buffer_data(sizeof(uint16_t) * packedLightIndices.size(), packedLightIndices.data(), GL_STREAM_DRAW); // fixme to use subData
 
         // Update cluster grid
         glTextureSubImage3D(clusterTexture, 0, 0, 0, 0, NumClustersX, NumClustersY, NumClustersZ, GL_RG_INTEGER, GL_UNSIGNED_INT, (void *)clusterTable.data());
+
+        t.stop();
 
         ImGui::Text("Uploaded %i lights indices to the lighting buffer", numLightIndices);
         ImGui::Text("Uploaded %i bytes to the index buffer", sizeof(uint16_t) * lightIndices.size());
