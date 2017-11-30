@@ -6,10 +6,10 @@
  * improvement over Forward Plus and Tiled Deferred shading, but not as state-of-the-art as
  * Yuri O'Donnell's Tiled Light Trees (2017). A major benefit of these 'modern' forward
  * approaches is that transparency and MSAA "just works" and supports a large number
- * of dynamic lights, an ideal fit for the requirements of virtual reality rendering.
+ * of dynamic lights, an ideal fit for the requirements of rendering for virtual reality.
  * 
- * Clustered shading is not an ideal term for this technique, since it extends Forward Plus 
- * shading on the Z axis and does not perform clustering in the statistical meaning of 
+ * Clustered shading is not an ideal term for this technique, since it extends Forward 
+ * Plus on the Z axis and does not perform clustering in the statistical meaning of 
  * the word. A traditional forward plus implementation requires a z-prepass and 
  * computes lists of lights affected a 2D lighting grid, often leveraging a compute 
  * shader to perform the necessary per-tile culling.
@@ -18,17 +18,23 @@
  * by Emil Persson, aka Humus. Light clustering is performed on the CPU and does 
  * not require a z-prepass. The viewing frustum is divided into a 3D grid of lights, 
  * where light-to-cluster assignment is performed in clipspace, sometimes called 
- * frustum voxels (froxels). Since VR scenes are often fragment-bound instead of 
+ * frustum voxels (froxels). Since VR experiences are often fragment-bound instead of 
  * vertex-bound, the lack of an extra z-prepass and compute shader theoretically enables
  * more GPU headroom for shading calculations. 
  * 
- * The crux of clustered shading is to compuete a tight froxel fit around the 
- * light source and pack this information in a way such that we can efficiently leverage 
+ * The crux of clustered shading is to compute a tight froxel fit around light sources 
+ * and pack this information in a way such that we can efficiently leverage 
  * the dynamic branching capabilities of newer GPUs. Clusters are available to the 
  * GPU as a 3D texture consisting of an offset to lighting indices affecting the 
  * cluster, and the number of lights. The lighting index buffer is a tightly packed 
  * array which stores an index value to the actual array of scene lights, sorted
  * by 3D cluster coordinate. 
+ *
+ * Useful References on Clustered Shading:
+ * [1] http://www.humus.name/Articles/PracticalClusteredShading.pdf
+ * [2] http://www.adriancourreges.com/blog/2016/09/09/doom-2016-graphics-study/
+ * [3] https://developer.oculus.com/blog/introducing-the-oculus-unreal-renderer/
+ * [4] http://diglib.eg.org/handle/10.2312/EGGH.HPG12.087-096
  */
 
 #ifndef clustered_shading_hpp
