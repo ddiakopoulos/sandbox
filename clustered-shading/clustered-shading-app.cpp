@@ -1,7 +1,6 @@
 #include "index.hpp"
 #include "imgui/imgui_internal.h"
 #include "clustered-shading-app.hpp"
-#include "clustered-shading.hpp"
 
 using namespace avl;
 
@@ -159,7 +158,7 @@ void shader_workbench::on_draw()
         // Main Camera View
         draw_debug_frustum(&basicShader, mul(debugProjectionMatrix, debugViewMatrix), mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
 
-        auto froxelList = clusteredLighting->build_debug_froxel_array(debugViewMatrix);
+        auto froxelList = build_debug_froxel_array(&clusteredLighting, debugViewMatrix);
         for (int f = 0; f < froxelList.size(); f++)
         {
             float4 color = float4(1, 1, 1, .1f);

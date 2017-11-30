@@ -1,5 +1,6 @@
 #include "index.hpp"
 #include "gl-gizmo.hpp"
+#include "clustered-shading.hpp"
 
 struct shader_workbench : public GLFWApp
 {

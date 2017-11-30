@@ -1,5 +1,36 @@
 #pragma once
 
+/*
+ * This file implements a minimal viable implementation of clustered forward shading, 
+ * currently only supporting point light sources. Clustered forward shading is an 
+ * improvement over Forward Plus and Tiled Deferred shading, but not as state-of-the-art as
+ * Yuri O'Donnell's Tiled Light Trees (2017). A major benefit of these 'modern' forward
+ * approaches is that transparency and MSAA "just works" and supports a large number
+ * of dynamic lights, an ideal fit for the requirements of virtual reality rendering.
+ * 
+ * Clustered shading is not an ideal term for this technique, since it extends Forward Plus 
+ * shading on the Z axis and does not perform clustering in the statistical meaning of 
+ * the word. A traditional forward plus implementation requires a z-prepass and 
+ * computes lists of lights affected a 2D lighting grid, often leveraging a compute 
+ * shader to perform the necessary per-tile culling.
+ * 
+ * This implementation is based on "Practical Clustered Shading (2012)" proposed
+ * by Emil Persson, aka Humus. Light clustering is performed on the CPU and does 
+ * not require a z-prepass. The viewing frustum is divided into a 3D grid of lights, 
+ * where light-to-cluster assignment is performed in clipspace, sometimes called 
+ * frustum voxels (froxels). Since VR scenes are often fragment-bound instead of 
+ * vertex-bound, the lack of an extra z-prepass and compute shader theoretically enables
+ * more GPU headroom for shading calculations. 
+ * 
+ * The crux of clustered shading is to compuete a tight froxel fit around the 
+ * light source and pack this information in a way such that we can efficiently leverage 
+ * the dynamic branching capabilities of newer GPUs. Clusters are available to the 
+ * GPU as a 3D texture consisting of an offset to lighting indices affecting the 
+ * cluster, and the number of lights. The lighting index buffer is a tightly packed 
+ * array which stores an index value to the actual array of scene lights, sorted
+ * by 3D cluster coordinate. 
+ */
+
 #ifndef clustered_shading_hpp
 #define clustered_shading_hpp
 
@@ -60,7 +91,8 @@ namespace uniforms
     };
 };
 
-//  "2D Polyhedral Bounds of a Clipped, Perspective - Projected 3D Sphere"
+// Based on sample code provided in "2D Polyhedral Bounds of a Clipped, Perspective-Projected 3D Sphere"
+// http://jcgt.org/published/0002/02/05/paper.pdf
 inline Bounds3D sphere_for_axis(const float3 & axis, const float3 & sphereCenter, const float sphereRadius, const float zNearClipCamera)
 {
     const bool sphereClipByZNear = !((sphereCenter.z + sphereRadius) < zNearClipCamera);
@@ -116,8 +148,6 @@ inline Bounds3D sphere_for_axis(const float3 & axis, const float3 & sphereCenter
 
     return boundsViewSpace;
 }
-
-// http://www.humus.name/Articles/PracticalClusteredShading.pdf
 
 struct ClusteredShading
 {
@@ -211,11 +241,10 @@ struct ClusteredShading
             const float3 lightCenterVS = transform_coord(viewMatrix, l.positionRadius.xyz());
             const float nearClipVS = -nearClip;
 
-            const float linearDepthMin = (-lightCenterVS.z - l.positionRadius.w) * nearFarDistanceRCP;
-            const float linearDepthMax = (-lightCenterVS.z + l.positionRadius.w) * nearFarDistanceRCP;
-
             const Bounds3D leftRightViewSpace = sphere_for_axis(float3(1, 0, 0), lightCenterVS, l.positionRadius.w, nearClipVS);
             const Bounds3D bottomTopViewSpace = sphere_for_axis(float3(0, 1, 0), lightCenterVS, l.positionRadius.w, nearClipVS);
+            const float linearDepthMin = (-lightCenterVS.z - l.positionRadius.w) * nearFarDistanceRCP;
+            const float linearDepthMax = (-lightCenterVS.z + l.positionRadius.w) * nearFarDistanceRCP;
 
             Bounds3D sphereClipSpace;
             sphereClipSpace._min = float3(transform_coord(projectionMatrix, leftRightViewSpace.min()).x, transform_coord(projectionMatrix, bottomTopViewSpace.min()).y, linearDepthMin);
@@ -275,7 +304,6 @@ struct ClusteredShading
         // Indices are tightly packed
         std::vector<uint16_t> packedLightIndices;
         uint16_t lastClusterID = -1;
-        uint16_t lastLightIndex = -1;
         for (int i = 0; i < numLightIndices; ++i)
         {
             uint16_t clusterId = lightListToSort[i].first;
@@ -289,11 +317,10 @@ struct ClusteredShading
             }
 
             packedLightIndices.push_back(lightListToSort[i].second);
-            lastLightIndex = lightListToSort[i].second;
             lastClusterID = clusterId;
         }
 
-        // repack the light indices now sorted by cluster id
+        // Repack the light indices which were sorted by cluster id
         for (int i = 0; i < numLightIndices; ++i) lightIndices[i] = packedLightIndices[i];
 
         // Update clustered lighting UBO
@@ -315,46 +342,46 @@ struct ClusteredShading
 
         gl_check_error(__FILE__, __LINE__);
     }
+};
 
-    std::vector<Frustum> build_debug_froxel_array(const float4x4 & viewMatrix)
+inline std::vector<Frustum> build_debug_froxel_array(const ClusteredShading & clusterer, const float4x4 & viewMatrix)
+{
+    std::vector<Frustum> froxels;
+
+    const float stepZ = (clusterer.farClip - clusterer.nearClip) / clusterer.NumClustersZ;
+
+    for (int z = 0; z < clusterer.NumClustersZ; z++)
     {
-        std::vector<Frustum> froxels;
+        const float near = clusterer.nearClip + (stepZ * z);
+        const float far = near + stepZ;
 
-        const float stepZ = (farClip - nearClip) / NumClustersZ;
+        const float top = near * std::tan(clusterer.vFov * 0.5f); // normalized height
+        const float right = top * clusterer.aspect; // normalized width
+        const float left = -right;
+        const float bottom = -top;
 
-        for (int z = 0; z < NumClustersZ; z++)
+        const float stepX = (right * 2.0f) / clusterer.NumClustersX;
+        const float stepY = (top   * 2.0f) / clusterer.NumClustersY;
+
+        float L, R, B, T;
+
+        for (int y = 0; y < clusterer.NumClustersY; y++)
         {
-            const float near = nearClip + (stepZ * z);
-            const float far = near + stepZ;
-
-            const float top = near * std::tan(vFov * 0.5f); // normalized height
-            const float right = top * aspect; // normalized width
-            const float left = -right;
-            const float bottom = -top;
-
-            const float stepX = (right * 2.0f) / NumClustersX;
-            const float stepY = (top   * 2.0f) / NumClustersY;
-
-            float L, R, B, T;
-
-            for (int y = 0; y < NumClustersY; y++)
+            for (int x = 0; x < clusterer.NumClustersX; x++)
             {
-                for (int x = 0; x < NumClustersX; x++)
-                {
-                    L = left + (stepX * x);
-                    R = L + stepX;
-                    B = bottom + (stepY * y);
-                    T = B + stepY;
+                L = left + (stepX * x);
+                R = L + stepX;
+                B = bottom + (stepY * y);
+                T = B + stepY;
 
-                    const float4x4 projectionMatrix = make_projection_matrix(L, R, B, T, near, far);
-                    const Frustum froxel(mul(projectionMatrix, viewMatrix));
-                    froxels.push_back(froxel);
-                }
+                const float4x4 projectionMatrix = make_projection_matrix(L, R, B, T, near, far);
+                const Frustum froxel(mul(projectionMatrix, viewMatrix));
+                froxels.push_back(froxel);
             }
         }
-
-        return froxels;
     }
-};
+
+    return froxels;
+}
 
 #endif // end clustered_shading_hpp
