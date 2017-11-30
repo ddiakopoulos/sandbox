@@ -57,9 +57,9 @@ void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & r
 // http://www.humus.name/Articles/PracticalClusteredShading.pdf
 struct ClusteredLighting
 {
-    static const int32_t NumClustersX = 2; // Tiles in X
-    static const int32_t NumClustersY = 2; // Tiles in Y
-    static const int32_t NumClustersZ = 2; // Slices in Z
+    static const int32_t NumClustersX = 16; // Tiles in X
+    static const int32_t NumClustersY = 16; // Tiles in Y
+    static const int32_t NumClustersZ = 16; // Slices in Z
 
     float nearClip, farClip;
     float vFov;
@@ -77,7 +77,7 @@ struct ClusteredLighting
         Area
     };
 
-    // This is stored in a 3D texture (clusterTexture => R32G32_UINT)
+    // This is stored in a 3D texture (clusterTexture => GL_RG32UI)
     struct ClusterPointer
     {
         uint32_t offset = 0; // offset into 
@@ -104,13 +104,9 @@ struct ClusteredLighting
 
         gl_check_error(__FILE__, __LINE__);
 
-        std::cout << "Light Index Buffer: " << lightIndexBuffer.id() << std::endl;
-
         glNamedBufferData(lightIndexBuffer, maxLights * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW); // DSA glBufferData
 
         gl_check_error(__FILE__, __LINE__);
-
-        std::cout << "Light Tex Buffer: " << lightIndexTexture.id() << std::endl;
 
         GLuint lib;
         glCreateTextures(GL_TEXTURE_BUFFER, 1, &lib);
@@ -118,6 +114,12 @@ struct ClusteredLighting
         glTextureBuffer(lightIndexTexture, GL_R16UI, lightIndexBuffer); // DSA for glTexBuffer
 
         gl_check_error(__FILE__, __LINE__);
+    }
+
+    float linear_01_depth(float z)
+    {
+        return (z - nearClip) / (farClip - nearClip);
+        //return (1.00000 / (((1.0 - farClip / nearClip) * z) + farClip / nearClip));
     }
 
     void cull_lights(const float4x4 & viewMatrix, const float4x4 & projectionMatrix, const std::vector<uniforms::point_light> & lights)
@@ -139,6 +141,7 @@ struct ClusteredLighting
 
         for (int lightIndex = 0; lightIndex < lights.size(); ++lightIndex)
         {
+
             const uniforms::point_light & l = lights[lightIndex];
 
             // Conservative light culling based on worldspace camera frustum
@@ -147,45 +150,62 @@ struct ClusteredLighting
                 continue;
             }
 
+            ImGui::Text("Light Idx %u", lightIndex);
+
             visibleLightCount++;
 
             auto viewDepthToFroxelDepth = [&](float viewspaceDepth)
             {
                 float vZ = (viewspaceDepth - nearClip) / (farClip - nearClip);
                 //float fZ = std::pow(vZ, 1 / 2.0f); // fixme, distribution factor 
-                return clamp(vZ, 0.f, 1.f);
+                return vZ;// clamp(vZ, 0.f, 1.f);
             };
 
             // Convert sphere to froxel bounds 
             const float3 lightCenterVS = transform_coord(viewMatrix, l.positionRadius.xyz());
             const float nearClipVS = -nearClip;
 
-            const float linearDepthMin = clamp((-lightCenterVS.z - l.positionRadius.w - nearClip) * nearFarDistanceRCP, -1.f, 1.f);
-            const float linearDepthMax = (-lightCenterVS.z + l.positionRadius.w - nearClip) * nearFarDistanceRCP;
+            const float linearDepthMin = (-lightCenterVS.z - l.positionRadius.w) * nearFarDistanceRCP;
+            const float linearDepthMax = (-lightCenterVS.z + l.positionRadius.w) * nearFarDistanceRCP;
 
-            //if (linearDepthMin == 0.f) continue;
-
-            //ImGui::Text("Min %f, Max %f", linearDepthMin, linearDepthMax);
+             ImGui::Text("Min %f, Max %f", linearDepthMin, linearDepthMax);
 
             const Bounds3D leftRightViewSpace = sphere_for_axis(float3(1, 0, 0), lightCenterVS, l.positionRadius.w, nearClipVS);
             const Bounds3D bottomTopViewSpace = sphere_for_axis(float3(0, 1, 0), lightCenterVS, l.positionRadius.w, nearClipVS);
 
             Bounds3D sphereClipSpace;
-            sphereClipSpace._min = float3(transform_coord(projectionMatrix, leftRightViewSpace.min()).x, transform_coord(projectionMatrix, bottomTopViewSpace.min()).y, viewDepthToFroxelDepth(linearDepthMin));
-            sphereClipSpace._max = float3(transform_coord(projectionMatrix, leftRightViewSpace.max()).x, transform_coord(projectionMatrix, bottomTopViewSpace.max()).y, viewDepthToFroxelDepth(linearDepthMax));
+            sphereClipSpace._min = float3(transform_coord(projectionMatrix, leftRightViewSpace.min()).x, transform_coord(projectionMatrix, bottomTopViewSpace.min()).y, linearDepthMin);
+            sphereClipSpace._max = float3(transform_coord(projectionMatrix, leftRightViewSpace.max()).x, transform_coord(projectionMatrix, bottomTopViewSpace.max()).y, linearDepthMax);
 
-            // Get the clip-space min, max extents of the sphere clamped to voxel boundaries. 
-            const float z0 = clamp((int)std::max(0, std::min((int)(linearDepthMin * (float)NumClustersZ), NumClustersZ - 1)), 0, 1);
-            const float z1 = clamp((int)std::max(0, std::min((int)(linearDepthMax * (float)NumClustersZ), NumClustersZ - 1)), 0, 1);
-            const float y0 = clamp((int)std::min((int)((sphereClipSpace._min.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1), 0, 1);
-            const float y1 = clamp((int)std::min((int)((sphereClipSpace._max.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1), 0, 1);
-            const float x0 = clamp((int)std::min((int)((sphereClipSpace._min.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1), 0, 1);
-            const float x1 = clamp((int)std::min((int)((sphereClipSpace._max.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1), 0, 1);
+            sphereClipSpace._min.x = clamp(sphereClipSpace._min.x, -1.f, 1.f);
+            sphereClipSpace._max.x = clamp(sphereClipSpace._max.x, -1.f, 1.f);
+            sphereClipSpace._min.y = clamp(sphereClipSpace._min.y, -1.f, 1.f);
+            sphereClipSpace._max.y = clamp(sphereClipSpace._max.y, -1.f, 1.f);
+            sphereClipSpace._min.z = clamp(sphereClipSpace._min.z, -1.f, 1.f);
+            sphereClipSpace._max.z = clamp(sphereClipSpace._max.z, -1.f, 1.f);
+
+            ImGui::Text("VS Overlap Min %f %f %f", sphereClipSpace._min.x, sphereClipSpace._min.y, sphereClipSpace._min.z);
+            ImGui::Text("VS Overlap Max %f %f %f", sphereClipSpace._max.x, sphereClipSpace._max.y, sphereClipSpace._max.z);
+
+            // Get the clip-space min/max extents of the sphere clamped to voxel boundaries. This will give us AABB cluster indices => clusterID.
+            const float z0 = (int)std::max(0, std::min((int)(linearDepthMin * (float)NumClustersZ), NumClustersZ - 1));
+            const float z1 = (int)std::max(0, std::min((int)(linearDepthMax * (float)NumClustersZ), NumClustersZ - 1));
+            const float y0 = (int)std::min((int)((sphereClipSpace._min.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
+            const float y1 = (int)std::min((int)((sphereClipSpace._max.y * 0.5f + 0.5f) * (float)NumClustersY), NumClustersY - 1);
+            const float x0 = (int)std::min((int)((sphereClipSpace._min.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
+            const float x1 = (int)std::min((int)((sphereClipSpace._max.x * 0.5f + 0.5f) * (float)NumClustersX), NumClustersX - 1);
 
             Bounds3D voxelsOverlappingSphere({ x0, y0, z0 }, { x1, y1, z1 });
 
-            //ImGui::Text("Overlap Min %f %f %f", x0, y0, z0);
-            //ImGui::Text("Overlap Max %f %f %f", x1, y1, z1);
+            //ImGui::Text("What %f", ((sphereClipSpace._min.y * 0.5f + 0.5f) * (float)NumClustersY));
+
+            ImGui::Text("Froxel View Depth Min %f, Max %f", viewDepthToFroxelDepth(linearDepthMin), viewDepthToFroxelDepth(linearDepthMax));
+
+           // ImGui::Text("Overlap Min %f %f", (sphereClipSpace._min.x * 0.5f + 0.5f), (sphereClipSpace._min.y * 0.5f + 0.5f)); // takes -1 to 1 into 0 to 1
+            //ImGui::Text("Overlap Max %f %f", (sphereClipSpace._max.x * 0.5f + 0.5f), (sphereClipSpace._max.y * 0.5f + 0.5f)); // takes -1 to 1 into 0 to 1
+
+            ImGui::Text("Clamped Overlap Min %f %f %f", x0, y0, z0);
+            ImGui::Text("Clamped Overlap Max %f %f %f", x1, y1, z1);
 
             for (int z = voxelsOverlappingSphere._min.z; z <= voxelsOverlappingSphere._max.z; z++)
             {
@@ -196,6 +216,8 @@ struct ClusteredLighting
                         const uint16_t clusterId = z * (NumClustersX * NumClustersY) + y * NumClustersX + x;
                         if (clusterId >= clusterTable.size()) continue; // todo - runtime assert max clusters. also there's an issue with spheres close to the nearclip. 
                         clusterTable[clusterId].lightCount += 1;
+
+                        ImGui::Text("ClusterID %u / Light Idx Ct %u", clusterId, numLightIndices);
 
                         if (numLightIndices > lightIndices.size()) continue; // actually return, can't handle any more lights
 
@@ -238,7 +260,7 @@ struct ClusteredLighting
             {
                 auto currentLightIndex = packedLightIndices.size(); 
                 clusterTable[clusterId].offset = currentLightIndex;
-                ImGui::Text("ClusterID %u / Light Idx %u", clusterId, lightListToSort[i].second);
+                //ImGui::Text("ClusterID %u / Light Idx %u", clusterId, lightListToSort[i].second);
             }
 
             packedLightIndices.push_back(lightListToSort[i].second);
@@ -281,8 +303,8 @@ struct ClusteredLighting
             const float near = nearClip + (stepZ * z);
             const float far = near + stepZ;
 
-            const float top = near * std::tan(vFov * 0.5f);       // normalized height
-            const float right = top * aspect;                     // normalized width
+            const float top = near * std::tan(vFov * 0.5f); // normalized height
+            const float right = top * aspect; // normalized width
             const float left = -right;
             const float bottom = -top;
 
@@ -313,6 +335,8 @@ struct ClusteredLighting
 };
 
 std::unique_ptr<ClusteredLighting> clusteredLighting;
+static bool animateLights = false;
+static int numLights = 128;
 
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Example")
 {
@@ -338,17 +362,6 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     sphereMesh = make_mesh_from_geometry(make_sphere(1.0f));
     floor = make_cube_mesh();
 
-    float h = 1.f / 256.f;
-    float val = 0.f;
-    for (int i = 0; i < 256; i++)
-    {
-        val += h;
-        float4 randomPosition = float4(rand.random_float(-1, 1), rand.random_float(0.1, 0.5), rand.random_float(-1, 1), rand.random_float(0.1, 6)); // position + radius
-        auto hsvToRGB = hsv_to_rgb({ val, rand.random_float(0.5), rand.random_float(0.5) });
-        float4 randomColor = float4(hsvToRGB, 1.f);
-        lights.push_back({ randomPosition, randomColor });
-    }
-
     angle.resize(256);
 
     auto knot = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply");
@@ -358,6 +371,8 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     {
         randomPositions.push_back({ rand.random_float(-24, 24), rand.random_float(1, 1), rand.random_float(-24, 24), rand.random_float(1, 2) });
     }
+
+    regenerate_lights(numLights);
 
     debugCamera.nearclip = 0.5f;
     debugCamera.farclip = 64.f;
@@ -370,8 +385,6 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     glfwGetWindowSize(window, &width, &height);
 
     clusteredLighting.reset(new ClusteredLighting(debugCamera.vfov, float(width) / float(height), debugCamera.nearclip, debugCamera.farclip));
-
-    std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
 shader_workbench::~shader_workbench() { }
@@ -390,16 +403,33 @@ void shader_workbench::on_update(const UpdateEvent & e)
     cameraController.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
 
-    for (int i = 0; i < lights.size(); ++i)
+    if (animateLights)
     {
-        angle[i] += rand.random_float(0.005f, 0.01f);
-    }
+        for (int i = 0; i < lights.size(); ++i)
+        {
+            angle[i] += rand.random_float(0.005f, 0.01f);
+        }
 
-    for (int i = 0; i < lights.size(); ++i)
+        for (int i = 0; i < lights.size(); ++i)
+        {
+            auto & l = lights[i];
+            l.positionRadius.x += cos(angle[i] * l.positionRadius.w) * 0.5;
+            l.positionRadius.z += sin(angle[i] * l.positionRadius.w) * 0.5;
+        }
+    }
+}
+
+void shader_workbench::regenerate_lights(size_t numLights)
+{
+    float h = 1.f / (float) numLights;
+    float val = 0.f;
+    for (int i = 0; i < numLights; i++)
     {
-        auto & l = lights[i];
-        l.positionRadius.x += cos(angle[i] * l.positionRadius.w) * 0.5;
-        l.positionRadius.z += sin(angle[i] * l.positionRadius.w) * 0.5;// *(l.positionRadius.w * 0.025);
+        val += h;
+        float4 randomPosition = float4(rand.random_float(-5, 5), rand.random_float(0.1, 0.5), rand.random_float(-5, 5), rand.random_float(3, 6)); // position + radius
+        float3 r3 = float3({ rand.random_float(1), rand.random_float(1), rand.random_float(1) });
+        float4 randomColor = float4(r3, 1.f);
+        lights.push_back({ randomPosition, randomColor });
     }
 }
 
@@ -431,7 +461,7 @@ void shader_workbench::on_draw()
 
     glViewport(0, 0, width, height);
 
-    float4x4 debugViewMatrix = inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
+    float4x4 debugViewMatrix = viewMatrix; // inverse(mul(make_translation_matrix({ xform.position.x, xform.position.y, xform.position.z }), make_scaling_matrix({ 1, 1, 1 })));
     float4x4 debugProjectionMatrix = projectionMatrix;
 
     // Cluster Debugging
@@ -448,7 +478,7 @@ void shader_workbench::on_draw()
 
             Frustum frox = froxelList[f];
             if (clusteredLighting->clusterTable[f].lightCount > 0) color = float4(0.25, 0.35, .66, 1);
-            draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
+            //draw_debug_frustum(&basicShader, frox, mul(projectionMatrix, viewMatrix), color);
         }
 
         clusterCPUTimer.pause();
@@ -523,6 +553,8 @@ void shader_workbench::on_draw()
     if (gizmo) gizmo->draw();
 
     ImGui::Text("Render Time GPU %f ms", renderTimer.elapsed_ms());
+    ImGui::Checkbox("Animate Lights", &animateLights);
+    if (ImGui::SliderInt("Num Lights", &numLights, 1, 256)) regenerate_lights(numLights);
 
     if (igm) igm->end_frame();
     gl_check_error(__FILE__, __LINE__);

@@ -115,4 +115,6 @@ struct shader_workbench : public GLFWApp
     virtual void on_input(const InputEvent & event) override;
     virtual void on_update(const UpdateEvent & e) override;
     virtual void on_draw() override;
+
+    void regenerate_lights(size_t numLights);
 };

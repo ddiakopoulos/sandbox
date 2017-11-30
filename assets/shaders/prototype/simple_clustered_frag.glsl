@@ -8,9 +8,9 @@ uniform float u_farClip;
 uniform vec2 u_rcpViewportSize;
 
 const int MAX_POINT_LIGHTS = 1024;
-const float NUM_TILES_X = 2.0;
-const float NUM_TILES_Y = 2.0;
-const float NUM_SLICES_Z = 2.0;
+const float NUM_TILES_X = 16.0;
+const float NUM_TILES_Y = 16.0;
+const float NUM_SLICES_Z = 16.0;
 
 struct PointLight
 {
