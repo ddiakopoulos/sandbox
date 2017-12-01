@@ -6,19 +6,23 @@
 
 constexpr const char default_color_vert[] = R"(#version 330
     layout(location = 0) in vec3 vertex;
+    layout(location = 1) in vec3 normal;
     uniform mat4 u_mvp;
+    out vec3 v_normal;
     void main()
     {
         gl_Position = u_mvp * vec4(vertex.xyz, 1);
+        v_normal = normal;
     }
 )";
 
 constexpr const char default_color_frag[] = R"(#version 330
     out vec4 f_color;
     uniform vec3 u_color;
+    in vec3 v_normal;
     void main()
     {
-        f_color = vec4(u_color, 1);
+        f_color = vec4(v_normal, 1);
     }
 )";
 
@@ -55,7 +59,7 @@ struct ExperimentalApp : public GLFWApp
 
         basicShader = GlShader(default_color_vert, default_color_frag);
 
-        mesh = make_mesh_from_geometry(make_sphere(0.25f));
+        mesh = make_plane_mesh(4, 4, 24, 24, true);
 
         debugCamera.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });
         cameraController.set_camera(&debugCamera);
@@ -75,6 +79,7 @@ struct ExperimentalApp : public GLFWApp
     void on_update(const UpdateEvent & e) override
     {
         cameraController.update(e.timestep_ms);
+        shaderMonitor.handle_recompile();
     }
 
     void render_scene(const float4x4 & viewMatrix, const float4x4 & projectionMatrix)
@@ -83,12 +88,19 @@ struct ExperimentalApp : public GLFWApp
 
         float4x4 modelMatrix = make_translation_matrix(float3(xform.position.x, xform.position.y, xform.position.z));
 
+        /*
         wireframeShader.bind();
         wireframeShader.uniform("u_eyePos", debugCamera.get_eye_point());
         wireframeShader.uniform("u_viewProjMatrix", viewProjectionMatrix);
         wireframeShader.uniform("u_modelMatrix", modelMatrix);
         mesh.draw_elements();
         wireframeShader.unbind();
+        */
+
+        basicShader.bind();
+        basicShader.uniform("u_mvp", mul(mul(projectionMatrix, viewMatrix), modelMatrix));
+        mesh.draw_elements();
+        basicShader.unbind();
 
         if (gizmo) gizmo->draw();
     }

@@ -484,19 +484,20 @@ namespace avl
         return capsule;
     }
     
-    inline Geometry make_plane(float width, float height, uint32_t nw, uint32_t nh, bool withBackface = false)
+    // A renderable quad with a configurable subvision. Constructed on the XY axis with normals facing -Z for front-faces.
+    inline Geometry make_plane(float width, float height, uint32_t widthVertices, uint32_t heightVertices, bool doubleSided = false)
     {
         Geometry plane;
         uint32_t indexOffset = 0;
         
         float rw = 1.f / width;
         float rh = 1.f / height;
-        float ow = width / nw;
-        float oh = height / nh;
+        float ow = width / widthVertices;
+        float oh = height / heightVertices;
         
         float ou = ow * rw;
         float ov = oh * rh;
-        
+
         for (float w = -width / 2.0; w < width / 2.0; w += ow)
         {
             for (float h = -height / 2.0; h < height / 2.0; h += oh)
@@ -514,20 +515,50 @@ namespace avl
                 plane.texCoords.emplace_back(u + ou, v);
                 plane.texCoords.emplace_back(u + ou, v + ov);
 
-                plane.faces.push_back({indexOffset + 0, indexOffset + 1, indexOffset + 2});
-                plane.faces.push_back({indexOffset + 0, indexOffset + 2, indexOffset + 3});
+                plane.normals.emplace_back(0, 0, -1);
+                plane.normals.emplace_back(0, 0, -1);
+                plane.normals.emplace_back(0, 0, -1);
+                plane.normals.emplace_back(0, 0, -1);
 
-                if (withBackface)
-                {
-                    plane.faces.push_back({ indexOffset + 2, indexOffset + 1, indexOffset + 0 });
-                    plane.faces.push_back({ indexOffset + 3, indexOffset + 2, indexOffset + 0 });
-                }
-                
+                plane.faces.push_back({ indexOffset + 2, indexOffset + 1, indexOffset + 0 });
+                plane.faces.push_back({ indexOffset + 3, indexOffset + 2, indexOffset + 0 });
+
                 indexOffset += 4;
             }
         }
+
+        if (doubleSided)
+        {
+            for (float w = width / 2.0; w > -width / 2.0; w -= ow)
+            {
+                for (float h = height / 2.0; h > -height / 2.0; h -= oh)
+                {
+                    float u = (w + width / 2.0) * rw;
+                    float v = (h + height / 2.0) * rh;
+
+                    plane.vertices.emplace_back(w, h + oh, 0.f);
+                    plane.vertices.emplace_back(w, h, 0.f);
+                    plane.vertices.emplace_back(w + ow, h, 0.f);
+                    plane.vertices.emplace_back(w + ow, h + oh, 0.f);
+
+                    plane.texCoords.emplace_back(u, v + ov);
+                    plane.texCoords.emplace_back(u, v);
+                    plane.texCoords.emplace_back(u + ou, v);
+                    plane.texCoords.emplace_back(u + ou, v + ov);
+
+                    plane.normals.emplace_back(0, 0, 1);
+                    plane.normals.emplace_back(0, 0, 1);
+                    plane.normals.emplace_back(0, 0, 1);
+                    plane.normals.emplace_back(0, 0, 1);
+
+                    plane.faces.push_back({ indexOffset + 0, indexOffset + 1, indexOffset + 2 });
+                    plane.faces.push_back({ indexOffset + 0, indexOffset + 2, indexOffset + 3 });
+
+                    indexOffset += 4;
+                }
+            }
+        }
         
-        plane.compute_normals(false); // fixme: this is broken for this geom
         plane.compute_tangents();
         plane.compute_bounds();
         
@@ -552,15 +583,11 @@ namespace avl
         {
             float t = (float)i / (float)numSegments;
             float3 point = curve.point(t);
-            
-            std::cout << point << std::endl;
-            
+           
             float3 tang = normalize(curve.derivative(t));
             float3 norm = float3(0.0f, 1.0f, 0.0f);
             float3 biNorm = cross(tang, norm);
-            
-            //std::cout << biNorm.x << ", " << biNorm.y << ", " << biNorm.z << std::endl;
-            
+
             int index = i * 2; // Slice idx
             
             plane.vertices[index] = point + float3(0, 0, 1); //biNorm;
