@@ -48,8 +48,8 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     basicShader = GlShader(default_color_vert, default_color_frag);
 
     sphereMesh = make_mesh_from_geometry(make_sphere(1.0f));
-    floor = make_cube_mesh();
-
+    //floor = make_cube_mesh();
+    floor = make_plane_mesh(48, 48, 1024, 1024);
     angle.resize(256);
 
     auto knot = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply");
@@ -101,14 +101,15 @@ void shader_workbench::on_update(const UpdateEvent & e)
         for (int i = 0; i < lights.size(); ++i)
         {
             auto & l = lights[i];
-            l.positionRadius.x += cos(angle[i] * l.positionRadius.w) * 0.5;
-            l.positionRadius.z += sin(angle[i] * l.positionRadius.w) * 0.5;
+            l.positionRadius.x += cos(angle[i] * l.positionRadius.w) * 0.25;
+            l.positionRadius.z += sin(angle[i] * l.positionRadius.w) * 0.25;
         }
     }
 }
 
 void shader_workbench::regenerate_lights(size_t numLights)
 {
+    lights.clear();
     float h = 1.f / (float) numLights;
     float val = 0.f;
     for (int i = 0; i < numLights; i++)
@@ -195,9 +196,9 @@ void shader_workbench::on_draw()
             clusteredShader.uniform("u_rcpViewportSize", float2(1.f / (float) width, 1.f / (float) height));
 
             {
-                float4x4 floorModel = make_scaling_matrix(float3(80, 0.1, 80));
-                floorModel = mul(make_translation_matrix(float3(0, -0.1, 0)), floorModel);
-
+                //float4x4 floorModel = make_scaling_matrix(float3(80, 0.1, 80));
+                //floorModel = mul(make_translation_matrix(float3(0, -0.1, 0)), floorModel);
+                float4x4 floorModel = make_rotation_matrix({ 1, 0, 0 }, ANVIL_PI / 2.f);
                 clusteredShader.uniform("u_modelMatrix", floorModel);
                 clusteredShader.uniform("u_modelMatrixIT", inverse(transpose(floorModel)));
                 floor.draw_elements();

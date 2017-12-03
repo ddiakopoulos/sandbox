@@ -73,6 +73,6 @@ void main()
 {
     vec4 tex = texture2D(s_outerTex, v_texcoord);
     float n = noise(u_time);
-    float v = pulse(u_time);
-    f_color = vec4(tex.rgb * colormap(v), tex.a);
+    float v = pulse(u_time + (gl_FragCoord.y / 150.0));
+    f_color = vec4(colormap(v), tex.a);
 }

@@ -173,7 +173,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Particle System Examp
         particleShader = std::move(shader);
     });
 
-    outerTex = load_image("../assets/images/particle.png");
+    outerTex = load_image("../assets/images/particle_alt_large.png");
     innerTex = load_image("../assets/images/blur_03.png");
 
     gizmo.reset(new GlGizmo());
@@ -242,6 +242,7 @@ void shader_workbench::on_draw()
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // one-one, additive
 
     float timeSeconds = timer.milliseconds().count() / 1000.f;
 
@@ -254,9 +255,10 @@ void shader_workbench::on_draw()
         glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        draw_scene(cam.get_eye_point(), viewProjectionMatrix);
+
         particleSystem->draw(viewMatrix, projectionMatrix, particleShader, outerTex, innerTex, timeSeconds);
 
-        draw_scene(cam.get_eye_point(), viewProjectionMatrix);
     }
 
     glDisable(GL_BLEND);

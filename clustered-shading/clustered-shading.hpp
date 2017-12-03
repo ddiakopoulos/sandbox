@@ -38,6 +38,14 @@
  * [5] https://www.3dgep.com/forward-plus/
  */
 
+// ToDo
+// [ ] Cluster Size Calculation
+// [ ] Circular Buffer Statistics
+// [ ] Compile-time tile/slice setting
+// [ ] Spotlights, area lights
+// [ ] Z slice distribution
+// [ ] Better constructor
+
 #ifndef clustered_shading_hpp
 #define clustered_shading_hpp
 
@@ -323,7 +331,7 @@ struct ClusteredShading
         // Update clustered lighting UBO
         glBindBufferBase(GL_UNIFORM_BUFFER, uniforms::clustered_lighting_buffer::binding, lightingBuffer);
         uniforms::clustered_lighting_buffer lighting = {};
-        for (int l = 0; l < lights.size(); l++) lighting.lights[l] = lights[l];
+        for (int l = 0, n = std::min<int>(lights.size(), uniforms::MAX_POINT_LIGHTS); l < n; l++) lighting.lights[l] = lights[l];
         lightingBuffer.set_buffer_data(sizeof(lighting), &lighting, GL_STREAM_DRAW);
 
         // Update Index Data
