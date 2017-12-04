@@ -8,7 +8,7 @@
 
 #include "util.hpp"
 
-#include "linalg_util.hpp"
+#include "math-common.hpp"
 #include <random>
 
 #if defined(ANVIL_PLATFORM_WINDOWS)

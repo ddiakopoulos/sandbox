@@ -3,8 +3,7 @@
 #ifndef scene_octree_hpp
 #define scene_octree_hpp
 
-#include "geometric.hpp"
-#include "linalg_util.hpp"
+#include "math-core.hpp"
 #include "gl-api.hpp"
 #include "util.hpp"
 #include "algo_misc.hpp"

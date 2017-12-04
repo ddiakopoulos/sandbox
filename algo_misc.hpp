@@ -2,10 +2,8 @@
 #define algo_misc_hpp
 
 #include "util.hpp"
+#include "math-core.hpp"
 #include <functional>
-#include "linalg_util.hpp"
-#include "geometric.hpp"
-#include "math_util.hpp"
 
 using namespace avl;
 

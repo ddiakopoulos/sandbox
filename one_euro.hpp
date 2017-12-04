@@ -3,7 +3,7 @@
 #ifndef one_euro_filter_h
 #define one_euro_filter_h
 
-#include "linalg_util.hpp"
+#include "math-common.hpp"
 
 // Quoted from https://hal.inria.fr/hal-00670496/file/CHI2012-casiez.pdf:
 // "To minimize jitter and lag when tracking human motion, the two parameters can be set using a simple

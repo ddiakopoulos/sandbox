@@ -5,7 +5,7 @@
 #ifndef poisson_disk_sampling_h
 #define poisson_disk_sampling_h
 
-#include "geometric.hpp"
+#include "math-spatial.hpp"
 #include "util.hpp"
 #include <functional>
 #include <vector>

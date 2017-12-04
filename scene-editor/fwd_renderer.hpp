@@ -5,12 +5,11 @@
 
 // http://efficientshading.com/2016/09/18/clustered-shading-in-the-wild/
 
-#include "linalg_util.hpp"
+#include "math-core.hpp"
 #include "simple_timer.hpp"
 #include "uniforms.hpp"
 #include "circular_buffer.hpp"
 #include "human_time.hpp"
-#include "projection-math.hpp"
 
 #include "gl-camera.hpp"
 #include "gl-async-gpu-timer.hpp"

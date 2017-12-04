@@ -1,8 +1,7 @@
 #ifndef procedural_sky_h
 #define procedural_sky_h
 
-#include "linalg_util.hpp"
-#include "math_util.hpp"
+#include "math-core.hpp"
 #include "util.hpp"
 #include "gl-api.hpp"
 #include "gl-procedural-mesh.hpp"
@@ -12,6 +11,7 @@
 #if defined(ANVIL_PLATFORM_WINDOWS)
 #pragma warning(push)
 #pragma warning(disable : 4244)
+#pragma warning(disable : 4305)
 #endif
 
 namespace

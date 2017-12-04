@@ -142,7 +142,7 @@ void shader_workbench::on_draw()
         for (auto & obj : objects)
         {
             litShader.uniform("u_modelMatrix", obj.matrix());
-            litShader.uniform("u_modelMatrixIT", inv(transpose(obj.matrix())));
+            litShader.uniform("u_modelMatrixIT", inverse(transpose(obj.matrix())));
             capsuleMesh.draw_elements();
         }
 
@@ -150,7 +150,7 @@ void shader_workbench::on_draw()
 
         billboardShader.bind();
         billboardShader.uniform("u_modelMatrix", sourcePose.matrix());
-        billboardShader.uniform("u_modelMatrixIT", inv(transpose(sourcePose.matrix())));
+        billboardShader.uniform("u_modelMatrixIT", inverse(transpose(sourcePose.matrix())));
         billboardShader.uniform("u_viewProj", viewProjectionMatrix);
         billboardShader.texture("s_billboard", 0, portalCameraRGB, GL_TEXTURE_2D);
         portalMesh.draw_elements();

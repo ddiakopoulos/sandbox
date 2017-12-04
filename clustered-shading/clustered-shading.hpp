@@ -49,10 +49,9 @@
 #ifndef clustered_shading_hpp
 #define clustered_shading_hpp
 
-#include "linalg_util.hpp"
+#include "math-core.hpp"
 #include "gl-api.hpp"
 #include "gl-mesh.hpp"
-#include "geometric.hpp"
 #include "geometry.hpp"
 
 using namespace avl;

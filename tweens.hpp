@@ -2,7 +2,7 @@
 #define animation_tweens_hpp
 
 #include "util.hpp"
-#include "linalg_util.hpp"
+#include "math-common.hpp"
 #include <list>
 #include <functional>
 #include <thread>

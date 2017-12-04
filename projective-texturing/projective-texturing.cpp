@@ -275,7 +275,7 @@ void shader_workbench::on_draw()
             projector.shader.uniform("u_viewProj", viewProjectionMatrix);
             projector.shader.uniform("u_projectorMatrix", projectorMatrix);
             projector.shader.uniform("u_modelMatrix", terrainModelMatrix);
-            projector.shader.uniform("u_modelMatrixIT", inv(transpose(terrainModelMatrix)));
+            projector.shader.uniform("u_modelMatrixIT", inverse(transpose(terrainModelMatrix)));
             projector.shader.texture("s_cookieTex", 0, *projector.cookieTexture, GL_TEXTURE_2D);
             projector.shader.texture("s_gradientTex", 1, *projector.gradientTexture, GL_TEXTURE_2D);
             terrainMesh.draw_elements();

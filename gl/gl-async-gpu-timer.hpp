@@ -16,7 +16,7 @@ class GlGpuTimer
     };
 
     GLsync sync;
-    GLuint activeIdx;
+    size_t activeIdx;
     std::vector<query_timer> queries;
 
 public:

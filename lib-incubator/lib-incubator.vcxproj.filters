@@ -28,6 +28,9 @@
     <Filter Include="source\gl-app\src">
       <UniqueIdentifier>{38363ae1-2d43-4362-a0f3-121895974a7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\math\core">
+      <UniqueIdentifier>{9dc4347b-d404-4cbd-9d9f-0867ab034cb1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\third_party\fontstash.h">
@@ -53,12 +56,6 @@
     </ClInclude>
     <ClInclude Include="..\third_party\tinyply.h">
       <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\geometric.hpp">
-      <Filter>source\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\math_util.hpp">
-      <Filter>source\math</Filter>
     </ClInclude>
     <ClInclude Include="..\one_euro.hpp">
       <Filter>source\math</Filter>
@@ -95,9 +92,6 @@
     </ClInclude>
     <ClInclude Include="..\third_party\imgui\imgui_internal.h">
       <Filter>third_party\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\linalg_util.hpp">
-      <Filter>source\math</Filter>
     </ClInclude>
     <ClInclude Include="..\poisson_disk.hpp">
       <Filter>source\math</Filter>
@@ -228,9 +222,6 @@
     <ClInclude Include="..\radix_sort.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\projection-math.hpp">
-      <Filter>source\math</Filter>
-    </ClInclude>
     <ClInclude Include="..\util.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
@@ -245,6 +236,24 @@
     </ClInclude>
     <ClInclude Include="..\octree.hpp">
       <Filter>source\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\math-core.hpp">
+      <Filter>source\math\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\math-euclidean.hpp">
+      <Filter>source\math\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\math-spatial.hpp">
+      <Filter>source\math\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\math-ray.hpp">
+      <Filter>source\math\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\math-projection.hpp">
+      <Filter>source\math\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\math-common.hpp">
+      <Filter>source\math\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

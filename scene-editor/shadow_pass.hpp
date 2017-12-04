@@ -4,7 +4,7 @@
 #define shadow_pass_hpp
 
 #include "util.hpp"
-#include "linalg_util.hpp"
+#include "math-core.hpp"
 #include "gl-api.hpp"
 #include "gl-imgui.hpp"
 #include "file_io.hpp"
@@ -79,7 +79,7 @@ struct StableCascadedShadowPass
             const float splitFar = C < splitIdx - 1 ? mix(near + (static_cast<float>(C + 1) / splitIdx) * (far - near),
                 near * pow(far / near, static_cast<float>(C + 1) / splitIdx), splitLambda) : far;
 
-            const float4x4 splitProjectionMatrix = make_perspective_matrix(vfov, aspectRatio, splitNear, splitFar);
+            const float4x4 splitProjectionMatrix = make_projection_matrix(vfov, aspectRatio, splitNear, splitFar);
 
             // Extract the frustum points
             float4 splitFrustumVerts[8] = {

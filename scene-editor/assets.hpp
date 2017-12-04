@@ -4,12 +4,11 @@
 #define vr_assets_hpp
 
 #include "util.hpp"
-#include "linalg_util.hpp"
+#include "math-core.hpp"
 #include "gl-api.hpp"
 #include "geometry.hpp"
 
 #include <memory>
-#include <vector>
 #include <unordered_map>
 
 template<typename T>

@@ -3,9 +3,8 @@
 #ifndef glfw_app_h
 #define glfw_app_h
 
-#include "string_utils.hpp"
-#include "linalg_util.hpp"
-#include "math_util.hpp"
+#include "util.hpp"
+#include "math-core.hpp"
 
 #include <thread>
 #include <chrono>
@@ -20,6 +19,11 @@
 
 #define GLFW_INCLUDE_GLU
 #include <GLFW/glfw3.h>
+
+#if defined(ANVIL_PLATFORM_WINDOWS)
+#pragma warning(push)
+#pragma warning(disable : 4800)
+#endif
 
 namespace avl
 {
@@ -119,5 +123,7 @@ namespace avl
 } // end namespace avl
 
 #endif
+
+#pragma warning(pop)
 
 #define IMPLEMENT_MAIN(...) namespace avl { int main(int argc, char * argv[]); } int main(int argc, char * argv[]) { return avl::Main(argc, argv); } int avl::Main(__VA_ARGS__)

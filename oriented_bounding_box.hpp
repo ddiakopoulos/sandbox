@@ -3,9 +3,7 @@
 #ifndef oriented_bounding_box_hpp
 #define oriented_bounding_box_hpp
 
-#include "linalg_util.hpp"
-#include "geometric.hpp"
-#include <vector>
+#include "math-core.hpp"
 #include <assert.h>
 
 namespace avl

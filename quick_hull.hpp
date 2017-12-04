@@ -14,8 +14,7 @@
 #define quick_hull_hpp
 
 #include "util.hpp"
-#include "linalg_util.hpp"
-#include "geometric.hpp"
+#include "math-core.hpp"
 #include <memory>
 #include <unordered_map>
 #include <array>

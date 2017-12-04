@@ -8,7 +8,7 @@
 #pragma warning(disable : 4244)
 #endif
 
-#include "math_util.hpp"
+#include "math-core.hpp"
 
 // http://mrob.com/pub/comp/xmorphia/
 // http://n-e-r-v-o-u-s.com/education/simulation/ethworkshop.php

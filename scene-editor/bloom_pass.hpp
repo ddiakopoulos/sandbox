@@ -4,7 +4,7 @@
 #define bloom_pass_hpp
 
 #include "util.hpp"
-#include "linalg_util.hpp"
+#include "math-common.hpp"
 #include "gl-api.hpp"
 #include "gl-async-pbo.hpp"
 #include "gl-imgui.hpp"

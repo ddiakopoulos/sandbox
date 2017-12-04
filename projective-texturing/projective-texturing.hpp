@@ -17,7 +17,7 @@ struct gl_material_projector
             const float halfSize = 1.0 * 0.5f;
             return mul(make_orthographic_matrix(-halfSize, halfSize, -halfSize, halfSize, -halfSize, halfSize), modelViewMatrix);
         }
-        return mul(make_perspective_matrix(to_radians(45.f), 1.0f, 0.1f, 16.f), modelViewMatrix);
+        return mul(make_projection_matrix(to_radians(45.f), 1.0f, 0.1f, 16.f), modelViewMatrix);
     }
 
     // Transforms a position into projective texture space.

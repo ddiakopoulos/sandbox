@@ -4,7 +4,7 @@
 #define vr_uniforms_hpp
 
 #include "util.hpp"
-#include "linalg_util.hpp"
+#include "math-common.hpp"
 
 using namespace avl;
 

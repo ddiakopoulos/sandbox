@@ -1,10 +1,8 @@
 #include "util.hpp"
 
 // Utilities
+#include "math-core.hpp"
 #include "string_utils.hpp"
-#include "geometric.hpp"
-#include "linalg_util.hpp"
-#include "math_util.hpp"
 #include "circular_buffer.hpp"
 #include "running_statistics.hpp"
 #include "human_time.hpp"
@@ -27,7 +25,6 @@
 #include "parallel_transport_frames.hpp"
 #include "simple_timer.hpp"
 #include "geometry.hpp"
-#include "projection-math.hpp"
 
 // OpenGL Rendering + Utilities
 #include "glfw-app.hpp"

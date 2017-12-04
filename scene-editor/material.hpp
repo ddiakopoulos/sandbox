@@ -4,8 +4,7 @@
 #define vr_material_hpp
 
 #include "gl-api.hpp"
-#include "linalg_util.hpp"
-#include "geometric.hpp"
+#include "math-core.hpp"
 #include "assets.hpp"
 
 namespace avl

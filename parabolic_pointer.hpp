@@ -8,10 +8,9 @@
 using namespace avl;
 
 #include "util.hpp"
-#include "linalg_util.hpp"
+#include "math-core.hpp"
 #include "solvers.hpp"
 #include "gl-api.hpp"
-#include "geometric.hpp"
 
 // Parabolic motion equation, y = p0 + v0*t + 1/2at^2
 inline float parabolic_curve(float p0, float v0, float a, float t) 
@@ -38,11 +37,6 @@ inline float3 parabolic_curve_derivative(float3 v0, float3 a, float t)
     return ret;
 }
 
-inline float3 project_onto_plane(const float3 planeNormal, const float3 vector)
-{
-    return vector - (dot(vector, planeNormal) * planeNormal);
-}
-
 inline bool linecast(const Bounds3D & b, const float3 & p1, const float3 & p2, float3 & hitPoint)
 {
     Ray r = between(p1, p2);
@@ -50,7 +44,7 @@ inline bool linecast(const Bounds3D & b, const float3 & p1, const float3 & p2, f
     float outT = 0.0f;
     float3 outNormal = {0, 0, 0};
 
-    if (intersect_ray_box(r, b, nullptr, &outT, &outNormal))
+    if (intersect_ray_box(r, b.min(), b.max(), nullptr, &outT, &outNormal))
     {
         hitPoint = r.calculate_position(outT);
         if (distance(hitPoint, p2) <= 1.0) return true; // Proximity check (ray could be far away -- is it consistent with the next point?)
@@ -107,7 +101,7 @@ inline float angle_between(float3 a, float3 b, float3 origin)
 float clamp_initial_velocity(const float3 origin, float3 & velocity, float3 & velocity_normalized) 
 {
     // Project the initial velocity onto the XZ plane.
-    float3 velocity_fwd = project_onto_plane(float3(0, 1, 0), velocity);
+    float3 velocity_fwd = project_on_plane(velocity, float3(0, 1, 0));
 
     // Find the angle between the XZ plane and the velocity
     float angle = to_degrees(angle_between(velocity_fwd, velocity, origin)); 

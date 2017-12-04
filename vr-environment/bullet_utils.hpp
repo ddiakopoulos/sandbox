@@ -3,8 +3,7 @@
 #ifndef bullet_utils_hpp
 #define bullet_utils_hpp
 
-#include "linalg_util.hpp"
-#include "geometric.hpp"
+#include "math-core.hpp"
 #include "btBulletCollisionCommon.h"
 
 using namespace avl;

@@ -1,7 +1,6 @@
 #include "fwd_renderer.hpp"
-
 #include "material.hpp"
-#include "geometric.hpp"
+#include "math-spatial.hpp"
 #include "geometry.hpp"
 
 // Update per-object uniform buffer

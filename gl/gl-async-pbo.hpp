@@ -4,7 +4,7 @@
 #define async_pbo_hpp
 
 #include "gl-api.hpp"
-#include "linalg_util.hpp"
+#include "math-common.hpp"
 
 struct AsyncRead1
 {

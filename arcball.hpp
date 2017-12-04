@@ -1,10 +1,8 @@
 #ifndef arcball_h
 #define arcball_h
 
-#include "linalg_util.hpp"
-#include "math_util.hpp"
+#include "math-core.hpp"
 #include "util.hpp"
-#include "geometric.hpp"
 #include "geometry.hpp"
 
 namespace avl

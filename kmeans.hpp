@@ -7,7 +7,7 @@
 #define kmeans_clustering_hpp
 
 #include "util.hpp"
-#include "linalg_util.hpp"
+#include "math-common.hpp"
 #include <assert.h>
 
 using namespace avl;

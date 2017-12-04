@@ -1,11 +1,9 @@
 #ifndef camera_h
 #define camera_h
 
-#include <vector>
-#include <array>
 #include "gl-api.hpp"
-#include "math_util.hpp"
-#include "geometric.hpp"
+#include "math-core.hpp"
+
 #include "stb/stb_image_write.h"
 
 namespace avl
@@ -267,7 +265,7 @@ namespace avl
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            auto projMatrix = make_perspective_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f); 
+            auto projMatrix = make_projection_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f); 
             for (int i = 0; i < 6; ++i)
             {
                 glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, faces[i].first, cubeMapHandle, 0);

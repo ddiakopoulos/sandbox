@@ -8,29 +8,6 @@
 #include <memory>
 #include <chrono>
 #include <mutex>
-#include "geometric.hpp"
-#include "linalg_util.hpp"
-
-#define ANVIL_PI            3.1415926535897931
-#define ANVIL_HALF_PI       1.5707963267948966
-#define ANVIL_QUARTER_PI    0.7853981633974483
-#define ANVIL_TWO_PI        6.2831853071795862
-#define ANVIL_TAU           ANVIL_TWO_PI
-#define ANVIL_INV_PI        0.3183098861837907
-#define ANVIL_INV_TWO_PI    0.1591549430918953
-#define ANVIL_INV_HALF_PI   0.6366197723675813
-
-#define ANVIL_DEG_TO_RAD    0.0174532925199433
-#define ANVIL_RAD_TO_DEG    57.295779513082321
-
-#define ANVIL_SQRT_2        1.4142135623730951
-#define ANVIL_INV_SQRT_2    0.7071067811865475
-#define ANVIL_LN_2          0.6931471805599453
-#define ANVIL_INV_LN_2      1.4426950408889634
-#define ANVIL_LN_10         2.3025850929940459
-#define ANVIL_INV_LN_10     0.43429448190325176
-
-#define ANVIL_GOLDEN        1.61803398874989484820
 
 #if (defined(__linux) || defined(__unix) || defined(__posix) || defined(__LINUX__) || defined(__linux__))
     #define ANVIL_PLATFORM_LINUX 1
@@ -70,13 +47,13 @@
 
 namespace avl
 {
-    class TryLocker
+    class try_locker
     {
         std::mutex & mutex;
-        bool locked = false;
+        bool locked{ false };
     public:
-        TryLocker(std::mutex & m) : mutex(m) { if (mutex.try_lock()) locked = true; }
-        virtual ~TryLocker() { if (locked) mutex.unlock(); }
+        try_locker(std::mutex & m) : mutex(m) { if (mutex.try_lock()) locked = true; }
+        ~try_locker() { if (locked) mutex.unlock(); }
         bool is_locked() const { return locked; }
     };
 
@@ -91,6 +68,7 @@ namespace avl
             std::cout << message << " completed in " << std::to_string((std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - t0).count() * 1000)) << " ms" << std::endl;
         }
     };
+
     class manual_timer
     {
         std::chrono::high_resolution_clock::time_point t0;
@@ -103,45 +81,13 @@ namespace avl
 
     #define AVL_SCOPED_TIMER(MESSAGE) scoped_timer scoped_timer ## __LINE__(MESSAGE)
 
-    struct ScreenSpaceAutoLayout
-    {
-        float aspectRatio { 1 };
-        URect placement { { 0,0 },{ 0,0 },{ 1,0 },{ 1,0 } };
-        Bounds2D bounds;
-
-        std::vector<std::shared_ptr<ScreenSpaceAutoLayout>> children;
-
-        void add_child(const URect & placement, std::shared_ptr<ScreenSpaceAutoLayout> child = std::make_shared<ScreenSpaceAutoLayout>())
-        {
-            child->placement = placement;
-            children.push_back(child);
-        }
-
-        void layout()
-        {
-            for (auto & child : children)
-            {
-                auto size = child->bounds.size();
-                child->bounds = child->placement.resolve(bounds);
-                auto childAspect = child->bounds.width() / child->bounds.height();
-                if (childAspect > 0)
-                {
-                    float xpadding = (1 - std::min((child->bounds.height() * childAspect) / child->bounds.width(), 1.0f)) / 2;
-                    float ypadding = (1 - std::min((child->bounds.width() / childAspect) / child->bounds.height(), 1.0f)) / 2;
-                    child->bounds = URect{ { xpadding, 0 },{ ypadding, 0 },{ 1 - xpadding, 0 },{ 1 - ypadding, 0 } }.resolve(child->bounds);
-                }
-                if (child->bounds.size() != size) child->layout();
-            }
-        }
-    };
-
     class UniformRandomGenerator
     {
         std::random_device rd;
         std::mt19937_64 gen;
         std::uniform_real_distribution<float> full { 0.f, 1.f };
         std::uniform_real_distribution<float> safe { 0.001f, 0.999f };
-        std::uniform_real_distribution<float> two_pi { 0.f, float(ANVIL_TWO_PI) };
+        std::uniform_real_distribution<float> two_pi { 0.f, float(6.2831853071795862) };
     public:
         UniformRandomGenerator() : rd(), gen(rd()) { }
         float random_float() { return full(gen); }

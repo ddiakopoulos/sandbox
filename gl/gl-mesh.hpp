@@ -1,9 +1,7 @@
 #ifndef gl_mesh_hpp
 #define gl_mesh_hpp
 
-#include "linalg_util.hpp"
-#include "math_util.hpp"
-#include "geometric.hpp"
+#include "math-core.hpp"
 #include "string_utils.hpp"
 #include "gl-api.hpp"
 #include "file_io.hpp"

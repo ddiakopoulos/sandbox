@@ -3,10 +3,9 @@
 #ifndef movement_tracker_hpp
 #define movement_tracker_hpp
 
-#include "linalg_util.hpp"
+#include "math-common.hpp"
 #include <deque>
 #include <utility>
-#include <vector>
 #include <memory>
 
 template<typename T>

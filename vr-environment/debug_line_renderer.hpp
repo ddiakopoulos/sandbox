@@ -3,7 +3,7 @@
 #ifndef debug_renderer_hpp
 #define debug_renderer_hpp
 
-#include "linalg_util.hpp"
+#include "math-core.hpp"
 #include "gl-api.hpp"
 #include "procedural_mesh.hpp"
 

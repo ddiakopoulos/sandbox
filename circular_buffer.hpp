@@ -5,11 +5,8 @@
 #ifndef circular_buffer_h
 #define circular_buffer_h
 
-#include <iostream>
-#include <vector>
-#include <numeric>
 #include <type_traits>
-#include "linalg_util.hpp"
+#include "math-core.hpp"
 
 using namespace avl;
 

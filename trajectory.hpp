@@ -8,10 +8,8 @@
 #ifndef trajectory_hpp
 #define trajectory_hpp
 
-#include <vector>
-#include <numeric>
 #include "util.hpp"
-#include "linalg_util.hpp"
+#include "math-core.hpp"
 #include "solvers.hpp"
 
 using namespace avl;

@@ -6,10 +6,8 @@
 #ifndef solvers_hpp
 #define solvers_hpp
 
-#include <vector>
-#include <numeric>
-#include "linalg_util.hpp"
 #include "util.hpp"
+#include "math-common.hpp"
 
 inline bool is_zero(double d) { return d > -double(1e-9) && d < double(1e-9); }
 

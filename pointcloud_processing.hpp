@@ -1,8 +1,7 @@
 #ifndef pointcloud_processing_hpp
 #define pointcloud_processing_hpp
 
-#include "linalg_util.hpp"
-#include "geometric.hpp"
+#include "math-core.hpp"
 #include <random>
 #include <utility>
 

@@ -6,12 +6,10 @@
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
 
-#include "linalg_util.hpp"
-#include "geometric.hpp"
+#include "math-core.hpp"
 #include "geometry.hpp"
 #include "bullet_utils.hpp"
 #include <functional>
-#include <vector>
 
 #include "bullet_object.hpp"
 

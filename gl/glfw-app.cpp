@@ -1,6 +1,6 @@
 #include "glfw-app.hpp"
 #include "util.hpp"
-#include "geometric.hpp"
+#include "math-spatial.hpp"
 #include "gl-api.hpp"
 
 using namespace avl;

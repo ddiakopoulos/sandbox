@@ -1,9 +1,7 @@
 #ifndef procedural_mesh_h
 #define procedural_mesh_h
 
-#include "linalg_util.hpp"
-#include "math_util.hpp"
-#include "geometric.hpp"
+#include "math-core.hpp"
 #include "splines.hpp"
 #include "geometry.hpp"
 #include "algo_misc.hpp"

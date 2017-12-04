@@ -7,11 +7,8 @@
 // William H. Press , Saul A. Teukolsky , William T. Vetterling , Brian P. Flannery, "Numerical Recipes in C: The Art of Scientific Computing,"
 // Cambridge University Press, New York, NY, 1992, Section 2.6 "Singular Value Decomposition."
 
-#include "linalg_util.hpp"
-
-#include <algorithm>
+#include "math-core.hpp"
 #include <assert.h>
-#include <vector>
 #include <iostream>
 #include <cmath>
 

@@ -4,11 +4,10 @@
 #define AVL_IMGUI_H
 
 #include <memory>
-#include <vector>
 #include <map>
 #include <string>
 
-#include "linalg_util.hpp"
+#include "math-common.hpp"
 #include "util.hpp"
 
 // Implicit casts for linalg types

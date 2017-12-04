@@ -5,7 +5,7 @@
 #ifndef constant_spline_h
 #define constant_spline_h
 
-#include "math_util.hpp"
+#include "math-core.hpp"
 
 namespace avl
 {

@@ -2,7 +2,7 @@
 #define parallel_transport_frames_hpp
 
 #include "util.hpp"
-#include "linalg_util.hpp"
+#include "math-common.hpp"
 #include "splines.hpp"
 
 // good ref: http://sunandblackcat.com/tipFullView.php?l=eng&topicid=4

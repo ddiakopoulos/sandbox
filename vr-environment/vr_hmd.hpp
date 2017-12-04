@@ -4,8 +4,7 @@
 #define vr_hmd_hpp
 
 #include "openvr/include/openvr.h"
-#include "linalg_util.hpp"
-#include "geometric.hpp"
+#include "math-core.hpp"
 #include "geometry.hpp"
 #include "gl-api.hpp"
 
