@@ -1,7 +1,13 @@
-﻿#pragma once
+﻿/*
+ * File: math-ray.hpp
+ * This header file defines the `Ray` value type and a number of intersection
+ * routines against geometric primitives (axis-aligned boxes, spheres, and triangles). 
+ */
 
-#ifndef ray_math_hpp
-#define ray_math_hpp
+#pragma once
+
+#ifndef math_ray_hpp
+#define math_ray_hpp
 
 #include "math-common.hpp"
 #include "math-spatial.hpp"
@@ -218,4 +224,4 @@ namespace avl
 
 }
 
-#endif
+#endif // end math_ray_hpp

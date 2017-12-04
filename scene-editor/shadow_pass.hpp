@@ -117,7 +117,7 @@ struct StableCascadedShadowPass
             const float3 minExtents = -maxExtents;
 
             const Pose cascadePose = look_at_pose_rh(frustumCentroid + lightDir * -minExtents.z, frustumCentroid);
-            const float4x4 splitViewMatrix = make_view_matrix_from_pose(cascadePose); 
+            const float4x4 splitViewMatrix = cascadePose.view_matrix();
 
             const float3 cascadeExtents = maxExtents - minExtents;
             float4x4 shadowProjectionMatrix = make_orthographic_matrix(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, cascadeExtents.z);

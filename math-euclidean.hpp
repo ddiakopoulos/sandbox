@@ -1,11 +1,17 @@
-﻿#pragma once
+﻿/*
+ * File: math-euclidean.hpp
+ * The name of this file might be slightly odd, but it defines commonly used geometric
+ * primitives such as axis-aligned bounding boxes in 2D and 3D, spheres, planes, segments,
+ * lines, and frustums. Although the functionality is not comprehensive between all
+ * primitive types, generally most of the common intersection types are provided. 
+ */
 
-#ifndef euclidean_hpp
-#define euclidean_hpp
+#pragma once
+
+#ifndef math_euclidean_hpp
+#define math_euclidean_hpp
 
 #include "math-common.hpp"
-
-// Geometric primitives and related helper functions (like intersections)
 
 namespace avl
 {
@@ -403,4 +409,4 @@ namespace avl
 
 }
 
-#endif // end euclidean_hpp
+#endif // end math_euclidean_hpp

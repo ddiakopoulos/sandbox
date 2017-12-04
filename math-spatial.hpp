@@ -1,74 +1,54 @@
-﻿#pragma once
+﻿/* 
+ * File: math-spatial.hpp
+ * This header file defines and implements data structures and algorithms 
+ * related to the affine transformation of 3D objects in space. Most of this
+ * codebase supports a right-handed, Y-up coordinate system, however some
+ * general utilities for converting between arbitrary coordinate systems
+ * are also provided. 
+ */
 
-#ifndef spatial_hpp
-#define spatial_hpp
+#pragma once
+
+#ifndef math_spatial_hpp
+#define math_spatial_hpp
 
 #include "math-common.hpp"
 
 namespace avl
 {
-    /////////////////////////////////////////////////
-    // Coordinate System Conversions and Utilities //
-    /////////////////////////////////////////////////
-  
-    // A value type representing an abstract direction vector in 3D space, independent of any coordinate system
-    enum class coord_axis { forward, back, left, right, up, down };
+    //////////
+    // Pose //
+    //////////
 
-    inline float dot(coord_axis a, coord_axis b)
+    // Rigid transformation value-type
+    struct Pose
     {
-        static float table[6][6]{ { +1,-1,0,0,0,0 },{ -1,+1,0,0,0,0 },{ 0,0,+1,-1,0,0 },{ 0,0,-1,+1,0,0 },{ 0,0,0,0,+1,-1 },{ 0,0,0,0,-1,+1 } };
-        return table[static_cast<int>(a)][static_cast<int>(b)];
-    }
+        float4      orientation;    // Orientation of an object, expressed as a rotation quaternion from the base orientation
+        float3      position;       // Position of an object, expressed as a translation vector from the base position
 
-    // A concrete 3D coordinate system with defined x, y, and z axes
-    struct coord_system
-    {
-        coord_axis x_axis, y_axis, z_axis;
-        float3 get_axis(coord_axis a) const { return{ dot(x_axis, a), dot(y_axis, a), dot(z_axis, a) }; }
-        float3 get_left() const { return get_axis(coord_axis::left); }
-        float3 get_right() const { return get_axis(coord_axis::right); }
-        float3 get_up() const { return get_axis(coord_axis::up); }
-        float3 get_down() const { return get_axis(coord_axis::down); }
-        float3 get_forward() const { return get_axis(coord_axis::forward); }
-        float3 get_back() const { return get_axis(coord_axis::back); }
+        Pose() : Pose({ 0,0,0,1 }, { 0,0,0 }) {}
+        Pose(const float4 & orientation, const float3 & position) : orientation(orientation), position(position) {}
+        explicit    Pose(const float4 & orientation) : Pose(orientation, { 0,0,0 }) {}
+        explicit    Pose(const float3 & position) : Pose({ 0,0,0,1 }, position) {}
+
+        Pose        inverse() const { auto invOri = qinv(orientation); return{ invOri, qrot(invOri, -position) }; }
+        float4x4    matrix() const { return { { qxdir(orientation),0 },{ qydir(orientation),0 },{ qzdir(orientation),0 },{ position,1 } }; }
+        float4x4    view_matrix() const { return inverse().matrix(); }
+        float3      xdir() const { return qxdir(orientation); } // Equivalent to transform_vector({1,0,0})
+        float3      ydir() const { return qydir(orientation); } // Equivalent to transform_vector({0,1,0})
+        float3      zdir() const { return qzdir(orientation); } // Equivalent to transform_vector({0,0,1})
+
+        float3      transform_vector(const float3 & vec) const { return qrot(orientation, vec); }
+        float3      transform_coord(const float3 & coord) const { return position + transform_vector(coord); }
+        float3      detransform_coord(const float3 & coord) const { return detransform_vector(coord - position); }    // Equivalent to inverse().transform_coord(coord), but faster
+        float3      detransform_vector(const float3 & vec) const { return qrot(qinv(orientation), vec); }             // Equivalent to inverse().transform_vector(vec), but faster
+
+        Pose        operator * (const Pose & pose) const { return{ qmul(orientation,pose.orientation), transform_coord(pose.position) }; }
     };
 
-    inline float4x4 coordinate_system_from_to(const coord_system & from, const coord_system & to) 
-    { 
-        return { 
-            { to.get_axis(from.x_axis), 0 },
-            { to.get_axis(from.y_axis), 0 },
-            { to.get_axis(from.z_axis), 0 },
-            { 0,0,0,1 } 
-        }; 
-    }
-
-    ///////////////////////////////////////
-    // Sphereical, Cartesian Coordinates //
-    ///////////////////////////////////////
-
-    // These functions adopt the physics convention (ISO):
-    // * (rho) r defined as the radial distance, 
-    // * (theta) θ defined as the the polar angle (inclination)
-    // * (phi) φ defined as the azimuthal angle (zenith)
-
-    // These conversion routines assume the following: 
-    // * the systems have the same origin
-    // * the spherical reference plane is the cartesian xy-plane
-    // * θ is inclination from the z direction
-    // * φ is measured from the cartesian x-axis (so that the y-axis has φ = +90°)
-
-    // theta ∈ [0, π], phi ∈ [0, 2π), rho ∈ [0, ∞)
-    inline float3 cartsesian_coord(float thetaRad, float phiRad, float rhoRad = 1.f) 
-    {
-        return float3(rhoRad * sin(thetaRad) * cos(phiRad), rhoRad * sin(phiRad) * sin(thetaRad), rhoRad * cos(thetaRad));
-    }
-
-    inline float3 spherical_coord(const float3 & coord)
-    {
-        const float radius = length(coord);
-        return float3(radius, std::acos(coord.z / radius), std::atan(coord.y / coord.x));
-    }
+    inline bool operator == (const Pose & a, const Pose & b) { return (a.position == b.position) && (a.orientation == b.orientation); }
+    inline bool operator != (const Pose & a, const Pose & b) { return (a.position != b.position) || (a.orientation != b.orientation); }
+    inline std::ostream & operator << (std::ostream & o, const Pose & r) { return o << "{" << r.position << ", " << r.orientation << "}"; }
 
     ////////////////////////////////////
     // Construct rotation quaternions //
@@ -278,8 +258,6 @@ namespace avl
     // Construct affine transformation matrices //
     //////////////////////////////////////////////
     
-    struct Pose;
-    
     inline float4x4 make_scaling_matrix(float scaling)
     {
         return {{scaling,0,0,0}, {0,scaling,0,0}, {0,0,scaling,0}, {0,0,0,1}};
@@ -328,112 +306,6 @@ namespace avl
     inline float3 transform_vector(const float4 & b, const float3 & a)
     {
         return qmul(b, float4(a, 1)).xyz();
-    }
-    
-    ///////////
-    // Poses //
-    ///////////
-
-    // Rigid transformation value-type
-    struct Pose
-    {
-        float4      orientation;                                    // Orientation of an object, expressed as a rotation quaternion from the base orientation
-        float3      position;                                       // Position of an object, expressed as a translation vector from the base position
-        
-        Pose()                                                      : Pose({0,0,0,1}, {0,0,0}) {}
-        Pose(const float4 & orientation, const float3 & position)   : orientation(orientation), position(position) {}
-        explicit    Pose(const float4 & orientation)                : Pose(orientation, {0,0,0}) {}
-        explicit    Pose(const float3 & position)                   : Pose({0,0,0,1}, position) {}
-        
-        Pose        inverse() const                                 { auto invOri = qinv(orientation); return{ invOri, qrot(invOri, -position) }; }
-        float4x4    matrix() const                                  { return make_rigid_transformation_matrix(orientation, position); }
-        float3      xdir() const                                    { return qxdir(orientation); } // Equivalent to transform_vector({1,0,0})
-        float3      ydir() const                                    { return qydir(orientation); } // Equivalent to transform_vector({0,1,0})
-        float3      zdir() const                                    { return qzdir(orientation); } // Equivalent to transform_vector({0,0,1})
-        
-        float3      transform_vector(const float3 & vec) const      { return qrot(orientation, vec); }
-        float3      transform_coord(const float3 & coord) const     { return position + transform_vector(coord); }
-        float3      detransform_coord(const float3 & coord) const   { return detransform_vector(coord - position); }    // Equivalent to inverse().transform_coord(coord), but faster
-        float3      detransform_vector(const float3 & vec) const    { return qrot(qinv(orientation), vec); }            // Equivalent to inverse().transform_vector(vec), but faster
-        
-        Pose        operator * (const Pose & pose) const            { return {qmul(orientation,pose.orientation), transform_coord(pose.position)}; }
-    };
-    
-    inline bool operator == (const Pose & a, const Pose & b)
-    {
-        return (a.position == b.position) && (a.orientation == b.orientation);
-    }
-
-    inline bool operator != (const Pose & a, const Pose & b)
-    {
-        return (a.position != b.position) || (a.orientation != b.orientation);
-    }
-
-    inline std::ostream & operator << (std::ostream & o, const Pose & r)
-    {
-        return o << "{" << r.position << ", " << r.orientation << "}";
-    }
-
-    inline float4x4 make_view_matrix_from_pose(const Pose & pose)
-    {
-        return pose.inverse().matrix();
-    }
-
-    // The long form of (a.inverse() * b) 
-    inline Pose make_pose_from_to(const Pose & a, const Pose & b)
-    {
-        Pose ret;
-        const auto inv = qinv(a.orientation);
-        ret.orientation = qmul(inv, b.orientation);
-        ret.position = qrot(inv, b.position - a.position);
-        return ret;
-    }
-
-    inline Pose look_at_pose_rh(float3 eyePoint, float3 target, float3 worldUp = { 0,1,0 })
-    {
-        Pose p;
-        float3 zDir = normalize(eyePoint - target);
-        float3 xDir = normalize(cross(worldUp, zDir));
-        float3 yDir = cross(zDir, xDir);
-        p.position = eyePoint;
-        p.orientation = normalize(make_rotation_quat_from_rotation_matrix({ xDir, yDir, zDir }));
-        return p;
-    }
-
-    inline Pose look_at_pose_lh(float3 eyePoint, float3 target, float3 worldUp = { 0,1,0 })
-    {
-        Pose p;
-        float3 zDir = normalize(target - eyePoint);
-        float3 xDir = normalize(cross(worldUp, zDir));
-        float3 yDir = cross(zDir, xDir);
-        p.position = eyePoint;
-        p.orientation = normalize(make_rotation_quat_from_rotation_matrix({xDir, yDir, zDir}));
-        return p;
-    }
-
-    // This is not even remotely correct for PTFs
-    inline Pose make_pose_from_transform_matrix(float4x4 & transform)
-    {
-        Pose p;
-        p.position = transform[3].xyz();
-        p.orientation = make_rotation_quat_from_rotation_matrix(get_rotation_submatrix(transform));
-        return p;
-    }
-
-    inline float4x4 make_projection_matrix(float l, float r, float b, float t, float n, float f)
-    {
-        return{ { 2 * n / (r - l),0,0,0 },{ 0,2 * n / (t - b),0,0 },{ (r + l) / (r - l),(t + b) / (t - b),-(f + n) / (f - n),-1 },{ 0,0,-2 * f*n / (f - n),0 } };
-    }
-
-    inline float4x4 make_projection_matrix(float vFovInRadians, float aspectRatio, float nearZ, float farZ)
-    {
-        const float top = nearZ * std::tan(vFovInRadians / 2.f), right = top * aspectRatio;
-        return make_projection_matrix(-right, right, -top, top, nearZ, farZ);
-    }
-
-    inline float4x4 make_orthographic_matrix(float l, float r, float b, float t, float n, float f)
-    {
-        return{ { 2 / (r - l),0,0,0 },{ 0,2 / (t - b),0,0 },{ 0,0,-2 / (f - n),0 },{ -(r + l) / (r - l),-(t + b) / (t - b),-(f + n) / (f - n),1 } };
     }
 
     //     | 1-2Nx^2   -2NxNy  -2NxNz  -2NxD |
@@ -492,6 +364,114 @@ namespace avl
         v = householder_mat[2].xyz();
     }
 
+    /////////////////////
+    // Construct Poses //
+    /////////////////////
+
+    // The long form of (a.inverse() * b) 
+    inline Pose make_pose_from_to(const Pose & a, const Pose & b)
+    {
+        Pose ret;
+        const auto inv = qinv(a.orientation);
+        ret.orientation = qmul(inv, b.orientation);
+        ret.position = qrot(inv, b.position - a.position);
+        return ret;
+    }
+
+    inline Pose look_at_pose_rh(float3 eyePoint, float3 target, float3 worldUp = { 0,1,0 })
+    {
+        Pose p;
+        float3 zDir = normalize(eyePoint - target);
+        float3 xDir = normalize(cross(worldUp, zDir));
+        float3 yDir = cross(zDir, xDir);
+        p.position = eyePoint;
+        p.orientation = normalize(make_rotation_quat_from_rotation_matrix({ xDir, yDir, zDir }));
+        return p;
+    }
+
+    inline Pose look_at_pose_lh(float3 eyePoint, float3 target, float3 worldUp = { 0,1,0 })
+    {
+        Pose p;
+        float3 zDir = normalize(target - eyePoint);
+        float3 xDir = normalize(cross(worldUp, zDir));
+        float3 yDir = cross(zDir, xDir);
+        p.position = eyePoint;
+        p.orientation = normalize(make_rotation_quat_from_rotation_matrix({ xDir, yDir, zDir }));
+        return p;
+    }
+
+    // tofix - this is not correct for parallel transport frames
+    inline Pose make_pose_from_transform_matrix(const float4x4 & transform)
+    {
+        Pose p;
+        p.position = transform[3].xyz();
+        p.orientation = make_rotation_quat_from_rotation_matrix(get_rotation_submatrix(transform));
+        return p;
+    }
+
+    /////////////////////////////////////////////////
+    // Coordinate System Conversions and Utilities //
+    /////////////////////////////////////////////////
+
+    // A value type representing an abstract direction vector in 3D space, independent of any coordinate system
+    enum class coord_axis { forward, back, left, right, up, down };
+
+    inline float dot(coord_axis a, coord_axis b)
+    {
+        static float table[6][6]{ { +1,-1,0,0,0,0 },{ -1,+1,0,0,0,0 },{ 0,0,+1,-1,0,0 },{ 0,0,-1,+1,0,0 },{ 0,0,0,0,+1,-1 },{ 0,0,0,0,-1,+1 } };
+        return table[static_cast<int>(a)][static_cast<int>(b)];
+    }
+
+    // A concrete 3D coordinate system with defined x, y, and z axes
+    struct coord_system
+    {
+        coord_axis x_axis, y_axis, z_axis;
+        float3 get_axis(coord_axis a) const { return{ dot(x_axis, a), dot(y_axis, a), dot(z_axis, a) }; }
+        float3 get_left() const { return get_axis(coord_axis::left); }
+        float3 get_right() const { return get_axis(coord_axis::right); }
+        float3 get_up() const { return get_axis(coord_axis::up); }
+        float3 get_down() const { return get_axis(coord_axis::down); }
+        float3 get_forward() const { return get_axis(coord_axis::forward); }
+        float3 get_back() const { return get_axis(coord_axis::back); }
+    };
+
+    inline float4x4 coordinate_system_from_to(const coord_system & from, const coord_system & to)
+    {
+        return{
+            { to.get_axis(from.x_axis), 0 },
+            { to.get_axis(from.y_axis), 0 },
+            { to.get_axis(from.z_axis), 0 },
+            { 0,0,0,1 }
+        };
+    }
+
+    ///////////////////////////////////////
+    // Sphereical, Cartesian Coordinates //
+    ///////////////////////////////////////
+
+    // These functions adopt the physics convention (ISO):
+    // * (rho) r defined as the radial distance, 
+    // * (theta) θ defined as the the polar angle (inclination)
+    // * (phi) φ defined as the azimuthal angle (zenith)
+
+    // These conversion routines assume the following: 
+    // * the systems have the same origin
+    // * the spherical reference plane is the cartesian xy-plane
+    // * θ is inclination from the z direction
+    // * φ is measured from the cartesian x-axis (so that the y-axis has φ = +90°)
+
+    // theta ∈ [0, π], phi ∈ [0, 2π), rho ∈ [0, ∞)
+    inline float3 cartsesian_coord(float thetaRad, float phiRad, float rhoRad = 1.f)
+    {
+        return float3(rhoRad * sin(thetaRad) * cos(phiRad), rhoRad * sin(phiRad) * sin(thetaRad), rhoRad * cos(thetaRad));
+    }
+
+    inline float3 spherical_coord(const float3 & coord)
+    {
+        const float radius = length(coord);
+        return float3(radius, std::acos(coord.z / radius), std::atan(coord.y / coord.x));
+    }
+
 }
 
-#endif // end spatial_hpp
+#endif // end math_spatial_hpp

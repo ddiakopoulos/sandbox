@@ -25,7 +25,7 @@ namespace avl
 
         float4x4 get_view_matrix() const 
         { 
-            return make_view_matrix_from_pose(pose); 
+            return pose.view_matrix();
         }
         
         float4x4 get_projection_matrix(float aspectRatio) const
@@ -269,7 +269,7 @@ namespace avl
             for (int i = 0; i < 6; ++i)
             {
                 glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, faces[i].first, cubeMapHandle, 0);
-                auto viewMatrix = make_view_matrix_from_pose(faces[i].second);
+                auto viewMatrix = faces[i].second.view_matrix();
 
                 if (render) render(eyePosition, viewMatrix, projMatrix);
             }

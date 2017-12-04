@@ -1,3 +1,13 @@
+/*
+ * File: math-common.hpp
+ * This file brings the linalg::aliases namespace into the codebase. It is used
+ * as a catch-all: we define useful mathematical constants and introduce a small
+ * number of vector functions mirroring their GLSL counterparts. Furthermore, some
+ * some common 1D functions are defined (like damped springs and sigmoids). 
+ */
+
+#pragma once
+
 #ifndef math_common_hpp
 #define math_common_hpp
 

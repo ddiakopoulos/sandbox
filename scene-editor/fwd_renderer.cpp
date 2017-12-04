@@ -223,7 +223,7 @@ void PhysicallyBasedRenderer::render_frame()
         if (settings.cameraCount == 2)
         {
             shadowView.pose.position = cameraWorldspace;
-            shadowView.viewMatrix = make_view_matrix_from_pose(shadowView.pose);
+            shadowView.viewMatrix = shadowView.pose.view_matrix();
             shadowView.viewProjMatrix = mul(shadowView.projectionMatrix, shadowView.viewMatrix);
         }
 
