@@ -154,9 +154,9 @@ PhysicallyBasedRenderer::PhysicallyBasedRenderer(const RendererSettings settings
     eyeDepthTextures.resize(settings.cameraCount);
 
     // Generate multisample render buffers for color and depth, attach to multi-sampled framebuffer target
-    glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], 4, GL_RGBA8, settings.renderSize.x, settings.renderSize.y);
+    glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[0], settings.msaaSamples, GL_RGBA8, settings.renderSize.x, settings.renderSize.y);
     glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffers[0]);
-    glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], 4, GL_DEPTH_COMPONENT, settings.renderSize.x, settings.renderSize.y);
+    glNamedRenderbufferStorageMultisampleEXT(multisampleRenderbuffers[1], settings.msaaSamples, GL_DEPTH_COMPONENT, settings.renderSize.x, settings.renderSize.y);
     glNamedFramebufferRenderbufferEXT(multisampleFramebuffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, multisampleRenderbuffers[1]);
 
     multisampleFramebuffer.check_complete();
@@ -164,9 +164,7 @@ PhysicallyBasedRenderer::PhysicallyBasedRenderer(const RendererSettings settings
     // Generate textures and framebuffers for `settings.cameraCount`
     for (int camIdx = 0; camIdx < settings.cameraCount; ++camIdx)
     {
-        glTextureImage2DEXT(eyeTextures[camIdx], GL_TEXTURE_2D, 0, GL_RGBA8, settings.renderSize.x, settings.renderSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(eyeTextures[camIdx], GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteriEXT(eyeTextures[camIdx], GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        eyeTextures[camIdx].setup(settings.renderSize.x, settings.renderSize.y, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, nullptr, false);
         glTextureParameteriEXT(eyeTextures[camIdx], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTextureParameteriEXT(eyeTextures[camIdx], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTextureParameteriEXT(eyeTextures[camIdx], GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
@@ -227,6 +225,7 @@ void PhysicallyBasedRenderer::render_frame()
     ViewData shadowAndCullingView = views[0];
     if (settings.cameraCount == 2)
     {
+        cpuProfiler.begin("center-view");
         // Take the mid-point between the eyes
         shadowAndCullingView.pose = Pose(views[0].pose.orientation, (views[0].pose.position + views[1].pose.position) * 0.5f);
 
@@ -240,6 +239,7 @@ void PhysicallyBasedRenderer::render_frame()
         // Regenerate the view matrix and near/far clip planes
         shadowAndCullingView.viewMatrix = inverse(mul(shadowAndCullingView.pose.matrix(), make_translation_matrix(centerOffsetZ)));
         near_far_clip_from_projection(shadowAndCullingView.projectionMatrix, shadowAndCullingView.nearClip, shadowAndCullingView.farClip);
+        cpuProfiler.end("center-view");
     }
 
     if (shadow->enabled)
@@ -285,6 +285,8 @@ void PhysicallyBasedRenderer::render_frame()
     std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(materialSortFunc)> renderQueueMaterial(materialSortFunc);
     std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(distanceSortFunc)> renderQueueDefault(distanceSortFunc);
 
+    cpuProfiler.begin("sort");
+
     for (auto obj : renderSet)
     {
         // Can't sort by material if the renderable doesn't *have* a material; bucket all other objects 
@@ -308,6 +310,8 @@ void PhysicallyBasedRenderer::render_frame()
         renderQueueDefault.pop();
         defaultRenderList.push_back(top);
     }
+
+    cpuProfiler.end("sort");
 
     for (int camIdx = 0; camIdx < settings.cameraCount; ++camIdx)
     {
@@ -335,7 +339,6 @@ void PhysicallyBasedRenderer::render_frame()
             gpuProfiler.begin("depth-prepass");
             run_depth_prepass(views[camIdx]);
             gpuProfiler.end("depth-prepass");
-
         }
 
         gpuProfiler.begin("forward pass");
