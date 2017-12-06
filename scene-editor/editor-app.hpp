@@ -195,6 +195,8 @@ struct scene_editor_app final : public GLFWApp
     FlyCameraController flycam;
     ShaderMonitor shaderMonitor { "../assets/" };
 
+    bool enableProfiling = true;
+
     Scene scene;
 
     std::unique_ptr<gui::ImGuiInstance> igm;

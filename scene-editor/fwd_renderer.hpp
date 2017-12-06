@@ -49,8 +49,7 @@ struct profiler
     uint32_t numSamples;
     profiler(uint32_t numSamplesToKeep = 15) : numSamples(numSamplesToKeep) { }
 
-    void enable() { enabled = true; }
-    void disable() { enabled = false; }
+    void set_enabled(bool newState) { enabled = newState; }
 
     void begin(const std::string & id)
     { 

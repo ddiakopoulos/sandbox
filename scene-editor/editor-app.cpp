@@ -488,8 +488,17 @@ void scene_editor_app::on_draw()
 
     gui::imgui_fixed_window_begin("Renderer", topLeftPane);
     {
-        for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[GPU] %s %f ms", t.first, compute_mean(t.second.average));
-        for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[CPU] %s %f ms", t.first, compute_mean(t.second.average));
+        if (ImGui::Checkbox("Enable Profiling", &enableProfiling))
+        {
+            renderer->gpuProfiler.set_enabled(enableProfiling);
+            renderer->cpuProfiler.set_enabled(enableProfiling);
+        }
+
+        if (enableProfiling)
+        {
+            for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[GPU] %s %f ms", t.first, compute_mean(t.second.average));
+            for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[CPU] %s %f ms", t.first, compute_mean(t.second.average));
+        }
 
         ImGui::Separator();
 
