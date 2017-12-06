@@ -297,13 +297,14 @@ void scene_editor_app::on_draw()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    const Pose cameraPose = cam.get_pose();
     const float4x4 projectionMatrix = cam.get_projection_matrix(float(width) / float(height));
     const float4x4 viewMatrix = cam.get_view_matrix();
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
     {
         // Single-viewport camera
-        renderer->add_camera(cam, 0);
+        renderer->add_camera(0, cameraPose, projectionMatrix);
 
         // Lighting
         for (auto & obj : scene.objects)

@@ -71,11 +71,10 @@ namespace avl
         return 1.0f / (projection[0][0] * (1.0f / projection[1][1]));
     }
 
-    inline float2 near_far_clip_from_projection(const float4x4 & projection)
+    inline void near_far_clip_from_projection(const float4x4 & projection, float & near, float & far)
     {
-        float near = projection[3][2] / (projection[2][2] - 1.0f);
-        float far = projection[3][2] / (1.0f + projection[2][2]);
-        return{ near, far };
+        near = projection[3][2] / (projection[2][2] - 1.0f);
+        far = projection[3][2] / (1.0f + projection[2][2]);
     }
 
     inline float get_focal_length(float vFoV)
@@ -126,17 +125,19 @@ namespace avl
         const float tanHalfFovHeight = max(leftFov.top, leftFov.bottom, rightFov.top, rightFov.bottom);
 
         // Double check that the near and far clip planes on both projections match
-        const float2 leftNF = near_far_clip_from_projection(leftProjection);
-        const float2 rightNF = near_far_clip_from_projection(rightProjection);
-        assert(leftNF == rightNF);
+        float leftNearClip, leftFarClip;
+        float rightNearClip, rightFarClip;
+        near_far_clip_from_projection(leftProjection, leftNearClip, leftFarClip);
+        near_far_clip_from_projection(rightProjection, rightNearClip, rightFarClip);
+        assert(leftNearClip == rightNearClip && leftFarClip == rightFarClip);
 
-        const float4x4 superfrustumProjection = make_projection_matrix(-tanHalfFovWidth, tanHalfFovWidth, -tanHalfFovHeight, tanHalfFovHeight, leftNF.x, leftNF.y);
+        const float4x4 superfrustumProjection = make_projection_matrix(-tanHalfFovWidth, tanHalfFovWidth, -tanHalfFovHeight, tanHalfFovHeight, leftNearClip, leftFarClip);
         const float superfrustumAspect = tanHalfFovWidth / tanHalfFovHeight;
         const float superfrustumvFoV = vfov_from_projection(superfrustumProjection);
 
         // Follows the technique outlined by Cass Everitt here: https://www.facebook.com/photo.php?fbid=10154006919426632&set=a.46932936631.70217.703211631&type=1&theater
         const float Nc = (interCameraDistance * 0.5f) * superfrustumProjection[0][0];
-        const float4x4 superfrustumProjectionFixed = make_projection_matrix(superfrustumvFoV, superfrustumAspect, leftNF.x + Nc, leftNF.y + Nc);
+        const float4x4 superfrustumProjectionFixed = make_projection_matrix(superfrustumvFoV, superfrustumAspect, leftNearClip + Nc, leftFarClip + Nc);
 
         outProjection = superfrustumProjectionFixed;
         outTranslation = float3(0, 0, Nc);

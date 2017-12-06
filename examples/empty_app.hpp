@@ -252,7 +252,6 @@ struct ExperimentalApp : public GLFWApp
         float4x4 combinedProjection = Identity4x4;
         float3 outTranslation = {};
         compute_center_view(projection, projection, 1.0f, combinedProjection, outTranslation);
-
         float4x4 centerViewProjection = mul(combinedProjection, inverse(mul(make_translation_matrix(cameraPosition), make_translation_matrix(outTranslation))));
 
         auto leftViewProj = mul(projection, left);

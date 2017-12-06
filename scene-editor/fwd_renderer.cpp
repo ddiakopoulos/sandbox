@@ -4,7 +4,7 @@
 #include "geometry.hpp"
 
 // Update per-object uniform buffer
-void PhysicallyBasedRenderer::update_per_object_uniform_buffer(Renderable * r, const ViewParameter & d)
+void PhysicallyBasedRenderer::update_per_object_uniform_buffer(Renderable * r, const ViewData & d)
 {
     uniforms::per_object object = {};
     object.modelMatrix = mul(r->get_pose().matrix(), make_scaling_matrix(r->get_scale()));
@@ -14,7 +14,21 @@ void PhysicallyBasedRenderer::update_per_object_uniform_buffer(Renderable * r, c
     perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
 }
 
-void PhysicallyBasedRenderer::run_depth_prepass(const ViewParameter & d)
+void PhysicallyBasedRenderer::add_camera(const uint32_t index, const Pose & p, const float4x4 & projectionMatrix)
+{
+    assert(uint32_t(index) <= settings.cameraCount);
+
+    ViewData v;
+    v.index = index;
+    v.pose = p;
+    v.viewMatrix = p.view_matrix();
+    v.projectionMatrix = projectionMatrix;
+    v.viewProjMatrix = mul(v.projectionMatrix, v.viewMatrix);
+    near_far_clip_from_projection(v.projectionMatrix, v.nearClip, v.farClip);
+    views[uint32_t(index)] = v;
+}
+
+void PhysicallyBasedRenderer::run_depth_prepass(const ViewData & d)
 {
     earlyZTimer.start();
 
@@ -28,22 +42,20 @@ void PhysicallyBasedRenderer::run_depth_prepass(const ViewParameter & d)
 
     auto & shader = earlyZPass.get();
     shader.bind();
-
     for (auto obj : renderSet)
     {
         update_per_object_uniform_buffer(obj, d);
         obj->draw();
     }
+    shader.unbind();
 
     // Restore color mask state
     glColorMask(colorMask[0], colorMask[1], colorMask[2], colorMask[3]);
 
-    shader.unbind();
-
     earlyZTimer.stop();
 }
 
-void PhysicallyBasedRenderer::run_skybox_pass(const ViewParameter & d)
+void PhysicallyBasedRenderer::run_skybox_pass(const ViewData & d)
 {
     if (!skybox) return;
 
@@ -55,7 +67,7 @@ void PhysicallyBasedRenderer::run_skybox_pass(const ViewParameter & d)
     if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
 }
 
-void PhysicallyBasedRenderer::run_shadow_pass(const ViewParameter & d)
+void PhysicallyBasedRenderer::run_shadow_pass(const ViewData & d)
 {
     shadow->update_cascades(d.viewMatrix,
         d.nearClip,
@@ -83,11 +95,14 @@ void PhysicallyBasedRenderer::run_shadow_pass(const ViewParameter & d)
     gl_check_error(__FILE__, __LINE__);
 }
 
-void PhysicallyBasedRenderer::run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const ViewParameter & d)
+void PhysicallyBasedRenderer::run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const ViewData & d)
 {
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glDepthMask(GL_FALSE); // depth already comes from the prepass
+    if (settings.useDepthPrepass)
+    {
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_FALSE); // depth already comes from the prepass
+    }
 
     for (auto r : renderQueueMaterial)
     {
@@ -108,10 +123,13 @@ void PhysicallyBasedRenderer::run_forward_pass(std::vector<Renderable *> & rende
         r->draw();
     }
 
-    glDepthMask(GL_TRUE); // cleanup state
+    if (settings.useDepthPrepass)
+    {
+        glDepthMask(GL_TRUE); // cleanup state
+    }
 }
 
-void PhysicallyBasedRenderer::run_post_pass(const ViewParameter & d)
+void PhysicallyBasedRenderer::run_post_pass(const ViewData & d)
 {
     GLboolean wasCullingEnabled = glIsEnabled(GL_CULL_FACE);
     GLboolean wasDepthTestingEnabled = glIsEnabled(GL_DEPTH_TEST);
@@ -131,7 +149,7 @@ void PhysicallyBasedRenderer::run_post_pass(const ViewParameter & d)
 
 PhysicallyBasedRenderer::PhysicallyBasedRenderer(const RendererSettings settings) : settings(settings)
 {
-    assert(settings.renderSize.x >= 0 && settings.renderSize.y >= 0);
+    assert(settings.renderSize.x > 0 && settings.renderSize.y > 0);
     assert(settings.cameraCount >= 1);
 
     views.resize(settings.cameraCount);
@@ -176,6 +194,11 @@ PhysicallyBasedRenderer::~PhysicallyBasedRenderer()
     timer.stop();
 }
 
+void PhysicallyBasedRenderer::update()
+{
+    // ... 
+}
+
 void PhysicallyBasedRenderer::render_frame()
 {
     renderLoopTimer.start();
@@ -207,27 +230,27 @@ void PhysicallyBasedRenderer::render_frame()
 
     shadowTimer.start();
 
-    // In VR, we create a virtual camera in between both eyes.
-    // todo - this is somewhat wrong since we need to actually create a superfrustum
-    // which is max(left, right)
-    float3 cameraWorldspace;
-    if (settings.cameraCount == 2) cameraWorldspace = (views[0].pose.position + views[1].pose.position) * 0.5f;
-    else cameraWorldspace = views[0].pose.position;
+    ViewData shadowAndCullingView = views[0];
+    if (settings.cameraCount == 2)
+    {
+        // Take the mid-point between the eyes
+        shadowAndCullingView.pose = Pose(views[0].pose.orientation, (views[0].pose.position + views[1].pose.position) * 0.5f);
+
+        // Compute the interocular distance
+        const float3 interocularDistance = views[1].pose.position - views[0].pose.position;
+
+        // Generate the superfrustum projection matrix and the value we need to move the midpoint in Z
+        float3 centerOffsetZ;
+        compute_center_view(views[0].projectionMatrix, views[1].projectionMatrix, interocularDistance.x, shadowAndCullingView.projectionMatrix, centerOffsetZ);
+
+        // Regenerate the view matrix and near/far clip planes
+        shadowAndCullingView.viewMatrix = inverse(mul(shadowAndCullingView.pose.matrix(), make_translation_matrix(centerOffsetZ)));
+        near_far_clip_from_projection(shadowAndCullingView.projectionMatrix, shadowAndCullingView.nearClip, shadowAndCullingView.farClip);
+    }
 
     if (shadow->enabled)
     {
-        // Default to the first camera
-        ViewParameter shadowView = views[0];
-
-        // regenerate the relevant matrices because we've already changed camera position
-        if (settings.cameraCount == 2)
-        {
-            shadowView.pose.position = cameraWorldspace;
-            shadowView.viewMatrix = shadowView.pose.view_matrix();
-            shadowView.viewProjMatrix = mul(shadowView.projectionMatrix, shadowView.viewMatrix);
-        }
-
-        run_shadow_pass(shadowView);
+        run_shadow_pass(shadowAndCullingView);
 
         for (int c = 0; c < uniforms::NUM_CASCADES; c++)
         {
@@ -246,10 +269,10 @@ void PhysicallyBasedRenderer::render_frame()
     perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
 
     // We follow the sorting strategy outlined here: http://realtimecollisiondetection.net/blog/?p=86
-    auto materialSortFunc = [cameraWorldspace](Renderable * lhs, Renderable * rhs)
+    auto materialSortFunc = [shadowAndCullingView](Renderable * lhs, Renderable * rhs)
     {
-        const float lDist = distance(cameraWorldspace, lhs->get_pose().position);
-        const float rDist = distance(cameraWorldspace, rhs->get_pose().position);
+        const float lDist = distance(shadowAndCullingView.pose.position, lhs->get_pose().position);
+        const float rDist = distance(shadowAndCullingView.pose.position, rhs->get_pose().position);
 
         // Sort by material (expensive shader state change)
         auto lid = lhs->get_material()->id();
@@ -260,10 +283,10 @@ void PhysicallyBasedRenderer::render_frame()
         return lDist < rDist;
     };
 
-    auto distanceSortFunc = [cameraWorldspace](Renderable * lhs, Renderable * rhs)
+    auto distanceSortFunc = [shadowAndCullingView](Renderable * lhs, Renderable * rhs)
     {
-        const float lDist = distance(cameraWorldspace, lhs->get_pose().position);
-        const float rDist = distance(cameraWorldspace, rhs->get_pose().position);
+        const float lDist = distance(shadowAndCullingView.pose.position, lhs->get_pose().position);
+        const float rDist = distance(shadowAndCullingView.pose.position, rhs->get_pose().position);
         return lDist < rDist;
     };
 
@@ -315,7 +338,11 @@ void PhysicallyBasedRenderer::render_frame()
         glClearNamedFramebufferfv(multisampleFramebuffer, GL_DEPTH, 0, &defaultDepth);
 
         // Execute the forward passes
-        run_depth_prepass(views[camIdx]);
+        if (settings.useDepthPrepass)
+        {
+            run_depth_prepass(views[camIdx]);
+        }
+
         run_skybox_pass(views[camIdx]);
         run_forward_pass(materialRenderList, defaultRenderList, views[camIdx]);
 

@@ -31,14 +31,14 @@ struct RendererSettings
 {
     uint32_t cameraCount = 1;
     uint32_t msaaSamples = 4;
-    float2 renderSize;
+    float2 renderSize{ 0, 0 };
     bool performanceProfiling = true;
-    bool useDepthPrepass = true;
+    bool useDepthPrepass = false;
 };
 
 class PhysicallyBasedRenderer
 {
-    struct ViewParameter
+    struct ViewData
     {
         uint32_t index;
         Pose pose;
@@ -64,7 +64,7 @@ class PhysicallyBasedRenderer
     GlBuffer perView;
     GlBuffer perObject;
 
-    std::vector<ViewParameter> views;
+    std::vector<ViewData> views;
 
     // MSAA 
     GlRenderbuffer multisampleRenderbuffers[2];
@@ -87,13 +87,13 @@ class PhysicallyBasedRenderer
     GlShaderHandle earlyZPass = { "depth-prepass" };
 
     // Update per-object uniform buffer
-    void update_per_object_uniform_buffer(Renderable * top, const ViewParameter & d);
+    void update_per_object_uniform_buffer(Renderable * top, const ViewData & d);
 
-    void run_depth_prepass(const ViewParameter & d);
-    void run_skybox_pass(const ViewParameter & d);
-    void run_shadow_pass(const ViewParameter & d);
-    void run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const ViewParameter & d);
-    void run_post_pass(const ViewParameter & d);
+    void run_depth_prepass(const ViewData & d);
+    void run_skybox_pass(const ViewData & d);
+    void run_shadow_pass(const ViewData & d);
+    void run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const ViewData & d);
+    void run_post_pass(const ViewData & d);
 
 public:
 
@@ -107,22 +107,10 @@ public:
     PhysicallyBasedRenderer(const RendererSettings settings);
     ~PhysicallyBasedRenderer();
 
+    void update();
     void render_frame();
 
-    void add_camera(const GlCamera & cam, const uint32_t index)
-    {
-        assert(index <= settings.cameraCount);
-        ViewParameter v;
-        v.index = index;
-        v.pose = cam.get_pose();
-        v.viewMatrix = cam.get_view_matrix();
-        v.projectionMatrix = cam.get_projection_matrix(settings.renderSize.x / settings.renderSize.y);
-        v.viewProjMatrix = mul(v.projectionMatrix, v.viewMatrix);
-        const float2 nearFar = near_far_clip_from_projection(v.projectionMatrix);
-        v.nearClip = nearFar.x;
-        v.farClip = nearFar.y;
-        views[index] = v;
-    }
+    void add_camera(const uint32_t index, const Pose & p, const float4x4 & projectionMatrix);
 
     void add_objects(const std::vector<Renderable *> & set)
     {
@@ -134,7 +122,7 @@ public:
         pointLights.push_back(light);
     }
 
-    void set_sunlight(uniforms::directional_light sun)
+    void set_sunlight(const uniforms::directional_light & sun)
     {
         sunlight = sun;
     }
@@ -158,7 +146,7 @@ public:
     {
         skybox = sky;
         sunlight.direction = sky->get_sun_direction();
-        sunlight.color = float3(1.f, 1.0f, 1.0f);
+        sunlight.color = float3(1.f);
         sunlight.amount = 1.0f;
     }
 
