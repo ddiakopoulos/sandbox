@@ -23,16 +23,8 @@ namespace avl
         float nearclip{ 0.01f };
         float farclip{ 64.f };
 
-        float4x4 get_view_matrix() const 
-        { 
-            return pose.view_matrix();
-        }
-        
-        float4x4 get_projection_matrix(float aspectRatio) const
-        {
-            const float4 f = make_frustum_coords(aspectRatio, nearclip, vfov);
-            return make_projection_matrix(f[3], f[1], f[2], f[0], nearclip, farclip);
-        }
+        float4x4 get_view_matrix() const { return pose.view_matrix(); }
+        float4x4 get_projection_matrix(float aspectRatio) const { return make_projection_matrix(vfov, aspectRatio, nearclip, farclip); }
 
         Pose get_pose() const { return pose; }
         Pose & get_pose() { return pose; }

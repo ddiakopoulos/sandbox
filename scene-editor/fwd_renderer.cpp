@@ -246,7 +246,6 @@ void PhysicallyBasedRenderer::render_frame()
     perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
 
     // We follow the sorting strategy outlined here: http://realtimecollisiondetection.net/blog/?p=86
-
     auto materialSortFunc = [cameraWorldspace](Renderable * lhs, Renderable * rhs)
     {
         const float lDist = distance(cameraWorldspace, lhs->get_pose().position);

@@ -7,25 +7,53 @@
 
 constexpr const char default_color_vert[] = R"(#version 330
     layout(location = 0) in vec3 vertex;
-    layout(location = 1) in vec3 normal;
     uniform mat4 u_mvp;
-    out vec3 v_normal;
     void main()
     {
         gl_Position = u_mvp * vec4(vertex.xyz, 1);
-        v_normal = normal;
     }
 )";
 
 constexpr const char default_color_frag[] = R"(#version 330
     out vec4 f_color;
-    uniform vec3 u_color;
-    in vec3 v_normal;
+    uniform vec4 u_color;
     void main()
     {
-        f_color = vec4(v_normal, 1);
+        f_color = u_color;
     }
 )";
+
+void draw_debug_frustum(GlShader * shader, const Frustum & f, const float4x4 & renderViewProjMatrix, const float4 & color)
+{
+    auto generated_frustum_corners = make_frustum_corners(f);
+
+    float3 ftl = generated_frustum_corners[0];
+    float3 fbr = generated_frustum_corners[1];
+    float3 fbl = generated_frustum_corners[2];
+    float3 ftr = generated_frustum_corners[3];
+    float3 ntl = generated_frustum_corners[4];
+    float3 nbr = generated_frustum_corners[5];
+    float3 nbl = generated_frustum_corners[6];
+    float3 ntr = generated_frustum_corners[7];
+
+    std::vector<float3> frustum_coords = {
+        ntl, ntr, ntr, nbr, nbr, nbl, nbl, ntl, // near quad
+        ntl, ftl, ntr, ftr, nbr, fbr, nbl, fbl, // between
+        ftl, ftr, ftr, fbr, fbr, fbl, fbl, ftl, // far quad
+    };
+
+    Geometry g;
+    for (auto & v : frustum_coords) g.vertices.push_back(v);
+    GlMesh mesh = make_mesh_from_geometry(g);
+    mesh.set_non_indexed(GL_LINES);
+
+    // Draw debug visualization 
+    shader->bind();
+    shader->uniform("u_mvp", mul(renderViewProjMatrix, Identity4x4));
+    shader->uniform("u_color", color);
+    mesh.draw_elements();
+    shader->unbind();
+}
 
 struct ExperimentalApp : public GLFWApp
 {
@@ -117,6 +145,35 @@ struct ExperimentalApp : public GLFWApp
         t.start();
     }
 
+    // https://computergraphics.stackexchange.com/questions/1736/vr-and-frustum-culling
+    void compute_center_view(const float4x4 & leftProjection, const float4x4 & rightProjection, const float interCameraDistance, float4x4 & outProjection, float3 & outTranslation)
+    {
+        FieldOfView leftFov = {};
+        FieldOfView rightFov = {};
+        get_tanspace_fov(leftProjection, leftFov);
+        get_tanspace_fov(rightProjection, rightFov);
+
+        // In the case of VR SDKs which provide asymmetric frusta, get their extents
+        const float tanHalfFovWidth = max(leftFov.left, leftFov.right, rightFov.left, rightFov.right);
+        const float tanHalfFovHeight = max(leftFov.top, leftFov.bottom, rightFov.top, rightFov.bottom);
+
+        // Double check that the near and far clip planes on both projections match
+        const float2 leftNF = near_far_clip_from_projection(leftProjection);
+        const float2 rightNF = near_far_clip_from_projection(rightProjection);
+        assert(leftNF == rightNF);
+
+        const float4x4 superfrustumProjection = make_projection_matrix(-tanHalfFovWidth, tanHalfFovWidth, -tanHalfFovHeight, tanHalfFovHeight, 0.5, leftNF.y);
+        const float superfrustumAspect = tanHalfFovWidth / tanHalfFovHeight;
+        const float superfrustumvFoV = vfov_from_projection(superfrustumProjection);
+
+        // Follows the technique outlined by Cass Everitt here: https://www.facebook.com/photo.php?fbid=10154006919426632&set=a.46932936631.70217.703211631&type=1&theater
+        const float Nc = (interCameraDistance * 0.5f) * superfrustumProjection[0][0];
+        const float4x4 superfrustumProjectionFixed =  make_projection_matrix(superfrustumvFoV, superfrustumAspect, 0.5 + Nc, leftNF.y + Nc);
+
+        outProjection = superfrustumProjectionFixed;
+        outTranslation = float3(0, 0, Nc);
+    }
+
     void on_window_resize(int2 size) override
     {
 
@@ -177,8 +234,6 @@ struct ExperimentalApp : public GLFWApp
         billboard.texture("s_noiseTex", 1, noise, GL_TEXTURE_2D);
         mesh.draw_elements();
         billboard.unbind();
-
-        if (gizmo) gizmo->draw();
     }
 
     void on_draw() override
@@ -207,7 +262,7 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 viewMatrix = debugCamera.get_view_matrix();
 
         glViewport(0, 0, width, height);
-        render_scene(viewMatrix, projectionMatrix);
+        //render_scene(viewMatrix, projectionMatrix);
 
         // Debug Views
         {
@@ -216,6 +271,27 @@ struct ExperimentalApp : public GLFWApp
             view.draw({{ 0, 0 }, { 256, 256 }}, float2(width, height), noise);
             glEnable(GL_DEPTH_TEST);
         }
+
+        auto cameraPosition = float3(xform.position.x, xform.position.y, xform.position.z);
+
+        auto left = inverse(make_translation_matrix({cameraPosition .x - 0.5f, cameraPosition.y, cameraPosition.z}));
+        auto right = inverse(make_translation_matrix({ cameraPosition.x + 0.5f, cameraPosition.y, cameraPosition.z }));
+        auto projection = make_projection_matrix(1.f, 1.f, 0.5, 20);
+
+        float4x4 combinedProjection = Identity4x4;
+        float3 outTranslation = {};
+        compute_center_view(projection, projection, 1.0f, combinedProjection, outTranslation);
+
+        float4x4 centerViewProjection = mul(combinedProjection, inverse(mul(make_translation_matrix(cameraPosition), make_translation_matrix(outTranslation))));
+
+        auto leftViewProj = mul(projection, left);
+        auto rightViewProj = mul(projection, right);
+
+        draw_debug_frustum(&basicShader, Frustum(leftViewProj), mul(projectionMatrix, viewMatrix), float4(0, 1, 0, 1));
+        draw_debug_frustum(&basicShader, Frustum(rightViewProj), mul(projectionMatrix, viewMatrix), float4(0, 0, 1, 1));
+        draw_debug_frustum(&basicShader, Frustum(centerViewProjection), mul(projectionMatrix, viewMatrix), float4(1, 0, 0, 1));
+
+        if (gizmo) gizmo->draw();
 
         gui->end_frame();
 

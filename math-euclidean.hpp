@@ -395,14 +395,14 @@ namespace avl
     {
         std::array<float3, 8> corners;
 
-        corners[0] = plane_intersection(f.planes[FrustumPlane::FAR], f.planes[FrustumPlane::TOP], f.planes[FrustumPlane::LEFT]);
-        corners[1] = plane_intersection(f.planes[FrustumPlane::FAR], f.planes[FrustumPlane::BOTTOM], f.planes[FrustumPlane::RIGHT]);
-        corners[2] = plane_intersection(f.planes[FrustumPlane::FAR], f.planes[FrustumPlane::BOTTOM], f.planes[FrustumPlane::LEFT]);
-        corners[3] = plane_intersection(f.planes[FrustumPlane::FAR], f.planes[FrustumPlane::TOP], f.planes[FrustumPlane::RIGHT]);
-        corners[4] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::TOP], f.planes[FrustumPlane::LEFT]);
-        corners[5] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::BOTTOM], f.planes[FrustumPlane::RIGHT]);
-        corners[6] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::BOTTOM], f.planes[FrustumPlane::LEFT]);
-        corners[7] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::TOP], f.planes[FrustumPlane::RIGHT]);
+        corners[0] = plane_intersection(f.planes[FrustumPlane::FAR],  f.planes[FrustumPlane::TOP],      f.planes[FrustumPlane::LEFT]);
+        corners[1] = plane_intersection(f.planes[FrustumPlane::FAR],  f.planes[FrustumPlane::BOTTOM],   f.planes[FrustumPlane::RIGHT]);
+        corners[2] = plane_intersection(f.planes[FrustumPlane::FAR],  f.planes[FrustumPlane::BOTTOM],   f.planes[FrustumPlane::LEFT]);
+        corners[3] = plane_intersection(f.planes[FrustumPlane::FAR],  f.planes[FrustumPlane::TOP],      f.planes[FrustumPlane::RIGHT]);
+        corners[4] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::TOP],      f.planes[FrustumPlane::LEFT]);
+        corners[5] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::BOTTOM],   f.planes[FrustumPlane::RIGHT]);
+        corners[6] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::BOTTOM],   f.planes[FrustumPlane::LEFT]);
+        corners[7] = plane_intersection(f.planes[FrustumPlane::NEAR], f.planes[FrustumPlane::TOP],      f.planes[FrustumPlane::RIGHT]);
 
         return corners;
     }

@@ -1,34 +1,34 @@
 #pragma once
 
 /*
- * This file implements a minimal viable implementation of clustered forward shading, 
+ * This file provides a minimal viable implementation of clustered forward shading, 
  * currently only supporting point light sources. Clustered forward shading is an 
- * improvement over Forward Plus and Tiled Deferred shading, but not as state-of-the-art as
- * Yuri O'Donnell's Tiled Light Trees (2017). A major benefit of these 'modern' forward
+ * improvement over `Forward Plus` and `Tiled Deferred` shading, but not as state-of-the-art as
+ * Yuri O'Donnell's `Tiled Light Trees` (2017). A major benefit of these modern forward
  * approaches is that transparency and MSAA "just works" and supports a large number
- * of dynamic lights, an ideal fit for the requirements of rendering for virtual reality.
+ * of dynamic lights (a good fit for the basis of a VR-ready renderer).
  * 
- * Clustered shading is not an ideal term for this technique, since it extends Forward 
- * Plus on the Z axis and does not perform clustering in the statistical meaning of 
- * the word. A traditional forward plus implementation requires a z-prepass and 
- * computes lists of lights affected a 2D lighting grid, often leveraging a compute 
- * shader to perform the necessary per-tile culling.
+ * Clustered shading is not an ideal term for this technique, since it extends the Forward Plus
+ * 2D tiling technique with an additional axis (i.e. z/depth) and does not perform clustering in the 
+ * statistical meaning of the word. A traditional Forward Plus implementation requires 
+ * a z-prepass and computes a lighting grid of affected scene geometry, commonly leveraging
+ * a compute shader to perform the necessary per-tile light culling.
  * 
- * This implementation is based on "Practical Clustered Shading (2012)" proposed
+ * This implementation is based on "Practical Clustered Shading" (2012) proposed
  * by Emil Persson, aka Humus. Light clustering is performed on the CPU and does 
  * not require a z-prepass. The viewing frustum is divided into a 3D grid of lights, 
- * where light-to-cluster assignment is performed in clipspace, sometimes called 
- * frustum voxels (froxels). Since VR experiences are often fragment-bound instead of 
- * vertex-bound, the lack of an extra z-prepass and compute shader theoretically enables
- * more GPU headroom for shading calculations. 
+ * where light-to-cluster assignment is performed in clipspace. When thinking in frustum units,
+ * this is sometimes refered to as a frustum-voxel space (froxels). Since VR experiences are
+ * often fragment-bound rather than vertex-bound, the omission of the z-prepass
+ * and compute shader theoretically enables more GPU headroom for shading calculations
+ * at the expense of increased CPU usage. 
  * 
- * The crux of clustered shading is to compute a tight froxel fit around light sources 
- * and pack this information in a way such that we can efficiently leverage 
- * the dynamic branching capabilities of newer GPUs. Clusters are available to the 
- * GPU as a 3D texture consisting of an offset to lighting indices affecting the 
- * cluster, and the number of lights. The lighting index buffer is a tightly packed 
- * array which stores an index value to the actual array of scene lights, sorted
- * by 3D cluster coordinate. 
+ * The crux of clustered shading is to compute a tight froxel fit around light sources,
+ * packing this information in a way such that the dynamic branching capabilities of newer GPUs
+ * can be efficiently leveraged. Clusters are available to the  GPU as a 3D texture consisting 
+ * of an offset to lighting indices affecting the cluster, and the number of lights. 
+ * The lighting index buffer is a tightly packed array which stores an index value to
+ * the actual array of scene lights, sorted by 3D cluster coordinate. 
  *
  * Useful References on Clustered Shading:
  * [1] http://www.humus.name/Articles/PracticalClusteredShading.pdf

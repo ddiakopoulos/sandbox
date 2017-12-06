@@ -39,7 +39,6 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     glfwWindowHint(GLFW_DEPTH_BITS, 24);
     glfwWindowHint(GLFW_STENCIL_BITS, 8);
     glfwWindowHint(GLFW_SAMPLES, glfwSamples);
-
     glfwWindowHint(GLFW_SRGB_CAPABLE, true);
     
 #if defined(ANVIL_PLATFORM_OSX)
@@ -183,8 +182,6 @@ void GLFWApp::main_loop()
     
     while (!glfwWindowShouldClose(window)) 
     {
-        glfwPollEvents();
-        
         for (auto & e : exceptions) on_uncaught_exception(e);
 
         try
@@ -211,6 +208,8 @@ void GLFWApp::main_loop()
 
             on_update(e);
             on_draw();
+
+            glfwPollEvents();
         }
         catch(...)
         {

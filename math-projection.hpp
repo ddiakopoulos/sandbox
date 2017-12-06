@@ -15,6 +15,11 @@
 
 namespace avl
 {
+    struct FieldOfView
+    {
+        float left, right, bottom, top, near, far;
+    };
+
     inline float4x4 make_projection_matrix(float l, float r, float b, float t, float n, float f)
     {
         return{ { 2 * n / (r - l),0,0,0 },{ 0,2 * n / (t - b),0,0 },{ (r + l) / (r - l),(t + b) / (t - b),-(f + n) / (f - n),-1 },{ 0,0,-2 * f*n / (f - n),0 } };
@@ -41,6 +46,18 @@ namespace avl
         projection[1][2] = c.y - projection[1][3];
         projection[2][2] = c.z - projection[2][3];
         projection[3][2] = c.w - projection[3][3];
+    }
+
+    inline void get_tanspace_fov(const float4x4 & projection, FieldOfView & fov)
+    {
+        fov.near = projection[3][2] / (projection[2][2] - 1.0f);
+        fov.far = projection[3][2] / (1.0f + projection[2][2]);
+
+        fov.left = fov.near * (projection[2][0] - 1.0f) / projection[0][0];
+        fov.right = fov.near * (1.0f + projection[2][0]) / projection[0][0];
+
+        fov.bottom = fov.near * (projection[2][1] - 1.0f) / projection[1][1];
+        fov.top = fov.near * (1.0f + projection[2][1]) / projection[1][1];
     }
 
     inline float vfov_from_projection(const float4x4 & projection)
@@ -94,46 +111,6 @@ namespace avl
     {
         return 2.f * atan(tan(hFoV / 2.f) / aspectRatio);
     }
-
-    inline float4 make_frustum_coords(float aspectRatio, float nearClip, float vFoV)
-    {
-        const float top = nearClip * std::tan(vFoV / 2.0f);
-        const float right = top * aspectRatio;
-        const float bottom = -top;
-        const float left = -right;
-        return{ top, right, bottom, left };
-    }
-
-    /*
-    // http://vrguy.blogspot.com/2013/05/what-is-binocular-overlap-and-why.html
-    // http://sensics.com/how-binocular-overlap-impacts-horizontal-field-of-view/
-    // https://www.reddit.com/r/oculus/comments/4at20n/field_of_view_for_vr_headsets_explained/
-    inline void debug_compute_binocular_overlap()
-    {
-        const float target_dfov = to_radians(100.f);
-        const float overlap_percent = 1.f;
-
-        const int horizontalAspect = std::ratio<1200, 1080>::num;
-        const int verticalAspect = std::ratio<1080, 1200>::num;
-
-        float diagonal_aspect = std::sqrt(pow(horizontalAspect, 2) + pow(verticalAspect, 2));
-        float hfov_original = 2.f * atan(tan(target_dfov / 2.f) * (horizontalAspect / diagonal_aspect));
-        float vfov = 2.f * atan(tan(target_dfov / 2.f) * (verticalAspect / diagonal_aspect));
-        float hfov_overlap = hfov_original * (2.f - overlap_percent);
-        float aspect_overlap = tan(hfov_overlap / 2.f) / tan(vfov / 2);
-        float diagonal_aspect_overlap = sqrt(pow(tan(hfov_overlap / 2.f), 2) + pow(verticalAspect, 2));
-        float dfov_overlap = 2.f * atan(tan(vfov / 2.f) * (diagonal_aspect_overlap / verticalAspect));
-
-        std::cout << "Target Field of View (Diagonal) : " << to_degrees(target_dfov) << std::endl;
-        std::cout << "Aspect Ratio (Diagonal)         : " << diagonal_aspect << std::endl;
-        std::cout << "Original Field of View (Horiz)  : " << to_degrees(hfov_original) << std::endl;
-        std::cout << "Field of View Overlap (Horiz)   : " << to_degrees(hfov_overlap) << std::endl;
-        std::cout << "Aspect Ratio Overlap            : " << aspect_overlap << std::endl;
-        std::cout << "Overlap Ratio (Diagonal)        : " << diagonal_aspect_overlap << std::endl;
-        std::cout << "Overlapping FoV (Diagonal)      : " << to_degrees(dfov_overlap) << std::endl;
-    }
-    */
-
 }
 
 #endif // end math_projection_hpp

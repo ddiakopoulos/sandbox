@@ -230,18 +230,6 @@ struct VRController final : public Renderable
     RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
 };
 
-struct VRHandsController final : public Renderable
-{
-    VRHandsController() { }
-    Pose get_pose() const override { return Pose(); }
-    void set_pose(const Pose & p) override { }
-    float3 get_scale() const override { return float3(); }
-    void set_scale(const float3 & s) override { }
-    Bounds3D get_bounds() const override { return Bounds3D(); }
-    Bounds3D get_world_bounds() const override { return Bounds3D(); }
-    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
-};
-
 struct TeleportDestination final : public Renderable
 {
     TeleportDestination() { }
@@ -266,21 +254,9 @@ struct Reticle final : public Renderable
     RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
 };
 
-struct VRCanvasNVG final : public Renderable
+struct TexturedQuad final : public Renderable
 {
-    VRCanvasNVG() { }
-    Pose get_pose() const override { return Pose(); }
-    void set_pose(const Pose & p) override { }
-    float3 get_scale() const override { return float3(); }
-    void set_scale(const float3 & s) override { }
-    Bounds3D get_bounds() const override { return Bounds3D(); }
-    Bounds3D get_world_bounds() const override { return Bounds3D(); }
-    RaycastResult raycast(const Ray & worldRay) const override { return{ false, -FLT_MAX,{ 0,0,0 } }; }
-};
-
-struct Billboard final : public Renderable
-{
-    Billboard() { }
+    TexturedQuad() { }
     Pose get_pose() const override { return Pose(); }
     void set_pose(const Pose & p) override { }
     float3 get_scale() const override { return float3(); }
