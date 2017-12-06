@@ -3,8 +3,6 @@
 #ifndef vr_renderer_hpp
 #define vr_renderer_hpp
 
-// http://efficientshading.com/2016/09/18/clustered-shading-in-the-wild/
-
 #include "math-core.hpp"
 #include "simple_timer.hpp"
 #include "uniforms.hpp"
@@ -36,6 +34,45 @@ struct RendererSettings
     bool useDepthPrepass = false;
 };
 
+template<typename T>
+struct profiler
+{
+    struct data_point
+    {
+        CircularBuffer<float> average;
+        T timer;
+    };
+
+    std::unordered_map<std::string, data_point> dataPoints;
+
+    bool enabled{ true };
+    uint32_t numSamples;
+    profiler(uint32_t numSamplesToKeep = 15) : numSamples(numSamplesToKeep) { }
+
+    void enable() { enabled = true; }
+    void disable() { enabled = false; }
+
+    void begin(const std::string & id)
+    { 
+        if (!enabled) return;
+        auto pt = dataPoints.insert({ id, {} });
+        if (pt.second == true) pt.first->second.average.resize(numSamples);
+        dataPoints[id].timer.start();
+    }
+
+    void end(const std::string & id) 
+    { 
+        if (!enabled) return;
+        dataPoints[id].timer.stop();
+    }
+
+    void collect()
+    {
+        if (!enabled) return;
+        for (auto & v : dataPoints) v.second.average.put(v.second.timer.elapsed_ms());
+    }
+};
+
 class PhysicallyBasedRenderer
 {
     struct ViewData
@@ -50,13 +87,6 @@ class PhysicallyBasedRenderer
     };
 
     RendererSettings settings;
-
-    GlGpuTimer earlyZTimer;
-    GlGpuTimer forwardTimer;
-    GlGpuTimer shadowTimer;
-    GlGpuTimer postTimer;
-    GlGpuTimer renderLoopTimer;
-    SimpleTimer renderLoopTimerCPU;
 
     SimpleTimer timer;
 
@@ -97,12 +127,8 @@ class PhysicallyBasedRenderer
 
 public:
 
-    CircularBuffer<float> earlyZAverage = { 3 };
-    CircularBuffer<float> forwardAverage = { 3 };
-    CircularBuffer<float> shadowAverage = { 3 };
-    CircularBuffer<float> postAverage = { 3 };
-    CircularBuffer<float> frameAverage = { 3 };
-    CircularBuffer<float> frameAverageCPU = { 3 };
+    profiler<SimpleTimer> cpuProfiler;
+    profiler<GlGpuTimer> gpuProfiler;
 
     PhysicallyBasedRenderer(const RendererSettings settings);
     ~PhysicallyBasedRenderer();

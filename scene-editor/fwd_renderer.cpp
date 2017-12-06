@@ -30,8 +30,6 @@ void PhysicallyBasedRenderer::add_camera(const uint32_t index, const Pose & p, c
 
 void PhysicallyBasedRenderer::run_depth_prepass(const ViewData & d)
 {
-    earlyZTimer.start();
-
     GLboolean colorMask[4];
     glGetBooleanv(GL_COLOR_WRITEMASK, &colorMask[0]);
 
@@ -51,8 +49,6 @@ void PhysicallyBasedRenderer::run_depth_prepass(const ViewData & d)
 
     // Restore color mask state
     glColorMask(colorMask[0], colorMask[1], colorMask[2], colorMask[3]);
-
-    earlyZTimer.stop();
 }
 
 void PhysicallyBasedRenderer::run_skybox_pass(const ViewData & d)
@@ -201,8 +197,8 @@ void PhysicallyBasedRenderer::update()
 
 void PhysicallyBasedRenderer::render_frame()
 {
-    renderLoopTimer.start();
-    renderLoopTimerCPU.start();
+    gpuProfiler.begin("renderloop");
+    cpuProfiler.begin("renderloop");
 
     // Renderer default state
     glEnable(GL_CULL_FACE);
@@ -228,8 +224,6 @@ void PhysicallyBasedRenderer::render_frame()
     GLfloat defaultColor[] = { 1.0f, 0.0f, 0.f, 1.0f };
     GLfloat defaultDepth = 1.f;
 
-    shadowTimer.start();
-
     ViewData shadowAndCullingView = views[0];
     if (settings.cameraCount == 2)
     {
@@ -250,7 +244,9 @@ void PhysicallyBasedRenderer::render_frame()
 
     if (shadow->enabled)
     {
+        gpuProfiler.begin("shadow pass");
         run_shadow_pass(shadowAndCullingView);
+        gpuProfiler.end("shadow pass");
 
         for (int c = 0; c < uniforms::NUM_CASCADES; c++)
         {
@@ -260,10 +256,6 @@ void PhysicallyBasedRenderer::render_frame()
             b.cascadesFar[c] = shadow->farPlanes[c];
         }
     }
-
-    shadowTimer.stop();
-
-    forwardTimer.start();
 
     // Per-scene can be uploaded now that the shadow pass has completed
     perScene.set_buffer_data(sizeof(b), &b, GL_STREAM_DRAW);
@@ -340,11 +332,16 @@ void PhysicallyBasedRenderer::render_frame()
         // Execute the forward passes
         if (settings.useDepthPrepass)
         {
+            gpuProfiler.begin("depth-prepass");
             run_depth_prepass(views[camIdx]);
+            gpuProfiler.end("depth-prepass");
+
         }
 
+        gpuProfiler.begin("forward pass");
         run_skybox_pass(views[camIdx]);
         run_forward_pass(materialRenderList, defaultRenderList, views[camIdx]);
+        gpuProfiler.end("forward pass");
 
         glDisable(GL_MULTISAMPLE);
 
@@ -364,42 +361,26 @@ void PhysicallyBasedRenderer::render_frame()
         gl_check_error(__FILE__, __LINE__);
     }
 
-    forwardTimer.stop();
-
     // Execute the post passes after having resolved the multisample framebuffers
     {
-        postTimer.start();
+        gpuProfiler.begin("postprocess");
         for (int camIdx = 0; camIdx < settings.cameraCount; ++camIdx)
         {
             run_post_pass(views[camIdx]);
         }
-        postTimer.stop();
+        gpuProfiler.end("postprocess");
     }
 
     glDisable(GL_FRAMEBUFFER_SRGB);
 
-    renderLoopTimer.stop();
+    gpuProfiler.end("renderloop");
+    cpuProfiler.end("renderloop");
+
+    gpuProfiler.collect();
+    cpuProfiler.collect();
 
     renderSet.clear();
     pointLights.clear();
-
-    // Compute frame GPU performance timing info
-    {
-        const float shadowMs = shadowTimer.elapsed_ms();
-        const float earlyZMs = earlyZTimer.elapsed_ms();
-        const float forwardMs = forwardTimer.elapsed_ms();
-        const float postMs = postTimer.elapsed_ms();
-        const float averageMs = renderLoopTimer.elapsed_ms();
-        const float averageCPU = renderLoopTimerCPU.milliseconds().count();
-        earlyZAverage.put(earlyZMs);
-        forwardAverage.put(forwardMs);
-        shadowAverage.put(shadowMs);
-        postAverage.put(postMs);
-        frameAverage.put(averageMs);
-        frameAverageCPU.put(averageCPU);
-    }
-
-    renderLoopTimerCPU.stop();
 
     gl_check_error(__FILE__, __LINE__);
 }

@@ -38,7 +38,7 @@ public:
 
     void stop() 
     {
-        reset();
+        pauseTime = current_time_point();
         isRunning = false;
     }
 
@@ -65,6 +65,7 @@ public:
     std::chrono::microseconds microseconds() const { return running_time<std::chrono::microseconds>(); }
     std::chrono::milliseconds milliseconds() const { return running_time<std::chrono::milliseconds>(); }
     std::chrono::seconds seconds() const { return running_time<std::chrono::seconds>(); }
+    double elapsed_ms() const { return milliseconds().count(); }
     bool is_running() { return isRunning; }
 };
 

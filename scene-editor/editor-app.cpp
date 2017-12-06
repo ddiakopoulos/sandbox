@@ -488,17 +488,15 @@ void scene_editor_app::on_draw()
 
     gui::imgui_fixed_window_begin("Renderer", topLeftPane);
     {
-        ImGui::Text("Shadow     %f ms", compute_mean(renderer->shadowAverage));
-        ImGui::Text("Early Z    %f ms", compute_mean(renderer->earlyZAverage));
-        ImGui::Text("Forward    %f ms", compute_mean(renderer->forwardAverage));
-        ImGui::Text("Post       %f ms", compute_mean(renderer->postAverage));
-        ImGui::Text("Frame      %f ms", compute_mean(renderer->frameAverage));
-        ImGui::Text("Frame CPU  %f ms", compute_mean(renderer->frameAverageCPU));
+        for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[GPU] %s \t %f ms", t.first, compute_mean(t.second.average));
+        for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[CPU] %s \t %f ms", t.first, compute_mean(t.second.average));
 
         ImGui::Separator();
 
         if (ImGui::TreeNode("Procedural Sky")) InspectGameObjectPolymorphic(nullptr, renderer->get_procedural_sky());
+
         if (ImGui::TreeNode("Bloom + Tonemap")) Edit("bloom", *renderer->get_bloom_pass());
+
         if (ImGui::TreeNode("Cascaded Shadow Mapping")) Edit("shadows", *renderer->get_shadow_pass());
 
         ImGui::Separator();
