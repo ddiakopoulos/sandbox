@@ -145,35 +145,6 @@ struct ExperimentalApp : public GLFWApp
         t.start();
     }
 
-    // https://computergraphics.stackexchange.com/questions/1736/vr-and-frustum-culling
-    void compute_center_view(const float4x4 & leftProjection, const float4x4 & rightProjection, const float interCameraDistance, float4x4 & outProjection, float3 & outTranslation)
-    {
-        FieldOfView leftFov = {};
-        FieldOfView rightFov = {};
-        get_tanspace_fov(leftProjection, leftFov);
-        get_tanspace_fov(rightProjection, rightFov);
-
-        // In the case of VR SDKs which provide asymmetric frusta, get their extents
-        const float tanHalfFovWidth = max(leftFov.left, leftFov.right, rightFov.left, rightFov.right);
-        const float tanHalfFovHeight = max(leftFov.top, leftFov.bottom, rightFov.top, rightFov.bottom);
-
-        // Double check that the near and far clip planes on both projections match
-        const float2 leftNF = near_far_clip_from_projection(leftProjection);
-        const float2 rightNF = near_far_clip_from_projection(rightProjection);
-        assert(leftNF == rightNF);
-
-        const float4x4 superfrustumProjection = make_projection_matrix(-tanHalfFovWidth, tanHalfFovWidth, -tanHalfFovHeight, tanHalfFovHeight, 0.5, leftNF.y);
-        const float superfrustumAspect = tanHalfFovWidth / tanHalfFovHeight;
-        const float superfrustumvFoV = vfov_from_projection(superfrustumProjection);
-
-        // Follows the technique outlined by Cass Everitt here: https://www.facebook.com/photo.php?fbid=10154006919426632&set=a.46932936631.70217.703211631&type=1&theater
-        const float Nc = (interCameraDistance * 0.5f) * superfrustumProjection[0][0];
-        const float4x4 superfrustumProjectionFixed =  make_projection_matrix(superfrustumvFoV, superfrustumAspect, 0.5 + Nc, leftNF.y + Nc);
-
-        outProjection = superfrustumProjectionFixed;
-        outTranslation = float3(0, 0, Nc);
-    }
-
     void on_window_resize(int2 size) override
     {
 
