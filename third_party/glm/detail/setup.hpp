@@ -1,11 +1,22 @@
 /// @ref core
 /// @file glm/detail/setup.hpp
 
-#pragma once
+#ifndef GLM_SETUP_INCLUDED
+
+#define GLM_VERSION_MAJOR			0
+#define GLM_VERSION_MINOR			9
+#define GLM_VERSION_PATCH			9
+#define GLM_VERSION_REVISION		0
+#define GLM_VERSION					990
+
+#define GLM_SETUP_INCLUDED GLM_VERSION
 
 #if defined(GLM_FORCE_SWIZZLE) && defined(GLM_FORCE_UNRESTRICTED_GENTYPE)
 #	error "Both GLM_FORCE_SWIZZLE and GLM_FORCE_UNRESTRICTED_GENTYPE can't be defined at the same time"
 #endif
+
+#include <cassert>
+#include <cstddef>
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Messages
@@ -19,18 +30,13 @@
 #	define GLM_MESSAGES GLM_MESSAGES_DISABLE
 #endif
 
-#include <cassert>
-#include <cstddef>
+///////////////////////////////////////////////////////////////////////////////////
+// Detect the platform
+
 #include "../simd/platform.h"
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Version
-
-#define GLM_VERSION					99
-#define GLM_VERSION_MAJOR			0
-#define GLM_VERSION_MINOR			9
-#define GLM_VERSION_PATCH			9
-#define GLM_VERSION_REVISION		0
 
 #if GLM_MESSAGES == GLM_MESSAGES_ENABLED && !defined(GLM_MESSAGE_VERSION_DISPLAYED)
 #	define GLM_MESSAGE_VERSION_DISPLAYED
@@ -497,7 +503,9 @@
 #		endif
 #	else
 #		define GLM_HAS_OPENMP 0
-#	endif// GLM_COMPILER & GLM_COMPILER_VC
+#	endif
+#else
+#	define GLM_HAS_OPENMP 0
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -505,8 +513,6 @@
 
 #if GLM_HAS_STATIC_ASSERT
 #	define GLM_STATIC_ASSERT(x, message) static_assert(x, message)
-#elif defined(BOOST_STATIC_ASSERT)
-#	define GLM_STATIC_ASSERT(x, message) BOOST_STATIC_ASSERT(x)
 #elif GLM_COMPILER & GLM_COMPILER_VC
 #	define GLM_STATIC_ASSERT(x, message) typedef char __CASSERT__##__LINE__[(x) ? 1 : -1]
 #else
@@ -591,6 +597,16 @@
 #	define GLM_MESSAGE_UNRESTRICTED_GENTYPE_DISPLAYED
 #	ifdef GLM_FORCE_UNRESTRICTED_GENTYPE
 #		pragma message("GLM: Use unrestricted genType")
+#	endif
+#endif//GLM_MESSAGES
+
+///////////////////////////////////////////////////////////////////////////////////
+// Force single only (remove explicit float64 types)
+
+#if GLM_MESSAGES == GLM_MESSAGES_ENABLED && !defined(GLM_MESSAGE_SINGLE_ONLY_DISPLAYED)
+#	define GLM_MESSAGE_SINGLE_ONLY_DISPLAYED
+#	ifdef GLM_FORCE_SINGLE_ONLY
+#		pragma message("GLM: Using only single precision floating-point types")
 #	endif
 #endif//GLM_MESSAGES
 
@@ -688,19 +704,13 @@
 
 #if GLM_HAS_DEFAULTED_FUNCTIONS
 #	define GLM_DEFAULT = default
-#	ifdef GLM_FORCE_NO_CTOR_INIT
-#		define GLM_DEFAULT_CTOR = default
-#	else
-#		define GLM_DEFAULT_CTOR
-#	endif
 #else
 #	define GLM_DEFAULT
-#	define GLM_DEFAULT_CTOR
 #endif
 
 #if GLM_HAS_CONSTEXPR || GLM_HAS_CONSTEXPR_PARTIAL
 #	define GLM_CONSTEXPR constexpr
-#	if GLM_COMPILER & GLM_COMPILER_VC // Visual C++ has a bug #594 https://github.com/g-truc/glm/issues/594
+#	if ((GLM_COMPILER & GLM_COMPILER_VC) && (GLM_COMPILER <= GLM_COMPILER_VC14)) // Visual C++ has a bug #594 https://github.com/g-truc/glm/issues/594
 #		define GLM_CONSTEXPR_CTOR
 #	else
 #		define GLM_CONSTEXPR_CTOR constexpr
@@ -733,9 +743,11 @@
 #define GLM_HAS_ALIGNED_TYPE GLM_HAS_UNRESTRICTED_UNIONS
 
 ///////////////////////////////////////////////////////////////////////////////////
-// Length type
+// Length type: all length functions returns a length_t type.
+// When GLM_FORCE_SIZE_T_LENGTH is defined, length_t is a typedef of size_t otherwise
+// length_t is a typedef of int like GLSL defines it.
 
-// User defines: GLM_FORCE_SIZE_T_LENGTH GLM_FORCE_SIZE_FUNC
+// User define: GLM_FORCE_SIZE_T_LENGTH
 
 namespace glm
 {
@@ -759,10 +771,6 @@ namespace glm
 ///////////////////////////////////////////////////////////////////////////////////
 // countof
 
-#ifndef __has_feature
-#	define __has_feature(x) 0 // Compatibility with non-clang compilers.
-#endif
-
 #if GLM_HAS_CONSTEXPR_PARTIAL
 	namespace glm
 	{
@@ -780,9 +788,10 @@ namespace glm
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////
-// Uninitialize constructors
+// Check inclusions of different versions of GLM
 
-namespace glm
-{
-	enum ctor{uninitialize};
-}//namespace glm
+#elif ((GLM_SETUP_INCLUDED != GLM_VERSION) && !defined(GLM_FORCE_IGNORE_VERSION))	
+#	error "GLM error: A different version of GLM is already included. Define GLM_FORCE_IGNORE_VERSION before including GLM headers to ignore this error."
+#elif GLM_SETUP_INCLUDED == GLM_VERSION
+
+#endif//GLM_SETUP_INCLUDED

@@ -1,22 +1,25 @@
 /// @ref gtx_matrix_decompose
 /// @file glm/gtx/matrix_decompose.inl
 
+#include "../gtc/constants.hpp"
+#include "../gtc/epsilon.hpp"
+
 namespace glm{
 namespace detail
 {
 	/// Make a linear combination of two vectors and return the result.
 	// result = (a * ascl) + (b * bscl)
-	template<typename T, precision P>
-	GLM_FUNC_QUALIFIER vec<3, T, P> combine(
-		vec<3, T, P> const & a, 
-		vec<3, T, P> const & b,
+	template<typename T, qualifier Q>
+	GLM_FUNC_QUALIFIER vec<3, T, Q> combine(
+		vec<3, T, Q> const& a, 
+		vec<3, T, Q> const& b,
 		T ascl, T bscl)
 	{
 		return (a * ascl) + (b * bscl);
 	}
 
-	template<typename T, precision P>
-	GLM_FUNC_QUALIFIER vec<3, T, P> scale(vec<3, T, P> const& v, T desiredLength)
+	template<typename T, qualifier Q>
+	GLM_FUNC_QUALIFIER vec<3, T, Q> scale(vec<3, T, Q> const& v, T desiredLength)
 	{
 		return v * desiredLength / length(v);
 	}
@@ -26,13 +29,13 @@ namespace detail
 	// http://www.opensource.apple.com/source/WebCore/WebCore-514/platform/graphics/transforms/TransformationMatrix.cpp
 	// Decomposes the mode matrix to translations,rotation scale components
 
-	template<typename T, precision P>
-	GLM_FUNC_QUALIFIER bool decompose(mat<4, 4, T, P> const & ModelMatrix, vec<3, T, P> & Scale, tquat<T, P> & Orientation, vec<3, T, P> & Translation, vec<3, T, P> & Skew, vec<4, T, P> & Perspective)
+	template<typename T, qualifier Q>
+	GLM_FUNC_QUALIFIER bool decompose(mat<4, 4, T, Q> const& ModelMatrix, vec<3, T, Q> & Scale, tquat<T, Q> & Orientation, vec<3, T, Q> & Translation, vec<3, T, Q> & Skew, vec<4, T, Q> & Perspective)
 	{
-		mat<4, 4, T, P> LocalMatrix(ModelMatrix);
+		mat<4, 4, T, Q> LocalMatrix(ModelMatrix);
 
 		// Normalize the matrix.
-		if(LocalMatrix[3][3] == static_cast<T>(0))
+		if(epsilonEqual(LocalMatrix[3][3], static_cast<T>(0), epsilon<T>()))
 			return false;
 
 		for(length_t i = 0; i < 4; ++i)
@@ -41,21 +44,24 @@ namespace detail
 
 		// perspectiveMatrix is used to solve for perspective, but it also provides
 		// an easy way to test for singularity of the upper 3x3 component.
-		mat<4, 4, T, P> PerspectiveMatrix(LocalMatrix);
+		mat<4, 4, T, Q> PerspectiveMatrix(LocalMatrix);
 
 		for(length_t i = 0; i < 3; i++)
 			PerspectiveMatrix[i][3] = static_cast<T>(0);
 		PerspectiveMatrix[3][3] = static_cast<T>(1);
 
 		/// TODO: Fixme!
-		if(determinant(PerspectiveMatrix) == static_cast<T>(0))
+		if(epsilonEqual(determinant(PerspectiveMatrix), static_cast<T>(0), epsilon<T>()))
 			return false;
 
 		// First, isolate perspective.  This is the messiest.
-		if(LocalMatrix[0][3] != static_cast<T>(0) || LocalMatrix[1][3] != static_cast<T>(0) || LocalMatrix[2][3] != static_cast<T>(0))
+		if(
+			epsilonNotEqual(LocalMatrix[0][3], static_cast<T>(0), epsilon<T>()) || 
+			epsilonNotEqual(LocalMatrix[1][3], static_cast<T>(0), epsilon<T>()) || 
+			epsilonNotEqual(LocalMatrix[2][3], static_cast<T>(0), epsilon<T>()))
 		{
 			// rightHandSide is the right hand side of the equation.
-			vec<4, T, P> RightHandSide;
+			vec<4, T, Q> RightHandSide;
 			RightHandSide[0] = LocalMatrix[0][3];
 			RightHandSide[1] = LocalMatrix[1][3];
 			RightHandSide[2] = LocalMatrix[2][3];
@@ -64,8 +70,8 @@ namespace detail
 			// Solve the equation by inverting PerspectiveMatrix and multiplying
 			// rightHandSide by the inverse.  (This is the easiest way, not
 			// necessarily the best.)
-			mat<4, 4, T, P> InversePerspectiveMatrix = glm::inverse(PerspectiveMatrix);//   inverse(PerspectiveMatrix, inversePerspectiveMatrix);
-			mat<4, 4, T, P> TransposedInversePerspectiveMatrix = glm::transpose(InversePerspectiveMatrix);//   transposeMatrix4(inversePerspectiveMatrix, transposedInversePerspectiveMatrix);
+			mat<4, 4, T, Q> InversePerspectiveMatrix = glm::inverse(PerspectiveMatrix);//   inverse(PerspectiveMatrix, inversePerspectiveMatrix);
+			mat<4, 4, T, Q> TransposedInversePerspectiveMatrix = glm::transpose(InversePerspectiveMatrix);//   transposeMatrix4(inversePerspectiveMatrix, transposedInversePerspectiveMatrix);
 
 			Perspective = TransposedInversePerspectiveMatrix * RightHandSide;
 			//  v4MulPointByMatrix(rightHandSide, transposedInversePerspectiveMatrix, perspectivePoint);
@@ -77,19 +83,19 @@ namespace detail
 		else
 		{
 			// No perspective.
-			Perspective = vec<4, T, P>(0, 0, 0, 1);
+			Perspective = vec<4, T, Q>(0, 0, 0, 1);
 		}
 
 		// Next take care of translation (easy).
-		Translation = vec<3, T, P>(LocalMatrix[3]);
-		LocalMatrix[3] = vec<4, T, P>(0, 0, 0, LocalMatrix[3].w);
+		Translation = vec<3, T, Q>(LocalMatrix[3]);
+		LocalMatrix[3] = vec<4, T, Q>(0, 0, 0, LocalMatrix[3].w);
 
-		vec<3, T, P> Row[3], Pdum3;
+		vec<3, T, Q> Row[3], Pdum3;
 
 		// Now get scale and shear.
 		for(length_t i = 0; i < 3; ++i)
-			for(int j = 0; j < 3; ++j)
-				Row[i][j] = LocalMatrix[i][j];
+		for(length_t j = 0; j < 3; ++j)
+			Row[i][j] = LocalMatrix[i][j];
 
 		// Compute X scale factor and normalize first row.
 		Scale.x = length(Row[0]);// v3Length(Row[0]);
