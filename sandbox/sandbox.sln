@@ -8,7 +8,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libincubator", "..\lib-incu
 		{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC} = {BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw3", "..\third_party\glfw-3.1.2\glfw3.vcxproj", "{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw3", "..\third_party\glfw3\glfw3.vcxproj", "{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vr-environment", "..\vr-environment\vr-environment.vcxproj", "{8935AE6A-79E7-421D-B215-C1DEEB35EBA3}"
 EndProject
