@@ -21,14 +21,7 @@ class GlGpuTimer
 
 public:
 
-    GlGpuTimer() { }
-
-    ~GlGpuTimer()
-    {
-        for (size_t i = 0; i<queries.size(); ++i) glDeleteQueries(2, &queries[i].start);
-    }
-
-    void init()
+    GlGpuTimer() 
     {
         const int default_size = 5;
         queries.reserve(default_size);
@@ -44,6 +37,11 @@ public:
             qt.in_use = false;
             queries.push_back(qt);
         }
+    }
+
+    ~GlGpuTimer()
+    {
+        for (size_t i = 0; i<queries.size(); ++i) glDeleteQueries(2, &queries[i].start);
     }
 
     void start()

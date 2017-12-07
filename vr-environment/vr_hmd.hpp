@@ -62,7 +62,7 @@ public:
     std::shared_ptr<ControllerRenderData> renderData;
 };
 
-class OpenVR_HMD
+class OpenVR_HMD 
 {
     vr::IVRSystem * hmd = nullptr;
     vr::IVRRenderModels * renderModels = nullptr;
@@ -96,7 +96,7 @@ public:
 
     uint2 get_recommended_render_target_size() { return renderTargetSize; }
 
-    float4x4 get_proj_matrix(vr::Hmd_Eye eye, float near_clip, float far_clip) { return transpose(reinterpret_cast<const float4x4 &>(hmd->GetProjectionMatrix(eye, near_clip, far_clip, vr::API_OpenGL))); }
+    float4x4 get_proj_matrix(vr::Hmd_Eye eye, float near_clip, float far_clip) { return transpose(reinterpret_cast<const float4x4 &>(hmd->GetProjectionMatrix(eye, near_clip, far_clip))); }
 
     Pose get_eye_pose(vr::Hmd_Eye eye) { return get_hmd_pose() * make_pose(hmd->GetEyeToHeadTransform(eye)); }
 

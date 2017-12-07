@@ -12,22 +12,26 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR Sandbox")
     igm.reset(new gui::ImGuiInstance(window));
     gui::make_dark_theme();
 
-    gpuTimer.init();
     cameraController.set_camera(&debugCam);
+
+    // Initialize Bullet physics
+    setup_physics();
 
     try
     {
         hmd.reset(new OpenVR_HMD());
         const uint2 targetSize = hmd->get_recommended_render_target_size();
         glfwSwapInterval(0);
+
+        auto controllerRenderModel = hmd->get_controller_render_data();
+        scene.leftController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller(vr::TrackedControllerRole_LeftHand), controllerRenderModel));
+        scene.rightController.reset(new MotionControllerVR(physicsEngine, hmd->get_controller(vr::TrackedControllerRole_RightHand), controllerRenderModel));
     }
     catch (const std::exception & e)
     {
         std::cout << "OpenVR Exception: " << e.what() << std::endl;
     }
 
-    // Initialize Bullet physics
-    setup_physics();
 
     gl_check_error(__FILE__, __LINE__);
 }

@@ -129,7 +129,7 @@ void OpenVR_HMD::update()
             {
             case vr::TrackedControllerRole_LeftHand:
             {
-                if (hmd->GetControllerState(i, &controllerState))
+                if (hmd->GetControllerState(i, &controllerState, sizeof(controllerState)))
                 {
                     controllers[0].trigger.update(!!(controllerState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger)));
                     controllers[0].pad.update(!!(controllerState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad)));
@@ -141,7 +141,7 @@ void OpenVR_HMD::update()
             }
             case vr::TrackedControllerRole_RightHand:
             {
-                if (hmd->GetControllerState(i, &controllerState))
+                if (hmd->GetControllerState(i, &controllerState, sizeof(controllerState)))
                 {
                     controllers[1].trigger.update(!!(controllerState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger)));
                     controllers[1].pad.update(!!(controllerState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad)));
@@ -160,10 +160,10 @@ void OpenVR_HMD::update()
 
 void OpenVR_HMD::submit(const GLuint leftEye, const GLuint rightEye)
 {
-    const vr::Texture_t leftTex = { (void*)(intptr_t) leftEye, vr::API_OpenGL, vr::ColorSpace_Gamma };
+    const vr::Texture_t leftTex = { (void*)(intptr_t) leftEye, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
     vr::VRCompositor()->Submit(vr::Eye_Left, &leftTex);
 
-    const vr::Texture_t rightTex = { (void*)(intptr_t) rightEye, vr::API_OpenGL, vr::ColorSpace_Gamma };
+    const vr::Texture_t rightTex = { (void*)(intptr_t) rightEye, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
     vr::VRCompositor()->Submit(vr::Eye_Right, &rightTex);
 
     glFlush();
