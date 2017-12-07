@@ -13,7 +13,7 @@ namespace gli
 	/// Cube map array texture sampler
 	/// @tparam T Sampler can fetch, write and interpret any texture format but will expose and process the data through type T conversions.
 	/// @tparam P Precision in term of ULPs
-	template <typename T, precision P = defaultp>
+	template <typename T, qualifier P = defaultp>
 	class sampler_cube_array : public sampler
 	{
 	private:

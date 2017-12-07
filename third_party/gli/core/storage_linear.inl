@@ -174,7 +174,7 @@ namespace gli
 		size_type BaseFace, size_type MaxFace,
 		size_type BaseLevel, size_type MaxLevel) const
 	{
-		GLI_ASSERT(BaseFace >= 0 && MaxFace < this->faces());
+		GLI_ASSERT(MaxFace >= 0 && MaxFace < this->faces());
 		GLI_ASSERT(BaseFace >= 0 && BaseFace < this->faces());
 		GLI_ASSERT(MaxLevel >= 0 && MaxLevel < this->levels());
 		GLI_ASSERT(BaseLevel >= 0 && BaseLevel < this->levels());

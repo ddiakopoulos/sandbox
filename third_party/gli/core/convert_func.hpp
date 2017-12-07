@@ -169,7 +169,7 @@ namespace detail
 
 	// convertFunc class
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P, convertMode mode = CONVERT_MODE_CAST, bool isSamplerFloat = false>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P, convertMode mode = CONVERT_MODE_CAST, bool isSamplerFloat = false>
 	struct convertFunc
 	{
 		typedef accessFunc<textureType, vec<L, T, P> > access;
@@ -185,7 +185,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P, bool isSamplerFloat>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P, bool isSamplerFloat>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_DEFAULT, isSamplerFloat>
 	{
 		static vec<4, retType, P> fetch(textureType const & Texture, typename textureType::extent_type const & TexelCoord, typename textureType::size_type Layer, typename textureType::size_type Face, typename textureType::size_type Level)
@@ -197,7 +197,7 @@ namespace detail
 		{}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_NORM, true>
 	{
 		typedef accessFunc<textureType, vec<L, T, P> > access;
@@ -215,7 +215,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_SRGB, true>
 	{
 		typedef accessFunc<textureType, vec<L, T, P> > access;
@@ -233,7 +233,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_RGB9E5, true>
 	{
 		typedef accessFunc<textureType, uint32> access;
@@ -251,7 +251,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_RG11B10F, true>
 	{
 		typedef accessFunc<textureType, uint32> access;
@@ -269,7 +269,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_HALF, true>
 	{
 		typedef accessFunc<textureType, vec<L, uint16, P> > access;
@@ -287,7 +287,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_44UNORM, true>
 	{
 		typedef accessFunc<textureType, uint8> access;
@@ -305,7 +305,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_4444UNORM, true>
 	{
 		typedef accessFunc<textureType, uint16> access;
@@ -323,7 +323,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_565UNORM, true>
 	{
 		typedef accessFunc<textureType, uint16> access;
@@ -341,7 +341,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_5551UNORM, true>
 	{
 		typedef accessFunc<textureType, uint16> access;
@@ -359,7 +359,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_332UNORM, true>
 	{
 		typedef accessFunc<textureType, uint8> access;
@@ -377,7 +377,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_RGB10A2UNORM, true>
 	{
 		typedef accessFunc<textureType, uint32> access;
@@ -395,7 +395,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_RGB10A2SNORM, true>
 	{
 		typedef accessFunc<textureType, uint32> access;
@@ -413,7 +413,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_RGB10A2USCALE, true>
 	{
 		typedef accessFunc<textureType, uint32> access;
@@ -438,7 +438,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_RGB10A2SSCALE, true>
 	{
 		typedef accessFunc<textureType, uint32> access;
@@ -463,7 +463,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_RGB10A2UINT, false>
 	{
 		typedef accessFunc<textureType, uint32> access;
@@ -481,7 +481,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_RGB10A2SINT, false>
 	{
 		typedef accessFunc<textureType, uint32> access;
@@ -499,7 +499,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_DXT1UNORM, true>
 	{
 		typedef accessFunc<gli::texture2d, uint32> access;
@@ -544,7 +544,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_DXT3UNORM, true> {
 		typedef accessFunc<gli::texture2d, uint32> access;
 
@@ -588,7 +588,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_DXT5UNORM, true> {
 		typedef accessFunc<gli::texture2d, uint32> access;
 
@@ -632,7 +632,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_BC4UNORM, true> {
 		typedef accessFunc<gli::texture2d, uint32> access;
 
@@ -676,7 +676,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_BC4SNORM, true> {
 		typedef accessFunc<gli::texture2d, uint32> access;
 
@@ -720,7 +720,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_BC5UNORM, true> {
 		typedef accessFunc<gli::texture2d, uint32> access;
 
@@ -764,7 +764,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename retType, length_t L, typename T, precision P>
+	template <typename textureType, typename retType, length_t L, typename T, qualifier P>
 	struct convertFunc<textureType, retType, L, T, P, CONVERT_MODE_BC5SNORM, true> {
 		typedef accessFunc<gli::texture2d, uint32> access;
 
@@ -808,7 +808,7 @@ namespace detail
 		}
 	};
 
-	template <typename textureType, typename samplerValType, precision P>
+	template <typename textureType, typename samplerValType, qualifier P>
 	struct convert
 	{
 		typedef vec<4, samplerValType, P>(*fetchFunc)(textureType const& Texture, typename textureType::extent_type const& TexelCoord, typename textureType::size_type Layer, typename textureType::size_type Face, typename textureType::size_type Level);

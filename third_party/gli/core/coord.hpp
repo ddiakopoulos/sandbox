@@ -5,8 +5,8 @@
 namespace gli{
 namespace detail
 {
-	template <length_t L, typename T, precision P>
-	inline vec<L, bool, P> in_interval(vec<L, T, P> const& Value, vec<L, T, P> const& Min, vec<L, T, P> const& Max)
+	template <length_t L, typename T, qualifier Q>
+	inline vec<L, bool, Q> in_interval(vec<L, T, Q> const& Value, vec<L, T, Q> const& Min, vec<L, T, Q> const& Max)
 	{
 		return greaterThanEqual(Value, Min) && lessThanEqual(Value, Max);
 	}
