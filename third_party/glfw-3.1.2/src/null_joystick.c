@@ -1,7 +1,6 @@
 //========================================================================
-// GLFW 3.3 Win32 - www.glfw.org
+// GLFW 3.3 - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
@@ -29,46 +28,15 @@
 
 
 //////////////////////////////////////////////////////////////////////////
-//////                       GLFW internal API                      //////
-//////////////////////////////////////////////////////////////////////////
-
-// Initialise timer
-//
-void _glfwInitTimerWin32(void)
-{
-    uint64_t frequency;
-
-    if (QueryPerformanceFrequency((LARGE_INTEGER*) &frequency))
-    {
-        _glfw.timer.win32.hasPC = GLFW_TRUE;
-        _glfw.timer.win32.frequency = frequency;
-    }
-    else
-    {
-        _glfw.timer.win32.hasPC = GLFW_FALSE;
-        _glfw.timer.win32.frequency = 1000;
-    }
-}
-
-
-//////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
-uint64_t _glfwPlatformGetTimerValue(void)
+int _glfwPlatformPollJoystick(_GLFWjoystick* js, int mode)
 {
-    if (_glfw.timer.win32.hasPC)
-    {
-        uint64_t value;
-        QueryPerformanceCounter((LARGE_INTEGER*) &value);
-        return value;
-    }
-    else
-        return (uint64_t) timeGetTime();
+    return GLFW_FALSE;
 }
 
-uint64_t _glfwPlatformGetTimerFrequency(void)
+void _glfwPlatformUpdateGamepadGUID(char* guid)
 {
-    return _glfw.timer.win32.frequency;
 }
 

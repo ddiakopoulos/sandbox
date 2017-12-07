@@ -33,16 +33,25 @@
     <ClCompile Include="src\win32_time.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\win32_tls.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\win32_window.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\window.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\winmm_joystick.c">
+    <ClCompile Include="src\win32_joystick.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\win32_thread.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\egl_context.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\vulkan.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\osmesa_context.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,17 +65,14 @@
     <ClInclude Include="src\win32_platform.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\win32_tls.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\winmm_joystick.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="include\GLFW\glfw3.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\GLFW\glfw3native.h">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\win32_joystick.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

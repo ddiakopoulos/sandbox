@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 Win32 - www.glfw.org
+// GLFW 3.3 POSIX - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
@@ -27,6 +27,9 @@
 
 #include "internal.h"
 
+#include <sys/time.h>
+#include <time.h>
+
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW internal API                      //////
@@ -34,19 +37,21 @@
 
 // Initialise timer
 //
-void _glfwInitTimerWin32(void)
+void _glfwInitTimerPOSIX(void)
 {
-    uint64_t frequency;
+#if defined(CLOCK_MONOTONIC)
+    struct timespec ts;
 
-    if (QueryPerformanceFrequency((LARGE_INTEGER*) &frequency))
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
     {
-        _glfw.timer.win32.hasPC = GLFW_TRUE;
-        _glfw.timer.win32.frequency = frequency;
+        _glfw.timer.posix.monotonic = GLFW_TRUE;
+        _glfw.timer.posix.frequency = 1000000000;
     }
     else
+#endif
     {
-        _glfw.timer.win32.hasPC = GLFW_FALSE;
-        _glfw.timer.win32.frequency = 1000;
+        _glfw.timer.posix.monotonic = GLFW_FALSE;
+        _glfw.timer.posix.frequency = 1000000;
     }
 }
 
@@ -57,18 +62,24 @@ void _glfwInitTimerWin32(void)
 
 uint64_t _glfwPlatformGetTimerValue(void)
 {
-    if (_glfw.timer.win32.hasPC)
+#if defined(CLOCK_MONOTONIC)
+    if (_glfw.timer.posix.monotonic)
     {
-        uint64_t value;
-        QueryPerformanceCounter((LARGE_INTEGER*) &value);
-        return value;
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        return (uint64_t) ts.tv_sec * (uint64_t) 1000000000 + (uint64_t) ts.tv_nsec;
     }
     else
-        return (uint64_t) timeGetTime();
+#endif
+    {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        return (uint64_t) tv.tv_sec * (uint64_t) 1000000 + (uint64_t) tv.tv_usec;
+    }
 }
 
 uint64_t _glfwPlatformGetTimerFrequency(void)
 {
-    return _glfw.timer.win32.frequency;
+    return _glfw.timer.posix.frequency;
 }
 

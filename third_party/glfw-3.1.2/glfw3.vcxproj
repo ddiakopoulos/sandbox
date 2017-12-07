@@ -20,26 +20,28 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\context.c" />
+    <ClCompile Include="src\egl_context.c" />
     <ClCompile Include="src\init.c" />
     <ClCompile Include="src\input.c" />
     <ClCompile Include="src\monitor.c" />
+    <ClCompile Include="src\osmesa_context.c" />
+    <ClCompile Include="src\vulkan.c" />
     <ClCompile Include="src\wgl_context.c" />
     <ClCompile Include="src\win32_init.c" />
+    <ClCompile Include="src\win32_joystick.c" />
     <ClCompile Include="src\win32_monitor.c" />
+    <ClCompile Include="src\win32_thread.c" />
     <ClCompile Include="src\win32_time.c" />
-    <ClCompile Include="src\win32_tls.c" />
     <ClCompile Include="src\win32_window.c" />
     <ClCompile Include="src\window.c" />
-    <ClCompile Include="src\winmm_joystick.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\GLFW\glfw3.h" />
     <ClInclude Include="include\GLFW\glfw3native.h" />
     <ClInclude Include="src\internal.h" />
     <ClInclude Include="src\wgl_context.h" />
+    <ClInclude Include="src\win32_joystick.h" />
     <ClInclude Include="src\win32_platform.h" />
-    <ClInclude Include="src\win32_tls.h" />
-    <ClInclude Include="src\winmm_joystick.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{BE423E72-28C2-4FB7-9FE1-42AA2F393BBC}</ProjectGuid>
@@ -111,7 +113,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_GLFW_USE_CONFIG_H;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_GLFW_WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -124,7 +126,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_GLFW_USE_CONFIG_H;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_GLFW_WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -139,7 +141,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_GLFW_USE_CONFIG_H;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_GLFW_WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -156,7 +158,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_GLFW_USE_CONFIG_H;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_GLFW_WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

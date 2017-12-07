@@ -1,8 +1,7 @@
 //========================================================================
-// GLFW 3.3 Win32 - www.glfw.org
+// GLFW 3.3 macOS - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2002-2006 Marcus Geelnard
-// Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2009-2016 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -27,6 +26,8 @@
 
 #include "internal.h"
 
+#include <mach/mach_time.h>
+
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW internal API                      //////
@@ -34,20 +35,12 @@
 
 // Initialise timer
 //
-void _glfwInitTimerWin32(void)
+void _glfwInitTimerNS(void)
 {
-    uint64_t frequency;
+    mach_timebase_info_data_t info;
+    mach_timebase_info(&info);
 
-    if (QueryPerformanceFrequency((LARGE_INTEGER*) &frequency))
-    {
-        _glfw.timer.win32.hasPC = GLFW_TRUE;
-        _glfw.timer.win32.frequency = frequency;
-    }
-    else
-    {
-        _glfw.timer.win32.hasPC = GLFW_FALSE;
-        _glfw.timer.win32.frequency = 1000;
-    }
+    _glfw.timer.ns.frequency = (info.denom * 1e9) / info.numer;
 }
 
 
@@ -57,18 +50,11 @@ void _glfwInitTimerWin32(void)
 
 uint64_t _glfwPlatformGetTimerValue(void)
 {
-    if (_glfw.timer.win32.hasPC)
-    {
-        uint64_t value;
-        QueryPerformanceCounter((LARGE_INTEGER*) &value);
-        return value;
-    }
-    else
-        return (uint64_t) timeGetTime();
+    return mach_absolute_time();
 }
 
 uint64_t _glfwPlatformGetTimerFrequency(void)
 {
-    return _glfw.timer.win32.frequency;
+    return _glfw.timer.ns.frequency;
 }
 

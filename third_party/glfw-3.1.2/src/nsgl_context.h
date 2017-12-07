@@ -1,7 +1,7 @@
 //========================================================================
-// GLFW 3.1 WinMM - www.glfw.org
+// GLFW 3.3 macOS - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2006-2014 Camilla Berglund <elmindreda@elmindreda.org>
+// Copyright (c) 2009-2016 Camilla Löwy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -24,24 +24,33 @@
 //
 //========================================================================
 
-#ifndef _glfw3_winmm_joystick_h_
-#define _glfw3_winmm_joystick_h_
-
-#define _GLFW_PLATFORM_LIBRARY_JOYSTICK_STATE \
-    _GLFWjoystickWinMM winmm_js[GLFW_JOYSTICK_LAST + 1]
+#define _GLFW_PLATFORM_CONTEXT_STATE            _GLFWcontextNSGL nsgl
+#define _GLFW_PLATFORM_LIBRARY_CONTEXT_STATE    _GLFWlibraryNSGL nsgl
 
 
-// WinMM-specific per-joystick data
+// NSGL-specific per-context data
 //
-typedef struct _GLFWjoystickWinMM
+typedef struct _GLFWcontextNSGL
 {
-    float           axes[6];
-    unsigned char   buttons[36]; // 32 buttons plus one hat
-    char*           name;
-} _GLFWjoystickWinMM;
+    id           pixelFormat;
+    id	         object;
+
+} _GLFWcontextNSGL;
+
+// NSGL-specific global data
+//
+typedef struct _GLFWlibraryNSGL
+{
+    // dlopen handle for OpenGL.framework (for glfwGetProcAddress)
+    CFBundleRef     framework;
+
+} _GLFWlibraryNSGL;
 
 
-void _glfwInitJoysticks(void);
-void _glfwTerminateJoysticks(void);
+GLFWbool _glfwInitNSGL(void);
+void _glfwTerminateNSGL(void);
+GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
+                                const _GLFWctxconfig* ctxconfig,
+                                const _GLFWfbconfig* fbconfig);
+void _glfwDestroyContextNSGL(_GLFWwindow* window);
 
-#endif // _glfw3_winmm_joystick_h_

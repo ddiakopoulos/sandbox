@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 Win32 - www.glfw.org
+// GLFW 3.3 POSIX - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
@@ -25,50 +25,27 @@
 //
 //========================================================================
 
-#include "internal.h"
+#include <pthread.h>
+
+#define _GLFW_PLATFORM_TLS_STATE    _GLFWtlsPOSIX   posix
+#define _GLFW_PLATFORM_MUTEX_STATE  _GLFWmutexPOSIX posix
 
 
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW internal API                      //////
-//////////////////////////////////////////////////////////////////////////
-
-// Initialise timer
+// POSIX-specific thread local storage data
 //
-void _glfwInitTimerWin32(void)
+typedef struct _GLFWtlsPOSIX
 {
-    uint64_t frequency;
+    GLFWbool        allocated;
+    pthread_key_t   key;
 
-    if (QueryPerformanceFrequency((LARGE_INTEGER*) &frequency))
-    {
-        _glfw.timer.win32.hasPC = GLFW_TRUE;
-        _glfw.timer.win32.frequency = frequency;
-    }
-    else
-    {
-        _glfw.timer.win32.hasPC = GLFW_FALSE;
-        _glfw.timer.win32.frequency = 1000;
-    }
-}
+} _GLFWtlsPOSIX;
 
-
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW platform API                      //////
-//////////////////////////////////////////////////////////////////////////
-
-uint64_t _glfwPlatformGetTimerValue(void)
+// POSIX-specific mutex data
+//
+typedef struct _GLFWmutexPOSIX
 {
-    if (_glfw.timer.win32.hasPC)
-    {
-        uint64_t value;
-        QueryPerformanceCounter((LARGE_INTEGER*) &value);
-        return value;
-    }
-    else
-        return (uint64_t) timeGetTime();
-}
+    GLFWbool        allocated;
+    pthread_mutex_t handle;
 
-uint64_t _glfwPlatformGetTimerFrequency(void)
-{
-    return _glfw.timer.win32.frequency;
-}
+} _GLFWmutexPOSIX;
 

@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 Win32 - www.glfw.org
+// GLFW 3.3 POSIX - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
@@ -25,50 +25,20 @@
 //
 //========================================================================
 
-#include "internal.h"
+#define _GLFW_PLATFORM_LIBRARY_TIMER_STATE _GLFWtimerPOSIX posix
+
+#include <stdint.h>
 
 
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW internal API                      //////
-//////////////////////////////////////////////////////////////////////////
-
-// Initialise timer
+// POSIX-specific global timer data
 //
-void _glfwInitTimerWin32(void)
+typedef struct _GLFWtimerPOSIX
 {
-    uint64_t frequency;
+    GLFWbool    monotonic;
+    uint64_t    frequency;
 
-    if (QueryPerformanceFrequency((LARGE_INTEGER*) &frequency))
-    {
-        _glfw.timer.win32.hasPC = GLFW_TRUE;
-        _glfw.timer.win32.frequency = frequency;
-    }
-    else
-    {
-        _glfw.timer.win32.hasPC = GLFW_FALSE;
-        _glfw.timer.win32.frequency = 1000;
-    }
-}
+} _GLFWtimerPOSIX;
 
 
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW platform API                      //////
-//////////////////////////////////////////////////////////////////////////
-
-uint64_t _glfwPlatformGetTimerValue(void)
-{
-    if (_glfw.timer.win32.hasPC)
-    {
-        uint64_t value;
-        QueryPerformanceCounter((LARGE_INTEGER*) &value);
-        return value;
-    }
-    else
-        return (uint64_t) timeGetTime();
-}
-
-uint64_t _glfwPlatformGetTimerFrequency(void)
-{
-    return _glfw.timer.win32.frequency;
-}
+void _glfwInitTimerPOSIX(void);
 
