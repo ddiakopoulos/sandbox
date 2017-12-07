@@ -39,7 +39,7 @@ struct profiler
 {
     struct data_point
     {
-        CircularBuffer<float> average;
+        CircularBuffer<double> average;
         T timer;
     };
 
@@ -47,7 +47,7 @@ struct profiler
 
     bool enabled{ true };
     uint32_t numSamples;
-    profiler(uint32_t numSamplesToKeep = 15) : numSamples(numSamplesToKeep) { }
+    profiler(uint32_t numSamplesToKeep = 5) : numSamples(numSamplesToKeep) { }
 
     void set_enabled(bool newState) { enabled = newState; }
 
@@ -63,12 +63,8 @@ struct profiler
     { 
         if (!enabled) return;
         dataPoints[id].timer.stop();
-    }
-
-    void collect()
-    {
-        if (!enabled) return;
-        for (auto & v : dataPoints) v.second.average.put(v.second.timer.elapsed_ms());
+        double t = dataPoints[id].timer.elapsed_ms();
+        if (t > 0) dataPoints[id].average.put(t);
     }
 };
 

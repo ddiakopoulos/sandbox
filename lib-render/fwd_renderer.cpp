@@ -195,7 +195,6 @@ void PhysicallyBasedRenderer::update()
 
 void PhysicallyBasedRenderer::render_frame()
 {
-    gpuProfiler.begin("renderloop");
     cpuProfiler.begin("renderloop");
 
     // Renderer default state
@@ -244,9 +243,9 @@ void PhysicallyBasedRenderer::render_frame()
 
     if (shadow->enabled)
     {
-        gpuProfiler.begin("shadow pass");
+        gpuProfiler.begin("shadowpass");
         run_shadow_pass(shadowAndCullingView);
-        gpuProfiler.end("shadow pass");
+        gpuProfiler.end("shadowpass");
 
         for (int c = 0; c < uniforms::NUM_CASCADES; c++)
         {
@@ -285,7 +284,7 @@ void PhysicallyBasedRenderer::render_frame()
     std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(materialSortFunc)> renderQueueMaterial(materialSortFunc);
     std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(distanceSortFunc)> renderQueueDefault(distanceSortFunc);
 
-    cpuProfiler.begin("sort");
+    cpuProfiler.begin("sort-queue");
 
     for (auto obj : renderSet)
     {
@@ -311,7 +310,7 @@ void PhysicallyBasedRenderer::render_frame()
         defaultRenderList.push_back(top);
     }
 
-    cpuProfiler.end("sort");
+    cpuProfiler.end("sort-queue");
 
     for (int camIdx = 0; camIdx < settings.cameraCount; ++camIdx)
     {
@@ -350,6 +349,8 @@ void PhysicallyBasedRenderer::render_frame()
 
         // Resolve multisample into per-view framebuffer
         {
+            gpuProfiler.begin("blit");
+
             // blit color 
             glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[camIdx],
                 0, 0, settings.renderSize.x, settings.renderSize.y, 0, 0,
@@ -359,6 +360,8 @@ void PhysicallyBasedRenderer::render_frame()
             glBlitNamedFramebuffer(multisampleFramebuffer, eyeFramebuffers[camIdx],
                 0, 0, settings.renderSize.x, settings.renderSize.y, 0, 0,
                 settings.renderSize.x, settings.renderSize.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+            gpuProfiler.end("blit");
         }
 
         gl_check_error(__FILE__, __LINE__);
@@ -376,11 +379,7 @@ void PhysicallyBasedRenderer::render_frame()
 
     glDisable(GL_FRAMEBUFFER_SRGB);
 
-    gpuProfiler.end("renderloop");
     cpuProfiler.end("renderloop");
-
-    gpuProfiler.collect();
-    cpuProfiler.collect();
 
     renderSet.clear();
     pointLights.clear();
