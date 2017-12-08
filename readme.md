@@ -1,20 +1,22 @@
-# Experiments!
+# Graphics Sandbox
 
 [![License is Unlicense](http://img.shields.io/badge/license-Unlicense-blue.svg?style=flat)](http://unlicense.org/)
 
 Platform | Build Status |
 -------- | ------------ |
-Visual Studio 2015 | [![Build status](https://ci.appveyor.com/api/projects/status/t1v586iy881ptlql?svg=true)](https://ci.appveyor.com/project/ddiakopoulos/sandbox)
+Visual Studio 2017 | [![Build status](https://ci.appveyor.com/api/projects/status/t1v586iy881ptlql?svg=true)](https://ci.appveyor.com/project/ddiakopoulos/sandbox)
 
-A collection of C++11 classes and GLSL shaders united under the arbitrarily chosen namespace "avl" (short for Anvil). 
+A collection of C++11/14 classes and opengl utilities united under the arbitrarily namespace "avl" (short for Anvil). 
 
 ## Project Structure
 
-  * `scene-editor\` - A scene editor implementing forward rendering, physically-based materials, and asset serialization. 
+  * `scene-editor\` - A scene editor
   * `particle-system\` - Work-in-progress CPU and GPU particle system simulator and renderer
   * `projective-texturing\` - Implements projective surface texturing (i.e. Unity's projector object)
   * `portal-rendering\` - A simple sample for source/target portal rendering. Does not handle nested portals.
   * `vr-environment\` - Incomplete sample for physics + VR interaction using Bullet 3
+  * `clustered-shading\` - A minimally viable implementation of clustered shading for point-lights
+  * `lib-render\` -  Implements a forward renderer, physically-based materials, and asset serialization. 
   * `lib-incubator\` - Shared code between public & private projects.
   * `examples\` - Tests of functionality in lib-incubator. Not likely to compile if you are not me. 
 
@@ -46,4 +48,4 @@ A collection of C++11 classes and GLSL shaders united under the arbitrarily chos
   * One-euro, complimentary, and exponential filters for 1D data
   * Ad-hoc statistical analysis (variance, skewness, kurtosis, etc)
 * Misc
-  * `libincubator` incorporates a considerable amount of public-domain code adapted for `linalg.h` types or readability/usability (like various lock-free queues). See `COPYING` for details.
+  * `lib-incubator` incorporates a considerable amount of public-domain code adapted for `linalg.h` types or readability/usability (like various lock-free queues). See `COPYING` for details.

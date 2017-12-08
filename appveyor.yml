@@ -1,10 +1,10 @@
 environment:
   matrix:
-  - os: Visual Studio 2015
-    DIR: msvc140
+  - os: Visual Studio 2017
+    DIR: msvc141
 
 platform: x64
-configuration: Debug
+configuration: Release
 
 build:
   verbosity: minimal
