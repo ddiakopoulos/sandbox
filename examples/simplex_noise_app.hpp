@@ -11,16 +11,13 @@ struct ExperimentalApp : public GLFWApp
     std::vector<std::shared_ptr<GlTexture2D>> textures;
     std::vector<std::shared_ptr<GLTextureView>> textureViews;
 
-    const int texResolution = 128;
+    const int texResolution = 512;
     std::vector<uint8_t> data;
 
-    std::random_device rd;
-    std::mt19937 gen;
+    UniformRandomGenerator gen;
 
     ExperimentalApp() : GLFWApp(1024, 1024, "Simplex Noise App")
     {
-        gen = std::mt19937(rd());
-        
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
@@ -44,7 +41,7 @@ struct ExperimentalApp : public GLFWApp
             auto t = std::make_shared<GlTexture2D>();
             t->setup(texResolution, texResolution, GL_RED, GL_RED, GL_UNSIGNED_BYTE, nullptr);
             
-            auto tv = std::make_shared<GLTextureView>(false, float2(255, 255));
+            auto tv = std::make_shared<GLTextureView>(false);
             
             textures.push_back(t);
             textureViews.push_back(tv);
@@ -65,7 +62,7 @@ struct ExperimentalApp : public GLFWApp
         {
             if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE)
             {
-                noise::regenerate_permutation_table(gen);
+                // noise::regenerate_permutation_table(gen);
             }
         }
     }

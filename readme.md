@@ -8,6 +8,10 @@ Visual Studio 2017 | [![Build status](https://ci.appveyor.com/api/projects/statu
 
 A collection of C++11/14 classes and opengl utilities united under the arbitrarily namespace "avl" (short for Anvil). 
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ddiakopoulos/sandbox/master/assets/images/sandbox-cover.png"/>
+</p>
+
 ## Project Structure
 
   * `scene-editor\` - A scene editor
