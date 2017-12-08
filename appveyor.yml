@@ -1,10 +1,11 @@
-environment:
-  matrix:
-  - os: Visual Studio 2017
-    DIR: msvc141
+version: 1.0.{build}
+
+image: Visual Studio 2017
 
 platform: x64
-configuration: Release
+configuration: 
+	- Release
+	- Debug
 
 build:
   verbosity: minimal
