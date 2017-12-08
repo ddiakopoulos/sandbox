@@ -33,13 +33,13 @@ class MotionControllerVR
 public:
 
     std::shared_ptr<BulletEngineVR> engine;
-    const OpenVR_Controller & ctrl;
+    const OpenVR_Controller * ctrl;
     std::shared_ptr<OpenVR_Controller::ControllerRenderData> renderData;
 
     btCollisionShape * controllerShape{ nullptr };
     BulletObjectVR * physicsObject{ nullptr };
 
-    MotionControllerVR(std::shared_ptr<BulletEngineVR> engine, const OpenVR_Controller & ctrl, std::shared_ptr<OpenVR_Controller::ControllerRenderData> renderData)
+    MotionControllerVR(std::shared_ptr<BulletEngineVR> engine, const OpenVR_Controller * ctrl, std::shared_ptr<OpenVR_Controller::ControllerRenderData> renderData)
         : engine(engine), ctrl(ctrl), renderData(renderData)
     {
 

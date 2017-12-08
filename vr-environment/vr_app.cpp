@@ -1,6 +1,7 @@
 #include "vr_app.hpp"
 #include "gl-imgui.hpp"
 #include "asset_io.hpp"
+#include "math-core.hpp"
 
 VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR Sandbox")
 {
@@ -80,8 +81,8 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
     if (hmd)
     {
-        scene.leftController->update(hmd->get_controller(vr::TrackedControllerRole_LeftHand).get_pose(hmd->get_world_pose()));
-        scene.rightController->update(hmd->get_controller(vr::TrackedControllerRole_RightHand).get_pose(hmd->get_world_pose()));
+        scene.leftController->update(hmd->get_controller(vr::TrackedControllerRole_LeftHand)->get_pose(hmd->get_world_pose()));
+        scene.rightController->update(hmd->get_controller(vr::TrackedControllerRole_RightHand)->get_pose(hmd->get_world_pose()));
 
         physicsEngine->update(e.timestep_ms);
 
@@ -115,8 +116,8 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
         //sceneDebugRenderer.draw_axis(scene.controllers[1].get_pose());
 
         std::vector<OpenVR_Controller::ButtonState> trackpadStates = { 
-            hmd->get_controller(vr::TrackedControllerRole_LeftHand).pad, 
-            hmd->get_controller(vr::TrackedControllerRole_RightHand).pad 
+            hmd->get_controller(vr::TrackedControllerRole_LeftHand)->pad, 
+            hmd->get_controller(vr::TrackedControllerRole_RightHand)->pad 
         };
 
         // Todo: refactor
@@ -126,7 +127,7 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
 
             if (state.down)
             {
-                auto pose = hmd->get_controller(vr::ETrackedControllerRole(i + 1)).get_pose(hmd->get_world_pose());
+                auto pose = hmd->get_controller(vr::ETrackedControllerRole(i + 1))->get_pose(hmd->get_world_pose());
                 scene.params.position = pose.position;
                 scene.params.forward = -qzdir(pose.orientation);
 
@@ -159,8 +160,8 @@ void VirtualRealityApp::on_update(const UpdateEvent & e)
     if (hmd)
     {
         std::vector<OpenVR_Controller::ButtonState> triggerStates = {
-            hmd->get_controller(vr::TrackedControllerRole_LeftHand).trigger,
-            hmd->get_controller(vr::TrackedControllerRole_RightHand).trigger
+            hmd->get_controller(vr::TrackedControllerRole_LeftHand)->trigger,
+            hmd->get_controller(vr::TrackedControllerRole_RightHand)->trigger
         };
     }
 

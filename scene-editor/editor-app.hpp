@@ -17,6 +17,7 @@ static inline tinygizmo::rigid_transform from_linalg(Pose & p)
 {
     return{ reinterpret_cast<minalg::float4 &>(p.orientation), reinterpret_cast<minalg::float3 &>(p.position) };
 }
+
 struct auto_layout
 {
 
