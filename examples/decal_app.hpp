@@ -1,4 +1,5 @@
 #include "index.hpp"
+#include "math-core.hpp"
 
 // http://blog.wolfire.com/2009/06/how-to-project-decals/
 

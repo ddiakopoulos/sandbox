@@ -267,7 +267,6 @@ void scene_editor_app::on_input(const InputEvent & event)
             }
         }
     }
-
 }
 
 void scene_editor_app::on_update(const UpdateEvent & e)
@@ -520,12 +519,6 @@ void scene_editor_app::on_draw()
                     shaderAsset.shouldRecompile = true;
                 }
             }
-            
-            if (renderer->settings.performanceProfiling)
-            {
-                for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[GPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
-                for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[CPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
-            }
 
             ImGui::TreePop();
         }
@@ -549,6 +542,12 @@ void scene_editor_app::on_draw()
         }
 
         ImGui::Separator();
+
+        if (renderer->settings.performanceProfiling)
+        {
+            for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[GPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
+            for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[CPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
+        }
     }
     gui::imgui_fixed_window_end();
 
@@ -562,13 +561,15 @@ void scene_editor_app::on_draw()
     igm->end_frame();
 
     // Debug Views
+    /*
     {
         glViewport(0, 0, width, height);
         glDisable(GL_DEPTH_TEST);
-        //debugViews[0]->draw(uiSurface.children[0]->bounds, float2(width, height), renderer->get_output_texture(0));
+        debugViews[0]->draw(uiSurface.children[0]->bounds, float2(width, height), renderer->get_output_texture(0));
         debugViews[1]->draw(uiSurface.children[1]->bounds, float2(width, height), renderer->get_output_texture(TextureType::DEPTH, 0));
         glEnable(GL_DEPTH_TEST);
     }
+    */
 
     // Scene editor gizmo
     glClear(GL_DEPTH_BUFFER_BIT);

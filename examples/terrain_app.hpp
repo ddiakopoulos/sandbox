@@ -144,7 +144,7 @@ struct ExperimentalApp : public GLFWApp
         icosahedronMesh = make_icosahedron_mesh();
         
         gizmo.reset(new GlGizmo());
-        igm.reset(new gui::ImGuiManager(window));
+        igm.reset(new gui::ImGuiInstance(window));
         gui::make_light_theme();
 
         sphereMesh = make_sphere_mesh(0.1f);
@@ -279,7 +279,7 @@ struct ExperimentalApp : public GLFWApp
 			terrainShader->uniform("u_model", model);
 			terrainShader->uniform("u_viewProj", viewProj);
             terrainShader->uniform("u_modelView", modelViewMat);
-            terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
+            terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inverse(transpose(modelViewMat))));
             terrainShader->uniform("u_surfaceColor", float3(95.f / 255.f, 189.f / 255.f, 192.f / 255.f));
             terrainMesh.draw_elements();
         }
@@ -293,7 +293,7 @@ struct ExperimentalApp : public GLFWApp
 			terrainShader->uniform("u_model", model);
 			terrainShader->uniform("u_viewProj", viewProj);
             terrainShader->uniform("u_modelView", modelViewMat);
-            terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(modelViewMat))));
+            terrainShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inverse(transpose(modelViewMat))));
             terrainShader->uniform("u_surfaceColor", float3(189.f / 255.f, 94.f / 255.f, 188.f / 255.f));
             icosahedronMesh.draw_elements();
         }
@@ -432,7 +432,7 @@ struct ExperimentalApp : public GLFWApp
                 waterShader->uniform("u_yWaterPlane", yWaterPlane);
                 waterShader->uniform("u_eyePosition", cameraPosition);
                 waterShader->uniform("u_modelView", modelViewMat);
-                waterShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inv(transpose(model))));
+                waterShader->uniform("u_modelMatrixIT", get_rotation_submatrix(inverse(transpose(model))));
                 waterShader->uniform("u_resolution", float2(width, height));
 
                 waterShader->uniform("u_clipPlane", { 0, 1, 0, 0 });

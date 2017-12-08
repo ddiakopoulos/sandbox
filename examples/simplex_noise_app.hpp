@@ -6,7 +6,7 @@ using namespace noise;
 
 struct ExperimentalApp : public GLFWApp
 {
-    ScreenSpaceAutoLayout uiSurface;
+    auto_layout uiSurface;
     
     std::vector<std::shared_ptr<GlTexture2D>> textures;
     std::vector<std::shared_ptr<GLTextureView>> textureViews;
@@ -34,7 +34,7 @@ struct ExperimentalApp : public GLFWApp
         {
             for (int j = 0; j < 4; ++j)
             {
-                uiSurface.add_child( {{j * sz,0},{i * sz,0},{(j + 1) * sz, 0}, {(i + 1) * sz, 0}}, std::make_shared<ScreenSpaceAutoLayout>());
+                uiSurface.add_child( {{j * sz,0},{i * sz,0},{(j + 1) * sz, 0}, {(i + 1) * sz, 0}}, std::make_shared<auto_layout>());
             }
         }
         uiSurface.layout();
@@ -44,7 +44,7 @@ struct ExperimentalApp : public GLFWApp
             auto t = std::make_shared<GlTexture2D>();
             t->setup(texResolution, texResolution, GL_RED, GL_RED, GL_UNSIGNED_BYTE, nullptr);
             
-            auto tv = std::make_shared<GLTextureView>(t->id());
+            auto tv = std::make_shared<GLTextureView>(false, float2(255, 255));
             
             textures.push_back(t);
             textureViews.push_back(tv);

@@ -18,55 +18,6 @@ static inline tinygizmo::rigid_transform from_linalg(Pose & p)
     return{ reinterpret_cast<minalg::float4 &>(p.orientation), reinterpret_cast<minalg::float3 &>(p.position) };
 }
 
-struct auto_layout
-{
-
-    struct ucoord
-    {
-        float a, b;
-        float resolve(float min, float max) const { return min + a * (max - min) + b; }
-    };
-
-    struct urect
-    {
-        ucoord x0, y0, x1, y1;
-        Bounds2D resolve(const Bounds2D & r) const { return{ x0.resolve(r.min().x, r.max().x), y0.resolve(r.min().y, r.max().y), x1.resolve(r.min().x, r.max().x), y1.resolve(r.min().y, r.max().y) }; }
-        bool is_fixed_width() const { return x0.a == x1.a; }
-        bool is_fixed_height() const { return y0.a == y1.a; }
-        float fixed_width() const { return x1.b - x0.b; }
-        float fixed_height() const { return y1.b - y0.b; }
-    };
-
-    float aspectRatio{ 1 };
-    urect placement{ { 0,0 },{ 0,0 },{ 1,0 },{ 1,0 } };
-    Bounds2D bounds;
-
-    std::vector<std::shared_ptr<auto_layout>> children;
-
-    void add_child(auto_layout::urect placement, std::shared_ptr<auto_layout> child = std::make_shared<auto_layout>())
-    {
-        child->placement = placement;
-        children.push_back(child);
-    }
-
-    void layout()
-    {
-        for (auto & child : children)
-        {
-            auto size = child->bounds.size();
-            child->bounds = child->placement.resolve(bounds);
-            auto childAspect = child->bounds.width() / child->bounds.height();
-            if (childAspect > 0)
-            {
-                float xpadding = (1 - std::min((child->bounds.height() * childAspect) / child->bounds.width(), 1.0f)) / 2;
-                float ypadding = (1 - std::min((child->bounds.width() / childAspect) / child->bounds.height(), 1.0f)) / 2;
-                child->bounds = urect{ { xpadding, 0 },{ ypadding, 0 },{ 1 - xpadding, 0 },{ 1 - ypadding, 0 } }.resolve(child->bounds);
-            }
-            if (child->bounds.size() != size) child->layout();
-        }
-    }
-};
-
 template<typename ObjectType>
 class editor_controller
 {

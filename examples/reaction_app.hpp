@@ -144,7 +144,7 @@ struct ExperimentalApp : public GLFWApp
             displacementShader.bind();
             
             displacementShader.uniform("u_modelMatrix", model);
-            displacementShader.uniform("u_modelMatrixIT", inv(transpose(model)));
+            displacementShader.uniform("u_modelMatrixIT", inverse(transpose(model)));
             displacementShader.uniform("u_viewProj", viewProj);
             displacementShader.texture("u_displacementTex", 0, gsOutput, GL_TEXTURE_2D);
             

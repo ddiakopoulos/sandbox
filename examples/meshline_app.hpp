@@ -19,7 +19,7 @@ struct ExperimentalApp : public GLFWApp
     
     float rotationAngle = 0.0f;
     
-    ExperimentalApp() : GLFWApp(1280, 720, "Meshline App")
+    ExperimentalApp() : GLFWApp(800, 800, "Meshline App")
     {
         gen = std::mt19937(rd());
     
@@ -47,21 +47,21 @@ struct ExperimentalApp : public GLFWApp
         colors.emplace_back(112.0f / 255.f, 193.0f / 255.f, 179.0f / 255.f);
         colors.emplace_back(60.0f / 255.f, 60.0f / 255.f, 60.0f / 255.f);
         
-        for (int i = 0; i < 48; i++)
+        for (int i = 0; i < 256; i++)
         {
             auto line = std::make_shared<GlRenderableMeshline>();
-            auto newSpline = create_curve(12.f, 48.f);
+            auto newSpline = create_curve(8.f, 48.f);
             line->set_vertices(newSpline);
             lines.push_back(line);
         }
 
-        for (int i = 0; i < 48; ++i)
+        for (int i = 0; i < 256; ++i)
         {
-            auto r = std::uniform_real_distribution<float>(2, 16.0);
+            auto r = std::uniform_real_distribution<float>(0.5, 8.0);
             sizes.push_back(r(gen));
         }
 
-        vignetteShader.reset(new GlShader(read_file_text("../assets/shaders/vignette_vert.glsl"), read_file_text("../assets/shaders/vignette_frag.glsl")));
+        vignetteShader.reset(new GlShader(read_file_text("../assets/shaders/prototype/vignette_vert.glsl"), read_file_text("../assets/shaders/prototype/vignette_frag.glsl")));
         
         gl_check_error(__FILE__, __LINE__);
     }
@@ -134,10 +134,10 @@ struct ExperimentalApp : public GLFWApp
         const float4x4 viewMatrix = camera.get_view_matrix();
         const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
         
-        auto r = std::uniform_real_distribution<float>(0.001, .5);
+        auto r = std::uniform_real_distribution<float>(0.25, 2.0);
         
         vignetteShader->bind();
-        vignetteShader->uniform("u_noiseAmount", 0.05f);
+        vignetteShader->uniform("u_noiseAmount", 0.075f);
         vignetteShader->uniform("u_time", r(gen));
         vignetteShader->uniform("u_screenResolution", float2(width, height));
         vignetteShader->uniform("u_backgroundColor", float3(20.f / 255.f, 20.f / 255.f, 20.f / 255.f));

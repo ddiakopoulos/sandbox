@@ -57,7 +57,6 @@ struct Renderable : public GameObject
 
     Material * get_material() 
     {
-
         if (mat.assigned())
         {
             return mat.get().get();
@@ -163,8 +162,8 @@ struct StaticMesh final : public Renderable
     float3 scale{ 1, 1, 1 };
     Bounds3D bounds;
 
-    GlMeshHandle mesh;
-    GeometryHandle geom;
+    GlMeshHandle mesh{ "" };
+    GeometryHandle geom{ "" };
 
     StaticMesh() {}
 

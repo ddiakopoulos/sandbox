@@ -61,7 +61,7 @@ public:
 
     GlRenderableMeshline()
     {
-        shader = GlShader(read_file_text("../assets/shaders/meshline_vert.glsl"), read_file_text("../assets/shaders/meshline_frag.glsl"));
+        shader = GlShader(read_file_text("../assets/shaders/prototype/meshline_vert.glsl"), read_file_text("../assets/shaders/prototype/meshline_frag.glsl"));
     }
     
     void set_vertices(const std::vector<float3> & vertices)

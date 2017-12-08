@@ -51,7 +51,7 @@ public:
     // so this function may not return the desired asset if loading has failed.
     T & get() const
     { 
-        if (name.size() == 0) throw std::invalid_argument("asset has no identifier");
+        // if (name.size() == 0) throw std::invalid_argument("asset has no identifier");
         
         if (handle->assigned) return handle->asset; // Check if this handle has a cached asset
         else // If not, this is a virgin handle and we should lookup from the static table
