@@ -43,7 +43,6 @@ struct StableCascadedShadowPass
     std::vector<float> nearPlanes;
     std::vector<float> farPlanes;
 
-    bool enabled = true;
     float resolution = 2048; // shadowmap resolution
     float splitLambda = 0.25f;  // frustum split constant
 
@@ -148,6 +147,7 @@ struct StableCascadedShadowPass
     void pre_draw()
     {
         glEnable(GL_DEPTH_TEST);
+
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
 
@@ -159,8 +159,6 @@ struct StableCascadedShadowPass
         shader.bind();
         shader.uniform("u_cascadeViewMatrixArray", uniforms::NUM_CASCADES, viewMatrices);
         shader.uniform("u_cascadeProjMatrixArray", uniforms::NUM_CASCADES, projMatrices);
-        //shader.uniform("u_cascadeNear", uniforms::NUM_CASCADES, nearPlanes);
-        //shader.uniform("u_cascadeFar", uniforms::NUM_CASCADES, farPlanes);
     }
 
     void post_draw()
@@ -177,7 +175,6 @@ struct StableCascadedShadowPass
 
 template<class F> void visit_fields(StableCascadedShadowPass & o, F f)
 {
-    f("enabled", o.enabled);
     f("shadowmap_resolution", o.resolution);
     f("cascade_split", o.splitLambda, range_metadata<float>{ 0.1f, 1.0f });
 }

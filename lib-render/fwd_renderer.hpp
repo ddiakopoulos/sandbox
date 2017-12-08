@@ -27,11 +27,13 @@ enum class TextureType
 
 struct RendererSettings
 {
-    uint32_t cameraCount = 1;
-    uint32_t msaaSamples = 4;
     float2 renderSize{ 0, 0 };
+    int cameraCount = 1;
+    int msaaSamples = 4;
     bool performanceProfiling = true;
     bool useDepthPrepass = false;
+    bool bloomEnabled = true;
+    bool shadowsEnabled = true;
 };
 
 template<typename T>
@@ -49,7 +51,11 @@ struct profiler
     uint32_t numSamples;
     profiler(uint32_t numSamplesToKeep = 5) : numSamples(numSamplesToKeep) { }
 
-    void set_enabled(bool newState) { enabled = newState; }
+    void set_enabled(bool newState) 
+    { 
+        enabled = newState;
+        dataPoints.clear();
+    }
 
     void begin(const std::string & id)
     { 
@@ -80,8 +86,6 @@ class PhysicallyBasedRenderer
         float nearClip;
         float farClip;
     };
-
-    RendererSettings settings;
 
     SimpleTimer timer;
 
@@ -122,6 +126,7 @@ class PhysicallyBasedRenderer
 
 public:
 
+    RendererSettings settings;
     profiler<SimpleTimer> cpuProfiler;
     profiler<GlGpuTimer> gpuProfiler;
 
@@ -186,6 +191,17 @@ public:
     { 
         return  bloom.get(); 
     }
+};
+
+template<class F> void visit_fields(PhysicallyBasedRenderer & o, F f)
+{
+    f("num_cameras", o.settings.cameraCount);
+    f("num_msaa_samples", o.settings.msaaSamples);
+    f("render_size", o.settings.renderSize);
+    f("performance_profiling", o.settings.performanceProfiling);
+    f("depth_prepass", o.settings.useDepthPrepass);
+    f("bloom_pass", o.settings.bloomEnabled);
+    f("shadow_pass", o.settings.shadowsEnabled);
 };
 
 #endif // end vr_renderer_hpp

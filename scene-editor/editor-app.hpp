@@ -67,7 +67,6 @@ struct auto_layout
     }
 };
 
-
 template<typename ObjectType>
 class editor_controller
 {
@@ -196,7 +195,7 @@ struct scene_editor_app final : public GLFWApp
     FlyCameraController flycam;
     ShaderMonitor shaderMonitor { "../assets/" };
 
-    bool enableProfiling = true;
+    uint32_t pbrProgramAsset = -1;
 
     Scene scene;
 

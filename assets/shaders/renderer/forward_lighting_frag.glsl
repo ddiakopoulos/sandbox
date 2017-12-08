@@ -41,7 +41,7 @@ uniform samplerCube sc_irradiance;
 
 // Lighting & Shadowing Uniforms
 uniform float u_pointLightAttenuation = 1.0;
-uniform float u_shadowOpacity = 0.88;
+uniform float u_shadowOpacity = 1.0;
 
 // Dielectrics have an F0 between 0.2 - 0.5, often exposed as the "specular level" parameter
 uniform vec3 u_albedo = vec3(1, 1, 1);
@@ -253,8 +253,11 @@ void main()
         vec3 biased_pos = get_biased_position(v_world_position, slope_bias, normal_bias, v_normal, L);
 
         // The way this is structured, it impacts lighting if we stop updating shadow uniforms 
-        float shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, debugShadowCascadeColor);
+        float shadowTerm = 1.0;
+        #ifdef ENABLE_SHADOWS
+        shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, debugShadowCascadeColor);
         shadowVisibility = 1.0 - ((shadowTerm  * NdotL) * u_shadowOpacity * u_receiveShadow);
+        #endif
 
         vec3 diffuseContrib, specContrib;
         compute_cook_torrance(data, u_directionalLight.amount, diffuseContrib, specContrib);

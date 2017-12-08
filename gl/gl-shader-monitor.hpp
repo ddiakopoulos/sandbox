@@ -9,9 +9,25 @@
 #include "asset_io.hpp"
 #include "third_party/efsw/efsw.hpp"
 #include <regex>
+#include <unordered_map>
 
 namespace avl
 {
+    // 32 bit Fowler–Noll–Vo Hash
+    inline uint32_t hash_fnv1a(const std::string & str)
+    {
+        static const uint32_t fnv1aBase32 = 0x811C9DC5u;
+        static const uint32_t fnv1aPrime32 = 0x01000193u;
+
+        uint32_t result = fnv1aBase32;
+
+        for (auto & c : str)
+        {
+            result ^= static_cast<uint32_t>(c);
+            result *= fnv1aPrime32;
+        }
+        return result;
+    }
 
     inline std::string preprocess_includes(const std::string & source, const std::string & includeSearchPath, std::vector<std::string> & includes, int depth)
     {
@@ -149,6 +165,8 @@ namespace avl
                 const std::string & inc = "", 
                 const std::vector<std::string> & def = {}) : vertexPath(v), fragmentPath(f), geomPath(g), includePath(inc), defines(def) { };
 
+            ShaderAsset() {};
+
             void recompile()
             {
                 shouldRecompile = false;
@@ -193,8 +211,7 @@ namespace avl
         };
 
         UpdateListener listener;
-
-        std::vector<ShaderAsset> assets;
+        std::unordered_map<uint32_t, ShaderAsset> assets;
 
     public:
 
@@ -206,8 +223,9 @@ namespace avl
 
             listener.callback = [&](const std::string filename)
             {
-                for (auto & shader : assets)
+                for (auto & asset : assets)
                 {
+                    auto & shader = asset.second;
                     // Recompile if any one of the shader stages have changed
                     if (get_filename_with_extension(filename) == get_filename_with_extension(shader.vertexPath) || 
                         get_filename_with_extension(filename) == get_filename_with_extension(shader.fragmentPath) || 
@@ -235,17 +253,17 @@ namespace avl
         // Call this regularly on the gl thread
         void handle_recompile()
         {
-            for (auto & shader : assets)
+            for (auto & asset : assets)
             {
-                if (shader.shouldRecompile)
+                if (asset.second.shouldRecompile)
                 {
-                    shader.recompile();
+                    asset.second.recompile();
                 }
             }
         }
 
         // Watch vertex and fragment
-        void watch(
+        uint32_t watch(
             const std::string & vertexShader,
             const std::string & fragmentShader,
             std::function<void(GlShader)> callback)
@@ -253,11 +271,13 @@ namespace avl
             ShaderAsset asset(vertexShader, fragmentShader);
             asset.onModified = callback;
             asset.recompile();
-            assets.push_back(std::move(asset));
+            uint32_t lookup = hash_fnv1a(vertexShader + fragmentShader);
+            assets[lookup] = std::move(asset);
+            return lookup;
         }
 
         // Watch vertex, fragment, and geometry
-        void watch(
+        uint32_t watch(
             const std::string & vertexShader,
             const std::string & fragmentShader,
             const std::string & geometryShader, 
@@ -266,11 +286,13 @@ namespace avl
             ShaderAsset asset(vertexShader, fragmentShader, geometryShader);
             asset.onModified = callback;
             asset.recompile();
-            assets.push_back(std::move(asset));
+            uint32_t lookup = hash_fnv1a(vertexShader + fragmentShader);
+            assets[lookup] = std::move(asset);
+            return lookup;
         }
 
         // Watch vertex and fragment with includes and defines
-        void watch(
+        uint32_t watch(
             const std::string & vertexShader, 
             const std::string & fragmentShader,
             const std::string & includePath,
@@ -280,11 +302,13 @@ namespace avl
             ShaderAsset asset(vertexShader, fragmentShader, "", includePath, defines);
             asset.onModified = callback;
             asset.recompile();
-            assets.push_back(std::move(asset));
+            uint32_t lookup = hash_fnv1a(vertexShader + fragmentShader);
+            assets[lookup] = std::move(asset);
+            return lookup;
         }
 
         // Watch vertex and fragment and geometry with includes and defines
-        void watch(
+        uint32_t watch(
             const std::string & vertexShader,
             const std::string & fragmentShader,
             const std::string & geometryShader,
@@ -295,7 +319,14 @@ namespace avl
             ShaderAsset asset(vertexShader, fragmentShader, geometryShader, includePath, defines);
             asset.onModified = callback;
             asset.recompile();
-            assets.push_back(std::move(asset));
+            uint32_t lookup = hash_fnv1a(vertexShader + fragmentShader);
+            assets[lookup] = std::move(asset);
+            return lookup;
+        }
+
+        ShaderAsset & get_asset(const uint32_t id)
+        {
+            return assets[id];
         }
 
     };

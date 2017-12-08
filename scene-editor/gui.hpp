@@ -141,7 +141,7 @@ namespace ImGui
             else ImGui::SetActiveID(0, nullptr);
         }
 
-        SplitRegion result = { r,r };
+        SplitRegion result = { r, r };
 
         switch (t)
         {

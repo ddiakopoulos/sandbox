@@ -134,10 +134,13 @@ void PhysicallyBasedRenderer::run_post_pass(const ViewData & d)
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
 
-    bloom->execute(eyeTextures[d.index]);
-    glBlitNamedFramebuffer(bloom->get_output_framebuffer(), eyeFramebuffers[d.index], 0, 0,
-        settings.renderSize.x, settings.renderSize.y, 0, 0,
-        settings.renderSize.x, settings.renderSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    if (settings.bloomEnabled)
+    {
+        bloom->execute(eyeTextures[d.index]);
+        glBlitNamedFramebuffer(bloom->get_output_framebuffer(), eyeFramebuffers[d.index], 0, 0,
+            settings.renderSize.x, settings.renderSize.y, 0, 0,
+            settings.renderSize.x, settings.renderSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    }
 
     if (wasCullingEnabled) glEnable(GL_CULL_FACE);
     if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
@@ -216,7 +219,7 @@ void PhysicallyBasedRenderer::render_frame()
     b.directional_light.color = sunlight.color;
     b.directional_light.direction = sunlight.direction;
     b.directional_light.amount = sunlight.amount;
-    for (int i = 0; i < (int)std::min(pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = pointLights[i];
+    for (int i = 0; i < (int) std::min(pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = pointLights[i];
 
     GLfloat defaultColor[] = { 1.0f, 0.0f, 0.f, 1.0f };
     GLfloat defaultDepth = 1.f;
@@ -241,7 +244,7 @@ void PhysicallyBasedRenderer::render_frame()
         cpuProfiler.end("center-view");
     }
 
-    if (shadow->enabled)
+    if (settings.shadowsEnabled)
     {
         gpuProfiler.begin("shadowpass");
         run_shadow_pass(shadowAndCullingView);
@@ -284,8 +287,6 @@ void PhysicallyBasedRenderer::render_frame()
     std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(materialSortFunc)> renderQueueMaterial(materialSortFunc);
     std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(distanceSortFunc)> renderQueueDefault(distanceSortFunc);
 
-    cpuProfiler.begin("sort-queue");
-
     for (auto obj : renderSet)
     {
         // Can't sort by material if the renderable doesn't *have* a material; bucket all other objects 
@@ -309,8 +310,6 @@ void PhysicallyBasedRenderer::render_frame()
         renderQueueDefault.pop();
         defaultRenderList.push_back(top);
     }
-
-    cpuProfiler.end("sort-queue");
 
     for (int camIdx = 0; camIdx < settings.cameraCount; ++camIdx)
     {

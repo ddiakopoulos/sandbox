@@ -46,11 +46,11 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         create_handle_for_asset("default-shader", std::move(shader));
     });
 
-    shaderMonitor.watch(
+    pbrProgramAsset = shaderMonitor.watch(
         "../assets/shaders/renderer/forward_lighting_vert.glsl", 
         "../assets/shaders/renderer/forward_lighting_frag.glsl", 
         "../assets/shaders/renderer", 
-        {"TWO_CASCADES", "USE_PCF_3X3", 
+        {"TWO_CASCADES", "USE_PCF_3X3", "ENABLE_SHADOWS", 
          "USE_IMAGE_BASED_LIGHTING", 
          "HAS_ROUGHNESS_MAP", "HAS_METALNESS_MAP", "HAS_ALBEDO_MAP", "HAS_NORMAL_MAP", "HAS_OCCLUSION_MAP"}, [](GlShader shader)
     {
@@ -488,25 +488,65 @@ void scene_editor_app::on_draw()
 
     gui::imgui_fixed_window_begin("Renderer", topLeftPane);
     {
-        if (ImGui::Checkbox("Enable Profiling", &enableProfiling))
-        {
-            renderer->gpuProfiler.set_enabled(enableProfiling);
-            renderer->cpuProfiler.set_enabled(enableProfiling);
-        }
-
-        if (enableProfiling)
-        {
-            for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[GPU] %s %f ms", t.first.c_str(), (float) compute_mean(t.second.average));
-            for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[CPU] %s %f ms", t.first.c_str(), (float) compute_mean(t.second.average));
-        }
 
         ImGui::Separator();
 
-        if (ImGui::TreeNode("Procedural Sky")) InspectGameObjectPolymorphic(nullptr, renderer->get_procedural_sky());
+        if (ImGui::TreeNode("Core"))
+        {
+            RendererSettings lastSettings = renderer->settings;
 
-        if (ImGui::TreeNode("Bloom + Tonemap")) Edit("bloom", *renderer->get_bloom_pass());
+            if (Edit("renderer", *renderer))
+            {
+                renderer->gpuProfiler.set_enabled(renderer->settings.performanceProfiling);
+                renderer->cpuProfiler.set_enabled(renderer->settings.performanceProfiling);
 
-        if (ImGui::TreeNode("Cascaded Shadow Mapping")) Edit("shadows", *renderer->get_shadow_pass());
+                if (renderer->settings.shadowsEnabled != lastSettings.shadowsEnabled)
+                {
+                    auto & shaderAsset = shaderMonitor.get_asset(pbrProgramAsset);
+                    auto & defines = shaderAsset.defines;
+
+                    if (renderer->settings.shadowsEnabled)
+                    {
+                        // Check if it's already in there
+                        auto itr = std::find(defines.begin(), defines.end(), "ENABLE_SHADOWS");
+                        if (itr == defines.end()) defines.push_back("ENABLE_SHADOWS");
+                    }
+                    else
+                    {
+                        auto & defines = shaderMonitor.get_asset(pbrProgramAsset).defines;
+                        auto itr = std::find(defines.begin(), defines.end(), "ENABLE_SHADOWS");
+                        if (itr != defines.end()) defines.erase(itr);
+                    }
+                    shaderAsset.shouldRecompile = true;
+                }
+            }
+            
+            if (renderer->settings.performanceProfiling)
+            {
+                for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[GPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
+                for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[CPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
+            }
+
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Procedural Sky"))
+        {
+            InspectGameObjectPolymorphic(nullptr, renderer->get_procedural_sky());
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Bloom + Tonemap"))   
+        {
+            Edit("bloom", *renderer->get_bloom_pass());
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Cascaded Shadow Mapping"))
+        {
+            Edit("shadows", *renderer->get_shadow_pass());
+            ImGui::TreePop();
+        }
 
         ImGui::Separator();
     }
