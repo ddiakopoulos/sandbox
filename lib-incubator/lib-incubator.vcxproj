@@ -246,6 +246,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\gl;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw3\include;$(ProjectDir)..\third_party\cereal\include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4305;4244;4800</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

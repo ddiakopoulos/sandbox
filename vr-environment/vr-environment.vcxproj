@@ -150,6 +150,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\third_party;$(ProjectDir)..\gl;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw3\include;$(ProjectDir)..\vr-environment;$(ProjectDir)..\vr-environment\third_party;$(ProjectDir)..\vr-environment\third_party\bullet3\src\;$(ProjectDir)..\vr-environment\third_party\bullet3\src\LinearMath;$(ProjectDir)..\vr-environment\third_party\bullet3\src\Bullet3Collision;$(ProjectDir)..\vr-environment\third_party\bullet3\src\Bullet3Common;$(ProjectDir)..\vr-environment\third_party\bullet3\src\Bullet3Dynamics;$(ProjectDir)..\vr-environment\third_party\bullet3\src\Bullet3Geometry;$(ProjectDir)..\vr-environment\third_party\bullet3\src\BulletCollision;$(ProjectDir)..\vr-environment\third_party\bullet3\src\BulletDynamics;$(ProjectDir)..\vr-environment\third_party\bullet3\src\BulletInverseDynamics;$(ProjectDir)..\vr-environment\third_party\bullet3\src\BulletSoftBody;$(ProjectDir)..\lib-render</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4703</DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
