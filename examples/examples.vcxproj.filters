@@ -15,9 +15,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="decal_app.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
     <ClInclude Include="geometric_algo_dev.hpp">
       <Filter>applications</Filter>
     </ClInclude>

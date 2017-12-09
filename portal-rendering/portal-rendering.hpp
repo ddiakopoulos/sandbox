@@ -20,7 +20,6 @@ struct shader_workbench : public GLFWApp
     GlTexture2D portalCameraDepth;
     GlFramebuffer portalFramebuffer;
 
-
     GlMesh fullscreen_quad, capsuleMesh, portalMesh, frustumMesh;
     std::shared_ptr<GlShader> basicShader;
     GlShader billboardShader, litShader;

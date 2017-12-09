@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib-incubator", "..\lib-incubator\lib-incubator.vcxproj", "{992E85A7-B590-477B-A1B2-8A04AAAD0E10}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -12,7 +12,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw3", "..\third_party\glf
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vr-environment", "..\vr-environment\vr-environment.vcxproj", "{8935AE6A-79E7-421D-B215-C1DEEB35EBA3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "examples", "..\examples\examples.vcxproj", "{93ED2D4D-908C-4383-9930-AF8922BE0EED}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "samples", "..\examples\examples.vcxproj", "{93ED2D4D-908C-4383-9930-AF8922BE0EED}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "scene-editor", "..\scene-editor\scene-editor.vcxproj", "{516363FB-3F0D-463F-9CE5-8B739253C9E3}"
 EndProject
@@ -27,6 +27,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "clustered-shading", "..\clustered-shading\clustered-shading.vcxproj", "{61F27053-ECE9-45B7-A89A-082C946F1462}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib-render", "..\lib-render\lib-render.vcxproj", "{71F00A1A-C67D-4CB9-9F37-98D4975FA5C7}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "geometric-decals", "..\geometric-decals\geometric-decals.vcxproj", "{5778E141-3CE4-415C-8C97-430041EE4D86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -124,8 +126,19 @@ Global
 		{71F00A1A-C67D-4CB9-9F37-98D4975FA5C7}.Release|Win32.Build.0 = Release|Win32
 		{71F00A1A-C67D-4CB9-9F37-98D4975FA5C7}.Release|x64.ActiveCfg = Release|x64
 		{71F00A1A-C67D-4CB9-9F37-98D4975FA5C7}.Release|x64.Build.0 = Release|x64
+		{5778E141-3CE4-415C-8C97-430041EE4D86}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5778E141-3CE4-415C-8C97-430041EE4D86}.Debug|Win32.Build.0 = Debug|Win32
+		{5778E141-3CE4-415C-8C97-430041EE4D86}.Debug|x64.ActiveCfg = Debug|x64
+		{5778E141-3CE4-415C-8C97-430041EE4D86}.Debug|x64.Build.0 = Debug|x64
+		{5778E141-3CE4-415C-8C97-430041EE4D86}.Release|Win32.ActiveCfg = Release|Win32
+		{5778E141-3CE4-415C-8C97-430041EE4D86}.Release|Win32.Build.0 = Release|Win32
+		{5778E141-3CE4-415C-8C97-430041EE4D86}.Release|x64.ActiveCfg = Release|x64
+		{5778E141-3CE4-415C-8C97-430041EE4D86}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E2D0793D-BD41-4F42-A6AA-DAB3D17A46BE}
 	EndGlobalSection
 EndGlobal
