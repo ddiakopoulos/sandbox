@@ -127,7 +127,7 @@ float noise_iq_fb(const float2 & v, uint8_t octaves = 4, const float2x2 & mat = 
 //   Utils   //
 ///////////////
 
-/// Skewing factors for 2D simplex grid:
+// Skewing factors for 2D simplex grid:
 // F2 = 0.5*(sqrt(3.0)-1.0)
 // G2 = (3.0-Math.sqrt(3.0))/6.0
 static const float F2 = 0.366025403f;

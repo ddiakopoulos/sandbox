@@ -1,6 +1,5 @@
 #include <iostream>
 #include <sstream>
-
 #include "index.hpp"
 
 using namespace avl;
@@ -13,10 +12,6 @@ using namespace avl;
 //#include "examples/reaction_app.hpp"
 //#include "examples/simplex_noise_app.hpp"
 //#include "examples/terrain_app.hpp"
-//#include "examples/textured_model_app.hpp"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "third_party/stb/stb_image.h"
 
 IMPLEMENT_MAIN(int argc, char * argv[])
 {
