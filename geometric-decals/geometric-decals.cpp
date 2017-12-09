@@ -32,15 +32,18 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Geometric Decals")
 
     GeometryHandle blah = {};
     std::cout << "Blah: " << blah.name << std::endl;
-    std::cout << &blah.get() << std::endl;
+    std::cout << "First: " << &blah.get() << std::endl;
+    std::cout << "Second: " << &blah.get() << std::endl;
     std::cout << blah.assigned() << std::endl;
 
     create_handle_for_asset("torus-mesh", std::move(torusMesh));
 
+    /*
     for (auto w : GeometryHandle::list())
     {
         std::cout << "Entry: " << w.name << std::endl;
     }
+    */
 
     StaticMesh m;
     m.geom = "torus-geom";

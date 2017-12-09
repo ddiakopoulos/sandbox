@@ -51,5 +51,5 @@ A collection of C++11/14 classes and opengl utilities united under the arbitrari
 * DSP Algorithms & Filters
   * One-euro, complimentary, and exponential filters for 1D data
   * Ad-hoc statistical analysis (variance, skewness, kurtosis, etc)
-* Misc
-  * `lib-incubator` incorporates a considerable amount of public-domain code adapted for `linalg.h` types or readability/usability (like various lock-free queues). See `COPYING` for details.
+
+`lib-incubator` incorporates a considerable amount of permissively-licensed and public-domain code adapted for `linalg.h` types or readability/usability/extensibility (like various lock-free queues and graphics samples). See `COPYING` for full attribution of code found in this repository. 

@@ -20,9 +20,6 @@ Authored by Sterling G. Orsten, 2015
 https://github.com/nvpro-samples/shared_sources/blob/master/noise/noise1234.h (Public Domain)
 Authored by Stefan Gustavson, 2011
 
-http://www.jonolick.com/home/gif-writer (Public Domain)
-Authored by Jon Olick, 2015
-
 https://en.wikipedia.org/wiki/MurmurHash (Public Domain)
 Authored by Austin Appleby, 2008
 
@@ -38,12 +35,24 @@ Authored by Forrest Smith, 2016+
 http://marc-b-reynolds.github.io/shf/2016/04/18/sobol.html (Public Domain)
 Authored by Marc B. Reynolds, 2010+
 
+https://github.com/Cultrarius/Swarmz (Public Domain)
+Authored by Michael Galetzka, 2016
+
 ////////////////////////////////////////
 //   Permissively Licensed Libraries  //
 ////////////////////////////////////////
 
+https://github.com/bulletphysics/bullet3 (zlib)
+Copyright (C) Erwin Coumans and Bullet contributors 
+
+https://github.com/fsole/brokkr (MIT)
+Copyright (C) Ferran Sole, 2017
+
+https://github.com/gabime/spdlog/ (MIT)
+Copyright (C) Gabi Melman, 2016
+
 http://www.glfw.org/ (zlib/libpng)
-Copyright (C) Camilla Berglund, 2006-2011
+Copyright (C) Camilla Berglund, 2006+
 
 http://www.geometrictools.com/ (Boost)
 Copyright (C) Geometric Tools, 1998-2015
@@ -61,10 +70,10 @@ https://bitbucket.org/SpartanJ/efsw (MIT)
 Copyright (C) James Wynn & Martín Lucas Golini, 2012+
 
 https://github.com/ocornut/imgui (MIT)
-Copyright (C) Omar Cornut and ImGui contributors, 2014-2015 
+Copyright (C) Omar Cornut and ImGui contributors, 2014+
 
 https://github.com/bkaradzic/bgfx (BSD 2-Clause)
-Copyright (C) Branimir Karadzic, 2010-2016
+Copyright (C) Branimir Karadzic, 2010+
 
 https://github.com/syoyo/tinyobjloader (BSD 2-Clause)
 Copyright (C) Syoyo Fujita, 2012 - 2015
@@ -113,6 +122,9 @@ Copyright (C) Nicholas Gillian, 2012
 
 https://github.com/mohaps/lrucache11 (BSD 2-Clause)
 Copyright (C) Saurav Mohapatra, 2012
+
+https://github.com/ekmett/vr (BSD 2-Clause)
+Copyright (C) Edward Kmett, 2015
 
 /////////////////////////
 //   Research Papers   //
