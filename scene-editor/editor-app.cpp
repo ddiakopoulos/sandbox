@@ -345,7 +345,7 @@ void scene_editor_app::on_draw()
     {
         glDisable(GL_DEPTH_TEST);
 
-        auto & program = GlShaderHandle("wireframe").get();
+        auto & program = wireframeHandle.get();
 
         program.bind();
 

@@ -150,6 +150,8 @@ struct scene_editor_app final : public GLFWApp
 
     Scene scene;
 
+    GlShaderHandle wireframeHandle{ "wireframe" };
+
     std::unique_ptr<gui::ImGuiInstance> igm;
     std::unique_ptr<PhysicallyBasedRenderer> renderer;
     std::unique_ptr<editor_controller<GameObject>> editor;

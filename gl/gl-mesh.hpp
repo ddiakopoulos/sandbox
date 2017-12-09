@@ -14,6 +14,7 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include <assert.h>
 
 #if defined(ANVIL_PLATFORM_WINDOWS)
 #pragma warning(push)
@@ -37,6 +38,8 @@ namespace avl
 
     inline GlMesh make_mesh_from_geometry(const Geometry & geometry, const GLenum usage = GL_STATIC_DRAW)
     {
+        assert(geometry.vertices.size() > 0);
+
         GlMesh m;
 
         int vertexOffset = 0;

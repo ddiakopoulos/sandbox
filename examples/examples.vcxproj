@@ -171,7 +171,6 @@
     <ClInclude Include="reaction_app.hpp" />
     <ClInclude Include="simplex_noise_app.hpp" />
     <ClInclude Include="terrain_app.hpp" />
-    <ClInclude Include="textured_model_app.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

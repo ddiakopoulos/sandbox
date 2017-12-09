@@ -19,5 +19,5 @@ vec4 wireframe(vec4 fill, vec4 stroke, float lineWidth)
 
 void main()
 {
-    f_color = wireframe(vec4(0, 0, 0, 0), vec4(1, 1, 1, 0.05), 1.25); 
+    f_color = wireframe(vec4(0, 0, 0, 0), vec4(1, 1, 1, 0.5), 1.25); 
 }

@@ -33,9 +33,6 @@
     <ClInclude Include="terrain_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>
-    <ClInclude Include="textured_model_app.hpp">
-      <Filter>applications</Filter>
-    </ClInclude>
     <ClInclude Include="octree_test_app.hpp">
       <Filter>applications</Filter>
     </ClInclude>

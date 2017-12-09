@@ -101,7 +101,7 @@ struct ExperimentalApp : public GLFWApp
             sceneShader->bind();
             sceneShader->uniform("u_viewProj", viewProjectionMatrix);
             sceneShader->uniform("u_modelMatrix", Identity4x4);
-            sceneShader->uniform("u_modelMatrixIT", inv(transpose(Identity4x4)));
+            sceneShader->uniform("u_modelMatrixIT", inverse(transpose(Identity4x4)));
             sphere.draw_elements(numInstances); // instanced draw     
             sceneShader->unbind();
         }

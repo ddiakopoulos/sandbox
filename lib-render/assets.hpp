@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef vr_assets_hpp
-#define vr_assets_hpp
+#ifndef asset_handles_hpp
+#define asset_handles_hpp
 
 #include "util.hpp"
 #include "math-core.hpp"
@@ -11,13 +11,18 @@
 #include <memory>
 #include <unordered_map>
 
+static inline uint64_t system_time_ns()
+{
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+}
+
+// Note that the asset of `UniqueAsset` must be default constructable.
 template<typename T>
 struct UniqueAsset : public Noncopyable
 {
     T asset;
-    bool assigned = false;
-    std::string filepath;
-    std::string timestamp;
+    bool assigned{ false };
+    uint64_t timestamp;
 };
 
 template<typename T>
@@ -32,13 +37,12 @@ public:
     std::string name;
 
     AssetHandle() : AssetHandle("") {}
+    AssetHandle(const std::string & asset_id, T && asset) : AssetHandle(asset_id.c_str()) { assign(std::move(asset)); }
     AssetHandle(const std::string & asset_id) : AssetHandle(asset_id.c_str()) {}
     AssetHandle(const char * asset_id)
     {
-        auto & a = table[asset_id];
-        if (!a) a = std::make_shared<UniqueAsset<T>>();
-        handle = a;
         name = asset_id;
+        if (name.empty()) name = "default";
     }
 
     AssetHandle(const AssetHandle & r)
@@ -47,44 +51,61 @@ public:
         name = r.name;
     }
 
-    // Return const reference to underlying resource. Note that `UniqueAsset` is default constructable,
-    // so this function may not return the desired asset if loading has failed.
+    // Return reference to underlying resource. 
     T & get() const
     { 
-        // if (name.size() == 0) throw std::invalid_argument("asset has no identifier");
-        
-        if (handle->assigned) return handle->asset; // Check if this handle has a cached asset
-        else // If not, this is a virgin handle and we should lookup from the static table
+        // Check if this handle has a cached asset
+        if (handle)
         {
-            auto & a = table[name];
-            if (a)
-            {
-                handle = a;
-                return handle->asset;
-            }
+            return handle->asset; 
         }
-
-        // No valid asset was found...
-        std::cout << "Returning default-constructed asset for " << name << std::endl;
-        return handle->asset;
+        else 
+        {
+            // If not, this is a virgin handle and we should lookup from the static table.
+            auto & a = table[name];
+            if (!a)
+            {
+                a = std::make_shared<UniqueAsset<T>>();
+                a->timestamp = system_time_ns();
+                a->assigned = false;
+                std::cout << "default constructing asset" << std::endl;
+            }
+            handle = a;
+            std::cout << "Get: " << handle << std::endl;
+            return handle->asset;
+        }
     }
 
     T & assign(T && asset)
     {
-        std::cout << "Assigning: " << typeid(this).name() << " - " << name << " - " << handle << " // " << handle->assigned << std::endl;
+        auto & a = table[name];
+
+        // New asset
+        if (!a)
+        {
+            a = std::make_shared<UniqueAsset<T>>();
+            a->timestamp = system_time_ns();
+        }
+
+        handle = a;
         handle->asset = std::move(asset);
         handle->assigned = true;
+        handle->timestamp = system_time_ns();
+
+        std::cout << "Assigning: " << typeid(this).name() << " - " << name << " - " << handle << " // " << handle->assigned << std::endl;
+
         return handle->asset;
     }
 
-    // Since `AssetHandle`s can serve back default-constructed values (handle->assigned == false)
-    // this also needs to lookup back to the table in the case that we check if an asset has 
-    // been assigned before ever calling `get()`
     bool assigned() const
     {
+        if (handle && handle->assigned) return true;
         auto & a = table[name];
-        if (a) handle = a;
-        if (handle->assigned) return true;
+        if (a)
+        {
+            handle = a;
+            return handle->assigned;
+        }
         return false;
     }
 
@@ -99,11 +120,22 @@ public:
 template<class T> 
 std::unordered_map<std::string, std::shared_ptr<UniqueAsset<T>>> AssetHandle<T>::table;
 
-template<class T> AssetHandle<T> create_handle_for_asset(const char * asset_id, T && asset)
+template<class T> inline AssetHandle<T> create_handle_for_asset(const char * asset_id, T && asset)
 {
-    AssetHandle<T> assetHandle(asset_id);
-    assetHandle.assign(std::move(asset));
-    return assetHandle;
+    static_assert(!std::is_pointer<T>::value, "cannot create a handle for a raw pointer");
+    return { AssetHandle<T>(asset_id, std::move(asset)) };
+}
+
+template<> inline AssetHandle<avl::Geometry> create_handle_for_asset(const char * asset_id, avl::Geometry && asset)
+{
+    assert(asset.vertices.size() > 0); // verify that this the geometry is not empty
+    return { AssetHandle<avl::Geometry>(asset_id, std::move(asset)) };
+}
+
+template<> inline AssetHandle<GlMesh> create_handle_for_asset(const char * asset_id, GlMesh && asset)
+{
+    assert(asset.get_vertex_data_buffer() > 0); // verify that this is a well-formed GlMesh object
+    return { AssetHandle<GlMesh>(asset_id, std::move(asset)) };
 }
 
 typedef AssetHandle<GlTexture2D> GlTextureHandle;
@@ -111,4 +143,4 @@ typedef AssetHandle<GlShader> GlShaderHandle;
 typedef AssetHandle<GlMesh> GlMeshHandle;
 typedef AssetHandle<avl::Geometry> GeometryHandle;
 
-#endif // end vr_assets_hpp
+#endif // end asset_handles_hpp
