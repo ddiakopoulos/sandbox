@@ -22,21 +22,13 @@ namespace ImGui
         ImGuiTextBuffer Buf;
         ImGuiTextFilter Filter;
         ImVector<int> LineOffsets;
-        bool ScrollToBottom;
+        bool ScrollToBottom = true;
 
         void Clear() { Buf.clear(); LineOffsets.clear(); }
 
-        void AddLog(const char * fmt, ...)
+        void Update(const std::string & message)
         {
-            int old_size = Buf.size();
-            va_list args;
-            va_start(args, fmt);
-            Buf.appendv(fmt, args);
-            va_end(args);
-            for (int new_size = Buf.size(); old_size < new_size; old_size++)
-            {
-                if (Buf[old_size] == '\n') LineOffsets.push_back(old_size);
-            }
+            Buf.append("%s\n", message.c_str());
             ScrollToBottom = true;
         }
 
@@ -80,6 +72,18 @@ namespace ImGui
 
             ImGui::EndChild();
         }
+    };
+
+    class LogWindowSink : public spdlog::sinks::sink
+    {
+        ImGuiAppLog & console;
+    public:
+        LogWindowSink(ImGuiAppLog & c) : console(c) { };
+        void log(const spdlog::details::log_msg & msg) override
+        {
+            console.Update(msg.raw.str());
+        }
+        void flush() { };
     };
 
     static auto vector_getter = [](void* vec, int idx, const char** out_text)

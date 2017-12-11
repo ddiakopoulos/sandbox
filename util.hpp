@@ -130,7 +130,7 @@ namespace avl
         Singleton() = default;
         ~Singleton() = default;
     public:
-        static T & get_instance() { if (!single) single = new T(); return *single; };
+        static T * get_instance() { if (!single) single = new T(); return single; };
     };
 
     inline std::string codepoint_to_utf8(uint32_t codepoint)

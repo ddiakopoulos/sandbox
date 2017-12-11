@@ -25,25 +25,8 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Geometric Decals")
     Geometry torusGeom = make_torus();
     GlMesh torusMesh = make_mesh_from_geometry(torusGeom);
 
-    //create_handle_for_asset("default", std::move(torusMesh));
-
     create_handle_for_asset("torus-geom", std::move(torusGeom));
-    //create_handle_for_asset("torus-mesh", std::move(torusMesh));
-
-    GeometryHandle blah = {};
-    std::cout << "Blah: " << blah.name << std::endl;
-    std::cout << "First: " << &blah.get() << std::endl;
-    std::cout << "Second: " << &blah.get() << std::endl;
-    std::cout << blah.assigned() << std::endl;
-
     create_handle_for_asset("torus-mesh", std::move(torusMesh));
-
-    /*
-    for (auto w : GeometryHandle::list())
-    {
-        std::cout << "Entry: " << w.name << std::endl;
-    }
-    */
 
     StaticMesh m;
     m.geom = "torus-geom";

@@ -10,6 +10,9 @@
 #include "file_io.hpp"
 #include "procedural_mesh.hpp"
 
+#undef near
+#undef far
+
 // http://developer.download.nvidia.com/SDK/10.5/opengl/src/cascaded_shadow_maps/doc/cascaded_shadow_maps.pdf
 // https://www.gamedev.net/forums/topic/497259-stable-cascaded-shadow-maps/
 // https://github.com/jklarowicz/dx11_samples/blob/master/VarianceShadows11/VarianceShadowsManager.cpp

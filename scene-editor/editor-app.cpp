@@ -2,6 +2,7 @@
 #include "editor-app.hpp"
 #include "gui.hpp"
 #include "serialization.hpp"
+#include "logging.hpp"
 
 using namespace avl;
 
@@ -23,6 +24,8 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
+
+    Logger::get_instance()->add_sink(std::make_shared<ImGui::LogWindowSink>(log));
 
     auto wireframeProgram = GlShader(
         read_file_text("../assets/shaders/wireframe_vert.glsl"), 
@@ -119,10 +122,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     for (auto & instance : scene.materialInstances)
     {
         create_handle_for_asset(instance.first.c_str(), static_cast<std::shared_ptr<Material>>(instance.second));
-        std::cout << "Material Handle (Instance): " << instance.first.c_str() << std::endl;
-        std::cout << "Program Shader Handle Name: " << instance.second->program.name << std::endl;
-        std::cout << "Program Shader Handle Asset: " << instance.second->program.get().handle() << std::endl;
-        // assigned?
     }
 
     //auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
@@ -553,7 +552,6 @@ void scene_editor_app::on_draw()
 
     gui::imgui_fixed_window_begin("Application Log", bottomLeftPane);
     {
-        static ImGui::ImGuiAppLog log;
         log.Draw("-");
     }
     gui::imgui_fixed_window_end();

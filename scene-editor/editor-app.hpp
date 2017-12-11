@@ -7,6 +7,7 @@
 #include "uniforms.hpp"
 #include "assets.hpp"
 #include "scene.hpp"
+#include "gui.hpp"
 
 static inline Pose to_linalg(tinygizmo::rigid_transform & t)
 {
@@ -156,6 +157,7 @@ struct scene_editor_app final : public GLFWApp
     std::unique_ptr<PhysicallyBasedRenderer> renderer;
     std::unique_ptr<editor_controller<GameObject>> editor;
 
+    ImGui::ImGuiAppLog log;
     auto_layout uiSurface;
     std::vector<std::shared_ptr<GLTextureView>> debugViews;
 

@@ -7,6 +7,7 @@
 #include "math-core.hpp"
 #include "gl-api.hpp"
 #include "geometry.hpp"
+#include "logging.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -42,7 +43,10 @@ public:
     AssetHandle(const char * asset_id)
     {
         name = asset_id;
-        if (name.empty()) name = "default";
+        if (name.empty())
+        {
+            name = "default";
+        }
     }
 
     AssetHandle(const AssetHandle & r)
@@ -59,6 +63,7 @@ public:
         {
             return handle->asset; 
         }
+        // Lazy load
         else 
         {
             // If not, this is a virgin handle and we should lookup from the static table.
@@ -68,10 +73,9 @@ public:
                 a = std::make_shared<UniqueAsset<T>>();
                 a->timestamp = system_time_ns();
                 a->assigned = false;
-                std::cout << "default constructing asset" << std::endl;
+                Logger::get_instance()->assetLog->info("asset type {} ({}) was default constructed", typeid(this).name(), name);
             }
             handle = a;
-            std::cout << "Get: " << handle << std::endl;
             return handle->asset;
         }
     }
@@ -92,7 +96,7 @@ public:
         handle->assigned = true;
         handle->timestamp = system_time_ns();
 
-        std::cout << "Assigning: " << typeid(this).name() << " - " << name << " - " << handle << " // " << handle->assigned << std::endl;
+        Logger::get_instance()->assetLog->info("asset type {} with id {} was assigned", typeid(this).name(), name);
 
         return handle->asset;
     }
