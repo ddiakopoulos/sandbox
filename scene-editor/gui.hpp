@@ -19,16 +19,16 @@ namespace ImGui
 
     struct ImGuiAppLog
     {
-        ImGuiTextBuffer Buf;
+        std::vector<std::string> buffer;
         ImGuiTextFilter Filter;
-        ImVector<int> LineOffsets;
+
         bool ScrollToBottom = true;
 
-        void Clear() { Buf.clear(); LineOffsets.clear(); }
+        void Clear() { buffer.clear(); }
 
         void Update(const std::string & message)
         {
-            Buf.append("%s\n", message.c_str());
+            buffer.push_back(message);
             ScrollToBottom = true;
         }
 
@@ -50,19 +50,21 @@ namespace ImGui
 
             if (Filter.IsActive())
             {
-                const char* buf_begin = Buf.begin();
-                const char* line = buf_begin;
-                for (int line_no = 0; line != NULL; line_no++)
+                for (auto & s : buffer)
                 {
-                    const char* line_end = (line_no < LineOffsets.Size) ? buf_begin + LineOffsets[line_no] : NULL;
-                    if (Filter.PassFilter(line, line_end))
+                    if (Filter.PassFilter(s.c_str()))
                     {
-                        ImGui::TextUnformatted(line, line_end);
+                        ImGui::TextUnformatted(s.c_str());
                     }
-                    line = line_end && line_end[1] ? line_end + 1 : NULL;
                 }
             }
-            else ImGui::TextUnformatted(Buf.begin());
+            else
+            {
+                for (auto & s : buffer)
+                {
+                    ImGui::TextUnformatted(s.c_str());
+                }
+            }
 
             if (ScrollToBottom)
             {
