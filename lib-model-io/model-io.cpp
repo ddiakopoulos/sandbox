@@ -7,18 +7,30 @@
 #include "third-party/meshoptimizer/meshoptimizer.hpp"
 #include "fbx-importer.hpp"
 
-std::vector<runtime_skinned_mesh> import_fbx(const std::string & path)
+std::map<std::string, runtime_skinned_mesh> import_fbx_model(const std::string & path)
 {
-#ifdef USE_FBX_SDK
-    // ...
-#elif
-#pragma message ("fbxsdk is not enabled with the USE_FBX_SDK flag")
-#endif
+    #ifdef USE_FBX_SDK
+    
+    try
+    {
+        auto asset = import_fbx_file(path);
+        return asset.meshes;
+     }
+    catch (const std::exception & e)
+    {
+        std::cout << "Caught FBX importing exception: " << e.what() << std::endl;
+    }
+
+    return {};
+
+    #elif
+        #pragma message ("fbxsdk is not enabled with the USE_FBX_SDK flag")
+    #endif
 }
 
-std::vector<runtime_mesh> import_obj(const std::string & path)
+std::map<std::string, runtime_mesh> import_obj_model(const std::string & path)
 {
-    std::vector<runtime_mesh> meshes;
+    std::map<std::string, runtime_mesh> meshes;
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -43,10 +55,10 @@ std::vector<runtime_mesh> import_obj(const std::string & path)
     // Parse tinyobj data into geometry struct
     for (unsigned int i = 0; i < shapes.size(); i++)
     {
-        runtime_skinned_mesh g;
-
         tinyobj::shape_t * shape = &shapes[i];
         tinyobj::mesh_t * mesh = &shapes[i].mesh;
+
+        runtime_mesh & g = meshes[shape->name];
 
         std::cout << "Submesh Name:  " << shape->name << std::endl;
         std::cout << "Num Indices:   " << mesh->indices.size() << std::endl;
@@ -99,9 +111,9 @@ std::vector<runtime_mesh> import_obj(const std::string & path)
         {
             g.colors.push_back({ attrib.colors[i + 0], attrib.colors[i + 1], attrib.colors[i + 2], 1 });
         }
-
-        meshes.push_back(g);
     }
+
+    return meshes;
 }
 
 void optimize_model(runtime_mesh & input)

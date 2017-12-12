@@ -125,7 +125,7 @@ void optimize_model(runtime_mesh & input);
 runtime_mesh import_mesh_binary(const std::string & path);
 void export_mesh_binary(const std::string & path, runtime_mesh & mesh, bool compressed = false);
 
-std::vector<runtime_skinned_mesh> import_fbx(const std::string & path);
-std::vector<runtime_mesh> import_obj(const std::string & path);
+std::map<std::string, runtime_skinned_mesh> import_fbx_model(const std::string & path);
+std::map<std::string, runtime_mesh> import_obj_model(const std::string & path);
 
 #endif // end runtime_mesh_hpp
