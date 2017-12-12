@@ -206,7 +206,7 @@ inline Geometry make_decal_geometry(Geometry & mesh, const Pose & pose, const Po
         for (int v = 0; v < clippedVertices.size(); v++)
         {
             auto & a = clippedVertices[v];
-            decal.texCoords.push_back(float2(0.5f + (a.v.x / dimensions.x), 0.5f + (a.v.y / dimensions.y)));
+            decal.texcoord0.push_back(float2(0.5f + (a.v.x / dimensions.x), 0.5f + (a.v.y / dimensions.y)));
             a.v = transform_coord(cubePose.matrix(), a.v); // back to local
         }
 

@@ -140,7 +140,7 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
     Geometry g;
 
     g.vertices.resize(points.size() * 2);
-    g.texCoords.resize(points.size() * 2);
+    g.texcoord0.resize(points.size() * 2);
 
     const float3 right = normalize(cross(fwd, float3(0, +1, 0)));
     const float3 thickness = float3(0.1);
@@ -158,8 +158,8 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
             uvoffset_mod += 1 - dist_cur / dist_last;
         }
 
-        g.texCoords[2 * x] = float2(0, x - uvoffset_mod);
-        g.texCoords[2 * x + 1] = float2(1, x - uvoffset_mod);
+        g.texcoord0[2 * x] = float2(0, x - uvoffset_mod);
+        g.texcoord0[2 * x + 1] = float2(1, x - uvoffset_mod);
     }
 
     std::vector<int> indices(2 * 3 * (g.vertices.size() - 2));

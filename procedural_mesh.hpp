@@ -42,7 +42,7 @@ namespace avl
         {
             cube.vertices.push_back(verts[i].position);
             cube.normals.push_back(verts[i].normal);
-            cube.texCoords.push_back(verts[i].texCoord);
+            cube.texcoord0.push_back(verts[i].texCoord);
         }
         
         compute_bounds(cube);
@@ -248,7 +248,7 @@ namespace avl
                 vertex.z = 0;
                 
                 ringGeom.vertices.push_back(vertex);
-                ringGeom.texCoords.emplace_back((vertex.x / outerRadius + 1.0f) / 2.0f, (vertex.y / outerRadius + 1.0f) / 2.0f);
+                ringGeom.texcoord0.emplace_back((vertex.x / outerRadius + 1.0f) / 2.0f, (vertex.y / outerRadius + 1.0f) / 2.0f);
                 
             }
             radius += radiusStep;
@@ -375,7 +375,7 @@ namespace avl
             {
                 auto b = make_rotation_quat_axis_angle({0,0,1}, (j % radial_segments) * ANVIL_TAU / radial_segments);
                 torus.vertices.push_back(qrot(a, qrot(b, float3(1,0,0)) + float3(3,0,0)));
-                torus.texCoords.push_back({i * 8.0f / radial_segments, j * 4.0f / radial_segments});
+                torus.texcoord0.push_back({i * 8.0f / radial_segments, j * 4.0f / radial_segments});
                 if (i > 0 && j > 0)
                 {
                     float4 q = {
@@ -411,7 +411,7 @@ namespace avl
             float ty = halfLength + radius;
             capsule.vertices.emplace_back(0.f, ty, 0.f);
             capsule.normals.emplace_back(0.f, 1.f, 0.f);
-            capsule.texCoords.emplace_back((j+1) / float(segments), 0.f);
+            capsule.texcoord0.emplace_back((j+1) / float(segments), 0.f);
         }
         
         for (int i = 1; i < segments; ++i)
@@ -427,7 +427,7 @@ namespace avl
             
             capsule.vertices.emplace_back(0.f, ty, -r);
             capsule.normals.push_back(safe_normalize(float3(0.f, y, -1.f)));
-            capsule.texCoords.emplace_back(0.f, i / float(segments));
+            capsule.texcoord0.emplace_back(0.f, i / float(segments));
             
             for (int j = 1; j < doubleSegments; ++j)
             {
@@ -442,12 +442,12 @@ namespace avl
                 
                 capsule.vertices.emplace_back(x * r, ty , z * r);
                 capsule.normals.push_back(safe_normalize(float3(x, y, z)));
-                capsule.texCoords.emplace_back(j / float(segments), i / float(segments));
+                capsule.texcoord0.emplace_back(j / float(segments), i / float(segments));
             }
             
             capsule.vertices.emplace_back(0.f, ty, -r);
             capsule.normals.push_back(safe_normalize(float3(0.f, y, -1.f)));
-            capsule.texCoords.emplace_back(2.f, i / float(segments));
+            capsule.texcoord0.emplace_back(2.f, i / float(segments));
         }
         
         for (int j = 0; j < doubleSegments; ++j)
@@ -455,7 +455,7 @@ namespace avl
             float ty = -halfLength - radius;
             capsule.vertices.emplace_back(0.f, ty, 0.f);
             capsule.normals.push_back(safe_normalize(float3(0.f, -1.f, 0.f)));
-            capsule.texCoords.emplace_back((j+1) / float(segments), 1.f);
+            capsule.texcoord0.emplace_back((j+1) / float(segments), 1.f);
         }
         
         int v = 0;
@@ -510,10 +510,10 @@ namespace avl
                 plane.vertices.emplace_back(w + ow, h, 0.f);
                 plane.vertices.emplace_back(w + ow, h + oh, 0.f);
                 
-                plane.texCoords.emplace_back(u, v + ov);
-                plane.texCoords.emplace_back(u, v);
-                plane.texCoords.emplace_back(u + ou, v);
-                plane.texCoords.emplace_back(u + ou, v + ov);
+                plane.texcoord0.emplace_back(u, v + ov);
+                plane.texcoord0.emplace_back(u, v);
+                plane.texcoord0.emplace_back(u + ou, v);
+                plane.texcoord0.emplace_back(u + ou, v + ov);
 
                 plane.normals.emplace_back(0, 0, -1);
                 plane.normals.emplace_back(0, 0, -1);
@@ -541,10 +541,10 @@ namespace avl
                     plane.vertices.emplace_back(w + ow, h, 0.f);
                     plane.vertices.emplace_back(w + ow, h + oh, 0.f);
 
-                    plane.texCoords.emplace_back(u, v + ov);
-                    plane.texCoords.emplace_back(u, v);
-                    plane.texCoords.emplace_back(u + ou, v);
-                    plane.texCoords.emplace_back(u + ou, v + ov);
+                    plane.texcoord0.emplace_back(u, v + ov);
+                    plane.texcoord0.emplace_back(u, v);
+                    plane.texcoord0.emplace_back(u + ou, v);
+                    plane.texcoord0.emplace_back(u + ou, v + ov);
 
                     plane.normals.emplace_back(0, 0, 1);
                     plane.normals.emplace_back(0, 0, 1);
@@ -577,7 +577,7 @@ namespace avl
         
         plane.vertices.resize(numVerts);
         plane.normals.resize(numVerts);
-        plane.texCoords.resize(numVerts);
+        plane.texcoord0.resize(numVerts);
         
         for (int i = 0; i <= numSegments; i++)
         {
@@ -596,8 +596,8 @@ namespace avl
             plane.normals[index] = norm;
             plane.normals[index + 1] = norm;
             
-            plane.texCoords[index] = float2(t, 0.0f);
-            plane.texCoords[index + 1] = float2(t, 1.0f);
+            plane.texcoord0[index] = float2(t, 0.0f);
+            plane.texcoord0[index + 1] = float2(t, 1.0f);
         }
         
         // Set up indices
@@ -828,12 +828,12 @@ namespace avl
         for (auto & v : ico.vertices) v = normalize(v);
         for (auto & n : ico.normals) n = normalize(n);
 
-        ico.texCoords.resize(ico.normals.size(), float2());
+        ico.texcoord0.resize(ico.normals.size(), float2());
         for (size_t i = 0; i < ico.normals.size(); ++i)
         {
             const float3 & normal = ico.normals[i];
-            ico.texCoords[i].x = 0.5f - 0.5f * std::atan2(normal.x, -normal.z) / float(ANVIL_PI);
-            ico.texCoords[i].y = 1.0f - std::acos(normal.y) / float(ANVIL_PI);
+            ico.texcoord0[i].x = 0.5f - 0.5f * std::atan2(normal.x, -normal.z) / float(ANVIL_PI);
+            ico.texcoord0[i].y = 1.0f - std::acos(normal.y) / float(ANVIL_PI);
         }
 
         auto add_unique_vertex = [&](size_t i, uint32_t component, const float2 & uv) 
@@ -845,15 +845,15 @@ namespace avl
 
             ico.vertices.push_back(ico.vertices[index]);
             ico.normals.push_back(ico.normals[index]);
-            ico.texCoords.push_back(uv);
+            ico.texcoord0.push_back(uv);
         };
 
         const size_t numTriangles = ico.faces.size();
         for (size_t i = 0; i < numTriangles; ++i)
         {
-            const float2 & uv0 = ico.texCoords[ico.faces[i].x];
-            const float2 & uv1 = ico.texCoords[ico.faces[i].y];
-            const float2 & uv2 = ico.texCoords[ico.faces[i].z];
+            const float2 & uv0 = ico.texcoord0[ico.faces[i].x];
+            const float2 & uv1 = ico.texcoord0[ico.faces[i].y];
+            const float2 & uv2 = ico.texcoord0[ico.faces[i].z];
 
             const float d1 = uv1.x - uv0.x;
             const float d2 = uv2.x - uv0.x;

@@ -102,7 +102,7 @@ namespace avl
     {
         Geometry g;
         g.vertices = { { -1.0f, -1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } };
-        g.texCoords = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
+        g.texcoord0 = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
         g.faces = { { 0, 1, 2 },{ 3, 4, 5 } };
         return make_mesh_from_geometry(g);
     }
@@ -116,7 +116,7 @@ namespace avl
     {
         Geometry g;
         g.vertices = { { 0.0f, 0.0f, 0.0f },{ 1.0f, 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 0.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } };
-        g.texCoords = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
+        g.texcoord0 = { { 0, 0 },{ 1, 0 },{ 0, 1 },{ 0, 1 },{ 1, 0 },{ 1, 1 } };
         g.faces = { { 0, 1, 2 },{ 3, 4, 5 }, { 5, 4, 3 },{ 2, 1, 0 } }; // with backfaces
         return make_mesh_from_geometry(g);
     }

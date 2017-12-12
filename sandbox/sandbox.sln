@@ -30,6 +30,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib-render", "..\lib-render
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "geometric-decals", "..\geometric-decals\geometric-decals.vcxproj", "{5778E141-3CE4-415C-8C97-430041EE4D86}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib-model-io", "..\lib-model-io\lib-model-io.vcxproj", "{BDDB4BE8-092B-4C42-B39E-7EF79011403C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -134,6 +136,14 @@ Global
 		{5778E141-3CE4-415C-8C97-430041EE4D86}.Release|Win32.Build.0 = Release|Win32
 		{5778E141-3CE4-415C-8C97-430041EE4D86}.Release|x64.ActiveCfg = Release|x64
 		{5778E141-3CE4-415C-8C97-430041EE4D86}.Release|x64.Build.0 = Release|x64
+		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Debug|Win32.Build.0 = Debug|Win32
+		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Debug|x64.ActiveCfg = Debug|x64
+		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Debug|x64.Build.0 = Debug|x64
+		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Release|Win32.ActiveCfg = Release|Win32
+		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Release|Win32.Build.0 = Release|Win32
+		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Release|x64.ActiveCfg = Release|x64
+		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

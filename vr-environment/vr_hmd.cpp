@@ -47,7 +47,7 @@ OpenVR_HMD::OpenVR_HMD()
             const vr::RenderModel_Vertex_t vertex = model->rVertexData[v];
             controllerRenderData->mesh.vertices.push_back({ vertex.vPosition.v[0], vertex.vPosition.v[1], vertex.vPosition.v[2] });
             controllerRenderData->mesh.normals.push_back({ vertex.vNormal.v[0], vertex.vNormal.v[1], vertex.vNormal.v[2] });
-            controllerRenderData->mesh.texCoords.push_back({ vertex.rfTextureCoord[0], vertex.rfTextureCoord[1] });
+            controllerRenderData->mesh.texcoord0.push_back({ vertex.rfTextureCoord[0], vertex.rfTextureCoord[1] });
         }
 
         for (int f = 0; f < model->unTriangleCount * 3; f +=3)

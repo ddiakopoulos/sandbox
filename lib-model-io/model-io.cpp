@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <fstream>
+
 #include "third-party/tinyobj/tiny_obj_loader.h"
 #include "third-party/tinyply/tinyply.h"
 #include "third-party/meshoptimizer/meshoptimizer.hpp"
@@ -195,7 +196,7 @@ runtime_mesh import_mesh_binary(const std::string & path)
     return mesh;
 }
 
-void export_mesh_binary(const std::string & path, runtime_mesh & mesh, bool compressed = false)
+void export_mesh_binary(const std::string & path, runtime_mesh & mesh, bool compressed)
 {
     auto file = std::ofstream(path, std::ios::out | std::ios::binary);
 

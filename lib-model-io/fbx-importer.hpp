@@ -6,10 +6,9 @@
 #define fbx_importer_hpp
 
 #include "model-io.hpp"
+#include "model-io-util.hpp"
 #include <vector>
 #include <memory>
-#include <unordered_map>
-#include <map>
 
 #include <fbxsdk/fbxsdk_nsbegin.h>
 class FbxLayerElementNormal;
@@ -21,10 +20,6 @@ class FbxVector4;
 class FbxScene;
 class FbxAnimEvaluator;
 #include <fbxsdk/fbxsdk_nsend.h>
-
-////////////////////
-//    Mesh Node   //
-////////////////////
 
 struct fbx_container
 {

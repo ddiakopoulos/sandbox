@@ -11,39 +11,10 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <unordered_map>
-#include <nmmintrin.h>
 
 using namespace avl;
 
-struct unique_vertex
-{
-    float3 position; float2 texcoord; float3 normal;
-};
-
-template <typename KeyType, typename ValueType>
-struct unordered_map_generator
-{
-    struct Hash
-    {
-        uint32_t operator()(const KeyType & a) const
-        {
-            uint32_t digest = 0;
-            for (size_t i = 0; i < sizeof(a); i++) digest = _mm_crc32_u8(digest, ((uint8_t*)&a)[i]);
-            return digest;
-        }
-    };
-    struct CompareEq
-    {
-        bool operator()(const KeyType & a, const KeyType & b) const
-        {
-            return !memcmp(&a, &b, sizeof(a));
-        }
-    };
-    typedef std::unordered_map<KeyType, ValueType, Hash, CompareEq> Type;
-};
-
-struct Keyframe
+struct animation_keyframe
 {
     uint32_t key = 0;
     float4 rotation = float4(0, 0, 0, 1);
@@ -51,11 +22,11 @@ struct Keyframe
     float3 scale = float3(1, 1, 1);
 };
 
-struct Track
+struct animation_track
 {
     uint32_t boneIndex = 0;
     uint32_t keyframeCount = 0;
-    std::vector<std::shared_ptr<Keyframe>> keyframes;
+    std::vector<std::shared_ptr<animation_keyframe>> keyframes;
 };
 
 struct skeletal_animation
@@ -66,7 +37,7 @@ struct skeletal_animation
     uint32_t startFrame = 0xffffffff;
     uint32_t endFrame = 0;
     uint32_t trackCount = 0;
-    std::vector<std::shared_ptr<Track>> tracks;
+    std::vector<std::shared_ptr<animation_track>> tracks;
 };
 
 struct runtime_mesh

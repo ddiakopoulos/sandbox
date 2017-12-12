@@ -2,19 +2,11 @@
 #define geometry_hpp
 
 #include "math-core.hpp"
+#include "../lib-model-io/model-io.hpp"
 
 using namespace avl;
 
-struct Geometry
-{
-    std::vector<float3> vertices;
-    std::vector<float3> normals;
-    std::vector<float4> colors;
-    std::vector<float2> texCoords;
-    std::vector<float3> tangents;
-    std::vector<float3> bitangents;
-    std::vector<uint3> faces;
-};
+typedef runtime_mesh Geometry;
 
 inline Bounds3D compute_bounds(const Geometry & g)
 {
@@ -47,9 +39,9 @@ inline void compute_tangents(Geometry & g)
         const float3 & v1 = g.vertices[face.y];
         const float3 & v2 = g.vertices[face.z];
 
-        const float2 & w0 = g.texCoords[face.x];
-        const float2 & w1 = g.texCoords[face.y];
-        const float2 & w2 = g.texCoords[face.z];
+        const float2 & w0 = g.texcoord0[face.x];
+        const float2 & w1 = g.texcoord0[face.y];
+        const float2 & w2 = g.texcoord0[face.z];
 
         float x1 = v1.x - v0.x;
         float x2 = v2.x - v0.x;

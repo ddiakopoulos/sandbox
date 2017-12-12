@@ -47,7 +47,7 @@ namespace avl
             colorOffset = components; components += 3;
         }
 
-        if (geometry.texCoords.size() != 0)
+        if (geometry.texcoord0.size() != 0)
         {
             texOffset = components; components += 2;
         }
@@ -87,8 +87,8 @@ namespace avl
 
             if (texOffset)
             {
-                buffer.push_back(geometry.texCoords[i].x);
-                buffer.push_back(geometry.texCoords[i].y);
+                buffer.push_back(geometry.texcoord0[i].x);
+                buffer.push_back(geometry.texcoord0[i].y);
             }
 
             if (tanOffset)
