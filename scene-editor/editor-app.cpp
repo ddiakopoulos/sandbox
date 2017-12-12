@@ -125,10 +125,12 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     }
 
     //auto shaderball = load_geometry_from_ply("../assets/models/shaderball/shaderball.ply");
+    /*
     auto shaderball = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply");
     rescale_geometry(shaderball, 1.f);
     create_handle_for_asset("shaderball", make_mesh_from_geometry(shaderball));
     create_handle_for_asset("shaderball", std::move(shaderball));
+    */
 
     auto ico = make_icosasphere(5);
     create_handle_for_asset("icosphere", make_mesh_from_geometry(ico));
@@ -170,6 +172,7 @@ void scene_editor_app::on_drop(std::vector<std::string> filepaths)
             create_handle_for_asset(get_filename_without_extension(path).c_str(), load_image(path, false));
         }
 
+        /*
         if (fileExtension == "ply")
         {
             auto plyImport = load_geometry_from_ply(path);
@@ -188,6 +191,7 @@ void scene_editor_app::on_drop(std::vector<std::string> filepaths)
                 create_handle_for_asset(get_filename_without_extension(path).c_str(), std::move(mesh));
             }
         }
+        */
     }
 }
 

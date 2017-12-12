@@ -52,9 +52,12 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Exa
     floor = make_plane_mesh(48, 48, 1024, 1024);
     angle.resize(256);
 
+    /*
     auto knot = load_geometry_from_ply("../assets/models/geometry/TorusKnotUniform.ply");
     rescale_geometry(knot, 1.f);
     torusKnot = make_mesh_from_geometry(knot);
+    */
+
     for (int i = 0; i < 128; i++)
     {
         randomPositions.push_back({ rand.random_float(-24, 24), rand.random_float(1, 1), rand.random_float(-24, 24), rand.random_float(1, 2) });

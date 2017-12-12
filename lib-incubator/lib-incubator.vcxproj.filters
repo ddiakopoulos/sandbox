@@ -51,12 +51,6 @@
     <ClInclude Include="..\third_party\nanovg_gl_utils.h">
       <Filter>third_party</Filter>
     </ClInclude>
-    <ClInclude Include="..\third_party\tiny_obj_loader.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\tinyply.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
     <ClInclude Include="..\one_euro.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
@@ -264,12 +258,6 @@
       <Filter>third_party</Filter>
     </ClCompile>
     <ClCompile Include="..\third_party\nanovg.cpp">
-      <Filter>third_party</Filter>
-    </ClCompile>
-    <ClCompile Include="..\third_party\tiny_obj_loader.cc">
-      <Filter>third_party</Filter>
-    </ClCompile>
-    <ClCompile Include="..\third_party\tinyply.cpp">
       <Filter>third_party</Filter>
     </ClCompile>
     <ClCompile Include="..\third_party\efsw.cpp">

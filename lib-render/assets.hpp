@@ -130,10 +130,10 @@ template<class T> inline AssetHandle<T> create_handle_for_asset(const char * ass
     return { AssetHandle<T>(asset_id, std::move(asset)) };
 }
 
-template<> inline AssetHandle<avl::Geometry> create_handle_for_asset(const char * asset_id, avl::Geometry && asset)
+template<> inline AssetHandle<Geometry> create_handle_for_asset(const char * asset_id, Geometry && asset)
 {
     assert(asset.vertices.size() > 0); // verify that this the geometry is not empty
-    return { AssetHandle<avl::Geometry>(asset_id, std::move(asset)) };
+    return { AssetHandle<Geometry>(asset_id, std::move(asset)) };
 }
 
 template<> inline AssetHandle<GlMesh> create_handle_for_asset(const char * asset_id, GlMesh && asset)
@@ -145,6 +145,6 @@ template<> inline AssetHandle<GlMesh> create_handle_for_asset(const char * asset
 typedef AssetHandle<GlTexture2D> GlTextureHandle;
 typedef AssetHandle<GlShader> GlShaderHandle;
 typedef AssetHandle<GlMesh> GlMeshHandle;
-typedef AssetHandle<avl::Geometry> GeometryHandle;
+typedef AssetHandle<Geometry> GeometryHandle;
 
 #endif // end asset_handles_hpp

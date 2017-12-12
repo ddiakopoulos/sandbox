@@ -87,8 +87,6 @@
     <ClInclude Include="..\third_party\nanovg_gl.h" />
     <ClInclude Include="..\third_party\nanovg_gl_utils.h" />
     <ClInclude Include="..\third_party\tiny-gizmo.hpp" />
-    <ClInclude Include="..\third_party\tinyply.h" />
-    <ClInclude Include="..\third_party\tiny_obj_loader.h" />
     <ClInclude Include="..\simple_timer.hpp" />
     <ClInclude Include="..\trajectory.hpp" />
     <ClInclude Include="..\tweens.hpp" />
@@ -106,8 +104,6 @@
     <ClCompile Include="..\third_party\murmur_hash_3.cpp" />
     <ClCompile Include="..\third_party\nanovg.cpp" />
     <ClCompile Include="..\third_party\tiny-gizmo.cpp" />
-    <ClCompile Include="..\third_party\tinyply.cpp" />
-    <ClCompile Include="..\third_party\tiny_obj_loader.cc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{992E85A7-B590-477B-A1B2-8A04AAAD0E10}</ProjectGuid>

@@ -206,7 +206,7 @@ inline Geometry make_parabolic_geometry(const std::vector<float3> & points, cons
         g.faces.emplace_back(indices[i + 0], indices[i + 1], indices[i + 2]);
     }
 
-    g.compute_bounds();
+    compute_bounds(g);
 
     return g;
 }

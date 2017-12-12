@@ -130,7 +130,7 @@ Geometry make_perlin_mesh(int gridSize = 32.f)
         terrain.faces.push_back(uint3(f.x, f.z, f.w));
     }
 
-    terrain.compute_normals(false);
+    compute_normals(terrain, false);
 
     return terrain;
 }

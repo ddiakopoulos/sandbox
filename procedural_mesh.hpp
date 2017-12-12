@@ -45,9 +45,9 @@ namespace avl
             cube.texCoords.push_back(verts[i].texCoord);
         }
         
-        cube.compute_bounds();
-        cube.compute_normals(false);
-        cube.compute_tangents();
+        compute_bounds(cube);
+        compute_normals(cube, false);
+        compute_tangents(cube);
         
         return cube;
     }
@@ -81,7 +81,7 @@ namespace avl
             }
         }
 
-        sphereGeom.compute_bounds();
+        compute_bounds(sphereGeom);
 
         return sphereGeom;
     }
@@ -280,8 +280,8 @@ namespace avl
             
         }
         
-        ringGeom.compute_normals();
-        ringGeom.compute_tangents();
+        compute_normals(ringGeom);
+        compute_tangents(ringGeom);
         
         return ringGeom;
     }
@@ -340,7 +340,7 @@ namespace avl
             ringGeom.faces.push_back({q2.x,q2.z,q2.w});
         }
         
-        ringGeom.compute_normals();
+        compute_normals(ringGeom);
         
         return ringGeom;
     }
@@ -389,8 +389,10 @@ namespace avl
                 }
             }
         }
-        torus.compute_normals();
-        torus.compute_tangents();
+
+        compute_normals(torus);
+        compute_tangents(torus);
+
         return torus;
     }
 
@@ -557,8 +559,8 @@ namespace avl
             }
         }
         
-        plane.compute_tangents();
-        plane.compute_bounds();
+        compute_tangents(plane);
+        compute_bounds(plane);
         
         return plane;
     }
@@ -610,7 +612,7 @@ namespace avl
             plane.faces.push_back(f2);
         }
         
-        plane.compute_tangents();
+        compute_tangents(plane);
         
         return plane;
     }
@@ -687,32 +689,41 @@ namespace avl
             {4, 9, 5}, {2, 4, 11}, {6, 2, 10}, {8, 6, 7}, {9, 8, 1}
         };
         
-        icosahedron.compute_normals();
+        compute_normals(icosahedron);
+
         return icosahedron;
     }
     
     inline Geometry make_octohedron()
     {
         Geometry octohedron;
+
         octohedron.vertices = {
             {1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0},
             {0.0, 1.0, 0.0}, {0.0, -1.0, 0.0},
             {0.0, 0.0, 1.0}, {0.0, 0.0, -1.0}
         };
+
         octohedron.faces = {{0, 2, 4}, {0, 4, 3}, {0, 3, 5}, {0, 5, 2}, {1, 2, 5}, {1, 5, 3}, {1, 3, 4}, {1, 4, 2}};
-        octohedron.compute_normals();
+
+        compute_normals(octohedron);
+
         return octohedron;
     }
     
     inline Geometry make_tetrahedron()
     {
         Geometry tetrahedron;
+
         tetrahedron.vertices = {
             {1.0, 1.0, 1.0}, {-1.0, -1.0, 1.0},
             {-1.0, 1.0, -1.0}, {1.0, -1.0, -1.0}
         };
+
         tetrahedron.faces = {{2, 1, 0},{0, 3, 2},{1, 3, 0},{2, 3, 1}};
-        tetrahedron.compute_normals();
+
+        compute_normals(tetrahedron);
+
         return tetrahedron;
     }
 
@@ -770,7 +781,8 @@ namespace avl
             shape.faces.push_back({ q.z,q.y,q.x });
         }
 
-        shape.compute_normals(true);
+        compute_normals(shape, true);
+
         return shape;
     }
 
@@ -851,7 +863,7 @@ namespace avl
             else if (std::abs(d2) > 0.5f) add_unique_vertex(i, 2, uv2 + float2((d2 < 0.0f) ? 1.0f : -1.0f, 0.0f));
         }
 
-        ico.compute_tangents();
+        compute_tangents(ico);
 
         return ico;
     }
