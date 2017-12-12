@@ -9,12 +9,99 @@
 
 std::vector<runtime_skinned_mesh> import_fbx(const std::string & path)
 {
-
+#ifdef USE_FBX_SDK
+    // ...
+#elif
+#pragma message ("fbxsdk is not enabled with the USE_FBX_SDK flag")
+#endif
 }
 
 std::vector<runtime_mesh> import_obj(const std::string & path)
 {
+    std::vector<runtime_mesh> meshes;
 
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+
+    std::string parentDir = parent_directory_from_filepath(path) + "/";
+
+    std::string err;
+    bool status = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, path.c_str(), parentDir.c_str());
+
+    if (status && !err.empty())
+    {
+        std::cout << "tinyobj warning: " << err << std::endl;
+    }
+
+    // Append `default` material
+    materials.push_back(tinyobj::material_t());
+
+    std::cout << "# of shapes    : " << shapes.size() << std::endl;
+    std::cout << "# of materials : " << materials.size() << std::endl;
+
+    // Parse tinyobj data into geometry struct
+    for (unsigned int i = 0; i < shapes.size(); i++)
+    {
+        runtime_skinned_mesh g;
+
+        tinyobj::shape_t * shape = &shapes[i];
+        tinyobj::mesh_t * mesh = &shapes[i].mesh;
+
+        std::cout << "Submesh Name:  " << shape->name << std::endl;
+        std::cout << "Num Indices:   " << mesh->indices.size() << std::endl;
+        std::cout << "Num TexCoords: " << attrib.texcoords.size() << std::endl;
+
+        size_t indexOffset = 0;
+
+        // de-duplicate vertices
+        unordered_map_generator<unique_vertex, uint32_t>::Type uniqueVertexMap;
+
+        for (size_t f = 0; f < mesh->num_face_vertices.size(); f++)
+        {
+            assert(mesh->num_face_vertices[f] == 3);
+
+            uint3 indices;
+            for (int v = 0; v < 3; v++)
+            {
+                const tinyobj::index_t idx = mesh->indices[indexOffset + v];
+
+                unique_vertex vertex;
+                vertex.position = { attrib.vertices[3 * idx.vertex_index + 0], attrib.vertices[3 * idx.vertex_index + 1], attrib.vertices[3 * idx.vertex_index + 2] };
+                vertex.normal = { attrib.normals[3 * idx.normal_index + 0], attrib.normals[3 * idx.normal_index + 1], attrib.normals[3 * idx.normal_index + 2] };
+                if (idx.texcoord_index != -1) vertex.texcoord = { attrib.texcoords[2 * idx.texcoord_index + 0], attrib.texcoords[2 * idx.texcoord_index + 1] };
+
+                auto it = uniqueVertexMap.find(vertex);
+                if (it != uniqueVertexMap.end())
+                {
+                    indices[v] = it->second; // found duplicated vertex
+                }
+                else
+                {
+                    // we haven't run into this vertex yet
+                    uint32_t index = uint32_t(g.vertices.size());
+
+                    uniqueVertexMap[vertex] = index;
+                    indices[v] = index;
+
+                    g.vertices.push_back(vertex.position);
+                    g.normals.push_back(vertex.normal);
+                    g.texcoord0.push_back(vertex.texcoord);
+                }
+            }
+
+            if (mesh->material_ids[f] > 0) g.material.push_back(mesh->material_ids[f]);
+            g.faces.push_back(indices);
+            indexOffset += 3;
+        }
+
+        for (int i = 0; i < attrib.colors.size(); i += 3)
+        {
+            g.colors.push_back({ attrib.colors[i + 0], attrib.colors[i + 1], attrib.colors[i + 2], 1 });
+        }
+
+        meshes.push_back(g);
+    }
 }
 
 void optimize_model(runtime_mesh & input)
