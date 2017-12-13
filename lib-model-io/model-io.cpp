@@ -55,6 +55,7 @@ std::map<std::string, runtime_mesh> import_fbx_model(const std::string & path)
     #else
         #pragma message ("fbxsdk is not enabled with the SYSTEM_HAS_FBX_SDK flag")
     #endif
+    return {};
 }
 
 std::map<std::string, runtime_mesh> import_obj_model(const std::string & path)
