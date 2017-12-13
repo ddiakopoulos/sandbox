@@ -76,7 +76,7 @@ https://github.com/bkaradzic/bgfx (BSD 2-Clause)
 Copyright (C) Branimir Karadzic, 2010+
 
 https://github.com/syoyo/tinyobjloader (BSD 2-Clause)
-Copyright (C) Syoyo Fujita, 2012 - 2015
+Copyright (C) Syoyo Fujita, 2012+
 
 https://github.com/melax/sandbox (MIT)
 Copyright (C) Stan Melax, 2014
@@ -125,6 +125,12 @@ Copyright (C) Saurav Mohapatra, 2012
 
 https://github.com/ekmett/vr (BSD 2-Clause)
 Copyright (C) Edward Kmett, 2015
+
+https://github.com/facebookresearch/HVVR (BSD 3-Clause)
+Copyright (C) Facebook, Inc., 2017+
+
+https://github.com/facebookincubator/FBX2glTF (BSD 3-Clause)
+Copyright (C) Facebook, Inc., 2017+
 
 /////////////////////////
 //   Research Papers   //

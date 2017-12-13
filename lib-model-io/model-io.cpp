@@ -8,18 +8,45 @@
 #include "third-party/meshoptimizer/meshoptimizer.hpp"
 #include "fbx-importer.hpp"
 
-std::map<std::string, runtime_skinned_mesh> import_fbx_model(const std::string & path)
+std::map<std::string, runtime_mesh> import_model(const std::string & path)
+{
+    std::map<std::string, runtime_mesh> results;
+
+    auto & ext = get_extension(path);
+
+    if (ext == "FBX" || ext == "fbx")
+    {
+        auto asset = import_fbx_model(path);
+        for (auto & a : asset) results[a.first] = a.second;
+    }
+    else if (ext == "OBJ" || ext == "obj")
+    {
+        auto asset = import_obj_model(path);
+        for (auto & a : asset) results[a.first] = a.second;
+    }
+    else
+    {
+        throw std::runtime_error("cannot import model format");
+    }
+
+    return results;
+}
+
+std::map<std::string, runtime_mesh> import_fbx_model(const std::string & path)
 {
     #ifdef USE_FBX_SDK
     
+    std::map<std::string, runtime_mesh> results;
+
     try
     {
         auto asset = import_fbx_file(path);
-        return asset.meshes;
+        for (auto & a : asset.meshes) results[a.first] = a.second;
+        return results;
      }
     catch (const std::exception & e)
     {
-        std::cout << "Caught FBX importing exception: " << e.what() << std::endl;
+        std::cout << "fbx import exception: " << e.what() << std::endl;
     }
 
     return {};
