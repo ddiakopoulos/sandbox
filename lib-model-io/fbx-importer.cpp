@@ -1,4 +1,4 @@
-#ifdef USE_FBX_SDK
+#ifdef SYSTEM_HAS_FBX_SDK
 
 #include "fbx-importer.hpp"
 #include <fbxsdk.h>
@@ -218,4 +218,4 @@ fbx_container import_fbx_file(const std::string & path)
     return container;
 }
 
-#endif // end USE_FBX_SDK
+#endif // end SYSTEM_HAS_FBX_SDK

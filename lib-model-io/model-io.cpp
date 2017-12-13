@@ -7,6 +7,7 @@
 #include "third-party/tinyply/tinyply.h"
 #include "third-party/meshoptimizer/meshoptimizer.hpp"
 #include "fbx-importer.hpp"
+#include "model-io-util.hpp"
 
 std::map<std::string, runtime_mesh> import_model(const std::string & path)
 {
@@ -34,7 +35,7 @@ std::map<std::string, runtime_mesh> import_model(const std::string & path)
 
 std::map<std::string, runtime_mesh> import_fbx_model(const std::string & path)
 {
-    #ifdef USE_FBX_SDK
+    #ifdef SYSTEM_HAS_FBX_SDK
     
     std::map<std::string, runtime_mesh> results;
 
@@ -51,8 +52,8 @@ std::map<std::string, runtime_mesh> import_fbx_model(const std::string & path)
 
     return {};
 
-    #elif
-        #pragma message ("fbxsdk is not enabled with the USE_FBX_SDK flag")
+    #else
+        #pragma message ("fbxsdk is not enabled with the SYSTEM_HAS_FBX_SDK flag")
     #endif
 }
 

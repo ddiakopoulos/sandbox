@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef USE_FBX_SDK
+#ifdef SYSTEM_HAS_FBX_SDK
 
 #ifndef fbx_importer_hpp
 #define fbx_importer_hpp
@@ -33,4 +33,4 @@ fbx_container import_fbx_file(const std::string & file);
 
 #endif // end fbx_importer_hpp
 
-#endif // end USE_FBX_SDK
+#endif // end SYSTEM_HAS_FBX_SDK
