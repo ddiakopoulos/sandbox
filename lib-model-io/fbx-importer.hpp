@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef SYSTEM_HAS_FBX_SDK
+#if (SYSTEM_HAS_FBX_SDK == 1)
 
 #ifndef fbx_importer_hpp
 #define fbx_importer_hpp

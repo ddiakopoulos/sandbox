@@ -1,4 +1,4 @@
-#ifdef SYSTEM_HAS_FBX_SDK
+#if (SYSTEM_HAS_FBX_SDK == 1)
 
 #include "fbx-importer.hpp"
 #include <fbxsdk.h>
