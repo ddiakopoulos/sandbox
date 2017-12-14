@@ -137,10 +137,12 @@ std::map<std::string, runtime_mesh> import_obj_model(const std::string & path)
             indexOffset += 3;
         }
 
+        /*
         for (int i = 0; i < attrib.colors.size(); i += 3)
         {
             g.colors.push_back({ attrib.colors[i + 0], attrib.colors[i + 1], attrib.colors[i + 2], 1 });
         }
+        */
     }
 
     return meshes;

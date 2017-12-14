@@ -166,6 +166,7 @@ public:
             case TextureType::COLOR: return eyeTextures[idx];
             case TextureType::DEPTH: return eyeDepthTextures[idx];
         }
+        return -1;
     }
 
     void set_procedural_sky(ProceduralSky * sky)

@@ -155,24 +155,24 @@ public:
 
 // template<typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
 
-template<typename T>
-inline T compute_min(const CircularBuffer<T> & b)
+template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+T compute_min(const CircularBuffer<T> & b)
 {
     T min = std::numeric_limits<T>::max();
     for (size_t i = 0; i < b.get_current_size(); i++) if (b[i] < min) min = b[i];
     return min;
 }
 
-template<typename T>
-inline T compute_max(const CircularBuffer<T> & b)
+template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+T compute_max(const CircularBuffer<T> & b)
 {
     T max = std::numeric_limits<T>::min();
     for (size_t i = 0; i < b.get_current_size(); i++) if (buffer[i] > max) max = buffer[i];
     return max;
 }
 
-template<typename T>
-inline T compute_median(const CircularBuffer<T> & b)
+template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+T compute_median(const CircularBuffer<T> & b)
 {
     auto vec = b.get_data_as_vector();
     std::sort(vec.begin(), vec.end());
@@ -180,16 +180,16 @@ inline T compute_median(const CircularBuffer<T> & b)
     return median;
 }
 
-template<typename T>
-inline T compute_mean(const CircularBuffer<T> & b)
+template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+T compute_mean(const CircularBuffer<T> & b)
 {
-    T sum = T();
+    T sum = {};
     for (size_t i = 0; i < b.get_current_size(); i++) sum += b[i];
     return sum / static_cast<T>(b.get_current_size());
 }
 
-template<typename T>
-inline T compute_variance(const CircularBuffer<T> & b)
+template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+T compute_variance(const CircularBuffer<T> & b)
 {
     T mean = compute_mean(b);
     T sum = T();
@@ -197,13 +197,13 @@ inline T compute_variance(const CircularBuffer<T> & b)
     return (sum / T(b.get_current_size()));
 }
 
-template<typename T>
+template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
 T compute_std_dev(const CircularBuffer<T> & b) 
 {
     return sqrt(compute_variance(b));
 }
 
-template<typename T>
+template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
 double compute_confidence(const CircularBuffer<T> & b) 
 {
     const double c = 0.48 - 0.1 * log(compute_std_dev(b));
@@ -216,7 +216,12 @@ double compute_confidence(const CircularBuffer<T> & b)
 // tl;dr: use on pointclouds (as first step to PCA) or IMU data
 inline linalg::aliases::float3x3 compute_covariance_matrix(const CircularBuffer<linalg::aliases::float3> & b)
 {
-    linalg::aliases::float3 mean = compute_mean<linalg::aliases::float3>(b);
+    linalg::aliases::float3 mean;
+
+    float3 sum = {};
+    for (size_t i = 0; i < b.get_current_size(); i++) sum += b[i];
+    sum /= float3(b.get_current_size());
+
     linalg::aliases::float3x3 total;
 
     for (int i = 0; i < b.get_current_size(); i++) 

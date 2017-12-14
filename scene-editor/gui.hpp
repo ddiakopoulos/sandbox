@@ -221,7 +221,7 @@ template<class... A> bool Edit(const char * label, int2 & f, const A & ... metad
 {
     auto * intRange = query_metadata<range_metadata<int>>(metadata...);
     if (intRange) return ImGui::SliderInt2(label, &f[0], intRange->min, intRange->max, "%.5f");
-    else return ImGui::SliderInt2(label, &f[0], 0.0f, 1.0f);
+    else return ImGui::SliderInt2(label, &f[0], 0, 1);
 }
 
 template<class T, class ... A> bool Edit(const char * label, AssetHandle<T> & h, const A & ... metadata)

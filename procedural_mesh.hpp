@@ -515,10 +515,10 @@ namespace avl
                 plane.texcoord0.emplace_back(u + ou, v);
                 plane.texcoord0.emplace_back(u + ou, v + ov);
 
-                plane.normals.emplace_back(0, 0, -1);
-                plane.normals.emplace_back(0, 0, -1);
-                plane.normals.emplace_back(0, 0, -1);
-                plane.normals.emplace_back(0, 0, -1);
+                plane.normals.emplace_back(0.f, 0.f, -1.f);
+                plane.normals.emplace_back(0.f, 0.f, -1.f);
+                plane.normals.emplace_back(0.f, 0.f, -1.f);
+                plane.normals.emplace_back(0.f, 0.f, -1.f);
 
                 plane.faces.push_back({ indexOffset + 2, indexOffset + 1, indexOffset + 0 });
                 plane.faces.push_back({ indexOffset + 3, indexOffset + 2, indexOffset + 0 });
@@ -546,10 +546,10 @@ namespace avl
                     plane.texcoord0.emplace_back(u + ou, v);
                     plane.texcoord0.emplace_back(u + ou, v + ov);
 
-                    plane.normals.emplace_back(0, 0, 1);
-                    plane.normals.emplace_back(0, 0, 1);
-                    plane.normals.emplace_back(0, 0, 1);
-                    plane.normals.emplace_back(0, 0, 1);
+                    plane.normals.emplace_back(0.f, 0.f, 1.f);
+                    plane.normals.emplace_back(0.f, 0.f, 1.f);
+                    plane.normals.emplace_back(0.f, 0.f, 1.f);
+                    plane.normals.emplace_back(0.f, 0.f, 1.f);
 
                     plane.faces.push_back({ indexOffset + 0, indexOffset + 1, indexOffset + 2 });
                     plane.faces.push_back({ indexOffset + 0, indexOffset + 2, indexOffset + 3 });

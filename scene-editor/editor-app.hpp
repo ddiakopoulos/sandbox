@@ -34,6 +34,7 @@ class editor_controller
 
     void compute_selection()
     {
+
         // No selected objects? The selection pose is nil
         if (selected_objects.size() == 0)
         {
@@ -49,21 +50,27 @@ class editor_controller
         {
             // todo: orientation... bounding boxes?
             float3 center_of_mass = {};
-            for (auto obj : selected_objects) center_of_mass += obj->get_pose().position;
-            center_of_mass /= float3(selected_objects.size());
+            float numObjects = 0;
+            for (auto & obj : selected_objects)
+            {
+                center_of_mass += obj->get_pose().position;
+                numObjects++;
+            }
+            center_of_mass /= numObjects;
             selection.position = center_of_mass;
         }
 
         compute_relative_transforms();
 
         gizmo_selection = from_linalg(selection);
+
     }
 
     void compute_relative_transforms()
     {
         relative_transforms.clear();
 
-        for (auto s : selected_objects)
+        for (auto & s : selected_objects)
         {
             relative_transforms.push_back(selection.inverse() * s->get_pose());
         }

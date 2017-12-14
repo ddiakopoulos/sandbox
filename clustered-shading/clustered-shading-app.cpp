@@ -104,8 +104,8 @@ void shader_workbench::on_update(const UpdateEvent & e)
         for (int i = 0; i < lights.size(); ++i)
         {
             auto & l = lights[i];
-            l.positionRadius.x += cos(angle[i] * l.positionRadius.w) * 0.25;
-            l.positionRadius.z += sin(angle[i] * l.positionRadius.w) * 0.25;
+            l.positionRadius.x += cos(angle[i] * l.positionRadius.w) * 0.25f;
+            l.positionRadius.z += sin(angle[i] * l.positionRadius.w) * 0.25f;
         }
     }
 }
