@@ -55,7 +55,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\gl;$(ProjectDir)..\third_party;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw3\include;$(ProjectDir)..\third_party\cereal\include;$(ProjectDir)third-party\fbxsdk\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;$(SYSTEM_HAS_FBX_SDK);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;SYSTEM_HAS_FBX_SDK=$(SYSTEM_HAS_FBX_SDK);FBXSDK_SHARED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -64,6 +64,7 @@
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>$(ProjectDir)third-party\fbxsdk\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(Configuration)/libfbxsdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <PostBuildEvent>
       <Command>
@@ -78,7 +79,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)..\;$(ProjectDir)..\gl;$(ProjectDir)..\third_party;$(ProjectDir)..\examples;$(ProjectDir)..\third_party\glew;$(ProjectDir)..\third_party\glfw3\include;$(ProjectDir)..\third_party\cereal\include;$(ProjectDir)third-party\fbxsdk\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;$(SYSTEM_HAS_FBX_SDK);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;__WINDOWS_DS__;NOMINMAX;_CRT_SECURE_NO_WARNINGS;SYSTEM_HAS_FBX_SDK=$(SYSTEM_HAS_FBX_SDK);FBXSDK_SHARED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -89,6 +90,7 @@
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>$(ProjectDir)third-party\fbxsdk\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(Configuration)/libfbxsdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <PostBuildEvent>
       <Command>

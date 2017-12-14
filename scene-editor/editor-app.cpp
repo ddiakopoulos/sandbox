@@ -170,30 +170,29 @@ void scene_editor_app::on_drop(std::vector<std::string> filepaths)
         if (fileExtension == "png" || fileExtension == "tga" || fileExtension == "jpg")
         {
             create_handle_for_asset(get_filename_without_extension(path).c_str(), load_image(path, false));
+            return;
         }
 
-        if (fileExtension == "obj")
+        auto importedModel = import_model(path);
+
+        for (auto & m : importedModel)
         {
-            auto importedModel = import_obj_model(path);
-            for (auto & m : importedModel)
-            {
-                auto & mesh = m.second;
-                rescale_geometry(mesh, 1.f);
+            auto & mesh = m.second;
+            rescale_geometry(mesh, 1.f);
 
-                if (mesh.normals.size() == 0) compute_normals(mesh);
-                if (mesh.tangents.size() == 0) compute_tangents(mesh);
+            if (mesh.normals.size() == 0) compute_normals(mesh);
+            if (mesh.tangents.size() == 0) compute_tangents(mesh);
                 
-                const std::string filename = get_filename_without_extension(path);
-                const std::string outputBasePath = "../assets/models/runtime/";
-                const std::string outputFile = outputBasePath + filename + "-" + m.first + "-" + ".mesh";
+            const std::string filename = get_filename_without_extension(path);
+            const std::string outputBasePath = "../assets/models/runtime/";
+            const std::string outputFile = outputBasePath + filename + "-" + m.first + "-" + ".mesh";
 
-                export_mesh_binary(outputFile, mesh, false);
+            export_mesh_binary(outputFile, mesh, false);
 
-                auto importedMesh = import_mesh_binary(outputFile);
+            auto importedMesh = import_mesh_binary(outputFile);
 
-                create_handle_for_asset(get_filename_without_extension(path).c_str(), make_mesh_from_geometry(importedMesh));
-                create_handle_for_asset(get_filename_without_extension(path).c_str(), std::move(importedMesh));
-            }
+            create_handle_for_asset(std::string(get_filename_without_extension(path) + "-" + m.first).c_str(), make_mesh_from_geometry(importedMesh));
+            create_handle_for_asset(std::string(get_filename_without_extension(path) + "-" + m.first).c_str(), std::move(importedMesh));
         }
 
         /*

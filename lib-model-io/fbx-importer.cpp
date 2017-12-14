@@ -6,12 +6,6 @@
 #include <map>
 #include "util.hpp"
 
-#ifdef _DEBUG
-#pragma comment(lib, "Debug/libfbxsdk.lib")
-#else
-#pragma comment(lib, "Release/libfbxsdk.lib")
-#endif
-
 float2 to_linalg(const fbxsdk::FbxDouble2 & v) { return float2(double2(v[0], v[1])); }
 float4 to_linalg(const fbxsdk::FbxDouble4 & v) { return float4(double4(v[0], v[1], v[2], v[3])); }
 
