@@ -66,7 +66,8 @@
       <AdditionalLibraryDirectories>$(ProjectDir)third-party\fbxsdk\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>xcopy /y /C /I $(ProjectDir)third-party\fbxsdk\lib\x64\$(Configuration)\libfbxsdk.dll $(OutDir)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -90,7 +91,8 @@
       <AdditionalLibraryDirectories>$(ProjectDir)third-party\fbxsdk\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PostBuildEvent>
-      <Command>xcopy /y /C /I $(ProjectDir)third-party\fbxsdk\lib\x64\$(Configuration)\libfbxsdk.dll $(OutDir)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
