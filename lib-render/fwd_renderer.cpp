@@ -28,6 +28,61 @@ void PhysicallyBasedRenderer::add_camera(const uint32_t index, const Pose & p, c
     views[uint32_t(index)] = v;
 }
 
+void PhysicallyBasedRenderer::add_objects(const std::vector<Renderable *> & set)
+{
+    renderSet = set;
+}
+
+void PhysicallyBasedRenderer::add_light(const uniforms::point_light & light)
+{
+    pointLights.push_back(light);
+}
+
+void PhysicallyBasedRenderer::add_sun(const uniforms::directional_light & sun)
+{
+    sunlight = sun;
+}
+
+uniforms::directional_light PhysicallyBasedRenderer::get_sunlight() const
+{
+    return sunlight;
+}
+
+GLuint PhysicallyBasedRenderer::get_output_texture(const TextureType type, const uint32_t idx) const
+{
+    assert(idx <= settings.cameraCount);
+    switch (type)
+    {
+    case TextureType::COLOR: return eyeTextures[idx];
+    case TextureType::DEPTH: return eyeDepthTextures[idx];
+    }
+    return -1;
+}
+
+void PhysicallyBasedRenderer::set_procedural_sky(ProceduralSky * sky)
+{
+    skybox = sky;
+    sunlight.direction = sky->get_sun_direction();
+    sunlight.color = float3(1.f);
+    sunlight.amount = 1.0f;
+}
+
+ProceduralSky * PhysicallyBasedRenderer::get_procedural_sky() const
+{
+    if (skybox) return skybox;
+    else return nullptr;
+}
+
+StableCascadedShadowPass * PhysicallyBasedRenderer::get_shadow_pass() const
+{
+    return shadow.get();
+}
+
+BloomPass * PhysicallyBasedRenderer::get_bloom_pass() const
+{
+    return  bloom.get();
+}
+
 void PhysicallyBasedRenderer::run_depth_prepass(const ViewData & d)
 {
     GLboolean colorMask[4];
