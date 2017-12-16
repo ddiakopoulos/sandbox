@@ -35,7 +35,7 @@ std::map<std::string, runtime_mesh> import_model(const std::string & path)
 
 std::map<std::string, runtime_mesh> import_fbx_model(const std::string & path)
 {
-    #if (SYSTEM_HAS_FBX_SDK == 1)
+#   if (USING_FBX == 1)
     
     std::map<std::string, runtime_mesh> results;
 
