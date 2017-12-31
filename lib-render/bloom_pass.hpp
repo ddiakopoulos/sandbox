@@ -118,7 +118,7 @@ struct BloomPass
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, luminance[idx + 1]);
                 glViewport(0, 0, targetSize.x, targetSize.y);
-                hdr_avgLumShader.texture("s_texColor", 0, luminance[idx], GL_TEXTURE_2D);
+                hdr_avgLumShader.texture("s_texColor", 0, luminance[idx], GL_TEXTURE_2D); // not bound?
                 fsQuad.draw_elements();
             };
 

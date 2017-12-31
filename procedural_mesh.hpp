@@ -527,6 +527,7 @@ namespace avl
             }
         }
 
+        /*
         if (doubleSided)
         {
             for (float w = width / 2.0; w > -width / 2.0; w -= ow)
@@ -558,6 +559,7 @@ namespace avl
                 }
             }
         }
+        */
         
         compute_tangents(plane);
         compute_bounds(plane);

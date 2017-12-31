@@ -1,6 +1,6 @@
 // https://github.com/McNopper/OpenGL/tree/master/Example11/shader
 
-#version 330
+#version 450
 
 uniform mat4 u_modelMatrix;
 uniform mat4 u_modelMatrixIT;
