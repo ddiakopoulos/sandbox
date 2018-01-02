@@ -3,14 +3,6 @@
 
 using namespace avl;
 
-/*
-    Glasses render very nicely in DOOM especially frosted or dirty glasses: decals are used to affect just some part of the glass 
-    to make its refraction more or less blurry. The pixel shader computes the refraction “blurriness” factor and selects from the
-    blur chain the 2 maps closest to this blurriness factor. It reads from these 2 maps and then linearly interpolates between the 
-    2 values to approximate the final blurry color the refraction is supposed to have. This is thanks to this process that glasses
-    can produce nice refraction at different levels of blur on a per-pixel-basis.
-*/
-
 constexpr const char skybox_vert[] = R"(#version 330
     layout(location = 0) in vec3 vertex;
     layout(location = 1) in vec3 normal;
@@ -40,24 +32,6 @@ constexpr const char skybox_frag[] = R"(#version 330
     }
 )";
 
-constexpr const char basic_vert[] = R"(#version 450
-    layout(location = 0) in vec3 vertex;
-    uniform mat4 u_mvp;
-    void main()
-    {
-        gl_Position = u_mvp * vec4(vertex.xyz, 1);
-    }
-)";
-
-constexpr const char basic_frag[] = R"(#version 450
-    out vec4 f_color;
-    uniform vec3 u_color;
-    void main()
-    {
-        f_color = vec4(u_color, 1);
-    }
-)";
-
 constexpr const char basic_textured_vert[] = R"(#version 450
     layout(location = 0) in vec3 vertex;
     layout(location = 3) in vec2 inTexcoord;
@@ -81,7 +55,7 @@ constexpr const char basic_textured_frag[] = R"(#version 450
     }
 )";
 
-shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Doom 2k16 Frosted Glass")
+shader_workbench::shader_workbench() : GLFWApp(1280, 720, "Doom 2k16 Frosted Glass")
 {
     int width, height;
     glfwGetWindowSize(window, &width, &height);
@@ -90,35 +64,30 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Doom 2k16 Frosted Gla
     igm.reset(new gui::ImGuiInstance(window));
     gui::make_light_theme();
 
-    basicShader = GlShader(basic_vert, basic_frag);
+    post.reset(new blur_chain(float2(width, height)));
 
     shaderMonitor.watch("../assets/shaders/prototype/frosted_glass_vert.glsl", "../assets/shaders/prototype/frosted_glass_frag.glsl", [&](GlShader & shader)
     {
         glassShader = std::move(shader);
     });
 
-    glassTex = load_image("../assets/textures/glass-dirty.png", true);
+    skyShader = GlShader(skybox_vert, skybox_frag);
+    texturedShader = GlShader(basic_textured_vert, basic_textured_frag);
 
+    glassTex = load_image("../assets/textures/glass-dirty.png", true);
     cubeTex = load_image("../assets/textures/uv_checker_map/uvcheckermap_01.png", true);
+    floorTex = load_image("../assets/textures/uv_checker_map/uvcheckermap_02.png", false);
+
+    glassSurface = make_plane_mesh(3, 3, 8, 8, false);
+    floorMesh = make_plane_mesh(12, 12, 8, 8, false);
+    cube = make_cube_mesh();
+    skyMesh = make_sphere_mesh(1.0f);
 
     sceneColor.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     sceneDepth.setup(width, height, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
     glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sceneColor, 0);
     glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, sceneDepth, 0);
     sceneFramebuffer.check_complete();
-
-    post.reset(new blur_chain(float2(width, height)));
-
-    glassSurface = make_plane_mesh(3, 3, 8, 8, false);
-    cube = make_cube_mesh();
-
-    floorMesh = make_plane_mesh(12, 12, 8, 8, false);
-    floorTex = load_image("../assets/textures/uv_checker_map/uvcheckermap_02.png", false);
-
-    skyMesh = make_sphere_mesh(1.0f);
-    skyShader = GlShader(skybox_vert, skybox_frag);
-
-    texturedShader = GlShader(basic_textured_vert, basic_textured_frag);
 
     // Setup Debug visualizations
     uiSurface.bounds = { 0, 0, (float)width, (float)height };
@@ -166,7 +135,7 @@ void shader_workbench::on_update(const UpdateEvent & e)
 {
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
-    elapsedTime += e.timestep_ms;
+    angle += 0.0025f;
 }
 
 void shader_workbench::on_draw()
@@ -202,6 +171,7 @@ void shader_workbench::on_draw()
 
             texturedShader.bind();
             float4x4 cubeModel = make_translation_matrix({ 0, 0, -3 });
+            if (animateCube) cubeModel = mul(cubeModel, make_rotation_matrix({ 0, 1, 0 }, angle * ANVIL_TAU));
             texturedShader.uniform("u_mvp", mul(viewProjectionMatrix, cubeModel));
             texturedShader.texture("s_texture", 0, cubeTex, GL_TEXTURE_2D);
             cube.draw_elements();
@@ -214,15 +184,10 @@ void shader_workbench::on_draw()
         }
     };
 
-    // Main Scene
     {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        glViewport(0, 0, width, height);
-        glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         {
             glBindFramebuffer(GL_FRAMEBUFFER, sceneFramebuffer);
@@ -238,6 +203,8 @@ void shader_workbench::on_draw()
         {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glViewport(0, 0, width, height);
+            glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             render_scene(cam.get_eye_point(), viewProjectionMatrix);
 
@@ -276,6 +243,7 @@ void shader_workbench::on_draw()
     }
 
     ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
+    ImGui::Checkbox("Animate", &animateCube);
     ImGui::Checkbox("Show Debug", &showDebug);
 
     igm->end_frame();

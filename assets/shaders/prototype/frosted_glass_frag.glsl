@@ -1,3 +1,12 @@
+/*
+    Quoting from http://www.adriancourreges.com/blog/2016/09/09/doom-2016-graphics-study/
+    "Glasses render very nicely in DOOM especially frosted or dirty glasses: decals are used to affect just some part of the glass 
+    to make its refraction more or less blurry. The pixel shader computes the refraction “blurriness” factor and selects from the
+    blur chain the 2 maps closest to this blurriness factor. It reads from these 2 maps and then linearly interpolates between the 
+    2 values to approximate the final blurry color the refraction is supposed to have. This is thanks to this process that glasses
+    can produce nice refraction at different levels of blur on a per-pixel-basis."
+*/
+
 #version 330
 
 #define NUM_MIPS 5.0

@@ -103,20 +103,16 @@ struct shader_workbench : public GLFWApp
     std::unique_ptr<gui::ImGuiInstance> igm;
     GlGpuTimer gpuTimer;
     std::unique_ptr<GlGizmo> gizmo;
-    GlShader basicShader;
-    GlShader glassShader;
 
-    float elapsedTime{ 0 };
-
+    GlFramebuffer sceneFramebuffer;
     GlTexture2D sceneColor;
     GlTexture2D sceneDepth;
-    GlFramebuffer sceneFramebuffer;
 
-    GlMesh skyMesh;
     GlShader skyShader;
-
+    GlShader glassShader;
     GlShader texturedShader;
 
+    GlMesh skyMesh;
     GlMesh cube;
     GlMesh floorMesh;
     GlMesh glassSurface;
@@ -125,8 +121,11 @@ struct shader_workbench : public GLFWApp
     GlTexture2D cubeTex;
     GlTexture2D floorTex;
 
-    int glassTextureSelection = 0;
+    int glassTextureSelection = 1;
     bool showDebug = false;
+    bool animateCube = false;
+
+    float angle = 0.f;
 
     auto_layout uiSurface;
     std::vector<std::shared_ptr<GLTextureView>> views;
