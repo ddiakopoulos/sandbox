@@ -1,137 +1,96 @@
 #include "index.hpp"
 #include "gl-gizmo.hpp"
 
-struct post_chain
+struct blur_chain
 {
-    std::vector<GlTexture2D> levelTex1;
-    std::vector<GlTexture2D> levelTex2;
-    std::vector<GlTexture2D> levelBuf;
-
     GlMesh quad;
-    float2 size;
-
     GlShader blur;
 
     float blurSigma = 4.0f;
     int blurPixelsPerSide = 2;
 
-    post_chain(const float2 size) : size(size)
+    struct target
+    {
+        GlFramebuffer framebuffer;
+        GlTexture2D colorAttachment0;
+        GlTexture2D colorAttachment1;
+        float2 size;
+    };
+
+    std::vector<target> targets;
+
+    blur_chain(const float2 size)
     {
         quad = make_fullscreen_quad();
 
-        levelTex1.resize(5);
-        levelTex2.resize(5);
-        levelBuf.resize(5);
+        const std::vector<float2> sizes = {
+            { size.x / 2,  size.y / 2 },
+            { size.x / 4,  size.y / 4 },
+            { size.x / 8,  size.y / 8 },
+            { size.x / 16, size.y / 16 },
+            { size.x / 32, size.y / 32 }
+        };
 
-        levelTex1[0].setup(size.x / 2,  size.y / 2, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(levelTex1[0], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTextureParameteriEXT(levelTex1[0], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        targets.resize(5);
 
-        levelTex1[1].setup(size.x / 4,  size.y / 4, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(levelTex1[1], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTextureParameteriEXT(levelTex1[1], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        for (int i = 0; i < targets.size(); ++i)
+        {
+            auto & target = targets[i];
 
-        levelTex1[2].setup(size.x / 8,  size.y / 8, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(levelTex1[2], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTextureParameteriEXT(levelTex1[2], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+            target.size = sizes[i];
 
-        levelTex1[3].setup(size.x / 16, size.y / 16, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(levelTex1[3], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTextureParameteriEXT(levelTex1[3], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+            target.colorAttachment0.setup(target.size.x, target.size.y, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+            glTextureParameteriEXT(target.colorAttachment0, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+            glTextureParameteriEXT(target.colorAttachment0, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-        levelTex1[4].setup(size.x / 32, size.y / 32, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(levelTex1[4], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTextureParameteriEXT(levelTex1[4], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+            target.colorAttachment1.setup(target.size.x, target.size.y, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+            glTextureParameteriEXT(target.colorAttachment1, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+            glTextureParameteriEXT(target.colorAttachment1, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-        levelTex2[0].setup(size.x / 2, size.y / 2, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(levelTex2[0], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTextureParameteriEXT(levelTex2[0], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+            glNamedFramebufferTexture2DEXT(target.framebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target.colorAttachment0, 0);
+            glNamedFramebufferTexture2DEXT(target.framebuffer, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, target.colorAttachment1, 0);
 
-        levelTex2[1].setup(size.x / 4, size.y / 4, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(levelTex2[1], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTextureParameteriEXT(levelTex2[1], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-        levelTex2[2].setup(size.x / 8, size.y / 8, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(levelTex2[2], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTextureParameteriEXT(levelTex2[2], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-        levelTex2[3].setup(size.x / 16, size.y / 16, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(levelTex2[3], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTextureParameteriEXT(levelTex2[3], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-        levelTex2[4].setup(size.x / 32, size.y / 32, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTextureParameteriEXT(levelTex2[4], GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTextureParameteriEXT(levelTex2[4], GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-        glNamedFramebufferTexture2DEXT(levelBuf[0], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, levelTex1[0], 0);
-        glNamedFramebufferTexture2DEXT(levelBuf[1], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, levelTex1[1], 0);
-        glNamedFramebufferTexture2DEXT(levelBuf[2], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, levelTex1[2], 0);
-        glNamedFramebufferTexture2DEXT(levelBuf[3], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, levelTex1[3], 0);
-        glNamedFramebufferTexture2DEXT(levelBuf[4], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, levelTex1[4], 0);
-
-        glNamedFramebufferTexture2DEXT(levelBuf[0], GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, levelTex2[0], 0);
-        glNamedFramebufferTexture2DEXT(levelBuf[1], GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, levelTex2[1], 0);
-        glNamedFramebufferTexture2DEXT(levelBuf[2], GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, levelTex2[2], 0);
-        glNamedFramebufferTexture2DEXT(levelBuf[3], GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, levelTex2[3], 0);
-        glNamedFramebufferTexture2DEXT(levelBuf[4], GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, levelTex2[4], 0);
+            target.framebuffer.check_complete();
+        }
 
         blur = GlShader(read_file_text("../assets/shaders/renderer/gaussian_blur_vert.glsl"), read_file_text("../assets/shaders/renderer/gaussian_blur_frag.glsl"));
 
         gl_check_error(__FILE__, __LINE__);
     }
 
-    void execute(GlTexture2D & colorTexture)
+    void execute(const GlTexture2D & colorTexture)
     {
-        std::vector<float3> downsampleTargets = { 
-            { 0, size.x / 2,  size.y / 2 },
-            { 1, size.x / 4,  size.y / 4 },
-            { 2, size.x / 8,  size.y / 8 },
-            { 3, size.x / 16, size.y / 16 },
-            { 4, size.x / 32, size.y / 32 } 
-        };
-
-        auto downsample = [&](const int idx, const float2 targetSize)
+        for (int i = 0; i < targets.size(); ++i)
         {
-            //std::cout << "Idx: " << idx << std::endl;
+            auto & target = targets[i];
 
-            {
-                glBindFramebuffer(GL_FRAMEBUFFER, levelBuf[idx]);
-                glViewport(0, 0, targetSize.x, targetSize.y);
+            glBindFramebuffer(GL_FRAMEBUFFER, target.framebuffer);
+            glViewport(0, 0, target.size.x, target.size.y);
 
-                blur.bind();
+            blur.bind();
 
-                blur.uniform("u_modelViewProj", Identity4x4);
-                blur.uniform("sigma", blurSigma);
-                blur.uniform("numBlurPixelsPerSide", float(blurPixelsPerSide));
+            blur.uniform("u_modelViewProj", Identity4x4);
+            blur.uniform("sigma", blurSigma);
+            blur.uniform("numBlurPixelsPerSide", float(blurPixelsPerSide));
 
-                glDrawBuffer(GL_COLOR_ATTACHMENT0);
+            // Horizontal pass - output to attachment 0 
+            glDrawBuffer(GL_COLOR_ATTACHMENT0);
+            blur.uniform("blurSize", 1.f / target.size.x);
+            blur.uniform("blurMultiplyVec", float2(1.0f, 0.0f));
+            blur.texture("s_blurTexure", 0,  (i == 0) ? colorTexture : targets[i - 1].colorAttachment1, GL_TEXTURE_2D);
+            quad.draw_elements();
 
-                // Horizontal pass - output to attachment 0 
-                blur.uniform("blurSize", 1.f / targetSize.x);
-                blur.uniform("blurMultiplyVec", float2(1.0f, 0.0f));
-                blur.texture("s_blurTexure", 0,  (idx == 0) ? colorTexture : levelTex2[idx - 1], GL_TEXTURE_2D);
-                quad.draw_elements();
+            // Vertical pass - output to attachment 1
+            glDrawBuffer(GL_COLOR_ATTACHMENT1);
+            blur.uniform("blurSize", 1.f / target.size.y);
+            blur.uniform("blurMultiplyVec", float2(0.0f, 1.0f));
+            blur.texture("s_blurTexure", 0, target.colorAttachment0, GL_TEXTURE_2D); 
+            quad.draw_elements();
 
-                glDrawBuffer(GL_COLOR_ATTACHMENT1);
-
-                // Vertical pass - output to attachment 1
-                blur.uniform("blurSize", 1.f / targetSize.y);
-                blur.uniform("blurMultiplyVec", float2(0.0f, 1.0f));
-                blur.texture("s_blurTexure", 0, levelTex1[idx], GL_TEXTURE_2D); 
-                quad.draw_elements();
-
-                blur.unbind();
-            }
-
+            blur.unbind();
+ 
             gl_check_error(__FILE__, __LINE__);
-
-        };
-
-        for (auto target : downsampleTargets)
-        {
-            downsample(target.x, float2(target.y, target.z));
         }
-        //std::cout << "End Pass --- " << std::endl;
     }
 };
 
@@ -147,12 +106,7 @@ struct shader_workbench : public GLFWApp
     GlShader basicShader;
     GlShader glassShader;
 
-    GlTexture2D glassNormal;
-
     float elapsedTime{ 0 };
-
-    GlMesh glassSurface;
-    GlMesh cube;
 
     GlTexture2D sceneColor;
     GlTexture2D sceneDepth;
@@ -162,9 +116,13 @@ struct shader_workbench : public GLFWApp
     GlShader skyShader;
 
     GlShader texturedShader;
-    GlTexture2D cubeTex;
 
+    GlMesh cube;
     GlMesh floorMesh;
+    GlMesh glassSurface;
+
+    GlTexture2D glassTex;
+    GlTexture2D cubeTex;
     GlTexture2D floorTex;
 
     bool showDebug = false;
@@ -172,7 +130,7 @@ struct shader_workbench : public GLFWApp
     auto_layout uiSurface;
     std::vector<std::shared_ptr<GLTextureView>> views;
 
-    std::unique_ptr<post_chain> post;
+    std::unique_ptr<blur_chain> post;
 
     shader_workbench();
     ~shader_workbench();

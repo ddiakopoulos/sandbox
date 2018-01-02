@@ -92,20 +92,12 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Doom 2k16 Frosted Gla
 
     basicShader = GlShader(basic_vert, basic_frag);
 
-    /*
-    shaderMonitor.watch("../assets/shaders/prototype/glass_vert.glsl", "../assets/shaders/prototype/glass_frag.glsl", [&](GlShader & shader)
-    {
-        glassShader = std::move(shader);
-    });
-    */
-
-    shaderMonitor.watch("../assets/shaders/billboard_vert.glsl", "../assets/shaders/billboard_frag.glsl", [&](GlShader & shader)
+    shaderMonitor.watch("../assets/shaders/prototype/frosted_glass_vert.glsl", "../assets/shaders/prototype/frosted_glass_frag.glsl", [&](GlShader & shader)
     {
         glassShader = std::move(shader);
     });
 
-
-    glassNormal = load_image("../assets/textures/normal/glass2.png", true);
+    glassTex = load_image("../assets/textures/glass-dirty.png", true);
 
     cubeTex = load_image("../assets/textures/uv_checker_map/uvcheckermap_01.png", true);
 
@@ -115,7 +107,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Doom 2k16 Frosted Gla
     glNamedFramebufferTexture2DEXT(sceneFramebuffer, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, sceneDepth, 0);
     sceneFramebuffer.check_complete();
 
-    post.reset(new post_chain(float2(width, height)));
+    post.reset(new blur_chain(float2(width, height)));
 
     glassSurface = make_plane_mesh(3, 3, 8, 8, false);
     cube = make_cube_mesh();
@@ -145,6 +137,8 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Doom 2k16 Frosted Gla
 
     cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
+
+    gl_check_error(__FILE__, __LINE__);
 }
 
 shader_workbench::~shader_workbench() { }
@@ -211,9 +205,7 @@ void shader_workbench::on_draw()
             texturedShader.uniform("u_mvp", mul(viewProjectionMatrix, cubeModel));
             texturedShader.texture("s_texture", 0, cubeTex, GL_TEXTURE_2D);
             cube.draw_elements();
-            texturedShader.unbind();
 
-            texturedShader.bind();
             float4x4 floorModel = mul(make_translation_matrix({ 0, -2, 0 }), make_rotation_matrix({ 1, 0, 0 }, ANVIL_PI / 2.f));
             texturedShader.uniform("u_mvp", mul(viewProjectionMatrix, floorModel));
             texturedShader.texture("s_texture", 0, floorTex, GL_TEXTURE_2D);
@@ -221,6 +213,7 @@ void shader_workbench::on_draw()
             texturedShader.unbind();
         }
     };
+
     // Main Scene
     {
         glEnable(GL_DEPTH_TEST);
@@ -256,13 +249,13 @@ void shader_workbench::on_draw()
             glassShader.uniform("u_viewProj", viewProjectionMatrix);
             glassShader.uniform("u_modelMatrix", glassModel);
             glassShader.uniform("u_modelMatrixIT", inverse(transpose(glassModel)));
-            glassShader.texture("s_mip1", 0, sceneColor, GL_TEXTURE_2D);
-            glassShader.texture("s_mip2", 1, post->levelTex2[0], GL_TEXTURE_2D);
-            glassShader.texture("s_mip3", 2, post->levelTex2[1], GL_TEXTURE_2D);
-            glassShader.texture("s_mip4", 3, post->levelTex2[2], GL_TEXTURE_2D);
-            glassShader.texture("s_mip5", 4, post->levelTex2[3], GL_TEXTURE_2D);
+            glassShader.texture("s_mip1", 0, post->targets[0].colorAttachment1, GL_TEXTURE_2D);
+            glassShader.texture("s_mip2", 1, post->targets[1].colorAttachment1, GL_TEXTURE_2D);
+            glassShader.texture("s_mip3", 2, post->targets[2].colorAttachment1, GL_TEXTURE_2D);
+            glassShader.texture("s_mip4", 3, post->targets[3].colorAttachment1, GL_TEXTURE_2D);
+            glassShader.texture("s_mip5", 4, post->targets[4].colorAttachment1, GL_TEXTURE_2D);
 
-            glassShader.texture("s_frosted", 5, glassNormal, GL_TEXTURE_2D);
+            glassShader.texture("s_frosted", 5, glassTex, GL_TEXTURE_2D);
 
             glassSurface.draw_elements();
             glassShader.unbind();
@@ -286,10 +279,10 @@ void shader_workbench::on_draw()
     {
         glViewport(0, 0, width, height);
         glDisable(GL_DEPTH_TEST);
-        views[0]->draw(uiSurface.children[0]->bounds, float2(width, height), post->levelTex2[0]);
-        views[1]->draw(uiSurface.children[1]->bounds, float2(width, height), post->levelTex2[1]);
-        views[2]->draw(uiSurface.children[2]->bounds, float2(width, height), post->levelTex2[2]);
-        views[3]->draw(uiSurface.children[3]->bounds, float2(width, height), post->levelTex2[3]);
+        views[0]->draw(uiSurface.children[0]->bounds, float2(width, height), post->targets[0].colorAttachment1);
+        views[1]->draw(uiSurface.children[1]->bounds, float2(width, height), post->targets[1].colorAttachment1);
+        views[2]->draw(uiSurface.children[2]->bounds, float2(width, height), post->targets[2].colorAttachment1);
+        views[3]->draw(uiSurface.children[3]->bounds, float2(width, height), post->targets[3].colorAttachment1);
         glEnable(GL_DEPTH_TEST);
     }
  
