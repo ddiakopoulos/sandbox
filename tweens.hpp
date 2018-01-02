@@ -120,7 +120,7 @@ public:
     }
 
     template<class VariableType, class EasingFunc>
-    const Tween & add_tween(VariableType * variable, VariableType targetValue, float seconds, EasingFunc ease)
+    Tween & add_tween(VariableType * variable, VariableType targetValue, float seconds, EasingFunc ease)
     {
         VariableType initialValue = *variable;
         auto updateFunction = [variable, initialValue, targetValue, ease](float t)

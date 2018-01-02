@@ -19,6 +19,7 @@ A collection of C++11/14 classes and opengl utilities united under the arbitrari
   * `projective-texturing\` - Implements projective surface texturing (i.e. Unity's projector object)
   * `portal-rendering\` - A simple sample for source/target portal rendering. Does not handle nested portals.
   * `frosted-glass\` - A recreation of the frosted/dirty glass window effect from Doom 2016/idTech6. 
+  * `terrain-scan-effect\` - A terrain scanning effect inspired by No Man's Sky. 
   * `vr-environment\` - Incomplete sample for physics + VR interaction using Bullet 3
   * `clustered-shading\` - A minimally viable implementation of clustered shading for point-lights
   * `lib-render\` -  Implements a forward renderer, physically-based materials, and asset serialization. 

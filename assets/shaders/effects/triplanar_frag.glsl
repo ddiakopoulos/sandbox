@@ -13,16 +13,16 @@ in vec3 v_eyeDir;
 
 out vec4 f_color;
 
-const float yCapHeight = 1.0;
-const float yCapTransition = 0.3;
-const float blendSharpness = 2.0;
+const float yCapHeight = 0.5;
+const float yCapTransition = 1.0;
+const float blendSharpness = 0.8;
 const float occlusionStrength = 1.0;
 
 void main()
 {
     // calculate a blend factor for triplanar mapping. Sharpness should be obvious.
     vec3 blendFactor = pow(abs(v_normal), vec3(blendSharpness));
-    blendFactor /= dot(blendFactor, vec3(1));
+    blendFactor /= dot(blendFactor, vec3(1.0));
 
     // compute texcoords for each axis based on world position of the fragment
     vec2 tx = v_world_position.yz * u_scale.x;
@@ -31,7 +31,7 @@ void main()
 
     vec4 cx = texture(s_diffuseTextureA, tx);
     vec4 cy = texture(s_diffuseTextureB, ty);
-    vec4 cz = texture(s_diffuseTextureA, tz); 
+    vec4 cz = texture(s_diffuseTextureA, tz); // texture C here
 
     float h = clamp(v_world_position.y - yCapHeight, 0, yCapTransition) / yCapTransition;
     vec3 yDiff = cy.rgb * h;

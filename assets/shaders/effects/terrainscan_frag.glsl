@@ -1,10 +1,5 @@
 #version 330
 
-const float zNear = 2.0;
-const float zFar = 64.0;
-
-const vec3 scannerPosition = vec3(0, 0, 0);
-
 uniform float u_time;
 uniform vec3 u_eye;
 
@@ -17,10 +12,15 @@ uniform vec4 u_midColor;
 uniform vec4 u_trailColor;
 uniform vec4 u_hbarColor;
 
+uniform float u_nearClip = 2.0;
+uniform float u_farClip = 64.0;
+
 uniform sampler2D s_colorTex;
 uniform sampler2D s_depthTex;
 
 uniform mat4 u_inverseViewProjection;
+
+uniform vec3 u_scannerPosition = vec3(0, 0, 0);
 
 in vec2 v_texcoord;
 in vec3 v_ray;
@@ -30,10 +30,9 @@ out vec4 f_color;
 
 // From Unity CgInc: 
 // Used to linearize Z buffer values. x is (1-far/near), y is (far/near), z is (x/far) and w is (y/far).
-const vec4 zBufferParams = vec4(1.0 - zFar/zNear, zFar/zNear, 0, 0);
-
 float linear_01_depth(in float z) 
 {
+    vec4 zBufferParams = vec4(1.0 - u_farClip/u_nearClip, u_farClip/u_nearClip, 0, 0);
     return (1.00000 / ((zBufferParams.x * z) + zBufferParams.y ));
 }
 
@@ -41,9 +40,9 @@ float linear_01_depth(in float z)
 vec3 reconstruct_worldspace_position(in vec2 coord, in float rawDepth)
 {
     vec4 vec = vec4(coord.x, coord.y, rawDepth, 1.0);
-    vec = vec * 2.0 - 1.0; // (0, 1) to screen coordinates (-1 to 1)
-    vec4 r = u_inverseViewProjection * vec; // deproject into world space
-    return r.xyz / r.w; // homogenize coordinate
+    vec = vec * 2.0 - 1.0;                       // (0, 1) to screen coordinates (-1 to 1)
+    vec4 r = u_inverseViewProjection * vec;      // deproject into world space
+    return r.xyz / r.w;                          // homogenize coordinate
 }
 
 vec4 screenspace_bars(vec2 p)
@@ -62,7 +61,7 @@ void main()
     // Scale the view ray by the ratio of the linear z value to the projected view ray
     vec3 worldspacePosition = u_eye + (v_ray * linearDepth);
 
-    float dist = distance(worldspacePosition, scannerPosition);
+    float dist = distance(worldspacePosition, u_scannerPosition);
 
     vec4 scannerColor = vec4(0, 0, 0, 0);
 
