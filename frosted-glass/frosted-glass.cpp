@@ -135,7 +135,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Doom 2k16 Frosted Gla
     }
     gizmo.reset(new GlGizmo());
 
-    cam.look_at({ 0, 9.5f, -6.0f }, { 0, 0.1f, 0 });
+    cam.look_at({ 0, 2.f, 4.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
 
     gl_check_error(__FILE__, __LINE__);
@@ -267,6 +267,13 @@ void shader_workbench::on_draw()
     gpuTimer.stop();
 
     igm->begin_frame();
+
+    static const char * glassTextures[] = { "glass-debug-gradient.png", "glass-dirty.png", "glass-pattern.png" };
+    std::vector<int> blendModes = { GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA };
+    if (ImGui::ListBox("Glass Texture", &glassTextureSelection, glassTextures, IM_ARRAYSIZE(glassTextures), 4))
+    {
+        glassTex = load_image("../assets/textures/" + std::string(glassTextures[glassTextureSelection]), true);
+    }
 
     ImGui::Text("Render Time %f ms", gpuTimer.elapsed_ms());
     ImGui::Checkbox("Show Debug", &showDebug);

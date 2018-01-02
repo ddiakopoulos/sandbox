@@ -125,6 +125,7 @@ struct shader_workbench : public GLFWApp
     GlTexture2D cubeTex;
     GlTexture2D floorTex;
 
+    int glassTextureSelection = 0;
     bool showDebug = false;
 
     auto_layout uiSurface;
