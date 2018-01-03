@@ -121,6 +121,8 @@ struct shader_workbench : public GLFWApp
     GlTexture2D cubeTex;
     GlTexture2D floorTex;
 
+    std::unique_ptr<CubemapCamera> cubemapCam;
+
     int glassTextureSelection = 1;
     bool showDebug = false;
     bool animateCube = false;

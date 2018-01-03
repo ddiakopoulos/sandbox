@@ -176,29 +176,24 @@ namespace avl
     class CubemapCamera
     {
         GlFramebuffer framebuffer;
-        GlTexture2D colorBuffer;
-        GLuint cubeMapHandle;
-        float2 resolution;
-        std::vector<std::pair<GLenum, Pose>> faces;
+        GlTexture2D cubeMapColor;
+        GlTexture2D cubeMapDepth;
+
+        float resolution;
         bool shouldCapture = false;
 
         void save_pngs()
         {
             const std::vector<std::string> faceNames = {{"positive_x"}, {"negative_x"}, {"positive_y"}, {"negative_y"}, {"positive_z"}, {"negative_z"}};
-            std::vector<uint8_t> data(static_cast<int>(resolution.x) * static_cast<int>(resolution.y) * 3);
+            std::vector<uint8_t> data(resolution * resolution * 3);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapColor);
             for (int i = 0; i < 6; ++i)
             {
-                glGetTexImage(faces[i].first, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
-                stbi_write_png(
-                    std::string(faceNames[i] + ".png").c_str(), 
-                    static_cast<int>(resolution.x), 
-                    static_cast<int>(resolution.y), 
-                    3, 
-                    data.data(), 
-                    static_cast<int>(resolution.x) * 3
-                );
-                data.clear();
+                glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+                stbi_write_png( std::string(faceNames[i] + ".png").c_str(), resolution, resolution, 3, data.data(), resolution * 3);
+                gl_check_error(__FILE__, __LINE__);
             }
+            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
             shouldCapture = false;
         }
 
@@ -206,72 +201,54 @@ namespace avl
 
         std::function<void(float3 eyePosition, float4x4 viewMatrix, float4x4 projMatrix)> render;
 
-        CubemapCamera(float2 resolution) : resolution(resolution)
+        CubemapCamera(int resolution) : resolution(resolution)
         {
-            this->resolution = resolution;
-
-            colorBuffer.setup(static_cast<int>(resolution.x), static_cast<int>(resolution.y), GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
-            glNamedFramebufferTexture2DEXT(framebuffer, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0); // attach
-            framebuffer.check_complete();
-        
-            gl_check_error(__FILE__, __LINE__);
-
-            glGenTextures(1, &cubeMapHandle);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandle);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 0);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        
-            for (int i = 0; i < 6; ++i) 
-            {
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, static_cast<int>(resolution.x), static_cast<int>(resolution.y), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-            }
-        
-            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-
-            std::vector<float3> targets = {{1, 0, 0,}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
-            std::vector<float3> upVecs = {{0, -1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, 1}, {0, -1, 0}, {0, -1, 0}};
-            for (int i = 0; i < 6; ++i)
-            {
-                auto f = std::pair<GLenum, Pose>(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, look_at_pose_rh(float3(0, 0, 0), targets[i], upVecs[i]));
-                faces.push_back(f);
-            }
-     
+            cubeMapColor.setup_cube(resolution, resolution, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+            cubeMapDepth.setup_cube(resolution, resolution, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
             gl_check_error(__FILE__, __LINE__);
          }
 
-         GLuint get_cubemap_handle() const { return cubeMapHandle; }
+         GLuint get_cubemap_handle() const { return cubeMapColor; }
      
          void export_pngs() { shouldCapture = true; }
 
-         void update(float3 eyePosition)
+         void update(const float3 worldLocation)
          {
-             // Todo: DSA
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
-            glViewport(0, 0, static_cast<int>(resolution.x) , static_cast<int>(resolution.y));
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+             if (shouldCapture)
+             {
+                 GLint drawFboId = 0, readFboId = 0;
+                 glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFboId);
+                 glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &readFboId);
 
-            auto projMatrix = make_projection_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f); 
-            for (int i = 0; i < 6; ++i)
-            {
-                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, faces[i].first, cubeMapHandle, 0);
-                auto viewMatrix = faces[i].second.view_matrix();
+                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
+                 glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
 
-                if (render) render(eyePosition, viewMatrix, projMatrix);
-            }
+                 std::vector<float3> targets = { { 1, 0, 0, },{ -1, 0, 0 },{ 0, 1, 0 },{ 0, -1, 0 },{ 0, 0, 1 },{ 0, 0, -1 } };
+                 std::vector<float3> upVecs = { { 0, -1, 0 },{ 0, -1, 0 },{ 0, 0, 1 },{ 0, 0, 1 },{ 0, -1, 0 },{ 0, -1, 0 } };
+                 const float4x4 projMatrix = make_projection_matrix(to_radians(90.f), 1.0f, 0.1f, 128.f);
 
-            if (shouldCapture) save_pngs();
+                 for (int i = 0; i < 6; ++i)
+                 {
+                     glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubeMapColor, 0);
+                     glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubeMapDepth, 0);
+                     glViewport(0, 0, resolution, resolution);
+                     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+                     const float4x4 viewMatrix = look_at_pose_rh(worldLocation, targets[i], upVecs[i]).view_matrix();
+
+                     if (render)
+                     {
+                         render(worldLocation, viewMatrix, projMatrix);
+                     }
+                 }
+                 save_pngs();
+
+                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, drawFboId);
+                 glBindFramebuffer(GL_READ_FRAMEBUFFER, readFboId);
+             }
         }
     };
-
 }
 
 #endif // camera_h

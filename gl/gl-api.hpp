@@ -220,15 +220,14 @@ struct GlTexture2D : public GlTextureObject
     {
         for (int i = 0; i < 6; ++i) glTextureImage2DEXT(*this, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_fmt, width, height, 0, format, type, pixels);
         if (createMipmap) glGenerateTextureMipmapEXT(*this, GL_TEXTURE_CUBE_MAP);
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, createMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
-        glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
-        glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 7);
+        glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 0);
         this->width = static_cast<float>(width);
         this->height = static_cast<float>(height);
     }
