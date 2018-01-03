@@ -39,19 +39,18 @@ struct view_data
     float4x4 viewProjMatrix;
     float nearClip;
     float farClip;
+
+    view_data(const uint32_t idx, const Pose & p, const float4x4 & projMat)
+    {
+        index = idx;
+        pose = p;
+        viewMatrix = p.view_matrix();
+        projectionMatrix = projMat;
+        viewProjMatrix = mul(projMat, viewMatrix);
+        near_far_clip_from_projection(projectionMatrix, nearClip, farClip);
+    }
 };
 
-inline view_data make_view_data(const uint32_t index, const Pose & p, const float4x4 & projectionMatrix)
-{
-    view_data v;
-    v.index = index;
-    v.pose = p;
-    v.viewMatrix = p.view_matrix();
-    v.projectionMatrix = projectionMatrix;
-    v.viewProjMatrix = mul(v.projectionMatrix, v.viewMatrix);
-    near_far_clip_from_projection(v.projectionMatrix, v.nearClip, v.farClip);
-    return v;
-}
 
 struct scene_data
 {
@@ -116,8 +115,6 @@ class PhysicallyBasedRenderer
     std::vector<GlFramebuffer> eyeFramebuffers;
     std::vector<GlTexture2D> eyeTextures;
     std::vector<GlTexture2D> eyeDepthTextures;
-
-    scene_data scene;
 
     std::unique_ptr<BloomPass> bloom;
     std::unique_ptr<StableCascadedShadowPass> shadow;
