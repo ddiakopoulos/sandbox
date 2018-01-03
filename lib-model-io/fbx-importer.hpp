@@ -1,13 +1,21 @@
 #pragma once
 
-#ifndef SYSTEM_HAS_FBX_SDK
-#define SYSTEM_HAS_FBX_SDK 0
+#ifdef SYSTEM_HAS_FBX_SDK
+    #define USING_FBX 1
+#else
+    #define USING_FBX 0
 #endif
 
-#if (SYSTEM_HAS_FBX_SDK == 1)
+#if (USING_FBX == 1)
 
 #ifndef fbx_importer_hpp
 #define fbx_importer_hpp
+
+#ifdef _DEBUG
+    #pragma comment(lib, "Debug/libfbxsdk.lib")
+#else
+#   pragma comment(lib, "Release/libfbxsdk.lib")
+#endif
 
 #include "model-io.hpp"
 #include "model-io-util.hpp"

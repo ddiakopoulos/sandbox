@@ -19,13 +19,7 @@
 
 using namespace avl;
 
-enum class TextureType
-{
-    COLOR,
-    DEPTH
-};
-
-struct RendererSettings
+struct renderer_settings
 {
     float2 renderSize{ 0, 0 };
     int cameraCount = 1;
@@ -34,6 +28,37 @@ struct RendererSettings
     bool useDepthPrepass = false;
     bool bloomEnabled = true;
     bool shadowsEnabled = true;
+};
+
+struct view_data
+{
+    uint32_t index;
+    Pose pose;
+    float4x4 viewMatrix;
+    float4x4 projectionMatrix;
+    float4x4 viewProjMatrix;
+    float nearClip;
+    float farClip;
+
+    view_data(const uint32_t idx, const Pose & p, const float4x4 & projMat)
+    {
+        index = idx;
+        pose = p;
+        viewMatrix = p.view_matrix();
+        projectionMatrix = projMat;
+        viewProjMatrix = mul(projMat, viewMatrix);
+        near_far_clip_from_projection(projectionMatrix, nearClip, farClip);
+    }
+};
+
+
+struct scene_data
+{
+    ProceduralSky * skybox{ nullptr };
+    std::vector<Renderable *> renderSet;
+    std::vector<uniforms::point_light> pointLights;
+    uniforms::directional_light sunlight;
+    std::vector<view_data> views;
 };
 
 template<typename T>
@@ -76,24 +101,11 @@ struct profiler
 
 class PhysicallyBasedRenderer
 {
-    struct ViewData
-    {
-        uint32_t index;
-        Pose pose;
-        float4x4 viewMatrix;
-        float4x4 projectionMatrix;
-        float4x4 viewProjMatrix;
-        float nearClip;
-        float farClip;
-    };
-
     SimpleTimer timer;
 
     GlBuffer perScene;
     GlBuffer perView;
     GlBuffer perObject;
-
-    std::vector<ViewData> views;
 
     // MSAA 
     GlRenderbuffer multisampleRenderbuffers[2];
@@ -104,94 +116,36 @@ class PhysicallyBasedRenderer
     std::vector<GlTexture2D> eyeTextures;
     std::vector<GlTexture2D> eyeDepthTextures;
 
-    std::vector<Renderable *> renderSet;
-    std::vector<uniforms::point_light> pointLights;
-
-    uniforms::directional_light sunlight;
-    ProceduralSky * skybox{ nullptr };
-
     std::unique_ptr<BloomPass> bloom;
     std::unique_ptr<StableCascadedShadowPass> shadow;
 
     GlShaderHandle earlyZPass = { "depth-prepass" };
 
     // Update per-object uniform buffer
-    void update_per_object_uniform_buffer(Renderable * top, const ViewData & d);
+    void update_per_object_uniform_buffer(Renderable * top, const view_data & d);
 
-    void run_depth_prepass(const ViewData & d);
-    void run_skybox_pass(const ViewData & d);
-    void run_shadow_pass(const ViewData & d);
+    void run_depth_prepass(const view_data & d);
+    void run_skybox_pass(const view_data & d);
+    void run_shadow_pass(const view_data & d);
     void run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const ViewData & d);
-    void run_post_pass(const ViewData & d);
+    void run_post_pass(const view_data & d);
 
 public:
 
-    RendererSettings settings;
+    renderer_settings settings;
     profiler<SimpleTimer> cpuProfiler;
     profiler<GlGpuTimer> gpuProfiler;
 
-    PhysicallyBasedRenderer(const RendererSettings settings);
+    PhysicallyBasedRenderer(const renderer_settings & settings);
     ~PhysicallyBasedRenderer();
 
-    void update();
-    void render_frame();
+    void render_frame(const scene_data & scene);
 
-    void add_camera(const uint32_t index, const Pose & p, const float4x4 & projectionMatrix);
+    uint32_t get_color_texture(const int32_t idx) const;
+    uint32_t get_depth_texture(const int32_t idx) const;
 
-    void add_objects(const std::vector<Renderable *> & set)
-    {
-        renderSet = set;
-    }
-
-    void add_light(const uniforms::point_light & light)
-    {
-        pointLights.push_back(light);
-    }
-
-    void set_sunlight(const uniforms::directional_light & sun)
-    {
-        sunlight = sun;
-    }
-
-    uniforms::directional_light get_sunlight() const
-    {
-        return sunlight;
-    }
-
-    GLuint get_output_texture(const TextureType type, const uint32_t idx) const
-    { 
-        assert(idx <= settings.cameraCount);
-        switch (type)
-        {
-            case TextureType::COLOR: return eyeTextures[idx];
-            case TextureType::DEPTH: return eyeDepthTextures[idx];
-        }
-        return -1;
-    }
-
-    void set_procedural_sky(ProceduralSky * sky)
-    {
-        skybox = sky;
-        sunlight.direction = sky->get_sun_direction();
-        sunlight.color = float3(1.f);
-        sunlight.amount = 1.0f;
-    }
-
-    ProceduralSky * get_procedural_sky() const
-    {
-        if (skybox) return skybox;
-        else return nullptr;
-    }
-
-    StableCascadedShadowPass * get_shadow_pass() const
-    { 
-        return shadow.get(); 
-    }
-
-    BloomPass * get_bloom_pass() const 
-    { 
-        return  bloom.get(); 
-    }
+    StableCascadedShadowPass & get_shadow_pass() const;
+    BloomPass & get_bloom_pass() const;
 };
 
 template<class F> void visit_fields(PhysicallyBasedRenderer & o, F f)
