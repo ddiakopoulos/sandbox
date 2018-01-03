@@ -4,7 +4,7 @@
 #include "geometry.hpp"
 
 // Update per-object uniform buffer
-void PhysicallyBasedRenderer::update_per_object_uniform_buffer(Renderable * r, const ViewData & d)
+void forward_renderer::update_per_object_uniform_buffer(Renderable * r, const view_data & d)
 {
     uniforms::per_object object = {};
     object.modelMatrix = mul(r->get_pose().matrix(), make_scaling_matrix(r->get_scale()));
@@ -14,76 +14,29 @@ void PhysicallyBasedRenderer::update_per_object_uniform_buffer(Renderable * r, c
     perObject.set_buffer_data(sizeof(object), &object, GL_STREAM_DRAW);
 }
 
-void PhysicallyBasedRenderer::add_camera(const uint32_t index, const Pose & p, const float4x4 & projectionMatrix)
-{
-    assert(uint32_t(index) <= settings.cameraCount);
-
-    ViewData v;
-    v.index = index;
-    v.pose = p;
-    v.viewMatrix = p.view_matrix();
-    v.projectionMatrix = projectionMatrix;
-    v.viewProjMatrix = mul(v.projectionMatrix, v.viewMatrix);
-    near_far_clip_from_projection(v.projectionMatrix, v.nearClip, v.farClip);
-    views[uint32_t(index)] = v;
-}
-
-void PhysicallyBasedRenderer::add_objects(const std::vector<Renderable *> & set)
-{
-    renderSet = set;
-}
-
-void PhysicallyBasedRenderer::add_light(const uniforms::point_light & light)
-{
-    pointLights.push_back(light);
-}
-
-void PhysicallyBasedRenderer::add_sun(const uniforms::directional_light & sun)
-{
-    sunlight = sun;
-}
-
-uniforms::directional_light PhysicallyBasedRenderer::get_sunlight() const
-{
-    return sunlight;
-}
-
-GLuint PhysicallyBasedRenderer::get_output_texture(const TextureType type, const uint32_t idx) const
+uint32_t forward_renderer::get_color_texture(const uint32_t idx) const
 {
     assert(idx <= settings.cameraCount);
-    switch (type)
-    {
-    case TextureType::COLOR: return eyeTextures[idx];
-    case TextureType::DEPTH: return eyeDepthTextures[idx];
-    }
-    return -1;
+    return eyeTextures[idx];
 }
 
-void PhysicallyBasedRenderer::set_procedural_sky(ProceduralSky * sky)
+uint32_t forward_renderer::get_depth_texture(const uint32_t idx) const 
 {
-    skybox = sky;
-    sunlight.direction = sky->get_sun_direction();
-    sunlight.color = float3(1.f);
-    sunlight.amount = 1.0f;
+    assert(idx <= settings.cameraCount);
+    return eyeDepthTextures[idx];
 }
 
-ProceduralSky * PhysicallyBasedRenderer::get_procedural_sky() const
+StableCascadedShadowPass & forward_renderer::get_shadow_pass() const
 {
-    if (skybox) return skybox;
-    else return nullptr;
+    return *shadow;
 }
 
-StableCascadedShadowPass * PhysicallyBasedRenderer::get_shadow_pass() const
+BloomPass & forward_renderer::get_bloom_pass() const
 {
-    return shadow.get();
+    return *bloom;
 }
 
-BloomPass * PhysicallyBasedRenderer::get_bloom_pass() const
-{
-    return  bloom.get();
-}
-
-void PhysicallyBasedRenderer::run_depth_prepass(const ViewData & d)
+void forward_renderer::run_depth_prepass(const view_data & view, const scene_data & scene)
 {
     GLboolean colorMask[4];
     glGetBooleanv(GL_COLOR_WRITEMASK, &colorMask[0]);
@@ -95,9 +48,9 @@ void PhysicallyBasedRenderer::run_depth_prepass(const ViewData & d)
 
     auto & shader = earlyZPass.get();
     shader.bind();
-    for (auto obj : renderSet)
+    for (auto obj : scene.renderSet)
     {
-        update_per_object_uniform_buffer(obj, d);
+        update_per_object_uniform_buffer(obj, view);
         obj->draw();
     }
     shader.unbind();
@@ -106,32 +59,32 @@ void PhysicallyBasedRenderer::run_depth_prepass(const ViewData & d)
     glColorMask(colorMask[0], colorMask[1], colorMask[2], colorMask[3]);
 }
 
-void PhysicallyBasedRenderer::run_skybox_pass(const ViewData & d)
+void forward_renderer::run_skybox_pass(const view_data & view, const scene_data & scene)
 {
-    if (!skybox) return;
+    if (!scene.skybox) return;
 
     GLboolean wasDepthTestingEnabled = glIsEnabled(GL_DEPTH_TEST);
     glDisable(GL_DEPTH_TEST);
 
-    skybox->render(d.viewProjMatrix, d.pose.position, d.farClip);
+    scene.skybox->render(view.viewProjMatrix, view.pose.position, view.farClip);
 
     if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
 }
 
-void PhysicallyBasedRenderer::run_shadow_pass(const ViewData & d)
+void forward_renderer::run_shadow_pass(const view_data & view, const scene_data & scene)
 {
-    shadow->update_cascades(d.viewMatrix,
-        d.nearClip,
-        d.farClip,
-        aspect_from_projection(d.projectionMatrix),
-        vfov_from_projection(d.projectionMatrix),
-        sunlight.direction);
+    shadow->update_cascades(view.viewMatrix,
+        view.nearClip,
+        view.farClip,
+        aspect_from_projection(view.projectionMatrix),
+        vfov_from_projection(view.projectionMatrix),
+        scene.sunlight.direction);
 
     shadow->pre_draw();
 
     gl_check_error(__FILE__, __LINE__);
 
-    for (Renderable * obj : renderSet)
+    for (Renderable * obj : scene.renderSet)
     {
         if (obj->get_cast_shadow())
         {
@@ -146,7 +99,7 @@ void PhysicallyBasedRenderer::run_shadow_pass(const ViewData & d)
     gl_check_error(__FILE__, __LINE__);
 }
 
-void PhysicallyBasedRenderer::run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const ViewData & d)
+void forward_renderer::run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const view_data & view, const scene_data & scene)
 {
     if (settings.useDepthPrepass)
     {
@@ -157,7 +110,7 @@ void PhysicallyBasedRenderer::run_forward_pass(std::vector<Renderable *> & rende
 
     for (auto r : renderQueueMaterial)
     {
-        update_per_object_uniform_buffer(r, d);
+        update_per_object_uniform_buffer(r, view);
 
         Material * mat = r->get_material();
         mat->update_uniforms();
@@ -170,7 +123,7 @@ void PhysicallyBasedRenderer::run_forward_pass(std::vector<Renderable *> & rende
     // We assume that objects without a valid material take care of their own shading in the `draw()` function. 
     for (auto r : renderQueueDefault)
     {
-        update_per_object_uniform_buffer(r, d);
+        update_per_object_uniform_buffer(r, view);
         r->draw();
     }
 
@@ -180,7 +133,7 @@ void PhysicallyBasedRenderer::run_forward_pass(std::vector<Renderable *> & rende
     }
 }
 
-void PhysicallyBasedRenderer::run_post_pass(const ViewData & d)
+void forward_renderer::run_post_pass(const view_data & view, const scene_data & scene)
 {
     GLboolean wasCullingEnabled = glIsEnabled(GL_CULL_FACE);
     GLboolean wasDepthTestingEnabled = glIsEnabled(GL_DEPTH_TEST);
@@ -191,8 +144,8 @@ void PhysicallyBasedRenderer::run_post_pass(const ViewData & d)
 
     if (settings.bloomEnabled)
     {
-        bloom->execute(eyeTextures[d.index]);
-        glBlitNamedFramebuffer(bloom->get_output_framebuffer(), eyeFramebuffers[d.index], 0, 0,
+        bloom->execute(eyeTextures[view.index]);
+        glBlitNamedFramebuffer(bloom->get_output_framebuffer(), eyeFramebuffers[view.index], 0, 0,
             settings.renderSize.x, settings.renderSize.y, 0, 0,
             settings.renderSize.x, settings.renderSize.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
     }
@@ -201,12 +154,11 @@ void PhysicallyBasedRenderer::run_post_pass(const ViewData & d)
     if (wasDepthTestingEnabled) glEnable(GL_DEPTH_TEST);
 }
 
-PhysicallyBasedRenderer::PhysicallyBasedRenderer(const RendererSettings settings) : settings(settings)
+forward_renderer::forward_renderer(const renderer_settings & settings) : settings(settings)
 {
     assert(settings.renderSize.x > 0 && settings.renderSize.y > 0);
     assert(settings.cameraCount >= 1);
 
-    views.resize(settings.cameraCount);
     eyeFramebuffers.resize(settings.cameraCount);
     eyeTextures.resize(settings.cameraCount);
     eyeDepthTextures.resize(settings.cameraCount);
@@ -241,18 +193,15 @@ PhysicallyBasedRenderer::PhysicallyBasedRenderer(const RendererSettings settings
     timer.start();
 }
 
-PhysicallyBasedRenderer::~PhysicallyBasedRenderer()
+forward_renderer::~forward_renderer()
 {
     timer.stop();
 }
 
-void PhysicallyBasedRenderer::update()
+void forward_renderer::render_frame(const scene_data & scene)
 {
-    // ... 
-}
+    assert(settings.cameraCount == scene.views.size());
 
-void PhysicallyBasedRenderer::render_frame()
-{
     cpuProfiler.begin("renderloop");
 
     // Renderer default state
@@ -269,29 +218,31 @@ void PhysicallyBasedRenderer::render_frame()
     b.time = timer.milliseconds().count() / 1000.f; // millisecond resolution expressed as seconds
     b.resolution = settings.renderSize;
     b.invResolution = 1.f / b.resolution;
-    b.activePointLights = pointLights.size();
+    b.activePointLights = scene.pointLights.size();
 
-    b.directional_light.color = sunlight.color;
-    b.directional_light.direction = sunlight.direction;
-    b.directional_light.amount = sunlight.amount;
-    for (int i = 0; i < (int) std::min(pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = pointLights[i];
+    b.directional_light.color = scene.sunlight.color;
+    b.directional_light.direction = scene.sunlight.direction;
+    b.directional_light.amount = scene.sunlight.amount;
+    for (int i = 0; i < (int) std::min(scene.pointLights.size(), size_t(uniforms::MAX_POINT_LIGHTS)); ++i) b.point_lights[i] = scene.pointLights[i];
 
     GLfloat defaultColor[] = { 1.0f, 0.0f, 0.f, 1.0f };
     GLfloat defaultDepth = 1.f;
 
-    ViewData shadowAndCullingView = views[0];
+    view_data shadowAndCullingView = scene.views[0];
+
     if (settings.cameraCount == 2)
     {
         cpuProfiler.begin("center-view");
+
         // Take the mid-point between the eyes
-        shadowAndCullingView.pose = Pose(views[0].pose.orientation, (views[0].pose.position + views[1].pose.position) * 0.5f);
+        shadowAndCullingView.pose = Pose(scene.views[0].pose.orientation, (scene.views[0].pose.position + scene.views[1].pose.position) * 0.5f);
 
         // Compute the interocular distance
-        const float3 interocularDistance = views[1].pose.position - views[0].pose.position;
+        const float3 interocularDistance = scene.views[1].pose.position - scene.views[0].pose.position;
 
         // Generate the superfrustum projection matrix and the value we need to move the midpoint in Z
         float3 centerOffsetZ;
-        compute_center_view(views[0].projectionMatrix, views[1].projectionMatrix, interocularDistance.x, shadowAndCullingView.projectionMatrix, centerOffsetZ);
+        compute_center_view(scene.views[0].projectionMatrix, scene.views[1].projectionMatrix, interocularDistance.x, shadowAndCullingView.projectionMatrix, centerOffsetZ);
 
         // Regenerate the view matrix and near/far clip planes
         shadowAndCullingView.viewMatrix = inverse(mul(shadowAndCullingView.pose.matrix(), make_translation_matrix(centerOffsetZ)));
@@ -302,7 +253,7 @@ void PhysicallyBasedRenderer::render_frame()
     if (settings.shadowsEnabled)
     {
         gpuProfiler.begin("shadowpass");
-        run_shadow_pass(shadowAndCullingView);
+        run_shadow_pass(shadowAndCullingView, scene);
         gpuProfiler.end("shadowpass");
 
         for (int c = 0; c < uniforms::NUM_CASCADES; c++)
@@ -342,7 +293,7 @@ void PhysicallyBasedRenderer::render_frame()
     std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(materialSortFunc)> renderQueueMaterial(materialSortFunc);
     std::priority_queue<Renderable *, std::vector<Renderable*>, decltype(distanceSortFunc)> renderQueueDefault(distanceSortFunc);
 
-    for (auto obj : renderSet)
+    for (auto obj : scene.renderSet)
     {
         // Can't sort by material if the renderable doesn't *have* a material; bucket all other objects 
         if (obj->get_material() != nullptr) renderQueueMaterial.push(obj);
@@ -370,14 +321,11 @@ void PhysicallyBasedRenderer::render_frame()
     {
         // Update per-view uniform buffer
         uniforms::per_view v = {};
-        v.view = views[camIdx].pose.inverse().matrix();
-        v.viewProj = mul(views[camIdx].projectionMatrix, views[camIdx].pose.inverse().matrix());
-        v.eyePos = float4(views[camIdx].pose.position, 1);
+        v.view = scene.views[camIdx].viewMatrix;
+        v.viewProj = scene.views[camIdx].viewProjMatrix;
+        v.eyePos = float4(scene.views[camIdx].pose.position, 1);
         perView.set_buffer_data(sizeof(v), &v, GL_STREAM_DRAW);
 
-        // Update render pass data
-        views[camIdx].viewMatrix = v.view;
-        views[camIdx].viewProjMatrix = v.viewProj;
 
         // Render into multisampled fbo
         glEnable(GL_MULTISAMPLE);
@@ -390,13 +338,13 @@ void PhysicallyBasedRenderer::render_frame()
         if (settings.useDepthPrepass)
         {
             gpuProfiler.begin("depth-prepass");
-            run_depth_prepass(views[camIdx]);
+            run_depth_prepass(scene.views[camIdx], scene);
             gpuProfiler.end("depth-prepass");
         }
 
         gpuProfiler.begin("forward pass");
-        run_skybox_pass(views[camIdx]);
-        run_forward_pass(materialRenderList, defaultRenderList, views[camIdx]);
+        run_skybox_pass(scene.views[camIdx], scene);
+        run_forward_pass(materialRenderList, defaultRenderList, scene.views[camIdx], scene);
         gpuProfiler.end("forward pass");
 
         glDisable(GL_MULTISAMPLE);
@@ -426,7 +374,7 @@ void PhysicallyBasedRenderer::render_frame()
         gpuProfiler.begin("postprocess");
         for (int camIdx = 0; camIdx < settings.cameraCount; ++camIdx)
         {
-            run_post_pass(views[camIdx]);
+            run_post_pass(scene.views[camIdx], scene);
         }
         gpuProfiler.end("postprocess");
     }
@@ -434,9 +382,6 @@ void PhysicallyBasedRenderer::render_frame()
     glDisable(GL_FRAMEBUFFER_SRGB);
 
     cpuProfiler.end("renderloop");
-
-    renderSet.clear();
-    pointLights.clear();
 
     gl_check_error(__FILE__, __LINE__);
 }

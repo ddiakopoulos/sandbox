@@ -1,6 +1,7 @@
-#if (SYSTEM_HAS_FBX_SDK == 1)
-
 #include "fbx-importer.hpp"
+
+#if (USING_FBX == 1)
+
 #include <fbxsdk.h>
 #include <assert.h>
 #include <map>
@@ -212,4 +213,4 @@ fbx_container import_fbx_file(const std::string & path)
     return container;
 }
 
-#endif // end SYSTEM_HAS_FBX_SDK
+#endif // end USING_FBX

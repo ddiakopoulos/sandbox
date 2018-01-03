@@ -34,7 +34,6 @@ class editor_controller
 
     void compute_selection()
     {
-
         // No selected objects? The selection pose is nil
         if (selected_objects.size() == 0)
         {
@@ -161,8 +160,11 @@ struct scene_editor_app final : public GLFWApp
     GlShaderHandle wireframeHandle{ "wireframe" };
 
     std::unique_ptr<gui::ImGuiInstance> igm;
-    std::unique_ptr<PhysicallyBasedRenderer> renderer;
+
     std::unique_ptr<editor_controller<GameObject>> editor;
+
+    std::unique_ptr<forward_renderer> renderer;
+    scene_data sceneData;
 
     ImGui::ImGuiAppLog log;
     auto_layout uiSurface;

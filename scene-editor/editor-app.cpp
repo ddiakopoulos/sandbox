@@ -78,20 +78,23 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
         create_handle_for_asset("post-tonemap", std::move(shader));
     });
 
-    RendererSettings settings;
+    renderer_settings settings;
     settings.renderSize = float2(width, height);
-    renderer.reset(new PhysicallyBasedRenderer(settings));
+    renderer.reset(new forward_renderer(settings));
 
     scene.skybox.reset(new HosekProceduralSky());
-    renderer->set_procedural_sky(scene.skybox.get());
+
+    sceneData.skybox = scene.skybox.get();
+
     scene.skybox->onParametersChanged = [&]
     {
         uniforms::directional_light updatedSun;
         updatedSun.direction = scene.skybox->get_sun_direction();
         updatedSun.color = float3(1.f, 1.0f, 1.0f);
         updatedSun.amount = 1.0f;
-        renderer->set_sunlight(updatedSun);
+        sceneData.sunlight = updatedSun;
     };
+    scene.skybox->onParametersChanged(); // call for initial set
 
     auto radianceBinary = read_file_binary("../assets/textures/envmaps/wells_radiance.dds");
     auto irradianceBinary = read_file_binary("../assets/textures/envmaps/wells_irradiance.dds");
@@ -329,23 +332,34 @@ void scene_editor_app::on_draw()
 
     {
         // Single-viewport camera
-        renderer->add_camera(0, cameraPose, projectionMatrix);
+        sceneData.views.push_back(view_data(0, cameraPose, projectionMatrix));
 
         // Lighting
         for (auto & obj : scene.objects)
         {
-            if (auto * r = dynamic_cast<PointLight*>(obj.get())) renderer->add_light(r->data);
+            if (auto * r = dynamic_cast<PointLight*>(obj.get()))
+            {
+                sceneData.pointLights.push_back(r->data);
+            }
         }
 
         // Gather Objects
         std::vector<Renderable *> sceneObjects;
         for (auto & obj : scene.objects)
         {
-            if (auto * r = dynamic_cast<Renderable*>(obj.get())) sceneObjects.push_back(r);
+            if (auto * r = dynamic_cast<Renderable*>(obj.get()))
+            {
+                sceneData.renderSet.push_back(r);
+            }
         }
-        renderer->add_objects(sceneObjects);
 
-        renderer->render_frame();
+        // Submit scene to the renderer
+        renderer->render_frame(sceneData);
+    
+        // Remember to clear any transient per-frame data
+        sceneData.pointLights.clear();
+        sceneData.renderSet.clear();
+        sceneData.views.clear();
 
         gl_check_error(__FILE__, __LINE__);
 
@@ -355,7 +369,7 @@ void scene_editor_app::on_draw()
 
         glActiveTexture(GL_TEXTURE0);
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, renderer->get_output_texture(TextureType::COLOR, 0));
+        glBindTexture(GL_TEXTURE_2D, renderer->get_color_texture(0));
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex2f(-1, -1);
         glTexCoord2f(1, 0); glVertex2f(+1, -1);
@@ -445,6 +459,11 @@ void scene_editor_app::on_draw()
                 auto obj = std::make_shared<std::remove_reference_t<decltype(*p)>>();
                 obj->set_material("default-material");
                 scene.objects.push_back(obj);
+
+                // Newly spawned objects are selected by default
+                std::vector<GameObject *> selectedObjects;
+                selectedObjects.push_back(obj.get());
+                editor->set_selection(selectedObjects);
             }
         });
         menu.end();
@@ -518,7 +537,7 @@ void scene_editor_app::on_draw()
 
         if (ImGui::TreeNode("Core"))
         {
-            RendererSettings lastSettings = renderer->settings;
+            renderer_settings lastSettings = renderer->settings;
 
             if (Edit("renderer", *renderer))
             {
@@ -551,19 +570,19 @@ void scene_editor_app::on_draw()
 
         if (ImGui::TreeNode("Procedural Sky"))
         {
-            InspectGameObjectPolymorphic(nullptr, renderer->get_procedural_sky());
+            InspectGameObjectPolymorphic(nullptr, sceneData.skybox);
             ImGui::TreePop();
         }
 
         if (ImGui::TreeNode("Bloom + Tonemap"))   
         {
-            Edit("bloom", *renderer->get_bloom_pass());
+            Edit("bloom", renderer->get_bloom_pass());
             ImGui::TreePop();
         }
 
         if (ImGui::TreeNode("Cascaded Shadow Mapping"))
         {
-            Edit("shadows", *renderer->get_shadow_pass());
+            Edit("shadows", renderer->get_shadow_pass());
             ImGui::TreePop();
         }
 

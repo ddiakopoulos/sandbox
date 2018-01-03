@@ -51,7 +51,6 @@ struct view_data
     }
 };
 
-
 struct scene_data
 {
     ProceduralSky * skybox{ nullptr };
@@ -99,7 +98,7 @@ struct profiler
     }
 };
 
-class PhysicallyBasedRenderer
+class forward_renderer
 {
     SimpleTimer timer;
 
@@ -124,11 +123,11 @@ class PhysicallyBasedRenderer
     // Update per-object uniform buffer
     void update_per_object_uniform_buffer(Renderable * top, const view_data & d);
 
-    void run_depth_prepass(const view_data & d);
-    void run_skybox_pass(const view_data & d);
-    void run_shadow_pass(const view_data & d);
-    void run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const ViewData & d);
-    void run_post_pass(const view_data & d);
+    void run_depth_prepass(const view_data & view, const scene_data & scene);
+    void run_skybox_pass(const view_data & view, const scene_data & scene);
+    void run_shadow_pass(const view_data & view, const scene_data & scene);
+    void run_forward_pass(std::vector<Renderable *> & renderQueueMaterial, std::vector<Renderable *> & renderQueueDefault, const view_data & view, const scene_data & scene);
+    void run_post_pass(const view_data & view, const scene_data & scene);
 
 public:
 
@@ -136,19 +135,19 @@ public:
     profiler<SimpleTimer> cpuProfiler;
     profiler<GlGpuTimer> gpuProfiler;
 
-    PhysicallyBasedRenderer(const renderer_settings & settings);
-    ~PhysicallyBasedRenderer();
+    forward_renderer(const renderer_settings & settings);
+    ~forward_renderer();
 
     void render_frame(const scene_data & scene);
 
-    uint32_t get_color_texture(const int32_t idx) const;
-    uint32_t get_depth_texture(const int32_t idx) const;
+    uint32_t get_color_texture(const uint32_t idx) const;
+    uint32_t get_depth_texture(const uint32_t idx) const;
 
     StableCascadedShadowPass & get_shadow_pass() const;
     BloomPass & get_bloom_pass() const;
 };
 
-template<class F> void visit_fields(PhysicallyBasedRenderer & o, F f)
+template<class F> void visit_fields(forward_renderer & o, F f)
 {
     f("num_cameras", o.settings.cameraCount);
     f("num_msaa_samples", o.settings.msaaSamples);
