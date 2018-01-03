@@ -85,6 +85,8 @@ namespace avl
         void set_fullscreen(bool state);
         bool get_fullscreen();
 
+        void take_screenshot(const std::string & filename);
+
         int get_mods() const;
 
     protected:
@@ -100,6 +102,9 @@ namespace avl
         void consume_mousebtn(int button, int action);
         void consume_cursor(double xpos, double ypos);
         void consume_scroll(double xoffset, double yoffset);
+
+        void take_screenshot_impl();
+        std::string screenshotPath;
         
         void preprocess_input(InputEvent & event);
 

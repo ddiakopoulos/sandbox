@@ -2,6 +2,8 @@
 #include "util.hpp"
 #include "math-spatial.hpp"
 #include "gl-api.hpp"
+#include "stb/stb_image_write.h"
+#include "human_time.hpp"
 
 using namespace avl;
 
@@ -176,6 +178,26 @@ void GLFWApp::consume_scroll(double deltaX, double deltaY)
     preprocess_input(e);
 }
 
+void GLFWApp::take_screenshot(const std::string & filename)
+{
+    screenshotPath = filename;
+}
+
+void GLFWApp::take_screenshot_impl()
+{
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    int2 size(width, height);
+    HumanTime t;
+    auto timestamp = t.make_timestamp();
+    std::vector<uint8_t> screenShot(size.x * size.y * 4);
+    glReadPixels(0, 0, size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, screenShot.data());
+    auto flipped = screenShot;
+    for (int y = 0; y < size.y; ++y) memcpy(flipped.data() + y * size.x * 4, screenShot.data() + (size.y - y - 1)*size.x * 4, size.x * 4);
+    stbi_write_png(std::string(screenshotPath + "-" + timestamp + ".png").c_str(), size.x, size.y, 4, flipped.data(), 4 * size.x);
+    screenshotPath.clear();
+}
+
 void GLFWApp::main_loop() 
 {
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -208,6 +230,8 @@ void GLFWApp::main_loop()
 
             on_update(e);
             on_draw();
+
+            if (screenshotPath.size() > 0)take_screenshot_impl();
 
             glfwPollEvents();
         }

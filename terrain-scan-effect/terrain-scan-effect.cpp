@@ -173,6 +173,7 @@ void shader_workbench::on_input(const InputEvent & event)
     if (event.type == InputEvent::KEY)
     {
         if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE) exit();
+        if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE) take_screenshot("terrain-scan-effect");
     }
 
     if (gizmo) gizmo->handle_input(event);
