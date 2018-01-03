@@ -159,7 +159,7 @@ struct scene_editor_app final : public GLFWApp
 
     GlShaderHandle wireframeHandle{ "wireframe" };
 
-    std::unique_ptr<gui::ImGuiInstance> igm;
+    std::unique_ptr<gui::imgui_wrapper> igm;
 
     std::unique_ptr<editor_controller<GameObject>> editor;
 
@@ -169,6 +169,8 @@ struct scene_editor_app final : public GLFWApp
     ImGui::ImGuiAppLog log;
     auto_layout uiSurface;
     std::vector<std::shared_ptr<GLTextureView>> debugViews;
+    bool showUI = true;
+    std::vector<ui_rect> active_imgui_regions;
 
     scene_editor_app();
     ~scene_editor_app();

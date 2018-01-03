@@ -13,6 +13,22 @@ namespace
 {
     static bool gEnableGLDebugOutputErrorBreakpoints = false;
 
+    inline void has_gl_extension(std::vector<std::pair<std::string, bool>> & extension_list)
+    {
+        int numExtensions = 0;
+        glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+
+        // Loop through all extensions
+        for (int i = 0; i < numExtensions; ++i)
+        {
+            auto * ext = reinterpret_cast<const char *>(glGetStringi(GL_EXTENSIONS, i));
+            for (auto & requiredExt : extension_list)
+            {
+                if (requiredExt.first == ext) requiredExt.second = true;
+            }
+        }
+    }
+
     inline void compile_shader(GLuint program, GLenum type, const char * source)
     {
         GLuint shader = glCreateShader(type);
@@ -220,15 +236,14 @@ struct GlTexture2D : public GlTextureObject
     {
         for (int i = 0; i < 6; ++i) glTextureImage2DEXT(*this, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_fmt, width, height, 0, format, type, pixels);
         if (createMipmap) glGenerateTextureMipmapEXT(*this, GL_TEXTURE_CUBE_MAP);
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, createMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
-        glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
         glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
-        glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 7);
+        glTextureParameteriEXT(*this, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 0);
         this->width = static_cast<float>(width);
         this->height = static_cast<float>(height);
     }

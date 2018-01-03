@@ -159,7 +159,7 @@ namespace ImGui
 
         if (r.contains(cursor) && !result.first.contains(cursor) && !result.second.contains(cursor))
         {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_Move);
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
             if (io.MouseClicked[0])
             {
                 ImGui::SetActiveID(id, window);

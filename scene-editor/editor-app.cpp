@@ -3,13 +3,12 @@
 #include "gui.hpp"
 #include "serialization.hpp"
 #include "logging.hpp"
+#include "win32.hpp"
 
 using namespace avl;
 
 scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
 {
-    std::cout << "Timestamp: " << HumanTime().make_timestamp() << std::endl;
-
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
@@ -17,8 +16,11 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    igm.reset(new gui::ImGuiInstance(window));
+    auto droidSansTTFBytes = read_file_binary("../assets/fonts/droid_sans.ttf");
+
+    igm.reset(new gui::imgui_wrapper(window));
     gui::make_light_theme();
+    igm->add_font(droidSansTTFBytes);
 
     editor.reset(new editor_controller<GameObject>());
 
@@ -28,7 +30,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     Logger::get_instance()->add_sink(std::make_shared<ImGui::LogWindowSink>(log));
 
     auto wireframeProgram = GlShader(
-        read_file_text("../assets/shaders/wireframe_vert.glsl"), 
+        read_file_text("../assets/shaders/wireframe_vert.glsl"),
         read_file_text("../assets/shaders/wireframe_frag.glsl"),
         read_file_text("../assets/shaders/wireframe_geom.glsl"));
     create_handle_for_asset("wireframe", std::move(wireframeProgram));
@@ -50,22 +52,22 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     });
 
     pbrProgramAsset = shaderMonitor.watch(
-        "../assets/shaders/renderer/forward_lighting_vert.glsl", 
-        "../assets/shaders/renderer/forward_lighting_frag.glsl", 
-        "../assets/shaders/renderer", 
-        {"TWO_CASCADES", "USE_PCF_3X3", "ENABLE_SHADOWS", 
-         "USE_IMAGE_BASED_LIGHTING", 
-         "HAS_ROUGHNESS_MAP", "HAS_METALNESS_MAP", "HAS_ALBEDO_MAP", "HAS_NORMAL_MAP", "HAS_OCCLUSION_MAP"}, [](GlShader shader)
+        "../assets/shaders/renderer/forward_lighting_vert.glsl",
+        "../assets/shaders/renderer/forward_lighting_frag.glsl",
+        "../assets/shaders/renderer",
+        { "TWO_CASCADES", "USE_PCF_3X3", "ENABLE_SHADOWS",
+         "USE_IMAGE_BASED_LIGHTING",
+         "HAS_ROUGHNESS_MAP", "HAS_METALNESS_MAP", "HAS_ALBEDO_MAP", "HAS_NORMAL_MAP", "HAS_OCCLUSION_MAP" }, [](GlShader shader)
     {
         create_handle_for_asset("pbr-forward-lighting", std::move(shader));
     });
 
     shaderMonitor.watch(
-        "../assets/shaders/renderer/shadowcascade_vert.glsl", 
-        "../assets/shaders/renderer/shadowcascade_frag.glsl", 
-        "../assets/shaders/renderer/shadowcascade_geom.glsl", 
-        "../assets/shaders/renderer", {}, 
-        [](GlShader shader) 
+        "../assets/shaders/renderer/shadowcascade_vert.glsl",
+        "../assets/shaders/renderer/shadowcascade_frag.glsl",
+        "../assets/shaders/renderer/shadowcascade_geom.glsl",
+        "../assets/shaders/renderer", {},
+        [](GlShader shader)
     {
         create_handle_for_asset("cascaded-shadows", std::move(shader));
     });
@@ -73,7 +75,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     shaderMonitor.watch(
         "../assets/shaders/renderer/post_tonemap_vert.glsl",
         "../assets/shaders/renderer/post_tonemap_frag.glsl",
-        [](GlShader shader) 
+        [](GlShader shader)
     {
         create_handle_for_asset("post-tonemap", std::move(shader));
     });
@@ -144,7 +146,40 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     create_handle_for_asset("cube", std::move(cube));
 
     scene.objects.clear();
-    cereal::deserialize_from_json("../assets/scene.json", scene.objects);
+    //cereal::deserialize_from_json("../assets/scene.json", scene.objects);
+
+    std::unordered_map<std::string, uint32_t> missingGeometryAssets;
+    std::unordered_map<std::string, uint32_t> missingMeshAssets;
+
+    for (auto & obj : scene.objects)
+    {
+        if (auto * mesh = dynamic_cast<StaticMesh*>(obj.get()))
+        {
+            bool foundGeom = false;
+            bool foundMesh = false;
+
+            for (auto & h : AssetHandle<Geometry>::list())
+            {
+                if (h.name == mesh->geom.name) foundGeom = true;
+            }
+
+            for (auto & h : AssetHandle<GlMesh>::list())
+            {
+                if (h.name == mesh->mesh.name) foundMesh = true;
+            }
+
+            if (!foundGeom) missingGeometryAssets[mesh->geom.name] += 1;
+            if (!foundMesh) missingMeshAssets[mesh->mesh.name] += 1;
+
+        }
+    }
+
+    for (auto & e : missingGeometryAssets) std::cout << "Asset table does not have " << e.first << " geometry required by " << e.second << " game object instances" << std::endl;
+    for (auto & e : missingMeshAssets) std::cout << "Asset table does not have " << e.first << " mesh required by " << e.second << " game object instances" << std::endl;
+
+
+    //if (foundGeom == false) std::cout << "asset table does not have a geometry entry for " << mesh->geom.name << std::endl;
+    //if (foundMesh == false) std::cout << "asset table does not have a mesh entry for " << mesh->mesh.name << std::endl;
 
     // Setup Debug visualizations
     uiSurface.bounds = { 0, 0, (float)width, (float)height };
@@ -230,30 +265,48 @@ void scene_editor_app::on_window_resize(int2 size)
 void scene_editor_app::on_input(const InputEvent & event)
 {
     igm->update_input(event);
+
+    if (ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard) return;
     flycam.handle_input(event);
     editor->on_input(event);
 
     // Prevent scene editor from responding to input destined for ImGui
-    if (!ImGui::GetIO().WantCaptureMouse && !ImGui::GetIO().WantCaptureKeyboard)
+    if (!ImGui::GetIO().WantCaptureMouse || !ImGui::GetIO().WantCaptureKeyboard)
     {
-
         if (event.type == InputEvent::KEY)
         {
+            // De-select all objects
             if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE)
             {
-                // De-select all objects
                 editor->clear();
+            }
+            // Focus on currently selected object
+            if (event.value[0] == GLFW_KEY_F && event.action == GLFW_RELEASE)
+            {
+                if (editor->get_selection().size() == 0) return;
+                if (auto * sel = editor->get_selection()[0])
+                {
+                    auto selectedObjectPose = sel->get_pose();
+                    auto focusOffset = selectedObjectPose.position + float3(0.f, 0.5f, 4.f);
+                    cam.look_at(focusOffset, selectedObjectPose.position);
+                    flycam.update_yaw_pitch();
+                }
+            }
+            // Togle drawing ImGUI
+            if (event.value[0] == GLFW_KEY_TAB && event.action == GLFW_RELEASE)
+            {
+                showUI = !showUI;
             }
         }
 
-        if (event.type == InputEvent::MOUSE && event.action == GLFW_PRESS && event.value[0] == GLFW_MOUSE_BUTTON_LEFT)
+        if (event.type == InputEvent::MOUSE && event.action == GLFW_RELEASE && event.value[0] == GLFW_MOUSE_BUTTON_LEFT)
         {
             int width, height;
             glfwGetWindowSize(window, &width, &height);
 
             const Ray r = cam.get_world_ray(event.cursor, float2(width, height));
 
-            if (length(r.direction) > 0 && !editor->active())
+            if (length(r.direction) > 0)
             {
                 std::vector<GameObject *> selectedObjects;
                 float best_t = std::numeric_limits<float>::max();
@@ -310,6 +363,8 @@ void scene_editor_app::on_update(const UpdateEvent & e)
 
 void scene_editor_app::on_draw()
 {
+    active_imgui_regions.clear();
+
     glfwMakeContextCurrent(window);
 
     glEnable(GL_CULL_FACE);
@@ -413,17 +468,34 @@ void scene_editor_app::on_draw()
     menu.app_menu_begin();
     {
         menu.begin("File");
-        if (menu.item("Open Scene", GLFW_MOD_CONTROL, GLFW_KEY_O))
+        if (menu.item("Load Scene", GLFW_MOD_CONTROL, GLFW_KEY_L))
         {
+            const auto selected_open_path = windows_file_dialog("anvil scene", "json", true);
+            if (!selected_open_path.empty())
+            {
+                scene.objects.clear();
+                cereal::deserialize_from_json(selected_open_path, scene.objects);
+                set_window_title(selected_open_path);
+            }
 
         }
         if (menu.item("Save Scene", GLFW_MOD_CONTROL, GLFW_KEY_S)) 
         {
-            write_file_text("../assets/scene.json", cereal::serialize_to_json(scene.objects));
+            const auto save_path = windows_file_dialog("anvil scene", "json", false);
+            if (!save_path.empty())
+            {
+                write_file_text(save_path, cereal::serialize_to_json(scene.objects));
+                set_window_title(save_path);
+            }
         }
         if (menu.item("New Scene", GLFW_MOD_CONTROL, GLFW_KEY_N)) 
         {
             scene.objects.clear();
+        }
+        if (menu.item("Take Screenshot", GLFW_MOD_CONTROL, GLFW_KEY_EQUAL))
+        {
+
+            take_screenshot("scene-editor");
         }
         if (menu.item("Exit", GLFW_MOD_ALT, GLFW_KEY_F4)) exit();
         menu.end();
@@ -471,136 +543,147 @@ void scene_editor_app::on_draw()
     }
     menu.app_menu_end();
 
-    static int horizSplit = 380;
-    static int rightSplit1 = (height / 3) - 17;
-    static int rightSplit2 = ((height / 3) - 17);
-    
-    // Define a split region between the whole window and the right panel
-    auto rightRegion = ImGui::Split({ { 0.f,17.f },{ (float) width, (float) height } }, &horizSplit, ImGui::SplitType::Right);
-    auto split2 = ImGui::Split(rightRegion.second, &rightSplit1, ImGui::SplitType::Top);
-    auto split3 = ImGui::Split(split2.first, &rightSplit2, ImGui::SplitType::Top); // split again by the same amount
-
-    ui_rect topRightPane = { { int2(split2.second.min()) }, { int2(split2.second.max()) } }; // top 1/3rd and `the rest`
-    ui_rect middleRightPane = { { int2(split3.first.min()) },{ int2(split3.first.max()) } }; // `the rest` split by the same amount
-    ui_rect bottomRightPane = { { int2(split3.second.min()) },{ int2(split3.second.max()) } }; // remainder
-
-    gui::imgui_fixed_window_begin("Inspector", topRightPane);
-    if (editor->get_selection().size() >= 1)
+    if (showUI)
     {
-        InspectGameObjectPolymorphic(nullptr, editor->get_selection()[0]);
-    }
-    gui::imgui_fixed_window_end();
+        static int horizSplit = 380;
+        static int rightSplit1 = (height / 3) - 17;
+        static int rightSplit2 = ((height / 3) - 17);
 
-    gui::imgui_fixed_window_begin("Materials", middleRightPane);
-    std::vector<std::string> mats;
-    for (auto & m : AssetHandle<std::shared_ptr<Material>>::list()) mats.push_back(m.name);
-    static int selectedMaterial = 1;
-    ImGui::ListBox("Material", &selectedMaterial, mats);
-    if (mats.size() >= 1)
-    {
-        auto w = AssetHandle<std::shared_ptr<Material>>::list()[selectedMaterial].get();
-        InspectGameObjectPolymorphic(nullptr, w.get());
-    }
-    gui::imgui_fixed_window_end();
+        // Define a split region between the whole window and the right panel
+        auto rightRegion = ImGui::Split({ { 0.f,17.f },{ (float)width, (float)height } }, &horizSplit, ImGui::SplitType::Right);
+        auto split2 = ImGui::Split(rightRegion.second, &rightSplit1, ImGui::SplitType::Top);
+        auto split3 = ImGui::Split(split2.first, &rightSplit2, ImGui::SplitType::Top); // split again by the same amount
 
-    // Scene Object List
-    gui::imgui_fixed_window_begin("Objects", bottomRightPane);
+        ui_rect topRightPane = { { int2(split2.second.min()) }, { int2(split2.second.max()) } }; // top 1/3rd and `the rest`
+        ui_rect middleRightPane = { { int2(split3.first.min()) },{ int2(split3.first.max()) } }; // `the rest` split by the same amount
+        ui_rect bottomRightPane = { { int2(split3.second.min()) },{ int2(split3.second.max()) } }; // remainder
 
-    for (size_t i = 0; i < scene.objects.size(); ++i)
-    {
-        ImGui::PushID(static_cast<int>(i));
-        bool selected = editor->selected(scene.objects[i].get());
-        std::string name = scene.objects[i]->id.size() > 0 ? scene.objects[i]->id : std::string(typeid(*scene.objects[i]).name()); // For polymorphic typeids, the trick is to dereference it first
-        std::vector<StaticMesh *> selectedObjects;
+        active_imgui_regions.push_back(topRightPane);
+        active_imgui_regions.push_back(middleRightPane);
+        active_imgui_regions.push_back(bottomRightPane);
 
-        if (ImGui::Selectable(name.c_str(), &selected))
+        gui::imgui_fixed_window_begin("Inspector", topRightPane);
+        if (editor->get_selection().size() >= 1)
         {
-            if (!ImGui::GetIO().KeyCtrl) editor->clear();
-            editor->update_selection(scene.objects[i].get());
+            InspectGameObjectPolymorphic(nullptr, editor->get_selection()[0]);
         }
-        ImGui::PopID();
-    }
-    gui::imgui_fixed_window_end();
+        gui::imgui_fixed_window_end();
 
-    // Define a split region between the whole window and the left panel
-    static int leftSplit = 380;
-    static int leftSplit1 = (height / 2);
-    auto leftRegionSplit = ImGui::Split({ { 0.f,17.f },{ (float)width, (float)height } }, &leftSplit, ImGui::SplitType::Left);
-    auto lsplit2 = ImGui::Split(leftRegionSplit.second, &leftSplit1, ImGui::SplitType::Top);
-    ui_rect topLeftPane = { { int2(lsplit2.second.min()) },{ int2(lsplit2.second.max()) } };
-    ui_rect bottomLeftPane = { { int2(lsplit2.first.min()) },{ int2(lsplit2.first.max()) } };
-
-    gui::imgui_fixed_window_begin("Renderer", topLeftPane);
-    {
-
-        ImGui::Separator();
-
-        if (ImGui::TreeNode("Core"))
+        gui::imgui_fixed_window_begin("Materials", middleRightPane);
+        std::vector<std::string> mats;
+        for (auto & m : AssetHandle<std::shared_ptr<Material>>::list()) mats.push_back(m.name);
+        static int selectedMaterial = 1;
+        ImGui::ListBox("Material", &selectedMaterial, mats);
+        if (mats.size() >= 1)
         {
-            renderer_settings lastSettings = renderer->settings;
+            auto w = AssetHandle<std::shared_ptr<Material>>::list()[selectedMaterial].get();
+            InspectGameObjectPolymorphic(nullptr, w.get());
+        }
+        gui::imgui_fixed_window_end();
 
-            if (Edit("renderer", *renderer))
+        // Scene Object List
+        gui::imgui_fixed_window_begin("Objects", bottomRightPane);
+
+        for (size_t i = 0; i < scene.objects.size(); ++i)
+        {
+            ImGui::PushID(static_cast<int>(i));
+            bool selected = editor->selected(scene.objects[i].get());
+            std::string name = scene.objects[i]->id.size() > 0 ? scene.objects[i]->id : std::string(typeid(*scene.objects[i]).name()); // For polymorphic typeids, the trick is to dereference it first
+            std::vector<StaticMesh *> selectedObjects;
+
+            if (ImGui::Selectable(name.c_str(), &selected))
             {
-                renderer->gpuProfiler.set_enabled(renderer->settings.performanceProfiling);
-                renderer->cpuProfiler.set_enabled(renderer->settings.performanceProfiling);
+                if (!ImGui::GetIO().KeyCtrl) editor->clear();
+                editor->update_selection(scene.objects[i].get());
+            }
+            ImGui::PopID();
+        }
+        gui::imgui_fixed_window_end();
 
-                if (renderer->settings.shadowsEnabled != lastSettings.shadowsEnabled)
+        // Define a split region between the whole window and the left panel
+        static int leftSplit = 380;
+        static int leftSplit1 = (height / 2);
+        auto leftRegionSplit = ImGui::Split({ { 0.f,17.f },{ (float)width, (float)height } }, &leftSplit, ImGui::SplitType::Left);
+        auto lsplit2 = ImGui::Split(leftRegionSplit.second, &leftSplit1, ImGui::SplitType::Top);
+        ui_rect topLeftPane = { { int2(lsplit2.second.min()) },{ int2(lsplit2.second.max()) } };
+        ui_rect bottomLeftPane = { { int2(lsplit2.first.min()) },{ int2(lsplit2.first.max()) } };
+
+        active_imgui_regions.push_back(topLeftPane);
+        active_imgui_regions.push_back(bottomLeftPane);
+
+        gui::imgui_fixed_window_begin("Renderer", topLeftPane);
+        {
+
+            ImGui::Separator();
+
+            if (ImGui::TreeNode("Core"))
+            {
+                renderer_settings lastSettings = renderer->settings;
+
+                if (Edit("renderer", *renderer))
                 {
-                    auto & shaderAsset = shaderMonitor.get_asset(pbrProgramAsset);
-                    auto & defines = shaderAsset.defines;
+                    renderer->gpuProfiler.set_enabled(renderer->settings.performanceProfiling);
+                    renderer->cpuProfiler.set_enabled(renderer->settings.performanceProfiling);
 
-                    if (renderer->settings.shadowsEnabled)
+                    if (renderer->settings.shadowsEnabled != lastSettings.shadowsEnabled)
                     {
-                        // Check if it's already in there
-                        auto itr = std::find(defines.begin(), defines.end(), "ENABLE_SHADOWS");
-                        if (itr == defines.end()) defines.push_back("ENABLE_SHADOWS");
+                        auto & shaderAsset = shaderMonitor.get_asset(pbrProgramAsset);
+                        auto & defines = shaderAsset.defines;
+
+                        if (renderer->settings.shadowsEnabled)
+                        {
+                            // Check if it's already in there
+                            auto itr = std::find(defines.begin(), defines.end(), "ENABLE_SHADOWS");
+                            if (itr == defines.end()) defines.push_back("ENABLE_SHADOWS");
+                        }
+                        else
+                        {
+                            auto & defines = shaderMonitor.get_asset(pbrProgramAsset).defines;
+                            auto itr = std::find(defines.begin(), defines.end(), "ENABLE_SHADOWS");
+                            if (itr != defines.end()) defines.erase(itr);
+                        }
+                        shaderAsset.shouldRecompile = true;
                     }
-                    else
-                    {
-                        auto & defines = shaderMonitor.get_asset(pbrProgramAsset).defines;
-                        auto itr = std::find(defines.begin(), defines.end(), "ENABLE_SHADOWS");
-                        if (itr != defines.end()) defines.erase(itr);
-                    }
-                    shaderAsset.shouldRecompile = true;
                 }
+
+                ImGui::TreePop();
             }
 
-            ImGui::TreePop();
-        }
+            if (ImGui::TreeNode("Procedural Sky"))
+            {
+                InspectGameObjectPolymorphic(nullptr, sceneData.skybox);
+                ImGui::TreePop();
+            }
 
-        if (ImGui::TreeNode("Procedural Sky"))
+            if (ImGui::TreeNode("Bloom + Tonemap"))
+            {
+                Edit("bloom", renderer->get_bloom_pass());
+                ImGui::TreePop();
+            }
+
+            if (ImGui::TreeNode("Cascaded Shadow Mapping"))
+            {
+                Edit("shadows", renderer->get_shadow_pass());
+                ImGui::TreePop();
+            }
+
+            ImGui::Separator();
+
+            if (renderer->settings.performanceProfiling)
+            {
+                for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[GPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
+                for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[CPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
+            }
+        }
+        gui::imgui_fixed_window_end();
+
+        gui::imgui_fixed_window_begin("Application Log", bottomLeftPane);
         {
-            InspectGameObjectPolymorphic(nullptr, sceneData.skybox);
-            ImGui::TreePop();
+            log.Draw("-");
         }
+        gui::imgui_fixed_window_end();
 
-        if (ImGui::TreeNode("Bloom + Tonemap"))   
-        {
-            Edit("bloom", renderer->get_bloom_pass());
-            ImGui::TreePop();
-        }
-
-        if (ImGui::TreeNode("Cascaded Shadow Mapping"))
-        {
-            Edit("shadows", renderer->get_shadow_pass());
-            ImGui::TreePop();
-        }
-
-        ImGui::Separator();
-
-        if (renderer->settings.performanceProfiling)
-        {
-            for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[GPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
-            for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[CPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
-        }
     }
-    gui::imgui_fixed_window_end();
-
-    gui::imgui_fixed_window_begin("Application Log", bottomLeftPane);
-    {
-        log.Draw("-");
-    }
-    gui::imgui_fixed_window_end();
 
     igm->end_frame();
 

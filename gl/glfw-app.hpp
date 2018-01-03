@@ -27,7 +27,6 @@
 
 namespace avl
 {
-
     struct UpdateEvent
     {
         double elapsed_s;
@@ -88,6 +87,8 @@ namespace avl
         void take_screenshot(const std::string & filename);
 
         int get_mods() const;
+
+        void set_window_title(const std::string & str);
 
     protected:
 

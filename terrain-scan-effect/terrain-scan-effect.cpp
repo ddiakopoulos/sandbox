@@ -115,7 +115,7 @@ shader_workbench::shader_workbench() : GLFWApp(1280, 720, "Terrain Scanning Effe
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    igm.reset(new gui::ImGuiInstance(window));
+    igm.reset(new gui::imgui_wrapper(window));
     gui::make_light_theme();
 
     cam.look_at({ 0, 3.0, -3.5 }, { 0, 2.0, 0 });

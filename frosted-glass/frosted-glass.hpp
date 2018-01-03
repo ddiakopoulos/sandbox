@@ -100,7 +100,7 @@ struct shader_workbench : public GLFWApp
     FlyCameraController flycam;
     ShaderMonitor shaderMonitor{ "../assets/" };
 
-    std::unique_ptr<gui::ImGuiInstance> igm;
+    std::unique_ptr<gui::imgui_wrapper> igm;
     GlGpuTimer gpuTimer;
     std::unique_ptr<GlGizmo> gizmo;
 
@@ -120,6 +120,8 @@ struct shader_workbench : public GLFWApp
     GlTexture2D glassTex;
     GlTexture2D cubeTex;
     GlTexture2D floorTex;
+
+    std::unique_ptr<CubemapCamera> cubemapCam;
 
     int glassTextureSelection = 1;
     bool showDebug = false;

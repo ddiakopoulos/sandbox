@@ -79,7 +79,7 @@ struct ExperimentalApp : public GLFWApp
 
     GlMesh mesh;
 
-    std::unique_ptr<gui::ImGuiInstance> gui;
+    std::unique_ptr<gui::imgui_wrapper> gui;
 
     GLTextureView view;
 
@@ -100,7 +100,7 @@ struct ExperimentalApp : public GLFWApp
         gizmo.reset(new GlGizmo());
         xform.position = { 0.0f, 0.0f, 0.0f };
 
-        gui.reset(new gui::ImGuiInstance(window));
+        gui.reset(new gui::imgui_wrapper(window));
         gui::make_light_theme();
 
         shaderMonitor.watch("../assets/shaders/wireframe_vert.glsl", "../assets/shaders/wireframe_frag.glsl", "../assets/shaders/wireframe_geom.glsl", [&](GlShader & shader)

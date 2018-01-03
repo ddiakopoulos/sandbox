@@ -10,11 +10,11 @@ using namespace avl;
 
 namespace gui
 {
-    ///////////////////////////////////////
-    //   ImGui Instance Implementation   //
-    ///////////////////////////////////////
+    ////////////////////////////////
+    //   Wrapper Implementation   //
+    ////////////////////////////////
 
-    ImGuiInstance::ImGuiInstance(GLFWwindow * win)
+    imgui_wrapper::imgui_wrapper(GLFWwindow * win)
     {
         data.window = win;
         data.context = ImGui::CreateContext();
@@ -43,17 +43,28 @@ namespace gui
         io.KeyMap[ImGuiKey_Y] = GLFW_KEY_Y;
         io.KeyMap[ImGuiKey_Z] = GLFW_KEY_Z;
         
-        io.Fonts->AddFontDefault();
+        //io.Fonts->AddFontDefault(); // fixme
     }
-    
-    ImGuiInstance::~ImGuiInstance()
+
+    std::vector<uint8_t> fontBuffer;
+    void imgui_wrapper::add_font(const std::vector<uint8_t> & buffer)
+    {
+        ImGuiIO & io = ImGui::GetIO();
+        fontBuffer = buffer;
+        ImFontConfig config;
+        config.FontDataOwnedByAtlas = false;
+        auto font = io.Fonts->AddFontFromMemoryTTF((void *)fontBuffer.data(), (int) fontBuffer.size(), 15.f, &config);
+        IM_ASSERT(font != NULL);
+    }
+
+    imgui_wrapper::~imgui_wrapper()
     {
         ImGui::SetCurrentContext(data.context);
         destroy_render_objects();
-        ImGui::Shutdown();
+        ImGui::Shutdown(data.context);
     }
     
-    void ImGuiInstance::update_input(const avl::InputEvent & e)
+    void imgui_wrapper::update_input(const avl::InputEvent & e)
     {
         ImGui::SetCurrentContext(data.context);
 
@@ -91,7 +102,7 @@ namespace gui
 
     }
 
-    bool ImGuiInstance::create_fonts_texture()
+    bool imgui_wrapper::create_fonts_texture()
     {
         ImGui::SetCurrentContext(data.context);
 
@@ -119,7 +130,7 @@ namespace gui
         return true;
     }
     
-    bool ImGuiInstance::create_render_objects()
+    bool imgui_wrapper::create_render_objects()
     {
         ImGui::SetCurrentContext(data.context);
 
@@ -199,9 +210,10 @@ namespace gui
         return true;
     }
     
-    void ImGuiInstance::destroy_render_objects()
+    void imgui_wrapper::destroy_render_objects()
     {
         ImGui::SetCurrentContext(data.context);
+
         if (data.VaoHandle) glDeleteVertexArrays(1, &data.VaoHandle);
         if (data.VboHandle) glDeleteBuffers(1, &data.VboHandle);
         if (data.ElementsHandle) glDeleteBuffers(1, &data.ElementsHandle);
@@ -226,7 +238,7 @@ namespace gui
         }
     }
     
-    void ImGuiInstance::begin_frame()
+    void imgui_wrapper::begin_frame()
     {
         ImGui::SetCurrentContext(data.context);
         if (!data.FontTexture) create_render_objects();
@@ -276,7 +288,7 @@ namespace gui
         ImGui::NewFrame();
     }
     
-    void ImGuiInstance::end_frame()
+    void imgui_wrapper::end_frame()
     {
         ImGui::SetCurrentContext(data.context);
         ImGui::Render();
@@ -433,6 +445,7 @@ namespace gui
         bool result = ImGui::Combo(label, current_item, (const char*) &charArray[0], height_in_items);
         return result;
     }
+
     ////////////////////
     //   Menu Stack   //
     ////////////////////

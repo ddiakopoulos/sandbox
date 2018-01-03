@@ -33,9 +33,9 @@ struct ExperimentalApp : public GLFWApp
         camera.vfov = to_radians(62.f);
         camera.look_at({0, 0, +15}, {0, 0, 0});
         
-        sceneShader.reset(new GlShader(read_file_text("../assets/shaders/instance_vert.glsl"), read_file_text("../assets/shaders/instance_frag.glsl")));
+        sceneShader.reset(new GlShader(read_file_text("../assets/shaders/prototype/instance_vert.glsl"), read_file_text("../assets/shaders/prototype/instance_frag.glsl")));
 
-        std::vector<float3> initialSet = {};
+        std::vector<float3> initialSet = { {0.f, 0.f, 0.f} };
         auto b = Bounds3D(float3(-10, -10, -10), float3(10, 10, 10));
         auto pd_dist = poisson::make_poisson_disk_distribution(b, initialSet, 4, 2.f);
         

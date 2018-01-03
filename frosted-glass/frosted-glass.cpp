@@ -57,11 +57,14 @@ constexpr const char basic_textured_frag[] = R"(#version 450
 
 shader_workbench::shader_workbench() : GLFWApp(1280, 720, "Doom 2k16 Frosted Glass")
 {
+
+    std::cout << "hfov to fov" << to_degrees(hfov_to_dfov(to_radians(100.f), 0.9f)) << std::endl;
+
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    igm.reset(new gui::ImGuiInstance(window));
+    igm.reset(new gui::imgui_wrapper(window));
     gui::make_light_theme();
 
     post.reset(new blur_chain(float2(width, height)));
@@ -104,6 +107,7 @@ shader_workbench::shader_workbench() : GLFWApp(1280, 720, "Doom 2k16 Frosted Gla
     }
     gizmo.reset(new GlGizmo());
 
+    cubemapCam.reset(new CubemapCamera(1024));
     cam.look_at({ 0, 2.f, 4.0f }, { 0, 0.1f, 0 });
     flycam.set_camera(&cam);
 
@@ -126,6 +130,7 @@ void shader_workbench::on_input(const InputEvent & event)
     if (event.type == InputEvent::KEY)
     {
         if (event.value[0] == GLFW_KEY_ESCAPE && event.action == GLFW_RELEASE) exit();
+        if (event.value[0] == GLFW_KEY_F1 && event.action == GLFW_RELEASE) cubemapCam->export_pngs();
     }
 
     if (gizmo) gizmo->handle_input(event);
@@ -154,35 +159,37 @@ void shader_workbench::on_draw()
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
     if (gizmo) gizmo->update(cam, float2(width, height));
 
-    auto render_scene = [&](const float3 eye, const float4x4 & viewProj)
+    auto render_scene = [&](const float3 eye, const float4x4 & viewMatrix, const float4x4 & projMatrix)
     {
-        {
-            // Largest non-clipped sphere
-            float4x4 world = mul(make_translation_matrix(eye), scaling_matrix(float3(cam.farclip * .99f)));
+        const float4x4 viewProjMatrix = mul(projMatrix, viewMatrix);
 
-            skyShader.bind();
-            float4x4 mvp = mul(viewProj, world);
-            skyShader.uniform("u_viewProj", viewProj);
-            skyShader.uniform("u_modelMatrix", world);
-            skyShader.uniform("u_bottomColor", float3(52.0f / 255.f, 62.0f / 255.f, 82.0f / 255.f));
-            skyShader.uniform("u_topColor", float3(81.0f / 255.f, 101.0f / 255.f, 142.0f / 255.f));
-            skyMesh.draw_elements();
-            skyShader.unbind();
+        // Largest non-clipped sphere
+        const float4x4 world = mul(make_translation_matrix(eye), scaling_matrix(float3(cam.farclip * .99f)));
 
-            texturedShader.bind();
-            float4x4 cubeModel = make_translation_matrix({ 0, 0, -3 });
-            if (animateCube) cubeModel = mul(cubeModel, make_rotation_matrix({ 0, 1, 0 }, angle * ANVIL_TAU));
-            texturedShader.uniform("u_mvp", mul(viewProjectionMatrix, cubeModel));
-            texturedShader.texture("s_texture", 0, cubeTex, GL_TEXTURE_2D);
-            cube.draw_elements();
+        skyShader.bind();
+        skyShader.uniform("u_viewProj", viewProjMatrix);
+        skyShader.uniform("u_modelMatrix", world);
+        skyShader.uniform("u_bottomColor", float3(52.0f / 255.f, 62.0f / 255.f, 82.0f / 255.f));
+        skyShader.uniform("u_topColor", float3(81.0f / 255.f, 101.0f / 255.f, 142.0f / 255.f));
+        skyMesh.draw_elements();
+        skyShader.unbind();
 
-            float4x4 floorModel = mul(make_translation_matrix({ 0, -2, 0 }), make_rotation_matrix({ 1, 0, 0 }, ANVIL_PI / 2.f));
-            texturedShader.uniform("u_mvp", mul(viewProjectionMatrix, floorModel));
-            texturedShader.texture("s_texture", 0, floorTex, GL_TEXTURE_2D);
-            floorMesh.draw_elements();
-            texturedShader.unbind();
-        }
+        texturedShader.bind();
+        float4x4 cubeModel = make_translation_matrix({ 0, 0, -3 });
+        if (animateCube) cubeModel = mul(cubeModel, make_rotation_matrix({ 0, 1, 0 }, angle * ANVIL_TAU));
+        texturedShader.uniform("u_mvp", mul(viewProjMatrix, cubeModel));
+        texturedShader.texture("s_texture", 0, cubeTex, GL_TEXTURE_2D);
+        cube.draw_elements();
+
+        float4x4 floorModel = mul(make_translation_matrix({ 0, -2, 0 }), make_rotation_matrix({ 1, 0, 0 }, ANVIL_PI / 2.f));
+        texturedShader.uniform("u_mvp", mul(viewProjMatrix, floorModel));
+        texturedShader.texture("s_texture", 0, floorTex, GL_TEXTURE_2D);
+        floorMesh.draw_elements();
+        texturedShader.unbind();
     };
+
+    cubemapCam->render = render_scene;
+    cubemapCam->update(float3(0, 0, 0));
 
     {
         glEnable(GL_DEPTH_TEST);
@@ -195,7 +202,7 @@ void shader_workbench::on_draw()
             glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            render_scene(cam.get_eye_point(), viewProjectionMatrix);
+            render_scene(cam.get_eye_point(), viewMatrix, projectionMatrix);
 
             post->execute(sceneColor);
         }
@@ -206,7 +213,7 @@ void shader_workbench::on_draw()
             glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            render_scene(cam.get_eye_point(), viewProjectionMatrix);
+            render_scene(cam.get_eye_point(), viewMatrix, projectionMatrix);
 
             glassShader.bind();
 

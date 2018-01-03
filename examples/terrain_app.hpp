@@ -75,7 +75,7 @@ struct ExperimentalApp : public GLFWApp
     HosekProceduralSky skydome;
     FlyCameraController cameraController;
 
-    std::unique_ptr<ImGuiInstance> igm;
+    std::unique_ptr<imgui_wrapper> igm;
     std::unique_ptr<GlGizmo> gizmo;
 
     tinygizmo::rigid_transform destination;
@@ -144,7 +144,7 @@ struct ExperimentalApp : public GLFWApp
         icosahedronMesh = make_icosahedron_mesh();
         
         gizmo.reset(new GlGizmo());
-        igm.reset(new gui::ImGuiInstance(window));
+        igm.reset(new gui::imgui_wrapper(window));
         gui::make_light_theme();
 
         sphereMesh = make_sphere_mesh(0.1f);

@@ -95,7 +95,7 @@ namespace avl
         float random_float(float min, float max) { std::uniform_real_distribution<float> custom(min, max); return custom(gen); }
         float random_float_sphere() { return two_pi(gen); }
         float random_float_safe() { return safe(gen); }
-        int random_int(int max) { std::uniform_int_distribution<int> dInt(0, max); return dInt(gen); }
+        uint32_t random_int(uint32_t max) { std::uniform_int_distribution<uint32_t> dInt(0, max); return dInt(gen); }
     };
     
     struct as_string

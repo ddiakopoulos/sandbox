@@ -10,8 +10,7 @@ VirtualRealityApp::VirtualRealityApp() : GLFWApp(1280, 800, "VR Sandbox")
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
 
-    igm.reset(new gui::ImGuiInstance(window));
-    gui::make_dark_theme();
+    igm.reset(new gui::imgui_wrapper(window));
 
     cameraController.set_camera(&debugCam);
 

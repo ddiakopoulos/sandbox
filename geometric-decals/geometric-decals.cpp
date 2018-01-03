@@ -9,7 +9,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Geometric Decals")
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    igm.reset(new gui::ImGuiInstance(window));
+    igm.reset(new gui::imgui_wrapper(window));
     gui::make_light_theme();
 
     shaderMonitor.watch("../assets/shaders/prototype/simple_vert.glsl", "../assets/shaders/prototype/simple_frag.glsl", [&](GlShader & shader)

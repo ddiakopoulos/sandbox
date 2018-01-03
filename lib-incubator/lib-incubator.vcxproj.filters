@@ -31,26 +31,14 @@
     <Filter Include="source\math\core">
       <UniqueIdentifier>{9dc4347b-d404-4cbd-9d9f-0867ab034cb1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="third_party\nanovg">
+      <UniqueIdentifier>{5019fdaa-f676-4a48-9b30-deb85e914465}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="third_party\tinygizmo">
+      <UniqueIdentifier>{154c9f53-9e43-418e-92c2-b97ca9e2b2e5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\third_party\fontstash.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\json.hpp">
-      <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\murmur_hash_3.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\nanovg.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\nanovg_gl.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
-    <ClInclude Include="..\third_party\nanovg_gl_utils.h">
-      <Filter>third_party</Filter>
-    </ClInclude>
     <ClInclude Include="..\one_euro.hpp">
       <Filter>source\math</Filter>
     </ClInclude>
@@ -219,9 +207,6 @@
     <ClInclude Include="..\util.hpp">
       <Filter>source\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\third_party\tiny-gizmo.hpp">
-      <Filter>third_party</Filter>
-    </ClInclude>
     <ClInclude Include="..\gl\gl-gizmo.hpp">
       <Filter>source\gl-app\include</Filter>
     </ClInclude>
@@ -249,20 +234,23 @@
     <ClInclude Include="..\math-common.hpp">
       <Filter>source\math\core</Filter>
     </ClInclude>
+    <ClInclude Include="..\third_party\nanovg_gl_utils.h">
+      <Filter>third_party\nanovg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\nanovg.h">
+      <Filter>third_party\nanovg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\nanovg_gl.h">
+      <Filter>third_party\nanovg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\fontstash.h">
+      <Filter>third_party\nanovg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\third_party\tiny-gizmo.hpp">
+      <Filter>third_party\tinygizmo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\third_party\json.cpp">
-      <Filter>third_party</Filter>
-    </ClCompile>
-    <ClCompile Include="..\third_party\murmur_hash_3.cpp">
-      <Filter>third_party</Filter>
-    </ClCompile>
-    <ClCompile Include="..\third_party\nanovg.cpp">
-      <Filter>third_party</Filter>
-    </ClCompile>
-    <ClCompile Include="..\third_party\efsw.cpp">
-      <Filter>third_party</Filter>
-    </ClCompile>
     <ClCompile Include="..\third_party\imgui\imgui.cpp">
       <Filter>third_party\imgui</Filter>
     </ClCompile>
@@ -281,8 +269,11 @@
     <ClCompile Include="..\impl.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\third_party\nanovg.cpp">
+      <Filter>third_party\nanovg</Filter>
+    </ClCompile>
     <ClCompile Include="..\third_party\tiny-gizmo.cpp">
-      <Filter>third_party</Filter>
+      <Filter>third_party\tinygizmo</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

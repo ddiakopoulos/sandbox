@@ -165,7 +165,7 @@ struct StaticMesh final : public Renderable
     GlMeshHandle mesh{ "" };
     GeometryHandle geom{ "" };
 
-    StaticMesh() {}
+    StaticMesh() { }
 
     Pose get_pose() const override { return pose; }
     void set_pose(const Pose & p) override { pose = p; }

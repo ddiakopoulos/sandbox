@@ -100,10 +100,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="editor-app.cpp" />
+    <ClCompile Include="win32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="editor-app.hpp" />
     <ClInclude Include="gui.hpp" />
+    <ClInclude Include="win32.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
