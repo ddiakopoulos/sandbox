@@ -25,6 +25,7 @@
 #include "parallel_transport_frames.hpp"
 #include "simple_timer.hpp"
 #include "geometry.hpp"
+#include "tweens.hpp"
 
 // OpenGL Rendering + Utilities
 #include "glfw-app.hpp"

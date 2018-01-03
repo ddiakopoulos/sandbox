@@ -32,6 +32,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "geometric-decals", "..\geom
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib-model-io", "..\lib-model-io\lib-model-io.vcxproj", "{BDDB4BE8-092B-4C42-B39E-7EF79011403C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "frosted-glass", "..\frosted-glass\frosted-glass.vcxproj", "{D9968374-A33A-4116-ADA7-F0AD0823B4E3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "terrain-scan-effect", "..\terrain-scan-effect\terrain-scan-effect.vcxproj", "{E37F4D08-39E4-421C-979E-3681ABC51452}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -90,6 +94,14 @@ Global
 		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Debug|x64.Build.0 = Debug|x64
 		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Release|x64.ActiveCfg = Release|x64
 		{BDDB4BE8-092B-4C42-B39E-7EF79011403C}.Release|x64.Build.0 = Release|x64
+		{D9968374-A33A-4116-ADA7-F0AD0823B4E3}.Debug|x64.ActiveCfg = Debug|x64
+		{D9968374-A33A-4116-ADA7-F0AD0823B4E3}.Debug|x64.Build.0 = Debug|x64
+		{D9968374-A33A-4116-ADA7-F0AD0823B4E3}.Release|x64.ActiveCfg = Release|x64
+		{D9968374-A33A-4116-ADA7-F0AD0823B4E3}.Release|x64.Build.0 = Release|x64
+		{E37F4D08-39E4-421C-979E-3681ABC51452}.Debug|x64.ActiveCfg = Debug|x64
+		{E37F4D08-39E4-421C-979E-3681ABC51452}.Debug|x64.Build.0 = Debug|x64
+		{E37F4D08-39E4-421C-979E-3681ABC51452}.Release|x64.ActiveCfg = Release|x64
+		{E37F4D08-39E4-421C-979E-3681ABC51452}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
