@@ -78,7 +78,13 @@ namespace gui
                 data.MousePressed[button] = true;
             }
         }
-        
+
+        if (e.type == InputEvent::Type::CURSOR)
+        {
+            io.MousePos = ImVec2(e.cursor.x, e.cursor.y);
+        }
+
+
         if (e.type == InputEvent::Type::SCROLL)
         {
             data.MouseWheel += (float)e.value[1]; // Use fractional mouse wheel, 1.0 unit 5 lines.
@@ -258,19 +264,21 @@ namespace gui
         io.DeltaTime = data.Time > 0.0 ? (float)(current_time - data.Time) : (float)(1.0f/60.0f);
         data.Time = current_time;
         
+        /*
         // Setup inputs
         // (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
         if (glfwGetWindowAttrib(data.window, GLFW_FOCUSED))
         {
             double mouse_x, mouse_y;
             glfwGetCursorPos(data.window, &mouse_x, &mouse_y);
-            io.MousePos = ImVec2((float)mouse_x, (float)mouse_y);
+
         }
         else
         {
             io.MousePos = ImVec2(-1,-1);
         }
-        
+        */
+
         for (int i = 0; i < 3; i++)
         {
             // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame

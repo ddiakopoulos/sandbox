@@ -137,6 +137,10 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     create_handle_for_asset("shaderball", std::move(shaderball));
     */
 
+    auto cap = make_icosasphere(3);
+    create_handle_for_asset("shaderball", make_mesh_from_geometry(cap));
+    create_handle_for_asset("shaderball", std::move(cap));
+
     auto ico = make_icosasphere(5);
     create_handle_for_asset("icosphere", make_mesh_from_geometry(ico));
     create_handle_for_asset("icosphere", std::move(ico));
@@ -146,7 +150,7 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     create_handle_for_asset("cube", std::move(cube));
 
     scene.objects.clear();
-    //cereal::deserialize_from_json("../assets/scene.json", scene.objects);
+    cereal::deserialize_from_json("../assets/scene.json", scene.objects);
 
     std::unordered_map<std::string, uint32_t> missingGeometryAssets;
     std::unordered_map<std::string, uint32_t> missingMeshAssets;
@@ -266,7 +270,12 @@ void scene_editor_app::on_input(const InputEvent & event)
 {
     igm->update_input(event);
 
-    if (ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard) return;
+    if (ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard)
+    {
+        flycam.reset();
+        return;
+    }
+
     flycam.handle_input(event);
     editor->on_input(event);
 

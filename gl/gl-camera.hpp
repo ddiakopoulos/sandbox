@@ -86,6 +86,17 @@ namespace avl
             camYaw = std::acos(clamp(dot(worldNorth, flatLookVec), -1.0f, +1.0f)) * (flatLookVec.x > 0 ? -1 : 1);
             camPitch = std::acos(clamp(dot(lookVec, flatLookVec), -1.0f, +1.0f)) * (lookVec.y > 0 ? 1 : -1);
         }
+
+        void reset()
+        {
+            bf = 0;
+            bl = 0;
+            bb = 0;
+            br = 0;
+            ml = 0;
+            mr = 0;
+            lastCursor = float2(0, 0);
+        }
         
         void handle_input(const InputEvent & e)
         {
