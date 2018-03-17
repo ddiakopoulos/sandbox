@@ -200,7 +200,7 @@ void main()
 
 #ifdef HAS_NORMAL_MAP
     vec3 nSample = texture(s_normal, v_texcoord).xyz * 2.0 - 1.0;
-    N = normalize(calc_normal_map(v_normal, v_tangent, v_bitangent, nSample).xyz);
+    N = normalize(calc_normal_map(v_normal, v_tangent, v_bitangent, normalize(nSample)).xyz);
     //N = normalize((v_tangent * nSample.x) + (v_bitangent * nSample.y) + (v_normal * nSample.z)); // alternate
 #endif
 
@@ -268,8 +268,8 @@ void main()
         // The way this is structured, it impacts lighting if we stop updating shadow uniforms 
         float shadowTerm = 1.0;
         #ifdef ENABLE_SHADOWS
-        shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, debugShadowColor);
-        shadowVisibility = 1.0 - ((shadowTerm  * NdotL) * u_shadowOpacity * u_receiveShadow);
+            shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, debugShadowColor);
+            shadowVisibility = 1.0 - ((shadowTerm  * NdotL) * u_shadowOpacity * u_receiveShadow);
         #endif
 
         vec3 diffuseContrib, specContrib;

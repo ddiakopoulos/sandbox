@@ -598,13 +598,35 @@ void scene_editor_app::on_draw()
             ImGui::PushID(static_cast<int>(i));
             bool selected = editor->selected(scene.objects[i].get());
             std::string name = scene.objects[i]->id.size() > 0 ? scene.objects[i]->id : std::string(typeid(*scene.objects[i]).name()); // For polymorphic typeids, the trick is to dereference it first
-            std::vector<StaticMesh *> selectedObjects;
+            //std::vector<StaticMesh *> selectedObjects;
 
             if (ImGui::Selectable(name.c_str(), &selected))
             {
                 if (!ImGui::GetIO().KeyCtrl) editor->clear();
                 editor->update_selection(scene.objects[i].get());
             }
+
+            // Update material
+            auto selection = editor->get_selection();
+            if (selection.size() == 1)
+            {
+                // Get the first
+                GameObject * selected_object = selection[0];
+
+                // Can it have a material?
+                if (auto * obj_as_mesh = dynamic_cast<StaticMesh *>(selected_object))
+                {
+
+                    uint32_t mat_idx = 0;
+                    for (auto & mat_name : mats)
+                    {
+                        if (obj_as_mesh->mat.name == mat_name) selectedMaterial = mat_idx;
+                        mat_idx++;
+                    }
+                    
+                }
+            }
+
             ImGui::PopID();
         }
         gui::imgui_fixed_window_end();
@@ -658,11 +680,15 @@ void scene_editor_app::on_draw()
                 ImGui::TreePop();
             }
 
+            ImGui::Dummy({ 0, 10 });
+
             if (ImGui::TreeNode("Procedural Sky"))
             {
                 InspectGameObjectPolymorphic(nullptr, sceneData.skybox);
                 ImGui::TreePop();
             }
+
+            ImGui::Dummy({ 0, 10 });
 
             if (ImGui::TreeNode("Bloom + Tonemap"))
             {
@@ -670,13 +696,15 @@ void scene_editor_app::on_draw()
                 ImGui::TreePop();
             }
 
+            ImGui::Dummy({ 0, 10 });
+
             if (ImGui::TreeNode("Cascaded Shadow Mapping"))
             {
                 Edit("shadows", renderer->get_shadow_pass());
                 ImGui::TreePop();
             }
 
-            ImGui::Separator();
+            ImGui::Dummy({ 0, 10 });
 
             if (renderer->settings.performanceProfiling)
             {
