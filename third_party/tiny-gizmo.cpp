@@ -364,6 +364,7 @@ void gizmo_context::gizmo_context_impl::update(const gizmo_application_state & s
     local_toggle = (!last_state.hotkey_local && active_state.hotkey_local && active_state.hotkey_ctrl) ? !local_toggle : local_toggle;
     has_clicked = (!last_state.mouse_left && active_state.mouse_left) ? true : false;
     has_released = (last_state.mouse_left && !active_state.mouse_left) ? true : false;
+    std::cout << "has released?" << has_released << std::endl;
     drawlist.clear();
 }
 
@@ -800,10 +801,9 @@ bool tinygizmo::transform_gizmo(const std::string & name, gizmo_context & g, rig
     if (g.impl->mode == transform_mode::translate) position_gizmo(name, *g.impl, t.orientation, t.position);
     else if (g.impl->mode == transform_mode::rotate) orientation_gizmo(name, *g.impl, t.position, t.orientation);
     else if (g.impl->mode == transform_mode::scale) scale_gizmo(name, *g.impl, t.orientation, t.position, t.scale);
-    
-    //  || g.impl->has_clicked || g.impl->has_released
 
     for (auto & giz : g.impl->gizmos) if (giz.second.hover || (giz.second.active && g.impl->active_state.mouse_left)) activated = true;
+    if (g.impl->has_released) activated = false; // override
 
     return activated;
 }

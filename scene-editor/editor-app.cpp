@@ -181,7 +181,6 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     for (auto & e : missingGeometryAssets) std::cout << "Asset table does not have " << e.first << " geometry required by " << e.second << " game object instances" << std::endl;
     for (auto & e : missingMeshAssets) std::cout << "Asset table does not have " << e.first << " mesh required by " << e.second << " game object instances" << std::endl;
 
-
     //if (foundGeom == false) std::cout << "asset table does not have a geometry entry for " << mesh->geom.name << std::endl;
     //if (foundMesh == false) std::cout << "asset table does not have a mesh entry for " << mesh->mesh.name << std::endl;
 
@@ -270,8 +269,8 @@ void scene_editor_app::on_window_resize(int2 size)
 
 void scene_editor_app::on_input(const InputEvent & event)
 {
-    std::cout << "Active: " << editor->active() << std::endl;
     igm->update_input(event);
+    editor->on_input(event);
 
     if (ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard)
     {
@@ -281,9 +280,6 @@ void scene_editor_app::on_input(const InputEvent & event)
     }
 
     flycam.handle_input(event);
-    editor->on_input(event);
-
-    //std::cout << "Top Active: " << editor->active() << std::endl; // why is this true when I click
 
     // Prevent scene editor from responding to input destined for ImGui
     //if (!ImGui::GetIO().WantCaptureMouse || !ImGui::GetIO().WantCaptureKeyboard)
@@ -375,6 +371,8 @@ void scene_editor_app::on_update(const UpdateEvent & e)
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
     editor->on_update(cam, float2(width, height));
+
+    //std::cout << "Active: " << editor->active() << std::endl;
 }
 
 void scene_editor_app::on_draw()
