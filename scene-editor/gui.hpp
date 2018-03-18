@@ -170,12 +170,28 @@ namespace ImGui
 
 }
 
-template<class T> const T * query_metadata(const T & meta) { return &meta; }
-template<class T> const T * query_metadata() { return nullptr; }
+// Variadic unpacking of the metadata in the style of sgorsten. The tricky bit is the use of SFINAE with `enable_if_t.
+// The compiler will keep bailing out until requested type matches the type in the parameter pack, by either of the two other templates below 
+// This is loosely inspired by `findArg` found here (https://github.com/WyattTechnology/Wyatt-STM/blob/master/wstm/find_arg.h) (BSD-3),
+// but using pointers instead of default-constructed objects.
+template<class T, class A, class... O> 
+std::enable_if_t<!std::is_same<T, A>::value, const T *> unpack(const A & first, const O & ... others)
+{
+    // Recursively resolve piece of metadata until `others...` exhausted
+    return unpack<T>(others...);
+}
+
+// Resolves the metadata when provided with a parameter pack. In the case of a single piece of metadata, this is the target.
+template<class T, class... O> 
+const T * unpack(const T & meta, const O & ... others) { return &meta; }
+
+// Base template to that is resolved when there's no metadata
+template<class T> 
+const T * unpack() { return nullptr; }
+
 template<class T> struct range_metadata { T min, max; };
 template<class T> struct degree_metadata { T min, max; };
-
-struct editor_hidden {  };
+struct editor_hidden { };
 
 inline bool Edit(const char * label, std::string & s)
 {
@@ -201,32 +217,36 @@ inline bool Edit(const char * label, float3 & v) { return ImGui::InputFloat3(lab
 inline bool Edit(const char * label, float4 & v) { return ImGui::InputFloat4(label, &v.x); }
 
 // Slider for range_metadata<int>
-template<class... A> bool Edit(const char * label, int & f, const A & ... metadata)
+template<class... A> 
+bool Edit(const char * label, int & f, const A & ... metadata)
 {
-    auto * rangeData = query_metadata<range_metadata<int>>(metadata...);
+    auto * rangeData = unpack<range_metadata<int>>(metadata...);
     if (rangeData) return ImGui::SliderInt(label, &f, rangeData->min, rangeData->max);
     else return ImGui::InputInt(label, &f);
 }
 
 // Slider for range_metadata<float>
-template<class... A> bool Edit(const char * label, float & f, const A & ... metadata)
+template<class... A> 
+bool Edit(const char * label, float & f, const A & ... metadata)
 {
-    auto * rangeData = query_metadata<range_metadata<float>>(metadata...);
+    auto * rangeData = unpack<range_metadata<float>>(metadata...);
     if (rangeData) return ImGui::SliderFloat(label, &f, rangeData->min, rangeData->max, "%.5f");
     else return ImGui::InputFloat(label, &f);
 }
 
 // Slider for range_metadata<int2>
-template<class... A> bool Edit(const char * label, int2 & f, const A & ... metadata)
+template<class... A> 
+bool Edit(const char * label, int2 & f, const A & ... metadata)
 {
-    auto * intRange = query_metadata<range_metadata<int>>(metadata...);
+    auto * intRange = unpack<range_metadata<int>>(metadata...);
     if (intRange) return ImGui::SliderInt2(label, &f[0], intRange->min, intRange->max, "%.5f");
     else return ImGui::SliderInt2(label, &f[0], 0, 1);
 }
 
-template<class T, class ... A> bool Edit(const char * label, AssetHandle<T> & h, const A & ... metadata)
+template<class T, class ... A> 
+bool Edit(const char * label, AssetHandle<T> & h, const A & ... metadata)
 {
-    auto * hidden = query_metadata<editor_hidden>(metadata...);
+    auto * hidden = unpack<editor_hidden>(metadata...);
     if (hidden) return false;
 
     int index;
@@ -246,7 +266,8 @@ template<class T, class ... A> bool Edit(const char * label, AssetHandle<T> & h,
     else return false;
 }
 
-template<class T> std::enable_if_t<std::is_class<T>::value, bool> Edit(const char * label, T & object)
+template<class T> std::enable_if_t<std::is_class<T>::value, bool>
+Edit(const char * label, T & object)
 {
     bool r = false;
     visit_fields(object, [&r](const char * name, auto & field, auto... metadata)
@@ -256,7 +277,8 @@ template<class T> std::enable_if_t<std::is_class<T>::value, bool> Edit(const cha
     return r;
 }
 
-template<class T> bool InspectGameObjectPolymorphic(const char * label, T * ptr)
+template<class T> bool 
+InspectGameObjectPolymorphic(const char * label, T * ptr)
 {
     bool r = false;
     visit_subclasses(ptr, [&r, label](const char * name, auto * p)

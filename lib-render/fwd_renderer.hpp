@@ -149,7 +149,7 @@ public:
 
 template<class F> void visit_fields(forward_renderer & o, F f)
 {
-    f("num_cameras", o.settings.cameraCount);
+    f("num_cameras", o.settings.cameraCount, editor_hidden{});
     f("num_msaa_samples", o.settings.msaaSamples);
     f("render_size", o.settings.renderSize);
     f("performance_profiling", o.settings.performanceProfiling);
