@@ -113,14 +113,21 @@ public:
     {
         return gizmo_active;
     }
-
+    
+    InputEvent evt;
     void on_input(const InputEvent & event)
     {
-        gizmo.handle_input(event);
+        evt = event;
+    }
+
+    void reset_input()
+    {
+        gizmo.reset_input();
     }
 
     void on_update(const GlCamera & camera, const float2 viewport_size)
     {
+        gizmo.handle_input(evt);
         gizmo.update(camera, viewport_size);
         gizmo_active = tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
 
@@ -180,4 +187,6 @@ struct scene_editor_app final : public GLFWApp
     void on_update(const UpdateEvent & e) override;
     void on_draw() override;
     void on_drop(std::vector <std::string> filepaths) override;
+
+    bool shouldHandleRaycast = false;
 };

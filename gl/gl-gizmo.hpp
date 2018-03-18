@@ -75,7 +75,18 @@ struct GlGizmo : public Noncopyable
             if (e.value[0] == GLFW_KEY_S) gizmo_state.hotkey_scale = e.is_down();
         }
         if (e.type == InputEvent::MOUSE && e.value[0] == GLFW_MOUSE_BUTTON_LEFT) gizmo_state.mouse_left = e.is_down();
-        if (e.type == InputEvent::CURSOR) gizmo_state.cursor = minalg::float2(e.cursor.x, e.cursor.y);
+        gizmo_state.cursor = minalg::float2(e.cursor.x, e.cursor.y);
+    }
+
+    void reset_input()
+    {
+        gizmo_state.cursor = { 0, 0 };
+        gizmo_state.mouse_left = false;
+        gizmo_state.hotkey_ctrl = false;
+        gizmo_state.hotkey_local = false;;
+        gizmo_state.hotkey_translate = false;
+        gizmo_state.hotkey_rotate = false;
+        gizmo_state.hotkey_scale = false;
     }
 
     void update(const GlCamera & cam, const avl::float2 windowSize)

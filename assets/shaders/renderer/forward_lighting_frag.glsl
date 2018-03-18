@@ -193,14 +193,14 @@ void main()
 {   
     // Surface properties
     vec3 albedo = u_albedo;
-    vec3 N = v_normal;
+    vec3 N = normalize(v_normal);
 
     float roughness = clamp(u_roughness, u_specularLevel, 1.0);
     float metallic = u_metallic;
 
 #ifdef HAS_NORMAL_MAP
     vec3 nSample = texture(s_normal, v_texcoord).xyz * 2.0 - 1.0;
-    N = normalize(calc_normal_map(v_normal, v_tangent, v_bitangent, normalize(nSample)).xyz);
+    N = normalize(calc_normal_map(v_normal, v_tangent, v_bitangent, nSample).xyz);
     //N = normalize((v_tangent * nSample.x) + (v_bitangent * nSample.y) + (v_normal * nSample.z)); // alternate
 #endif
 

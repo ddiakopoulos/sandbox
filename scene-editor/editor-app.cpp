@@ -266,21 +266,27 @@ void scene_editor_app::on_window_resize(int2 size)
     uiSurface.layout();
 }
 
+//InputEvent last_evt;
+
 void scene_editor_app::on_input(const InputEvent & event)
 {
+    std::cout << "Active: " << editor->active() << std::endl;
     igm->update_input(event);
 
     if (ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard)
     {
         flycam.reset();
+        editor->reset_input();
         return;
     }
 
     flycam.handle_input(event);
     editor->on_input(event);
 
+    //std::cout << "Top Active: " << editor->active() << std::endl; // why is this true when I click
+
     // Prevent scene editor from responding to input destined for ImGui
-    if (!ImGui::GetIO().WantCaptureMouse || !ImGui::GetIO().WantCaptureKeyboard)
+    //if (!ImGui::GetIO().WantCaptureMouse || !ImGui::GetIO().WantCaptureKeyboard)
     {
         if (event.type == InputEvent::KEY)
         {
@@ -315,7 +321,7 @@ void scene_editor_app::on_input(const InputEvent & event)
 
             const Ray r = cam.get_world_ray(event.cursor, float2(width, height));
 
-            if (length(r.direction) > 0)
+            if (length(r.direction) > 0 && !editor->active())
             {
                 std::vector<GameObject *> selectedObjects;
                 float best_t = std::numeric_limits<float>::max();
@@ -356,6 +362,7 @@ void scene_editor_app::on_input(const InputEvent & event)
                     }
                 }
             }
+
         }
     }
 }
@@ -559,13 +566,13 @@ void scene_editor_app::on_draw()
         static int rightSplit2 = ((height / 3) - 17);
 
         // Define a split region between the whole window and the right panel
-        auto rightRegion = ImGui::Split({ { 0.f,17.f },{ (float)width, (float)height } }, &horizSplit, ImGui::SplitType::Right);
+        auto rightRegion = ImGui::Split({ { 0.f ,17.f },{ (float)width, (float)height } }, &horizSplit, ImGui::SplitType::Right);
         auto split2 = ImGui::Split(rightRegion.second, &rightSplit1, ImGui::SplitType::Top);
         auto split3 = ImGui::Split(split2.first, &rightSplit2, ImGui::SplitType::Top); // split again by the same amount
 
-        ui_rect topRightPane = { { int2(split2.second.min()) }, { int2(split2.second.max()) } }; // top 1/3rd and `the rest`
-        ui_rect middleRightPane = { { int2(split3.first.min()) },{ int2(split3.first.max()) } }; // `the rest` split by the same amount
-        ui_rect bottomRightPane = { { int2(split3.second.min()) },{ int2(split3.second.max()) } }; // remainder
+        ui_rect topRightPane = { { int2(split2.second.min()) }, { int2(split2.second.max()) } };    // top 1/3rd and `the rest`
+        ui_rect middleRightPane = { { int2(split3.first.min()) },{ int2(split3.first.max()) } };    // `the rest` split by the same amount
+        ui_rect bottomRightPane = { { int2(split3.second.min()) },{ int2(split3.second.max()) } };  // remainder
 
         active_imgui_regions.push_back(topRightPane);
         active_imgui_regions.push_back(middleRightPane);
@@ -597,8 +604,9 @@ void scene_editor_app::on_draw()
         {
             ImGui::PushID(static_cast<int>(i));
             bool selected = editor->selected(scene.objects[i].get());
-            std::string name = scene.objects[i]->id.size() > 0 ? scene.objects[i]->id : std::string(typeid(*scene.objects[i]).name()); // For polymorphic typeids, the trick is to dereference it first
-            //std::vector<StaticMesh *> selectedObjects;
+
+            // For polymorphic typeids, the trick is to dereference it first
+            std::string name = scene.objects[i]->id.size() > 0 ? scene.objects[i]->id : std::string(typeid(*scene.objects[i]).name()); 
 
             if (ImGui::Selectable(name.c_str(), &selected))
             {
