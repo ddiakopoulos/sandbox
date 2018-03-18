@@ -126,7 +126,6 @@ public:
 
     void on_update(const GlCamera & camera, const float2 viewport_size)
     {
-
         gizmo.update(camera, viewport_size);
         gizmo_active = tinygizmo::transform_gizmo("editor-controller", gizmo.gizmo_ctx, gizmo_selection);
 

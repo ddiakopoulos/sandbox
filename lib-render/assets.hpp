@@ -73,7 +73,7 @@ public:
                 a = std::make_shared<UniqueAsset<T>>();
                 a->timestamp = system_time_ns();
                 a->assigned = false;
-                Logger::get_instance()->assetLog->info("asset type {} ({}) was default constructed", typeid(this).name(), name);
+                Logger::get_instance()->assetLog->info("asset type {} ({}) was default constructed", typeid(T).name(), name);
             }
             handle = a;
             return handle->asset;
@@ -96,7 +96,8 @@ public:
         handle->assigned = true;
         handle->timestamp = system_time_ns();
 
-        Logger::get_instance()->assetLog->info("asset type {} with id {} was assigned", typeid(this).name(), name);
+        Logger::get_instance()->assetLog->info("asset type {} with id {} was assigned", typeid(T).name(), name);
+        //Logger::get_instance()->assetLog->info("asset type {} with id {} was assigned", typeid(this).name(), name);
 
         return handle->asset;
     }

@@ -364,7 +364,6 @@ void gizmo_context::gizmo_context_impl::update(const gizmo_application_state & s
     local_toggle = (!last_state.hotkey_local && active_state.hotkey_local && active_state.hotkey_ctrl) ? !local_toggle : local_toggle;
     has_clicked = (!last_state.mouse_left && active_state.mouse_left) ? true : false;
     has_released = (last_state.mouse_left && !active_state.mouse_left) ? true : false;
-    std::cout << "has released?" << has_released << std::endl;
     drawlist.clear();
 }
 

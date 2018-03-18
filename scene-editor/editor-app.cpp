@@ -265,8 +265,6 @@ void scene_editor_app::on_window_resize(int2 size)
     uiSurface.layout();
 }
 
-//InputEvent last_evt;
-
 void scene_editor_app::on_input(const InputEvent & event)
 {
     igm->update_input(event);
@@ -279,10 +277,9 @@ void scene_editor_app::on_input(const InputEvent & event)
         return;
     }
 
-    flycam.handle_input(event);
+    // flycam only works when a mod key isn't held down
+    if (event.mods == 0) flycam.handle_input(event);
 
-    // Prevent scene editor from responding to input destined for ImGui
-    //if (!ImGui::GetIO().WantCaptureMouse || !ImGui::GetIO().WantCaptureKeyboard)
     {
         if (event.type == InputEvent::KEY)
         {
@@ -310,6 +307,7 @@ void scene_editor_app::on_input(const InputEvent & event)
             }
         }
 
+        // Raycast for editor/gizmo selection on mouse up
         if (event.type == InputEvent::MOUSE && event.action == GLFW_RELEASE && event.value[0] == GLFW_MOUSE_BUTTON_LEFT)
         {
             int width, height;
@@ -371,8 +369,6 @@ void scene_editor_app::on_update(const UpdateEvent & e)
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
     editor->on_update(cam, float2(width, height));
-
-    //std::cout << "Active: " << editor->active() << std::endl;
 }
 
 void scene_editor_app::on_draw()
@@ -482,7 +478,8 @@ void scene_editor_app::on_draw()
     menu.app_menu_begin();
     {
         menu.begin("File");
-        if (menu.item("Load Scene", GLFW_MOD_CONTROL, GLFW_KEY_L))
+        bool mod_enabled = !editor->active();
+        if (menu.item("Open Scene", GLFW_MOD_CONTROL, GLFW_KEY_O, mod_enabled))
         {
             const auto selected_open_path = windows_file_dialog("anvil scene", "json", true);
             if (!selected_open_path.empty())
@@ -493,7 +490,7 @@ void scene_editor_app::on_draw()
             }
 
         }
-        if (menu.item("Save Scene", GLFW_MOD_CONTROL, GLFW_KEY_S)) 
+        if (menu.item("Save Scene", GLFW_MOD_CONTROL, GLFW_KEY_S, mod_enabled))
         {
             const auto save_path = windows_file_dialog("anvil scene", "json", false);
             if (!save_path.empty())
@@ -502,11 +499,11 @@ void scene_editor_app::on_draw()
                 set_window_title(save_path);
             }
         }
-        if (menu.item("New Scene", GLFW_MOD_CONTROL, GLFW_KEY_N)) 
+        if (menu.item("New Scene", GLFW_MOD_CONTROL, GLFW_KEY_N, mod_enabled))
         {
             scene.objects.clear();
         }
-        if (menu.item("Take Screenshot", GLFW_MOD_CONTROL, GLFW_KEY_EQUAL))
+        if (menu.item("Take Screenshot", GLFW_MOD_CONTROL, GLFW_KEY_EQUAL, mod_enabled))
         {
 
             take_screenshot("scene-editor");
@@ -651,7 +648,7 @@ void scene_editor_app::on_draw()
         gui::imgui_fixed_window_begin("Renderer", topLeftPane);
         {
 
-            ImGui::Separator();
+            ImGui::Dummy({ 0, 10 });
 
             if (ImGui::TreeNode("Core"))
             {
