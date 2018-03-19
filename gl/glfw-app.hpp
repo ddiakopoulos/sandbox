@@ -103,6 +103,7 @@ namespace avl
         void consume_mousebtn(int button, int action);
         void consume_cursor(double xpos, double ypos);
         void consume_scroll(double xoffset, double yoffset);
+        void on_iconify();
 
         void take_screenshot_impl();
         std::string screenshotPath;

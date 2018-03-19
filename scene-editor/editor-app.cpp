@@ -305,6 +305,15 @@ void scene_editor_app::on_input(const InputEvent & event)
             {
                 showUI = !showUI;
             }
+
+            /*
+            if (event.value[0] == GLFW_KEY_SPACE && event.action == GLFW_RELEASE)
+            {
+                glfwShowWindow(window);
+                glfwFocusWindow(window);
+                glfwRequestWindowAttention(window);
+            }
+            */
         }
 
         // Raycast for editor/gizmo selection on mouse up

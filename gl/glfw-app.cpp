@@ -148,6 +148,19 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     {
         auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); try { app->on_drop({names, names+count});} catch(...) { CATCH_CURRENT; }
     });
+
+    /*
+    glfwSetWindowIconifyCallback(window, [](GLFWwindow * window, int)
+    {
+        auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); 
+        
+        try 
+        { 
+            glfwMakeContextCurrent(window);
+        }
+        catch (...) { CATCH_CURRENT; }
+    });
+    */
 }
 
 GLFWApp::~GLFWApp() 

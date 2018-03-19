@@ -248,36 +248,13 @@ namespace gui
     {
         ImGui::SetCurrentContext(data.context);
         if (!data.FontTexture) create_render_objects();
-        
-        ImGuiIO & io = ImGui::GetIO();
-        
-        // Setup display size (every frame to accommodate for window resizing)
-        int w, h;
-        int display_w, display_h;
-        glfwGetWindowSize(data.window, &w, &h);
-        glfwGetFramebufferSize(data.window, &display_w, &display_h);
-        io.DisplaySize = ImVec2((float)w, (float)h);
-        io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
-        
-        // Setup time step
-        double current_time =  glfwGetTime();
-        io.DeltaTime = data.Time > 0.0 ? (float)(current_time - data.Time) : (float)(1.0f/60.0f);
-        data.Time = current_time;
-        
-        /*
-        // Setup inputs
-        // (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
-        if (glfwGetWindowAttrib(data.window, GLFW_FOCUSED))
-        {
-            double mouse_x, mouse_y;
-            glfwGetCursorPos(data.window, &mouse_x, &mouse_y);
 
-        }
-        else
-        {
-            io.MousePos = ImVec2(-1,-1);
-        }
-        */
+        ImGuiIO & io = ImGui::GetIO();
+
+        // Setup time step
+        double current_time = glfwGetTime();
+        io.DeltaTime = data.Time > 0.0 ? (float)(current_time - data.Time) : (float)(1.0f / 60.0f);
+        data.Time = current_time;
 
         for (int i = 0; i < 3; i++)
         {
@@ -285,13 +262,25 @@ namespace gui
             io.MouseDown[i] = data.MousePressed[i] || glfwGetMouseButton(data.window, i) != 0;
             data.MousePressed[i] = false;
         }
-        
+
         io.MouseWheel = data.MouseWheel;
         data.MouseWheel = 0.0f;
-        
+
         // Hide OS mouse cursor if ImGui is drawing it
         glfwSetInputMode(data.window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
-        
+
+        // Don't muck with the state if minimized
+        if (!glfwGetWindowAttrib(data.window, GLFW_ICONIFIED))
+        {
+            // Setup display size (every frame to accommodate for window resizing)
+            int w, h;
+            int display_w, display_h;
+            glfwGetWindowSize(data.window, &w, &h);
+            glfwGetFramebufferSize(data.window, &display_w, &display_h);
+            io.DisplaySize = ImVec2((float)w, (float)h);
+            io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
+        }
+
         // Start the frame
         ImGui::NewFrame();
     }
