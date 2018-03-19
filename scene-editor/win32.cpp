@@ -5,8 +5,8 @@
 #include <sstream>
 
 #ifndef UNICODE
-#define UNICODE
-#define UNICODE_WAS_UNDEFINED
+    #define UNICODE
+    #define UNICODE_WAS_UNDEFINED
 #endif
 
 #define WIN32_LEAN_AND_MEAN
@@ -61,5 +61,5 @@ std::string windows_file_dialog(const std::string & filter_type, const std::stri
 }
 
 #ifdef UNICODE_WAS_UNDEFINED
-#undef UNICODE
+    #undef UNICODE
 #endif

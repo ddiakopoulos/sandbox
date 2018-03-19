@@ -206,49 +206,69 @@ inline bool Edit(const char * label, std::string & s)
     else return false;
 }
 
-inline bool Edit(const char * label, bool & v) { return ImGui::Checkbox(label, &v); }
-inline bool Edit(const char * label, float & v) { return ImGui::InputFloat(label, &v); }
-inline bool Edit(const char * label, int & v) { return ImGui::InputInt(label, &v); }
-inline bool Edit(const char * label, int2 & v) { return ImGui::InputInt2(label, &v.x); }
-inline bool Edit(const char * label, int3 & v) { return ImGui::InputInt3(label, &v.x); }
-inline bool Edit(const char * label, int4 & v) { return ImGui::InputInt4(label, &v.x); }
-inline bool Edit(const char * label, float2 & v) { return ImGui::InputFloat2(label, &v.x); }
-inline bool Edit(const char * label, float3 & v) { return ImGui::InputFloat3(label, &v.x); }
-inline bool Edit(const char * label, float4 & v) { return ImGui::InputFloat4(label, &v.x); }
-
-// Slider for range_metadata<int>
-template<class... A> 
-bool Edit(const char * label, int & f, const A & ... metadata)
-{
-    auto * rangeData = unpack<range_metadata<int>>(metadata...);
-    if (rangeData) return ImGui::SliderInt(label, &f, rangeData->min, rangeData->max);
-    else return ImGui::InputInt(label, &f);
+template<class... A>
+inline bool Edit(const char * label, bool & v, const A & ... metadata)
+{ 
+    return ImGui::Checkbox(label, &v); 
 }
 
-// Slider for range_metadata<float>
-template<class... A> 
-bool Edit(const char * label, float & f, const A & ... metadata)
-{
+template<class... A>
+inline bool Edit(const char * label, float & v, const A & ... metadata)
+{ 
     auto * rangeData = unpack<range_metadata<float>>(metadata...);
-    if (rangeData) return ImGui::SliderFloat(label, &f, rangeData->min, rangeData->max, "%.5f");
-    else return ImGui::InputFloat(label, &f);
+    if (rangeData) return ImGui::SliderFloat(label, &v, rangeData->min, rangeData->max, "%.5f");
+    else return ImGui::InputFloat(label, &v); 
 }
 
-// Slider for range_metadata<int2>
-template<class... A> 
-bool Edit(const char * label, int2 & f, const A & ... metadata)
-{
+template<class... A>
+inline bool Edit(const char * label, int & v, const A & ... metadata)
+{ 
+    auto * rangeData = unpack<range_metadata<int>>(metadata...);
+    if (rangeData) return ImGui::SliderInt(label, &v, rangeData->min, rangeData->max);
+    else return ImGui::InputInt(label, &v);
+}
+
+template<class... A>
+inline bool Edit(const char * label, int2 & v, const A & ... metadata)
+{ 
     auto * intRange = unpack<range_metadata<int>>(metadata...);
-    if (intRange) return ImGui::SliderInt2(label, &f[0], intRange->min, intRange->max, "%.5f");
-    else return ImGui::SliderInt2(label, &f[0], 0, 1);
+    if (intRange) return ImGui::SliderInt2(label, &v[0], intRange->min, intRange->max);
+    else return ImGui::InputInt2(label, &v.x); 
+}
+
+template<class... A>
+inline bool Edit(const char * label, int3 & v, const A & ... metadata)
+{ 
+    return ImGui::InputInt3(label, &v.x); 
+}
+
+template<class... A>
+inline bool Edit(const char * label, int4 & v, const A & ... metadata)
+{ 
+    return ImGui::InputInt4(label, &v.x); 
+}
+
+template<class... A>
+inline bool Edit(const char * label, float2 & v, const A & ... metadata)
+{ 
+    return ImGui::InputFloat2(label, &v.x); 
+}
+
+template<class... A>
+inline bool Edit(const char * label, float3 & v, const A & ... metadata)
+{ 
+    return ImGui::InputFloat3(label, &v.x);
+}
+
+template<class... A>
+inline bool Edit(const char * label, float4 & v, const A & ... metadata)
+{ 
+    return ImGui::InputFloat4(label, &v.x); 
 }
 
 template<class T, class ... A> 
 bool Edit(const char * label, AssetHandle<T> & h, const A & ... metadata)
 {
-    auto * hidden = unpack<editor_hidden>(metadata...);
-    if (hidden) return false;
-
     int index;
     std::vector<std::string> items;
 
@@ -272,6 +292,11 @@ Edit(const char * label, T & object)
     bool r = false;
     visit_fields(object, [&r](const char * name, auto & field, auto... metadata)
     {   
+        auto * hidden = unpack<editor_hidden>(metadata...);
+        if (hidden)
+        {
+            return false;
+        }
         r |= Edit(name, field, metadata...);
     });
     return r;

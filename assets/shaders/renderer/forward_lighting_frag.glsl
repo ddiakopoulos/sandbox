@@ -182,6 +182,14 @@ vec3 env_brdf_approx(vec3 specularColor, float roughness, float NoV)
     return specularColor * AB.x + AB.y;
 }
 
+vec3 blend_rnm(vec3 n1, vec3 n2)
+{
+    vec3 t = n1.xyz*vec3( 2,  2, 2) + vec3(-1, -1,  0);
+    vec3 u = n2.xyz*vec3(-2, -2, 2) + vec3( 1,  1, -1);
+    vec3 r = t*dot(t, u) - u*t.z;
+    return normalize(r);
+}
+
 // todo - can compute TBN in vertex shader
 vec4 calc_normal_map(vec3 normal, vec3 tangent, vec3 bitangent, vec3 sampledMap)
 {
@@ -199,7 +207,7 @@ void main()
     float metallic = u_metallic;
 
 #ifdef HAS_NORMAL_MAP
-    vec3 nSample = texture(s_normal, v_texcoord).xyz * 2.0 - 1.0;
+    vec3 nSample = texture(s_normal, v_texcoord).xyz * 2.0 - 1;
     N = normalize(calc_normal_map(v_normal, v_tangent, v_bitangent, nSample).xyz);
     //N = normalize((v_tangent * nSample.x) + (v_bitangent * nSample.y) + (v_normal * nSample.z)); // alternate
 #endif
@@ -227,7 +235,7 @@ void main()
 
     vec3 F0 = vec3(u_specularLevel);
     vec3 diffuseColor = albedo * (vec3(1.0) - F0);
-    diffuseColor *= 1.0 - metallic;
+    //diffuseColor *= 1.0 - metallic;
 
     vec3 specularColor = mix(F0, albedo, metallic);
 
@@ -306,7 +314,7 @@ void main()
 
     #ifdef USE_IMAGE_BASED_LIGHTING
     {
-        const int NUM_MIP_LEVELS = 6;
+        const int NUM_MIP_LEVELS = 8;
         float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
         vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
 
@@ -337,8 +345,8 @@ void main()
     //f_color = vec4(vec3(debugShadowColor), 1.0);
     //f_color = vec4(mix(vec3(shadowVisibility), vec3(debugShadowColor), 0.5), 1.0);
     //f_color = vec4(vec3(shadowVisibility), u_opacity); 
+    //f_color = vec4(nSample, 1.0);
 
     // Combine direct lighting, IBL, and shadow visbility
-
     f_color = vec4(Lo * shadowVisibility, u_opacity); 
 }
