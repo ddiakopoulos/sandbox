@@ -36,6 +36,14 @@ scene_editor_app::scene_editor_app() : GLFWApp(1920, 1080, "Scene Editor")
     create_handle_for_asset("wireframe", std::move(wireframeProgram));
 
     shaderMonitor.watch(
+        "../assets/shaders/ibl_vert.glsl",
+        "../assets/shaders/ibl_frag.glsl",
+        "../assets/shaders/renderer", {}, [](GlShader shader)
+    {
+        create_handle_for_asset("ibl", std::move(shader));
+    });
+
+    shaderMonitor.watch(
         "../assets/shaders/renderer/depth_prepass_vert.glsl",
         "../assets/shaders/renderer/depth_prepass_frag.glsl",
         "../assets/shaders/renderer", {}, [](GlShader shader)
@@ -393,7 +401,7 @@ void scene_editor_app::on_draw()
     glfwGetWindowSize(window, &width, &height);
 
     glViewport(0, 0, width, height);
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glEnable(GL_BLEND);

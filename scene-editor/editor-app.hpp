@@ -163,6 +163,8 @@ struct scene_editor_app final : public GLFWApp
     Scene scene;
 
     GlShaderHandle wireframeHandle{ "wireframe" };
+    GlShaderHandle iblHandle{ "ibl" };
+    GlMeshHandle cubeHandle{ "cube" };
 
     std::unique_ptr<gui::imgui_wrapper> igm;
 

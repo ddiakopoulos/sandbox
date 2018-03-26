@@ -207,9 +207,9 @@ void main()
     float metallic = u_metallic;
 
 #ifdef HAS_NORMAL_MAP
-    vec3 nSample = texture(s_normal, v_texcoord).xyz * 2.0 - 1;
-    N = normalize(calc_normal_map(v_normal, v_tangent, v_bitangent, nSample).xyz);
-    //N = normalize((v_tangent * nSample.x) + (v_bitangent * nSample.y) + (v_normal * nSample.z)); // alternate
+    vec3 nSample = texture(s_normal, v_texcoord).xyz * 2.0 - 1.0;
+    N = normalize(calc_normal_map(v_normal, normalize(v_tangent), normalize(v_bitangent), normalize(nSample)).xyz);
+    //N = normalize( (normalize(v_tangent) * nSample.x) + (normalize(v_bitangent) * nSample.y) + (normalize(v_normal) * nSample.z)); // alternate
 #endif
 
 // todo - can pack roughness and metalness into the same RG texture
