@@ -179,8 +179,6 @@ namespace avl
 
             void recompile()
             {
-                shouldRecompile = false;
-
                 GlShader result;
 
                 try
@@ -247,29 +245,48 @@ namespace avl
             }
         };
 
-        SimpleTimer limiter;
         std::string root_path;
         std::unordered_map<uint32_t, ShaderAsset> assets;
+        std::thread watch_thread;
+        std::mutex watch_mutex;
 
     public:
 
-        ShaderMonitor(const std::string & root_path) : root_path(root_path) { limiter.start(); }
+        ShaderMonitor(const std::string & root_path) : root_path(root_path) 
+        {
+            watch_thread = std::thread([this, root_path]()
+            {
+                for (;;)
+                {
+                    try
+                    {
+                        std::lock_guard<std::mutex> guard(watch_mutex);
+                        walk_root_directory(root_path);
+                    }
+                    catch (const std::exception & e)
+                    {
+                        std::cout << "Filesystem error: " << e.what() << std::endl;
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                }
+            });
+        }
+
+        ~ShaderMonitor()
+        {
+            if (watch_thread.joinable()) watch_thread.join();
+        }
 
         // Call this regularly on the gl thread
         void handle_recompile()
         {
-            if (limiter.milliseconds().count() > 250)
+            for (auto & asset : assets)
             {
-                limiter.reset();
-
-                walk_root_directory(root_path);
-
-                for (auto & asset : assets)
+                if (asset.second.shouldRecompile)
                 {
-                    if (asset.second.shouldRecompile)
-                    {
-                        asset.second.recompile();
-                    }
+                    std::lock_guard<std::mutex> guard(watch_mutex);
+                    asset.second.recompile();
+                    asset.second.shouldRecompile = false;
                 }
             }
         }
