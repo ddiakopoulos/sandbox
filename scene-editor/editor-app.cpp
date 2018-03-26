@@ -383,9 +383,11 @@ void scene_editor_app::on_update(const UpdateEvent & e)
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
+    editorProfiler.begin("on_update");
     flycam.update(e.timestep_ms);
     shaderMonitor.handle_recompile();
     editor->on_update(cam, float2(width, height));
+    editorProfiler.end("on_update");
 }
 
 void scene_editor_app::on_draw()
@@ -413,6 +415,7 @@ void scene_editor_app::on_draw()
     const float4x4 viewProjectionMatrix = mul(projectionMatrix, viewMatrix);
 
     {
+        editorProfiler.begin("gather-scene");
         // Single-viewport camera
         sceneData.views.push_back(view_data(0, cameraPose, projectionMatrix));
 
@@ -434,16 +437,17 @@ void scene_editor_app::on_draw()
                 sceneData.renderSet.push_back(r);
             }
         }
+        editorProfiler.end("gather-scene");
 
+        editorProfiler.begin("submit-scene");
         // Submit scene to the renderer
         renderer->render_frame(sceneData);
+        editorProfiler.end("submit-scene");
     
         // Remember to clear any transient per-frame data
         sceneData.pointLights.clear();
         sceneData.renderSet.clear();
         sceneData.views.clear();
-
-        gl_check_error(__FILE__, __LINE__);
 
         glUseProgram(0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -463,6 +467,7 @@ void scene_editor_app::on_draw()
         gl_check_error(__FILE__, __LINE__);
     }
 
+    editorProfiler.begin("wireframe-rendering");
     // Selected objects as wireframe
     {
         glDisable(GL_DEPTH_TEST);
@@ -488,7 +493,9 @@ void scene_editor_app::on_draw()
 
         glEnable(GL_DEPTH_TEST);
     }
+    editorProfiler.end("wireframe-rendering");
 
+    editorProfiler.begin("imgui-menu");
     igm->begin_frame();
 
     gui::imgui_menu_stack menu(*this, ImGui::GetIO().KeysDown);
@@ -570,7 +577,9 @@ void scene_editor_app::on_draw()
 
     }
     menu.app_menu_end();
+    editorProfiler.end("imgui-menu");
 
+    editorProfiler.begin("imgui-editor");
     if (showUI)
     {
         static int horizSplit = 380;
@@ -728,9 +737,13 @@ void scene_editor_app::on_draw()
 
             if (renderer->settings.performanceProfiling)
             {
-                for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[GPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
-                for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[CPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
+                for (auto & t : renderer->gpuProfiler.dataPoints) ImGui::Text("[Renderer GPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
+                for (auto & t : renderer->cpuProfiler.dataPoints) ImGui::Text("[Renderer CPU] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
             }
+
+            ImGui::Dummy({ 0, 10 });
+
+            for (auto & t : editorProfiler.dataPoints) ImGui::Text("[Editor] %s %f ms", t.first.c_str(), (float)compute_mean(t.second.average));
         }
         gui::imgui_fixed_window_end();
 
@@ -743,6 +756,7 @@ void scene_editor_app::on_draw()
     }
 
     igm->end_frame();
+    editorProfiler.end("imgui-editor");
 
     // Debug Views
     /*
@@ -755,9 +769,12 @@ void scene_editor_app::on_draw()
     }
     */
 
-    // Scene editor gizmo
-    glClear(GL_DEPTH_BUFFER_BIT);
-    editor->on_draw();
+    {
+        editorProfiler.begin("gizmo_on_draw");
+        glClear(GL_DEPTH_BUFFER_BIT);
+        editor->on_draw();
+        editorProfiler.end("gizmo_on_draw");
+    }
 
     gl_check_error(__FILE__, __LINE__);
 

@@ -166,6 +166,8 @@ struct scene_editor_app final : public GLFWApp
     GlShaderHandle iblHandle{ "ibl" };
     GlMeshHandle cubeHandle{ "cube" };
 
+    profiler<SimpleTimer> editorProfiler;
+
     std::unique_ptr<gui::imgui_wrapper> igm;
 
     std::unique_ptr<editor_controller<GameObject>> editor;

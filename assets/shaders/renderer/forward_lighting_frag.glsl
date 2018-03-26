@@ -269,8 +269,8 @@ void main()
         );
 
         float NdotL_S = clamp(dot(v_normal, L), 0.001, 1.0);
-        const float slope_bias = 0.04;
-        const float normal_bias = 0.01;
+        const float slope_bias = 0.04;  // fixme - expose to user
+        const float normal_bias = 0.01; // fixme - expose to user
         vec3 biased_pos = get_biased_position(v_world_position, slope_bias, normal_bias, v_normal, L);
 
         // The way this is structured, it impacts lighting if we stop updating shadow uniforms 
