@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <filesystem>
+#include <atomic>
 
 using namespace std::experimental::filesystem;
 using namespace std::chrono;
@@ -249,6 +250,7 @@ namespace avl
         std::unordered_map<uint32_t, ShaderAsset> assets;
         std::thread watch_thread;
         std::mutex watch_mutex;
+        std::atomic<bool> watch_should_exit{ false };
 
     public:
 
@@ -256,7 +258,7 @@ namespace avl
         {
             watch_thread = std::thread([this, root_path]()
             {
-                for (;;)
+                while (!watch_should_exit)
                 {
                     try
                     {
@@ -274,6 +276,7 @@ namespace avl
 
         ~ShaderMonitor()
         {
+            watch_should_exit = true;
             if (watch_thread.joinable()) watch_thread.join();
         }
 
