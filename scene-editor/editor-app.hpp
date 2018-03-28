@@ -113,10 +113,15 @@ public:
     {
         return gizmo_active;
     }
-
+    
     void on_input(const InputEvent & event)
     {
         gizmo.handle_input(event);
+    }
+
+    void reset_input()
+    {
+        gizmo.reset_input();
     }
 
     void on_update(const GlCamera & camera, const float2 viewport_size)
@@ -158,8 +163,12 @@ struct scene_editor_app final : public GLFWApp
     Scene scene;
 
     GlShaderHandle wireframeHandle{ "wireframe" };
+    GlShaderHandle iblHandle{ "ibl" };
+    GlMeshHandle cubeHandle{ "cube" };
 
-    std::unique_ptr<gui::ImGuiInstance> igm;
+    profiler<SimpleTimer> editorProfiler;
+
+    std::unique_ptr<gui::imgui_wrapper> igm;
 
     std::unique_ptr<editor_controller<GameObject>> editor;
 
@@ -169,6 +178,8 @@ struct scene_editor_app final : public GLFWApp
     ImGui::ImGuiAppLog log;
     auto_layout uiSurface;
     std::vector<std::shared_ptr<GLTextureView>> debugViews;
+    bool showUI = true;
+    std::vector<ui_rect> active_imgui_regions;
 
     scene_editor_app();
     ~scene_editor_app();
@@ -178,4 +189,6 @@ struct scene_editor_app final : public GLFWApp
     void on_update(const UpdateEvent & e) override;
     void on_draw() override;
     void on_drop(std::vector <std::string> filepaths) override;
+
+    bool shouldHandleRaycast = false;
 };

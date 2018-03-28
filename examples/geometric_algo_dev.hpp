@@ -20,7 +20,7 @@ struct ExperimentalApp : public GLFWApp
     uint64_t frameCount = 0;
     float time = 0.0;
 
-    std::unique_ptr<gui::ImGuiInstance> igm;
+    std::unique_ptr<gui::imgui_wrapper> igm;
 
     GlCamera camera;
     HosekProceduralSky skydome;
@@ -99,8 +99,7 @@ struct ExperimentalApp : public GLFWApp
     {
 		glfwSwapInterval(0);
 
-        igm.reset(new gui::ImGuiInstance(window));
-        gui::make_dark_theme();
+        igm.reset(new gui::imgui_wrapper(window));
         
 		fixedTimer.start();
 

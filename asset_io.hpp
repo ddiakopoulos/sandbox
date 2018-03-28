@@ -41,6 +41,10 @@ inline GlTexture2D load_image(const std::string & path, bool flip = false)
         case 4: tex.setup(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, data, true); break;
         default: throw std::runtime_error("unsupported number of channels");
     }
+
+    glTextureParameteriEXT(tex, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteriEXT(tex, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
     tex.set_name(path);
     stbi_image_free(data);
     return tex;

@@ -7,9 +7,20 @@
 #include "util.hpp"
 #include "string_utils.hpp"
 #include "asset_io.hpp"
-#include "third_party/efsw/efsw.hpp"
 #include <regex>
 #include <unordered_map>
+#include <chrono>
+#include <filesystem>
+#include <atomic>
+
+using namespace std::experimental::filesystem;
+using namespace std::chrono;
+
+inline system_clock::time_point write_time(const std::string & file_path)
+{
+    try { return last_write_time(path(file_path));}
+    catch (...) { return system_clock::time_point::min(); };
+}
 
 namespace avl
 {
@@ -143,7 +154,6 @@ namespace avl
 
     class ShaderMonitor
     {
-        std::unique_ptr<efsw::FileWatcher> fileWatcher;
 
         struct ShaderAsset
         {
@@ -157,6 +167,7 @@ namespace avl
             std::vector<std::string> includes;
 
             bool shouldRecompile = false;
+            int64_t writeTime = 0;
 
             ShaderAsset(
                 const std::string & v, 
@@ -169,8 +180,6 @@ namespace avl
 
             void recompile()
             {
-                shouldRecompile = false;
-
                 GlShader result;
 
                 try
@@ -194,60 +203,81 @@ namespace avl
             }
         };
 
-        struct UpdateListener : public efsw::FileWatchListener
+        void walk_root_directory(path root)
         {
-            std::function<void(const std::string filename)> callback;
-            void handleFileAction(efsw::WatchID watchid, const std::string & dir, const std::string & filename, efsw::Action action, std::string oldFilename = "")
+            for (auto & entry : recursive_directory_iterator(root))
             {
-                if (action == efsw::Actions::Modified)
+                const size_t root_len = root.string().length(), ext_len = entry.path().extension().string().length();
+                auto path = entry.path().string(), name = path.substr(root_len + 1, path.size() - root_len - ext_len - 1);
+                for (auto & chr : path) if (chr == '\\') chr = '/';
+
+                for (auto & asset : assets)
                 {
-                    std::cout << "Shader file updated: " << filename << std::endl;
-                    if (callback)
+                    // Regular shader assets
+                    if (path == asset.second.vertexPath || path == asset.second.fragmentPath || path == asset.second.geomPath)
                     {
-                        callback(filename);
+                        auto writeTime = duration_cast<seconds>(write_time(path).time_since_epoch()).count();
+                        if (writeTime > asset.second.writeTime)
+                        {
+                            asset.second.writeTime = writeTime;
+                            asset.second.shouldRecompile = true;
+                            std::cout << "Modified Shader: " << asset.second.vertexPath << std::endl;
+                        }
                     }
+
+                    // Each shader keeps a list of the files it includes. ShaderMonitor watches a base path,
+                    // so we should be able to recompile shaders dependent on common includes
+                    for (auto & includePath : asset.second.includes)
+                    {
+                        if (get_filename_with_extension(path) == get_filename_with_extension(includePath))
+                        {
+                            auto writeTime = duration_cast<seconds>(write_time(path).time_since_epoch()).count();
+                            if (writeTime > asset.second.writeTime)
+                            {
+                                asset.second.writeTime = writeTime;
+                                asset.second.shouldRecompile = true;
+                                std::cout << "Modified Include: " << includePath << std::endl;
+                                break;
+                            }
+                        }
+                    }
+
                 }
             }
         };
 
-        UpdateListener listener;
+        std::string root_path;
         std::unordered_map<uint32_t, ShaderAsset> assets;
+        std::thread watch_thread;
+        std::mutex watch_mutex;
+        std::atomic<bool> watch_should_exit{ false };
 
     public:
 
-        ShaderMonitor(const std::string & basePath)
+        ShaderMonitor(const std::string & root_path) : root_path(root_path) 
         {
-            fileWatcher.reset(new efsw::FileWatcher());
-
-            efsw::WatchID id = fileWatcher->addWatch(basePath, &listener, true);
-
-            listener.callback = [&](const std::string filename)
+            watch_thread = std::thread([this, root_path]()
             {
-                for (auto & asset : assets)
+                while (!watch_should_exit)
                 {
-                    auto & shader = asset.second;
-                    // Recompile if any one of the shader stages have changed
-                    if (get_filename_with_extension(filename) == get_filename_with_extension(shader.vertexPath) || 
-                        get_filename_with_extension(filename) == get_filename_with_extension(shader.fragmentPath) || 
-                        get_filename_with_extension(filename) == get_filename_with_extension(shader.geomPath))
+                    try
                     {
-                        shader.shouldRecompile = true;
+                        std::lock_guard<std::mutex> guard(watch_mutex);
+                        walk_root_directory(root_path);
                     }
-
-                    // Each shader keeps a list of the files it includes. ShaderMonitor watches a base path,
-                    // so we should be able to recompile shaders depenent on common includes
-                    for (auto & includePath : shader.includes)
+                    catch (const std::exception & e)
                     {
-                        if (get_filename_with_extension(filename) == get_filename_with_extension(includePath))
-                        {
-                            shader.shouldRecompile = true;
-                            break;
-                        }
+                        std::cout << "Filesystem error: " << e.what() << std::endl;
                     }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(250));
                 }
-            };
+            });
+        }
 
-            fileWatcher->watch();
+        ~ShaderMonitor()
+        {
+            watch_should_exit = true;
+            if (watch_thread.joinable()) watch_thread.join();
         }
 
         // Call this regularly on the gl thread
@@ -257,69 +287,71 @@ namespace avl
             {
                 if (asset.second.shouldRecompile)
                 {
+                    std::lock_guard<std::mutex> guard(watch_mutex);
                     asset.second.recompile();
+                    asset.second.shouldRecompile = false;
                 }
             }
         }
 
         // Watch vertex and fragment
         uint32_t watch(
-            const std::string & vertexShader,
-            const std::string & fragmentShader,
+            const std::string & vert_path,
+            const std::string & frag_path,
             std::function<void(GlShader)> callback)
         {
-            ShaderAsset asset(vertexShader, fragmentShader);
+            ShaderAsset asset(vert_path, frag_path);
             asset.onModified = callback;
             asset.recompile();
-            uint32_t lookup = hash_fnv1a(vertexShader + fragmentShader);
+            uint32_t lookup = hash_fnv1a(vert_path + frag_path);
             assets[lookup] = std::move(asset);
             return lookup;
         }
 
         // Watch vertex, fragment, and geometry
         uint32_t watch(
-            const std::string & vertexShader,
-            const std::string & fragmentShader,
-            const std::string & geometryShader, 
+            const std::string & vert_path,
+            const std::string & frag_path,
+            const std::string & geom_path, 
             std::function<void(GlShader)> callback)
         {
-            ShaderAsset asset(vertexShader, fragmentShader, geometryShader);
+            ShaderAsset asset(vert_path, frag_path, geom_path);
             asset.onModified = callback;
             asset.recompile();
-            uint32_t lookup = hash_fnv1a(vertexShader + fragmentShader);
+            uint32_t lookup = hash_fnv1a(vert_path + frag_path);
             assets[lookup] = std::move(asset);
             return lookup;
         }
 
         // Watch vertex and fragment with includes and defines
         uint32_t watch(
-            const std::string & vertexShader, 
-            const std::string & fragmentShader,
-            const std::string & includePath,
+            const std::string & vert_path,
+            const std::string & frag_path,
+            const std::string & include_path,
             const std::vector<std::string> & defines,
             std::function<void(GlShader)> callback)
         {
-            ShaderAsset asset(vertexShader, fragmentShader, "", includePath, defines);
+            ShaderAsset asset(vert_path, frag_path, "", include_path, defines);
             asset.onModified = callback;
             asset.recompile();
-            uint32_t lookup = hash_fnv1a(vertexShader + fragmentShader);
+            uint32_t lookup = hash_fnv1a(vert_path + frag_path);
             assets[lookup] = std::move(asset);
             return lookup;
         }
 
         // Watch vertex and fragment and geometry with includes and defines
         uint32_t watch(
-            const std::string & vertexShader,
-            const std::string & fragmentShader,
-            const std::string & geometryShader,
-            const std::string & includePath,
+            const std::string & vert_path,
+            const std::string & frag_path,
+            const std::string & geom_path,
+            const std::string & include_path,
             const std::vector<std::string> & defines,
             std::function<void(GlShader)> callback)
         {
-            ShaderAsset asset(vertexShader, fragmentShader, geometryShader, includePath, defines);
+            ShaderAsset asset(vert_path, frag_path, geom_path, include_path, defines);
             asset.onModified = callback;
             asset.recompile();
-            uint32_t lookup = hash_fnv1a(vertexShader + fragmentShader);
+            uint32_t lookup = hash_fnv1a(vert_path + frag_path);
             assets[lookup] = std::move(asset);
             return lookup;
         }

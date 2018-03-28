@@ -13,6 +13,22 @@ namespace
 {
     static bool gEnableGLDebugOutputErrorBreakpoints = false;
 
+    inline void has_gl_extension(std::vector<std::pair<std::string, bool>> & extension_list)
+    {
+        int numExtensions = 0;
+        glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+
+        // Loop through all extensions
+        for (int i = 0; i < numExtensions; ++i)
+        {
+            auto * ext = reinterpret_cast<const char *>(glGetStringi(GL_EXTENSIONS, i));
+            for (auto & requiredExt : extension_list)
+            {
+                if (requiredExt.first == ext) requiredExt.second = true;
+            }
+        }
+    }
+
     inline void compile_shader(GLuint program, GLenum type, const char * source)
     {
         GLuint shader = glCreateShader(type);
@@ -207,11 +223,11 @@ struct GlTexture2D : public GlTextureObject
     void setup(GLsizei width, GLsizei height, GLenum internal_fmt, GLenum format, GLenum type, const GLvoid * pixels, bool createMipmap = false)
     {
         glTextureImage2DEXT(*this, GL_TEXTURE_2D, 0, internal_fmt, width, height, 0, format, type, pixels);
-        if (createMipmap) glGenerateTextureMipmapEXT(*this, GL_TEXTURE_2D);
         glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, createMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
         glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTextureParameteriEXT(*this, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        if (createMipmap) glGenerateTextureMipmapEXT(*this, GL_TEXTURE_2D);
         this->width = static_cast<float>(width);
         this->height = static_cast<float>(height);
     }

@@ -123,7 +123,7 @@ template<class F> void visit_fields(MetallicRoughnessMaterial & o, F f)
     f("radiance_cubemap_handle", o.radianceCubemap);
     f("irradiance_cubemap_handle", o.irradianceCubemap);
 
-    f("program_handle", o.program, editor_hidden{});
+    f("program_handle", o.program);
 }
 
 ////////////////////////////////

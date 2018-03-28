@@ -27,7 +27,6 @@
 
 namespace avl
 {
-
     struct UpdateEvent
     {
         double elapsed_s;
@@ -89,6 +88,8 @@ namespace avl
 
         int get_mods() const;
 
+        void set_window_title(const std::string & str);
+
     protected:
 
         GLFWwindow * window;
@@ -102,6 +103,7 @@ namespace avl
         void consume_mousebtn(int button, int action);
         void consume_cursor(double xpos, double ypos);
         void consume_scroll(double xoffset, double yoffset);
+        void on_iconify();
 
         void take_screenshot_impl();
         std::string screenshotPath;

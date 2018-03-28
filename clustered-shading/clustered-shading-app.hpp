@@ -8,7 +8,7 @@ struct shader_workbench : public GLFWApp
     FlyCameraController cameraController;
     ShaderMonitor shaderMonitor{ "../assets/" };
 
-    std::unique_ptr<gui::ImGuiInstance> igm;
+    std::unique_ptr<gui::imgui_wrapper> igm;
     std::unique_ptr<GlGizmo> gizmo;
     tinygizmo::rigid_transform xform;
 

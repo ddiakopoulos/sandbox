@@ -191,15 +191,16 @@ namespace poisson
     
     struct PoissonDiskGenerator3D
     {
-        std::function<float(const float3 &)> distFunction;
-        std::function<bool(const float3 &)> boundsFunction;
-        
+        std::function<float(const float3)> distFunction;
+        std::function<bool(const float3)> boundsFunction;
+        UniformRandomGenerator r;
+
         std::vector<float3> build(const Bounds3D & bounds, const std::vector<float3> & initialSet, int k, float separation = 1.0)
         {
             std::vector<float3> processingList;
             std::vector<float3> outputList;
             Volume grid(bounds, 3);
-            UniformRandomGenerator r;
+
             
             for (auto p : initialSet)
             {
@@ -217,13 +218,15 @@ namespace poisson
             
             while (processingList.size())
             {
-                int randPoint = r.random_int(int(processingList.size()) - 1);
-                float3 center = processingList[randPoint];
+                const uint32_t randPoint = r.random_int(int(processingList.size()) - 1);
+                const float3 center = processingList[randPoint];
                 
                 processingList.erase(processingList.begin() + randPoint);
                 
                 if (distFunction)
+                {
                     separation = distFunction(center);
+                }
 
                 for (int i = 0; i < k; i++)
                 {

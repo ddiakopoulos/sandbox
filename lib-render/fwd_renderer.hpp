@@ -65,15 +65,15 @@ struct profiler
 {
     struct data_point
     {
-        CircularBuffer<double> average;
+        CircularBuffer<double> average{ 30 };
         T timer;
     };
 
     std::unordered_map<std::string, data_point> dataPoints;
 
     bool enabled{ true };
-    uint32_t numSamples;
-    profiler(uint32_t numSamplesToKeep = 5) : numSamples(numSamplesToKeep) { }
+
+    profiler() { }
 
     void set_enabled(bool newState) 
     { 
@@ -84,8 +84,6 @@ struct profiler
     void begin(const std::string & id)
     { 
         if (!enabled) return;
-        auto pt = dataPoints.insert({ id, {} });
-        if (pt.second == true) pt.first->second.average.resize(numSamples);
         dataPoints[id].timer.start();
     }
 
@@ -93,8 +91,8 @@ struct profiler
     { 
         if (!enabled) return;
         dataPoints[id].timer.stop();
-        double t = dataPoints[id].timer.elapsed_ms();
-        if (t > 0) dataPoints[id].average.put(t);
+        const double t = dataPoints[id].timer.elapsed_ms();
+        if (t > 0.0) dataPoints[id].average.put(t);
     }
 };
 
@@ -149,8 +147,8 @@ public:
 
 template<class F> void visit_fields(forward_renderer & o, F f)
 {
-    f("num_cameras", o.settings.cameraCount);
-    f("num_msaa_samples", o.settings.msaaSamples);
+    f("num_cameras", o.settings.cameraCount, editor_hidden{});
+    f("num_msaa_samples", o.settings.msaaSamples, editor_hidden{});
     f("render_size", o.settings.renderSize);
     f("performance_profiling", o.settings.performanceProfiling);
     f("depth_prepass", o.settings.useDepthPrepass);

@@ -55,7 +55,6 @@ namespace avl
         GlCamera * cam;
         
         float camPitch = 0, camYaw = 0;
-        float4 orientation, lastOrientation;
         
         bool bf = 0, bl = 0, bb = 0, br = 0, ml = 0, mr = 0;
         float2 lastCursor;
@@ -86,6 +85,17 @@ namespace avl
             float3 flatLookVec = safe_normalize(float3(lookVec.x, 0, lookVec.z));
             camYaw = std::acos(clamp(dot(worldNorth, flatLookVec), -1.0f, +1.0f)) * (flatLookVec.x > 0 ? -1 : 1);
             camPitch = std::acos(clamp(dot(lookVec, flatLookVec), -1.0f, +1.0f)) * (lookVec.y > 0 ? 1 : -1);
+        }
+
+        void reset()
+        {
+            bf = 0;
+            bl = 0;
+            bb = 0;
+            br = 0;
+            ml = 0;
+            mr = 0;
+            lastCursor = float2(0, 0);
         }
         
         void handle_input(const InputEvent & e)

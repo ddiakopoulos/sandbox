@@ -73,8 +73,6 @@
     <ClInclude Include="..\third_party\imgui\imconfig.h" />
     <ClInclude Include="..\third_party\imgui\imgui.h" />
     <ClInclude Include="..\third_party\imgui\imgui_internal.h" />
-    <ClInclude Include="..\third_party\json.hpp" />
-    <ClInclude Include="..\third_party\murmur_hash_3.h" />
     <ClInclude Include="..\third_party\nanovg.h" />
     <ClInclude Include="..\third_party\nanovg_gl.h" />
     <ClInclude Include="..\third_party\nanovg_gl_utils.h" />
@@ -89,11 +87,8 @@
     <ClCompile Include="..\gl\gl-nvg.cpp" />
     <ClCompile Include="..\gl\glfw-app.cpp" />
     <ClCompile Include="..\impl.cpp" />
-    <ClCompile Include="..\third_party\efsw.cpp" />
     <ClCompile Include="..\third_party\imgui\imgui.cpp" />
     <ClCompile Include="..\third_party\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\third_party\json.cpp" />
-    <ClCompile Include="..\third_party\murmur_hash_3.cpp" />
     <ClCompile Include="..\third_party\nanovg.cpp" />
     <ClCompile Include="..\third_party\tiny-gizmo.cpp" />
   </ItemGroup>

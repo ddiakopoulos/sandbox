@@ -801,7 +801,8 @@ bool tinygizmo::transform_gizmo(const std::string & name, gizmo_context & g, rig
     else if (g.impl->mode == transform_mode::rotate) orientation_gizmo(name, *g.impl, t.position, t.orientation);
     else if (g.impl->mode == transform_mode::scale) scale_gizmo(name, *g.impl, t.orientation, t.position, t.scale);
 
-    for (auto & giz : g.impl->gizmos) if (giz.second.hover == true || g.impl->active_state.mouse_left == true) activated = true;
+    for (auto & giz : g.impl->gizmos) if (giz.second.hover || (giz.second.active && g.impl->active_state.mouse_left)) activated = true;
+    if (g.impl->has_released) activated = false; // override
 
     return activated;
 }

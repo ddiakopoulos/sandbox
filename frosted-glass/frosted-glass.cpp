@@ -64,7 +64,7 @@ shader_workbench::shader_workbench() : GLFWApp(1280, 720, "Doom 2k16 Frosted Gla
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    igm.reset(new gui::ImGuiInstance(window));
+    igm.reset(new gui::imgui_wrapper(window));
     gui::make_light_theme();
 
     post.reset(new blur_chain(float2(width, height)));

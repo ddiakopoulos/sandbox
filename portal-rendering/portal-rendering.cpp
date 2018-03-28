@@ -28,7 +28,7 @@ shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Portal Rendering Samp
     glfwGetWindowSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    igm.reset(new gui::ImGuiInstance(window));
+    igm.reset(new gui::imgui_wrapper(window));
     gui::make_light_theme();
 
     basicShader = std::make_shared<GlShader>(basic_vert, basic_frag);

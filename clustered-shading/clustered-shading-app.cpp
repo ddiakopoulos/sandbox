@@ -28,7 +28,7 @@ static int numLights = 256;
 
 shader_workbench::shader_workbench() : GLFWApp(1200, 800, "Clustered Shading Example")
 {
-    igm.reset(new gui::ImGuiInstance(window));
+    igm.reset(new gui::imgui_wrapper(window));
 
     gizmo.reset(new GlGizmo());
     xform.position = { 0.0f, 1.f, 0.0f };

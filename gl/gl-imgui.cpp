@@ -10,11 +10,11 @@ using namespace avl;
 
 namespace gui
 {
-    ///////////////////////////////////////
-    //   ImGui Instance Implementation   //
-    ///////////////////////////////////////
+    ////////////////////////////////
+    //   Wrapper Implementation   //
+    ////////////////////////////////
 
-    ImGuiInstance::ImGuiInstance(GLFWwindow * win)
+    imgui_wrapper::imgui_wrapper(GLFWwindow * win)
     {
         data.window = win;
         data.context = ImGui::CreateContext();
@@ -43,17 +43,28 @@ namespace gui
         io.KeyMap[ImGuiKey_Y] = GLFW_KEY_Y;
         io.KeyMap[ImGuiKey_Z] = GLFW_KEY_Z;
         
-        io.Fonts->AddFontDefault();
+        //io.Fonts->AddFontDefault(); // fixme
     }
-    
-    ImGuiInstance::~ImGuiInstance()
+
+    std::vector<uint8_t> fontBuffer;
+    void imgui_wrapper::add_font(const std::vector<uint8_t> & buffer)
+    {
+        ImGuiIO & io = ImGui::GetIO();
+        fontBuffer = buffer;
+        ImFontConfig config;
+        config.FontDataOwnedByAtlas = false;
+        auto font = io.Fonts->AddFontFromMemoryTTF((void *)fontBuffer.data(), (int) fontBuffer.size(), 15.f, &config);
+        IM_ASSERT(font != NULL);
+    }
+
+    imgui_wrapper::~imgui_wrapper()
     {
         ImGui::SetCurrentContext(data.context);
         destroy_render_objects();
-        ImGui::Shutdown();
+        ImGui::Shutdown(data.context);
     }
     
-    void ImGuiInstance::update_input(const avl::InputEvent & e)
+    void imgui_wrapper::update_input(const avl::InputEvent & e)
     {
         ImGui::SetCurrentContext(data.context);
 
@@ -67,7 +78,13 @@ namespace gui
                 data.MousePressed[button] = true;
             }
         }
-        
+
+        if (e.type == InputEvent::Type::CURSOR)
+        {
+            io.MousePos = ImVec2(e.cursor.x, e.cursor.y);
+        }
+
+
         if (e.type == InputEvent::Type::SCROLL)
         {
             data.MouseWheel += (float)e.value[1]; // Use fractional mouse wheel, 1.0 unit 5 lines.
@@ -91,7 +108,7 @@ namespace gui
 
     }
 
-    bool ImGuiInstance::create_fonts_texture()
+    bool imgui_wrapper::create_fonts_texture()
     {
         ImGui::SetCurrentContext(data.context);
 
@@ -119,7 +136,7 @@ namespace gui
         return true;
     }
     
-    bool ImGuiInstance::create_render_objects()
+    bool imgui_wrapper::create_render_objects()
     {
         ImGui::SetCurrentContext(data.context);
 
@@ -199,9 +216,10 @@ namespace gui
         return true;
     }
     
-    void ImGuiInstance::destroy_render_objects()
+    void imgui_wrapper::destroy_render_objects()
     {
         ImGui::SetCurrentContext(data.context);
+
         if (data.VaoHandle) glDeleteVertexArrays(1, &data.VaoHandle);
         if (data.VboHandle) glDeleteBuffers(1, &data.VboHandle);
         if (data.ElementsHandle) glDeleteBuffers(1, &data.ElementsHandle);
@@ -226,57 +244,48 @@ namespace gui
         }
     }
     
-    void ImGuiInstance::begin_frame()
+    void imgui_wrapper::begin_frame()
     {
         ImGui::SetCurrentContext(data.context);
         if (!data.FontTexture) create_render_objects();
-        
+
         ImGuiIO & io = ImGui::GetIO();
-        
-        // Setup display size (every frame to accommodate for window resizing)
-        int w, h;
-        int display_w, display_h;
-        glfwGetWindowSize(data.window, &w, &h);
-        glfwGetFramebufferSize(data.window, &display_w, &display_h);
-        io.DisplaySize = ImVec2((float)w, (float)h);
-        io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
-        
+
         // Setup time step
-        double current_time =  glfwGetTime();
-        io.DeltaTime = data.Time > 0.0 ? (float)(current_time - data.Time) : (float)(1.0f/60.0f);
+        double current_time = glfwGetTime();
+        io.DeltaTime = data.Time > 0.0 ? (float)(current_time - data.Time) : (float)(1.0f / 60.0f);
         data.Time = current_time;
-        
-        // Setup inputs
-        // (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
-        if (glfwGetWindowAttrib(data.window, GLFW_FOCUSED))
-        {
-            double mouse_x, mouse_y;
-            glfwGetCursorPos(data.window, &mouse_x, &mouse_y);
-            io.MousePos = ImVec2((float)mouse_x, (float)mouse_y);
-        }
-        else
-        {
-            io.MousePos = ImVec2(-1,-1);
-        }
-        
+
         for (int i = 0; i < 3; i++)
         {
             // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame
             io.MouseDown[i] = data.MousePressed[i] || glfwGetMouseButton(data.window, i) != 0;
             data.MousePressed[i] = false;
         }
-        
+
         io.MouseWheel = data.MouseWheel;
         data.MouseWheel = 0.0f;
-        
+
         // Hide OS mouse cursor if ImGui is drawing it
         glfwSetInputMode(data.window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
-        
+
+        // Don't muck with the state if minimized
+        if (!glfwGetWindowAttrib(data.window, GLFW_ICONIFIED))
+        {
+            // Setup display size (every frame to accommodate for window resizing)
+            int w, h;
+            int display_w, display_h;
+            glfwGetWindowSize(data.window, &w, &h);
+            glfwGetFramebufferSize(data.window, &display_w, &display_h);
+            io.DisplaySize = ImVec2((float)w, (float)h);
+            io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
+        }
+
         // Start the frame
         ImGui::NewFrame();
     }
     
-    void ImGuiInstance::end_frame()
+    void imgui_wrapper::end_frame()
     {
         ImGui::SetCurrentContext(data.context);
         ImGui::Render();
@@ -433,6 +442,7 @@ namespace gui
         bool result = ImGui::Combo(label, current_item, (const char*) &charArray[0], height_in_items);
         return result;
     }
+
     ////////////////////
     //   Menu Stack   //
     ////////////////////

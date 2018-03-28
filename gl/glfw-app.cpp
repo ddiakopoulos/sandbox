@@ -70,13 +70,36 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     ANVIL_INFO("GL_VERSION =  " << (char *)glGetString(GL_VERSION));
     ANVIL_INFO("GL_VENDOR =   " << (char *)glGetString(GL_VENDOR));
     ANVIL_INFO("GL_RENDERER = " << (char *)glGetString(GL_RENDERER));
-   
+
 #if defined(ANVIL_PLATFORM_WINDOWS)
     glewExperimental = GL_TRUE;
     if (GLenum err = glewInit()) 
        throw std::runtime_error(std::string("glewInit() failed - ") + (const char *)glewGetErrorString(err));
     ANVIL_INFO("GLEW_VERSION = " << (char *)glewGetString(GLEW_VERSION));
 #endif
+
+    std::vector<std::pair<std::string, bool>> extensions{
+        { "GL_EXT_direct_state_access", false },
+        { "GL_KHR_debug", false },
+        { "GL_EXT_blend_equation_separate", false },
+        { "GL_EXT_framebuffer_sRGB", false },
+        { "GL_EXT_pixel_buffer_object", false },
+    };
+    has_gl_extension(extensions);
+
+    std::ostringstream ss;
+    ss << "Unsupported extensions: ";
+
+    bool anyUnsupported = false;
+    for (auto & e : extensions)
+    {
+        if (!e.second)
+        {
+            ss << ' ' << e.first;
+            anyUnsupported = true;
+        }
+    }
+    if (anyUnsupported) { throw std::runtime_error(ss.str()); }
 
 #ifdef _DEBUG
     glEnable(GL_DEBUG_OUTPUT);
@@ -125,6 +148,19 @@ GLFWApp::GLFWApp(int width, int height, const std::string title, int glfwSamples
     {
         auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); try { app->on_drop({names, names+count});} catch(...) { CATCH_CURRENT; }
     });
+
+    /*
+    glfwSetWindowIconifyCallback(window, [](GLFWwindow * window, int)
+    {
+        auto app = (GLFWApp *)(glfwGetWindowUserPointer(window)); 
+        
+        try 
+        { 
+            glfwMakeContextCurrent(window);
+        }
+        catch (...) { CATCH_CURRENT; }
+    });
+    */
 }
 
 GLFWApp::~GLFWApp() 
@@ -141,6 +177,11 @@ void GLFWApp::preprocess_input(InputEvent & event)
     }
     event.drag = isDragging;
     on_input(event);
+}
+
+void GLFWApp::set_window_title(const std::string & str)
+{
+    glfwSetWindowTitle(window, str.c_str());
 }
 
 void GLFWApp::consume_character(uint32_t codepoint)
@@ -336,21 +377,6 @@ int2 get_screen_size(GLFWwindow * window)
 #define GLFW_EXPOSE_NATIVE_WGL
 #include <GLFW/glfw3native.h>
 #include <shellapi.h>
-
-namespace avl
-{
-    std::string windows_to_utf8(const std::wstring & string)
-    {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conversion;
-        return conversion.to_bytes(string);
-    }
-
-    std::wstring utf8_to_windows(const std::string & string)
-    {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conversion;
-        return conversion.from_bytes(string);
-    }
-}
 
 void GLFWApp::enter_fullscreen(GLFWwindow * window, int2 & windowedSize, int2 & windowedPos)
 {

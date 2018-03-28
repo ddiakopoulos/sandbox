@@ -1,10 +1,13 @@
+// This implementation is heavily based on the reference available for the gLTF File format: 
+// https://github.com/KhronosGroup/glTF-WebGL-PBR/blob/master/shaders/pbr-frag.glsl (MIT Licensed)
+
 // http://gamedev.stackexchange.com/questions/63832/normals-vs-normal-maps/63833
 // http://blog.selfshadow.com/publications/blending-in-detail/
 // http://www.trentreed.net/blog/physically-based-shading-and-image-based-lighting/
 // http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 // https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
 // http://www.frostbite.com/wp-content/uploads/2014/11/course_notes_moving_frostbite_to_pbr_v2.pdf
-// https://github.com/KhronosGroup/glTF-WebGL-PBR/blob/master/shaders/pbr-frag.glsl
+// http://www.thetenthplanet.de/archives/1180
 
 // [1] http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
 // [2] http://blog.selfshadow.com/publications/s2012-shading-course/burley/s2012_pbs_disney_brdf_notes_v3.pdf
@@ -140,7 +143,7 @@ float geometric_occlusion(LightingInfo data)
 // http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
 float microfacet_distribution(LightingInfo data)
 {
-    float roughnessSq = data.alphaRoughness * data.alphaRoughness;
+    float roughnessSq = data.alphaRoughness * data.alphaRoughness; // squared?
     float f = (data.NdotH * roughnessSq - data.NdotH) * data.NdotH + 1.0;
     return roughnessSq / (PI * f * f);
 }
@@ -166,8 +169,9 @@ vec3 fix_cube_lookup(vec3 v, float cubeSize, float lod)
     if (abs(v.z) != M) v.z *= scale;
     return v;
 }
-
+ 
 // https://www.unrealengine.com/blog/physically-based-shading-on-mobile
+// todo - this is typically precomputed using Monte-Carlo and stored as a 2d LUT.
 vec3 env_brdf_approx(vec3 specularColor, float roughness, float NoV)
 {
     const vec4 c0 = vec4(-1, -0.0275, -0.572, 0.022);
@@ -178,20 +182,37 @@ vec3 env_brdf_approx(vec3 specularColor, float roughness, float NoV)
     return specularColor * AB.x + AB.y;
 }
 
+vec3 blend_rnm(vec3 n1, vec3 n2)
+{
+    vec3 t = n1.xyz*vec3( 2,  2, 2) + vec3(-1, -1,  0);
+    vec3 u = n2.xyz*vec3(-2, -2, 2) + vec3( 1,  1, -1);
+    vec3 r = t*dot(t, u) - u*t.z;
+    return normalize(r);
+}
+
+// todo - can compute TBN in vertex shader
+vec4 calc_normal_map(vec3 normal, vec3 tangent, vec3 bitangent, vec3 sampledMap)
+{
+    const mat3 TBN = mat3(tangent, bitangent, normal);
+    return vec4(TBN * sampledMap, 1.0); 
+}
+
 void main()
 {   
     // Surface properties
     vec3 albedo = u_albedo;
-    vec3 N = v_normal;
+    vec3 N = normalize(v_normal);
 
     float roughness = clamp(u_roughness, u_specularLevel, 1.0);
     float metallic = u_metallic;
 
 #ifdef HAS_NORMAL_MAP
-    vec3 nSample = texture(s_normal, v_texcoord).xyz * 2 - 1;
-    N = normalize(normalize(v_tangent) * nSample.x + normalize(v_bitangent) * nSample.y + normalize(v_normal) * nSample.z);
+    vec3 nSample = texture(s_normal, v_texcoord).xyz * 2.0 - 1.0;
+    N = normalize(calc_normal_map(v_normal, normalize(v_tangent), normalize(v_bitangent), normalize(nSample)).xyz);
+    //N = normalize( (normalize(v_tangent) * nSample.x) + (normalize(v_bitangent) * nSample.y) + (normalize(v_normal) * nSample.z)); // alternate
 #endif
 
+// todo - can pack roughness and metalness into the same RG texture
 #ifdef HAS_ROUGHNESS_MAP
     roughness *= texture(s_roughness, v_texcoord).r;
 #endif
@@ -201,12 +222,12 @@ void main()
 #endif
 
 #ifdef HAS_ALBEDO_MAP
-    albedo = sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA) * u_albedo; 
+    albedo *= sRGBToLinear(texture(s_albedo, v_texcoord).rgb, DEFAULT_GAMMA); 
 #endif
 
     // Roughness is authored as perceptual roughness; as is convention,
     // convert to material roughness by squaring the perceptual roughness [2].
-    float alphaRoughness = roughness * roughness;
+    const float alphaRoughness = roughness * roughness;
 
     // View direction
     vec3 V = normalize(u_eyePos.xyz - v_world_position);
@@ -214,7 +235,7 @@ void main()
 
     vec3 F0 = vec3(u_specularLevel);
     vec3 diffuseColor = albedo * (vec3(1.0) - F0);
-    diffuseColor *= 1.0 - metallic;
+    //diffuseColor *= 1.0 - metallic;
 
     vec3 specularColor = mix(F0, albedo, metallic);
 
@@ -229,7 +250,7 @@ void main()
 
     vec3 Lo = vec3(0);
 
-    vec3 debugShadowCascadeColor;
+    vec3 debugShadowColor;
     float shadowVisibility = 1;
 
     // Compute directional light
@@ -248,15 +269,15 @@ void main()
         );
 
         float NdotL_S = clamp(dot(v_normal, L), 0.001, 1.0);
-        const float slope_bias = 0.04;
-        const float normal_bias = 0.01;
+        const float slope_bias = 0.04;  // fixme - expose to user
+        const float normal_bias = 0.01; // fixme - expose to user
         vec3 biased_pos = get_biased_position(v_world_position, slope_bias, normal_bias, v_normal, L);
 
         // The way this is structured, it impacts lighting if we stop updating shadow uniforms 
         float shadowTerm = 1.0;
         #ifdef ENABLE_SHADOWS
-        shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, debugShadowCascadeColor);
-        shadowVisibility = 1.0 - ((shadowTerm  * NdotL) * u_shadowOpacity * u_receiveShadow);
+            shadowTerm = calculate_csm_coefficient(s_csmArray, biased_pos, v_view_space_position, u_cascadesMatrix, u_cascadesPlane, debugShadowColor);
+            shadowVisibility = 1.0 - ((shadowTerm  * NdotL) * u_shadowOpacity * u_receiveShadow);
         #endif
 
         vec3 diffuseContrib, specContrib;
@@ -293,7 +314,7 @@ void main()
 
     #ifdef USE_IMAGE_BASED_LIGHTING
     {
-        const int NUM_MIP_LEVELS = 6;
+        const int NUM_MIP_LEVELS = 8;
         float mipLevel = NUM_MIP_LEVELS - 1.0 + log2(roughness);
         vec3 cubemapLookup = fix_cube_lookup(-reflect(V, N), 512, mipLevel);
 
@@ -321,10 +342,11 @@ void main()
     Lo += u_emissive * u_emissiveStrength;
 
     // Debugging
-    //f_color = vec4(vec3(debugShadowCascadeColor), 1.0);
-    //f_color = vec4(mix(vec3(shadowVisibility), vec3(debugShadowCascadeColor), 0.5), 1.0);
+    //f_color = vec4(vec3(debugShadowColor), 1.0);
+    //f_color = vec4(mix(vec3(shadowVisibility), vec3(debugShadowColor), 0.5), 1.0);
+    //f_color = vec4(vec3(shadowVisibility), u_opacity); 
+    //f_color = vec4(nSample, 1.0);
 
     // Combine direct lighting, IBL, and shadow visbility
-    //f_color = vec4(vec3(shadowVisibility), u_opacity); 
     f_color = vec4(Lo * shadowVisibility, u_opacity); 
 }

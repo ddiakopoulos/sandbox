@@ -100,7 +100,7 @@ struct shader_workbench : public GLFWApp
     FlyCameraController flycam;
     ShaderMonitor shaderMonitor{ "../assets/" };
 
-    std::unique_ptr<gui::ImGuiInstance> igm;
+    std::unique_ptr<gui::imgui_wrapper> igm;
     GlGpuTimer gpuTimer;
     std::unique_ptr<GlGizmo> gizmo;
 
